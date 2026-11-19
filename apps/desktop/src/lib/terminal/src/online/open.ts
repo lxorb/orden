@@ -15,14 +15,12 @@ export async function openOnline(beside = false): Promise<Tab | null> {
   await refused(made)
   return null
 }
-
 export async function madeOnline(beside: string | null, activate = true): Promise<Tab | Refused | null> {
   if (!account.accountToken) return 'signed-out'
   const asking = machine.refresh()
   if (machine.known?.allowed !== true || machine.refused !== null) await asking
   const why = machine.known?.allowed === false ? 'list' : machine.refused
   if (why) return why
-
   let words: string
   try {
     words = termText(await termSession(null))
@@ -34,7 +32,6 @@ export async function madeOnline(beside: string | null, activate = true): Promis
   workspace.persist()
   return tab
 }
-
 export function openTerm(path: string, how: OpenHow = {}, text = ''): Tab | null {
   if (__EVEN_PLUGIN__) return null
   const open = workspace.tabs.find((one) => one.kind === 'terminal' && samePath(one.path, path))
@@ -42,7 +39,6 @@ export function openTerm(path: string, how: OpenHow = {}, text = ''): Tab | null
     if (how.activate !== false) workspace.activeTabId = open.id
     return open
   }
-
   const beside = how.beside ? workspace.activeTabId : null
   const name = termName(nameOf(path))
   const tab = workspace.openUnsaved('terminal', text, name, beside, how.activate ?? true)
@@ -50,7 +46,6 @@ export function openTerm(path: string, how: OpenHow = {}, text = ''): Tab | null
   workspace.persist()
   return tab
 }
-
 async function refused(why: Refused): Promise<void> {
   if (why === 'signed-out') {
     account.ask()

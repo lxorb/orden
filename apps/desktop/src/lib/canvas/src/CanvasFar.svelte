@@ -32,10 +32,8 @@
     height: number
     palette: Palette
   } = $props()
-
   let element = $state<HTMLCanvasElement>()
   const ratio = $derived(Math.min(2, pixelRatio.now))
-
   function paint() {
     if (!element) return
     paintFar(element, {
@@ -54,7 +52,6 @@
       ratio,
     })
   }
-
   const follows = (..._values: unknown[]) => undefined
   let frame = 0
   let painted = false
@@ -72,7 +69,6 @@
       paint()
     })
   })
-
   $effect(() => () => {
     if (frame) cancelAnimationFrame(frame)
   })

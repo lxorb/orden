@@ -1,5 +1,4 @@
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
-
 use crate::Held as _;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -13,28 +12,23 @@ pub struct Usage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gpu: Option<f64>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq)]
 struct Totals {
     pub ticks: u64,
     pub memory: u64,
     pub engines: HashMap<String, u64>,
 }
-
 const TICKS: f64 = 100.0;
-
 #[derive(Default)]
 struct Sampler {
     last: HashMap<String, (Instant, Totals)>,
 }
-
 impl Sampler {
     pub fn rate(&mut self, key: &str, now: Instant, totals: Totals) -> Usage {
         let before = self.last.insert(key.to_owned(), (now, totals.clone()));
         rate_between(before.as_ref(), now, &totals)
     }
 }
-
 #[allow(clippy::cast_precision_loss)]
 fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Totals) -> Usage {
     let Some((at, old)) = before else {
@@ -70,13 +64,11 @@ fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Total
         gpu,
     }
 }
-
 pub fn resident_of(text: &str) -> Option<u64> {
     let line = text.lines().find(|line| line.starts_with("VmRSS:"))?;
     let kilobytes: u64 = line.split_whitespace().nth(1)?.parse().ok()?;
     Some(kilobytes * 1024)
 }
-
 pub fn engines_of(text: &str) -> Option<(String, Vec<(String, u64)>)> {
     let mut client = None;
     let mut engines = Vec::new();
@@ -98,13 +90,11 @@ pub fn engines_of(text: &str) -> Option<(String, Vec<(String, u64)>)> {
     }
     Some((client?, engines))
 }
-
 #[derive(Clone, Copy, Debug)]
 pub enum Whose {
     Tree(u32),
     Group(u32),
 }
-
 #[cfg(target_os = "linux")]
 fn totals(whose: Whose) -> Option<Totals> {
     let mut all: Vec<(u32, u32, u32, u64)> = Vec::new();
@@ -170,7 +160,6 @@ fn totals(whose: Whose) -> Option<Totals> {
     }
     Some(totals)
 }
-
 pub fn sample(key: &str, whose: Whose) -> Option<Usage> {
     static SAMPLES: std::sync::LazyLock<std::sync::Mutex<Sampler>> =
         std::sync::LazyLock::new(std::sync::Mutex::default);
@@ -178,12 +167,10 @@ pub fn sample(key: &str, whose: Whose) -> Option<Usage> {
     let mut samples = SAMPLES.held();
     Some(samples.rate(key, Instant::now(), totals))
 }
-
 #[cfg(not(target_os = "linux"))]
 fn totals(_whose: Whose) -> Option<Totals> {
     None
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,7 +193,6 @@ mod tests {
         );
         assert_eq!(engines_of("pos:\t0\nflags:\t02\n"), None);
     }
-
     #[test]
     fn makes_rates_of_two_samples_and_leaves_out_a_gpu_it_cannot_read() {
         let start = Instant::now();
@@ -249,7 +235,6 @@ mod tests {
             r#"{"cpu":1.0,"memory":2}"#
         );
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     fn reads_a_busy_process_from_the_kernel() {

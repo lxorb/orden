@@ -7,17 +7,14 @@ import { loadCompletion } from './completion'
 import { createEditor } from './editor'
 
 const open: EditorView[] = []
-
 beforeAll(async () => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await loadCompletion()
 })
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function typedAfter(doc: string, words: string): string {
   const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
   open.push(view)
@@ -35,16 +32,13 @@ function typedAfter(doc: string, words: string): string {
   }
   return view.state.doc.toString()
 }
-
 describe('edit76 an apostrophe typed after a link or marked words', () => {
   test('after a wiki link adds no closing quote', () => {
     expect(typedAfter('Met [[John]]', "'s dog")).toBe("Met [[John]]'s dog")
   })
-
   test('after bold words adds no closing quote', () => {
     expect(typedAfter('Met **John**', "'s dog")).toBe("Met **John**'s dog")
   })
-
   test('after a link adds no closing quote', () => {
     expect(typedAfter('Read [the guide](https://x.com)', "'s end")).toBe("Read [the guide](https://x.com)'s end")
   })

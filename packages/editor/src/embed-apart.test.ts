@@ -22,17 +22,14 @@ function blocks(doc: string): string[] {
   })
   return out
 }
-
 const embeds = (doc: string) =>
   (renderMarkdown(doc, { resolveEmbed: () => 'words' }).match(/class="embed"/g) ?? []).length
-
 describe('a note embed beside a block that stands on its own', () => {
   test('under a rule is drawn as the note, as the reading view draws it', () => {
     const doc = 'Top\n\n---\n![[Plan]]'
     expect(embeds(doc)).toBe(1)
     expect(blocks(doc)).toEqual(['![[Plan]]'])
   })
-
   test('under a code block is drawn as the note, as the reading view draws it', () => {
     const doc = '```\ncode\n```\n![[Plan]]'
     expect(embeds(doc)).toBe(1)

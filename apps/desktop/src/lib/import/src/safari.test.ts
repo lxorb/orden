@@ -5,12 +5,10 @@ import { BOOKMARKS, SESSION, TABS } from './safari.fixture'
 import { sidebarImport } from './sidebar-plan'
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
-
 function space(files: Partial<{ bookmarks: unknown; tabs: unknown; session: unknown }>) {
   const sidebar = safariSidebar({ bookmarks: null, tabs: null, session: null, ...files }, 'Safari')
   return { sidebar, space: sidebarImport(sidebar, NOW, null).spaces[0] }
 }
-
 describe("Safari's tabs, bookmarks and Reading List as Orden's", () => {
   test('puts the pinned tab first as an Essential, a tab group as a folder, the window’s own tabs at the top', () => {
     const { space: safari } = space({ tabs: TABS, bookmarks: BOOKMARKS })
@@ -18,14 +16,12 @@ describe("Safari's tabs, bookmarks and Reading List as Orden's", () => {
     expect(safari?.bookmarks).toEqual(['Mail.url'])
     expect(safari?.order.Cars).toEqual(['One.url', 'Two.url'])
   })
-
   test('leaves a deleted tab, a blank one and Safari’s own lists, and counts the page not on the web', () => {
     const { sidebar, space: safari } = space({ tabs: TABS })
     const paths = safari?.files.map((one) => one.path) ?? []
     expect(paths.some((path) => /Gone|Elsewhere|Settings/.test(path))).toBe(false)
     expect(sidebar.dropped).toBe(1)
   })
-
   test('leaves the tabs of Private Browsing, pinned or not', () => {
     const folder = (id: number, title: string) => ({ id, parent: 2, type: 1, title, order: id })
     const tab = (id: number, parent: number, url: string) => ({
@@ -46,14 +42,12 @@ describe("Safari's tabs, bookmarks and Reading List as Orden's", () => {
     const paths = space({ tabs }).space?.files.map((one) => one.path) ?? []
     expect(paths.some((path) => path.includes('secret'))).toBe(false)
   })
-
   test('makes Favorites, the menu and the other lists the Bookmarks folder, History left', () => {
     const { space: safari } = space({ bookmarks: BOOKMARKS })
     expect(safari?.order.Bookmarks).toEqual(['Favorites', 'Bookmarks menu', 'Trips'])
     expect(safari?.order['Bookmarks/Favorites']).toEqual(['Work', 'News.url'])
     expect(safari?.order['Bookmarks/Favorites/Work']).toEqual(['Wiki.url'])
   })
-
   test('makes the Reading List a folder of its own, each page kept on the day it was added', () => {
     const { space: safari } = space({ bookmarks: BOOKMARKS })
     const file = safari?.files.find((one) => one.path === 'Reading List/A long read.url')
@@ -63,14 +57,12 @@ describe("Safari's tabs, bookmarks and Reading List as Orden's", () => {
       added: '2026-10-01T08:00:00.000Z',
     })
   })
-
   test('reads an older Safari’s windows where there is no tab database, never a private one', () => {
     const { space: safari } = space({ session: SESSION })
     expect(safari?.order['']).toEqual(['Mail.url', 'News.url'])
     expect(safari?.bookmarks).toEqual(['Mail.url'])
     expect(space({ tabs: TABS, session: SESSION }).space?.order['']).not.toContain('News.url')
   })
-
   test('reads nothing out of nothing', () => {
     expect(space({ bookmarks: 'nonsense', tabs: 7 }).space?.files).toEqual([])
   })

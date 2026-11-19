@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../platform/src/api', () => ({ isDesktop: false, invoke: () => Promise.resolve(null) }))
-
 const world = vi.hoisted(() => ({
   refuses: false,
   made: [] as { title: string; options: NotificationOptions; onclick: (() => void) | null }[],
   byWorker: [] as { title: string; options: NotificationOptions & { data?: unknown } }[],
   heard: null as ((event: { data: unknown; ports?: { postMessage(said: unknown): void }[] }) => void) | null,
 }))
-
 class Paged {
   static permission = 'granted'
   onclick: (() => void) | null = null
@@ -26,7 +24,6 @@ class Paged {
   }
   close = vi.fn()
 }
-
 const registration = {
   showNotification: (title: string, options: NotificationOptions) => {
     world.byWorker.push({ title, options })
@@ -34,7 +31,6 @@ const registration = {
   },
   getNotifications: () => Promise.resolve([]),
 }
-
 vi.stubGlobal('Notification', Paged)
 vi.stubGlobal('window', { focus: () => undefined })
 vi.stubGlobal('navigator', {
@@ -47,17 +43,13 @@ vi.stubGlobal('navigator', {
     startMessages: () => undefined,
   },
 })
-
 const { show } = await import('../src/api')
-
 const settled = () => new Promise((done) => setTimeout(done, 0))
-
 beforeEach(() => {
   world.refuses = false
   world.made.length = 0
   world.byWorker.length = 0
 })
-
 describe('notices in a browser', () => {
   it('are shown by the page where the page may show them', async () => {
     const opened = vi.fn()
@@ -68,7 +60,6 @@ describe('notices in a browser', () => {
     world.made[0]?.onclick?.()
     expect(opened).toHaveBeenCalledOnce()
   })
-
   it('go through the service worker where the page may not, as on Android, and are no error', async () => {
     world.refuses = true
     const opened = vi.fn()
@@ -84,26 +75,22 @@ describe('notices in a browser', () => {
         }),
       },
     ])
-
     world.heard?.({ data: { ordenNotice: 'c_2' } })
     expect(opened).toHaveBeenCalledOnce()
     world.heard?.({ data: { ordenNotice: 'someone else' } })
     world.heard?.({ data: 'c_2' })
     expect(opened).toHaveBeenCalledOnce()
   })
-
   it('tell the worker which window showed them, so a press comes back to it', async () => {
     world.refuses = true
     show({ title: 'Lucile', body: 'The figures are in', tag: 'c_9', opened: vi.fn() })
     await settled()
-
     const answers: unknown[] = []
     const port = { postMessage: (said: unknown) => answers.push(said) }
     world.heard?.({ data: { ordenHolds: 'c_9' }, ports: [port] })
     world.heard?.({ data: { ordenHolds: 'someone else' }, ports: [port] })
     expect(answers).toEqual([true, false])
   })
-
   it('without a tag still get one, so a press finds its way back', async () => {
     world.refuses = true
     const opened = vi.fn()

@@ -19,7 +19,6 @@ const PROJECT = [
   '- [ ] Call the printer',
   '',
 ].join('\n')
-
 const LOG = [
   '## Notes',
   '',
@@ -36,12 +35,10 @@ const LOG = [
   'second notes',
   '',
 ].join('\n')
-
 async function outlineOf(text: string) {
   const read = await readNote(deskWith({ 'note.md': text }).desk, { path: 'note.md' })
   return read.outline ?? []
 }
-
 describe('the outline an agent reads, when a heading has a namesake deeper under a sibling', () => {
   test('hands an anchor that names the Tasks section right under the top heading', async () => {
     const lines = PROJECT.split('\n')
@@ -50,7 +47,6 @@ describe('the outline an agent reads, when a heading has a namesake deeper under
       expect(PROJECT.slice(place.from).startsWith(lines[row.line] ?? '')).toBe(true)
     }
   })
-
   test('deleting the second Notes section by its outline anchor keeps the Monday notes', async () => {
     const second = (await outlineOf(LOG)).filter((row) => row.title === 'Notes').at(-1)
     const after = applied(LOG, plan(readEdits([{ at: second?.anchor, delete: true }]), LOG).edits)

@@ -8,10 +8,8 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 let env: TestEnv
 let token: string
 let space: string
-
 const ZONE = 'Europe/Zurich'
 const AT = Date.UTC(2099, 0, 5, 8)
-
 beforeEach(async () => {
   env = testEnv()
   forgetAccess()
@@ -19,9 +17,7 @@ beforeEach(async () => {
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
   space = (created.json as { space: { id: string } }).space.id
 })
-
 afterEach(() => env.close())
-
 function recorded(...replies: ((url: string) => Response)[]) {
   const asked: { url: string; init: RequestInit | undefined }[] = []
   const send = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -32,11 +28,9 @@ function recorded(...replies: ((url: string) => Response)[]) {
   }) as typeof fetch
   return { send, asked }
 }
-
 function register(body: Record<string, string>) {
   return call<{ id: string; error?: string }>(env, '/v2/push/targets', { token, body })
 }
-
 function remind(at: number, title = 'Call the bank', id = 'r1') {
   const user = (env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }).user_id
   env.db
@@ -47,7 +41,6 @@ function remind(at: number, title = 'Call the bank', id = 'r1') {
     )
     .run(`inbox:${user}`, id, user, space, at, title)
 }
-
 function kept() {
   return env.db.prepare('select id, at, title, body, sent_at from push_reminders').all() as {
     id: string
@@ -57,7 +50,6 @@ function kept() {
     sent_at: number | null
   }[]
 }
-
 describe('Web Push encryption', () => {
   test('is RFC 8291 to the byte, on its own worked example', async () => {
     const asPublic = fromBase64url(
@@ -89,7 +81,6 @@ describe('Web Push encryption', () => {
     )
   })
 })
-
 describe('targets', () => {
   test('a device registers once per token, and takes itself off', async () => {
     const first = await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
@@ -97,18 +88,15 @@ describe('targets', () => {
     const again = await register({ kind: 'fcm', token: 'phone-token', zone: 'Asia/Tokyo' })
     expect(again.json.id).toBe(first.json.id)
     expect(env.db.prepare('select zone from push_targets').all()).toEqual([{ zone: 'Asia/Tokyo' }])
-
     await call(env, `/v2/push/targets/${first.json.id}`, { method: 'DELETE', token })
     expect(env.db.prepare('select id from push_targets').all()).toEqual([])
   })
-
   test('refuses what is not a target', async () => {
     expect((await register({ kind: 'pigeon', token: 'x' })).status).toBe(400)
     expect((await register({ kind: 'webpush', token: 'http://evil.test/x', p256dh: 'a', auth: 'b' })).status).toBe(400)
     expect((await register({ kind: 'webpush', token: 'https://push.test/x' })).status).toBe(400)
     expect((await register({ kind: 'fcm', token: 't', zone: 'Mars/Olympus' })).status).toBe(400)
   })
-
   test('says which services are on', async () => {
     expect((await call(env, '/v2/push/key', { token })).json).toEqual({
       webpush: null,
@@ -119,12 +107,10 @@ describe('targets', () => {
     env.VAPID_PRIVATE_KEY = 'private'
     expect((await call(env, '/v2/push/key', { token })).json).toMatchObject({ webpush: 'BPublic' })
   })
-
   test('is closed to anybody signed out', async () => {
     expect((await call(env, '/v2/push/targets', { body: { kind: 'fcm', token: 't' } })).status).toBe(401)
   })
 })
-
 describe('sending', () => {
   async function serviceAccount() {
     const pair = (await crypto.subtle.generateKey(
@@ -141,12 +127,10 @@ describe('sending', () => {
     const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
     return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
   }
-
   test('a due reminder goes to a phone once, as data the app decides on', async () => {
     env.FCM_SERVICE_ACCOUNT = await serviceAccount()
     await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
     remind(AT)
-
     const fcm = recorded(
       () => Response.json({ access_token: 'access', expires_in: 3600 }),
       () => Response.json({ name: 'projects/orden-test/messages/1' }),
@@ -167,11 +151,9 @@ describe('sending', () => {
       path: 'todo',
     })
     expect(sent.message.data.id).toBe(kept()[0]?.id)
-
     expect(await sendDue(env, AT + 60_000, fcm.send)).toBe(0)
     expect(kept().filter((one) => one.sent_at !== null)).toHaveLength(1)
   })
-
   test('a subscription its service no longer has is dropped', async () => {
     const vapid = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
       'sign',
@@ -181,7 +163,6 @@ describe('sending', () => {
       new Uint8Array((await crypto.subtle.exportKey('raw', vapid.publicKey)) as ArrayBuffer),
     )
     env.VAPID_PRIVATE_KEY = jwk.d ?? ''
-
     const browser = (await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, [
       'deriveBits',
     ])) as CryptoKeyPair
@@ -194,7 +175,6 @@ describe('sending', () => {
       zone: ZONE,
     })
     remind(AT)
-
     const gone = recorded(() => new Response('', { status: 410 }))
     await sendDue(env, AT, gone.send)
     const asked = gone.asked[0]
@@ -204,7 +184,6 @@ describe('sending', () => {
     expect(headers['content-encoding']).toBe('aes128gcm')
     expect(env.db.prepare('select id from push_targets').all()).toEqual([])
   })
-
   test('a service with no keys is left alone, and its target kept', async () => {
     await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
     remind(AT)
@@ -213,13 +192,11 @@ describe('sending', () => {
     expect(none.asked).toEqual([])
     expect(env.db.prepare('select kind from push_targets').all()).toEqual([{ kind: 'apns' }])
   })
-
   describe('a push no service took', () => {
     const OK = () => Response.json({ name: 'projects/orden-test/messages/1' })
     const DOWN = () => new Response('down', { status: 503 })
     const TOKEN = () => Response.json({ access_token: 'access', expires_in: 3600 })
     const MINUTE = 60_000
-
     function service(reply: () => Response) {
       const ids: string[] = []
       const send = ((input: string, init?: RequestInit) => {
@@ -230,30 +207,24 @@ describe('sending', () => {
       }) as typeof fetch
       return { ids, send }
     }
-
     async function due() {
       env.FCM_SERVICE_ACCOUNT = await serviceAccount()
       await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
       remind(AT)
     }
-
     test('is tried again after a wait, and rings once', async () => {
       await due()
-
       const down = service(DOWN)
       expect(await sendDue(env, AT, down.send)).toBe(0)
       expect(kept()).toMatchObject([{ sent_at: null }])
-
       expect(await sendDue(env, AT + MINUTE, down.send)).toBe(0)
       expect(down.ids).toHaveLength(1)
-
       const back = service(OK)
       expect(await sendDue(env, AT + TRY_AGAIN_AFTER, back.send)).toBe(1)
       expect(back.ids).toHaveLength(1)
       expect(await sendDue(env, AT + TRY_AGAIN_AFTER + MINUTE, back.send)).toBe(0)
       expect(back.ids).toHaveLength(1)
     })
-
     test.each([
       ['too many requests', 429, true],
       ['unavailable', 503, true],
@@ -267,7 +238,6 @@ describe('sending', () => {
       const later = service(OK)
       expect(await sendDue(env, AT + TRY_AGAIN_AFTER, later.send)).toBe(again ? 1 : 0)
     })
-
     test('and where the service could not be reached', async () => {
       await due()
       const unreachable = ((input: string) =>
@@ -277,30 +247,24 @@ describe('sending', () => {
       await sendDue(env, AT, unreachable)
       expect(await sendDue(env, AT + TRY_AGAIN_AFTER, service(OK).send)).toBe(1)
     })
-
     test('is not tried again where another device of the account took it', async () => {
       await due()
       await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
-
       const replies = [OK, DOWN]
       const half = service(() => (replies.shift() ?? OK)())
       expect(await sendDue(env, AT, half.send)).toBe(1)
       expect(half.ids).toHaveLength(2)
-
       const after = service(OK)
       expect(await sendDue(env, AT + TRY_AGAIN_AFTER, after.send)).toBe(0)
       expect(after.ids).toEqual([])
     })
-
     test('nor where a device beside it may have taken it', async () => {
       await due()
       await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
-
       const replies = [() => new Response('no', { status: 500 }), DOWN]
       await sendDue(env, AT, service(() => (replies.shift() ?? OK)()).send)
       expect(await sendDue(env, AT + TRY_AGAIN_AFTER, service(OK).send)).toBe(0)
     })
-
     test('stops being tried once it is too late to be worth ringing', async () => {
       await due()
       const down = service(DOWN)
@@ -310,14 +274,12 @@ describe('sending', () => {
       expect(down.ids).toHaveLength(MOST_TRIES)
       expect(kept()[0]?.sent_at).not.toBeNull()
     })
-
     test('is not tried again where a service has no keys', async () => {
       await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
       remind(AT)
       expect(await sendDue(env, AT, recorded().send)).toBe(0)
       expect(kept()[0]?.sent_at).toBe(AT)
     })
-
     test('holds up no reminder due, and the tries of a whole minute stay bounded', async () => {
       await due()
       const row = env.db.prepare('select note_id, user_id, space_id from push_reminders').get() as {
@@ -334,14 +296,12 @@ describe('sending', () => {
       for (let one = 0; one < 250; one++) {
         insert.run(row.note_id, `due-${one}`, row.user_id, row.space_id, AT)
       }
-
       const down = service(DOWN)
       await sendDue(env, AT, down.send)
       expect(down.ids).toHaveLength(200)
       await sendDue(env, AT + MINUTE, down.send)
       expect(new Set(down.ids).size).toBe(250)
       expect(down.ids).toHaveLength(250)
-
       for (let minute = 2; minute <= 180; minute++) {
         await sendDue(env, AT + minute * MINUTE, down.send)
       }
@@ -349,7 +309,6 @@ describe('sending', () => {
     })
   })
 })
-
 test('the automatic reminder is an account setting, of the choices the app offers', async () => {
   const set = await call(env, '/v1/settings', {
     method: 'PATCH',

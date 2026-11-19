@@ -1,9 +1,6 @@
 const MOST_BYTES: usize = 256 * 1024 * 1024;
-
 const CONNECTING: std::time::Duration = std::time::Duration::from_secs(20);
-
 const SILENT: std::time::Duration = std::time::Duration::from_secs(60);
-
 pub fn client() -> Result<reqwest::Client, String> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
@@ -12,11 +9,9 @@ pub fn client() -> Result<reqwest::Client, String> {
         .build()
         .map_err(|error| error.to_string())
 }
-
 pub async fn download(url: &str) -> Result<Vec<u8>, String> {
     capped(url, MOST_BYTES).await
 }
-
 async fn capped(url: &str, most: usize) -> Result<Vec<u8>, String> {
     let mut response = client()?
         .get(url)
@@ -39,11 +34,9 @@ async fn capped(url: &str, most: usize) -> Result<Vec<u8>, String> {
     }
     Ok(bytes)
 }
-
 pub fn offline(error: reqwest::Error) -> String {
     format!("the store could not be reached: {error}")
 }
-
 #[cfg(test)]
 mod tests {
     use super::capped;
@@ -71,7 +64,6 @@ mod tests {
         });
         format!("http://{address}/x.crx")
     }
-
     #[test]
     fn a_download_that_says_no_length_is_cut_off_at_the_most_it_may_be() {
         let small = tauri::async_runtime::block_on(capped(&serving(2), 4096));

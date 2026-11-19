@@ -3,11 +3,8 @@ import { taskAt } from './tasks'
 import { codeAndWords, codeSpans, inCode, opensTag, opensTagAt, tagAt } from './tags'
 
 export type Priority = 1 | 2 | 3 | 4 | 5 | 6
-
 export const NO_PRIORITY: Priority = 4
-
 export type Remind = { before: number } | { time: string } | { at: string; time: string }
-
 export interface TaskFields {
   text: string
   status: string
@@ -34,7 +31,6 @@ export interface TaskFields {
   block?: string
   fields: Record<string, string>
 }
-
 export type FieldName =
   | 'due'
   | 'scheduled'
@@ -53,9 +49,7 @@ export type FieldName =
   | 'remind'
   | 'assignee'
   | 'block'
-
 export type FieldForm = 'emoji' | 'bracket' | 'paren' | 'tag' | 'caret'
-
 export interface FieldToken {
   field: FieldName | 'tag' | 'other'
   form: FieldForm
@@ -66,7 +60,6 @@ export interface FieldToken {
   key?: string
   inline: boolean
 }
-
 export interface ParsedTask {
   fields: TaskFields
   box: number
@@ -74,7 +67,6 @@ export interface ParsedTask {
   wordsTo: number
   tokens: FieldToken[]
 }
-
 const PRIORITY_MARKS: readonly [Priority, string, string][] = [
   [1, '🔺', 'highest'],
   [2, '⏫', 'high'],
@@ -83,26 +75,21 @@ const PRIORITY_MARKS: readonly [Priority, string, string][] = [
   [5, '🔽', 'low'],
   [6, '⏬', 'lowest'],
 ]
-
 const PRIORITY_BY_EMOJI = new Map<string, Priority>(
   PRIORITY_MARKS.filter(([, emoji]) => emoji).map(([at, emoji]) => [emoji, at]),
 )
-
 export const EMOJI_BY_PRIORITY = Object.fromEntries(PRIORITY_MARKS.map(([at, emoji]) => [at, emoji])) as Record<
   Priority,
   string
 >
-
 const PRIORITY_BY_WORD = new Map<string, Priority>([
   ...PRIORITY_MARKS.map(([at, , word]): [string, Priority] => [word, at]),
   ['normal', 4],
 ])
-
 export const WORD_BY_PRIORITY = Object.fromEntries(PRIORITY_MARKS.map(([at, , word]) => [at, word])) as Record<
   Priority,
   string
 >
-
 export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
   completed: '✅',
   cancelledOn: '❌',
@@ -111,7 +98,6 @@ export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
   start: '🛫',
   created: '➕',
 }
-
 const DATE_BY_EMOJI = new Map<string, FieldName>([
   ['✅', 'completed'],
   ['❌', 'cancelledOn'],
@@ -123,12 +109,10 @@ const DATE_BY_EMOJI = new Map<string, FieldName>([
   ['🛫', 'start'],
   ['➕', 'created'],
 ])
-
 export const RECURRENCE_EMOJI = '🔁'
 export const ON_COMPLETION_EMOJI = '🏁'
 export const ID_EMOJI = '🆔'
 export const DEPENDS_EMOJI = '⛔'
-
 const FIELD_BY_KEY: ReadonlyMap<string, FieldName> = new Map(
   Object.entries({
     due: 'due',
@@ -149,7 +133,6 @@ const FIELD_BY_KEY: ReadonlyMap<string, FieldName> = new Map(
     assignee: 'assignee',
   } satisfies Record<string, FieldName>),
 )
-
 export const KEY_BY_FIELD: Record<FieldName, string> = {
   due: 'due',
   scheduled: 'scheduled',
@@ -169,9 +152,7 @@ export const KEY_BY_FIELD: Record<FieldName, string> = {
   assignee: 'assignee',
   block: 'block',
 }
-
 export const ORDEN_FIELDS: readonly FieldName[] = ['time', 'duration', 'deadline', 'remind', 'assignee']
-
 export const TASKS_FIELDS: readonly FieldName[] = [
   'id',
   'dependsOn',
@@ -185,10 +166,8 @@ export const TASKS_FIELDS: readonly FieldName[] = [
   'cancelledOn',
   'completed',
 ]
-
 const VARIANT = '️?'
 const DATE = String.raw`(\d{4}-\d{2}-\d{2})`
-
 const AT_END = {
   block: /(?<=\s)\^([A-Za-z0-9-]+)$/u,
   priority: new RegExp(`(🔺|⏫|🔼|🔽|⏬)${VARIANT}$`, 'u'),
@@ -199,15 +178,12 @@ const AT_END = {
   id: new RegExp(`🆔${VARIANT} *([a-zA-Z0-9-_]+)$`, 'u'),
   dependsOn: new RegExp(`⛔${VARIANT} *([a-zA-Z0-9-_]+(?: *, *[a-zA-Z0-9-_]+)*) *$`, 'u'),
 }
-
 const FIELD_KEY = { '[': /\[([^[\]():]+?)::/uy, '(': /\(([^[\]():]+?)::/uy }
-
 interface Found {
   index: number
   0: string
   [group: number]: string | undefined
 }
-
 function fieldAt(text: string, at: number, last: number): Found | null {
   if (escaped(text, at)) return null
   const open = text[at] === '[' ? '[' : '('
@@ -215,28 +191,22 @@ function fieldAt(text: string, at: number, last: number): Found | null {
   key.lastIndex = at
   const found = key.exec(text)
   if (!found || key.lastIndex > last) return null
-
   const end = text.indexOf(open === '[' ? ']' : ')', key.lastIndex)
   let from = key.lastIndex
   let to = end
   while (from < to && isBlank(text[from])) from++
   while (to > from && isBlank(text[to - 1])) to--
-
   return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
 }
-
 function escaped(text: string, at: number): boolean {
   let before = at
   while (before > 0 && text[before - 1] === '\\') before--
   return (at - before) % 2 === 1
 }
-
 const isBlank = (character: string | undefined): boolean => character === ' ' || character === '\t'
-
 function fieldAtEnd(head: string): Found | null {
   const shut = head.at(-1)
   if (shut !== ']' && shut !== ')') return null
-
   const end = head.length - 1
   const open = shut === ']' ? '[' : '('
   let at = head.indexOf(open, head.lastIndexOf(shut, end - 1) + 1)
@@ -246,23 +216,18 @@ function fieldAtEnd(head: string): Found | null {
     const found = fieldAt(head, at, end)
     if (found) return found
   }
-
   return null
 }
-
 const OPENS = /[[(]/g
 const HASH = /#/g
 const MOST_FIELDS = 40
-
 const keyOf = (written: string): string =>
   written
     .trim()
     .toLowerCase()
     .replace(/[\s_-]+/g, '')
-
 export const fieldOfKey = (key: string): FieldName | undefined => FIELD_BY_KEY.get(keyOf(key))
 const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_][\w+-]*(?:\/[\w+-]+)*))?$/
-
 export function readTime(value: string): { time: string; zone?: string } | null {
   const found = TIME.exec(value.trim())
   if (!found) return null
@@ -272,27 +237,22 @@ export function readTime(value: string): { time: string; zone?: string } | null 
   const time = `${String(hours).padStart(2, '0')}:${found[2] ?? '00'}`
   return found[3] ? { time, zone: found[3] } : { time }
 }
-
 export function readDuration(value: string): number | null {
   const written = value.trim().toLowerCase()
   if (/^\d+$/.test(written)) return Number(written)
-
   const found = /^(?:(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hours?|std)\.?)?\s*(?:(\d+)\s*(?:m|min|mins|minutes?)\.?)?$/u.exec(
     written,
   )
   if (!found || (found[1] === undefined && found[2] === undefined)) return null
-
   const hours = Number((found[1] ?? '0').replace(',', '.'))
   return Math.round(hours * 60) + Number(found[2] ?? '0')
 }
-
 export function writeDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
   if (hours === 0) return `${rest}m`
   return rest === 0 ? `${hours}h` : `${hours}h${rest}m`
 }
-
 function readBefore(value: string): number | null {
   const found = /^(?:(\d+)d)?\s*(?:(\d+)h)?\s*(?:(\d+)m)?$/.exec(value.trim().toLowerCase())
   if (!found || (found[1] === undefined && found[2] === undefined && found[3] === undefined)) {
@@ -300,12 +260,10 @@ function readBefore(value: string): number | null {
   }
   return Number(found[1] ?? 0) * 1440 + Number(found[2] ?? 0) * 60 + Number(found[3] ?? 0)
 }
-
 function writeBefore(minutes: number): string {
   if (minutes > 0 && minutes % 1440 === 0) return `${minutes / 1440}d`
   return writeDuration(minutes)
 }
-
 export function readRemind(value: string): Remind[] | null {
   const out: Remind[] = []
   for (const part of value.split(',')) {
@@ -328,7 +286,6 @@ export function readRemind(value: string): Remind[] | null {
   }
   return out
 }
-
 export const writeRemind = (remind: readonly Remind[]): string =>
   remind
     .map((one) => {
@@ -337,7 +294,6 @@ export const writeRemind = (remind: readonly Remind[]): string =>
       return one.time
     })
     .join(', ')
-
 export function isDate(value: string): boolean {
   const found = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!found) return false
@@ -345,7 +301,6 @@ export function isDate(value: string): boolean {
   const date = new Date(Date.UTC(year, month - 1, day))
   return date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
-
 const emptyFields = (status: string): TaskFields => ({
   text: '',
   status,
@@ -357,7 +312,6 @@ const emptyFields = (status: string): TaskFields => ({
   dependsOn: [],
   fields: Object.create(null) as Record<string, string>,
 })
-
 function setField(fields: TaskFields, field: FieldName, value: string): boolean {
   switch (field) {
     case 'due':
@@ -415,7 +369,6 @@ function setField(fields: TaskFields, field: FieldName, value: string): boolean 
     }
   }
 }
-
 const DATE_FIELDS: ReadonlySet<FieldToken['field']> = new Set([
   'due',
   'scheduled',
@@ -425,10 +378,8 @@ const DATE_FIELDS: ReadonlySet<FieldToken['field']> = new Set([
   'cancelledOn',
   'deadline',
 ])
-
 const heldLength = (field: FieldToken['field'], value: string): number =>
   DATE_FIELDS.has(field) ? Math.min(10, value.length) : value.length
-
 function trailingTokens(
   line: string,
   from: number,
@@ -437,7 +388,6 @@ function trailingTokens(
 ): { tokens: FieldToken[]; end: number } {
   const tokens: FieldToken[] = []
   let end = line.trimEnd().length
-
   const take = (found: Found, field: FieldToken['field'], form: FieldForm, value: number, key?: string) => {
     const start = from + found.index
     const valueText = found[value] ?? ''
@@ -458,23 +408,19 @@ function trailingTokens(
     tokens.unshift(token)
     end = line.slice(0, start).trimEnd().length
   }
-
   const read = (field: FieldName, value: string) => {
     if (seen.has(field)) return true
     seen.add(field)
     return setField(fields, field, value)
   }
-
   const block = AT_END.block.exec(line.slice(from, end))
   if (block) {
     take(block, 'block', 'caret', 1)
     read('block', block[1] ?? '')
   }
-
   for (let runs = 0; runs < MOST_FIELDS && end > from; runs++) {
     const head = line.slice(from, end)
     let found: Found | null
-
     if ((found = AT_END.priority.exec(head))) {
       read('priority', found[1] ?? '')
       take(found, 'priority', 'emoji', 1)
@@ -507,16 +453,13 @@ function trailingTokens(
       break
     }
   }
-
   return { tokens, end: Math.max(end, from) }
 }
-
 function inlineTokens(line: string, from: number, to: number, fields: TaskFields, seen: Set<FieldName>): FieldToken[] {
   const tokens: FieldToken[] = []
   const words = line.slice(from, to)
   const last = { '[': words.lastIndexOf(']'), '(': words.lastIndexOf(')') }
   const code = codeSpans(words)
-
   for (OPENS.lastIndex = 0; OPENS.exec(words);) {
     const at = OPENS.lastIndex - 1
     const inside = code.find(([from, to]) => at >= from && at < to)
@@ -527,7 +470,6 @@ function inlineTokens(line: string, from: number, to: number, fields: TaskFields
     const found = fieldAt(words, at, words[at] === '[' ? last['['] : last['('])
     if (!found) continue
     OPENS.lastIndex = at + found[0].length
-
     const bracket = found[0].startsWith('[')
     const key = found[1] ?? ''
     const value = found[2] ?? ''
@@ -551,7 +493,6 @@ function inlineTokens(line: string, from: number, to: number, fields: TaskFields
   }
   return tokens
 }
-
 export function tagsIn(text: string): string[] {
   const out: string[] = []
   const code = codeSpans(text)
@@ -561,11 +502,9 @@ export function tagsIn(text: string): string[] {
   }
   return out
 }
-
 export function parseTask(line: string): ParsedTask | null {
   const item = taskAt(line)
   if (!item) return null
-
   const fields = emptyFields(item.mark)
   const seen = new Set<FieldName>()
   const { tokens: trailing, end } = trailingTokens(line, item.marker, fields, seen)
@@ -577,12 +516,10 @@ export function parseTask(line: string): ParsedTask | null {
     text = before === '' || after === '' ? before + after : `${before} ${after}`
   }
   fields.text = text.trim()
-
   const trailingTags = trailing.filter((token) => token.field === 'tag')
   fields.tags = tagsIn(
     [line.slice(item.marker, end), ...trailingTags.map((token) => line.slice(token.from, token.to))].join(' '),
   )
-
   return {
     fields,
     box: item.box,
@@ -591,10 +528,8 @@ export function parseTask(line: string): ParsedTask | null {
     tokens: [...inline, ...trailing],
   }
 }
-
 export const readTask = (line: string): TaskFields | null => parseTask(line)?.fields ?? null
 const FIELD_EMOJI = /(🔺|⏫|🔼|🔽|⏬|✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕|🔁|🏁|🆔|⛔)\uFE0F?/gu
-
 export function taskWords(words: string): string {
   let before = ''
   return codeAndWords(words)
@@ -605,7 +540,6 @@ export function taskWords(words: string): string {
     })
     .join('')
 }
-
 function taskWordsAfter(words: string, before: string): string {
   let out = ''
   for (let at = 0; at < words.length; at++) {
@@ -618,7 +552,6 @@ function taskWordsAfter(words: string, before: string): string {
   }
   return out.replace(FIELD_EMOJI, '$&\u2060')
 }
-
 function endsKey(words: string, colon: number): boolean {
   for (let back = colon - 1; back >= 0; back--) {
     const char = words.charAt(back)
@@ -627,5 +560,4 @@ function endsKey(words: string, colon: number): boolean {
   }
   return false
 }
-
 export const plainTaskWords = (words: string): string => taskWords(plainWords(words))

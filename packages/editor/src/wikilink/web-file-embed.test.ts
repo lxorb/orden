@@ -9,7 +9,6 @@ import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { type NoteIndex, noteIndex } from './notes'
 
 const shortcut = (path: string) => ({ path, name: path, headings: [], blocks: [], aliases: [] })
-
 const index: NoteIndex = {
   notes: [
     { path: 'Today.md', name: 'Today', headings: [], blocks: [], aliases: [] },
@@ -20,7 +19,6 @@ const index: NoteIndex = {
   path: 'Today.md',
   read: () => Promise.resolve('[InternetShortcut]\nURL=https://example.com/soup\n'),
 }
-
 function drawnAsNotes(doc: string): string[] {
   const full = `${doc}\n\nx`
   const state = parsed(
@@ -36,28 +34,22 @@ function drawnAsNotes(doc: string): string[] {
   })
   return out
 }
-
 describe('a file that opens in its own tab, embedded in a note, in Live Preview', () => {
   test('a .url is drawn as a link, not as its raw shortcut lines', () => {
     expect(drawnAsNotes('![[Recipe.url]]')).toEqual([])
   })
-
   test('a .webloc is drawn as a link, not as the text of its property list', () => {
     expect(drawnAsNotes('![[Soup.webloc]]')).toEqual([])
   })
-
   test('a page note is drawn as a link, not as a note that cannot be found', () => {
     expect(drawnAsNotes('![[Sketch.pages]]')).toEqual([])
   })
-
   test('a web link named without its extension is drawn as a link too', () => {
     expect(drawnAsNotes('![[Recipe]]')).toEqual([])
   })
-
   test('a note is still drawn as the note', () => {
     expect(drawnAsNotes('![[Plan]]')).toEqual(['![[Plan]]'])
   })
-
   test('the reading view draws them as links too', () => {
     const html = renderMarkdown('![[Recipe.url]]\n', {
       resolveEmbed: () => '[InternetShortcut]\nURL=https://example.com/soup\n',

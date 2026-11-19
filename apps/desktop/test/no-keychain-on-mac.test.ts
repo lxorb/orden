@@ -5,12 +5,10 @@ import { describe, expect, test } from 'vitest'
 import { walk } from './files'
 
 const TAURI = fileURLToPath(new URL('../src-tauri', import.meta.url))
-
 const sources = () => [
   ...walk(join(TAURI, 'src'), (path) => path.endsWith('.rs')),
   ...walk(join(TAURI, 'crates'), (path) => path.endsWith('.rs')),
 ]
-
 function tables(manifest: string): { header: string; body: string }[] {
   const out: { header: string; body: string }[] = []
   for (const line of manifest.split('\n')) {
@@ -20,14 +18,12 @@ function tables(manifest: string): { header: string; body: string }[] {
   }
   return out
 }
-
 function readOnMac(header: string): boolean {
   if (header === '[dependencies]' || header === '[build-dependencies]') return true
   const target = /^\[target\.'cfg\((.*)\)'\.(?:build-)?dependencies\]$/.exec(header)?.[1]
   if (target === undefined) return false
   return target.includes('target_os = "macos"') || /not\(.*target_os = "ios"/.test(target)
 }
-
 describe('a Mac build and the keychain', () => {
   test('no table a Mac build reads asks for the keyring crate', () => {
     const manifest = ['Cargo.toml', 'crates/secrets/Cargo.toml']
@@ -37,7 +33,6 @@ describe('a Mac build and the keychain', () => {
     expect(keyring.length).toBeGreaterThan(0)
     for (const one of keyring) expect(readOnMac(one.header), one.header).toBe(false)
   })
-
   test('the crate reaches the keyring in one place, which a Mac build leaves out', () => {
     for (const path of sources()) {
       const text = readFileSync(path, 'utf8')
@@ -55,7 +50,6 @@ describe('a Mac build and the keychain', () => {
       expect(text, name).not.toMatch(/\bkeyring::/)
     }
   })
-
   test('nothing calls the keychain itself', () => {
     for (const path of sources()) {
       const text = readFileSync(path, 'utf8')
@@ -65,14 +59,12 @@ describe('a Mac build and the keychain', () => {
       )
     }
   })
-
   test('the web engine keeps its cookie key out of a Mac’s keychain', () => {
     const engine = readFileSync(join(TAURI, 'src/engine.rs'), 'utf8')
     expect(engine).toMatch(
       /if cfg!\(target_os = "macos"\) \{\n\s*engine = engine\.secret_storage\(SecretStorage::Mock\);/,
     )
   })
-
   test('a Codex home of Orden’s keeps its login in a file on a Mac', () => {
     const home = readFileSync(join(TAURI, 'crates/ai/src/ai_cli/home.rs'), 'utf8')
     expect(home).toMatch(

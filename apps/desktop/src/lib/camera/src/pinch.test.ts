@@ -6,7 +6,6 @@ function pinchSteps(span: number, steps = 12): { deltaY: number; deltaMode: numb
   const each = Math.log(span) / steps
   return Array.from({ length: steps }, () => ({ deltaY: -100 * each, deltaMode: 0 }))
 }
-
 describe('Ctrl and the wheel', () => {
   test('a pinch to twice the span is twice the size, and back to half is half', () => {
     const out = pinchSteps(2).reduce((scale, one) => scale * ctrlWheelZoom(one), 1)
@@ -14,7 +13,6 @@ describe('Ctrl and the wheel', () => {
     const back = pinchSteps(0.5).reduce((scale, one) => scale * ctrlWheelZoom(one), 1)
     expect(back).toBeCloseTo(0.5, 6)
   })
-
   test('a wheel’s notch is a notch, at a display’s own scale too', () => {
     expect(ctrlWheelZoom({ deltaY: -100, deltaMode: 0 })).toBeCloseTo(NOTCH, 10)
     expect(ctrlWheelZoom({ deltaY: 100, deltaMode: 0 })).toBeCloseTo(1 / NOTCH, 10)
@@ -23,17 +21,14 @@ describe('Ctrl and the wheel', () => {
     expect(ctrlWheelZoom({ deltaY: -3.5, deltaMode: 1 })).toBeCloseTo(ctrlWheelZoom({ deltaY: -140, deltaMode: 0 }), 10)
   })
 })
-
 describe('a Mac’s pinch', () => {
   function gesture(type: string, scale: number, x = 40, y = 60): Event {
     return Object.assign(new Event(type, { cancelable: true }), { scale, clientX: x, clientY: y })
   }
-
   test('zooms by what the fingers moved since the last change, about where they are', () => {
     const element = document.createElement('div')
     const zooms: [number, number, number][] = []
     const stop = heldGestures(element, (at, by) => zooms.push([at.clientX, at.clientY, by]))
-
     const began = gesture('gesturestart', 1)
     element.dispatchEvent(began)
     expect(began.defaultPrevented).toBe(true)
@@ -41,7 +36,6 @@ describe('a Mac’s pinch', () => {
     for (const scale of [1.25, 1.5, 3]) element.dispatchEvent(gesture('gesturechange', scale))
     element.dispatchEvent(gesture('gestureend', 3))
     expect(pinching()).toBe(false)
-
     expect(zooms.map(([x, y]) => [x, y])).toEqual([
       [40, 60],
       [40, 60],

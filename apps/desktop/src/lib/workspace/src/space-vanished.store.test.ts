@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: false,
@@ -18,17 +17,13 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const shown = (ws: { panes: { all: { id: string }[] }; tabsIn(pane: string): { path: string | null }[] }) =>
   ws.panes.all.flatMap((one) => ws.tabsIn(one.id).map((tab) => tab.path))
-
 const WORK = { id: 'work', name: 'Work', root: '/spaces/Work' }
 const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }
-
 describe('the shown space going away in another window', () => {
   test('shows the space that takes its place with that space’s own tabs', async () => {
     const one = disk.current!

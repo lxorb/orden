@@ -6,7 +6,6 @@ export interface StretchParams {
   t: number
   p: number
 }
-
 export function nativeStretch(
   secret: string,
   salt: Uint8Array,

@@ -5,7 +5,6 @@ import urllib.request
 from pathlib import Path
 
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
-
 def endpoint():
     for _ in range(120):
         try:
@@ -16,9 +15,7 @@ def endpoint():
             pass
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
-
 PORT, SECRET = endpoint()
-
 def said(code, timeout=10, tries=6):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
     asked = urllib.request.Request(
@@ -36,7 +33,6 @@ def said(code, timeout=10, tries=6):
         except (TimeoutError, OSError):
             pass
     return None
-
 def run(code, timeout=10):
     answer = said(code, timeout)
     return answer.get("value") if answer and answer.get("ok") else None

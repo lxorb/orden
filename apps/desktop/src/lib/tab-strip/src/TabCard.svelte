@@ -7,7 +7,6 @@
 
   const { hovering }: { hovering: { readonly card: Shown | null; readonly facts: readonly (readonly string[])[] } } =
     $props()
-
   const card = $derived(hovering.card)
 </script>
 
@@ -54,18 +53,15 @@
     width: 16rem;
     overflow: hidden;
   }
-
   .card.sliding {
     transition: translate var(--dur-base) var(--ease-out);
   }
-
   .words {
     display: flex;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
   }
-
   .name {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -78,7 +74,6 @@
     font-weight: var(--weight-strong);
     unicode-bidi: isolate;
   }
-
   .where {
     display: flex;
     align-items: center;
@@ -87,7 +82,6 @@
     color: var(--muted);
     white-space: nowrap;
   }
-
   .fact {
     color: var(--muted);
     font-family: var(--font-mono);
@@ -96,14 +90,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .site {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     unicode-bidi: isolate;
   }
-
   .from {
     display: flex;
     flex: none;
@@ -112,12 +104,10 @@
     min-width: 0;
     max-width: 50%;
   }
-
   .mark {
     --row-height-sm: var(--icon-md);
     font-size: var(--text-xs);
   }
-
   .still {
     display: block;
     width: calc(100% + 2 * var(--space-3));
@@ -127,7 +117,6 @@
     object-position: top;
     border-top: 1px solid var(--line-strong);
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

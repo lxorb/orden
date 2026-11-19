@@ -2,7 +2,6 @@ import { ACCENTS } from '../../theme/src/api'
 import { readIcon } from '../../ui-kit/src/api'
 
 const DRAWING = /^chrome:\/\/browser\/skin\/zen-icons\/(?:[\w-]+\/)*([\w-]+)\.svg$/i
-
 const LUCIDE: Record<string, string> = {
   airplane: 'plane',
   basket: 'shopping-basket',
@@ -45,7 +44,6 @@ const LUCIDE: Record<string, string> = {
   water: 'droplet',
   weight: 'dumbbell',
 }
-
 const SAME = new Set([
   'bed',
   'bell',
@@ -93,28 +91,21 @@ const SAME = new Set([
   'video',
   'wallet',
 ])
-
 export function zenIcon(value: string | null): string | null {
   if (!value) return null
-
   const drawn = DRAWING.exec(value.trim())
   if (drawn) {
     const name = (drawn[1] ?? '').toLowerCase()
     return LUCIDE[name] ?? (SAME.has(name) ? name : null)
   }
-
   const read = readIcon(value)
   return read?.kind === 'emoji' ? read.text : null
 }
-
 export const ZEN_DRAWINGS: readonly string[] = [...Object.values(LUCIDE), ...SAME]
-
 export function zenTint(colour: readonly [number, number, number] | null): string | null {
   if (!colour) return null
-
   const [hue, saturation] = hsl(colour)
   if (saturation < 0.15) return 'slate'
-
   let nearest: string | null = null
   let distance = Infinity
   for (const accent of ACCENTS) {
@@ -128,19 +119,16 @@ export function zenTint(colour: readonly [number, number, number] | null): strin
   }
   return nearest
 }
-
 function rgbOf(hex: string): [number, number, number] {
   const said = Number.parseInt(hex.slice(1), 16)
   return [(said >> 16) & 255, (said >> 8) & 255, said & 255]
 }
-
 function hsl([r, g, b]: readonly [number, number, number]): [number, number] {
   const [red, green, blue] = [r / 255, g / 255, b / 255]
   const most = Math.max(red, green, blue)
   const least = Math.min(red, green, blue)
   const spread = most - least
   if (spread === 0) return [0, 0]
-
   const light = (most + least) / 2
   const saturation = spread / (1 - Math.abs(2 * light - 1))
   let hue =

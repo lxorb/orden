@@ -1,5 +1,4 @@
 import sys
-
 import harness
 from harness import Drive
 
@@ -8,7 +7,6 @@ say = DRIVE.say
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
@@ -17,7 +15,6 @@ PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -30,7 +27,6 @@ async () => {
   return ws.files.length
 }
 """
-
 MEASURED = """
 () => {
   const box = (what) => {
@@ -51,14 +47,12 @@ MEASURED = """
   }
 }
 """
-
 SIDES = """
 () => {
   const ws = window.ordenApp.workspace
   return { right: [...ws.right], left: ws.panel, rightOpen: ws.rightPanel }
 }
 """
-
 STRIPS = """
 () => [...document.querySelectorAll('.panels')].map((one) => ({
   side: one.classList.contains('right') ? 'right' : 'left',
@@ -68,7 +62,6 @@ STRIPS = """
   ),
 }))
 """
-
 WHERE = """
 () => {
   const at = document.activeElement
@@ -80,9 +73,7 @@ WHERE = """
   return `${region} | ${at.tagName.toLowerCase()} | ${JSON.stringify(named)}`
 }
 """
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def started(browser, name: str, width: int, height: int, agent: str, finger: bool):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -98,43 +89,34 @@ def started(browser, name: str, width: int, height: int, agent: str, finger: boo
     DRIVE.open(page)
     say(f"[{name}] the space holds {page.evaluate(SEED)} files")
     page.wait_for_timeout(700)
-
     return context, page
-
 def onDesktop(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     context, page = started(browser, "desktop", 1440, 900, DESKTOP_AGENT, False)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(SHOTS / f"desktop-{tag}.png"))
         say(f"    shot desktop-{tag}.png")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
-
     before = page.evaluate(MEASURED)
     say(f"as it arrives: {before}")
     say(f"the strips: {page.evaluate(STRIPS)}")
     shot("nothing-moved")
-
     say("--- a panel moved over ---")
     page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
     page.evaluate("() => window.ordenApp.workspace.movePanel('search', 'right')")
     page.wait_for_timeout(700)
-
     say(f"the sides say: {page.evaluate(SIDES)}")
     say(f"the strips: {page.evaluate(STRIPS)}")
     moved = page.evaluate(MEASURED)
     say(f"with a panel on the right: right columns {moved['right']}, toggles {moved['toggles']}")
     say(f"the note is now {moved['editor']} (it was {before['editor']})")
     shot("search-on-the-right")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
     say(f"both sides open: {page.evaluate(SIDES)}")
     shot("both-sides")
-
     say("--- F6 reaches it ---")
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
@@ -145,7 +127,6 @@ def onDesktop(browser) -> None:
         walked.append(page.evaluate("() => document.activeElement?.closest('[data-region]')?.dataset.region ?? '-'"))
     say(f"F6 went round: {' -> '.join(walked)}")
     say(f"and where it stopped: {page.evaluate(WHERE)}")
-
     say("--- the window remembers which side ---")
     page.evaluate("() => window.ordenApp.workspace.flush?.()")
     page.wait_for_timeout(400)
@@ -155,33 +136,26 @@ def onDesktop(browser) -> None:
     page.wait_for_timeout(1200)
     say(f"after a restart: {page.evaluate(SIDES)}")
     shot("after-a-restart")
-
     say("--- and moved back ---")
     page.evaluate("() => window.ordenApp.workspace.movePanel('search', 'left')")
     page.wait_for_timeout(700)
     after = page.evaluate(MEASURED)
     say(f"the sides say: {page.evaluate(SIDES)}")
-
     for what in ["left", "foot", "tabs", "editor"]:
         same = before[what] == after[what]
         say(f"{what}: {after[what]} {'same as before' if same else f'MOVED (was {before[what]})'}")
     say(f"right columns now {after['right']}, toggles {after['toggles']}")
     shot("moved-back")
-
     context.close()
-
 def onPhone(browser) -> None:
     context, page = started(browser, "phone", 390, 844, PHONE_AGENT, True)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(SHOTS / f"phone-{tag}.png"))
         say(f"    shot phone-{tag}.png")
-
     say("--- a drawer from the right ---")
     page.evaluate("() => window.ordenApp.workspace.movePanel('outline', 'right')")
     page.wait_for_timeout(500)
     say(f"the sides say: {page.evaluate(SIDES)}")
-
     more = page.locator("[data-phone-more]").first
     say(f"the note's More button is there: {more.count() == 1}")
     more.tap()
@@ -190,39 +164,32 @@ def onPhone(browser) -> None:
     say(f"after pressing it: {page.evaluate(SIDES)}")
     say(f"and the drawer is over the note: {page.evaluate(DRAWER)}")
     shot("drawer-open")
-
     page.mouse.click(40, 400)
     page.wait_for_timeout(700)
     say(f"after the scrim: {page.evaluate(SIDES)}")
     shot("drawer-shut")
-
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar()")
     page.wait_for_timeout(700)
     say(f"the left drawer still opens: {page.evaluate(SIDES)}")
     shot("left-drawer")
-
     page.evaluate("() => window.ordenApp.workspace.closePanel()")
     page.wait_for_timeout(700)
-
     say("--- and a thumb drags it out ---")
     held = page.evaluate(DRAG, {"from": 380, "to": 200, "y": 420, "steps": 9, "hold": True})
     for one in held[::3]:
         say(f"    at x={one['x']}: right edge {one['right']}, scrim {one['scrim']:.2f}")
     say(f"the sides mid-drag: {page.evaluate(SIDES)}")
     shot("drag-half-way")
-
     page.evaluate(DRAG, {"from": 200, "to": 60, "y": 420, "steps": 6, "hold": False})
     page.wait_for_timeout(700)
     say(f"after the drag: {page.evaluate(SIDES)}")
     say(f"and where it landed: {page.evaluate(DRAWER)}")
     shot("drag-open")
-
     back = page.evaluate(DRAG, {"from": 120, "to": 380, "y": 420, "steps": 9, "hold": False})
     say(f"pushing it back: {[one['right'] for one in back]}")
     page.wait_for_timeout(700)
     say(f"after pushing it back: {page.evaluate(SIDES)}")
     shot("drag-shut")
-
     say("--- the left drawer's drag is what it was ---")
     page.evaluate("() => window.ordenApp.workspace.closePanel()")
     page.evaluate("() => window.ordenApp.workspace.closePanel('right')")
@@ -235,9 +202,7 @@ def onPhone(browser) -> None:
     page.evaluate(DRAG, {"from": 300, "to": 380, "y": 420, "steps": 3, "hold": False})
     page.wait_for_timeout(700)
     say(f"after the left drag: {page.evaluate(SIDES)}")
-
     context.close()
-
 DRAG = """
 async (plan) => {
   const target = document.elementFromPoint(plan.from, plan.y) ?? document.body
@@ -280,7 +245,6 @@ async (plan) => {
   return frames
 }
 """
-
 DRAWER = """
 () => {
   const one = document.querySelector('.panels.right')
@@ -297,12 +261,9 @@ DRAWER = """
   }
 }
 """
-
 def main() -> int:
     with DRIVE.session() as browser:
         onDesktop(browser)
         onPhone(browser)
-
     return DRIVE.verdict(f"shots in {SHOTS}")
-
 raise SystemExit(main())

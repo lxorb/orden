@@ -7,7 +7,6 @@ const world = vi.hoisted(() => ({
   invitation: null as { note: string | null } | null,
   active: null as { note: { shared?: string } } | null,
 }))
-
 vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     get user() {
@@ -21,7 +20,6 @@ vi.mock('../../accounts/src/account.svelte', () => ({
     },
   },
 }))
-
 vi.mock('../../sharing/src/api', () => ({
   joining: {
     get invitation() {
@@ -29,7 +27,6 @@ vi.mock('../../sharing/src/api', () => ({
     },
   },
 }))
-
 vi.mock('./workspace.svelte', () => ({
   workspace: {
     get active() {
@@ -38,9 +35,7 @@ vi.mock('./workspace.svelte', () => ({
     panes: { focusedId: 'pane-1' },
   },
 }))
-
 const { alone } = await import('./alone.svelte')
-
 beforeEach(() => {
   world.user = null
   world.guest = null
@@ -48,10 +43,8 @@ beforeEach(() => {
   world.invitation = null
   world.active = null
 })
-
 const guest = { id: 'g1', name: 'Windows wren' }
 const sharedCanvas = { note: { shared: 'note-1' } }
-
 describe('a guest a link gave one file to', () => {
   test('has the window to itself while the file is in front', () => {
     world.guest = guest
@@ -59,12 +52,10 @@ describe('a guest a link gave one file to', () => {
     expect(alone.on).toBe(true)
     expect(alone.pane).toBe('pane-1')
   })
-
   test('and while the link to it is still being walked through', () => {
     world.invitation = { note: 'board.canvas' }
     expect(alone.on).toBe(true)
   })
-
   test('gets the app back in front of anything that is not that file', () => {
     world.guest = guest
     world.active = { note: {} }
@@ -72,7 +63,6 @@ describe('a guest a link gave one file to', () => {
     expect(alone.pane).toBeNull()
   })
 })
-
 describe('everybody else keeps the app round the file', () => {
   test('an account, whatever it opened', () => {
     world.user = { id: 'u1' }
@@ -80,14 +70,12 @@ describe('everybody else keeps the app round the file', () => {
     world.invitation = { note: 'board.canvas' }
     expect(alone.on).toBe(false)
   })
-
   test('a guest a link let into a whole space', () => {
     world.guest = guest
     world.spaces = [{ id: 'space-1' }]
     world.active = sharedCanvas
     expect(alone.on).toBe(false)
   })
-
   test('a link to a space, on its way', () => {
     world.invitation = { note: null }
     expect(alone.on).toBe(false)

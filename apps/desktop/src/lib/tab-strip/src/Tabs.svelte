@@ -83,23 +83,19 @@
   import { SvelteSet } from 'svelte/reactivity'
 
   const { paneId, caption = false }: { paneId: string; caption?: boolean } = $props()
-
   const pane = $derived(workspace.panes.at(paneId))
   const tabs = $derived(workspace.tabsIn(paneId))
   const faceless = new SvelteSet<string>()
   const focused = $derived(workspace.panes.focusedId === paneId)
   const alone = $derived(workspace.panes.count < 2)
   const twinned = $derived(workspace.twins(paneId).length > 0)
-
   const walking = $derived(workspace.showing(paneId))
   const walked = $derived(tabs.some((one) => one.trail.length > 1))
-
   function showTrail(event: MouseEvent, tab: Tab) {
     if (!tab.canGoBack) return
     event.preventDefault()
     void here(tabMenus()).then(({ trailMenu }) => menu.show(event, trailMenu(tab), { title: 'Back' }))
   }
-
   function showMenu(event: MouseEvent, tab: Tab) {
     event.preventDefault()
     event.stopPropagation()
@@ -107,39 +103,29 @@
       menu.show(event, tabMenu(tab, paneId), { title: tabMenuTitle(tab, paneId) }),
     )
   }
-
   function showNoteMenu(event: MouseEvent) {
     void here(import('./note-menu').then(({ noteMenu }) => noteMenu(paneId))).then((rows) => menu.show(event, rows))
   }
-
   let onMark = false
   function resumes(id: string) {
     if (onMark && agentMarks.on[id]?.stopped) agentMarks.act?.(id, 'resume')
     onMark = false
   }
-
   function showStripMenu(event: MouseEvent) {
     if (document.elementFromPoint(event.clientX, event.clientY) !== strip) return
     void here(stripMenus()).then(({ stripMenu }) => menu.show(event, stripMenu(paneId)))
   }
-
   const LEAD = 8
   const TOP = 5
-
   let strip = $state<HTMLElement>()
   let stripWidth = $state(0)
   let live = $state(false)
   let resizing = $state(false)
-
   const flush = $derived(flushStart(paneId))
   const lead = $derived(flush ? 0 : LEAD)
-
   const plus = $derived(!viewport.touch && plusFits(stripWidth, lead))
-
   const room = $derived(stripWidth > 0 ? Math.max(0, stripWidth - lead - (plus ? PLUS : 0)) : null)
-
   const here = whileHere()
-
   const drag = new TabDrag()
   let closing = $state<ClosingWidths | null>(null)
   onMount(() => {
@@ -148,7 +134,6 @@
   let hovered = $state<string | null>(null)
   let settling = $state<string | null>(null)
   let grabY = 0
-
   const activeId = $derived(pane?.activeTabId ?? null)
   const icons = $derived(iconTabs.on && !viewport.touch)
   let measurer = $state<HTMLSpanElement | undefined>()
@@ -156,7 +141,6 @@
   let names: Record<string, number> = {}
   let namesFont = ''
   let pen: CanvasRenderingContext2D | null | undefined
-
   function measured(name: string): number {
     if (!measurer) return 0
     const type = getComputedStyle(measurer)
@@ -175,7 +159,6 @@
     }
     return width
   }
-
   $effect(() => {
     const next: Record<string, number> = {}
     if (fitTabs.on && measurer) {
@@ -200,7 +183,6 @@
     const keys = Object.keys(next)
     if (keys.length !== Object.keys(now).length || keys.some((id) => now[id] !== next[id])) fits = next
   })
-
   const sized = $derived(
     tabs.map((tab) => ({
       id: tab.id,
@@ -209,9 +191,7 @@
       fit: fits[tab.id],
     })),
   )
-
   const opened = $derived(icons && !drag.on && hovered !== null && hovered !== activeId ? hovered : null)
-
   let settledOpen = $state<string | null>(null)
   $effect(() => {
     const now = opened
@@ -222,7 +202,6 @@
     const timer = setTimeout(() => (settledOpen = now), dur(OPENING))
     return () => clearTimeout(timer)
   })
-
   const lettered = $derived.by(() => {
     if (!icons) return new Set<string>()
     const looks = tabs.map((tab) => {
@@ -233,25 +212,20 @@
     })
     return twins(looks)
   })
-
   const widths = $derived.by(() => {
     const shared = (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room)
     const at = opened === null ? -1 : sized.findIndex((one) => one.id === opened)
     return at < 0 ? shared : widened(shared, at, room, sized[at]?.fit)
   })
   const base = $derived(placed(widths))
-
   const picking = $derived(picks.loaded)
   const picked = $derived(new Set(picking?.chosen.of(paneId).map((one) => one.id)))
   let plainOnPick = false
   let block = $state<Block | null>(null)
   const lifted = $derived(drag.tabId === null ? [] : (block?.ids ?? [drag.tabId]))
-
   const landing = $derived(workspace.panes.landing)
   const incoming = $derived(landing?.kind === 'strip' && landing.paneId === paneId && !drag.on ? landing.at : null)
-
   const behind = (one: (typeof sized)[number]) => ({ ...one, active: false, icon: icons })
-
   const arriving = $derived.by(() => {
     if (incoming === null || !fitTabs.on) return undefined
     const carriedTab = workspace.panes.dragging?.tabId
@@ -271,16 +245,13 @@
     const width = measured(name)
     return width > 0 ? fitted(width) : undefined
   })
-
   const layout = $derived.by(() => {
     const boxes: Record<string, Bounds> = {}
     const carried = drag.tabId
-
     if (carried) {
       if (block) return block.layout(room, drag)
       const from = drag.from
       const own = { x: drag.x, width: widths[from] ?? 0 }
-
       if (drag.out) {
         const rest = sized.filter((_, at) => at !== from)
         const bounds = placed(widthsFor(rest, room))
@@ -288,7 +259,6 @@
         boxes[carried] = own
         return { boxes, end: endOf(bounds) }
       }
-
       const order = moved(sized, from, drag.slot)
       const bounds = placed(moved(widths, from, drag.slot))
       for (const [at, one] of order.entries()) {
@@ -296,7 +266,6 @@
       }
       return { boxes, end: endOf(bounds) }
     }
-
     if (incoming !== null) {
       const withGap = [
         ...sized.slice(0, incoming).map(behind),
@@ -309,11 +278,9 @@
       }
       return { boxes, end: endOf(bounds) }
     }
-
     for (const [at, one] of sized.entries()) boxes[one.id] = base[at] ?? { x: 0, width: 0 }
     return { boxes, end: endOf(base) }
   })
-
   const span = $derived(lead + layout.end + (plus ? PLUS : 0))
   let shrinking = $state(false)
   let spanWas = 0
@@ -321,7 +288,6 @@
     shrinking = span < spanWas
     spanWas = span
   })
-
   const lines = $derived.by(() => {
     const ids =
       drag.on && !drag.out
@@ -329,48 +295,38 @@
         : sized.filter((one) => !(drag.out && lifted.includes(one.id))).map((one) => one.id)
     if (incoming !== null) ids.splice(incoming, 0, '')
     const filled = new Set([...lifted, ...picked, '', activeId ?? '', hovered ?? ''])
-
     return separated(ids, filled)
   })
-
   const quiet = $derived(!focused && !alone)
   const bare = $derived(!sized.some((one) => one.active && !(drag.out && lifted.includes(one.id))))
-
   function alongOf(clientX: number): number {
     if (!strip) return 0
-
     const box = strip.getBoundingClientRect()
     return clientX - box.left - lead + strip.scrollLeft
   }
-
   $effect(() =>
     register(paneId, {
       slotAt: (clientX) => slotAt(base, alongOf(clientX)),
       top: () => (strip?.getBoundingClientRect().top ?? 0) + TOP,
     }),
   )
-
   $effect(() => {
     closing?.still(sized.map((one) => one.id))
   })
-
   $effect.pre(() => {
     if (stripWidth <= 0) return
     if (!untrack(() => live)) {
       requestAnimationFrame(() => (live = true))
       return
     }
-
     resizing = true
     const frame = requestAnimationFrame(() => (resizing = false))
     return () => cancelAnimationFrame(frame)
   })
-
   $effect(() => {
     const id = activeId
     const node = strip
     if (!id || !node || stripWidth <= 0) return
-
     untrack(() => {
       const box = layout.boxes[id]
       if (!box) return
@@ -383,7 +339,6 @@
       })
     })
   })
-
   function closeTab(tab: Tab, by: 'mouse' | 'touch' | null) {
     if (by && worthKeeping(sized, room)) {
       closing?.hold(
@@ -393,10 +348,8 @@
         () => strip?.getBoundingClientRect() ?? null,
       )
     }
-
     void (by ? workspace.closeAsking(tab.id) : closeByKey(tab.id))
   }
-
   async function closeByKey(id: string) {
     await workspace.closeAsking(id)
     await tick()
@@ -405,34 +358,27 @@
     next?.focus()
     if (next) staysOn(next)
   }
-
   function pointerOf(event: MouseEvent): 'mouse' | 'touch' | null {
     if (event.detail === 0) return null
     return 'pointerType' in event && event.pointerType === 'touch' ? 'touch' : 'mouse'
   }
-
   function unfollow() {
     workspace.panes.landing = null
     workspace.panes.dragging = null
   }
-
   const chip = $derived.by(() => {
     if (!drag.out) return null
     const press = drag.pressing
     if (!press) return null
-
     const width = widths[sized.findIndex((one) => one.id === drag.tabId)] ?? 0
     const grab = press.grab - (block?.strip.before ?? 0)
     const left = drag.pointer.x - grab
     const target = landing?.kind === 'strip' ? stripOf(landing.paneId) : undefined
-
     return { left, top: target ? target.top() : drag.pointer.y - grabY, width }
   })
-
   const carriedTab = $derived(tabs.find((one) => one.id === drag.tabId) ?? null)
   let Chip = $state<Awaited<ReturnType<typeof loadTabChip>>['default'] | null>(null)
   let carry: Awaited<ReturnType<typeof tabCarrying>> | null = null
-
   function capture(node: HTMLElement, pointerId: number) {
     try {
       node.setPointerCapture(pointerId)
@@ -440,7 +386,6 @@
       // Nothing to hold on to, and nothing that needs holding.
     }
   }
-
   function pressed(event: PointerEvent, tab: Tab, at: number) {
     if (event.button === 1) {
       event.preventDefault()
@@ -455,7 +400,6 @@
       })
     }
     if (!picks.loaded) void loadPicking()
-
     const finger = event.pointerType === 'touch'
     if (!finger && picksWith(event)) {
       event.preventDefault()
@@ -472,11 +416,9 @@
       if (!finger) workspace.activate(tab.id)
     }
     block = finger ? null : (picking?.Block.of(paneId, tab, sized, widths) ?? null)
-
     const node = event.currentTarget as HTMLElement
     const top = node.closest('.tab')?.getBoundingClientRect().top ?? event.clientY
     const along = alongOf(event.clientX)
-
     grabY = event.clientY - (top + TOP)
     drag.down({
       tabId: tab.id,
@@ -487,14 +429,11 @@
       grab: along - (base[at]?.x ?? 0) + (block?.strip.before ?? 0),
       finger,
     })
-
     if (!finger) capture(node, event.pointerId)
   }
-
   function movedTo(event: PointerEvent) {
     const press = drag.pressing
     if (!press || !strip) return
-
     const lifting = !drag.on
     const up = drag.move(
       alongOf(event.clientX),
@@ -509,7 +448,6 @@
       block?.frame(room ?? endOf(base)) ?? { widths, room: room ?? endOf(base) },
     )
     if (!up) return
-
     event.preventDefault()
     if (lifting) {
       closing?.letGo()
@@ -517,17 +455,14 @@
     }
     carry?.follow(drag, paneId)
   }
-
   function settle(tabId: string) {
     settling = tabId
     setTimeout(() => {
       if (settling === tabId) settling = null
     }, dur(210))
   }
-
   function released(event: PointerEvent) {
     if (!drag.pressing) return
-
     const from = chip
     const where = workspace.panes.landing
     const carried = block
@@ -539,16 +474,13 @@
       return
     }
     if (!workspace.tabs.some((one) => one.id === ending.tabId)) return
-
     event.preventDefault()
     settle(ending.tabId)
-
     if (ending.kind === 'moved') {
       if (carried) carried.moved(paneId, ending.from, ending.to)
       else if (ending.to !== ending.from) workspace.moveTab(ending.tabId, paneId, ending.to)
       return
     }
-
     if (where) {
       if (from) handOver(ending.tabId, from.left, from.top)
       if (carried) carried.dropped(where)
@@ -558,7 +490,6 @@
       if (from) flyHome(ending.tabId, from)
     }
   }
-
   function flyHome(tabId: string, from: { left: number; top: number }) {
     carry?.flyHome(
       () => [strip?.querySelector<HTMLElement>(`[data-box="${CSS.escape(tabId)}"]`), layout.boxes[tabId]],
@@ -566,7 +497,6 @@
       TOP,
     )
   }
-
   function giveUp() {
     const tabId = drag.tabId
     const from = chip
@@ -575,41 +505,31 @@
     unfollow()
     if (!tabId) return
     carry?.overList(tabId, null)
-
     settle(tabId)
     if (from) flyHome(tabId, from)
   }
-
   function strayed(event: PointerEvent) {
     if (drag.pressing) released(event)
   }
-
   function strayedBare(event: PointerEvent) {
     if (!drag.pressing || event.buttons !== 0 || event.pointerType === 'touch') return
     if (!(event.target instanceof Node && strip?.contains(event.target))) released(event)
   }
-
   function keyed(event: KeyboardEvent) {
     if (!drag.on || event.key !== 'Escape') return
-
     event.preventDefault()
     event.stopPropagation()
     giveUp()
   }
-
   onDestroy(() => {
     if (drag.on) unfollow()
     closing?.letGo()
   })
-
   const widthOf = (node: HTMLElement) => parseFloat(node.style.width) || 0
-
   function arrive(node: HTMLElement, { id, x }: { id: string; x: number }) {
     const from = arrival(id)
     const duration = dur(210)
-
     if (workspace.panes.swapping) return risen(x)
-
     if (from) {
       const rect = node.getBoundingClientRect()
       const dx = from.left - rect.left
@@ -620,28 +540,23 @@
         css: (_t: number, u: number) => `transform: translate(${x + dx * u}px, ${dy * u}px)`,
       }
     }
-
     const width = widthOf(node)
     const before = node.previousElementSibling
     const dx = before?.classList.contains('tab')
       ? before.getBoundingClientRect().right - node.getBoundingClientRect().left
       : 0
-
     return {
       duration,
       easing: quintOut,
       css: (t: number, u: number) => `width: ${t * width}px; transform: translateX(${x + dx * u}px)`,
     }
   }
-
   const risen = (x = 0) => ({
     duration: dur(150),
     easing: quintOut,
     css: (t: number, u: number) => `opacity: ${t}; transform: translate(${x}px, ${u * 4}px)`,
   })
-
   const together = (_node: Element) => (workspace.panes.swapping ? risen() : { duration: dur(0) })
-
   function leave(node: HTMLElement) {
     node.classList.remove('active', 'chosen', 'line')
     node.classList.add('leaving')
@@ -649,13 +564,10 @@
     if (duration) node.style.width = '0px'
     return { duration }
   }
-
   const takes = (transfer: DataTransfer | null) =>
     isTreeDrag(transfer) || isBookmarkDrag(transfer) || isAiChatDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
-
   function over(event: DragEvent) {
     if (!takes(event.dataTransfer)) return
-
     event.preventDefault()
     event.stopPropagation()
     if (
@@ -664,35 +576,28 @@
     ) {
       event.dataTransfer.dropEffect = 'move'
     }
-
     const at = slotAt(base, alongOf(event.clientX))
     const where: Landing = { kind: 'strip', paneId, at }
     if (keyOf(workspace.panes.landing) !== keyOf(where)) workspace.panes.landing = where
   }
-
   function dropped(event: DragEvent) {
     const transfer = event.dataTransfer
     if (!takes(transfer)) return
-
     event.preventDefault()
     event.stopPropagation()
-
     const at = slotAt(base, alongOf(event.clientX))
     workspace.panes.landing = null
     workspace.panes.dropped()
-
     const mark = workspace.bookmarks.indexOf(draggedBookmark(transfer))
     if (mark !== null) {
       void here(essentialDropping()).then(({ droppedEssential }) => droppedEssential(mark, paneId, at))
       return
     }
-
     const asked = draggedAiChat(transfer)
     if (asked) {
       workspace.moveTab(workspace.openChat(asked.id, asked.title || 'Untitled'), paneId, at)
       return
     }
-
     if (!isTreeDrag(transfer)) {
       const held = new Map(['text/uri-list', 'text/plain'].map((type) => [type, transfer?.getData(type) ?? '']))
       const address = droppedAddress((type) => held.get(type) ?? '')
@@ -701,58 +606,44 @@
       if (id !== null) workspace.moveTab(id, paneId, at)
       return
     }
-
     const paths = dragged(transfer)
     if (paths.length) void workspace.dropNotes(paths, { kind: 'strip', paneId, at })
   }
-
   $effect(() => {
     const node = strip
     if (!node) return
-
     const turned = (event: WheelEvent) => {
       if (node.scrollWidth <= node.clientWidth) return
       const along = wheelAlong(event, node.clientWidth)
       if (along === 0) return
-
       event.preventDefault()
       node.scrollLeft += along
     }
-
     node.addEventListener('wheel', turned, { passive: false })
     return () => node.removeEventListener('wheel', turned)
   })
-
   function renameKey(event: KeyboardEvent) {
     if (!shortcuts.pressed('tabs.rename', event) || !(event.target instanceof Element)) return
-
     const id = event.target.closest<HTMLElement>('.pick')?.dataset.tab
     const tab = tabs.find((one) => one.id === id)
     if (!tab || !workspace.canRenameFromTab(tab)) return
-
     event.preventDefault()
     rename(tab.id)
   }
-
   const rename = (id: string) => void here(tabOps()).then((ops) => ops.renameFromTab(id))
-
   function doubled(tab: Tab) {
     if (tab.kind === 'terminal') rename(tab.id)
     else workspace.keep(tab.id)
   }
-
   const picksWith = (event: MouseEvent) =>
     event.shiftKey || (shortcuts.platform === 'mac' ? event.metaKey : event.ctrlKey)
-
   const loadPicking = () => here(tabPicking()).then((one) => (picks.loaded ??= one))
-
   function pickWith(loaded: NonNullable<typeof picks.loaded>, event: MouseEvent, tab: Tab) {
     const how = loaded.pickingOf(event, shortcuts.platform === 'mac')
     const front = how && loaded.pick(paneId, tab.id, how)
     if (front) workspace.activate(front)
     return front
   }
-
   let cards: ReturnType<typeof hoverCards> | undefined
   const card = (tab: Tab, node: Element | null, focused = false) =>
     void (cards ??= here(hoverCards())).then(({ hovering }) =>
@@ -1055,7 +946,6 @@
     --tab-line: var(--strip-line, var(--tab-edge));
     --tab-rim: var(--card-edge, var(--tab-line));
   }
-
   .tabs {
     position: relative;
     flex: 1 1 calc(var(--lead) + 38px);
@@ -1069,11 +959,9 @@
     --tab-round: var(--radius-md);
     --tab-foot: var(--radius-md);
   }
-
   .tabs::-webkit-scrollbar {
     display: none;
   }
-
   .lane {
     position: absolute;
     inset-block: 0;
@@ -1081,16 +969,13 @@
     overflow: clip;
     pointer-events: none;
   }
-
   .tabs.live .lane.shrinking {
     transition: width var(--dur-base) var(--ease-out);
   }
-
   .reach {
     position: relative;
     flex: none;
   }
-
   .reach::after {
     content: '';
     position: absolute;
@@ -1100,24 +985,19 @@
     height: 1px;
     background: var(--tab-line);
   }
-
   .tabs + .reach::after {
     inset-inline: 0 auto;
   }
-
   .tabs.bare {
     box-shadow: inset 0 -1px var(--tab-line);
   }
-
   .tabs,
   .reach {
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   .quiet {
     opacity: 0.55;
   }
-
   .tab {
     position: absolute;
     top: 0;
@@ -1128,58 +1008,46 @@
     -webkit-user-select: none;
     --round: clamp(0px, (var(--w) - 6px - 2 * var(--tab-round)) / 3, var(--tab-round));
   }
-
   .tabs.live .tab,
   .tabs.live .new {
     transition:
       transform var(--dur-base) var(--ease-out),
       width var(--dur-base) var(--ease-out);
   }
-
   .tabs.live .tab.carried {
     transition: none;
   }
-
   .tab.active {
     z-index: var(--z-raised);
   }
-
   .tab.carried,
   .tab.settling {
     z-index: var(--z-lifted);
   }
-
   .tab.gone {
     opacity: 0;
   }
-
   .tab.away {
     visibility: hidden;
   }
-
   .tabs.moving .tab:not(.carried) {
     pointer-events: none;
   }
-
   .tab.onbar {
     --tab-ground: var(--web-ground, var(--surface));
   }
-
   .tab.onterminal {
     --tab-ground: var(--terminal-paper, var(--terminal-ground, var(--tab-paper)));
   }
-
   .fill {
     position: absolute;
     inset: var(--tab-top) 3px 0;
     border-radius: var(--round) var(--round) 0 0;
     pointer-events: none;
   }
-
   .fill {
     opacity: 0;
   }
-
   .tab.active .fill {
     opacity: 1;
     background: var(--tab-ground);
@@ -1187,12 +1055,10 @@
       --tab-ground var(--dur-slow) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);
   }
-
   .tab.chosen:not(.active)::before {
     opacity: 1;
     background: var(--surface-picked);
   }
-
   .tab.active .fill::before,
   .tab.active .fill::after {
     content: '';
@@ -1204,17 +1070,14 @@
       transparent calc(var(--tab-foot) - 1.5px),
       var(--tab-rim) calc(var(--tab-foot) - 1px) calc(var(--tab-foot) - 0.5px), var(--tab-ground) var(--tab-foot);
   }
-
   .tab.active .fill::before {
     right: 100%;
     background: radial-gradient(circle at 0 0, var(--rise));
   }
-
   .tab.active .fill::after {
     left: 100%;
     background: radial-gradient(circle at 100% 0, var(--rise));
   }
-
   .edge {
     position: absolute;
     inset: calc(var(--tab-top) - 1px) 2px var(--tab-foot);
@@ -1223,12 +1086,10 @@
     border-radius: calc(var(--round) + 1px) calc(var(--round) + 1px) 0 0;
     pointer-events: none;
   }
-
   .tab.active .edge {
     border-color: var(--tab-rim);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   .tab.active .edge::before,
   .tab.active .edge::after {
     content: '';
@@ -1238,34 +1099,27 @@
     height: 1px;
     background: var(--tab-line);
   }
-
   .tab.active .edge::before {
     right: calc(100% + var(--tab-foot));
   }
-
   .tab.active .edge::after {
     left: calc(100% + var(--tab-foot));
   }
-
   .tabs.flush .tab.first .fill {
     inset-inline-start: 0;
   }
-
   .tabs.flush .tab.first .edge {
     inset-inline-start: -1px;
   }
-
   .tabs.flush .tab.first.active .fill::before {
     display: none;
   }
-
   .tabs.flush .tab.first.active .edge::before {
     right: auto;
     left: -1px;
     width: 1px;
     height: var(--tab-foot);
   }
-
   .tab::before {
     content: '';
     position: absolute;
@@ -1276,13 +1130,11 @@
     pointer-events: none;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .tab:not(.active):hover::before {
       opacity: 1;
     }
   }
-
   .tab::after {
     content: '';
     position: absolute;
@@ -1295,20 +1147,16 @@
     pointer-events: none;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .tab.line::after {
     opacity: 1;
   }
-
   .tab:global(.leaving) {
     pointer-events: none;
   }
-
   .tab:global(.leaving):hover::before,
   .tab:global(.leaving) .shut {
     opacity: 0;
   }
-
   button {
     border: none;
     background: none;
@@ -1318,7 +1166,6 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   .pick {
     position: absolute;
     inset: 0 3px;
@@ -1331,34 +1178,27 @@
     text-align: start;
     touch-action: none;
   }
-
   .tab.closable .pick {
     padding-inline-end: calc(8px + 16px + 4px);
   }
-
   .pick.centred {
     justify-content: center;
     padding-inline: 0;
   }
-
   .tab:hover .pick {
     color: var(--text);
   }
-
   .tab.active .pick {
     color: var(--text-strong);
   }
-
   .face {
     position: relative;
     display: flex;
     flex: none;
   }
-
   .face.unloaded {
     opacity: 0.45;
   }
-
   .letter {
     position: absolute;
     inset-inline-end: -6px;
@@ -1373,22 +1213,18 @@
     line-height: 11px;
     text-align: center;
   }
-
   .hidden {
     display: none;
   }
-
   .reading,
   .label,
   .here,
   .tab :global(.sound) {
     margin-inline-start: 6px;
   }
-
   .pick .label:dir(rtl) {
     margin-inline: 0 6px;
   }
-
   .label {
     flex: 1 1 0;
     min-width: 0;
@@ -1397,24 +1233,19 @@
     --fade: min(24px, 33%);
     mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
   }
-
   .label:dir(rtl) {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
   }
-
   .label {
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .label.quiet {
     opacity: 0;
   }
-
   .label.whole,
   .label.whole:dir(rtl) {
     mask-image: none;
   }
-
   .measure {
     position: absolute;
     visibility: hidden;
@@ -1422,15 +1253,12 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .label.naming {
     visibility: hidden;
   }
-
   .tab.preview .pick {
     font-style: italic;
   }
-
   .reading {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -1442,14 +1270,12 @@
     stroke-linejoin: round;
     opacity: 0.75;
   }
-
   .here {
     display: flex;
     flex: none;
     align-items: center;
     margin-inline-end: -2px;
   }
-
   .who {
     width: 5px;
     height: 5px;
@@ -1459,7 +1285,6 @@
     background: var(--accent);
     box-shadow: 0 0 0 1.5px var(--bg);
   }
-
   .who.face {
     position: relative;
     display: grid;
@@ -1471,7 +1296,6 @@
     color: var(--accent-ink);
     font: var(--weight-strong) 9px var(--font-ui);
   }
-
   .who.face img {
     position: absolute;
     inset: 0;
@@ -1479,7 +1303,6 @@
     height: 100%;
     object-fit: cover;
   }
-
   .shut {
     position: absolute;
     inset-inline-end: calc(3px + 8px);
@@ -1495,27 +1318,22 @@
       color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-
   .shut::after {
     content: '';
     position: absolute;
     inset: -4px;
   }
-
   .shut.hidden {
     display: none;
   }
-
   .shut:hover {
     color: var(--danger);
     background: var(--surface-hover);
   }
-
   .shut:active {
     color: color-mix(in srgb, var(--danger) 78%, var(--text-strong));
     background: var(--surface-press);
   }
-
   .shut :global(svg) {
     width: 8px;
     height: 8px;
@@ -1524,7 +1342,6 @@
     stroke-width: 1.4;
     stroke-linecap: round;
   }
-
   .new {
     position: absolute;
     inset-inline-start: var(--lead);
@@ -1538,17 +1355,14 @@
     color: var(--muted);
     pointer-events: auto;
   }
-
   .new:hover {
     background: var(--tab-hover);
     color: var(--text-strong);
   }
-
   .new:active {
     background: var(--surface-press);
     color: var(--text-strong);
   }
-
   .new svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -1557,14 +1371,12 @@
     stroke-width: 1.4;
     stroke-linecap: round;
   }
-
   .steps {
     display: flex;
     align-items: center;
     flex: none;
     padding-inline-start: var(--space-1);
   }
-
   .step {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
@@ -1573,16 +1385,13 @@
     border-radius: var(--radius-row);
     color: var(--muted);
   }
-
   .step:hover:not(:disabled) {
     background: var(--tab-hover);
     color: var(--text-strong);
   }
-
   .step:active:not(:disabled) {
     background: var(--surface-press);
   }
-
   .step svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -1592,12 +1401,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .drag {
     flex: 0 1000 var(--space-5);
     min-width: 0;
   }
-
   .link {
     flex: none;
     align-self: center;
@@ -1609,29 +1416,23 @@
     border-radius: var(--radius-row);
     color: var(--muted);
   }
-
   .link:hover {
     background: var(--tab-hover);
     color: var(--text-strong);
   }
-
   .link:active {
     background: var(--surface-press);
   }
-
   .link.on {
     color: var(--accent);
     background: var(--surface-selected);
   }
-
   .more {
     align-self: center;
   }
-
   .more svg {
     stroke-width: 2.6;
   }
-
   .link svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -1640,7 +1441,6 @@
     stroke-width: 1.3;
     stroke-linecap: round;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

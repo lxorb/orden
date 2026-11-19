@@ -6,9 +6,7 @@ export interface XmlElement {
   children: XmlElement[]
   text: string
 }
-
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
-
 export function decodeEntities(text: string): string {
   return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
     if (name.startsWith('#')) {
@@ -18,14 +16,11 @@ export function decodeEntities(text: string): string {
     return ENTITIES[name] ?? whole
   })
 }
-
 const NAME = /[A-Za-z_:][\w:.-]*/y
 const ATTRIBUTE = /\s+([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/y
-
 function malformed(): ImportError {
   return new ImportError('The file is not well-formed XML.')
 }
-
 export function parseXml(text: string): XmlElement {
   const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text
   const top: XmlElement = { name: '', attributes: {}, children: [], text: '' }
@@ -89,15 +84,12 @@ export function parseXml(text: string): XmlElement {
   if (stack.length !== 1 || root === undefined || top.children.length !== 1) throw malformed()
   return root
 }
-
 export function childOf(element: XmlElement, name: string): XmlElement | undefined {
   return element.children.find((one) => one.name === name)
 }
-
 export function childrenOf(element: XmlElement, name: string): XmlElement[] {
   return element.children.filter((one) => one.name === name)
 }
-
 export function textAt(element: XmlElement | undefined, ...path: string[]): string {
   let at = element
   for (const name of path) at = at === undefined ? undefined : childOf(at, name)

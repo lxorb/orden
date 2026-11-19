@@ -30,7 +30,6 @@
 
   const { ui, onchosen, corner }: { ui: PassUi; onchosen?: () => void; corner?: Snippet<[PassUi]> | undefined } =
     $props()
-
   const view = $derived(ui.view)
   const live = $derived(pass.items.filter((one) => one.trashed === null))
   const trashed = $derived(pass.items.length - live.length)
@@ -42,15 +41,12 @@
     const found = report(pass.items, ui.compromised)
     return found.weak.length + found.reused.size + found.inactive2fa.length + found.compromised.length
   })
-
   function countIn(vault: string, folder: string | null = null): number {
     return live.filter((one) => one.vault === vault && (folder === null || one.folder === folder)).length
   }
-
   function childrenOf(vault: Vault, parent: string | null): Folder[] {
     return vault.folders.filter((one) => one.parent === parent).sort((a, b) => a.name.localeCompare(b.name))
   }
-
   function isOn(scope: Scope): boolean {
     if (view.page !== 'items') return false
     const now = view.scope
@@ -58,11 +54,9 @@
     if (now.kind === 'vault' && scope.kind === 'vault') return now.vault === scope.vault && now.folder === scope.folder
     return true
   }
-
   function chosen(to: Scope | 'links' | 'monitor' | 'settings') {
     void (typeof to === 'string' ? ui.goTo(to) : ui.choose(to)).then(() => onchosen?.())
   }
-
   function newItem(event: MouseEvent) {
     const box = (event.currentTarget as Element).getBoundingClientRect()
     menu.show(event, newItemEntries(ui, { x: box.left, y: box.bottom }), { until: pass.opened })
@@ -194,27 +188,22 @@
     min-width: 0;
     height: 100%;
   }
-
   .top {
     flex: none;
     padding: var(--space-3) var(--space-3) var(--space-2);
   }
-
   .new {
     width: 100%;
     justify-content: flex-start;
     font-size: var(--text-row);
   }
-
   .new :global(.glyph) {
     stroke-width: 2;
   }
-
   .grow {
     flex: 1;
     text-align: start;
   }
-
   .scroll {
     flex: 1;
     min-height: 0;
@@ -224,21 +213,17 @@
     gap: 1px;
     padding: 0 var(--space-2) var(--space-2);
   }
-
   .orden-section {
     margin: var(--space-3) 0 var(--space-1);
     padding: 0 var(--row-pad);
   }
-
   .vault-row {
     position: relative;
     display: flex;
   }
-
   .vault {
     --row-height-sm: 22px;
   }
-
   .vault-row .more {
     position: absolute;
     inset-inline-end: 2px;
@@ -249,22 +234,18 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .vault-row:hover .more,
   .more:focus-visible {
     opacity: 1;
   }
-
   .vault-row:hover .count {
     visibility: hidden;
   }
-
   :global([data-touch]) .vault-row .more {
     opacity: 1;
     position: static;
     translate: none;
   }
-
   .invited,
   .issues {
     min-width: 18px;
@@ -274,16 +255,13 @@
     color: var(--text-strong);
     text-align: center;
   }
-
   .issues {
     background: color-mix(in srgb, var(--callout-warning) 22%, transparent);
   }
-
   .gap {
     height: var(--space-3);
     flex: none;
   }
-
   .foot {
     flex: none;
     display: flex;
@@ -292,7 +270,6 @@
     padding: var(--space-2);
     border-top: 1px solid var(--line);
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

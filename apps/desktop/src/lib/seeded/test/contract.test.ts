@@ -6,21 +6,17 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-
 const seeded = await import('../src/api')
-
 beforeEach(() => {
   held.clear()
   seeded.forgetSeedStore()
 })
-
 describe('whether the welcome notes were written', () => {
   test('is no until marked, and yes after', async () => {
     expect(await seeded.wasSeeded()).toBe(false)
     await seeded.markSeeded()
     expect(await seeded.wasSeeded()).toBe(true)
   })
-
   test('is also asked of and told to a store elsewhere, which may fail', async () => {
     const told: string[] = []
     seeded.rememberSeedIn({
@@ -30,7 +26,6 @@ describe('whether the welcome notes were written', () => {
     expect(await seeded.wasSeeded()).toBe(true)
     await seeded.markSeeded()
     expect(told).toEqual(['seeded'])
-
     seeded.rememberSeedIn({
       read: () => Promise.reject(new Error('gone')),
       write: () => Promise.reject(new Error('gone')),
@@ -40,7 +35,6 @@ describe('whether the welcome notes were written', () => {
     await expect(seeded.markSeeded()).resolves.toBeUndefined()
   })
 })
-
 describe('the space the welcome notes went into', () => {
   test('is kept until forgotten', () => {
     expect(seeded.seedSpaceRoot()).toBeNull()

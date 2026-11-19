@@ -14,13 +14,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 describe('landing on a heading from the outline or the palette', () => {
   test('puts the caret after the hidden hashes when quiet marks are on', () => {
     const doc = 'intro\n\n## Plan\n\nwords'
@@ -37,10 +34,8 @@ describe('landing on a heading from the outline or the palette', () => {
     )
     const view = new EditorView({ state, parent: document.body })
     open.push(view)
-
     landOnLine(view, 2)
     view.dispatch(view.state.replaceSelection('x'))
-
     expect(view.state.doc.line(3).text).toBe('## xPlan')
   })
 })

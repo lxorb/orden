@@ -12,10 +12,8 @@ interface Held {
   pane: { x: number; y: number; width: number; height: number } | null
   shown: boolean
 }
-
 const held = new Map<string, Held>()
 const done: string[] = []
-
 const pages = {
   of: (id: string) => {
     const found = held.get(id)
@@ -50,29 +48,23 @@ const pages = {
   }),
   hide: vi.fn((id: string) => done.push(`hide ${id}`)),
 }
-
 vi.mock('./pages.svelte', () => ({
   pages,
   OUT_OF_THE_WAY: 20_000,
   inSight: (page: Held) => page.onScreen,
 }))
-
 const { lend, unlend } = await import('./lending')
 const NOTHING = { url: null, space: null, path: null, own: null }
-
 beforeEach(() => {
   held.clear()
   done.length = 0
 })
-
 describe('a tab lent to an agent', () => {
   test('takes what its pane would tell its page: the address and space only where it has none', async () => {
     const page = pages.of('t1')
     page.url = 'https://kept.example/'
     const as = { url: 'https://a.example/', space: 'work', path: '/s/Work/A.url', own: 'apart' }
-
     await lend('t1', as)
-
     expect(page).toMatchObject({
       url: 'https://kept.example/',
       space: 'work',
@@ -83,17 +75,13 @@ describe('a tab lent to an agent', () => {
     await lend('t1', as)
     expect(page).toMatchObject({ own: null })
   })
-
   test('with no page is built outside the window, and keeps the pane it had', async () => {
     const page = pages.of('t1')
     page.url = 'https://a.example/'
-
     await lend('t1', NOTHING)
-
     expect(done).toEqual(['build t1 -20000 1280'])
     expect(page).toMatchObject({ lent: true, shown: false, pane: { x: 0, width: 1280 } })
   })
-
   test('with a page out of sight is thawed and put out of the way, never hidden', async () => {
     const page = pages.of('t1')
     Object.assign(page, {
@@ -101,12 +89,9 @@ describe('a tab lent to an agent', () => {
       url: 'https://a.example/',
       pane: { x: 40, y: 0, width: 900, height: 600 },
     })
-
     await lend('t1', NOTHING)
-
     expect(done).toEqual(['thaw t1', 'aside t1 40'])
   })
-
   test('brought on screen while it thaws is the reader’s, never put out of the way', async () => {
     const page = pages.of('t1')
     Object.assign(page, {
@@ -119,12 +104,9 @@ describe('a tab lent to an agent', () => {
       page.onScreen = true
       return Promise.resolve()
     })
-
     await lend('t1', NOTHING)
-
     expect(done).toEqual(['thaw t1'])
   })
-
   test('brought on screen while it is built keeps the place the reader gave it', async () => {
     const page = pages.of('t1')
     page.url = 'https://a.example/'
@@ -138,21 +120,15 @@ describe('a tab lent to an agent', () => {
       })
       return Promise.resolve()
     })
-
     await lend('t1', NOTHING)
-
     expect(page).toMatchObject({ shown: true, pane: { x: 300, width: 500 } })
   })
-
   test('on screen is the reader’s to place, and is left as it is', async () => {
     Object.assign(pages.of('t1'), { live: true, onScreen: true, url: 'https://a.example/' })
-
     await lend('t1', NOTHING)
-
     expect(done).toEqual([])
     expect(pages.of('t1').lent).toBe(true)
   })
-
   test('is hidden again once the agent is done, if nobody is looking at it', async () => {
     Object.assign(pages.of('t1'), {
       live: true,
@@ -161,11 +137,9 @@ describe('a tab lent to an agent', () => {
     })
     await lend('t1', NOTHING)
     done.length = 0
-
     unlend('t1')
     expect(done).toEqual(['hide t1'])
     expect(pages.of('t1').lent).toBe(false)
-
     unlend('t1')
     unlend('a-note')
     expect(done).toEqual(['hide t1'])

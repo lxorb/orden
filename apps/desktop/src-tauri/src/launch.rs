@@ -6,13 +6,11 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 
 static WINDOWS: AtomicU32 = AtomicU32::new(0);
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Handed {
     Pages,
     Pdfs,
 }
-
 impl Handed {
     fn event(self) -> &'static str {
         match self {
@@ -21,23 +19,19 @@ impl Handed {
         }
     }
 }
-
 #[derive(Default)]
 pub struct Pending(Mutex<Waiting>);
-
 #[derive(Default)]
 struct Waiting {
     pages: Road,
     pdfs: Road,
     launched: bool,
 }
-
 #[derive(Default)]
 struct Road {
     waiting: Vec<String>,
     listening: HashSet<String>,
 }
-
 impl Waiting {
     fn road(&mut self, handed: Handed) -> &mut Road {
         match handed {
@@ -46,52 +40,43 @@ impl Waiting {
         }
     }
 }
-
 impl Pending {
     pub fn hold(&self, handed: Handed, arrived: Vec<String>) {
         if let Ok(mut waiting) = self.0.lock() {
             waiting.road(handed).waiting.extend(arrived);
         }
     }
-
     pub fn launched(&self) {
         if let Ok(mut waiting) = self.0.lock() {
             waiting.launched = true;
         }
     }
-
     pub fn forget(&self, label: &str) {
         if let Ok(mut waiting) = self.0.lock() {
             waiting.pages.listening.remove(label);
             waiting.pdfs.listening.remove(label);
         }
     }
-
     pub fn is_listening(&self, label: &str) -> bool {
         self.hears(Handed::Pages, label)
     }
-
     fn hears(&self, handed: Handed, label: &str) -> bool {
         self.0
             .lock()
             .is_ok_and(|mut waiting| waiting.road(handed).listening.contains(label))
     }
-
     fn take(&self, handed: Handed, label: &str) -> Vec<String> {
         let Ok(mut waiting) = self.0.lock() else {
             return Vec::new();
         };
-
         let road = waiting.road(handed);
         road.listening.insert(label.to_owned());
         std::mem::take(&mut road.waiting)
     }
 }
-
 pub fn handed_by(args: &[String]) -> Vec<String> {
     orden_web::web_handed::pages_in(args)
 }
-
 pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path::Path) {
     if let Some(pending) = app.try_state::<Pending>() {
         let words: Vec<String> = args
@@ -106,7 +91,6 @@ pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path
         );
     }
 }
-
 #[tauri::command]
 pub fn take_startup_pages(
     window: tauri::Window,
@@ -114,12 +98,10 @@ pub fn take_startup_pages(
 ) -> Vec<String> {
     pending.take(Handed::Pages, window.label())
 }
-
 #[tauri::command]
 pub fn take_startup_pdfs(window: tauri::Window, pending: tauri::State<'_, Pending>) -> Vec<String> {
     pending.take(Handed::Pdfs, window.label())
 }
-
 pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
     let later = app.clone();
     std::thread::spawn(move || {
@@ -127,7 +109,6 @@ pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
         let _ = later.run_on_main_thread(move || second_launch(&answering, &argv, &cwd));
     });
 }
-
 fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
     if in_background(argv) {
         return;
@@ -144,7 +125,6 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
         app.deep_link().handle_cli_arguments(unread.iter());
     }
     let argv = &without_ours(argv);
-
     let reminder = argv
         .iter()
         .any(|one| orden_reminders::reminders::link::is_reminder(one));
@@ -154,7 +134,6 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
         }
         bring_forward(&window);
     }
-
     hand_over(app, Handed::Pages, handed_by(argv));
     let (app, argv, cwd) = (app.clone(), argv.clone(), cwd.to_owned());
     std::thread::spawn(move || {
@@ -166,13 +145,11 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
         );
     });
 }
-
 pub fn page_up(app: &AppHandle, label: &str) -> bool {
     app.try_state::<Pending>()
         .is_some_and(|pending| pending.is_listening(label))
         && !orden_crashes::stall::page_gone(label)
 }
-
 fn token_in(argv: &[String]) -> Option<String> {
     argv.iter()
         .skip(1)
@@ -180,7 +157,6 @@ fn token_in(argv: &[String]) -> Option<String> {
         .filter(|token| !token.is_empty())
         .map(str::to_owned)
 }
-
 fn without_ours(argv: &[String]) -> Vec<String> {
     argv.iter()
         .filter(|one| {
@@ -191,19 +167,15 @@ fn without_ours(argv: &[String]) -> Vec<String> {
         .cloned()
         .collect()
 }
-
 fn unread_link(argv: &[String]) -> Option<Vec<String>> {
     token_in(argv).map(|_| without_ours(argv))
 }
-
 pub const TOKEN_FLAG: &str = "--activation-token=";
-
 pub fn restart_env() -> tauri::Env {
     let mut env = tauri::Env::default();
     env.args_os = restarted_with(&env.args_os);
     env
 }
-
 fn restarted_with(args: &[std::ffi::OsString]) -> Vec<std::ffi::OsString> {
     let flags = args
         .iter()
@@ -215,24 +187,20 @@ fn restarted_with(args: &[std::ffi::OsString]) -> Vec<std::ffi::OsString> {
         });
     args.iter().take(1).chain(flags).cloned().collect()
 }
-
 pub fn in_background<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> bool {
     argv.iter()
         .skip(1)
         .any(|one| one.as_ref() == BACKGROUND_FLAG)
 }
-
 pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
     if arrived.is_empty() {
         return;
     }
-
     let Some(pending) = app.try_state::<Pending>() else {
         return;
     };
     let seen = seen(app, &pending, handed);
     let launched = pending.0.lock().is_ok_and(|waiting| waiting.launched);
-
     match receiver(&seen, launched) {
         Handover::To(label) => {
             if let Some(window) = app.get_window(&label) {
@@ -247,14 +215,12 @@ pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
         }
     }
 }
-
 pub fn brought_up(window: &tauri::Window) {
     if orden_placement::placement::away().is_none() {
         let _ = window.show();
     }
     bring_forward(window);
 }
-
 pub fn open_for_what_waits(app: &AppHandle) {
     let launched = app
         .try_state::<Pending>()
@@ -263,7 +229,6 @@ pub fn open_for_what_waits(app: &AppHandle) {
         let _ = open_again(app);
     }
 }
-
 #[cfg(target_os = "macos")]
 pub fn reopen(app: &AppHandle) {
     let windows = document_windows(app);
@@ -271,7 +236,6 @@ pub fn reopen(app: &AppHandle) {
         .iter()
         .find(|window| window.label() == MAIN)
         .or_else(|| windows.first());
-
     match waiting {
         Some(window) => {
             let _ = window.show();
@@ -282,7 +246,6 @@ pub fn reopen(app: &AppHandle) {
         }
     }
 }
-
 #[tauri::command]
 pub async fn new_window(app: AppHandle) -> Result<(), String> {
     let (sending, mut waiting) = tauri::async_runtime::channel(1);
@@ -296,11 +259,9 @@ pub async fn new_window(app: AppHandle) -> Result<(), String> {
         .await
         .unwrap_or_else(|| Err("could not open another window".to_string()))
 }
-
 fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     opened(window_builder(app, label))
 }
-
 fn open_again(app: &AppHandle) -> Result<(), String> {
     let label = reopened_label(app);
     if label != MAIN {
@@ -311,7 +272,6 @@ fn open_again(app: &AppHandle) -> Result<(), String> {
         window_builder(app, MAIN),
     ))
 }
-
 fn window_builder<'a>(
     app: &'a AppHandle,
     label: &str,
@@ -327,21 +287,16 @@ fn window_builder<'a>(
         Some(colour) => builder.background_color(colour),
         None => builder,
     };
-
     #[cfg(target_os = "macos")]
     let builder = builder.visible(false);
-
     let builder = crate::engine::own_window(builder);
-
     builder
 }
-
 fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> Result<(), String> {
     let building = orden_system::appearance::own_frame(builder);
     let window = orden_placement::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
     orden_web::pinch::let_through(window.as_ref());
-
     #[cfg(target_os = "macos")]
     {
         orden_system::lights::hold(&window);
@@ -353,10 +308,8 @@ fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> R
     }
     #[cfg(not(target_os = "macos"))]
     let _ = window;
-
     Ok(())
 }
-
 fn reopened_label(app: &AppHandle) -> String {
     if app.get_window(MAIN).is_none() {
         MAIN.to_owned()
@@ -364,22 +317,18 @@ fn reopened_label(app: &AppHandle) -> String {
         free_label(app)
     }
 }
-
 fn bring_forward(window: &tauri::Window) {
     orden_placement::placement::raised(window);
 }
-
 #[tauri::command]
 pub fn show_window(window: tauri::Window) {
     bring_forward(&window);
 }
-
 struct Seen {
     label: String,
     focused: bool,
     listening: bool,
 }
-
 fn seen(app: &AppHandle, pending: &Pending, handed: Handed) -> Vec<Seen> {
     document_windows(app)
         .into_iter()
@@ -390,28 +339,24 @@ fn seen(app: &AppHandle, pending: &Pending, handed: Handed) -> Vec<Seen> {
         })
         .collect()
 }
-
 #[derive(Debug, PartialEq, Eq)]
 enum Handover {
     To(String),
     Hold,
     HoldAndOpen,
 }
-
 fn receiver(windows: &[Seen], launched: bool) -> Handover {
     let listening = || windows.iter().filter(|one| one.listening);
     let chosen = listening()
         .find(|one| one.focused)
         .or_else(|| listening().find(|one| one.label == MAIN))
         .or_else(|| listening().next());
-
     match chosen {
         Some(one) => Handover::To(one.label.clone()),
         None if windows.is_empty() && launched => Handover::HoldAndOpen,
         None => Handover::Hold,
     }
 }
-
 fn free_label(app: &AppHandle) -> String {
     loop {
         let label = format!("orden-{}", WINDOWS.fetch_add(1, Ordering::Relaxed) + 2);
@@ -420,7 +365,6 @@ fn free_label(app: &AppHandle) -> String {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -435,44 +379,35 @@ mod tests {
             listening,
         }
     }
-
     #[test]
     fn pages_go_to_the_window_in_front() {
         let windows = [window("main", false, true), window("orden-2", true, true)];
         assert_eq!(receiver(&windows, true), Handover::To("orden-2".into()));
     }
-
     #[test]
     fn with_nothing_in_front_the_first_window_takes_them() {
         let windows = [window("orden-3", false, true), window("main", false, true)];
         assert_eq!(receiver(&windows, true), Handover::To("main".into()));
-
         let windows = [window("orden-3", false, true)];
         assert_eq!(receiver(&windows, true), Handover::To("orden-3".into()));
     }
-
     #[test]
     fn a_window_still_loading_is_not_handed_anything() {
         let windows = [window("main", true, false)];
         assert_eq!(receiver(&windows, true), Handover::Hold);
-
         let windows = [window("main", true, false), window("orden-2", false, true)];
         assert_eq!(receiver(&windows, true), Handover::To("orden-2".into()));
     }
-
     #[test]
     fn with_no_window_at_all_one_is_opened_once_the_launch_is_through() {
         assert_eq!(receiver(&[], false), Handover::Hold);
         assert_eq!(receiver(&[], true), Handover::HoldAndOpen);
     }
-
     #[test]
     fn a_window_is_up_once_it_has_asked_for_its_pages() {
         let pending = Pending::default();
         pending.hold(Handed::Pages, vec!["https://example.com/".into()]);
-
         assert!(!pending.is_listening("main"));
-
         assert_eq!(
             pending.take(Handed::Pages, "main"),
             vec!["https://example.com/".to_owned()]
@@ -480,12 +415,10 @@ mod tests {
         assert!(pending.is_listening("main"));
         assert!(pending.take(Handed::Pages, "main").is_empty());
     }
-
     #[test]
     fn pdfs_wait_on_a_road_of_their_own() {
         let pending = Pending::default();
         pending.hold(Handed::Pdfs, vec![r"C:\Downloads\a.pdf".into()]);
-
         assert!(pending.take(Handed::Pages, "main").is_empty());
         assert!(!pending.hears(Handed::Pdfs, "main"));
         assert_eq!(
@@ -493,20 +426,16 @@ mod tests {
             vec![r"C:\Downloads\a.pdf".to_owned()]
         );
         assert!(pending.hears(Handed::Pdfs, "main"));
-
         pending.forget("main");
         assert!(!pending.hears(Handed::Pdfs, "main"));
     }
-
     #[test]
     fn a_window_that_went_listens_for_nothing() {
         let pending = Pending::default();
         pending.take(Handed::Pages, "orden-2");
-
         pending.forget("orden-2");
         assert!(!pending.is_listening("orden-2"));
     }
-
     #[test]
     fn a_launch_token_travels_with_the_arguments_and_is_taken_off_them() {
         let argv: Vec<String> = [
@@ -525,7 +454,6 @@ mod tests {
         let bare: Vec<String> = ["orden", "--activation-token="].map(String::from).into();
         assert_eq!(token_in(&bare), None);
     }
-
     #[test]
     fn an_agents_launch_asks_for_no_window() {
         let agent: Vec<String> = ["orden", BACKGROUND_FLAG].map(String::from).into();
@@ -540,7 +468,6 @@ mod tests {
             assert!(!in_background(&argv), "{argv:?}");
         }
     }
-
     #[test]
     fn a_link_beside_a_token_is_read_again_without_it() {
         let link = "orden://open?path=Inbox.md";
@@ -556,14 +483,12 @@ mod tests {
         let bare: Vec<String> = ["orden", link].map(String::from).into();
         assert_eq!(unread_link(&bare), None);
     }
-
     #[test]
     fn a_command_line_hands_over_pages_and_never_a_note() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let note = dir.path().join("Idea.md");
         std::fs::write(&note, "# Idea").expect("a note");
         let note = note.to_string_lossy().to_string();
-
         assert!(handed_by(&["orden.exe".into(), note.clone()]).is_empty());
         assert_eq!(
             handed_by(&[
@@ -573,7 +498,6 @@ mod tests {
             ]),
             vec!["https://example.com/".to_owned()]
         );
-
         let pages = handed_by(&[
             "orden.exe".into(),
             "--url".into(),
@@ -583,7 +507,6 @@ mod tests {
         assert_eq!(pages.len(), 1);
         assert!(pages[0].starts_with("https://example.com/"));
     }
-
     #[test]
     fn every_webview_takes_its_own_drops() {
         let mut taken = Vec::new();
@@ -603,7 +526,6 @@ mod tests {
             "a webview built with Tauri's drop handler on: {taken:?}"
         );
     }
-
     #[test]
     fn a_restart_hands_nothing_over_again() {
         let line = |args: &[&str]| -> Vec<std::ffi::OsString> {

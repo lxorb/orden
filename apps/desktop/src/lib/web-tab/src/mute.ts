@@ -7,11 +7,9 @@ export function mute(tabId: string, page: Page, muted: boolean): void {
   page.muted = muted
   void invoke('web_mute', { tab: tabId, muted }).catch(() => undefined)
 }
-
 export async function muteSite(tabId: string, muted: boolean): Promise<void> {
   const site = siteOf(pages.addressOf(tabId))
   if (!site) return
-
   const page = pages.of(tabId)
   const aside = asideFor(tabId, page)
   if (aside !== undefined) {
@@ -19,7 +17,6 @@ export async function muteSite(tabId: string, muted: boolean): Promise<void> {
     mute(tabId, page, muted)
     return
   }
-
   setMuted(site, muted)
   const { workspace } = await import('../../workspace/src/api')
   for (const tab of workspace.tabs) {

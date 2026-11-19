@@ -45,13 +45,10 @@ export interface Mark {
   title: () => string
   key: string | null
 }
-
 export interface ToolMark extends Mark {
   id: Tool
 }
-
 export const hinted = (mark: Pick<Mark, 'title' | 'key'>): string => shortcuts.tooltip(mark.title(), mark.key)
-
 export const ABOUT: ToolMark[] = [
   {
     id: 'select',
@@ -61,19 +58,16 @@ export const ABOUT: ToolMark[] = [
   },
   { id: 'hand', icon: Hand, title: () => 'Pan', key: 'canvas.tool.hand' },
 ]
-
 export const WORDS: ToolMark = {
   id: 'words',
   icon: Type,
   title: () => 'Text',
   key: 'canvas.tool.words',
 }
-
 export const RUBBING: ToolMark[] = [
   { id: 'erase', icon: Eraser, title: () => 'Erase', key: 'canvas.tool.erase' },
   { id: 'lasso', icon: Lasso, title: () => 'Lasso', key: 'canvas.tool.lasso' },
 ]
-
 export const PLACING: ToolMark[] = [
   { id: 'text', icon: StickyNote, title: () => 'Card', key: 'canvas.tool.text' },
   { id: 'file', icon: FileText, title: () => 'Note', key: 'canvas.tool.file' },
@@ -88,7 +82,6 @@ export const PLACING: ToolMark[] = [
   { id: 'arrow', icon: ArrowUpRight, title: () => 'Arrow', key: 'canvas.tool.arrow' },
   { id: 'elbow', icon: CornerDownRight, title: () => 'Elbow', key: 'canvas.tool.elbow' },
 ]
-
 export const PEN_ICONS: Record<InkTool, IconNode> = {
   pen: PenLine,
   fountain: PenTool,
@@ -98,7 +91,6 @@ export const PEN_ICONS: Record<InkTool, IconNode> = {
   brush: Brush,
   calligraphy: Feather,
 }
-
 export const PEN_NAMES: Record<InkTool, () => string> = {
   pen: () => 'Pen',
   fountain: () => 'Fountain pen',
@@ -108,7 +100,6 @@ export const PEN_NAMES: Record<InkTool, () => string> = {
   brush: () => 'Brush',
   calligraphy: () => 'Calligraphy',
 }
-
 export const MARKS = {
   undo: Undo2,
   redo: Redo2,

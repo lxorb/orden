@@ -11,23 +11,18 @@ function fakeEngine(): Engine & { extra: () => string } {
     extra: () => 'kept',
   }
 }
-
 const thread = (id: string, provider: string) => ({ id, provider }) as Thread
-
 describe('which thread was answering when', () => {
   beforeEach(() => {
     vi.useFakeTimers({ now: 1_000_000 })
   })
-
   afterEach(() => {
     vi.useRealTimers()
   })
-
   test('is every send of an engine, from its start to its end', async () => {
     const engine = watching(fakeEngine())
     const heard = vi.fn()
     const stop = onSend(heard)
-
     const before = Date.now()
     const sending = engine.send(
       thread('t1', 'own'),
@@ -47,7 +42,6 @@ describe('which thread was answering when', () => {
     expect(answeringAt('other', before)).toBeNull()
     stop()
   })
-
   test('keeps the engine’s own, whatever it grows, and is the same engine twice', () => {
     const raw = fakeEngine()
     const engine = watching(raw) as typeof raw

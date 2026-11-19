@@ -9,16 +9,13 @@ vi.stubGlobal('localStorage', {
   setItem: () => undefined,
   removeItem: () => undefined,
 })
-
 const { idIn, runner } = await import('./runner.svelte')
-
 function engine(role: string | null, entry: { id: string } | null, inside = true): Engine {
   return {
     placed: () => (inside ? { space: { row: { role } }, path: 'Notepad.application' } : null),
     entryAt: () => entry,
   } as unknown as Engine
 }
-
 interface Open {
   current: unknown
   accountId: string | null
@@ -27,7 +24,6 @@ interface Open {
   ask(what: string, args: Record<string, unknown>): Promise<unknown>
   answering(said: { what: string; args: Record<string, unknown> }): Promise<unknown>
 }
-
 describe('the id sync gave a file', () => {
   test('is said with whether its space is the reader’s own, or why there is none', () => {
     const path = '/s/Notepad.application'
@@ -38,7 +34,6 @@ describe('the id sync gave a file', () => {
     expect(idIn(engine('owner', null, false), path, true)).toEqual({ none: 'outside' })
     expect(idIn(engine('owner', null, false), path, false)).toEqual({ none: 'not-running' })
   })
-
   test('is asked of the window running sync by one that does not run it', async () => {
     const open = runner as unknown as Open
     const asked: unknown[] = []
@@ -56,7 +51,6 @@ describe('the id sync gave a file', () => {
     open.ask = () => Promise.resolve(null)
     expect(await runner.idAt('/s/Notepad.application')).toEqual({ none: 'not-running' })
   })
-
   test('is answered by the window running sync', async () => {
     const open = runner as unknown as Open
     open.current = engine('owner', { id: 'a1' })
@@ -68,14 +62,12 @@ describe('the id sync gave a file', () => {
     open.current = null
   })
 })
-
 describe('the space sync keeps for a folder', () => {
   test('is found under any spelling of that folder', () => {
     const open = runner as unknown as Open & { local: boolean }
     const spaces = new Map([['s1', { id: 's1', row: { root: 'C:\\Users\\Ada\\Orden\\Notes', role: 'read' } }]])
     open.local = false
     open.current = { core: { spaces } }
-
     expect(runner.remoteIdFor('C:/Users/Ada/Orden/Notes')).toBe('s1')
     expect(runner.roleKept('C:/Users/Ada/Orden/Notes/')).toBe('read')
     expect(runner.remoteIdFor('C:/Users/Ada/Orden/Other')).toBeNull()

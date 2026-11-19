@@ -19,9 +19,7 @@ function at(written: string, ...extensions: Extension[]) {
     }),
   )
 }
-
 const tex = (written: string, ...extensions: Extension[]) => mathsAtCaret(at(written, ...extensions))?.tex ?? null
-
 describe('the formula the caret is in', () => {
   test('inline, anywhere inside it and against either dollar', () => {
     expect(tex('so $a^|2$ holds')).toBe('a^2')
@@ -29,7 +27,6 @@ describe('the formula the caret is in', () => {
     expect(tex('so $a^2$| holds')).toBe('a^2')
     expect(mathsAtCaret(at('so $a^2$ holds'))).toBeNull()
   })
-
   test.each([
     ['so| $a^2$ holds'],
     ['words $a$ and |more'],
@@ -37,7 +34,6 @@ describe('the formula the caret is in', () => {
     ['```\n$a|$\n```'],
     ['so `$a|$` here'],
   ])('%j', (input) => expect(tex(input)).toBeNull())
-
   test.each([
     ['$x$ and $y|$', 'y'],
     ['$x|$ and $y$', 'x'],
@@ -48,25 +44,21 @@ describe('the formula the caret is in', () => {
     ['- item $\\alpha|$', '\\alpha'],
     ['# Title $\\beta|$', '\\beta'],
   ])('%j', (input, wanted) => expect(tex(input)).toEqual(wanted))
-
   test('a display block, on any of its lines', () => {
     const block = mathsAtCaret(at('above\n\n$$\n\\frac{1}{2}\n+ |x\n$$\n\nbelow'))
     expect(block).toMatchObject({ tex: '\\frac{1}{2}\n+ x', block: true })
     expect(tex('$$|\nx\n$$')).toBe('x')
     expect(tex('$$\nx\n$$|')).toBe('x')
   })
-
   test('a selection inside it counts, one reaching past it does not', () => {
     expect(tex('so $|a^2|$ holds')).toBe('a^2')
     expect(tex('s|o $a^2|$ holds')).toBeNull()
   })
-
   test.each([
     ['$a|$', EditorState.readOnly.of(true)],
     ['$a|$', noReveal.of(true)],
   ])('%j', (input, extra) => expect(tex(input, extra)).toBeNull())
 })
-
 describe('the formula in a table cell', () => {
   test('read by the note’s parser', () => {
     expect(mathsInText('so $x^2$ here', 5)).toMatchObject({ from: 3, to: 8, tex: 'x^2' })
@@ -78,12 +70,10 @@ describe('the formula in a table cell', () => {
     expect(mathsInText('$5 and $6', 4)).toBeNull()
   })
 })
-
 describe('where the preview goes', () => {
   const visible = { top: 100, bottom: 700, left: 50, right: 650 }
   const row = (top: number) => ({ top, bottom: top + 20, left: 200, right: 210 })
   const size = { width: 120, height: 40 }
-
   test('above the row being typed, aligned with the formula', () => {
     expect(place(row(400), 180, visible, size, null)).toEqual({
       top: 400 - GAP - 40,
@@ -92,29 +82,24 @@ describe('where the preview goes', () => {
       maxHeight: null,
     })
   })
-
   test('below when there is no room above, at the top of the note', () => {
     const placed = place(row(110), 180, visible, size, null)
     expect(placed).toMatchObject({ above: false, top: 130 + GAP })
   })
-
   test('stays on its side while it still fits there', () => {
     expect(place(row(160), 180, visible, size, false)?.above).toBe(false)
     expect(place(row(160), 180, visible, size, null)?.above).toBe(true)
     expect(place(row(670), 180, visible, size, false)?.above).toBe(true)
   })
-
   test('inside the pane, however far right the formula starts', () => {
     expect(place(row(400), 600, visible, size, null)?.left).toBe(650 - GAP - 120)
     expect(place(row(400), 10, visible, size, null)?.left).toBe(50 + GAP)
   })
-
   test('cut to the room there is when it is taller than either side', () => {
     const tall = { width: 120, height: 500 }
     const placed = place(row(400), 180, visible, tall, null)
     expect(placed).toMatchObject({ above: true, maxHeight: 400 - 100 - GAP, top: 100 })
   })
-
   test('nowhere when the caret has been scrolled out of the pane', () => {
     expect(place(row(20), 180, visible, size, null)).toBeNull()
     expect(place(row(720), 180, visible, size, null)).toBeNull()

@@ -9,7 +9,6 @@ export interface Carried {
   writes: boolean
   space: string
 }
-
 export interface Carrying {
   exists(path: string): Promise<boolean>
   stamp(path: string): Promise<string | null>
@@ -24,38 +23,27 @@ export interface Carrying {
   kept(): void
   said(note: Carried, failed: string): void
 }
-
 const lacking = new Map<string, number>()
-
 const ASK_AGAIN = 60_000
-
 const settled = new Set<string>()
-
 const refused = new Map<string, string>()
-
 const failing = new Map<string, { tries: number; until: number; said: boolean }>()
-
 function failingOf(id: string) {
   const one = failing.get(id) ?? { tries: 0, until: 0, said: false }
   failing.set(id, one)
   return one
 }
-
 function sayOnce(note: Carried, failed: string, how: Carrying) {
   const one = failingOf(note.id)
   if (one.said) return
   one.said = true
   how.said(note, failed)
 }
-
 let notSignedInUntil = 0
-
 const REFUSALS: ReadonlySet<number> = new Set([400, 413, 415])
-
 export function paperRetryDelay(tries: number): number {
   return Math.min(30_000 * 2 ** Math.max(0, tries - 1), 600_000)
 }
-
 export async function carryPapers(notes: readonly Carried[], how: Carrying): Promise<void> {
   for (const note of notes) {
     if (Date.now() < notSignedInUntil) return
@@ -77,12 +65,10 @@ export async function carryPapers(notes: readonly Carried[], how: Carrying): Pro
     }
   }
 }
-
 async function carryOne(note: Carried, how: Carrying): Promise<void> {
   const key = `${note.id}\n${note.path}`
   if (settled.has(key) || Date.now() - (lacking.get(note.id) ?? -ASK_AGAIN) < ASK_AGAIN) return
   const paper = paperOf(note.path)
-
   if (await how.exists(paper)) {
     if (!how.carried.has(note.id) && note.writes) {
       const stamp = await how.stamp(paper)
@@ -111,7 +97,6 @@ async function carryOne(note: Carried, how: Carrying): Promise<void> {
     settled.add(key)
     return
   }
-
   if (!namesAPaper(await how.text(note.path))) {
     settled.add(key)
     return
@@ -127,11 +112,9 @@ async function carryOne(note: Carried, how: Carrying): Promise<void> {
   how.kept()
   settled.add(key)
 }
-
 async function stillWanted(note: string, paper: string, how: Pick<Carrying, 'exists'>): Promise<boolean> {
   return (await how.exists(note)) && !(await how.exists(paper))
 }
-
 export function namesAPaper(text: string | null): boolean {
   if (!text) return false
   try {
@@ -140,7 +123,6 @@ export function namesAPaper(text: string | null): boolean {
     return false
   }
 }
-
 export async function paperFor(
   id: string,
   note: string | null,
@@ -155,7 +137,6 @@ export async function paperFor(
   }
   return bytes
 }
-
 export function forgetLacking(): void {
   lacking.clear()
   settled.clear()

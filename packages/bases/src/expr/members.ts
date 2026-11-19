@@ -17,9 +17,7 @@ import {
 } from './runtime'
 
 const DAY = 86_400_000
-
 const dateValue = (iso: string | undefined): DateValue | null => (iso ? { kind: 'date', iso } : null)
-
 export function fileField(row: Row, name: string, scope: Scope): Val {
   const file = row.file
   switch (name) {
@@ -63,7 +61,6 @@ export function fileField(row: Row, name: string, scope: Scope): Val {
       return null
   }
 }
-
 export function taskField(row: Row, name: string, scope: Scope): Val {
   const task = row.task
   if (!task) return null
@@ -139,7 +136,6 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
       return fieldOf(task.fields, name)
   }
 }
-
 function dateField(date: DateValue, name: string): Val {
   const [hours = 0, minutes = 0, seconds = 0] = (date.time ?? '').split(':').map((part) => Number.parseFloat(part) || 0)
   switch (name) {
@@ -161,7 +157,6 @@ function dateField(date: DateValue, name: string): Val {
       return null
   }
 }
-
 function durationField(ms: number, months: number, name: string): Val {
   const whole = (value: number) => Math.trunc(value)
   const total = ms + months * 30 * DAY
@@ -186,7 +181,6 @@ function durationField(ms: number, months: number, name: string): Val {
       return null
   }
 }
-
 export function member(object: Val, name: string, scope: Scope): Val {
   if (object === null) return null
   if (object instanceof FileRef) return fileField(object.row, name, scope)
@@ -204,7 +198,6 @@ export function member(object: Val, name: string, scope: Scope): Val {
   if (isObject(object)) return fieldOf(object, name)
   return null
 }
-
 export function indexed(object: Val, index: Val, scope: Scope): Val {
   if (object === null || index === null) return null
   if (typeof index === 'number') {
@@ -215,7 +208,6 @@ export function indexed(object: Val, index: Val, scope: Scope): Val {
   if (typeof index === 'string') return member(object, index, scope)
   return null
 }
-
 function samePerson(one: string, other: string | undefined): boolean {
   if (other === undefined) return false
   const key = (name: string) => name.trim().normalize('NFC').toLowerCase()

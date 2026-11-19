@@ -27,14 +27,11 @@
     ai: AiStep,
     welcome: WelcomeStep,
   }
-
   setup.resume()
-
   onMount(() => {
     iconLibrary.load(BRANDS)
     void setup.look()
   })
-
   const Shown = $derived(SCREENS[setup.step])
   const wide = $derived(setup.step === 'account' || setup.step === 'welcome')
   const way = $derived(setup.forward ? 1 : -1)
@@ -81,14 +78,12 @@
       background-color 0.5s var(--ease-out),
       color 0.5s var(--ease-out);
   }
-
   :global([data-theme='light']) .setup {
     --glow-a: #c9ddf8;
     --glow-b: #ecd1f1;
     --glow-c: #dcd6fb;
     --card: #fff;
   }
-
   .aura {
     position: absolute;
     inset: -20%;
@@ -102,70 +97,57 @@
     animation: drift 8s var(--ease-out) both;
     transition: opacity 0.8s var(--ease-out);
   }
-
   .wide .aura {
     opacity: 1;
   }
-
   @keyframes drift {
     to {
       transform: translate3d(3%, -2%, 0) rotate(6deg) scale(1.05);
     }
   }
-
   .stage {
     position: absolute;
     inset: 0;
   }
-
   .setup :global(.rise) {
     animation: rise 0.6s var(--ease-out) both;
   }
-
   .setup :global(.rise:nth-child(2)) {
     animation-delay: 0.06s;
   }
-
   .setup :global(.rise:nth-child(3)) {
     animation-delay: 0.12s;
   }
-
   .setup :global(.rise:nth-child(4)) {
     animation-delay: 0.18s;
   }
-
   @keyframes rise {
     from {
       opacity: 0;
       transform: translateY(14px);
     }
   }
-
   .setup :global(.pane-in) {
     animation: pane-in 0.45s var(--ease-out) both;
   }
-
   @keyframes pane-in {
     from {
       opacity: 0;
       transform: translateX(24px);
     }
   }
-
   .setup :global(.o-pane) {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
-
   .setup :global(.o-grid) {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
   }
-
   .setup :global(.o-scroll) {
     max-height: min(40vh, 330px);
     overflow-y: auto;
@@ -173,7 +155,6 @@
     margin: -4px;
     mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
   }
-
   .setup :global(.o-field) {
     width: min(360px, 100%);
     height: 50px;
@@ -185,14 +166,12 @@
     font-size: 16px;
     color: var(--text);
   }
-
   .setup :global(.o-error) {
     margin: 0;
     color: var(--danger);
     font-size: 14px;
     text-align: center;
   }
-
   .setup :global(.o-end) {
     margin-inline-start: auto;
     min-width: 74px;
@@ -200,7 +179,6 @@
     display: inline-grid;
     place-items: center;
   }
-
   .setup :global(.o-done) {
     margin-inline-start: auto;
     min-width: 30px;
@@ -213,7 +191,6 @@
     font-weight: 600;
     white-space: nowrap;
   }
-
   .setup :global(.o-done svg) {
     width: 16px;
     height: 16px;
@@ -223,7 +200,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .setup :global(.o-list) {
     width: 100%;
     border-radius: 14px;
@@ -233,11 +209,9 @@
       0 8px 24px rgb(16 24 40 / 0.08);
     overflow: hidden;
   }
-
   .setup :global(.o-list > *) {
     position: relative;
   }
-
   .setup :global(.o-list > * + *::before) {
     content: '';
     position: absolute;
@@ -246,7 +220,6 @@
     height: 1px;
     background: var(--line);
   }
-
   .setup :global(.o-row) {
     width: 100%;
     display: flex;
@@ -259,11 +232,9 @@
     color: var(--text);
     text-align: start;
   }
-
   .setup :global(button.o-row) {
     cursor: pointer;
   }
-
   .setup :global(.o-toggle) {
     width: 44px;
     height: 26px;
@@ -274,7 +245,6 @@
     flex: none;
     transition: background 0.25s var(--ease-out);
   }
-
   .setup :global(.o-toggle::after) {
     content: '';
     position: absolute;
@@ -287,22 +257,18 @@
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
     transition: transform 0.3s var(--ease-spring);
   }
-
   .setup :global([aria-checked='true'] > .o-toggle) {
     background: #34c759;
   }
-
   .setup :global([aria-checked='true'] > .o-toggle::after) {
     transform: translateX(18px);
   }
-
   @media (max-width: 640px) {
     .setup :global(.o-grid) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .aura,
     .setup :global(.rise),

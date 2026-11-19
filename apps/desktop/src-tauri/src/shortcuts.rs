@@ -13,7 +13,6 @@ pub fn shortcuts_offered() -> bool {
         false
     }
 }
-
 #[tauri::command]
 pub async fn open_shortcuts() -> Result<(), String> {
     orden_base::lane::off_the_runtime(|| -> Result<(), String> {
@@ -32,7 +31,6 @@ pub async fn open_shortcuts() -> Result<(), String> {
     })
     .await
 }
-
 #[tauri::command(async)]
 pub fn shortcuts_added(webview: Webview) -> Result<Vec<serde_json::Value>, String> {
     orden_base::labels::from_the_app(&webview)?;
@@ -48,7 +46,6 @@ pub fn shortcuts_added(webview: Webview) -> Result<Vec<serde_json::Value>, Strin
         Ok(Vec::new())
     }
 }
-
 #[tauri::command(async)]
 pub fn shortcuts_added_taken(webview: Webview, id: String) -> Result<(), String> {
     orden_base::labels::from_the_app(&webview)?;
@@ -61,7 +58,6 @@ pub fn shortcuts_added_taken(webview: Webview, id: String) -> Result<(), String>
         Err(format!("{id} is not a task Shortcuts added"))
     }
 }
-
 #[tauri::command(async)]
 pub fn shortcuts_left_inbox(webview: Webview) -> Result<Option<String>, String> {
     orden_base::labels::from_the_app(&webview)?;

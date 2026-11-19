@@ -9,10 +9,8 @@ vi.stubGlobal('localStorage', {
   length: 0,
   clear: () => held.clear(),
 })
-
 const { forgetAccount, forgetHome, homeOf, keepHomes, leaveSpaces, leftBy, leftByAnother, leftGone, leftMoved } =
   await import('../src/api')
-
 describe('the spaces this device left', () => {
   test('are marked with the account that left them, and the first mark stays', () => {
     leaveSpaces('a', ['/s/one', '/s/two'])
@@ -23,7 +21,6 @@ describe('the spaces this device left', () => {
     expect(leftByAnother('/s/one', 'a')).toBe(false)
     expect(leftByAnother('/s/none', 'a')).toBe(false)
   })
-
   test('follow a moved folder, drop a gone one, and forget an account’s marks', () => {
     leftMoved('/s/two', '/s/moved')
     expect(leftBy('/s/two')).toBe(null)
@@ -35,7 +32,6 @@ describe('the spaces this device left', () => {
     expect(leftBy('/s/three')).toBe('b')
   })
 })
-
 describe('the space each folder here was paired with', () => {
   test('is kept for the account that paired it, one folder for each space', () => {
     held.clear()
@@ -47,14 +43,12 @@ describe('the space each folder here was paired with', () => {
     expect(homeOf('/h/Team', 'a')).toBe(null)
     expect(homeOf('/h/Team 2', 'a')).toBe('s1')
   })
-
   test('is never kept for a folder another account left here', () => {
     held.clear()
     leaveSpaces('a', ['/h/Work'])
     keepHomes('b', [{ root: '/h/Work', spaceId: 's2' }])
     expect(homeOf('/h/Work', 'b')).toBe(null)
   })
-
   test('follows a renamed folder, goes with a deleted one, and outlives signing out', () => {
     held.clear()
     leaveSpaces('a', ['/h/Team'])

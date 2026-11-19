@@ -23,12 +23,10 @@ pub enum News {
     Whole,
     Gone,
 }
-
 struct Mapped {
     at: *mut libc::c_void,
     length: usize,
 }
-
 impl Mapped {
     #[allow(unsafe_code)]
     fn new(descriptor: &std::os::fd::OwnedFd, length: usize) -> Option<Mapped> {
@@ -45,13 +43,11 @@ impl Mapped {
         };
         (at != libc::MAP_FAILED).then_some(Mapped { at, length })
     }
-
     #[allow(unsafe_code)]
     fn bytes(&self, length: usize) -> &[u8] {
         unsafe { std::slice::from_raw_parts(self.at.cast::<u8>(), length.min(self.length)) }
     }
 }
-
 impl Drop for Mapped {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
@@ -60,13 +56,11 @@ impl Drop for Mapped {
         }
     }
 }
-
 struct Segment {
     id: shm::Seg,
     mapped: Mapped,
     size: (u16, u16),
 }
-
 pub struct Capture {
     x: Arc<RustConnection>,
     root: Window,
@@ -74,7 +68,6 @@ pub struct Capture {
     segment: Option<Segment>,
     waker: Window,
 }
-
 impl Capture {
     pub fn open(display: &str, seen: Sender<News>) -> Result<Capture, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
@@ -121,7 +114,6 @@ impl Capture {
             .map_err(|e| said(&e))?
             .reply()
             .map_err(|e| said(&e))?;
-
         let damage = x.generate_id().map_err(|e| said(&e))?;
         x.damage_create(damage, root, damage::ReportLevel::NON_EMPTY)
             .map_err(|e| said(&e))?;
@@ -148,7 +140,6 @@ impl Capture {
         )
         .map_err(|e| said(&e))?;
         x.flush().map_err(|e| said(&e))?;
-
         let x = Arc::new(x);
         if let Some(now) = pointer(&x) {
             let _ = seen.send(News::Pointer(now));
@@ -163,7 +154,6 @@ impl Capture {
             waker,
         })
     }
-
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
         let x = &self.x;
@@ -208,7 +198,6 @@ impl Capture {
         Ok((segment.mapped.bytes(length), size))
     }
 }
-
 impl Drop for Capture {
     fn drop(&mut self) {
         let x = &self.x;
@@ -225,7 +214,6 @@ impl Drop for Capture {
         let _ = x.flush();
     }
 }
-
 fn watch(x: &RustConnection, root: Window, waker: Window, seen: &Sender<News>) {
     loop {
         let Ok(event) = x.wait_for_event() else {
@@ -246,7 +234,6 @@ fn watch(x: &RustConnection, root: Window, waker: Window, seen: &Sender<News>) {
         }
     }
 }
-
 fn pointer(x: &RustConnection) -> Option<String> {
     let image = x.xfixes_get_cursor_image().ok()?.reply().ok()?;
     Some(pointer_text(
@@ -256,7 +243,6 @@ fn pointer(x: &RustConnection) -> Option<String> {
         &image.cursor_image,
     ))
 }
-
 pub fn pointer_text(width: u16, height: u16, hot: (u16, u16), argb: &[u32]) -> String {
     let count = usize::from(width) * usize::from(height);
     if count == 0 || argb.len() < count || argb[..count].iter().all(|one| one >> 24 == 0) {
@@ -276,7 +262,6 @@ pub fn pointer_text(width: u16, height: u16, hot: (u16, u16), argb: &[u32]) -> S
     })
     .to_string()
 }
-
 fn png_of(width: u16, height: u16, argb: &[u32]) -> Option<Vec<u8>> {
     let mut rgba = Vec::with_capacity(argb.len() * 4);
     for &pixel in argb {
@@ -305,7 +290,6 @@ fn png_of(width: u16, height: u16, argb: &[u32]) -> Option<Vec<u8>> {
     writer.finish().ok()?;
     Some(out)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -330,7 +314,6 @@ mod tests {
             r#"{"hidden":true,"t":"pointer"}"#
         );
     }
-
     #[test]
     fn takes_the_alpha_back_out_of_the_colour() {
         let png = png_of(1, 1, &[0x8040_0000]).unwrap();
@@ -340,7 +323,6 @@ mod tests {
         reader.next_frame(&mut pixel).unwrap();
         assert_eq!(pixel, [128, 0, 0, 128]);
     }
-
     #[test]
     fn reads_the_screen_when_it_is_drawn_on_and_not_otherwise() {
         super::super::in_time(|| {
@@ -363,7 +345,6 @@ mod tests {
             assert_eq!(bytes.len(), 320 * 240 * 4);
             let still = seen.recv_timeout(Duration::from_millis(300));
             assert!(still.is_err(), "{still:?} with nothing drawn");
-
             let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
             let root = x.setup().roots[screen].root;
             let pen = x.generate_id().unwrap();
@@ -392,7 +373,6 @@ mod tests {
             assert_eq!(news, Ok(News::Drawn));
             let (bytes, _) = capture.grab().unwrap();
             assert_eq!(&bytes[..3], &[0, 0, 0xff]);
-
             display.fit(400, 300, 1.0).unwrap();
             let until = std::time::Instant::now() + Duration::from_secs(2);
             let mut resized = false;

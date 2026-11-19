@@ -1,22 +1,17 @@
 import io
 import json
-
 from PIL import Image
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 from settling import NO_CARET, quiet
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 APART = 4
-
 QUIET = NO_CARET + """
   footer[data-region="status"], .fab { visibility: hidden !important }
   [data-panes] { background: #ff00ff !important }
 """
-
 CARDS = """
 () => {
   const ws = window.ordenApp.workspace
@@ -47,10 +42,8 @@ CARDS = """
   })
 }
 """
-
 def apart(one: tuple[int, ...], other: tuple[int, ...]) -> int:
     return max(abs(a - b) for a, b in zip(one[:3], other[:3]))
-
 def checked(page: Page, label: str) -> None:
     quiet(page)
     cards = page.evaluate(CARDS)
@@ -77,7 +70,6 @@ def checked(page: Page, label: str) -> None:
                 wrong(f"{where} is square, where the card is rounded: {json.dumps(card)}")
             if not rounded and off > APART:
                 wrong(f"{where} is cut round, where the card meets the window: {json.dumps(card)}")
-
 ARRANGE = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -87,16 +79,13 @@ async () => {
   ws.showRight('outline')
 }
 """
-
 SPLITS = {
     "one": [],
     "side by side": [("row", 0)],
     "stacked": [("column", 0)],
     "three": [("row", 0), ("column", 1)],
 }
-
 KINDS = {"note": "note", "web": "web", "page": "pages"}
-
 OPEN = """async ([pane, kind]) => {
   const ws = window.ordenApp.workspace
   ws.focusPane(pane)
@@ -104,7 +93,6 @@ OPEN = """async ([pane, kind]) => {
   if (kind === 'web') ws.openPage('https://example.com/')
   if (kind === 'page') await ws.createPages(undefined, 'Corners.pages')
 }"""
-
 def fill(page: Page, kind: str) -> None:
     for pane in page.evaluate("() => window.ordenApp.workspace.panes.all.map((one) => one.id)"):
         shows = f"window.ordenApp.workspace.showing({json.dumps(pane)})?.kind === {json.dumps(KINDS[kind])}"
@@ -114,7 +102,6 @@ def fill(page: Page, kind: str) -> None:
             if page.evaluate(f"() => {shows}"):
                 break
         wait_for(page, shows, f"a {kind} in pane {pane}")
-
 def drive(browser: Browser) -> None:
     for layout, splits in SPLITS.items():
         context = DRIVE.context(browser, viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
@@ -134,5 +121,4 @@ def drive(browser: Browser) -> None:
             fill(page, kind)
             checked(page, f"{layout.replace(' ', '-')}-{kind}")
         context.close()
-
 raise SystemExit(DRIVE.run(drive, "every pane's card is rounded at every corner but where it meets the window"))

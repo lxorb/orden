@@ -8,7 +8,6 @@ const script = (invoker: string, name: string, url: string, at: number, duration
   sourceCharPosition: at,
   took: duration,
 })
-
 describe('a stall in the log', () => {
   it('names the longest scripts by file, and what the page was waiting on', () => {
     const line = described(
@@ -24,20 +23,17 @@ describe('a stall in the log', () => {
       },
       ['read_tree 2.1 s'],
     )
-
     expect(line).toBe(
       'stall: the page was blocked 1844 ms; ran TimerHandler:setTimeout fold link-index-3bd2.js:4120 1610 ms, ' +
         'Window.requestAnimationFrame tick editor-9.js:7 120 ms, Response.json.then - index-a1.js:88 12 ms; ' +
         'waiting on read_tree 2.1 s',
     )
   })
-
   it('says so when nothing it ran can be named, and leaves out an empty wait', () => {
     expect(described({ startTime: 0, took: 1000, scripts: [] }, [])).toBe(
       'stall: the page was blocked 1000 ms; ran nothing it could name',
     )
   })
-
   it('says an address by its last part only', () => {
     expect(fileOf('https://example.com/private/path/page.js?token=1#x')).toBe('page.js')
     expect(fileOf('IMG#avatar.onload')).toBe('IMG#avatar.onload')

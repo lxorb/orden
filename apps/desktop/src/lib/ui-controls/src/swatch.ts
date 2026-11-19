@@ -3,7 +3,6 @@ export interface SwatchOption {
   label: string
   colour: string
 }
-
 export interface PairField {
   get(): readonly [string, string]
   own(): boolean

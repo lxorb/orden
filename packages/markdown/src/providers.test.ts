@@ -4,7 +4,6 @@ import { iframeCard, webCard } from './web-embed'
 
 const frame = (address: string) => webEmbed(address)?.frame ?? null
 const named = (address: string) => webEmbed(address)?.provider.id ?? null
-
 describe('the addresses a note can show rather than link to', () => {
   test('a YouTube video, however it was written', () => {
     const wanted = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ'
@@ -19,7 +18,6 @@ describe('the addresses a note can show rather than link to', () => {
       expect(frame(address), address).toBe(wanted)
     }
   })
-
   test('and never youtube.com itself, which sets a cookie to be watched; a timestamp is where it starts; a page of a provider that is not a thing to show is a link', () => {
     expect(frame('https://youtu.be/dQw4w9WgXcQ')).toContain('youtube-nocookie.com')
     expect(frame('https://youtu.be/abc?t=90')).toBe('https://www.youtube-nocookie.com/embed/abc?start=90')
@@ -31,7 +29,6 @@ describe('the addresses a note can show rather than link to', () => {
     expect(webEmbed('https://x.com/somebody')).toBe(null)
     expect(webEmbed('https://open.spotify.com/user/x')).toBe(null)
   })
-
   test('everything else on the web is a link like any other; and so is anything not asked for over https', () => {
     expect(webEmbed('https://example.test/a')).toBe(null)
     expect(webEmbed('https://gist.github.com/a/b')).toBe(null)
@@ -40,7 +37,6 @@ describe('the addresses a note can show rather than link to', () => {
     expect(webEmbed('http://www.youtube.com/watch?v=abc')).toBe(null)
     expect(webEmbed('javascript:alert(1)')).toBe(null)
   })
-
   test('the other rows', () => {
     expect(frame('https://vimeo.com/123456')).toBe('https://player.vimeo.com/video/123456')
     expect(frame('https://x.com/orden/status/1234567890')).toBe(
@@ -60,14 +56,12 @@ describe('the addresses a note can show rather than link to', () => {
     expect(frame('https://www.google.com/maps/@46.9,7.4,12z')).toContain('q=46.9%2C7.4')
     expect(named('https://maps.app.goo.gl/abc')).toBe(null)
   })
-
   test('nothing a link wrote reaches a frame address unchecked', () => {
     expect(frame('https://youtu.be/abc?x=1/../../evil')).toBe('https://www.youtube-nocookie.com/embed/abc')
     expect(webEmbed('https://www.loom.com/share/abc%2f..%2fevil')).toBe(null)
     expect(webEmbed('https://codepen.io/a/pen/b?c=d#e')).not.toBe(null)
     expect(frame('https://codepen.io/a/pen/b?c=d#e')).toBe('https://codepen.io/a/embed/b?default-tab=result')
   })
-
   test('every row asks for a sandbox, and none for more than it needs', () => {
     for (const provider of providers()) {
       expect(provider.sandbox, provider.id).toContain('allow-scripts')
@@ -76,7 +70,6 @@ describe('the addresses a note can show rather than link to', () => {
       expect(provider.sandbox, provider.id).not.toContain('allow-modals')
     }
   })
-
   test('and every row has a name, a mark and a shape', () => {
     const rows = providers()
     expect(rows.length).toBeGreaterThan(5)
@@ -88,7 +81,6 @@ describe('the addresses a note can show rather than link to', () => {
     expect(new Set(rows.map((one) => one.id)).size).toBe(rows.length)
   })
 })
-
 describe('the broad list, for the places nobody wrote a row for by hand', () => {
   const listed = [
     ['https://drive.google.com/file/d/1A2b3C4d5E6f7G8hI9j/view?usp=sharing', 'drive'],
@@ -99,7 +91,6 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     ['https://form.typeform.com/to/u6nXL7', 'typeform'],
     ['https://sketchfab.com/3d-models/a-thing-0d8e5c1e0f7f4a0a9e5b2a7b0e3c1d2f', 'sketchfab'],
   ] as const
-
   test('each of them is a card saying whose page it stands for; and what it frames is an address of that provider’s, over https', () => {
     for (const [address, id] of listed) {
       expect(named(address), address).toBe(id)
@@ -109,7 +100,6 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
       expect(frame(address) ?? '', address).toMatch(/^https:\/\/[\w.-]+\//)
     }
   })
-
   test('a row nobody measured gets scripts and nothing more', () => {
     for (const [address] of listed) {
       const card = webCard(address) ?? ''
@@ -120,7 +110,6 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
       expect(card, address).not.toContain('src=')
     }
   })
-
   test('a page of a listed provider that is not a thing to show is a link; and a domain the list never named stays the link it was', () => {
     expect(webEmbed('https://miro.com/pricing')).toBe(null)
     expect(webEmbed('https://drive.google.com/drive/folders/1A2b3C')).toBe(null)
@@ -131,7 +120,6 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     expect(webCard('https://example.test/a')).toBe(null)
     expect(webCard('https://drive.google.example/file/d/abc/view')).toBe(null)
   })
-
   test('nothing a link wrote reaches a listed frame address unchecked', () => {
     for (const address of [
       'https://miro.com/app/board/a%2f..%2fevil/',
@@ -147,7 +135,6 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     expect(frame('https://www.tiktok.com/@orden/video/1?a=b#c')).toBe('https://www.tiktok.com/embed/v2/1')
   })
 })
-
 describe('the card an address is shown as', () => {
   test('says whose page it is, and holds the frame without loading it', () => {
     const card = webCard('https://youtu.be/dQw4w9WgXcQ')
@@ -159,7 +146,6 @@ describe('the card an address is shown as', () => {
     expect(card).not.toContain('<iframe')
     expect(card).not.toContain('src=')
   })
-
   test('is a link, so a page with no script still goes somewhere; takes the room the frame will take, so nothing moves when it loads; and nothing else gets one', () => {
     const card = webCard('https://youtu.be/abc') ?? ''
     expect(card).toContain('href="https://youtu.be/abc"')
@@ -171,7 +157,6 @@ describe('the card an address is shown as', () => {
     expect(webCard('shot.png')).toBe(null)
   })
 })
-
 describe('the card an <iframe> a note wrote becomes', () => {
   test('says the domain, and holds the page without loading it', () => {
     const card = iframeCard('<iframe src="https://maps.example.test/plan?a=1&amp;b=2"></iframe>')
@@ -181,34 +166,29 @@ describe('the card an <iframe> a note wrote becomes', () => {
     expect(card).not.toContain('<iframe')
     expect(card).not.toContain(' src=')
   })
-
   test('and gets scripts and nothing else, having promised nothing', () => {
     const card = iframeCard('<iframe src="https://x.test/a"></iframe>') ?? ''
     expect(card).toContain('data-sandbox="allow-scripts"')
     expect(card).not.toContain('allow-same-origin')
     expect(card).not.toContain('data-allow=')
   })
-
   test('is a link, so a page with no script still goes somewhere', () => {
     const card = iframeCard("<iframe src='https://x.test/a' width=560></iframe>") ?? ''
     expect(card).toContain('href="https://x.test/a"')
     expect(card).toContain('rel="noopener noreferrer nofollow"')
   })
-
   test('takes the room the tag asked for, when it asked for a sane amount', () => {
     expect(iframeCard('<iframe src="https://x.test/a" height="240"></iframe>')).toContain('--embed-height: 240px')
     for (const height of ['', ' height="4"', ' height="99999"', ' height="50%"']) {
       expect(iframeCard(`<iframe src="https://x.test/a"${height}></iframe>`), height).toContain('embed-wide')
     }
   })
-
   test('a host the table knows gets the table’s card, not this one', () => {
     const card = iframeCard('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>')
     expect(card).toContain('data-provider="youtube"')
     expect(card).toContain('youtube-nocookie.com/embed/dQw4w9WgXcQ')
     expect(card).toContain('YouTube')
   })
-
   test('and an address a browser would not frame gets no card at all', () => {
     for (const tag of [
       '<iframe src="http://x.test/a"></iframe>',
@@ -223,7 +203,6 @@ describe('the card an <iframe> a note wrote becomes', () => {
       expect(iframeCard(tag), tag).toBe(null)
     }
   })
-
   test('and nothing the tag carried besides the address comes with it', () => {
     const card = iframeCard('<iframe src="https://x.test/a" onload="alert(1)"></iframe>') ?? ''
     expect(card).not.toContain('onload')

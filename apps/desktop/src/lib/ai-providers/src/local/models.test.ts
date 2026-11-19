@@ -29,7 +29,6 @@ describe('Claude Code’s list', () => {
     ])
   })
 })
-
 describe('Codex’s list', () => {
   test('is its shown models, their efforts on Orden’s scale, pictures and Fast', () => {
     const models = modelsIn('codex', {
@@ -62,7 +61,6 @@ describe('Codex’s list', () => {
       },
     ])
   })
-
   test('says nothing of an answer that is not a list', () => {
     expect(modelsIn('codex', null)).toEqual([])
     expect(modelsIn('claude-code', 'models')).toEqual([])

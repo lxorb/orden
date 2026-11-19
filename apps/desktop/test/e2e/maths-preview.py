@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """Maths first $a^2 + b^2 = c^2$ on the top line
 
 a paragraph to make room above
@@ -29,7 +26,6 @@ $$
 
 the end
 """ + "".join(f"\nfiller {n}\n" for n in range(40))
-
 PREVIEW = """
 () => {
   const view = window.orden
@@ -54,9 +50,7 @@ PREVIEW = """
   }
 }
 """
-
 LINES = "() => [...document.querySelectorAll('.cm-line')].map((l) => Math.round(l.getBoundingClientRect().top))"
-
 def caret_after(page: Page, needle: str, offset: int = 0) -> None:
     page.evaluate(
         """([needle, offset]) => {
@@ -69,14 +63,11 @@ def caret_after(page: Page, needle: str, offset: int = 0) -> None:
         [needle, offset],
     )
     page.wait_for_timeout(150)
-
 def preview(page: Page) -> dict | None:
     return page.evaluate(PREVIEW)
-
 def shown(page: Page, what: str) -> dict | None:
     wait_for(page, f"({PREVIEW})()?.katex || ({PREVIEW})()?.error", what, patience=15)
     return preview(page)
-
 def check_inside(seen: dict, label: str) -> None:
     pane = seen["scroller"]
     if seen["left"] < pane["left"] - 1 or seen["right"] > pane["right"] + 1:
@@ -86,15 +77,12 @@ def check_inside(seen: dict, label: str) -> None:
     caret = seen["caret"]
     if caret and seen["top"] < caret["bottom"] - 1 and seen["bottom"] > caret["top"] + 1:
         wrong(f"[{label}] the preview covers the line being typed: {json.dumps(seen)}")
-
 def open_note(page: Page) -> None:
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Maths first")
     wait_for(page, "() => document.querySelectorAll('.orden-math-block').length === 1", "the formulas")
-
 def desktop(page: Page, scheme: str) -> None:
     open_note(page)
-
     caret_after(page, "$\\sqrt{x", 0)
     seen = shown(page, "the inline preview")
     say(f"[{scheme}] inline: {json.dumps(seen)}")
@@ -105,7 +93,6 @@ def desktop(page: Page, scheme: str) -> None:
     else:
         check_inside(seen, f"{scheme} inline")
     shot(page, f"{scheme}-inline")
-
     before = page.evaluate(LINES)
     page.keyboard.type("+y")
     page.wait_for_timeout(200)
@@ -115,7 +102,6 @@ def desktop(page: Page, scheme: str) -> None:
     after = page.evaluate(LINES)
     if before != after:
         wrong(f"[{scheme}] typing moved the lines of the note: {before} -> {after}")
-
     page.keyboard.type("\\frac{")
     page.wait_for_timeout(250)
     seen = preview(page)
@@ -128,7 +114,6 @@ def desktop(page: Page, scheme: str) -> None:
     seen = preview(page)
     if not seen or seen["error"] or seen["stale"]:
         wrong(f"[{scheme}] the error stayed after the formula was finished: {seen}")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(150)
     if preview(page):
@@ -137,11 +122,9 @@ def desktop(page: Page, scheme: str) -> None:
     page.wait_for_timeout(250)
     if not preview(page):
         wrong(f"[{scheme}] the preview did not come back with the next keystroke")
-
     caret_after(page, "another paragraph")
     if preview(page):
         wrong(f"[{scheme}] the preview stayed after the caret left the formula")
-
     caret_after(page, "$\\sqrt{x", 0)
     page.evaluate(
         """() => {
@@ -157,7 +140,6 @@ def desktop(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] at the top of the note the preview was not put below: {seen}")
     else:
         check_inside(seen, f"{scheme} top")
-
     caret_after(page, "\\int_0^1", 0)
     first = shown(page, "the block preview")
     caret_after(page, "= \\frac{1}", 0)
@@ -171,12 +153,10 @@ def desktop(page: Page, scheme: str) -> None:
     else:
         check_inside(second, f"{scheme} block")
     shot(page, f"{scheme}-block")
-
     caret_after(page, "$e^{i", 0)
     seen = shown(page, "the callout preview")
     if not seen or not seen["katex"]:
         wrong(f"[{scheme}] no preview in a callout: {seen}")
-
     cell = page.locator(".orden-table td", has_text="pi").first
     cell.click()
     page.wait_for_timeout(150)
@@ -197,7 +177,6 @@ def desktop(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] no preview in a table cell")
     shot(page, f"{scheme}-table")
     page.keyboard.press("Escape")
-
     caret_after(page, "$\\sqrt{x", 0)
     cdp = page.context.new_cdp_session(page)
     cdp.send("Input.imeSetComposition", {"text": "α", "selectionStart": 1, "selectionEnd": 1})
@@ -208,7 +187,6 @@ def desktop(page: Page, scheme: str) -> None:
     seen = preview(page)
     if not seen or "α" not in seen["text"]:
         wrong(f"[{scheme}] the preview did not follow a composed character: {seen}")
-
     page.evaluate("() => window.ordenApp.modes.toggleSource()")
     page.wait_for_timeout(300)
     caret_after(page, "$\\sqrt{x", 0)
@@ -217,7 +195,6 @@ def desktop(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] no preview in source mode: {seen}")
     shot(page, f"{scheme}-source")
     page.evaluate("() => window.ordenApp.modes.toggleSource()")
-
 def phone(page: Page) -> None:
     open_note(page)
     caret_after(page, "$e^{i", 0)
@@ -226,7 +203,6 @@ def phone(page: Page) -> None:
     if seen:
         check_inside(seen, "phone")
     shot(page, "phone")
-
 def drive(browser: Browser) -> None:
     backgrounds = {}
     for scheme in ("light", "dark"):
@@ -239,10 +215,8 @@ def drive(browser: Browser) -> None:
         page.context.close()
     if backgrounds["light"] == backgrounds["dark"]:
         wrong(f"the preview looks the same in light and dark: {backgrounds}")
-
     page = DRIVE.page(browser, viewport={"width": 390, "height": 740}, color_scheme="light", is_mobile=True, has_touch=True)
     DRIVE.open(page)
     phone(page)
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "the formula is drawn live above its source, wherever it is written"))

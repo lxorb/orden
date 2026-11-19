@@ -13,13 +13,11 @@ const stateOf = (doc: string, caret: number): EditorState =>
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-
 function press(state: EditorState, command: StateCommand): EditorState {
   let next = state
   command({ state, dispatch: (transaction) => (next = transaction.state) })
   return next
 }
-
 function steps(doc: string, caret: number): string[] {
   const seen: string[] = []
   let state = stateOf(doc, caret)
@@ -31,7 +29,6 @@ function steps(doc: string, caret: number): string[] {
   }
   return seen
 }
-
 describe('growing the selection', () => {
   test.each([
     [
@@ -52,17 +49,14 @@ describe('growing the selection', () => {
       '# One\n\n## Two\n\n- a\n- b\n\n## Three\n'.indexOf('b'),
     ],
   ])('%j', (input, wanted, extra) => expect(steps(input, extra)).toEqual(wanted))
-
   test('a heading’s words before the heading', () => {
     const doc = '## Big title\n\ntext'
     expect(steps(doc, doc.indexOf('title')).slice(0, 3)).toEqual(['title', 'Big title', '## Big title'])
   })
-
   test('a link’s words before the link', () => {
     const doc = 'see [the docs](https://a.ch) now'
     expect(steps(doc, doc.indexOf('docs')).slice(0, 3)).toEqual(['docs', 'the docs', '[the docs](https://a.ch)'])
   })
-
   test('never grows into the front matter', () => {
     const meta = '---\nicon: x\n---\n'
     const doc = `${meta}words here`
@@ -70,17 +64,14 @@ describe('growing the selection', () => {
     expect(last).toBe('words here')
   })
 })
-
 describe('shrinking it again', () => {
   test('goes back down the steps it came up, one a press', () => {
     const doc = 'Some *very* nice text.'
     let state = stateOf(doc, doc.indexOf('very') + 1)
     const start = state.selection
-
     const at = (one: EditorState) => one.sliceDoc(one.selection.main.from, one.selection.main.to)
     for (let n = 0; n < 3; n++) state = press(state, expandSelection)
     expect(at(state)).toBe('Some *very* nice text.')
-
     state = press(state, shrinkSelection)
     expect(at(state)).toBe('*very*')
     state = press(state, shrinkSelection)
@@ -89,12 +80,10 @@ describe('shrinking it again', () => {
     expect(state.selection.eq(start)).toBe(true)
     expect(shrinkSelection({ state, dispatch: () => undefined })).toBe(false)
   })
-
   test('has nothing to go back to once the selection has moved', () => {
     let state = stateOf('one two', 1)
     state = press(state, expandSelection)
     state = state.update({ selection: EditorSelection.cursor(5) }).state
-
     expect(shrinkSelection({ state, dispatch: () => undefined })).toBe(false)
   })
 })

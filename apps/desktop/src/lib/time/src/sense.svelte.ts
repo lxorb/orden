@@ -9,7 +9,6 @@ import { time } from './time.svelte'
 import { type Place, siteOf, Tracker } from './tracker'
 
 const AWAY = 5 * 60_000
-
 const tracker = new Tracker({
   opened: (lane, place, start, end) =>
     time.addSpan({ start, end, source: lane, place: place.key, label: place.name }).id,
@@ -19,12 +18,10 @@ const tracker = new Tracker({
     return true
   },
 })
-
 const fold = new MinuteFold()
 let lastInput = Date.now()
 let leading = false
 const locks = 'locks' in navigator ? navigator.locks : null
-
 if (locks) {
   void locks.request('orden-time-sense', () => {
     leading = true
@@ -33,28 +30,23 @@ if (locks) {
 } else {
   leading = true
 }
-
 function spaceInFront(): Place | null {
   const space = workspace.activeSpace
   if (!space) return null
   return { key: sync.remoteIdFor(space.root) ?? `name:${space.name}`, name: space.name }
 }
-
 function tabInFront(): Place | null {
   const tab = workspace.active
   if (!tab || tab.inPrivate) return null
   return { key: tab.path ?? `${tab.kind}:${tab.name}`, name: tab.name }
 }
-
 function siteInFront(): Place | null {
   const tab = workspace.active
   if (tab?.kind !== 'web' || tab.inPrivate) return null
   const site = siteOf(tab.address)
   return site ? { key: site, name: site } : null
 }
-
 const shown = () => document.visibilityState === 'visible'
-
 async function sense(): Promise<Sensed> {
   if (isDesktop) {
     const said = sensedOf(await invoke<unknown>('time_sense').catch(() => null))
@@ -72,9 +64,7 @@ async function sense(): Promise<Sensed> {
     locked: null,
   }
 }
-
 let looking = false
-
 async function look(): Promise<void> {
   if (looking || !time.ready) return
   if (!timeOn() || !time.recording) {
@@ -107,14 +97,12 @@ async function look(): Promise<void> {
     looking = false
   }
 }
-
 $effect.root(() => {
   $effect(() => {
     const looked = [workspace.activeSpace?.id, workspace.active?.id, workspace.active?.address]
     if (looked.length) untrack(() => void look())
   })
 })
-
 const heard = () => {
   lastInput = Date.now()
 }

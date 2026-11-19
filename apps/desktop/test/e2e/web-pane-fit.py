@@ -1,13 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 ARRANGE = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -20,7 +17,6 @@ async () => {
   ws.openPage('https://example.com/')
 }
 """
-
 LOOK = """
 () => {
   const box = (one) => {
@@ -45,7 +41,6 @@ LOOK = """
     })
 }
 """
-
 def lines_of(items: list[dict]) -> list[list[dict]]:
     lines: list[list[dict]] = []
     for one in sorted(items, key=lambda item: (item["top"], item["left"])):
@@ -55,7 +50,6 @@ def lines_of(items: list[dict]) -> list[list[dict]]:
         else:
             lines.append([one])
     return lines
-
 def checked(page: Page, label: str) -> None:
     tabs = page.evaluate(LOOK)
     if not tabs:
@@ -75,7 +69,6 @@ def checked(page: Page, label: str) -> None:
         }
         if any(abs(value) > 0.5 for value in off.values()):
             wrong(f"{where} the page's room is not the card under the bar: {json.dumps(off)}")
-
         lines = lines_of(tab["items"])
         fields = [number for number, line in enumerate(lines) if any(one["field"] for one in line)]
         if len(fields) != 1:
@@ -89,22 +82,18 @@ def checked(page: Page, label: str) -> None:
         if not alone or fields[0] != len(lines) - 1 or len(glyphs) != 1:
             shape = [["field" if one["field"] else "glyph" for one in line] for line in lines]
             wrong(f"{where} the bar wrapped into {shape}, not the glyphs over the field alone")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     page.evaluate(ARRANGE)
     wait_for(page, "document.querySelector('.web .webbar')", "the web tab's bar")
     quiet(page)
-
     checked(page, "one pane")
     DRIVE.steady(page, "01-one-pane")
-
     page.evaluate("() => window.ordenApp.workspace.showRight('outline')")
     wait_for(page, "!!document.querySelector('.panels.right.open')", "the right side")
     quiet(page)
     checked(page, "beside the right side")
-
     for width in range(760, 459, -1):
         page.set_viewport_size({"width": width, "height": 820})
         page.wait_for_timeout(30)
@@ -112,11 +101,9 @@ def drive(browser: Browser) -> None:
     quiet(page)
     DRIVE.steady(page, "02-narrow-beside-the-right-side")
     page.set_viewport_size({"width": 1180, "height": 820})
-
     page.evaluate("() => window.ordenApp.workspace.closePanel('right')")
     quiet(page)
     checked(page, "right side shut")
-
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "two panes")
     quiet(page)
@@ -138,17 +125,14 @@ def drive(browser: Browser) -> None:
         checked(page, f"three panes, {width} wide")
     DRIVE.steady(page, "04-three-narrow-panes")
     page.set_viewport_size({"width": 1180, "height": 820})
-
     page.evaluate("() => window.ordenApp.modes.setZoom(1.4)")
     quiet(page)
     checked(page, "the words larger")
     page.evaluate("() => window.ordenApp.modes.setZoom(1)")
-
     page.locator("[data-pane] .web .webbar .field input").first.click()
     page.keyboard.press("Shift+F11")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 1", "the window filled")
     quiet(page)
     checked(page, "filling the window")
     DRIVE.steady(page, "05-filling-the-window")
-
 raise SystemExit(DRIVE.run(drive))

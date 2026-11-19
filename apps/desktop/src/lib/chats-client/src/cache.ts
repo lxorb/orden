@@ -11,7 +11,6 @@ export interface CachedChat {
   complete: boolean
   row: ChatRow | null
 }
-
 export interface OutboxRow {
   id: string
   chat: string
@@ -20,13 +19,11 @@ export interface OutboxRow {
   tries: number
   refused: Refusal | null
 }
-
 export interface DraftRow {
   chat: string
   text: string
   at: number
 }
-
 export interface WindowAsk {
   chat: string
   parent?: string
@@ -35,7 +32,6 @@ export interface WindowAsk {
   around?: number
   limit: number
 }
-
 export interface SearchAsk {
   chats?: string[]
   words?: string[]
@@ -47,7 +43,6 @@ export interface SearchAsk {
   until?: number
   limit: number
 }
-
 export type CacheChange =
   | { t: 'chat'; chat: CachedChat }
   | { t: 'message'; chat: string; kept: Kept }
@@ -57,7 +52,6 @@ export type CacheChange =
   | { t: 'draft'; draft: DraftRow }
   | { t: 'undraft'; chat: string }
   | { t: 'forget'; chat: string }
-
 export interface ChatCache {
   chats(): Promise<CachedChat[]>
   window(ask: WindowAsk): Promise<Kept[]>
@@ -69,35 +63,28 @@ export interface ChatCache {
   write(changes: readonly CacheChange[]): Promise<void>
   forget(): Promise<void>
 }
-
 export function isMain(message: Message): boolean {
   return message.parent === undefined || message.alsoToChat
 }
-
 export function hasColumn(message: Message): string {
   return ` ${hasOf(message).join(' ')} `
 }
-
 function folded(text: string): string {
   return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
 }
-
 function wordsOf(text: string): string[] {
   return folded(text)
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean)
 }
-
 export class MemoryCache implements ChatCache {
   private readonly chatRows = new Map<string, CachedChat>()
   private readonly rows = new Map<string, Map<string, Kept>>()
   private readonly queued = new Map<string, OutboxRow>()
   private readonly drafted = new Map<string, DraftRow>()
-
   chats(): Promise<CachedChat[]> {
     return Promise.resolve([...this.chatRows.values()])
   }
-
   window(ask: WindowAsk): Promise<Kept[]> {
     const all = [...(this.rows.get(ask.chat)?.values() ?? [])]
       .filter((one) => (ask.parent === undefined ? isMain(one.message) : one.message.parent === ask.parent))
@@ -112,12 +99,10 @@ export class MemoryCache implements ChatCache {
     if (ask.after !== undefined) return Promise.resolve(newer(ask.after, limit))
     return Promise.resolve(older(ask.before ?? Number.MAX_SAFE_INTEGER, limit))
   }
-
   messages(chat: string, ids: readonly string[]): Promise<Kept[]> {
     const rows = this.rows.get(chat)
     return Promise.resolve(ids.flatMap((id) => rows?.get(id) ?? []).sort((a, b) => a.message.seq - b.message.seq))
   }
-
   search(ask: SearchAsk): Promise<{ chat: string; kept: Kept }[]> {
     const found: { chat: string; kept: Kept }[] = []
     for (const [chat, rows] of this.rows) {
@@ -141,7 +126,6 @@ export class MemoryCache implements ChatCache {
     found.sort((a, b) => b.kept.message.at - a.kept.message.at || b.kept.message.seq - a.kept.message.seq)
     return Promise.resolve(found.slice(0, ask.limit))
   }
-
   unread(chat: string, after: number, me: Who): Promise<number> {
     let count = 0
     for (const { message } of this.rows.get(chat)?.values() ?? []) {
@@ -149,15 +133,12 @@ export class MemoryCache implements ChatCache {
     }
     return Promise.resolve(count)
   }
-
   outbox(): Promise<OutboxRow[]> {
     return Promise.resolve([...this.queued.values()].sort((a, b) => a.madeAt - b.madeAt || (a.id < b.id ? -1 : 1)))
   }
-
   drafts(): Promise<DraftRow[]> {
     return Promise.resolve([...this.drafted.values()])
   }
-
   write(changes: readonly CacheChange[]): Promise<void> {
     for (const change of changes) {
       switch (change.t) {
@@ -194,7 +175,6 @@ export class MemoryCache implements ChatCache {
     }
     return Promise.resolve()
   }
-
   forget(): Promise<void> {
     this.chatRows.clear()
     this.rows.clear()

@@ -8,7 +8,6 @@ export interface TaskChip {
   text: string
   tone?: 'overdue' | 'p1' | 'p2' | 'p3'
 }
-
 const HIDDEN = new Set<FieldToken['field']>([
   'due',
   'scheduled',
@@ -27,7 +26,6 @@ const HIDDEN = new Set<FieldToken['field']>([
   'remind',
   'assignee',
 ])
-
 function fieldSpans(line: string, parsed: ParsedTask): { from: number; to: number }[] {
   const out: { from: number; to: number }[] = []
   for (const token of parsed.tokens) {
@@ -38,7 +36,6 @@ function fieldSpans(line: string, parsed: ParsedTask): { from: number; to: numbe
   }
   return out
 }
-
 const PRIORITY: Record<Priority, Pick<TaskChip, 'text' | 'tone'> | null> = {
   1: { text: '🔺', tone: 'p1' },
   2: { text: '⏫', tone: 'p2' },
@@ -47,13 +44,11 @@ const PRIORITY: Record<Priority, Pick<TaskChip, 'text' | 'tone'> | null> = {
   5: { text: '🔽' },
   6: { text: '⏬' },
 }
-
 const minutes = (count: number) => {
   const hours = Math.floor(count / 60)
   const rest = count % 60
   return hours ? (rest ? `${hours}h${rest}m` : `${hours}h`) : `${rest}m`
 }
-
 export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'start'): TaskChip[] {
   const day = (iso: string, time?: string) => dayWords(iso, today, time)
   const out: TaskChip[] = []
@@ -79,16 +74,13 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
   if (fields.completed !== undefined) out.push({ field: 'done', text: `done ${day(fields.completed)}` })
   return out
 }
-
 export class TaskChipsWidget extends OrdenWidget {
   constructor(private readonly chips: readonly TaskChip[]) {
     super()
   }
-
   override eq(other: TaskChipsWidget) {
     return JSON.stringify(other.chips) === JSON.stringify(this.chips)
   }
-
   toDOM() {
     const row = document.createElement('span')
     row.className = 'orden-task-chips orden-task-chips-still'
@@ -102,12 +94,10 @@ export class TaskChipsWidget extends OrdenWidget {
     }
     return row
   }
-
   override ignoreEvent() {
     return true
   }
 }
-
 export function taskDrawing(
   line: string,
   due: DueReads = 'start',
@@ -116,10 +106,8 @@ export function taskDrawing(
   if (!parsed) return null
   return { hide: fieldSpans(line, parsed), chips: chipsOf(parsed.fields, todayHere(), due) }
 }
-
 const COMMENT_FIELD = /[ \t]*\[(at|by)::[ \t]*([^\]]*?)[ \t]*\]/g
 const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
-
 export function commentDrawing(
   line: string,
   today = todayHere(),
@@ -139,16 +127,13 @@ export function commentDrawing(
   }
   return hide.length ? { hide, chips } : null
 }
-
 export class CommentChipsWidget extends OrdenWidget {
   constructor(readonly chips: readonly string[]) {
     super()
   }
-
   override eq(other: CommentChipsWidget) {
     return other.chips.join('\n') === this.chips.join('\n')
   }
-
   toDOM() {
     const row = document.createElement('span')
     row.className = 'orden-task-chips orden-comment-chips'
@@ -160,7 +145,6 @@ export class CommentChipsWidget extends OrdenWidget {
     }
     return row
   }
-
   override ignoreEvent() {
     return false
   }

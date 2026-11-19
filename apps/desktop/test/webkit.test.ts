@@ -13,32 +13,25 @@ const SOURCES = [
   'packages/chats/src',
   'packages/glasses/src',
 ]
-
 const files = SOURCES.flatMap((one) =>
   walk(join(ROOT, one), (path) => /\.(ts|svelte|css|js)$/.test(path) && !path.endsWith('.test.ts'), ['node_modules']),
 ).map((path) => ({
   name: relative(ROOT, path).replaceAll('\\', '/'),
   text: readFileSync(path, 'utf8'),
 }))
-
 function code(text: string): string {
   return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1')
 }
-
 function blocks(text: string): string[] {
   return [...code(text).matchAll(/\{[^{}]*\}/g)].map((one) => one[0])
 }
-
 const sheets = files.filter((one) => /\.(css|svelte)$/.test(one.name))
-
 interface Tag {
   type: string
   name?: string
   attributes?: { type: string; name?: string }[]
 }
-
 const DOM_TAGS = new Set(['RegularElement', 'SvelteElement', 'SvelteWindow', 'SvelteDocument', 'SvelteBody'])
-
 function* tags(node: unknown): Generator<Tag> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -49,21 +42,17 @@ function* tags(node: unknown): Generator<Tag> {
   if (DOM_TAGS.has(tag.type)) yield tag
   for (const [key, value] of Object.entries(node)) if (key !== 'attributes') yield* tags(value)
 }
-
 function hears(tag: Tag, kind: 'dragover' | 'dragenter'): boolean {
   return (tag.attributes ?? []).some(
     (one) =>
       (one.type === 'Attribute' && one.name === `on${kind}`) || (one.type === 'OnDirective' && one.name === kind),
   )
 }
-
 function count(text: string, pattern: RegExp): number {
   return [...text.matchAll(pattern)].length
 }
-
 const LISTENS = (kind: string) => new RegExp(`addEventListener\\(\\s*['"\`]${kind}['"\`]`, 'g')
 const HANDLES = (kind: string) => new RegExp(`^\\s*${kind}\\s*[(:]`, 'gm')
-
 function overWithoutEnter(one: { name: string; text: string }): string[] {
   const lone: string[] = []
   if (one.name.endsWith('.svelte')) {
@@ -80,9 +69,7 @@ function overWithoutEnter(one: { name: string; text: string }): string[] {
       lone.push(`${one.name}: a dragover ${what} without its dragenter`)
   return lone
 }
-
 const PREFIXED = ['user-select', 'backdrop-filter']
-
 const MISSING: [string, RegExp, RegExp][] = [
   ['requestIdleCallback', /\brequestIdleCallback\s*\(/, /typeof requestIdleCallback/],
   ['cancelIdleCallback', /\bcancelIdleCallback\s*\(/, /typeof requestIdleCallback|hasIdle/],
@@ -90,13 +77,11 @@ const MISSING: [string, RegExp, RegExp][] = [
   ['showOpenFilePicker', /\bshow(Open|Save)FilePicker\s*\(|\bshowDirectoryPicker\s*\(/, /in window/],
   ['navigator.locks', /navigator\.locks\s*\.request/, /navigator\.locks\s*\?|typeof navigator/],
 ]
-
 describe('WebKit on iOS', () => {
   test('the scan reads the app', () => {
     expect(files.length).toBeGreaterThan(500)
     expect(sheets.some((one) => one.name.endsWith('base.css'))).toBe(true)
   })
-
   for (const property of PREFIXED) {
     test(`reads ${property} only with -webkit- beside it`, () => {
       const bare = new RegExp(`(^|[^-\\w])${property}\\s*:`)
@@ -109,12 +94,10 @@ describe('WebKit on iOS', () => {
       expect(loose).toEqual([])
     })
   }
-
   test('has no style.userSelect, so a drag holds selection off with .orden-unselectable', () => {
     const written = files.filter((one) => /\.style\.userSelect\b/.test(code(one.text)))
     expect(written.map((one) => one.name)).toEqual([])
   })
-
   for (const [name, used, asked] of MISSING) {
     test(`lacks ${name}, which is asked about wherever it is used`, () => {
       const unasked = files.filter((one) => {
@@ -124,12 +107,10 @@ describe('WebKit on iOS', () => {
       expect(unasked.map((one) => one.name)).toEqual([])
     })
   }
-
   test('takes a drop where it hears dragover from dragenter on, as WebKit decides there', () => {
     expect(files.reduce((sum, one) => sum + count(one.text, /use:dropOver=/g), 0)).toBeGreaterThan(20)
     expect(files.filter((one) => /\.(ts|js|svelte)$/.test(one.name)).flatMap(overWithoutEnter)).toEqual([])
   })
-
   test('sizes a field to its words only through grow where it cannot itself', () => {
     const fields = files.filter((one) => /field-sizing:\s*content/.test(code(one.text)))
     expect(fields.length).toBeGreaterThan(0)

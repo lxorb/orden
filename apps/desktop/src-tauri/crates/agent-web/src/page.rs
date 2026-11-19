@@ -20,15 +20,10 @@ use orden_agents::verbs::{
 use orden_documents::pdf::{printing, PdfPage};
 
 const WORLD: &str = "orden-agent";
-
 const NAVIGATION_STARTS: Duration = Duration::from_millis(50);
-
 const SETTLES: Duration = Duration::from_secs(3);
-
 const STILL: Duration = Duration::from_millis(80);
-
 const LIT: Duration = Duration::from_millis(300);
-
 static INSIDE: LazyLock<String> = LazyLock::new(|| {
     [
         "function (place) { ",
@@ -37,11 +32,8 @@ static INSIDE: LazyLock<String> = LazyLock::new(|| {
     ]
     .concat()
 });
-
 const NATIVE: &str = "const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one); const call = (one, key, ...args) => read(one, key).apply(one, args); ";
-
 const TALLEST: f64 = 16_384.0;
-
 const FIELDS: &str = r"
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   const call = (one, key, ...args) => read(one, key).apply(one, args)
@@ -83,7 +75,6 @@ const FIELDS: &str = r"
     }
   }
 ";
-
 const FACTS_BODY: &str = r"
   let el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || this.element || this.host || this.documentElement
   if (!el || read(el, 'nodeType') !== 1) return {}
@@ -249,10 +240,8 @@ const FACTS_BODY: &str = r"
   const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
   return { at, cut: walked >= 50000 || fields.length >= 200, control: !!control, tag, type: kind, name, autocomplete: String(call(el, 'getAttribute', 'autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
 ";
-
 static FACTS: LazyLock<String> =
     LazyLock::new(|| ["function (heard) {", FIELDS, FACTS_BODY, "}"].concat());
-
 static ROUND_IT: LazyLock<String> = LazyLock::new(|| {
     [
         "function () { ",
@@ -261,11 +250,8 @@ static ROUND_IT: LazyLock<String> = LazyLock::new(|| {
     ]
     .concat()
 });
-
 const MOST_LISTENED_ROUND: usize = 6;
-
 const PRESS_EVENTS: [&str; 5] = ["click", "mousedown", "mouseup", "pointerdown", "pointerup"];
-
 fn hears_a_press(said: &Value) -> bool {
     said.get("listeners")
         .and_then(Value::as_array)
@@ -277,9 +263,7 @@ fn hears_a_press(said: &Value) -> bool {
             })
         })
 }
-
 const SECRETS: &str = "orden-agent-secrets";
-
 static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
@@ -288,7 +272,6 @@ static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     ]
     .concat()
 });
-
 static FIELDS_SCOPE: LazyLock<String> = LazyLock::new(|| {
     [
         "function () { ",
@@ -297,10 +280,8 @@ static FIELDS_SCOPE: LazyLock<String> = LazyLock::new(|| {
     ]
     .concat()
 });
-
 static DESCRIBED_ONLY: LazyLock<String> =
     LazyLock::new(|| ["function () {", FIELDS, "return describe(this) }"].concat());
-
 static PRESSED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
@@ -309,15 +290,11 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     ]
     .concat()
 });
-
 pub const FRAME_PATIENCE: Duration = Duration::from_secs(8);
-
 const MOST_ON_FRAMES: Duration = Duration::from_secs(10);
-
 fn prefix_past_budget(prefix: &str, started: Instant) -> bool {
     !prefix.is_empty() && started.elapsed() > MOST_ON_FRAMES
 }
-
 fn patience_in(session: Option<&str>) -> Duration {
     if session.is_some() {
         FRAME_PATIENCE
@@ -325,21 +302,15 @@ fn patience_in(session: Option<&str>) -> Duration {
         cdp::PATIENCE
     }
 }
-
 const LEFT_OUT: &str = "left out";
-
 const MOST_FIELDS_ASKED: usize = 500;
-
 const MOST_PAINTED: usize = 500;
-
 type Hidden = (HashSet<(String, u64)>, Vec<[f64; 4]>);
-
 struct Secret {
     prefix: String,
     backend: u64,
     filled: bool,
 }
-
 const ACTIVE: &str = r"(() => {
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   let at = document.activeElement
@@ -350,7 +321,6 @@ const ACTIVE: &str = r"(() => {
   } } catch (_) {}
   return at
 })()";
-
 const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
   const init = { key, code, bubbles: true, cancelable: true, composed: true, altKey: !!(modifiers & 1), ctrlKey: !!(modifiers & 2), metaKey: !!(modifiers & 4), shiftKey: !!(modifiers & 8) }
   const went = this.dispatchEvent(new KeyboardEvent('keydown', init))
@@ -373,17 +343,13 @@ const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
   this.dispatchEvent(new KeyboardEvent('keyup', init))
   return answer
 }";
-
 const TEXT: &str = r"(() => ({ url: location.href, title: document.title, text: document.body ? document.body.innerText : '' }))()";
-
 const UNVALUED: &str = r"const unvalued = (root) => {
   for (const one of root.querySelectorAll('input[type=password]')) one.remove()
   for (const one of root.querySelectorAll('input[value]')) one.removeAttribute('value')
   return root
 }";
-
 const REGIONS: &str = r"[contenteditable]:not([contenteditable=false i]), [role=textbox]";
-
 static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     [
         "(() => {",
@@ -394,7 +360,6 @@ static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     ]
     .concat()
 });
-
 const MASKED_TEXT: &str = r"
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   const call = (one, key, ...args) => read(one, key).apply(one, args)
@@ -418,12 +383,10 @@ const MASKED_TEXT: &str = r"
   }
   return say(document.body).replace(/\n{3,}/g, '\n\n').trim()
 ";
-
 const MASKED_CLONE: &str = r"
   const all = Array.from(copy.querySelectorAll('[contenteditable]:not([contenteditable=false i]), [role=textbox]'))
   for (const at of hidden) if (all[at]) all[at].textContent = '[hidden]'
 ";
-
 fn text_hiding(hidden: &[usize]) -> String {
     if hidden.is_empty() {
         return TEXT.to_string();
@@ -433,7 +396,6 @@ fn text_hiding(hidden: &[usize]) -> String {
         json!(hidden)
     )
 }
-
 fn whole_hiding(hidden: &[usize]) -> String {
     [
         "(() => {\n",
@@ -456,7 +418,6 @@ fn whole_hiding(hidden: &[usize]) -> String {
     ]
     .concat()
 }
-
 fn clipped_hiding(hidden: &[usize]) -> String {
     orden_web::web_tabs::reader(false).replace(
         "/* __HIDE__ */",
@@ -466,19 +427,16 @@ fn clipped_hiding(hidden: &[usize]) -> String {
         ),
     )
 }
-
 pub struct Aim {
     point: (f64, f64),
     pub on: Element,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct FrameMap {
     origin: (f64, f64),
     across: (f64, f64),
     down: (f64, f64),
 }
-
 impl FrameMap {
     fn same() -> Self {
         Self {
@@ -487,7 +445,6 @@ impl FrameMap {
             down: (0.0, 1.0),
         }
     }
-
     fn of(quad: &[f64], width: f64, height: f64) -> Option<Self> {
         if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
             return None;
@@ -501,7 +458,6 @@ impl FrameMap {
         };
         (parallel && map.determinant().abs() > 1e-6).then_some(map)
     }
-
     fn nothing_drawn(quad: &[f64], width: f64, height: f64) -> bool {
         if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
             return true;
@@ -512,7 +468,6 @@ impl FrameMap {
             + (quad[6] * quad[1] - quad[0] * quad[7]);
         area.abs() < 1e-6
     }
-
     fn within(self, outer: Self) -> Self {
         let step = |(x, y): (f64, f64)| {
             (
@@ -526,18 +481,15 @@ impl FrameMap {
             down: step(self.down),
         }
     }
-
     fn determinant(self) -> f64 {
         self.across.0 * self.down.1 - self.across.1 * self.down.0
     }
-
     fn to_page(self, (x, y): (f64, f64)) -> (f64, f64) {
         (
             self.origin.0 + self.across.0 * x + self.down.0 * y,
             self.origin.1 + self.across.1 * x + self.down.1 * y,
         )
     }
-
     fn to_frame(self, (x, y): (f64, f64)) -> Option<(f64, f64)> {
         let det = self.determinant();
         if det.abs() <= 1e-6 {
@@ -550,19 +502,16 @@ impl FrameMap {
         ))
     }
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Element {
     session: Option<String>,
     frame: Option<String>,
     pub backend: u64,
 }
-
 impl Page<'_> {
     fn heard(&self) -> Arc<Mutex<Heard>> {
         cdp::heard(&self.label)
     }
-
     fn call(&self, method: &str, params: &Value) -> Result<Value, Answer> {
         cdp::call_until(self.view, None, method, params, || {
             crate::quiet::dialog_of(&self.label).is_some()
@@ -570,7 +519,6 @@ impl Page<'_> {
         .map(Option::unwrap_or_default)
         .map_err(|why| Answer::error(Code::Failed, why))
     }
-
     fn call_on(&self, element: &Element, method: &str, params: &Value) -> Result<Value, Answer> {
         cdp::call_until(
             self.view,
@@ -582,15 +530,12 @@ impl Page<'_> {
         .map(Option::unwrap_or_default)
         .map_err(|why| stale(&why))
     }
-
     fn asked_in(&self, session: Option<&str>, method: &str, params: &Value) -> Option<Value> {
         cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
     }
-
     pub(crate) fn url(&self) -> String {
         self.view.url()
     }
-
     pub(crate) fn element(&self, reference: &str) -> Result<Element, Answer> {
         let Some((frame, backend)) = snapshot::parse_ref(reference) else {
             return Err(Answer::error(
@@ -619,12 +564,10 @@ impl Page<'_> {
                 )
             })
     }
-
     fn object(&self, element: &Element) -> Result<String, Answer> {
         self.handle_in_world(element.session.as_deref(), element.backend, WORLD)
             .ok_or_else(|| stale("the element has no object"))
     }
-
     fn handle_in_world(&self, session: Option<&str>, backend: u64, group: &str) -> Option<String> {
         let resolve = |world: i64| {
             cdp::call_in(
@@ -661,7 +604,6 @@ impl Page<'_> {
         }
         None
     }
-
     fn frames_of(&self, session: Option<&str>) -> Vec<String> {
         let key = session.map(str::to_string);
         if let Some(known) = self.frame_lists.held().get(&key) {
@@ -681,7 +623,6 @@ impl Page<'_> {
         self.frame_lists.held().insert(key, frames.clone());
         frames
     }
-
     fn frame_read(&self, session: Option<&str>, frame: &str) {
         if let Some(known) = self
             .frame_lists
@@ -693,7 +634,6 @@ impl Page<'_> {
             }
         }
     }
-
     fn page_object(&self, element: &Element) -> Result<String, Answer> {
         let resolved = self.call_on(
             element,
@@ -706,7 +646,6 @@ impl Page<'_> {
             .map(str::to_string)
             .ok_or_else(|| stale("the element has no object"))
     }
-
     fn world_in(&self, session: Option<&str>) -> Result<i64, Answer> {
         let frame = match session {
             None => self.main_frame()?,
@@ -725,7 +664,6 @@ impl Page<'_> {
         };
         self.world_of_frame(session, &frame)
     }
-
     fn world_of_frame(&self, session: Option<&str>, frame: &str) -> Result<i64, Answer> {
         let key = (session.map(str::to_string), frame.to_string());
         if let Some(world) = self.worlds.held().get(&key) {
@@ -746,14 +684,12 @@ impl Page<'_> {
         self.worlds.held().insert(key, world);
         Ok(world)
     }
-
     fn forget_worlds(&self, session: Option<&str>) {
         self.worlds
             .held()
             .retain(|(of, _), _| of.as_deref() != session);
         self.frame_lists.held().remove(&session.map(str::to_string));
     }
-
     fn run_on(
         &self,
         element: &Element,
@@ -762,7 +698,6 @@ impl Page<'_> {
     ) -> Result<Value, Answer> {
         self.run_with(element, &self.object(element)?, function, arguments)
     }
-
     fn run_in_page(
         &self,
         element: &Element,
@@ -771,7 +706,6 @@ impl Page<'_> {
     ) -> Result<Value, Answer> {
         self.run_with(element, &self.page_object(element)?, function, arguments)
     }
-
     fn run_with(
         &self,
         element: &Element,
@@ -800,12 +734,10 @@ impl Page<'_> {
             .cloned()
             .unwrap_or_default())
     }
-
     pub(crate) fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
         Ok(self.facts_from(element, &said))
     }
-
     pub(crate) fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
         let mut facts = self.facts(element)?;
         if facts.link && self.link_listens(element) {
@@ -841,16 +773,13 @@ impl Page<'_> {
             .unwrap_or_default();
         Ok(named(self.facts_from(element, &said)))
     }
-
     fn link_listens(&self, element: &Element) -> bool {
         self.control_of(element)
             .is_some_and(|object| self.hears(element, &object))
     }
-
     fn control_of(&self, element: &Element) -> Option<String> {
         self.through(element, &self.object(element).ok()?, &PRESSED)
     }
-
     fn through(&self, element: &Element, object: &str, function: &str) -> Option<String> {
         let found = self
             .call_on(
@@ -864,7 +793,6 @@ impl Page<'_> {
             .as_str()
             .map(str::to_string)
     }
-
     fn hears(&self, element: &Element, object: &str) -> bool {
         let page_side = (|| {
             let node = self
@@ -892,7 +820,6 @@ impl Page<'_> {
             .is_ok_and(|said| hears_a_press(&said))
         })
     }
-
     fn engine_control_round(&self, element: &Element) -> Option<String> {
         let tree = self
             .call_on(
@@ -903,7 +830,6 @@ impl Page<'_> {
             .ok()?;
         control_in_tree(tree.get("nodes")?.as_array()?)
     }
-
     fn listening(&self, element: &Element) -> Option<String> {
         let mut object = self.object(element).ok()?;
         for _ in 0..MOST_LISTENED_ROUND {
@@ -914,7 +840,6 @@ impl Page<'_> {
         }
         None
     }
-
     fn facts_from(&self, element: &Element, said: &Value) -> Facts {
         let mut facts = facts_read(said);
         if !facts.cut {
@@ -930,7 +855,6 @@ impl Page<'_> {
         }
         facts
     }
-
     fn engine_name(&self, element: &Element) -> Option<String> {
         let control = self.control_of(element)?;
         let tree = self
@@ -944,11 +868,9 @@ impl Page<'_> {
             .as_str()
             .map(str::to_string)
     }
-
     fn may_read_frame(&self, at: &[String]) -> bool {
         engines::frame_readable(self.limits.as_ref(), at)
     }
-
     fn closed_fields(&self, element: &Element) -> Option<Vec<Field>> {
         let session = element.session.as_deref();
         let call = |method: &str, params: &Value| self.asked_in(session, method, params);
@@ -982,7 +904,6 @@ impl Page<'_> {
             })
             .collect()
     }
-
     fn capture(&self, session: Option<&str>) -> Option<Value> {
         cdp::call_in(
             self.view,
@@ -993,7 +914,6 @@ impl Page<'_> {
         )
         .ok()
     }
-
     pub(crate) fn active_facts(&self) -> Result<Option<Facts>, Answer> {
         let Some((facts, object)) = self.active_in(None, None)? else {
             return Ok(None);
@@ -1022,7 +942,6 @@ impl Page<'_> {
             )),
         }
     }
-
     fn frame_held(&self, session: Option<&str>, object: &str) -> Option<String> {
         cdp::call_in(
             self.view,
@@ -1034,7 +953,6 @@ impl Page<'_> {
         .ok()
         .and_then(|said| said.get("node").and_then(frame_of_holder))
     }
-
     fn frame_world(&self, frame: &str) -> Option<u64> {
         self.call(
             "Page.createIsolatedWorld",
@@ -1044,7 +962,6 @@ impl Page<'_> {
         .get("executionContextId")?
         .as_u64()
     }
-
     fn active_in_a_frame(&self) -> Option<Facts> {
         let frames = self.heard().held().frames();
         let mut held = None;
@@ -1074,7 +991,6 @@ impl Page<'_> {
         }
         held
     }
-
     fn active_in(
         &self,
         session: Option<&str>,
@@ -1102,7 +1018,6 @@ impl Page<'_> {
             .cloned()
             .map(|value| (facts_read(&value), object.to_string())))
     }
-
     fn frame_session(&self, frame: &str) -> Option<String> {
         self.heard()
             .held()
@@ -1111,7 +1026,6 @@ impl Page<'_> {
             .find(|(_, one)| one.id == frame)
             .map(|(_, one)| one.session)
     }
-
     pub fn isolated(&self, expression: &str) -> Result<Value, Answer> {
         let run = |context: i64| {
             self.call(
@@ -1134,11 +1048,9 @@ impl Page<'_> {
             .cloned()
             .unwrap_or_default())
     }
-
     fn world(&self) -> Result<i64, Answer> {
         self.world_in(None)
     }
-
     fn main_frame(&self) -> Result<String, Answer> {
         if let Some(frame) = self.heard().held().main_frame.clone() {
             return Ok(frame);
@@ -1152,7 +1064,6 @@ impl Page<'_> {
         self.heard().held().main_frame = Some(frame.clone());
         Ok(frame)
     }
-
     pub(crate) fn settle(&self, navigations_before: u64) {
         let started = Instant::now();
         let navigated = loop {
@@ -1194,19 +1105,15 @@ impl Page<'_> {
             SETTLES + Duration::from_millis(500),
         );
     }
-
     fn interrupted(&self) -> bool {
         orden_agents::stop::cancelled(self.since) || crate::quiet::dialog_of(&self.label).is_some()
     }
-
     pub(crate) fn navigations(&self) -> u64 {
         self.heard().held().navigations
     }
-
     fn point(&self, element: &Element) -> Result<(f64, f64), Answer> {
         Ok(self.points(element)?[0])
     }
-
     fn points(&self, element: &Element) -> Result<Vec<(f64, f64)>, Answer> {
         let _ = self.call_on(
             element,
@@ -1239,7 +1146,6 @@ impl Page<'_> {
             .map(|point| map.to_page(point))
             .collect())
     }
-
     fn landing(&self, element: &Element) -> Result<(f64, f64), Answer> {
         let points = self.points(element)?;
         let mut first = None;
@@ -1258,13 +1164,11 @@ impl Page<'_> {
             )
         }))
     }
-
     pub fn aim(&self, element: &Element) -> Result<Aim, Answer> {
         let point = self.landing(element)?;
         let on = self.struck(element, point)?;
         Ok(Aim { point, on })
     }
-
     fn struck(&self, element: &Element, point: (f64, f64)) -> Result<Element, Answer> {
         if self.node_at(point).is_some() {
             self.element_at(point)
@@ -1272,12 +1176,10 @@ impl Page<'_> {
             Ok(element.clone())
         }
     }
-
     pub(crate) fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
         let point = self.point(element)?;
         self.struck(element, point)
     }
-
     fn scrolled(&self) -> (f64, f64) {
         let Ok(metrics) = self.call("Page.getLayoutMetrics", &json!({})) else {
             return (0.0, 0.0);
@@ -1288,7 +1190,6 @@ impl Page<'_> {
             get("/cssLayoutViewport/pageY"),
         )
     }
-
     fn node_at(&self, (x, y): (f64, f64)) -> Option<u64> {
         let (left, top) = self.scrolled();
         let hit = self
@@ -1300,7 +1201,6 @@ impl Page<'_> {
         let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
         Some(self.originating(None, backend))
     }
-
     fn originating(&self, session: Option<&str>, backend: u64) -> u64 {
         let call = |method: &str, params: &Value| self.asked_in(session, method, params);
         let hangs =
@@ -1329,7 +1229,6 @@ impl Page<'_> {
         };
         holder().unwrap_or(backend)
     }
-
     pub(crate) fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
         let backend = self
             .node_at(point)
@@ -1354,7 +1253,6 @@ impl Page<'_> {
             )
         })
     }
-
     fn element_in_frame(&self, frame: &str, (x, y): (f64, f64)) -> Option<Element> {
         let session = self.frame_session(frame)?;
         let inner = Element {
@@ -1383,7 +1281,6 @@ impl Page<'_> {
             .is_none()
             .then_some(Element { backend, ..inner })
     }
-
     fn frame_map(&self, element: &Element) -> Result<FrameMap, Answer> {
         let Some(frame) = &element.frame else {
             return Ok(FrameMap::same());
@@ -1430,7 +1327,6 @@ impl Page<'_> {
             None => Ok(map),
         }
     }
-
     fn frame_holding(&self, frame: &str) -> Result<Option<Element>, Answer> {
         let frames = self.heard().held().frames();
         let parent = frames
@@ -1453,7 +1349,6 @@ impl Page<'_> {
             })
             .ok_or_else(|| stale("the frame round it is gone"))
     }
-
     fn lands_on(&self, element: &Element, point: (f64, f64)) -> Result<(), Answer> {
         let covered = if element.session.is_some() {
             match self.element_at(point) {
@@ -1494,7 +1389,6 @@ impl Page<'_> {
             format!("e{} is covered by e{hit} (a {what}) where it would be pressed: deal with that first, or, where the element is what shows there, press there with browser_click's x and y", element.backend),
         ))
     }
-
     fn light(&self, element: &Element) {
         if element.session.is_some() {
             return;
@@ -1515,7 +1409,6 @@ impl Page<'_> {
             let _ = self.call("Overlay.hideHighlight", &json!({}));
         }
     }
-
     fn mouse(
         &self,
         kind: &str,
@@ -1539,7 +1432,6 @@ impl Page<'_> {
         )
         .map(|_| ())
     }
-
     pub(crate) fn click(
         &self,
         element: &Element,
@@ -1556,7 +1448,6 @@ impl Page<'_> {
         }
         self.press_judged(aim.point, &aim.on, button, count, modifiers, gate)
     }
-
     fn refuse_picker(&self, element: &Element) -> Result<(), Answer> {
         if self.facts(element)?.picker() {
             return Err(Answer::error(
@@ -1566,7 +1457,6 @@ impl Page<'_> {
         }
         Ok(())
     }
-
     pub(crate) fn click_at(
         &self,
         point: (f64, f64),
@@ -1589,7 +1479,6 @@ impl Page<'_> {
         self.refuse_picker(judged)?;
         self.press_judged(point, judged, button, count, modifiers, gate)
     }
-
     fn press_judged(
         &self,
         point: (f64, f64),
@@ -1626,7 +1515,6 @@ impl Page<'_> {
         self.settle(before);
         Ok(())
     }
-
     fn pointer_over(&self, element: &Element) -> Option<Element> {
         let (session, frame) = (element.session.as_deref()?, element.frame.as_deref()?);
         let world = self.world_of_frame(Some(session), frame).ok()?;
@@ -1645,7 +1533,6 @@ impl Page<'_> {
             ..element.clone()
         })
     }
-
     fn same_press(&self, one: &Element, other: &Element) -> bool {
         if one == other {
             return true;
@@ -1655,7 +1542,6 @@ impl Page<'_> {
         };
         self.inside(one, &one_held, &other_held)
     }
-
     fn inside(&self, on: &Element, object: &str, target: &str) -> bool {
         self.call_on(
             on,
@@ -1669,12 +1555,10 @@ impl Page<'_> {
         )
         .is_ok_and(|said| said.pointer("/result/value").and_then(Value::as_bool) != Some(false))
     }
-
     pub(crate) fn hover(&self, element: &Element) -> Result<(), Answer> {
         let point = self.point(element)?;
         self.mouse("mouseMoved", point, "none", 0, 0)
     }
-
     pub(crate) fn type_text(
         &self,
         element: &Element,
@@ -1735,7 +1619,6 @@ impl Page<'_> {
         self.call("Input.insertText", &json!({ "text": text }))
             .map(|_| ())
     }
-
     fn set_value(&self, element: &Element, text: &str) -> Result<(), Answer> {
         let said = self.run_in_page(
             element,
@@ -1751,7 +1634,6 @@ impl Page<'_> {
             ))
         }
     }
-
     pub(crate) fn select(
         &self,
         element: &Element,
@@ -1788,7 +1670,6 @@ impl Page<'_> {
             })
             .unwrap_or_default())
     }
-
     pub(crate) fn fill(
         &self,
         element: &Element,
@@ -1820,12 +1701,10 @@ impl Page<'_> {
             FieldValue::Words(text) => self.type_text(element, text, true),
         }
     }
-
     pub(crate) fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
         let now = self.run_on(element, "function () { return this.checked }", &[])?;
         Ok(now.as_bool() != Some(wanted))
     }
-
     pub(crate) fn press(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let before = self.navigations();
@@ -1833,7 +1712,6 @@ impl Page<'_> {
         self.settle(before);
         Ok(())
     }
-
     pub(crate) fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let found = self.call(
@@ -1869,14 +1747,12 @@ impl Page<'_> {
         self.settle(before);
         Ok(())
     }
-
     fn press_key(&self, key: &Key) -> Result<(), Answer> {
         for event in key.events() {
             self.call("Input.dispatchKeyEvent", &event)?;
         }
         Ok(())
     }
-
     pub(crate) fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
         if let Some(element) = element {
             self.call_on(
@@ -1918,7 +1794,6 @@ impl Page<'_> {
         ))?;
         Ok(())
     }
-
     pub(crate) fn drag(
         &self,
         (from, picked): (&Element, &Element),
@@ -1966,7 +1841,6 @@ impl Page<'_> {
         let _ = self.call("Input.setInterceptDrags", &json!({ "enabled": false }));
         dragged
     }
-
     pub(crate) fn upload(
         &self,
         element: &Element,
@@ -2008,7 +1882,6 @@ impl Page<'_> {
         )?;
         Ok(())
     }
-
     fn viewport(&self) -> Result<(f64, f64, f64, f64), Answer> {
         let metrics = self.call("Page.getLayoutMetrics", &json!({}))?;
         let get = |path: &str| number(&metrics, path);
@@ -2019,7 +1892,6 @@ impl Page<'_> {
             get("/cssVisualViewport/pageY"),
         ))
     }
-
     fn ratio(&self) -> f64 {
         self.call("Page.getLayoutMetrics", &json!({}))
             .ok()
@@ -2033,7 +1905,6 @@ impl Page<'_> {
             .filter(|ratio| *ratio > 0.0)
             .unwrap_or(1.0)
     }
-
     pub(crate) fn screenshot(
         &self,
         element: Option<&Element>,
@@ -2109,7 +1980,6 @@ impl Page<'_> {
             "this page's secret fields keep changing, so there is no picture of it",
         ))
     }
-
     fn page_rect(&self, element: &Element) -> Result<[f64; 4], Answer> {
         let model = self.call_on(
             element,
@@ -2145,7 +2015,6 @@ impl Page<'_> {
         );
         Ok([left + x, top + y, right + x, bottom + y])
     }
-
     fn hidden_rects(&self) -> Result<Hidden, Answer> {
         let secrets: Vec<Secret> = self
             .secrets(self.every_part()?)
@@ -2182,7 +2051,6 @@ impl Page<'_> {
         drawn.extend(self.denied_frames()?);
         Ok((which, drawn))
     }
-
     fn nested_followed(&self) -> Result<(), Answer> {
         cdp::follow_nested(self.view, &self.label, FRAME_PATIENCE).map_err(|why| {
             Answer::error(
@@ -2191,7 +2059,6 @@ impl Page<'_> {
             )
         })
     }
-
     fn every_part(&self) -> Result<Vec<String>, Answer> {
         self.nested_followed()?;
         let mut prefixes = vec![String::new()];
@@ -2204,7 +2071,6 @@ impl Page<'_> {
         );
         Ok(prefixes)
     }
-
     pub(crate) fn parts(&self) -> Result<Tree, Answer> {
         let started = Instant::now();
         let _ = self.nested_followed();
@@ -2220,7 +2086,6 @@ impl Page<'_> {
         let away = away
             .into_iter()
             .filter(|(_, frame)| frame.parent.is_empty());
-
         let tree = self.call("Page.getFrameTree", &json!({}))?;
         let mut same = Vec::new();
         collect_frames(
@@ -2293,7 +2158,6 @@ impl Page<'_> {
         }
         Ok((parts, secret))
     }
-
     fn denied_frames(&self) -> Result<Vec<[f64; 4]>, Answer> {
         if self.limits.is_none() {
             return Ok(Vec::new());
@@ -2332,7 +2196,6 @@ impl Page<'_> {
         }
         Ok(rects)
     }
-
     fn frame_address(&self, frame: &cdp::Frame) -> Vec<String> {
         let world = self.world_in(Some(&frame.session)).ok();
         world
@@ -2349,7 +2212,6 @@ impl Page<'_> {
         .and_then(|said| serde_json::from_value(said.pointer("/result/value")?.clone()).ok())
         .unwrap_or_else(|| vec![frame.url.clone()])
     }
-
     fn owner_in(&self, parts: &[Part], frame: &str) -> Option<(usize, u64)> {
         let owner = self
             .call("DOM.getFrameOwner", &json!({ "frameId": frame }))
@@ -2363,7 +2225,6 @@ impl Page<'_> {
         })?;
         Some((part, backend))
     }
-
     fn secret_fields(&self, parts: &[Part]) -> HashSet<(String, u64)> {
         let prefixes: HashSet<String> = parts.iter().map(|part| part.prefix.clone()).collect();
         let (found, seen) = self.scanned(prefixes);
@@ -2373,7 +2234,6 @@ impl Page<'_> {
             .chain(gone_fields(parts, &seen))
             .collect()
     }
-
     fn session_of_part(&self, prefix: &str) -> Option<String> {
         if prefix.is_empty() {
             return None;
@@ -2381,11 +2241,9 @@ impl Page<'_> {
         let number = prefix.trim_start_matches('f').parse::<usize>().ok()?;
         self.heard().held().frame(number).map(|frame| frame.session)
     }
-
     fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
         self.scanned(prefixes).0
     }
-
     fn scanned(
         &self,
         prefixes: impl IntoIterator<Item = String>,
@@ -2461,7 +2319,6 @@ impl Page<'_> {
         }
         (found, seen)
     }
-
     fn secret_regions(&self) -> Result<Vec<usize>, Answer> {
         let said = self.isolated(&REGIONS_SAID)?;
         let all = said.as_array().ok_or_else(|| {
@@ -2481,7 +2338,6 @@ impl Page<'_> {
             .map(|(at, _)| at)
             .collect())
     }
-
     fn read_hiding(&self, reading: fn(&[usize]) -> String) -> Result<Value, Answer> {
         for _ in 0..2 {
             let hidden = self.secret_regions()?;
@@ -2495,7 +2351,6 @@ impl Page<'_> {
             "the page's fields keep changing, so its words cannot be read",
         ))
     }
-
     pub(crate) fn read(
         &self,
         app: &tauri::AppHandle,
@@ -2509,14 +2364,12 @@ impl Page<'_> {
         })?;
         Ok(scripts::words(app, shape, &said))
     }
-
     pub(crate) fn title(&self) -> String {
         self.isolated("document.title")
             .ok()
             .and_then(|one| one.as_str().map(str::to_string))
             .unwrap_or_default()
     }
-
     pub fn clip(&self) -> Result<(String, String, String), Answer> {
         let said = self.read_hiding(clipped_hiding)?;
         Ok((
@@ -2525,7 +2378,6 @@ impl Page<'_> {
             text(&said, "html"),
         ))
     }
-
     pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
         if !self.denied_frames()?.is_empty() {
             return Err(Answer::error(
@@ -2560,7 +2412,6 @@ impl Page<'_> {
             .map(str::to_string)
             .ok_or_else(|| Answer::error(Code::Failed, "the engine printed nothing"))
     }
-
     pub(crate) fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
         let started = Instant::now();
         loop {
@@ -2628,7 +2479,6 @@ impl Page<'_> {
             std::thread::sleep(Duration::from_millis(100));
         }
     }
-
     pub(crate) fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
         if !page_world {
             return self.isolated(expression);
@@ -2643,7 +2493,6 @@ impl Page<'_> {
             .cloned()
             .unwrap_or_default())
     }
-
     pub(crate) fn navigate(&self, url: &str) -> Result<(), Answer> {
         let loads = self.heard().held().loads;
         let went = self.call("Page.navigate", &json!({ "url": url }))?;
@@ -2660,7 +2509,6 @@ impl Page<'_> {
         self.loaded_after(loads, Duration::from_secs(10));
         Ok(())
     }
-
     pub(crate) fn step(&self, by: i64) -> Result<(), Answer> {
         let loads = self.heard().held().loads;
         if by == 0 {
@@ -2692,7 +2540,6 @@ impl Page<'_> {
         self.loaded_after(loads, Duration::from_secs(10));
         Ok(())
     }
-
     fn loaded_after(&self, loads: u64, most: Duration) {
         let started = Instant::now();
         while started.elapsed() < most && !self.interrupted() {
@@ -2702,7 +2549,6 @@ impl Page<'_> {
             std::thread::sleep(Duration::from_millis(25));
         }
     }
-
     pub(crate) fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
         let said = self.call("Network.getCookies", &json!({ "urls": [self.url()] }))?;
         Ok(said
@@ -2730,7 +2576,6 @@ impl Page<'_> {
             })
             .collect())
     }
-
     pub(crate) fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
         if let Some(domain) = &cookie.domain {
             if !policy::host_of(&self.url()).is_some_and(|host| cookie_fits(domain, &host)) {
@@ -2760,7 +2605,6 @@ impl Page<'_> {
         }
         Ok(())
     }
-
     pub(crate) fn clear(&self) -> Result<(), Answer> {
         for cookie in self.cookies()? {
             let _ = self.call(
@@ -2777,34 +2621,27 @@ impl Page<'_> {
         )?;
         Ok(())
     }
-
     pub(crate) fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
         let said = self.isolated("(() => { const out = {}; for (let at = 0; at < localStorage.length; at++) { const key = localStorage.key(at); out[key] = localStorage.getItem(key) } return out })()")?;
         Ok(said.as_object().cloned().unwrap_or_default())
     }
-
     pub(crate) fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
         let (parts, secret) = self.parts()?;
         Ok(snapshot::find(&parts, &secret, wanted))
     }
 }
-
 const BODIES: usize = 20;
 const LONGEST_BODY: usize = 100_000;
-
 impl Page<'_> {
     pub(crate) fn wake(&self) {
         cdp::awake(self.view, &self.label, self.own);
     }
-
     pub(crate) fn aimed(&self, element: &Element) -> Result<Element, Answer> {
         Ok(Page::aim(self, element)?.on)
     }
-
     pub(crate) fn opened(&self) -> Vec<String> {
         std::mem::take(&mut self.heard().held().opened)
     }
-
     pub(crate) fn hosts(&self) -> Vec<String> {
         let heard = self.heard();
         let held = heard.held();
@@ -2820,7 +2657,6 @@ impl Page<'_> {
         }
         hosts.into_iter().collect()
     }
-
     pub(crate) fn console(&self, since: Option<u64>, level: Option<&str>) -> ConsoleLines {
         cdp::listen_to_console(self.view, &self.label);
         let (lines, next) = self.heard().held().console(since, level);
@@ -2831,7 +2667,6 @@ impl Page<'_> {
             .collect();
         ConsoleLines { lines, next }
     }
-
     pub(crate) fn network(
         &self,
         since: Option<u64>,
@@ -2868,19 +2703,16 @@ impl Page<'_> {
         Requests { requests, next }
     }
 }
-
 fn unprintable(said: &str) -> bool {
     let said = said.to_ascii_lowercase();
     said.contains("not implemented")
         || said.contains("not supported")
         || said.contains("wasn't found")
 }
-
 #[allow(clippy::cast_possible_truncation)]
 fn whole(value: f64) -> i64 {
     value.round() as i64
 }
-
 fn stale(why: &str) -> Answer {
     let gone = why.contains("No node")
         || why.contains("Could not find node")
@@ -2896,7 +2728,6 @@ fn stale(why: &str) -> Answer {
         Answer::error(Code::Failed, why.to_string())
     }
 }
-
 fn thrown(answered: &Value) -> Result<(), Answer> {
     let Some(details) = answered.get("exceptionDetails") else {
         return Ok(());
@@ -2911,7 +2742,6 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
         cdp::cut(said.to_string(), 2_000),
     ))
 }
-
 fn frame_of_holder(node: &Value) -> Option<String> {
     let name = node.get("nodeName").and_then(Value::as_str)?;
     matches!(
@@ -2922,7 +2752,6 @@ fn frame_of_holder(node: &Value) -> Option<String> {
     .flatten()
     .map(str::to_string)
 }
-
 fn control_in_tree(nodes: &[Value]) -> Option<String> {
     let by_id: HashMap<&str, &Value> = nodes
         .iter()
@@ -2951,13 +2780,11 @@ fn control_in_tree(nodes: &[Value]) -> Option<String> {
     }
     None
 }
-
 fn undrawn(message: &str) -> bool {
     message.contains("Could not compute box model")
         || message.contains("is not on the page")
         || message.contains("gone")
 }
-
 fn painted_over(
     png: String,
     clip: (f64, f64, f64, f64),
@@ -2986,7 +2813,6 @@ fn painted_over(
         )
     })
 }
-
 fn frames_under(tree: &Value, out: &mut Vec<String>) {
     if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
         out.push(id.to_string());
@@ -3000,7 +2826,6 @@ fn frames_under(tree: &Value, out: &mut Vec<String>) {
         frames_under(child, out);
     }
 }
-
 fn facts_read(said: &Value) -> Facts {
     let named = said.get("tag").and_then(Value::as_str).is_some();
     match serde_json::from_value::<Facts>(said.clone()) {
@@ -3016,7 +2841,6 @@ fn facts_read(said: &Value) -> Facts {
         },
     }
 }
-
 fn text(value: &Value, key: &str) -> String {
     value
         .get(key)
@@ -3024,14 +2848,12 @@ fn text(value: &Value, key: &str) -> String {
         .unwrap_or_default()
         .to_string()
 }
-
 fn nodes_of(tree: &Value) -> Vec<Value> {
     tree.get("nodes")
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default()
 }
-
 fn joined_name(read: &str, engine: &str) -> String {
     let (read, engine) = (read.trim(), engine.trim());
     if read.contains(engine) {
@@ -3042,7 +2864,6 @@ fn joined_name(read: &str, engine: &str) -> String {
         format!("{read} {engine}")
     }
 }
-
 fn cookie_fits(domain: &str, host: &str) -> bool {
     let domain = domain
         .trim_start_matches('.')
@@ -3053,7 +2874,6 @@ fn cookie_fits(domain: &str, host: &str) -> bool {
     (domain == host || host.ends_with(&format!(".{domain}")))
         && (domain == site || domain.ends_with(&format!(".{site}")))
 }
-
 fn places_in(tree: &Value) -> HashMap<String, Vec<String>> {
     let mut places = HashMap::new();
     frame_places(
@@ -3063,7 +2883,6 @@ fn places_in(tree: &Value) -> HashMap<String, Vec<String>> {
     );
     places
 }
-
 fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<String>>) {
     let mut at = Vec::with_capacity(around.len() + 1);
     if let Some(url) = tree.pointer("/frame/url").and_then(Value::as_str) {
@@ -3082,7 +2901,6 @@ fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<S
         frame_places(child, &at, out);
     }
 }
-
 fn nodes_in_capture(capture: &Value) -> Vec<u64> {
     capture
         .get("documents")
@@ -3094,7 +2912,6 @@ fn nodes_in_capture(capture: &Value) -> Vec<u64> {
         .filter_map(Value::as_u64)
         .collect()
 }
-
 fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u64)> {
     parts
         .iter()
@@ -3120,7 +2937,6 @@ fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u6
         })
         .collect()
 }
-
 fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
     let strings: Vec<&str> = capture
         .get("strings")
@@ -3198,11 +3014,9 @@ fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
     }
     out
 }
-
 fn local_name(name: &str) -> String {
     name.rsplit(':').next().unwrap_or(name).to_ascii_uppercase()
 }
-
 fn edited(name: &str, attributes: &[&str]) -> bool {
     attributes.chunks(2).any(|pair| {
         let value = pair.get(1).copied().unwrap_or_default();
@@ -3210,7 +3024,6 @@ fn edited(name: &str, attributes: &[&str]) -> bool {
             || (pair[0] == "role" && value == "textbox" && !matches!(name, "INPUT" | "TEXTAREA"))
     })
 }
-
 fn takes_words(attributes: &[&str]) -> bool {
     let kind = attributes
         .chunks(2)
@@ -3225,7 +3038,6 @@ fn takes_words(attributes: &[&str]) -> bool {
     ]
     .contains(&kind.as_str())
 }
-
 fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
     if !top {
         if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
@@ -3241,7 +3053,6 @@ fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
         collect_frames(child, false, out);
     }
 }
-
 fn pressable(quad: &[f64]) -> Vec<(f64, f64)> {
     let corners: Vec<(f64, f64)> = quad
         .as_chunks::<2>()
@@ -3262,14 +3073,12 @@ fn pressable(quad: &[f64]) -> Vec<(f64, f64)> {
         }))
         .collect()
 }
-
 fn number(value: &Value, path: &str) -> f64 {
     value
         .pointer(path)
         .and_then(Value::as_f64)
         .unwrap_or_default()
 }
-
 fn area(at: &[f64]) -> f64 {
     let mut twice = 0.0;
     for corner in 0..4 {
@@ -3280,19 +3089,16 @@ fn area(at: &[f64]) -> f64 {
     }
     (twice / 2.0).abs()
 }
-
 fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> bool {
     !engines::limits_sites(limits)
         || under.is_some_and(|facts| engines::acts_in(limits, facts).is_ok())
 }
-
 fn still_in_flight(limits: Option<&(Grant, Store)>, rows: Vec<(Request, Whence)>) -> Vec<String> {
     rows.into_iter()
         .filter(|(one, from)| request_readable(limits, one, from))
         .map(|(one, _)| one.url)
         .collect()
 }
-
 fn line_readable(limits: Option<&(Grant, Store)>, line: &ConsoleLine, whence: &Whence) -> bool {
     match whence {
         Whence::Orden => true,
@@ -3305,7 +3111,6 @@ fn line_readable(limits: Option<&(Grant, Store)>, line: &ConsoleLine, whence: &W
         }
     }
 }
-
 fn request_readable(limits: Option<&(Grant, Store)>, row: &Request, from: &Whence) -> bool {
     engines::frame_readable(limits, std::slice::from_ref(&row.url))
         && match from {
@@ -3313,7 +3118,6 @@ fn request_readable(limits: Option<&(Grant, Store)>, row: &Request, from: &Whenc
             Whence::Frame(at) => engines::from_allowed(limits, at).is_ok(),
         }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3324,7 +3128,6 @@ mod tests {
         grant.sites.insert("bank.example".into(), SiteRule::Deny);
         (grant, Store::Reader)
     }
-
     fn request(url: &str) -> Request {
         Request {
             seq: 1,
@@ -3337,11 +3140,9 @@ mod tests {
             body: None,
         }
     }
-
     fn frame(at: &[&str]) -> Whence {
         Whence::Frame(at.iter().map(|one| (*one).to_string()).collect())
     }
-
     #[test]
     fn a_denied_frame_s_console_line_is_not_read_whatever_its_script() {
         let limits = denying();
@@ -3376,7 +3177,6 @@ mod tests {
         ));
         assert!(line_readable(None, &line(None), &bank));
     }
-
     #[test]
     fn a_denied_frame_s_request_is_not_read_whatever_its_host() {
         let limits = denying();
@@ -3412,7 +3212,6 @@ mod tests {
             &frame(&["https://bank.example/"])
         ));
     }
-
     #[test]
     fn a_scroll_by_no_ref_does_not_wheel_a_denied_frame() {
         let limits = denying();
@@ -3433,7 +3232,6 @@ mod tests {
         assert!(wheels(Some(&open), None));
         assert!(wheels(None, None));
     }
-
     #[test]
     fn a_network_wait_names_only_the_requests_the_agent_may_read() {
         let limits = denying();
@@ -3458,7 +3256,6 @@ mod tests {
         );
         assert_eq!(still_in_flight(None, rows).len(), 3);
     }
-
     #[test]
     fn a_frame_inside_a_frame_maps_through_both() {
         let outer = FrameMap::of(
@@ -3473,7 +3270,6 @@ mod tests {
         assert_eq!(map.to_page((1.0, 1.0)), (22.0, 32.0));
         assert_eq!(map.to_frame((22.0, 32.0)), Some((1.0, 1.0)));
     }
-
     #[test]
     fn a_frame_of_no_size_shows_nothing_and_one_in_perspective_is_shown() {
         let flat = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
@@ -3487,7 +3283,6 @@ mod tests {
         assert!(!FrameMap::nothing_drawn(&square, 100.0, 100.0));
         assert!(!FrameMap::nothing_drawn(&tilted, 100.0, 100.0));
     }
-
     #[test]
     fn a_field_gone_by_the_scan_is_a_secret_by_what_the_tree_says() {
         let field = |backend: u64, value: &str| json!({ "backendDOMNodeId": backend, "value": { "value": value } });
@@ -3524,7 +3319,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_slider_gone_by_the_scan_is_no_secret() {
         let parts = [Part {
@@ -3536,7 +3330,6 @@ mod tests {
         }];
         assert!(gone_fields(&parts, &HashSet::new()).is_empty());
     }
-
     #[test]
     fn a_capture_says_every_node_in_every_document() {
         let capture = json!({ "documents": [
@@ -3545,7 +3338,6 @@ mod tests {
         ] });
         assert_eq!(nodes_in_capture(&capture), [1, 2, 3]);
     }
-
     #[test]
     fn a_press_tries_the_middle_and_then_each_quarter() {
         let points = pressable(&[0.0, 0.0, 100.0, 0.0, 100.0, 40.0, 0.0, 40.0]);
@@ -3560,13 +3352,11 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn an_empty_quad_is_no_place_to_press() {
         assert!((area(&[0.0, 0.0, 10.0, 0.0, 10.0, 5.0, 0.0, 5.0]) - 50.0).abs() < f64::EPSILON);
         assert!(area(&[3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0]) < 1.0);
     }
-
     #[test]
     fn a_print_is_on_the_readers_paper_with_no_line_of_the_browsers() {
         let a4 = PdfPage {
@@ -3583,7 +3373,6 @@ mod tests {
         assert_eq!(asked["printBackground"], true);
         assert_eq!(asked["displayHeaderFooter"], false);
         assert_eq!(asked["transferMode"], "ReturnAsBase64");
-
         let turned = printing(&PdfPage {
             margin: -1.0,
             landscape: true,
@@ -3592,12 +3381,10 @@ mod tests {
         assert_eq!(turned["paperWidth"], 8.27);
         assert_eq!(turned["landscape"], true);
         assert_eq!(turned["marginTop"], 0.0);
-
         assert!(unprintable("PrintToPDF is not implemented"));
         assert!(unprintable("'Page.printToPDF' wasn't found"));
         assert!(!unprintable("Printing failed"));
     }
-
     #[test]
     fn a_clip_is_the_clip_buttons_own_script_and_no_field_value() {
         let clipped = clipped_hiding(&[]);
@@ -3606,7 +3393,6 @@ mod tests {
         assert!(!clipped.contains("__HIDE__"));
         assert!(whole_hiding(&[]).contains("unvalued(copy)"));
     }
-
     #[test]
     fn a_control_by_the_engine_alone_names_what_it_holds() {
         let nodes = [
@@ -3621,7 +3407,6 @@ mod tests {
         let round = [json!({ "nodeId": "3", "parentId": "3", "role": { "value": "generic" } })];
         assert_eq!(control_in_tree(&round), None);
     }
-
     #[test]
     fn every_frame_of_a_tree_is_tried_the_top_one_first() {
         let tree = json!({
@@ -3635,7 +3420,6 @@ mod tests {
         frames_under(&tree, &mut frames);
         assert_eq!(frames, ["a", "b", "c", "d"]);
     }
-
     #[test]
     fn a_frames_size_with_its_bars_lands_where_the_quad_says() {
         let map = FrameMap::of(
@@ -3647,7 +3431,6 @@ mod tests {
         assert_eq!(map.to_page((200.0, 20.0)), (200.0, 20.0));
         assert_eq!(map.to_frame((200.0, 20.0)), Some((200.0, 20.0)));
     }
-
     #[test]
     fn only_what_holds_a_frame_holds_one() {
         let node = |name: &str| json!({ "nodeName": name, "frameId": "F" });
@@ -3659,7 +3442,6 @@ mod tests {
         }
         assert_eq!(frame_of_holder(&json!({ "nodeName": "IFRAME" })), None);
     }
-
     #[test]
     fn a_frame_under_a_transform_is_mapped_by_its_quad() {
         let half = FrameMap::of(
@@ -3695,7 +3477,6 @@ mod tests {
         assert!(FrameMap::of(&[], 200.0, 100.0).is_none());
         assert_eq!(FrameMap::same().to_page((3.0, 4.0)), (3.0, 4.0));
     }
-
     #[test]
     fn a_line_that_says_what_it_does_names_what_acts() {
         let read = facts_read(
@@ -3707,7 +3488,6 @@ mod tests {
         );
         assert_eq!(plain.name, "Stripe");
     }
-
     #[test]
     fn a_listener_for_a_press_is_told_from_any_other() {
         assert!(hears_a_press(
@@ -3722,7 +3502,6 @@ mod tests {
         assert!(!hears_a_press(&json!({ "listeners": [] })));
         assert!(!hears_a_press(&json!({})));
     }
-
     #[test]
     fn an_editable_region_is_a_field_and_false_says_it_is_not() {
         assert!(edited("DIV", &["contenteditable", ""]));
@@ -3736,7 +3515,6 @@ mod tests {
         assert_eq!(local_name("input"), "INPUT");
         assert_eq!(local_name("html:input"), "INPUT");
     }
-
     #[test]
     fn a_read_of_a_page_with_no_secret_region_is_the_plain_read() {
         assert_eq!(text_hiding(&[]), TEXT);
@@ -3746,7 +3524,6 @@ mod tests {
         assert!(MASKED_TEXT.contains("[hidden]") && MASKED_CLONE.contains("[hidden]"));
         assert!(MASKED_TEXT.contains(REGIONS) && MASKED_CLONE.contains(REGIONS));
     }
-
     #[test]
     fn what_cannot_be_read_of_a_press_is_never_nothing() {
         assert!(facts_read(&json!({})).opaque);
@@ -3756,7 +3533,6 @@ mod tests {
         assert!(!read.opaque);
         assert_eq!(read.name, "OK");
     }
-
     #[test]
     fn a_controls_name_is_what_the_page_and_the_engine_call_it() {
         assert_eq!(joined_name("", "Pay now"), "Pay now");
@@ -3765,7 +3541,6 @@ mod tests {
         assert_eq!(joined_name("OK", "OK Pay now"), "OK Pay now");
         assert_eq!(joined_name("Continue", "Pay now"), "Continue Pay now");
     }
-
     #[test]
     fn a_cookie_is_for_the_pages_own_site() {
         assert!(cookie_fits("shop.example", "www.shop.example"));
@@ -3776,7 +3551,6 @@ mod tests {
         assert!(!cookie_fits("github.io", "shop.github.io"));
         assert!(!cookie_fits("op.example", "shop.example"));
     }
-
     fn captured(nodes: &[(i64, &str, u64, &[&str])], roots: &[(u64, &str)]) -> Value {
         let mut strings: Vec<String> = Vec::new();
         let mut index = |word: &str| {
@@ -3809,7 +3583,6 @@ mod tests {
             } }],
         })
     }
-
     #[test]
     fn every_field_is_found_through_roots_and_frames() {
         let capture = captured(
@@ -3834,7 +3607,6 @@ mod tests {
         assert_eq!(fields_in_capture(&capture, Some(100)), [4]);
         assert_eq!(fields_in_capture(&capture, Some(101)), Vec::<u64>::new());
     }
-
     #[test]
     fn a_field_a_thousand_levels_down_is_found() {
         let mut nodes: Vec<(i64, &str, u64, &[&str])> = vec![(-1, "#document", 5000, &[])];
@@ -3853,7 +3625,6 @@ mod tests {
             serde_json::from_str(&text).expect("a flat reply is within the parser's limit");
         assert_eq!(fields_in_capture(&read, None), [7]);
     }
-
     #[test]
     fn a_frame_with_no_address_of_its_own_is_where_it_sits() {
         let tree = json!({ "frame": { "id": "top", "url": "https://a.example/" }, "childFrames": [
@@ -3871,7 +3642,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn frames_are_every_one_under_the_page() {
         let tree = json!({ "frame": { "id": "top" }, "childFrames": [
@@ -3882,7 +3652,6 @@ mod tests {
         collect_frames(&tree, true, &mut out);
         assert_eq!(out, ["a", "b", "c"]);
     }
-
     #[test]
     fn a_gone_element_says_to_look_again() {
         let code = |said| match stale(said) {

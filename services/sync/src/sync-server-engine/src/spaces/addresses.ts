@@ -2,9 +2,7 @@ import { blogRoots, type Env, origins, passHost, type Space } from '../../../syn
 
 export const SUBDOMAIN = /^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$/
 const DOMAIN = /^(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/
-
 export const DOMAIN_LIMIT = 253
-
 const RESERVED = new Set([
   'www',
   'mail',
@@ -23,7 +21,6 @@ const RESERVED = new Set([
   'cname',
   'localhost',
   'local',
-
   'autoconfig',
   'autodiscover',
   'mta-sts',
@@ -32,7 +29,6 @@ const RESERVED = new Set([
   'spf',
   'wpad',
   'isatap',
-
   'about',
   'account',
   'accounts',
@@ -115,7 +111,6 @@ const RESERVED = new Set([
   'upgrade',
   'vpn',
   'ws',
-
   'abuse',
   'hostmaster',
   'info',
@@ -131,7 +126,6 @@ const RESERVED = new Set([
   'ftp',
   'sftp',
 ])
-
 export function reserved(env: Env, subdomain: string): boolean {
   return (
     RESERVED.has(subdomain) ||
@@ -139,7 +133,6 @@ export function reserved(env: Env, subdomain: string): boolean {
     blogRoots(env).some((root) => `${subdomain}.${root}` === passHost(env))
   )
 }
-
 export function cleanDomain(input: string): string {
   return input
     .trim()
@@ -148,27 +141,21 @@ export function cleanDomain(input: string): string {
     .replace(/\/.*$/, '')
     .replace(/\.$/, '')
 }
-
 export function looksLikeDomain(domain: string): boolean {
   return domain.length <= DOMAIN_LIMIT && DOMAIN.test(domain)
 }
-
 export function ours(env: Env, domain: string): boolean {
   const roots = [...blogRoots(env), ...origins(env).map((origin) => new URL(origin).hostname)]
   return roots.some((root) => domain === root || domain.endsWith(`.${root}`))
 }
-
 function proofName(domain: string): string {
   return `_orden-verify.${domain}`
 }
-
 export function proofNames(domain: string): string[] {
   return [proofName(domain), `_nib-verify.${domain}`]
 }
-
 export function dnsRecords(env: Env, space: Space): { type: string; name: string; value: string; note?: string }[] {
   if (!space.blog_domain) return []
-
   const apex = space.blog_domain.split('.').length === 2
   return [
     {

@@ -21,15 +21,12 @@ import { holdsWords, unixLines } from '../../documents/src/api'
 import { services } from './services'
 
 const NO_ENGINE = 'no-engine'
-
 function dotted(path: string): boolean {
   const space = workspace.spaces.find((one) => withinSpace(one.root, path) !== null)
   const inside = space ? withinSpace(space.root, path) : null
   return (inside ?? path).split('/').some((part) => part.startsWith('.'))
 }
-
 const listAgain = afterQuiet(() => void workspace.loadTree(), 100)
-
 async function lookAt(path: string): Promise<void> {
   await workspace.holdingUnder(path, async () => {
     const note = workspace.documentAt(path)
@@ -47,14 +44,11 @@ async function lookAt(path: string): Promise<void> {
     windows.say('words', { path, text: disk })
   })
 }
-
 async function told(op: FileOp) {
   windows.say('file-op', { op })
   await workspace.fileOps.tell({ ...op, heard: true, watched: true })
 }
-
 const kindOf = (dir: boolean) => (dir ? 'folder' : 'file')
-
 function vanished(path: string, dir: boolean) {
   for (const note of workspace.documents) {
     if (note.path === null || !note.dirty || within(path, note.path) === null) continue
@@ -68,18 +62,15 @@ function vanished(path: string, dir: boolean) {
   workspace.closed.follow(op)
   void links.follow(op)
 }
-
 async function gone(path: string, dir: boolean) {
   if (await onDisk(path)) return
   vanished(path, dir)
   windows.say('vanished', { path, dir })
   listAgain()
 }
-
 function lockedAlike(from: string, to: string) {
   workspace.protection.copied(from, to, workspace.rootHolding(from), workspace.rootHolding(to))
 }
-
 async function moved(from: string, to: string, dir: boolean) {
   if (landing(to)) return
   if (await onDisk(from)) {
@@ -96,12 +87,10 @@ async function moved(from: string, to: string, dir: boolean) {
   })
   listAgain()
 }
-
 async function came(path: string, dir: boolean) {
   await told({ op: 'created', path, kind: kindOf(dir), root: workspace.rootHolding(path) })
   listAgain()
 }
-
 export async function heardChange(change: SpaceChange): Promise<void> {
   if (dotted(change.path)) {
     if (change.kind !== 'renamed' || dotted(change.from)) return
@@ -130,13 +119,10 @@ export async function heardChange(change: SpaceChange): Promise<void> {
     if (read !== null) links.noteSaved(change.path, read)
   }
 }
-
 async function lookAtAll(): Promise<void> {
   await Promise.all(workspace.documents.flatMap((one) => one.path ?? []).map(lookAt))
 }
-
 let hearing: Promise<void> = Promise.resolve()
-
 export function heardNews(news: SpaceNews): Promise<void> {
   hearing = hearing.then(async () => {
     if (news.unwatched) log('warn', `not all of ${news.root} can be watched: ${news.unwatched}`)
@@ -156,24 +142,19 @@ export function heardNews(news: SpaceNews): Promise<void> {
   })
   return hearing
 }
-
 const engineWatches = () => account.user !== null && sync.version === 2
-
 export class TheWatch {
   private giving: AbortController | null = null
   private lead: Leadership | null = null
   private armed: string | null = null
-
   settle(): void {
     if (engineWatches()) this.letGo()
     else void this.leadAndArm()
   }
-
   letGoOfByEngine(): void {
     this.armed = null
     this.settle()
   }
-
   private arm() {
     if (!this.lead || engineWatches()) return
     const roots = workspace.spaces
@@ -188,7 +169,6 @@ export class TheWatch {
       log('warn', `outside: the spaces are not watched - ${String(error)}`)
     })
   }
-
   private letGo() {
     this.giving?.abort()
     this.giving = null
@@ -196,7 +176,6 @@ export class TheWatch {
     this.lead = null
     this.armed = null
   }
-
   private async leadAndArm() {
     if (this.lead || this.giving) {
       this.arm()
@@ -214,7 +193,6 @@ export class TheWatch {
     this.arm()
   }
 }
-
 export function hearsUnwatched(
   watch: TheWatch,
   line: {
@@ -232,7 +210,6 @@ export function hearsUnwatched(
     heard()
   }
 }
-
 export function hearOutside(): void {
   const watch = new TheWatch()
   hearsUnwatched(watch)
@@ -240,7 +217,6 @@ export function hearOutside(): void {
     vanished(String(path), dir === true)
     listAgain()
   })
-
   $effect.root(() => {
     $effect(() => {
       void engineWatches()
@@ -248,7 +224,6 @@ export function hearOutside(): void {
       untrack(() => watch.settle())
     })
   })
-
   window.addEventListener('focus', () => {
     if (!engineWatches()) void lookAtAll()
   })

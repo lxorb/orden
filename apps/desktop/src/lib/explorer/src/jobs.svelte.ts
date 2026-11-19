@@ -11,9 +11,7 @@ interface Running {
   count: number
   shown: boolean
 }
-
 const SHOWN_AFTER = 400
-
 class Jobs {
   list = $state<Running[]>([])
   #hearing = door(() =>
@@ -24,7 +22,6 @@ class Jobs {
       }),
     ),
   )
-
   async run<T>(label: string, work: (id: string) => Promise<T>): Promise<T> {
     const heard = this.hear()
     const id = identifier()
@@ -40,19 +37,15 @@ class Jobs {
       this.list = this.list.filter((one) => one.id !== id)
     }
   }
-
   cancel(id: string) {
     void cancelJob(id)
   }
-
   private change(id: string, to: Partial<Running>) {
     this.list = this.list.map((one) => (one.id === id ? { ...one, ...to } : one))
   }
-
   private hear(): Promise<unknown> {
     if (!isDesktop) return Promise.resolve()
     return this.#hearing().catch(() => undefined)
   }
 }
-
 export const jobs = new Jobs()

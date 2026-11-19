@@ -9,12 +9,10 @@ describe('the brand a website belongs to', () => {
     expect(siteBrand('https://claude.ai/new')).toBe('claude')
     expect(siteBrand('https://www.linkedin.com/in/someone')).toBe('linkedin')
   })
-
   test('past a country s own second level', () => {
     expect(siteBrand('https://www.amazon.co.uk/')).toBe('amazon')
     expect(siteBrand('https://www.ebay.com.au/')).toBe('ebay')
   })
-
   test('and the logo a site goes by where that is not its name', () => {
     expect(siteBrand('https://chatgpt.com/')).toBe('openai')
     expect(siteBrand('https://obsproject.com/download')).toBe('obsstudio')
@@ -22,7 +20,6 @@ describe('the brand a website belongs to', () => {
     expect(siteBrand('https://code.visualstudio.com/docs')).toBe('visualstudiocode')
     expect(siteBrand('https://twitter.com/someone')).toBe('x')
   })
-
   test('and nothing for an address that is not a website s', () => {
     expect(siteBrand(null)).toBeNull()
     expect(siteBrand('')).toBeNull()

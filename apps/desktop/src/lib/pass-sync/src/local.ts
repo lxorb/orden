@@ -10,18 +10,15 @@ const VERSION = 2
 const THIS = 'this'
 const KEPT_VERSIONS = 30
 export const KEPT_AFTER_DELETE = 30 * 24 * 60 * 60 * 1000
-
 export interface KeyringRow {
   keyring: Keyring
   rev: number
   pending: boolean
 }
-
 export interface DeviceRow {
   seal: DeviceSeal
   kdf: KdfParams
 }
-
 export interface VaultRow {
   id: string
   rev: number
@@ -37,7 +34,6 @@ export interface VaultRow {
   accepted?: Accepted | null
   handovers?: Handover[]
 }
-
 export interface ItemRow {
   vault: string
   id: string
@@ -49,7 +45,6 @@ export interface ItemRow {
   pending: boolean
   deleted: boolean
 }
-
 export interface VersionRow {
   vault: string
   id: string
@@ -58,12 +53,10 @@ export interface VersionRow {
   body: string
   at: number
 }
-
 export interface ItemRef {
   vault: string
   id: string
 }
-
 export interface FilePartRow {
   item: string
   file: string
@@ -71,18 +64,14 @@ export interface FilePartRow {
   parts: number
   bytes: Uint8Array<ArrayBuffer>
 }
-
 export interface Change {
   vaults?: VaultRow[]
   items?: ItemRow[]
   versions?: VersionRow[]
   dropVersions?: ItemRef[]
 }
-
 type StoreName = 'keyring' | 'device' | 'vaults' | 'items' | 'versions' | 'meta' | 'files'
-
 let opening: Promise<IDBDatabase> | null = null
-
 function database(): Promise<IDBDatabase> {
   opening ??= new Promise((resolve, reject) => {
     const request = indexedDB.open(NAME, VERSION)
@@ -112,14 +101,12 @@ function database(): Promise<IDBDatabase> {
   })
   return opening
 }
-
 function answer<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('pass: the device store failed'))
   })
 }
-
 function finished(change: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     change.oncomplete = () => resolve()
@@ -127,12 +114,10 @@ function finished(change: IDBTransaction): Promise<void> {
     change.onabort = () => reject(change.error ?? new Error('pass: a write was abandoned'))
   })
 }
-
 async function read<T>(name: StoreName, ask: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
   const db = await database()
   return await answer(ask(db.transaction(name, 'readonly').objectStore(name)))
 }
-
 async function changed(name: StoreName, run: (store: IDBObjectStore) => void): Promise<void> {
   const db = await database()
   const writing = db.transaction(name, 'readwrite')
@@ -140,18 +125,15 @@ async function changed(name: StoreName, run: (store: IDBObjectStore) => void): P
   run(writing.objectStore(name))
   await done
 }
-
 async function put(name: StoreName, value: unknown, key?: IDBValidKey): Promise<void> {
   await changed(name, (store) => {
     if (value === null && key !== undefined) store.delete(key)
     else store.put(value, key)
   })
 }
-
 function versionsOf(vault: string, id: string): IDBKeyRange {
   return IDBKeyRange.bound([vault, id, -Infinity], [vault, id, Infinity])
 }
-
 function deviceSealIn(value: unknown): DeviceSeal | null {
   if (!isRecord(value)) return null
   const { way, salt, sealed, tries } = value
@@ -160,7 +142,6 @@ function deviceSealIn(value: unknown): DeviceSeal | null {
   if (typeof tries !== 'number' || !Number.isInteger(tries) || tries < 0) return null
   return { way, salt, sealed, tries }
 }
-
 export async function readKeyring(): Promise<KeyringRow | null> {
   const row: unknown = await read('keyring', (store) => store.get(THIS))
   if (!isRecord(row)) return null
@@ -168,26 +149,21 @@ export async function readKeyring(): Promise<KeyringRow | null> {
   if (keyring === null || typeof row.rev !== 'number') return null
   return { keyring, rev: row.rev, pending: row.pending === true }
 }
-
 export async function writeKeyring(row: KeyringRow): Promise<void> {
   await put('keyring', row, THIS)
 }
-
 export async function readDevice(): Promise<DeviceRow | null> {
   return deviceRowIn(await read('device', (store) => store.get(THIS)))
 }
-
 export async function writeDevice(row: DeviceRow | null): Promise<void> {
   await put('device', row, THIS)
 }
-
 function deviceRowIn(row: unknown): DeviceRow | null {
   if (!isRecord(row)) return null
   const seal = deviceSealIn(row.seal)
   const kdf = kdfParamsIn(row.kdf)
   return seal === null || kdf === null ? null : { seal, kdf }
 }
-
 async function pinTries(next: (seal: DeviceSeal) => number | null): Promise<DeviceRow | null> {
   let row: DeviceRow | null = null
   await changed('device', (store) => {
@@ -203,61 +179,48 @@ async function pinTries(next: (seal: DeviceSeal) => number | null): Promise<Devi
   })
   return row
 }
-
 export function spendPinTry(): Promise<DeviceRow | null> {
   return pinTries((seal) => seal.tries + 1)
 }
-
 export function clearPinTries(sealed: string): Promise<DeviceRow | null> {
   return pinTries((seal) => (seal.sealed === sealed ? 0 : null))
 }
-
 export async function readVaults(): Promise<VaultRow[]> {
   return (await read('vaults', (store) => store.getAll())) as VaultRow[]
 }
-
 export async function readItems(): Promise<ItemRow[]> {
   return (await read('items', (store) => store.getAll())) as ItemRow[]
 }
-
 export async function readItem(vault: string, id: string): Promise<ItemRow | null> {
   const row = (await read('items', (store) => store.get([vault, id]))) as ItemRow | undefined
   return row ?? null
 }
-
 export async function readVersions(vault: string, id: string): Promise<VersionRow[]> {
   const rows = (await read('versions', (store) => store.getAll(versionsOf(vault, id)))) as VersionRow[]
   return rows.reverse()
 }
-
 export async function readMeta(key: string): Promise<unknown> {
   return await read('meta', (store) => store.get(key))
 }
-
 export async function writeMeta(key: string, value: unknown): Promise<void> {
   await put('meta', value, key)
 }
-
 function partsOf(item: string, file?: string): IDBKeyRange {
   return file === undefined
     ? IDBKeyRange.bound([item], [item, []])
     : IDBKeyRange.bound([item, file, -Infinity], [item, file, Infinity])
 }
-
 export async function readFileParts(item: string, file: string): Promise<FilePartRow[]> {
   return (await read('files', (store) => store.getAll(partsOf(item, file)))) as FilePartRow[]
 }
-
 export async function writeFileParts(rows: readonly FilePartRow[]): Promise<void> {
   await changed('files', (store) => {
     for (const row of rows) store.put(row)
   })
 }
-
 export async function dropFileParts(item: string, file?: string): Promise<void> {
   await changed('files', (store) => store.delete(partsOf(item, file)))
 }
-
 function prune(store: IDBObjectStore, ref: ItemRef): void {
   const keys = store.getAllKeys(versionsOf(ref.vault, ref.id))
   keys.onsuccess = () => {
@@ -265,7 +228,6 @@ function prune(store: IDBObjectStore, ref: ItemRef): void {
     for (const key of keys.result.slice(0, Math.max(0, extra))) store.delete(key)
   }
 }
-
 export async function write(change: Change): Promise<void> {
   const db = await database()
   const writing = db.transaction(['vaults', 'items', 'versions'], 'readwrite')
@@ -281,13 +243,11 @@ export async function write(change: Change): Promise<void> {
   for (const ref of touched.values()) prune(versions, ref)
   await done
 }
-
 async function closeLocal(): Promise<void> {
   const was = opening
   opening = null
   if (was) (await was.catch(() => null))?.close()
 }
-
 export async function forgetLocal(): Promise<void> {
   await closeLocal()
   await new Promise<void>((resolve, reject) => {

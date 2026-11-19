@@ -11,38 +11,31 @@
   import ToneDot from './ToneDot.svelte'
 
   const { kit, column }: { kit: Kit; column: string } = $props()
-
   const live = $derived(kit.live)
   const key = $derived(bare(column))
   const options = $derived(live.base ? optionsAt(live.base, column) : [])
   const id = $derived(live.base?.orden.id?.property === key ? live.base.orden.id : null)
-
   const GROUPS = [
     { value: '', label: 'None' },
     { value: 'todo', label: 'To do' },
     { value: 'doing', label: 'Doing' },
     { value: 'done', label: 'Done' },
   ]
-
   function write(next: SelectOption[]) {
     kit.change((base) => setProperty(base, key, { options: next.length ? next : undefined }))
   }
-
   function change(at: number, option: SelectOption) {
     write(options.map((one, index) => (index === at ? option : one)))
   }
-
   function rename(at: number, words: string) {
     const was = options[at]
     if (was) renameOption(kit, column, was.value, words)
   }
-
   function add() {
     let value = 'New option'
     for (let count = 2; options.some((one) => one.value === value); count++) value = `New option ${count}`
     write([...options, { value, tone: String((options.length % 6) + 1) }])
   }
-
   function carry(event: PointerEvent, from: number) {
     event.preventDefault()
     const list = (event.currentTarget as HTMLElement).closest('.options')
@@ -64,7 +57,6 @@
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', up)
   }
-
   function prefix(words: string) {
     const base = live.base
     if (!base || !id) return
@@ -140,13 +132,11 @@
     align-items: center;
     gap: var(--space-2);
   }
-
   .options {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .grip {
     color: var(--muted);
     cursor: grab;
@@ -154,15 +144,12 @@
     -webkit-user-select: none;
     user-select: none;
   }
-
   .prefix {
     grid-template-columns: auto minmax(0, 1fr);
   }
-
   .key {
     color: var(--muted-strong);
   }
-
   .adder .orden-row-label {
     color: var(--muted);
   }

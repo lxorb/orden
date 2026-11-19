@@ -9,7 +9,6 @@ interface World {
   renamed: [string, string][]
   settled: number
 }
-
 const world = vi.hoisted((): World => ({
   record: null,
   met: [],
@@ -18,7 +17,6 @@ const world = vi.hoisted((): World => ({
   renamed: [],
   settled: 0,
 }))
-
 vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',
@@ -27,14 +25,11 @@ vi.mock('../../accounts/src/account.svelte', () => ({
     settled: () => (world.settled += 1),
   },
 }))
-
 vi.mock('../../platform/src/stored', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/stored')>()),
   stored: () => world.record,
 }))
-
 vi.mock('./meeting', () => ({ meeting: () => Promise.resolve(world.met) }))
-
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: () => {
@@ -43,7 +38,6 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-
 providePort('workspace.view', {
   ...workspaceView(),
   spaces: [
@@ -55,62 +49,44 @@ providePort('workspace.view', {
     return Promise.resolve()
   },
 })
-
 const { settleLocalNotes } = await import('./settling')
-
 const PLANS = { name: 'Plans', root: '/Plans' }
 const MIRRORS = { '/Plans': { spaceId: 's1', cursor: 3, notes: {} } }
-
 beforeEach(() => {
   Object.assign(world, { record: null, met: [], answer: null, asked: 0, renamed: [], settled: 0 })
 })
-
 describe('signing in', () => {
   test('asks nothing of a device back with its own account, however it would meet', async () => {
     world.record = { account: 'me', mirrors: MIRRORS }
     world.met = [PLANS]
-
     await settleLocalNotes()
-
     expect(world.asked).toBe(0)
     expect(world.settled).toBe(1)
   })
-
   test('asks nothing where nothing would meet', async () => {
     world.record = { account: 'them', mirrors: MIRRORS }
-
     await settleLocalNotes()
-
     expect(world.asked).toBe(0)
     expect(world.settled).toBe(1)
   })
-
   test('asks about another account’s notes that would meet, and Merge leaves them be', async () => {
     world.record = { account: 'them', mirrors: MIRRORS }
     world.met = [PLANS]
     world.answer = 'merge'
-
     await settleLocalNotes()
-
     expect(world.asked).toBe(1)
     expect(world.renamed).toEqual([])
     expect(world.settled).toBe(1)
   })
-
   test('Keep separate gives each space that would meet a name nobody has', async () => {
     world.met = [PLANS]
     world.answer = 'apart'
-
     await settleLocalNotes()
-
     expect(world.renamed).toEqual([['a', 'Plans 3']])
   })
-
   test('closing the question keeps them separate too', async () => {
     world.met = [PLANS]
-
     await settleLocalNotes()
-
     expect(world.asked).toBe(1)
     expect(world.renamed).toEqual([['a', 'Plans 3']])
     expect(world.settled).toBe(1)

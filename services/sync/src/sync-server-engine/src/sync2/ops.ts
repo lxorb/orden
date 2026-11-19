@@ -11,7 +11,6 @@ import { type Env, newId, type Reached } from '../../../sync-server/src/api'
 import { type Changed, changeTree, type Content, kindOfName, type Reach, reachOf, type Tree } from './tree'
 
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
-
 export async function blobSizes(
   env: Env,
   space: Pick<Reached, 'id' | 'user_id'>,
@@ -20,7 +19,6 @@ export async function blobSizes(
 ): Promise<Map<string, number>> {
   const wanted = [...new Set([...hashes].map((hash) => hash.toLowerCase()))]
   if (!wanted.length) return new Map()
-
   const { results } = await env.DB.prepare(
     `select b.hash, max(b.size) as size from blobs b
       where b.hash in (select value from json_each(?1))
@@ -36,16 +34,13 @@ export async function blobSizes(
     .all<{ hash: string; size: number }>()
   return new Map(results.map((row) => [row.hash, row.size]))
 }
-
 function createdHashes(ops: readonly Op[]): string[] {
   return ops.flatMap((op) => (op.t === 'create' && op.kind === 'file' && op.hash ? [op.hash] : []))
 }
-
 async function takenIds(env: Env, spaceId: string, ops: readonly Op[]): Promise<Set<string>> {
   const ids = new Set<string>()
   for (const op of ops) if (op.t === 'create' || op.t === 'mkdir') ids.add(op.id)
   if (!ids.size) return ids
-
   const { results } = await env.DB.prepare(
     `select id from notes
       where id in (select value from json_each(?1))
@@ -59,7 +54,6 @@ async function takenIds(env: Env, spaceId: string, ops: readonly Op[]): Promise<
     .all<{ id: string }>()
   return new Set(results.map((row) => row.id))
 }
-
 export async function applyOps(
   env: Env,
   space: Reached,
@@ -70,7 +64,6 @@ export async function applyOps(
   const sizes = await blobSizes(env, space, asker, createdHashes(ops))
   const taken = await takenIds(env, space.id, ops)
   const context: OpContext = { role: space.role, device }
-
   return await changeTree(
     env,
     space.id,
@@ -80,7 +73,6 @@ export async function applyOps(
     reachOf(ops),
   )
 }
-
 function applied(
   tree: Tree,
   op: Op,
@@ -95,20 +87,16 @@ function applied(
   if ((op.t === 'create' || op.t === 'mkdir') && taken.has(op.id) && !tree.answers(op.op)) {
     return { op: op.op, refused: 'gone' }
   }
-
   if (op.t !== 'create' || op.kind !== 'file' || context.role === 'read') {
     return tree.apply(op, context)
   }
-
   const hash = op.hash?.toLowerCase()
   const size = hash === undefined ? undefined : sizes.get(hash)
   if (hash === undefined || size === undefined) return { op: op.op, refused: 'gone' }
-
   const result = tree.apply(op, context)
   tree.content.set(op.id, { hash, size, front: null, epoch: 0, epochBase: null })
   return result
 }
-
 function foldersFor(tree: Tree, folders: readonly string[], context: OpContext, fresh: () => string): string | null {
   let parent: string | null = null
   for (const name of folders) {
@@ -117,7 +105,6 @@ function foldersFor(tree: Tree, folders: readonly string[], context: OpContext, 
       parent = found.id
       continue
     }
-
     const id = fresh()
     const made = tree.apply({ op: fresh(), t: 'mkdir', id, parent, name, seen: SAW_EVERYTHING }, context)
     if (!('id' in made)) throw new Error(`a folder could not be made for ${name}`)
@@ -125,14 +112,12 @@ function foldersFor(tree: Tree, folders: readonly string[], context: OpContext, 
   }
   return parent
 }
-
 function split(path: string): { folders: string[]; name: string } {
   const folders = path.split('/')
   const name = folders.pop() ?? path
   if (![...folders, name].every(isName)) throw new Error(`not a place for a note: ${path}`)
   return { folders, name }
 }
-
 function noteAtPath(tree: Tree, folders: readonly string[], name: string): string | null {
   let parent: string | null = null
   for (const folder of folders) {
@@ -143,12 +128,10 @@ function noteAtPath(tree: Tree, folders: readonly string[], name: string): strin
   const found = tree.child(parent, name)
   return found && found.kind !== 'folder' ? found.id : null
 }
-
 export interface ByPath<T> {
   reach: Reach
   work: (tree: Tree, fresh?: () => string) => T
 }
-
 export function creatingAt(
   path: string,
   device: string | undefined,
@@ -162,7 +145,6 @@ export function creatingAt(
     work: (tree, fresh = newId) => {
       const taken = noteAtPath(tree, folders, name)
       if (taken) return { taken }
-
       const parent = foldersFor(tree, folders, context, fresh)
       const id = fresh()
       const create: CreateOp = {
@@ -176,7 +158,6 @@ export function creatingAt(
       }
       tree.apply(create, context)
       tree.content.set(id, content)
-
       const entry = tree.entry(id)
       if (entry) {
         entry.docSeq = entry.seq
@@ -188,7 +169,6 @@ export function creatingAt(
     },
   }
 }
-
 export function movingTo(id: string, path: string, device: string | undefined): ByPath<string | null> {
   const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
   const { folders, name } = split(path)
@@ -201,7 +181,6 @@ export function movingTo(id: string, path: string, device: string | undefined): 
     },
   }
 }
-
 export async function createByPath(
   env: Env,
   spaceId: string,
@@ -214,7 +193,6 @@ export async function createByPath(
   const { value } = await changeTree(env, spaceId, device, (tree) => work(tree), [], reach)
   return value
 }
-
 export async function moveByPath(
   env: Env,
   spaceId: string,
@@ -226,7 +204,6 @@ export async function moveByPath(
   const { value } = await changeTree(env, spaceId, device, (tree) => work(tree), [], reach)
   return value
 }
-
 export async function deleteById(
   env: Env,
   spaceId: string,
@@ -239,7 +216,6 @@ export async function deleteById(
   const { value } = await changeTree(env, spaceId, device, (tree) => tree.apply(op, context), [], reachOf([op]))
   return value
 }
-
 export async function revive(
   env: Env,
   spaceId: string,

@@ -8,12 +8,10 @@ export interface AccountNote {
   path: string
   deletedAt: number
 }
-
 export function folderOfSpace(spaceId: string): string | null {
   const space = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === spaceId)
   return space ? (space.root.split(/[\\/]/).pop() ?? null) : null
 }
-
 export function doublesOf(
   device: readonly TrashItem[],
   account: readonly AccountNote[],
@@ -34,7 +32,6 @@ export function doublesOf(
     })
     .map((item) => item.id)
 }
-
 export async function withoutDoubles(device: TrashItem[], account: readonly AccountNote[]): Promise<TrashItem[]> {
   const doubles = new Set(doublesOf(device, account, folderOfSpace))
   if (!doubles.size) return device

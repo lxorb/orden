@@ -8,13 +8,10 @@ export interface Pose {
   tab: number
   alpha: number
 }
-
 const KEYS = ['x', 'y', 'w', 'h', 'tab', 'alpha'] as const
 const TAB_RADIUS = 8
-
 export class Flight {
   private readonly springs: Record<keyof Pose, Spring>
-
   constructor(from: Pose) {
     this.springs = {
       x: spring(from.x),
@@ -25,11 +22,9 @@ export class Flight {
       alpha: spring(from.alpha, SHARE),
     }
   }
-
   aim(to: Pose) {
     for (const key of KEYS) this.springs[key].to = to[key]
   }
-
   hold(x: number, y: number, w: number, h: number) {
     for (const [key, value] of [
       ['x', x],
@@ -44,11 +39,9 @@ export class Flight {
     this.springs.tab.to = 0
     this.springs.alpha.to = 1
   }
-
   land() {
     for (const key of KEYS) land(this.springs[key])
   }
-
   step(seconds: number, feel: Feel = FLIGHT): boolean {
     let still = true
     for (const key of KEYS) {
@@ -57,19 +50,15 @@ export class Flight {
     }
     return still
   }
-
   get pose(): Pose {
     const { x, y, w, h, tab, alpha } = this.springs
     return { x: x.at, y: y.at, w: w.at, h: h.at, tab: tab.at, alpha: alpha.at }
   }
-
   get resting(): boolean {
     return KEYS.every((key) => resting(this.springs[key]))
   }
 }
-
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
-
 export function drawn(
   pose: Pose,
   wide: number,
@@ -99,9 +88,7 @@ export function drawn(
     },
   }
 }
-
 export type Corners = readonly [number, number, number, number]
-
 export function paneDrawn(
   pose: Pose,
   camera: { x: number; y: number; zoom: number },

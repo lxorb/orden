@@ -37,7 +37,6 @@
     tools?: Snippet
   } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   let shown = $state(false)
   const id = `pass-field-${Math.random().toString(36).slice(2, 8)}`
 </script>
@@ -111,17 +110,14 @@
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
   }
-
   .mark {
     flex: none;
     color: var(--muted);
   }
-
   .is-tall .mark {
     align-self: flex-start;
     margin-top: 11px;
   }
-
   .text {
     flex: 1;
     min-width: 0;
@@ -129,12 +125,10 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .label {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   input.label {
     padding: 0;
     border: 1px solid transparent;
@@ -142,11 +136,9 @@
     background: none;
     font-family: var(--font-ui);
   }
-
   input.label:focus {
     color: var(--text);
   }
-
   .value {
     width: 100%;
     min-height: 22px;
@@ -159,36 +151,29 @@
     font-size: var(--text-row);
     resize: vertical;
   }
-
   .value::placeholder,
   .label::placeholder {
     color: var(--muted);
   }
-
   .value.is-mono {
     font-family: var(--font-mono);
     letter-spacing: 0.02em;
   }
-
   .value.is-big {
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
   }
-
   .is-invalid .label {
     color: var(--danger);
   }
-
   .wrong {
     font-size: var(--text-xs);
     color: var(--danger);
   }
-
   .orden-glyph {
     flex: none;
     color: var(--muted-strong);
   }
-
   .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);

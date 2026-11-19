@@ -22,88 +22,66 @@ const GRAPH = JSON.stringify([
     children: [{ string: 'As I said in ((abc123))', uid: 'mno345' }],
   },
 ])
-
 describe('a Roam export', () => {
   test('a page is a note and its blocks are a nested list', async () => {
     const plan = await readRoam([file('graph.json', GRAPH)])
-
     const text = noteAt(plan, 'The plan.md')
     expect(text).toContain('- First thought')
     expect(text).toContain('  - Under it')
     expect(text).toContain('date: 2026-01-02')
   })
-
   test('a checkbox is a task and a highlight is a highlight', async () => {
     const text = noteAt(await readRoam([file('graph.json', GRAPH)]), 'The plan.md')
-
     expect(text).toContain('- [ ] Ring the bank')
     expect(text).toContain('Bold ==and lit==')
   })
-
   test('a daily page is the date it is, in a folder of its own', async () => {
     const plan = await readRoam([file('graph.json', GRAPH)])
-
     expect(plan.files.map((one) => one.path)).toEqual(['The plan.md', 'Journals/2026-09-11.md'])
   })
-
   test('a block reference is written out as what it said', async () => {
     const plan = await readRoam([file('graph.json', GRAPH)])
-
     expect(noteAt(plan, 'Journals/2026-09-11.md')).toContain('As I said in First thought')
     expect(plan.lost[0]).toBe('1 block references were written out as the words they pointed at')
   })
-
   test('a JSON that is not a Roam graph is not read as one', async () => {
     const plan = await readRoam([file('settings.json', '{"theme":"dark"}')])
-
     expect(plan.files).toHaveLength(0)
   })
 })
-
 describe("Roam's own spellings", () => {
   test('an embed is the words it embedded', () => {
     const known = new Map([['abc', 'The words']])
-
     expect(roamText('{{[[embed]]: ((abc))}}', known)).toBe('The words')
   })
-
   test('a reference nothing knows is left exactly as written', () => {
     expect(roamText('See ((nope))')).toBe('See ((nope))')
   })
-
   test('a button loses its braces and keeps its words', () => {
     expect(roamText('{{[[query]]}}')).toBe('query')
   })
 })
-
 describe('a day out of a page name', () => {
   test('reads the shape Roam writes', () => {
     expect(dayName('September 11th, 2026')).toBe('2026-09-11')
     expect(dayName('May 1st, 2026')).toBe('2026-05-01')
   })
-
   test('is nothing for a page somebody named', () => {
     expect(dayName('September plans')).toBeNull()
     expect(dayName('2026-09-11')).toBeNull()
   })
 })
-
 describe('a Roam export, block by block', () => {
   const page = (children: unknown[]) =>
     readRoam([file('graph.json', JSON.stringify([{ title: 'P', children }]))]).then((plan) => noteAt(plan, 'P.md'))
-
   test('a code block stays inside its list item, its closing fence on a line of its own', async () => {
     const text = await page([{ string: '```js\nconst one = 1\n\nconst two = 2```', uid: 'a' }])
-
     expect(text).toContain('- ```js\n  const one = 1\n\n  const two = 2\n  ```\n')
   })
-
   test('the lines of a block after its first stay in it', async () => {
     const text = await page([{ string: 'line one\nline two', uid: 'a', children: [{ string: 'under', uid: 'b' }] }])
-
     expect(text).toContain('- line one\n  line two\n  - under')
   })
-
   test('every spelling of an embed shows the block, and its children when it stands alone', async () => {
     const text = await page([
       { string: 'Shown', uid: 'src', children: [{ string: 'child', uid: 'kid' }] },
@@ -111,47 +89,37 @@ describe('a Roam export, block by block', () => {
       { string: '{{[[embed-path]]: ((src))}}', uid: 'e2' },
       { string: '{{[[embed]]: [[Other page]]}}', uid: 'e3' },
     ])
-
     expect(text).toContain('- Shown\n  - child\n- Shown\n  - child\n- Shown\n  - child\n')
     expect(text).toContain('- ![[Other page]]')
   })
-
   test('a block that embeds itself is shown once', async () => {
     const text = await page([{ string: 'Top', uid: 'top', children: [{ string: '{{embed: ((top))}}', uid: 'in' }] }])
-
     expect(text).toContain('- Top\n  - Top\n')
   })
-
   test('a reference with words of its own keeps them', async () => {
     const text = await page([
       { string: 'The block', uid: 'src' },
       { string: 'See [this](((src))) and [the page]([[Other]])', uid: 'b' },
     ])
-
     expect(text).toContain('See this and [[Other|the page]]')
   })
-
   test("Roam's italics are italics", async () => {
     expect(roamText('__lean__ and **bold**')).toBe('*lean* and **bold**')
   })
-
   test('code is left exactly as it was written', () => {
     expect(roamText('Type `{{[[TODO]]}} __x__` to make one')).toBe('Type `{{[[TODO]]}} __x__` to make one')
   })
-
   test('an escaped backtick opens no code, so a tag after it stays words', () => {
     const text = roamText('\\`<img src=x> and `<b>`')
     expect(text).toBe('\\`\\<img src=x> and `<b>`')
     expect(renderMarkdown(text)).not.toContain('<img')
   })
-
   test('a tag in a block stays words, since Roam shows it as text, and its own markup still converts', () => {
     const known = new Map([['abc', 'Embedded <iframe src=https://t.example/>']])
     expect(roamText('{{[[TODO]]}} ^^Look^^ <img src=https://t.example/p.gif> [[Page]] ((abc)) `<b>`', known)).toBe(
       '[ ] ==Look== \\<img src=https://t.example/p.gif> [[Page]] Embedded \\<iframe src=https://t.example/> `<b>`',
     )
   })
-
   test('a tag in a page stays words wherever the block is written', async () => {
     const plan = await readRoam([
       file(
@@ -169,39 +137,30 @@ describe('a Roam export, block by block', () => {
     ])
     expect(noteAt(plan, 'Tagged.md')).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
   })
-
   test('a link to a daily page says the date it is now', () => {
     expect(roamText('On [[September 11th, 2026]] #[[September 11th, 2026]]')).toBe('On [[2026-09-11]] #[[2026-09-11]]')
   })
-
   test('a title with a slash is a page in a folder', async () => {
     const plan = await readRoam([file('graph.json', JSON.stringify([{ title: 'roam/css' }]))])
-
     expect(plan.files.map((one) => one.path)).toEqual(['roam/css.md'])
   })
-
   test('a title a file name cannot hold answers to it as an alias', async () => {
     const plan = await readRoam([file('graph.json', JSON.stringify([{ title: 'Why? Because' }]))])
-
     expect(noteAt(plan, 'Why Because.md')).toContain('aliases: [Why? Because]')
   })
-
   test('a heading is set apart from the list above it, and what is under it follows it', async () => {
     const text = await page([
       { string: 'Before', uid: 'a' },
       { string: 'Section', uid: 'h', heading: 2, children: [{ string: 'Under', uid: 'u' }] },
     ])
-
     expect(text).toContain('- Before\n\n## Section\n\n- Under')
   })
 })
-
 describe("Roam's checkboxes", () => {
   test('are read with their brackets or without', () => {
     expect(roamText('{{TODO}} Ring and {{[[DONE]]}}')).toBe('[ ] Ring and [x] ')
   })
 })
-
 describe('a very long page', { timeout: 30_000 }, () => {
   test('of more nested blocks than a call can take as arguments comes in whole', async () => {
     const children = Array.from({ length: 200_000 }, (_, at) => ({
@@ -210,7 +169,6 @@ describe('a very long page', { timeout: 30_000 }, () => {
     }))
     const graph = JSON.stringify([{ title: 'Long', children: [{ string: 'Top', uid: 'top', children }] }])
     const plan = await readRoam([file('graph.json', graph)])
-
     expect(noteAt(plan, 'Long.md')).toContain('- Block 199999')
   })
 })

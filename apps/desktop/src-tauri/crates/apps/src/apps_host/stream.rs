@@ -34,7 +34,6 @@ const STILL_EVERY: Duration = Duration::from_secs(1);
 const DUE_AT_ONCE: usize = 4;
 const SAMPLE_EVERY: Duration = Duration::from_secs(1);
 const SAMPLED_AFTER_A_PING: Duration = Duration::from_secs(5);
-
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum FromViewer {
@@ -49,19 +48,16 @@ pub enum FromViewer {
         bye: bool,
     },
 }
-
 #[derive(Debug, Deserialize)]
 pub struct ViewerCandidate {
     pub candidate: String,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Cannot {
     Encoder,
     Offer,
     Network,
 }
-
 impl Cannot {
     pub fn word(self) -> &'static str {
         match self {
@@ -71,21 +67,17 @@ impl Cannot {
         }
     }
 }
-
 pub fn answer_text(sdp: &str) -> String {
     serde_json::json!({ "answer": sdp }).to_string()
 }
-
 pub fn cannot_text(why: &str) -> String {
     serde_json::json!({ "cannot": why }).to_string()
 }
-
 fn provider() -> Arc<CryptoProvider> {
     static ONE: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
     ONE.get_or_init(|| Arc::new(str0m::crypto::from_feature_flags()))
         .clone()
 }
-
 struct Shared {
     rtc: Rtc,
     sockets: Vec<UdpSocket>,
@@ -109,21 +101,18 @@ struct Shared {
     pinged: Option<Instant>,
     usage: Option<orden_base::usage::Usage>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Stage {
     Waiting,
     Due,
     Started,
 }
-
 pub struct Source {
     pub screen: Arc<Mutex<Screen>>,
     pub clipboard: Option<Arc<Clipboard>>,
     pub sound: Option<String>,
     pub group: Option<u32>,
 }
-
 struct Inner {
     shared: Mutex<Shared>,
     ended: AtomicBool,
@@ -131,30 +120,24 @@ struct Inner {
     began: Instant,
     generation: AtomicU64,
 }
-
 impl Inner {
     fn lock(&self) -> MutexGuard<'_, Shared> {
         self.shared.held()
     }
-
     fn over(&self) -> bool {
         self.ended.load(Ordering::SeqCst)
     }
-
     fn screen(&self) -> Screen {
         self.screen.held().clone()
     }
-
     fn end(&self) {
         self.ended.store(true, Ordering::SeqCst);
         self.lock().rtc.disconnect();
     }
 }
-
 pub struct Peer {
     inner: Arc<Inner>,
 }
-
 impl Peer {
     pub fn answer(source: Source, offer: &str) -> Result<(Peer, String), Cannot> {
         let Source {
@@ -178,7 +161,6 @@ impl Peer {
             .enable_opus(true, false)
             .set_crypto_provider(provider())
             .build(now);
-
         let sockets = gather(&mut rtc)?;
         let answer = rtc
             .sdp_api()
@@ -188,7 +170,6 @@ impl Peer {
         if !answers_video(&answer) {
             return Err(Cannot::Offer);
         }
-
         let display = screen.held().display.clone();
         let listening: Vec<UdpSocket> = sockets
             .iter()
@@ -239,7 +220,6 @@ impl Peer {
         }
         Ok((Peer { inner }, answer))
     }
-
     pub fn candidate(&self, line: &str) {
         let line = line.trim();
         if line.is_empty() {
@@ -252,13 +232,11 @@ impl Peer {
         shared.rtc.add_remote_candidate(candidate);
         drive(&mut shared);
     }
-
     #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
     pub fn ended(&self) -> bool {
         self.inner.over()
     }
 }
-
 impl Drop for Peer {
     fn drop(&mut self) {
         self.inner.end();
@@ -267,13 +245,11 @@ impl Drop for Peer {
         }
     }
 }
-
 fn wall_now() -> f64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0.0, |since| since.as_secs_f64() * 1000.0)
 }
-
 fn pong_text(
     at: f64,
     began: f64,
@@ -293,7 +269,6 @@ fn pong_text(
     })
     .to_string()
 }
-
 fn copied(inner: &Inner, text: &str) {
     let mut shared = inner.lock();
     if !shared.sharing {
@@ -303,7 +278,6 @@ fn copied(inner: &Inner, text: &str) {
     write_channel(&mut shared, &said);
     drive(&mut shared);
 }
-
 fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
     let mut sockets = Vec::new();
     for ip in addresses() {
@@ -343,7 +317,6 @@ fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
     }
     Ok(sockets)
 }
-
 fn addresses() -> Vec<IpAddr> {
     const TOWARDS: [&str; 6] = [
         "8.8.8.8:9",
@@ -380,7 +353,6 @@ fn addresses() -> Vec<IpAddr> {
     found.push(IpAddr::V4(Ipv4Addr::LOCALHOST));
     found
 }
-
 fn usable_address(ip: IpAddr) -> bool {
     if ip.is_unspecified() || ip.is_loopback() {
         return false;
@@ -390,7 +362,6 @@ fn usable_address(ip: IpAddr) -> bool {
         IpAddr::V6(v6) => (v6.segments()[0] & 0xffc0) != 0xfe80,
     }
 }
-
 fn drive(shared: &mut Shared) -> bool {
     loop {
         match next_output(&mut shared.rtc) {
@@ -421,7 +392,6 @@ fn drive(shared: &mut Shared) -> bool {
         }
     }
 }
-
 fn next_output(rtc: &mut Rtc) -> Result<Output, str0m::RtcError> {
     for _ in 0..DUE_AT_ONCE {
         match rtc.poll_output()? {
@@ -433,7 +403,6 @@ fn next_output(rtc: &mut Rtc) -> Result<Output, str0m::RtcError> {
     }
     rtc.poll_output()
 }
-
 fn heard(shared: &mut Shared, event: Event) -> bool {
     match event {
         Event::MediaAdded(added) if added.kind == MediaKind::Audio => {
@@ -533,7 +502,6 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
         _ => true,
     }
 }
-
 fn due(shared: &mut Shared) {
     let connected = shared.connected.is_some();
     if connected && shared.video.is_some() && shared.pictures == Stage::Waiting {
@@ -544,9 +512,7 @@ fn due(shared: &mut Shared) {
         shared.sounds = Stage::Due;
     }
 }
-
 const ENCODED: [&str; 3] = ["VP8/", "VP9/", "H264/"];
-
 fn answers_video(sdp: &str) -> bool {
     let mut in_video = false;
     for line in sdp.lines() {
@@ -564,7 +530,6 @@ fn answers_video(sdp: &str) -> bool {
     }
     false
 }
-
 fn made_of(codec: Codec) -> Option<Made> {
     match codec {
         Codec::Vp8 => Some(Made::Vp8),
@@ -573,7 +538,6 @@ fn made_of(codec: Codec) -> Option<Made> {
         _ => None,
     }
 }
-
 fn after(inner: &Arc<Inner>, shared: &mut Shared) {
     if shared.pictures == Stage::Due {
         shared.pictures = Stage::Started;
@@ -588,7 +552,6 @@ fn after(inner: &Arc<Inner>, shared: &mut Shared) {
         }
     }
 }
-
 fn sound(inner: &Arc<Inner>, monitor: &str) {
     let Some(mut sound) = audio::Sound::start(monitor) else {
         return;
@@ -612,7 +575,6 @@ fn sound(inner: &Arc<Inner>, monitor: &str) {
         at += u64::from(samples);
     }
 }
-
 fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
     let Ok(local) = socket.local_addr() else {
         return;
@@ -637,7 +599,6 @@ fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
         }
     }
 }
-
 fn keep_time(inner: &Arc<Inner>) {
     let mut sampled: Option<Instant> = None;
     while !inner.over() {
@@ -676,7 +637,6 @@ fn keep_time(inner: &Arc<Inner>) {
         std::thread::sleep(wait.clamp(Duration::from_millis(1), LONGEST_WAIT));
     }
 }
-
 struct Encoding {
     child: Child,
     frames: ChildStdin,
@@ -684,19 +644,16 @@ struct Encoding {
     began: Instant,
     seen: Arc<Mutex<VecDeque<Instant>>>,
 }
-
 impl Drop for Encoding {
     fn drop(&mut self) {
         stop(&mut self.child);
     }
 }
-
 #[derive(Debug, Default)]
 struct Owed {
     drawn: bool,
     whole: bool,
 }
-
 impl Owed {
     fn hear(&mut self, inner: &Inner, news: News) -> bool {
         match news {
@@ -712,7 +669,6 @@ impl Owed {
         }
         true
     }
-
     fn due(
         &self,
         now: Instant,
@@ -730,7 +686,6 @@ impl Owed {
         [drawn, whole, still].into_iter().flatten().min()
     }
 }
-
 fn pictures(inner: &Arc<Inner>) {
     let Some((_, _, chosen)) = inner.lock().video else {
         inner.end();
@@ -768,7 +723,6 @@ fn pictures(inner: &Arc<Inner>) {
             }
             continue;
         }
-
         for one in news.try_iter() {
             if !owed.hear(inner, one) {
                 break 'reading;
@@ -804,7 +758,6 @@ fn pictures(inner: &Arc<Inner>) {
     drop(capture);
     inner.end();
 }
-
 fn start_encoder(
     inner: &Arc<Inner>,
     chosen: Encoder,
@@ -835,7 +788,6 @@ fn start_encoder(
         seen,
     })
 }
-
 fn send_frames(
     inner: &Arc<Inner>,
     made: ChildStdout,
@@ -891,11 +843,9 @@ fn send_frames(
         inner.end();
     }
 }
-
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.held()
 }
-
 fn write_channel(shared: &mut Shared, text: &str) {
     if let Some(id) = shared.channel {
         if let Some(mut channel) = shared.rtc.channel(id) {
@@ -903,7 +853,6 @@ fn write_channel(shared: &mut Shared, text: &str) {
         }
     }
 }
-
 fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>, seen: Instant) {
     let mut shared = inner.lock();
     let (Some((mid, pt, _)), Some(_)) = (shared.video, shared.connected) else {
@@ -920,12 +869,10 @@ fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>, seen: Instant) {
         drive(&mut shared);
     }
 }
-
 fn stop(child: &mut Child) {
     let _ = child.kill();
     let _ = child.wait();
 }
-
 fn ivf_header(from: &mut impl Read) -> io::Result<()> {
     let mut header = [0_u8; 32];
     from.read_exact(&mut header)?;
@@ -941,7 +888,6 @@ fn ivf_header(from: &mut impl Read) -> io::Result<()> {
     }
     Ok(())
 }
-
 fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
     let mut header = [0_u8; 12];
     from.read_exact(&mut header)?;
@@ -957,7 +903,6 @@ fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
     from.read_exact(&mut frame)?;
     Ok(frame)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1006,7 +951,6 @@ mod tests {
         }
         out
     }
-
     #[test]
     fn reads_the_encoders_frames_one_by_one() {
         let bytes = ivf(&[b"one", b"", b"three"]);
@@ -1017,7 +961,6 @@ mod tests {
         assert_eq!(ivf_frame(&mut from).unwrap(), b"three");
         assert!(ivf_frame(&mut from).is_err());
     }
-
     #[test]
     fn refuses_what_is_not_ivf_and_a_frame_too_large() {
         let mut other = &b"RIFF0000000000000000000000000000"[..];
@@ -1027,7 +970,6 @@ mod tests {
         huge.extend_from_slice(&[0_u8; 8]);
         assert!(ivf_frame(&mut huge.as_slice()).is_err());
     }
-
     #[test]
     fn reads_what_the_viewer_says() {
         let offer: FromViewer = serde_json::from_str(r#"{"offer":"v=0"}"#).unwrap();
@@ -1045,7 +987,6 @@ mod tests {
         ));
         assert!(serde_json::from_str::<FromViewer>(r#"{"run":"rm -rf ~"}"#).is_err());
     }
-
     #[test]
     fn answers_a_ping_with_both_clocks_and_its_encoder() {
         let said: serde_json::Value = serde_json::from_str(&pong_text(
@@ -1070,7 +1011,6 @@ mod tests {
         assert_eq!(said["usage"]["memory"], 1024);
         assert!(said["usage"].get("gpu").is_none());
     }
-
     #[test]
     fn says_its_answer_and_why_it_cannot() {
         assert_eq!(answer_text("v=0\r\n"), r#"{"answer":"v=0\r\n"}"#);
@@ -1079,7 +1019,6 @@ mod tests {
             r#"{"cannot":"encoder"}"#
         );
     }
-
     #[test]
     fn names_no_address_a_candidate_cannot_carry() {
         assert!(usable_address("192.168.1.2".parse().unwrap()));
@@ -1089,7 +1028,6 @@ mod tests {
         assert!(!usable_address("127.0.0.1".parse().unwrap()));
         assert_eq!(addresses().last(), Some(&IpAddr::V4(Ipv4Addr::LOCALHOST)));
     }
-
     #[test]
     fn answers_no_offer_it_cannot_read() {
         if encoder::ffmpeg().is_none() {
@@ -1113,7 +1051,6 @@ mod tests {
             Some(Cannot::Offer)
         );
     }
-
     #[test]
     fn a_frame_written_goes_out_at_once() {
         use str0m::change::SdpAnswer;
@@ -1137,7 +1074,6 @@ mod tests {
             .unwrap();
         host.add_remote_candidate(Candidate::host(viewer_at, "udp").unwrap());
         viewer.add_remote_candidate(Candidate::host(host_at, "udp").unwrap());
-
         let (mut video, mut connected) = (None, false);
         let until = Instant::now() + Duration::from_secs(10);
         while !(connected && video.is_some()) && Instant::now() < until {
@@ -1204,7 +1140,6 @@ mod tests {
         }
         assert!(arrived, "the frame did not arrive");
     }
-
     fn rtc(vp8: bool) -> Rtc {
         let config = RtcConfig::new();
         let config = if vp8 {
@@ -1214,14 +1149,12 @@ mod tests {
         };
         config.set_crypto_provider(provider()).build(Instant::now())
     }
-
     fn hand_over(other: &mut Rtc, sent: &str0m::net::Transmit, to: SocketAddr) {
         let came = Receive::new(Protocol::Udp, sent.source, to, &sent.contents).unwrap();
         other
             .handle_input(Input::Receive(Instant::now(), came))
             .unwrap();
     }
-
     #[test]
     fn reads_whether_the_answer_sends_a_video() {
         use str0m::media::Direction;
@@ -1249,7 +1182,6 @@ mod tests {
             "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 AV1/90000\r\n"
         ));
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn vp8(frame: &[u8]) -> (bool, Option<(u16, u16)>) {
         let key = frame.first().is_some_and(|tag| (tag & 1) == 0);
@@ -1261,14 +1193,12 @@ mod tests {
         });
         (key, size)
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     struct Viewer {
         rtc: Rtc,
         socket: UdpSocket,
         local: SocketAddr,
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     impl Viewer {
         fn connect(
@@ -1290,7 +1220,6 @@ mod tests {
             let heard = change.add_media(MediaKind::Audio, Direction::RecvOnly, None, None, None);
             change.add_channel("input".to_owned());
             let (offer, pending) = change.apply().unwrap();
-
             let (peer, answer) = Peer::answer(
                 Source {
                     screen,
@@ -1311,7 +1240,6 @@ mod tests {
                 .unwrap();
             (peer, Viewer { rtc, socket, local }, mid, heard)
         }
-
         fn run(
             &mut self,
             within: Duration,
@@ -1347,7 +1275,6 @@ mod tests {
             done()
         }
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     #[allow(clippy::too_many_lines)]
@@ -1388,7 +1315,6 @@ mod tests {
                 Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
                 _ => {}
             };
-
             let connected = viewer.run(
                 Duration::from_secs(30),
                 |rtc, event| heard(rtc, event, &mut shape),
@@ -1403,7 +1329,6 @@ mod tests {
                 || false,
             );
             assert!(shape || shaped, "the pointer's shape came");
-
             frames.borrow_mut().clear();
             viewer.run(
                 STILL_EVERY * 2,
@@ -1415,7 +1340,6 @@ mod tests {
                 "{} frames of a still screen, more than it is sent again",
                 frames.borrow().len()
             );
-
             let pen = x.generate_id().unwrap();
             x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000))
                 .unwrap();
@@ -1437,7 +1361,6 @@ mod tests {
                 || !frames.borrow().is_empty(),
             );
             assert!(drawn, "what was drawn came");
-
             frames.borrow_mut().clear();
             viewer
                 .rtc
@@ -1451,7 +1374,6 @@ mod tests {
                 || frames.borrow().iter().any(|one| vp8(one).0),
             );
             assert!(whole, "a key frame came when one was asked for");
-
             frames.borrow_mut().clear();
             display.fit(400, 300, 1.0).unwrap();
             let resized = viewer.run(
@@ -1469,7 +1391,6 @@ mod tests {
             drop(peer);
         });
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     #[allow(clippy::too_many_lines)]
@@ -1520,7 +1441,6 @@ mod tests {
                     .unwrap()
                     .owner
             };
-
             let channel = std::cell::Cell::new(None);
             let copied = std::cell::RefCell::new(Vec::<String>::new());
             let heard = |_: &mut Rtc, event: Event| match event {
@@ -1538,11 +1458,9 @@ mod tests {
                 let id = channel.get().unwrap();
                 viewer.rtc.channel(id).unwrap().write(false, text).unwrap();
             };
-
             say(&mut viewer, br#"{"t":"clipboard","text":"secret"}"#);
             viewer.run(Duration::from_millis(500), heard, || false);
             assert_eq!(owner(), NONE);
-
             say(&mut viewer, br#"{"t":"share","clipboard":true}"#);
             say(
                 &mut viewer,
@@ -1572,7 +1490,6 @@ mod tests {
                 pasted.is_some()
             });
             assert_eq!(pasted.as_deref(), Some("from the holder"));
-
             x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME)
                 .unwrap();
             x.flush().unwrap();
@@ -1613,13 +1530,11 @@ mod tests {
             drop(peer);
         });
     }
-
     #[cfg(target_os = "linux")]
     struct SoundServer {
         server: std::process::Child,
         folder: std::path::PathBuf,
     }
-
     #[cfg(target_os = "linux")]
     impl Drop for SoundServer {
         fn drop(&mut self) {
@@ -1628,7 +1543,6 @@ mod tests {
             let _ = std::fs::remove_dir_all(&self.folder);
         }
     }
-
     #[cfg(target_os = "linux")]
     #[allow(unsafe_code)]
     fn sound_server() -> Option<SoundServer> {
@@ -1688,7 +1602,6 @@ mod tests {
         }
         Some(server)
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     fn a_viewer_hears_the_applications_sound() {
@@ -1723,7 +1636,6 @@ mod tests {
                 .stderr(Stdio::null())
                 .spawn()
                 .unwrap();
-
             let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
             let (peer, mut viewer, _, heard) =
                 Viewer::connect(display.name(), display.clipboard(), Some(monitor));
@@ -1746,20 +1658,17 @@ mod tests {
             drop(sink);
         });
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     fn a_change_on_the_display_reaches_the_viewer_without_waiting_for_another() {
         drawn_and_arrived(false);
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     #[ignore = "a measurement: run alone, as CI does, since a loaded machine makes its times say nothing"]
     fn latency_benchmark() {
         drawn_and_arrived(true);
     }
-
     #[cfg(target_os = "linux")]
     #[allow(clippy::too_many_lines)]
     fn drawn_and_arrived(measured: bool) {
@@ -1809,7 +1718,6 @@ mod tests {
             };
             assert!(viewer.run(Duration::from_secs(30), heard, || frames.get() > 0));
             viewer.run(Duration::from_millis(300), heard, || false);
-
             let mut latencies = Vec::new();
             for _ in 0..20 {
                 let before = frames.get();
@@ -1827,7 +1735,6 @@ mod tests {
                 assert!(median < Duration::from_millis(50), "median {median:?}");
                 assert!(worst < Duration::from_millis(120), "90th {worst:?}");
             }
-
             arrived.borrow_mut().clear();
             let began = Instant::now();
             let mut next = began;
@@ -1860,7 +1767,6 @@ mod tests {
             drop(peer);
         });
     }
-
     #[cfg(target_os = "windows")]
     #[test]
     fn a_viewer_gets_the_picture_of_a_desktop_of_its_own_and_types_into_it() {
@@ -1905,7 +1811,6 @@ mod tests {
             );
             assert!(connected, "{} frames came", frames.borrow().len());
             assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
-
             let id = channel.get().unwrap();
             for said in [
                 r#"{"t":"move","x":320,"y":240}"#,
@@ -1945,7 +1850,6 @@ mod tests {
             let _ = program.wait();
         });
     }
-
     #[cfg(target_os = "windows")]
     #[allow(unsafe_code)]
     fn text_in(window: windows::Win32::Foundation::HWND) -> String {

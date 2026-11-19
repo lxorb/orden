@@ -17,7 +17,6 @@ const kept = (query: string) => {
   const { base } = readTasksQuery(query)
   return answer(base, 0, rows, context).groups.flatMap((group) => group.rows.map((row) => row.task?.text))
 }
-
 describe('a tasks fence', () => {
   test.each<[string, string[]]>([
     ['not done', ['Write report', 'Old thing', 'Paint', 'Someday', 'Halfway']],
@@ -53,7 +52,6 @@ describe('a tasks fence', () => {
   ])('%j', (query, expected) => {
     expect(kept(query)).toEqual(expected)
   })
-
   test('groups by what the plugin groups by, one level and a second under it', () => {
     const { base } = readTasksQuery('not done\ngroup by filename\ngroup by heading')
     expect(base.views[0]?.groupBy).toEqual({ property: 'file.basename', direction: 'ASC' })
@@ -61,7 +59,6 @@ describe('a tasks fence', () => {
     const result = answer(base, 0, rows, context)
     expect(result.groups.map((group) => group.key)).toEqual(['Home', 'Plan'])
   })
-
   test("lines about drawing are Orden's to decide, and lines it cannot read are said", () => {
     const query = readTasksQuery(
       'not done\nshort mode\nhide edit button\nexplain\n# a comment\nfrobnicate wildly\ngroup by urgency score',

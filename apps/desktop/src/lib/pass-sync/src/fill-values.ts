@@ -2,13 +2,11 @@ import type { Card, Identity, IdentityKey, Login } from '@orden/pass/types'
 import type { FieldRole, FormKind, PassForm } from './channel'
 
 type RolePick = (role: FieldRole) => string | null
-
 export interface LoginFill {
   login: Login
   code: string | null
   fresh: string | null
 }
-
 const IDENTITY: Partial<Record<FieldRole, readonly IdentityKey[]>> = {
   'given-name': ['firstName'],
   'additional-name': ['middleName'],
@@ -25,7 +23,6 @@ const IDENTITY: Partial<Record<FieldRole, readonly IdentityKey[]>> = {
   organization: ['organization', 'company'],
   bday: ['birthdate'],
 }
-
 function valuesBy(form: PassForm, pick: RolePick): Record<string, string> {
   const values: Record<string, string> = {}
   for (const one of form.fields) {
@@ -35,11 +32,9 @@ function valuesBy(form: PassForm, pick: RolePick): Record<string, string> {
   }
   return values
 }
-
 function firstOf(...texts: string[]): string | null {
   return texts.find((one) => one !== '') ?? null
 }
-
 function loginPick(kind: FormKind, given: LoginFill): RolePick {
   const { login, code, fresh } = given
   const by: Partial<Record<FieldRole, () => string | null>> = {
@@ -51,24 +46,19 @@ function loginPick(kind: FormKind, given: LoginFill): RolePick {
   }
   return (role) => by[role]?.() ?? null
 }
-
 export function loginValues(form: PassForm, given: LoginFill): Record<string, string> {
   return valuesBy(form, loginPick(form.kind, given))
 }
-
 export function aliasValues(form: PassForm, address: string): Record<string, string> {
   return valuesBy(form, (role) => (role === 'email' || role === 'username' ? address : null))
 }
-
 export function generatedValues(form: PassForm, fresh: string): Record<string, string> {
   return valuesBy(form, (role) => (role === 'new-password' ? fresh : null))
 }
-
 interface Expiry {
   month: string
   year: string
 }
-
 function expiryOf(text: string): Expiry | null {
   const trimmed = text.trim()
   const short = /^(\d{1,2})\s*[/.-]\s*(\d{2}|\d{4})$/.exec(trimmed)
@@ -80,7 +70,6 @@ function expiryOf(text: string): Expiry | null {
   if (long?.[1] && long[2]) return { month: long[2].padStart(2, '0'), year: long[1] }
   return null
 }
-
 function cardPick(card: Card): RolePick {
   const expiry = expiryOf(card.expiry)
   const by: Partial<Record<FieldRole, () => string | null>> = {
@@ -93,16 +82,13 @@ function cardPick(card: Card): RolePick {
   }
   return (role) => by[role]?.() ?? null
 }
-
 export function cardValues(form: PassForm, card: Card): Record<string, string> {
   return valuesBy(form, cardPick(card))
 }
-
 function wholeName(identity: Identity): string {
   const { firstName, middleName, lastName } = identity.values
   return [firstName, middleName, lastName].filter(Boolean).join(' ')
 }
-
 function identityPick(identity: Identity): RolePick {
   return (role) => {
     const keys = IDENTITY[role]
@@ -112,7 +98,6 @@ function identityPick(identity: Identity): RolePick {
     return role === 'name' ? firstOf(wholeName(identity)) : null
   }
 }
-
 export function identityValues(form: PassForm, identity: Identity): Record<string, string> {
   return valuesBy(form, identityPick(identity))
 }

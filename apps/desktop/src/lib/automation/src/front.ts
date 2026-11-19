@@ -9,7 +9,6 @@ export const NOTE_WRITES = new Set([
   'save',
   'split-at-caret',
 ])
-
 export const NOTE_TREE = new Set([
   'archive',
   'convert-website-notes',
@@ -19,11 +18,8 @@ export const NOTE_TREE = new Set([
   'rename',
   'undo-file',
 ])
-
 const ACROSS_SPACE = new Set(['convert-website-notes', 'redo-file', 'undo-file'])
-
 const ACROSS_SPACES = new Set(['redo-file', 'undo-file'])
-
 function actsOnFrontNote(id: string): boolean {
   return (
     id.startsWith('export-') ||
@@ -32,17 +28,14 @@ function actsOnFrontNote(id: string): boolean {
     /^(edit|format|paragraph)\./.test(id)
   )
 }
-
 function actsAcrossSpace(id: string): boolean {
   return id.startsWith('export-') || ACROSS_SPACE.has(id)
 }
-
 export interface AgentsMay {
   front: boolean
   space: boolean
   everywhere: boolean
 }
-
 export function keptFromAgents(id: string, may: AgentsMay): string | null {
   if (actsOnFrontNote(id) && !may.front) {
     return `${id} acts on the note in front, which is protected: the reader has to choose Let agents read in its menu`

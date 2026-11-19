@@ -5,11 +5,8 @@ import { NoPass } from './sync'
 import { cursorOf, keepCursor } from './synced'
 
 export type Outcome = 'synced' | 'old-server' | 'conflict' | 'other-account'
-
 const ROUNDS = 3
-
 type Pass = 'pulled' | 'conflict' | 'deferred'
-
 async function pulledAll(world: SyncWorld, from: number): Promise<Pass> {
   let since = from
   for (;;) {
@@ -25,7 +22,6 @@ async function pulledAll(world: SyncWorld, from: number): Promise<Pass> {
     if (!changes.more) return 'pulled'
   }
 }
-
 async function exchanged(world: SyncWorld): Promise<Outcome> {
   const cursor = await cursorOf(world.rows)
   if (cursor && cursor.account !== world.account) return 'other-account'
@@ -39,7 +35,6 @@ async function exchanged(world: SyncWorld): Promise<Outcome> {
   }
   return 'synced'
 }
-
 export async function syncOnce(world: SyncWorld): Promise<Outcome> {
   try {
     return await exchanged(world)

@@ -7,14 +7,12 @@ import { pass } from './store.svelte'
 import { type Page, type PassView, type SettingsTab, viewIn, writeView } from './view'
 
 export type Column = 'side' | 'list' | 'item'
-
 export interface Editing {
   id: string | null
   content: Content
   vault: string
   folder: string | null
 }
-
 export type PassSheet =
   | { kind: 'vault'; vault: string | null }
   | { kind: 'move'; ids: string[] }
@@ -24,7 +22,6 @@ export type PassSheet =
   | { kind: 'link'; item: string }
   | { kind: 'adopt' }
   | null
-
 export class PassUi {
   view = $state.raw<PassView>(viewIn(''))
   query = $state('')
@@ -38,25 +35,20 @@ export class PassUi {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- replaced whole after each check, never changed in place
   compromised = $state.raw<ReadonlySet<string>>(new Set())
   searchField: HTMLInputElement | null = null
-
   private readonly tab: Tab | null
-
   constructor(tab: Tab | null) {
     this.tab = tab
     this.view = viewIn(tab?.doc ?? '')
     if (this.view.item !== null) this.column = 'item'
   }
-
   get shownItem(): Item | null {
     const id = this.view.item
     return id === null ? null : (pass.items.find((one) => one.id === id) ?? null)
   }
-
   show(change: Partial<PassView>): void {
     this.view = { ...this.view, ...change }
     this.tab?.note.replace(writeView(this.view), false)
   }
-
   async leave(): Promise<boolean> {
     if (this.editing && this.dirty) {
       const sure = await prompt.confirm({
@@ -71,7 +63,6 @@ export class PassUi {
     this.dirty = false
     return true
   }
-
   async choose(scope: Scope): Promise<void> {
     if (!(await this.leave())) return
     this.flag = null
@@ -79,7 +70,6 @@ export class PassUi {
     this.show({ scope, page: 'items', item: null })
     this.column = 'list'
   }
-
   async goTo(page: Page, settingsTab?: SettingsTab): Promise<void> {
     if (!(await this.leave())) return
     this.flag = null
@@ -87,14 +77,12 @@ export class PassUi {
     this.show({ page, item: null, ...(settingsTab ? { settingsTab } : {}) })
     this.column = 'list'
   }
-
   async openItem(id: string): Promise<void> {
     if (this.editing?.id === id) return
     if (!(await this.leave())) return
     this.show({ item: id })
     this.column = 'item'
   }
-
   async newItem(content: Content): Promise<void> {
     if (!(await this.leave())) return
     const scope = this.view.scope
@@ -106,7 +94,6 @@ export class PassUi {
     }
     this.column = 'item'
   }
-
   async edit(id: string): Promise<void> {
     const item = pass.items.find((one) => one.id === id)
     if (!item || !(await this.leave())) return
@@ -119,14 +106,12 @@ export class PassUi {
     this.show({ item: id })
     this.column = 'item'
   }
-
   edited(item: Item | null): void {
     this.editing = null
     this.dirty = false
     if (item) this.show({ item: item.id, page: 'items' })
     else if (this.view.item === null) this.column = 'list'
   }
-
   back(): void {
     if (this.column === 'item') {
       void this.leave().then((left) => {
@@ -134,7 +119,6 @@ export class PassUi {
       })
     } else this.column = 'side'
   }
-
   defaultVault(): string {
     const scope = this.view.scope
     const vaults = pass.vaults

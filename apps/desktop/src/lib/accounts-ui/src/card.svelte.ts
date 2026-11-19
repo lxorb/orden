@@ -6,19 +6,14 @@ interface Anchor {
   right: number
   bottom: number
 }
-
 class Card {
   shown = $state<{ id: string; space: string | null; at: Anchor } | null>(null)
-
   close(): void {
     this.shown = null
   }
 }
-
 export const card = new Card()
-
 let mounted = false
-
 export function showProfile(id: string, from: Element, space: string | null = null): void {
   const box = from.getBoundingClientRect()
   card.shown = {

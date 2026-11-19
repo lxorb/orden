@@ -6,12 +6,10 @@ function holding() {
   const held = new Promise<void>((resolve) => (letGo = () => resolve()))
   return { held, letGo }
 }
-
 afterEach(() => {
   busy.clear()
   vi.useRealTimers()
 })
-
 describe('the line across the top of the document', () => {
   test('is on while work is running and off when it ends', async () => {
     expect(busy.active).toBe(false)
@@ -22,12 +20,10 @@ describe('the line across the top of the document', () => {
     expect(busy.active).toBe(false)
     expect(busy.label).toBeNull()
   })
-
   test('goes off however the work ends', async () => {
     await expect(busy.run('Exporting', () => Promise.reject(new Error('no')))).rejects.toThrow('no')
     expect(busy.active).toBe(false)
   })
-
   test('says what stopped work nobody is waiting on', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     busy.start('Exporting', () => Promise.reject(new Error('the file is locked')))
@@ -35,7 +31,6 @@ describe('the line across the top of the document', () => {
     expect(busy.trouble).toBe('Exporting: the file is locked')
     vi.restoreAllMocks()
   })
-
   test('stays on until the last of them finishes', async () => {
     const { held, letGo } = holding()
     const slow = busy.run('Exporting', () => held)
@@ -46,14 +41,12 @@ describe('the line across the top of the document', () => {
     expect(busy.active).toBe(false)
   })
 })
-
 describe('what the line says went wrong', () => {
   test('is nothing until something does, then the sentence it was given', () => {
     expect(busy.trouble).toBeNull()
     busy.failed('That went to the print dialog')
     expect(busy.trouble).toBe('That went to the print dialog')
   })
-
   test('goes by itself after a moment', () => {
     vi.useFakeTimers()
     busy.failed('That went to the print dialog')
@@ -62,7 +55,6 @@ describe('what the line says went wrong', () => {
     vi.advanceTimersByTime(2000)
     expect(busy.trouble).toBeNull()
   })
-
   test('is the newest of them, and its own moment starts again', () => {
     vi.useFakeTimers()
     busy.failed('The first')
@@ -71,13 +63,11 @@ describe('what the line says went wrong', () => {
     vi.advanceTimersByTime(4000)
     expect(busy.trouble).toBe('The second')
   })
-
   test('goes when the next piece of work starts', async () => {
     busy.failed('That went to the print dialog')
     await busy.run('Exporting', () => Promise.resolve())
     expect(busy.trouble).toBeNull()
   })
-
   test('stays while work that is already running fails', async () => {
     await busy.run('Exporting', async () => {
       busy.failed('That went to the print dialog')
@@ -87,7 +77,6 @@ describe('what the line says went wrong', () => {
     expect(busy.trouble).toBe('That went to the print dialog')
   })
 })
-
 describe('work asked for again while it is still running', () => {
   test('runs once, and can be asked for again once it is done', async () => {
     const { held, letGo } = holding()
@@ -102,7 +91,6 @@ describe('work asked for again while it is still running', () => {
     expect(work).toHaveBeenCalledTimes(2)
     await vi.waitFor(() => expect(busy.active).toBe(false))
   })
-
   test('can be asked for again after it failed', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     busy.start('Exporting', () => Promise.reject(new Error('no')), 'export-pdf')
@@ -113,7 +101,6 @@ describe('work asked for again while it is still running', () => {
     expect(work).toHaveBeenCalledTimes(1)
     vi.restoreAllMocks()
   })
-
   test('does not hold back different work under the same words', () => {
     const one = vi.fn(() => Promise.resolve())
     const other = vi.fn(() => Promise.resolve())

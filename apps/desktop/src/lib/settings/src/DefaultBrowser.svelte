@@ -6,11 +6,9 @@
   import { invoke } from '../../platform/src/api'
 
   let is = $state<boolean | null>(null)
-
   async function check() {
     is = await invoke<boolean>('default_browser').catch(() => false)
   }
-
   async function make() {
     settings.error = null
     try {
@@ -20,10 +18,8 @@
     }
     await check()
   }
-
   onMount(() => {
     void check()
-
     let stop: (() => void) | null = null
     let gone = false
     void import('@tauri-apps/api/window')
@@ -37,7 +33,6 @@
         else stop = unlisten
       })
       .catch(() => undefined)
-
     return () => {
       gone = true
       stop?.()

@@ -8,14 +8,12 @@ describe('the protection password', () => {
     expect(JSON.stringify(kept)).not.toContain('tulip')
     expect((await hashPassword('tulip ladder')).salt).not.toBe(kept.salt)
   })
-
   test('opens with itself and nothing else', async () => {
     const kept = await hashPassword('tulip ladder')
     expect(await matches('tulip ladder', kept)).toBe(true)
     expect(await matches('tulip ladde', kept)).toBe(false)
     expect(await matches('', kept)).toBe(false)
   })
-
   test('is read back only as a hash the app could have written', async () => {
     const kept = await hashPassword('x')
     expect(hashedOf(JSON.parse(JSON.stringify(kept)))).toEqual(kept)
@@ -23,7 +21,6 @@ describe('the protection password', () => {
     expect(hashedOf({ ...kept, hash: 1 })).toBeNull()
     expect(hashedOf('tulip')).toBeNull()
   })
-
   test('is never read back at a cost that would hold the app for minutes or take gigabytes', async () => {
     const kept = await hashPassword('x')
     expect(hashedOf({ ...kept, n: 1 << 20 })).toBeNull()

@@ -65,26 +65,21 @@ interface Entry {
   paper?: boolean
   evicted?: boolean
 }
-
 interface TreeOptions {
   showHidden?: boolean
   papers?: boolean
   every?: boolean
 }
-
 const now = () => Date.now()
 export const MOST_NOTE_BYTES = 64 * 1024 * 1024
 export const TOO_LARGE = 'that note is too large'
-
 function tooLarge(content: string): boolean {
   if (content.length > MOST_NOTE_BYTES) return true
   if (content.length * 3 <= MOST_NOTE_BYTES) return false
   return new TextEncoder().encode(content).byteLength > MOST_NOTE_BYTES
 }
-
 export const SCANNED_AT_ONCE = 256 * 1024
 const UNSIZED = SCANNED_AT_ONCE / 128
-
 function chunksOf(
   paths: readonly string[],
   sizes: ReadonlyMap<string, number>,
@@ -98,23 +93,19 @@ function chunksOf(
     chunk = []
     held = 0
   }
-
   for (const path of paths) {
     if (!wanted(path)) {
       if ((sizes.get(path) ?? Infinity) > UNSIZED) flush()
       continue
     }
-
     const size = sizes.get(path) ?? UNSIZED
     if (held + size > SCANNED_AT_ONCE) flush()
     chunk.push(path)
     held += size
   }
-
   flush()
   return out
 }
-
 function listed(path: string): boolean {
   return (
     isMarkdown(path) ||
@@ -128,11 +119,8 @@ function listed(path: string): boolean {
     isApplicationTarget(path)
   )
 }
-
 const sidecarOf = (path: string) => `${normalise(path)}${PDF_SIDECAR}`
-
 const within = (base: string) => (one: string) => one === base || one.startsWith(`${base}/`)
-
 async function tree(root: string, options: TreeOptions = {}, raw = false): Promise<Entry> {
   const base = normalise(root)
   const rows = (await stats.all()).filter((row) => under(base, row.path))
@@ -146,12 +134,10 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
       rows.push({ path, modified: one.modified, created: one.modified, size: one.size })
     }
   }
-
   const folders = new Map<string, Entry>()
   const make = (path: string): Entry => {
     const existing = folders.get(path)
     if (existing) return existing
-
     const entry: Entry = {
       name: basename(path) || 'Orden',
       path,
@@ -160,29 +146,24 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
       created: 0,
       children: [],
     }
-
     folders.set(path, entry)
     if (path !== base) make(parent(path)).children.push(entry)
     return entry
   }
-
   const top = make(base)
   const present = new Set(rows.map((row) => row.path))
   const held = (path: string) => {
     const holder = holderOf(path)
     return holder !== null && present.has(holder)
   }
-
   for (const row of rows) {
     if (basename(row.path) === KEEP) {
       make(parent(row.path))
       continue
     }
-
     if (!options.every && !listed(row.path)) continue
     if (!options.showHidden && basename(row.path).startsWith('.')) continue
     if (!options.papers && held(row.path)) continue
-
     make(parent(row.path)).children.push({
       name: basename(row.path),
       path: row.path,
@@ -194,7 +175,6 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
       ...(away.has(row.path) ? { evicted: true } : {}),
     })
   }
-
   const sort = (entry: Entry) => {
     entry.children.sort((a, b) => {
       if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1
@@ -202,11 +182,9 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
     })
     entry.children.forEach(sort)
   }
-
   sort(top)
   return top
 }
-
 export function readsAsText(path: string): boolean {
   return (
     isMarkdown(path) ||
@@ -216,9 +194,7 @@ export function readsAsText(path: string): boolean {
     /\.(base|url|webloc|term|chat|application)$/i.test(path)
   )
 }
-
 const wordsOf = (base64: string) => new TextDecoder().decode(fromBase64(base64))
-
 async function writeBytes(path: string, base64: string, type: string) {
   const at = normalise(path)
   if (!readsAsText(at)) {
@@ -228,14 +204,12 @@ async function writeBytes(path: string, base64: string, type: string) {
   if (await assets.get(at)) await assets.remove(at)
   await writeNote(at, wordsOf(base64))
 }
-
 async function textRow(path: string): Promise<FileRow | undefined> {
   const at = normalise(path)
   const file = await files.get(at)
   if (!readsAsText(at)) return file
   const asset = await assets.get(at)
   if (!asset) return file
-
   await assets.remove(at)
   if (file && file.modified >= asset.modified) {
     await files.put(file)
@@ -244,64 +218,50 @@ async function textRow(path: string): Promise<FileRow | undefined> {
   await writeNote(at, wordsOf(asset.data))
   return await files.get(at)
 }
-
 function namedForEveryMachine(path: string): void {
   const name = basename(path)
   if (isReserved(name)) {
     throw new Error(`${name} is a name Windows keeps for a device, so a note or folder cannot be called it`)
   }
 }
-
 async function writeNote(path: string, content: string) {
   await files.write(normalise(path), content, now(), isCanvas(path) || isPages(path) ? planeMarks(content) : undefined)
 }
-
 async function renameNote(from: string, to: string, hold = false, alone = false, raw = false) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
-
   const tree = treeAt(source, target)
   if (tree) return renameInTree(tree, source, target, hold, alone)
-
   await paperFree(source, target, hold)
   if (!raw && spaceOf(source) !== spaceOf(target) && (await stillAway(source))) {
     throw new Error(NOT_HERE)
   }
-
   if (await holds(target, raw)) throw new Error('something already lives there')
-
   const pictures = await moveAssets(source, target)
   const rows = await rowsOf((await files.paths()).filter(within(source)), files.get)
-
   if (!rows.length && pictures) {
     if (isPdf(source) && !alone) await moveHighlights(source, target)
     return
   }
   if (!rows.length && keptAway.under(source).length) return
   if (!rows.length) throw new Error('nothing to rename')
-
   await files.move(
     rows.map((row) => ({ ...row, path: target + row.path.slice(source.length), modified: now() })),
     rows.map((row) => row.path),
   )
-
   if (isPages(source)) await renamePaper(paperOf(source), paperOf(target), !alone)
 }
-
 async function stillAway(source: string): Promise<boolean> {
   const away = keptAway.under(source)
   if (!away.length) return false
   const here = new Set(await files.paths())
   return away.some((one) => !here.has(normalise(one.path)))
 }
-
 async function renameInTree(tree: TreeRows, source: string, target: string, hold: boolean, alone: boolean) {
   await paperFree(source, target, hold)
   if (!(await stats.holds(source))) throw new Error('nothing to rename')
-
   await tree.move(source, target)
-
   if (isPdf(source) && !alone) await besideInTree(tree, sidecarOf(source), sidecarOf(target))
   if (isPages(source)) {
     const paper = paperOf(source)
@@ -310,13 +270,11 @@ async function renameInTree(tree: TreeRows, source: string, target: string, hold
     }
   }
 }
-
 async function besideInTree(tree: TreeRows, source: string, target: string): Promise<boolean> {
   if (!(await stats.holds(source)) || (await stats.holds(target))) return false
   await tree.move(source, target)
   return true
 }
-
 async function paperInTheWay(source: string, target: string): Promise<string | null> {
   if (isPages(target)) {
     const paper = paperOf(target)
@@ -326,57 +284,46 @@ async function paperInTheWay(source: string, target: string): Promise<string | n
   const holder = holderOf(target)
   return holder && (await files.get(holder)) ? holder : null
 }
-
 async function paperFree(source: string, target: string, hold = false) {
   const there = await paperInTheWay(source, target)
   if (there && !(hold && isPdf(target) && parent(source) === parent(target))) {
     throw new Error(`${there} is already there`)
   }
 }
-
 async function renamePaper(source: string, target: string, highlights = true) {
   const paper = await assets.get(source)
   if (!paper || (await assets.get(target))) return
-
   await assets.put({ ...paper, path: target, modified: now() })
   await assets.remove(source)
   if (highlights) await moveHighlights(source, target)
 }
-
 async function moveHighlights(source: string, target: string) {
   const side = await files.get(sidecarOf(source))
   if (side) await files.move([{ ...side, path: sidecarOf(target), modified: now() }], [side.path])
 }
-
 async function bringBackUnder(source: string) {
   if (!(await keptAway.bringBackUnder(source))) throw new Error(NOT_HERE)
 }
-
 async function copyPath(from: string, to: string) {
   const source = normalise(from)
   const target = normalise(to)
-
   if (target === source || target.startsWith(`${source}/`)) {
     throw new Error(`${source} cannot be copied into itself`)
   }
   if (await holds(target)) throw new Error('something already lives there')
   await paperFree(source, target)
   await bringBackUnder(source)
-
   const under = within(source)
   const copied = (one: string) => target + one.slice(source.length)
   const notes = await rowsOf((await files.paths()).filter(under), files.get)
   const pictures = await rowsOf((await assets.paths()).filter(under), assets.get)
   if (!notes.length && !pictures.length) throw new Error('nothing to copy')
-
   for (const row of notes) {
     await files.put({ ...row, path: copied(row.path), created: now(), modified: now() })
   }
   for (const row of pictures) await assets.put({ ...row, path: copied(row.path), modified: now() })
-
   await copyHeld(source, target)
 }
-
 async function rowsOf<T>(paths: readonly string[], get: (path: string) => Promise<T | undefined>) {
   const out: T[] = []
   for (const path of paths) {
@@ -385,7 +332,6 @@ async function rowsOf<T>(paths: readonly string[], get: (path: string) => Promis
   }
   return out
 }
-
 async function copyHeld(source: string, target: string) {
   if (isPages(source)) {
     const paper = await assets.get(paperOf(source))
@@ -394,11 +340,9 @@ async function copyHeld(source: string, target: string) {
     await copyHeld(paperOf(source), paperOf(target))
     return
   }
-
   const side = isPdf(source) ? await files.get(sidecarOf(source)) : undefined
   if (side) await files.put({ ...side, path: sidecarOf(target), created: now(), modified: now() })
 }
-
 async function removeFolder(path: string) {
   const base = normalise(path)
   const tree = treeAt(base)
@@ -407,16 +351,13 @@ async function removeFolder(path: string) {
     return
   }
   const under = within(base)
-
   for (const one of (await files.paths()).filter(under)) await files.remove(one)
   for (const one of (await assets.paths()).filter(under)) await assets.remove(one)
 }
-
 async function removeEmptyFolder(path: string) {
   const base = normalise(path)
   const inside = (one: string) => one.startsWith(`${base}/`)
   const held = [...(await files.paths()), ...(await assets.paths())].filter(inside)
-
   if (held.some((one) => basename(one) !== KEEP)) return
   const tree = treeAt(base)
   if (tree) {
@@ -425,56 +366,43 @@ async function removeEmptyFolder(path: string) {
   }
   for (const one of held) await files.remove(one)
 }
-
 async function moveAssets(source: string, target: string): Promise<number> {
   const rows = await rowsOf((await assets.paths()).filter(within(source)), assets.get)
-
   for (const row of rows) {
     await assets.put({ ...row, path: target + row.path.slice(source.length), modified: now() })
     await assets.remove(row.path)
   }
   return rows.length
 }
-
 const TRASH = '/.trash'
-
 const flagged = (apart: boolean, arrived: boolean) => ({
   ...(apart ? { apart } : {}),
   ...(arrived ? { arrived } : {}),
 })
-
 function entryOf(value: unknown): Trashed | null {
   if (!isRecord(value)) return null
-
   const { id, kind, name, from, trashedAt, apart, arrived } = value
   if (!isString(id) || !isString(kind) || !isString(name)) return null
   if (!isString(from) || !isNumber(trashedAt)) return null
-
   return { id, kind, name, from, trashedAt, ...flagged(apart === true, arrived === true) }
 }
-
 const keptTrash = async () => (await Promise.all(trees().map((tree) => tree.trash.list()))).flat()
 const trashEntries = async () => [...(await ownTrash()), ...(await keptTrash())]
-
 async function trashOf(id: string): Promise<TreeRows | null> {
   for (const tree of trees()) {
     if ((await tree.trash.list()).some((one) => one.id === id)) return tree
   }
   return null
 }
-
 async function ownTrash(): Promise<Trashed[]> {
   if (!keepsOwnRows()) return []
   const held = parsed((await meta.get('trash')) ?? null)
   if (!Array.isArray(held)) return []
-
   return held.map(entryOf).filter((one): one is Trashed => one !== null)
 }
-
 const TRASH_LOCK = 'orden:web-trash'
 const TRASH_PATIENCE = 10_000
 let trashTurn: Promise<unknown> = Promise.resolve()
-
 function changeTrash(change: (entries: Trashed[]) => Trashed[]): Promise<void> {
   const run = () =>
     inTurn(
@@ -486,60 +414,48 @@ function changeTrash(change: (entries: Trashed[]) => Trashed[]): Promise<void> {
   trashTurn = mine.catch(() => undefined)
   return mine
 }
-
 function trashId(): string {
   return `${now()}-${crypto.randomUUID().slice(0, 8)}`
 }
-
 async function saveTrash(entries: Trashed[]) {
   const kept = new Set((await keptTrash()).map((one) => one.id))
   await meta.put('trash', JSON.stringify(entries.filter((one) => !kept.has(one.id))))
 }
-
 async function occupied(path: string, raw = false): Promise<boolean> {
   if (await files.get(path)) return true
   if (!raw && keptAway.under(path).length) return true
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
-
 async function holds(path: string, raw = false): Promise<boolean> {
   if ((await occupied(path, raw)) || (await assets.get(path))) return true
   return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
 }
-
 const freeSpot = (path: string, isFile: boolean) => firstSpot(path, isFile, async (one) => !(await taken(one)))
-
 async function firstSpot(path: string, isFile: boolean, fits: (one: string) => Promise<boolean>): Promise<string> {
   if (await fits(path)) return path
-
   const folder = parent(path)
   const file = basename(path)
   const dot = file.lastIndexOf('.')
   const stem = isFile && dot > 0 ? file.slice(0, dot) : file
   const extension = isFile && dot > 0 ? file.slice(dot) : ''
-
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
     if (await fits(candidate)) return candidate
   }
 }
-
 async function taken(path: string): Promise<boolean> {
   if ((await holds(path)) || (await pairedTaken(path))) return true
   return isPdf(path) && !!(await files.get(sidecarOf(path)))
 }
-
 async function pairedTaken(path: string): Promise<boolean> {
   if (/\.pages\.pdf$/i.test(path)) return holds(path.slice(0, -'.pdf'.length))
   if (/\.pages$/i.test(path)) return holds(`${path}.pdf`)
   return false
 }
-
 async function trashItem(path: string, kind: string, alone = false, arrived = false): Promise<Trashed> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
   if (!(await holds(source))) throw new Error('nothing is there')
-
   const id = trashId()
   const name = basename(source)
   const tree = treeAt(source)
@@ -553,16 +469,13 @@ async function trashItem(path: string, kind: string, alone = false, arrived = fa
   }
   await bringBackUnder(source)
   await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
-
   const entry = { id, kind, name, from: source, trashedAt: now(), ...flagged(alone, arrived) }
   await changeTrash((entries) => [...entries, entry])
   return entry
 }
-
 async function trashWords(path: string, content: string): Promise<Trashed> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
-
   const id = trashId()
   const name = basename(source)
   const tree = treeAt(source)
@@ -572,12 +485,10 @@ async function trashWords(path: string, content: string): Promise<Trashed> {
     return { ...entry, from: source }
   }
   await writeNote(`${TRASH}/${id}/${name}`, content)
-
   const entry = { id, kind: 'note', name, from: source, trashedAt: now() }
   await changeTrash((entries) => [...entries, entry])
   return entry
 }
-
 async function restoreTrash(id: string): Promise<string> {
   const entry = (await trashEntries()).find((one) => one.id === id)
   if (!entry) throw new Error('nothing to restore')
@@ -585,32 +496,27 @@ async function restoreTrash(id: string): Promise<string> {
     entry.apart && (await rejoinsHighlights(entry.from))
       ? entry.from
       : await freeSpot(entry.from, entry.kind === 'note')
-
   const tree = await trashOf(id)
   if (tree) {
     const target = await spot()
     await tree.trash.restore(id, target)
     return target
   }
-
   const held = `${TRASH}/${entry.id}/${entry.name}`
   const forget = () => changeTrash((now) => now.filter((one) => one.id !== id))
   if (!(await holds(held))) {
     await forget()
     throw new Error('it is already gone')
   }
-
   const target = await spot()
   await renameNote(held, target)
   await forget()
   return target
 }
-
 async function rejoinsHighlights(pdf: string): Promise<boolean> {
   if (!isPdf(pdf) || (await holds(pdf)) || (await pairedTaken(pdf))) return false
   return !!(await files.get(sidecarOf(pdf)))
 }
-
 async function purgeTrash(id: string) {
   const tree = await trashOf(id)
   if (tree) {
@@ -620,21 +526,17 @@ async function purgeTrash(id: string) {
   await removeFolder(`${TRASH}/${id}`)
   await changeTrash((entries) => entries.filter((one) => one.id !== id))
 }
-
 async function spaceList() {
   const names = new Set<string>()
-
   const away = keptAway.all().map((one) => normalise(one.path))
   for (const path of [...(await files.paths()), ...away]) {
     const space = spaceOf(path)
     if (space !== '/' && !basename(space).startsWith('.')) names.add(space)
   }
-
   return [...names]
     .sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : 1))
     .map((path) => ({ name: basename(path), path }))
 }
-
 async function spaceTags(root: string) {
   const base = normalise(root)
   const paths = (await files.paths()).filter((path) => under(base, path))
@@ -642,7 +544,6 @@ async function spaceTags(root: string) {
   for (const row of await stats.all()) {
     if (row.size !== undefined && under(base, row.path)) sizes.set(row.path, row.size)
   }
-
   const counts = new Map<string, number>()
   for (const chunk of chunksOf(paths, sizes, isMarkdown)) {
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
@@ -657,16 +558,13 @@ async function spaceTags(root: string) {
       counts.set(tag, (counts.get(tag) ?? 0) + 1)
     }
   }
-
   return [...counts.entries()]
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count || (a.tag < b.tag ? -1 : 1))
 }
-
 async function scanLinks(root: string): Promise<SpaceLinks> {
   const base = normalise(root)
   const relative = (path: string) => path.slice(base === '/' ? 1 : base.length + 1)
-
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
   const paths = (await files.paths()).filter((path) => under(base, path) && !hiddenUnder(base, path))
@@ -680,24 +578,18 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   for (const path of paths) {
     if (!sizes.has(path) && (isCanvas(path) || isPages(path))) sizes.set(path, Infinity)
   }
-
   const read = (path: string) =>
     isMarkdown(path) || isWebTarget(path) || ((isCanvas(path) || isPages(path)) && !marked.has(path))
-
   for (const path of paths) {
     if (read(path)) continue
-
     const marks = marked.get(path)
     if (marks) notes.push(markedPlane(relative(path), marks))
     if (basename(path) !== KEEP && !path.endsWith(PDF_SIDECAR)) beside.push(path)
   }
-
   const learnt: { path: string; modified: number; size: number; plane?: PlaneMarks }[] = []
-
   for (const chunk of chunksOf(paths, sizes, read)) {
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
       const found = { path: row.path, modified: row.modified, size: row.content.length }
-
       if ((isCanvas(row.path) || isPages(row.path)) && read(row.path)) {
         const marks = planeMarks(row.content)
         notes.push(markedPlane(relative(row.path), marks))
@@ -705,10 +597,8 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
         beside.push(row.path)
         continue
       }
-
       if (!sizes.has(row.path)) learnt.push(found)
       if (!read(row.path)) continue
-
       if (isMarkdown(row.path)) {
         notes.push({
           ...scanNote(relative(row.path), row.content),
@@ -717,16 +607,12 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
         })
         continue
       }
-
       notes.push(scanShortcut(relative(row.path), row.content))
       beside.push(row.path)
     }
-
     await breathe()
   }
-
   if (learnt.length) await stats.learn(learnt).catch(() => undefined)
-
   const here = new Set(paths)
   for (const away of keptAway.under(base)) {
     const path = normalise(away.path)
@@ -738,17 +624,13 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     if (scan) notes.push(scan)
     if (!scan || isWebTarget(path) || isCanvas(path) || isPages(path)) beside.push(path)
   }
-
   const pictures = (await assets.paths()).filter((path) => under(base, path) && !hiddenUnder(base, path))
-
   return {
     notes: notes.sort((a, b) => (a.path < b.path ? -1 : 1)),
     files: [...beside, ...pictures].map(relative).sort(),
   }
 }
-
 const KEEP_SNAPSHOTS = 40
-
 async function snapshot(path: string, content: string, source: string | undefined) {
   const notePath = normalise(path)
   const said = source ? { source: source.trim().slice(0, 64) } : {}
@@ -757,15 +639,12 @@ async function snapshot(path: string, content: string, source: string | undefine
     if (source) await snapshots.put({ ...last, ...said })
     return
   }
-
   await snapshots.put({ notePath, content, taken_at: now(), size: content.length, ...said })
-
   const ids = await snapshots.idsOf(notePath)
   for (const id of ids.slice(0, Math.max(0, ids.length - KEEP_SNAPSHOTS))) {
     await snapshots.remove(id)
   }
 }
-
 async function purgeSnapshots(days: number): Promise<number> {
   const byNote = new Map<string, { id?: number; taken_at: number }[]>()
   for (const row of await snapshots.all()) {
@@ -773,7 +652,6 @@ async function purgeSnapshots(days: number): Promise<number> {
     note.push(row)
     byNote.set(row.notePath, note)
   }
-
   let dropped = 0
   for (const rows of byNote.values()) {
     const stale = new Set(
@@ -783,35 +661,27 @@ async function purgeSnapshots(days: number): Promise<number> {
         days,
       ),
     )
-
     for (const row of rows) {
       if (row.id === undefined || !stale.has(row.taken_at)) continue
-
       await snapshots.remove(row.id)
       dropped++
     }
   }
-
   return dropped
 }
-
 const THEMES = 'themes/'
 const THEME_ID = /^[a-z0-9][a-z0-9-]{0,38}$/
-
 function themeKey(id: string): string {
   if (!THEME_ID.test(id)) throw new Error(`${id} is not a theme id`)
   return `${THEMES}${id}.css`
 }
-
 async function keysUnder(prefix: string): Promise<string[]> {
   return (await meta.keys()).filter((key): key is string => typeof key === 'string' && key.startsWith(prefix))
 }
-
 function humanise(stem: string): string {
   const spaced = stem.replace(/[-_]/g, ' ')
   return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
-
 async function listThemes(): Promise<{ id: string; name: string; path: string }[]> {
   return (await keysUnder(THEMES))
     .map((key) => {
@@ -820,10 +690,8 @@ async function listThemes(): Promise<{ id: string; name: string; path: string }[
     })
     .sort((a, b) => (a.name < b.name ? -1 : 1))
 }
-
 const PAPERS = 'papers/'
 const PAPER_LIMIT = 4 * 1024 * 1024
-
 async function paperRecords(): Promise<{ key: string; path: string; size: number }[]> {
   return (await keysUnder(PAPERS)).flatMap((key) => {
     const rest = key.slice(PAPERS.length)
@@ -831,37 +699,28 @@ async function paperRecords(): Promise<{ key: string; path: string; size: number
     const size = Number(rest.slice(0, at))
     const path = rest.slice(at + 1)
     if (at < 1 || !Number.isFinite(size) || !path) return []
-
     return [{ key, path, size }]
   })
 }
-
 async function readPaperText(path: string): Promise<string> {
   const wanted = normalise(path)
   const found = (await paperRecords()).find((one) => one.path === wanted)
-
   return found ? ((await meta.get(found.key)) ?? '') : ''
 }
-
 function aPdf(path: string): void {
   if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
 }
-
 async function writePaperText(path: string, content: string): Promise<void> {
   aPdf(path)
   if (content.length > PAPER_LIMIT) throw new Error(`${path} would keep too much`)
-
   const wanted = normalise(path)
   for (const one of await paperRecords()) {
     if (one.path === wanted) await meta.remove(one.key)
   }
-
   if (content) await meta.put(`${PAPERS}${content.length}:${wanted}`, content)
 }
-
 const SCRATCHPAD = '/.orden/Scratchpad.md'
 const FORMER_SCRATCHPAD = '/.nib/Scratchpad.md'
-
 const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
   web_pass_fill: false,
@@ -875,7 +734,6 @@ const UNSUPPORTED: Record<string, unknown> = {
   custom_css_path: '/custom.css',
   snippets_path: '/snippets.json',
 }
-
 interface Args {
   [key: string]: unknown
   path: string
@@ -894,19 +752,15 @@ interface Args {
   days: number
   age: number
 }
-
 async function bringBack(path: string) {
   if (!(await keptAway.bringBack(path))) throw new Error(NOT_HERE)
 }
-
 function spaceNamed(name: string): string {
   const wanted = safeName(name)
   if (!wanted) throw new Error('that name cannot be used')
   return wanted
 }
-
 const secretKey = (name: string) => `ai-key/${name}`
-
 const COMMANDS: Record<string, (args: Args) => unknown> = {
   async read_note({ path, raw }) {
     let row = await textRow(path)
@@ -918,16 +772,13 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     if (tooLarge(row.content)) throw new Error(TOO_LARGE)
     return row.content
   },
-
   async write_note({ path, content, arrived, raw }) {
     if (arrived !== true && raw !== true && keptAway.at(path)) await bringBack(path)
     if (arrived !== true && !(await occupied(normalise(path)))) namedForEveryMachine(path)
     await writeNote(path, content)
   },
-
   write_bytes: ({ path, bytes, base64 }) =>
     writeBytes(path, bytes instanceof Uint8Array ? toBase64(bytes) : base64, assetType(path)),
-
   async delete_note({ path }) {
     await files.remove(normalise(path))
     await assets.remove(normalise(path))
@@ -937,48 +788,38 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
       await files.remove(sidecarOf(paperOf(path)))
     }
   },
-
   async rename_note({ from, to, arrived, hold, alone, raw }) {
     if (arrived !== true && basename(from) !== basename(to)) namedForEveryMachine(to)
     await renameNote(from, to, hold === true, alone === true, raw === true)
   },
-
   async copy_path({ from, to }) {
     namedForEveryMachine(to)
     await copyPath(from, to)
   },
-
   async create_folder({ path, arrived }) {
     if (arrived !== true) namedForEveryMachine(path)
     await writeNote(join(path, KEEP), '')
   },
-
   delete_folder: ({ path }) => removeFolder(path),
   remove_empty_folder: ({ path }) => removeEmptyFolder(path),
   read_tree: ({ root, options, raw }) => tree(root, options ?? {}, raw === true),
-
   path_exists: ({ path, raw }) => (raw !== true && keptAway.under(path).length > 0) || stats.holds(normalise(path)),
-
   async let_go_note({ path }) {
     await files.remove(normalise(path))
   },
-
   space_tags: ({ root }) => spaceTags(root),
   scan_links: ({ root }) => scanLinks(root),
   spaces_root: () => '/',
   list_spaces: spaceList,
-
   async create_space(args) {
     const wanted = spaceNamed(args.name)
     const taken = new Set((await spaceList()).map((space) => space.name))
     let name = wanted
     let counter = 2
     while (taken.has(name)) name = `${wanted} ${counter++}`
-
     await writeNote(join('/', `${name}/${KEEP}`), '')
     return { name, path: `/${name}` }
   },
-
   async rename_space(args) {
     const wanted = spaceNamed(args.name)
     const target = `/${wanted}`
@@ -996,36 +837,30 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     }
     return { name: wanted, path: target }
   },
-
   delete_space: ({ path }) => removeFolder(path),
   trash_item: ({ path, kind, alone, arrived }) => trashItem(path, kind, alone === true, arrived === true),
   trash_words: ({ path, content }) => trashWords(path, content),
   list_trash: async () => (await trashEntries()).sort((a, b) => b.trashedAt - a.trashedAt),
   restore_trash: ({ id }) => restoreTrash(id),
   purge_trash: ({ id }) => purgeTrash(id),
-
   async purge_trash_older_than({ age }) {
     const cutoff = now() - age
     const old = (await trashEntries()).filter((one) => one.trashedAt < cutoff)
     for (const one of old) await purgeTrash(one.id)
     return old.length
   },
-
   async save_asset(args) {
     const bytes = args.bytes as number[]
     const given = (args.name || `pasted-${now()}.png`).replace(/[/\\]/g, '-')
     const name = isReserved(given) ? `_${given}` : given
     const relative = (args.folder ?? 'assets').replace(/^\/+|\/+$/g, '')
-
     const folder = join(parent(args.notePath), relative)
     const space = spaceOf(args.notePath)
     if (folder !== space && !under(space, folder)) {
       throw new Error(`${relative} is not a folder inside the space`)
     }
-
     let binary = ''
     for (const byte of bytes) binary += String.fromCharCode(byte)
-
     const data = btoa(binary)
     const same = async (one: string) =>
       (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
@@ -1034,22 +869,18 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     if (!(await same(target))) await writeBytes(target, data, assetType(file))
     return relative ? `${relative}/${file}` : file
   },
-
   async read_highlights({ path }) {
     aPdf(path)
     return (await textRow(sidecarOf(path)))?.content ?? ''
   },
-
   async write_highlights({ path, content }) {
     aPdf(path)
     if (content) await writeNote(sidecarOf(path), content)
     else await files.remove(sidecarOf(path))
   },
-
   read_paper_text: ({ path }) => readPaperText(path),
   write_paper_text: ({ path, content }) => writePaperText(path, content),
   list_paper_texts: async () => (await paperRecords()).map(({ path, size }) => ({ path, size })),
-
   async read_asset({ path }) {
     const words = readsAsText(path) ? await textRow(path) : undefined
     if (words) {
@@ -1060,10 +891,8 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     if (!row) throw new Error('no such image')
     return `data:${assetType(path, row.type)};base64,${row.data}`
   },
-
   snapshot_note: ({ path, content, source }) =>
     snapshot(path, content, typeof source === 'string' ? source : undefined),
-
   list_snapshots: async ({ path }) =>
     (await snapshots.forNote(normalise(path)))
       .sort((a, b) => b.taken_at - a.taken_at)
@@ -1073,64 +902,51 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
         size: row.size,
         ...(row.source ? { source: row.source } : {}),
       })),
-
   async read_snapshot({ path }) {
     const id = Number(path)
     return (Number.isInteger(id) ? await snapshots.get(id) : undefined)?.content ?? ''
   },
-
   purge_snapshots: ({ days }) => purgeSnapshots(days),
   list_themes: listThemes,
   read_theme: async ({ path }) => (await meta.get(path)) ?? '',
-
   async write_theme({ id, css }) {
     const key = themeKey(id)
     await meta.put(key, css)
     return key
   },
-
   async remove_theme({ id }) {
     await meta.remove(themeKey(id))
   },
-
   read_custom_css: async () => (await meta.get('custom.css')) ?? '',
   read_snippets: async () => (await meta.get('snippets.json')) ?? '{}',
-
   async scratchpad_path() {
     if (!(await files.get(SCRATCHPAD))) {
       await writeNote(SCRATCHPAD, (await textRow(FORMER_SCRATCHPAD))?.content ?? '')
     }
     return SCRATCHPAD
   },
-
   new_window: () => void window.open(location.href, '_blank'),
   show_window: () => window.focus(),
   secret_read: async ({ name }) => (await meta.get(secretKey(name))) ?? null,
-
   async secret_write({ name, secret }) {
     await meta.put(secretKey(name), secret)
   },
-
   async secret_forget({ name }) {
     await meta.remove(secretKey(name))
   },
 }
-
 export async function webInvoke<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
   const run = Object.hasOwn(COMMANDS, command) ? COMMANDS[command] : undefined
   if (run) return (await run(args as Args)) as T
   if (command in UNSUPPORTED) return UNSUPPORTED[command] as T
   throw new Error(`${command} is not available in the browser`)
 }
-
 export async function seed(): Promise<boolean> {
   if (await wasSeeded()) return false
-
   if ((await files.paths()).length) {
     await markSeeded()
     return false
   }
-
   await writeNote(WELCOME_PATH, WELCOME)
   await markSeeded()
   markSeedSpace(`/${WELCOME_SPACE}`)

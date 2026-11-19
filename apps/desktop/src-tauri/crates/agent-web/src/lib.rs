@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 pub mod browser;
 pub mod capture;
 pub mod cdp;
@@ -43,7 +42,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args:
     );
     answered
 }
-
 fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
     tabs::back(caller.id());
     match verb {
@@ -103,11 +101,9 @@ fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
         }
     }
 }
-
 fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     browser::answer(app, caller, verb, since)
 }
-
 fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     match limits::wait_for_room(
         caller.id(),
@@ -119,7 +115,6 @@ fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
         Ok(_) => Ok(()),
     }
 }
-
 fn status(caller: &Caller) -> Answer {
     let Caller::Agent(grant) = caller else {
         return Answer::error(
@@ -136,7 +131,6 @@ fn status(caller: &Caller) -> Answer {
         grant,
     })
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -148,7 +142,6 @@ mod tests {
         };
         result["grant"].clone()
     }
-
     #[test]
     fn an_agent_is_told_the_grant_it_acts_under_not_the_one_kept() {
         let kept = Grant::third_party("told-codex".into(), "Codex");
@@ -156,7 +149,6 @@ mod tests {
         assert_eq!(full["mode"], "autonomous");
         let scopes = full["scopes"].as_array().map_or(0, Vec::len);
         assert_eq!(scopes, Scope::ALL.len());
-
         let mut asking = kept;
         asking.mode = Mode::Confirm;
         assert_eq!(told(asking)["mode"], "confirm");

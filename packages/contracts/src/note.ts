@@ -11,7 +11,6 @@ export interface NoteContent {
   readonly shared: string | null
   readonly home: SpaceId | null
 }
-
 export interface NoteStart {
   readonly kind: TabKind
   readonly path: NotePath | null
@@ -21,13 +20,10 @@ export interface NoteStart {
   readonly shared?: string | null
   readonly home?: SpaceId | null
 }
-
 export interface Heading {
   readonly level: number
   readonly text: string
   readonly line: number
 }
-
 export const UNTITLED = 'Untitled'
-
 export const unixLines = (text: string): string => (text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text)

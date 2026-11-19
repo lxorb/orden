@@ -8,7 +8,6 @@ import { tagOpener, tagTitle } from './tag-press'
 import { parsed } from '../test/parsed'
 
 const PARK = '\n\nx'
-
 function state(doc: string, at = doc.length, more: Extension[] = [], upTo = doc.length): EditorState {
   return parsed(
     EditorState.create({
@@ -19,7 +18,6 @@ function state(doc: string, at = doc.length, more: Extension[] = [], upTo = doc.
     upTo,
   )
 }
-
 function parsedTags(doc: string): string[] {
   const out: string[] = []
   syntaxTree(state(doc)).iterate({
@@ -29,11 +27,9 @@ function parsedTags(doc: string): string[] {
   })
   return out
 }
-
 function pills(doc: string, at?: number, more: Extension[] = []) {
   const full = at === undefined ? doc + PARK : doc
   const out: { text: string; className: string; tag: string; title?: string }[] = []
-
   buildDecorations(state(full, at ?? full.length, more)).decorations.between(0, full.length, (from, to, value) => {
     const spec = value.spec as {
       class?: string
@@ -47,10 +43,8 @@ function pills(doc: string, at?: number, more: Extension[] = []) {
       ...(spec.attributes?.title ? { title: spec.attributes.title } : {}),
     })
   })
-
   return out
 }
-
 describe('what the parser reads as a tag', () => {
   test.each([
     ['Filed under #work and (#aside), #b2', ['#work', '#aside', '#b2']],
@@ -59,7 +53,6 @@ describe('what the parser reads as a tag', () => {
     ['# Heading\n\n#42 and C#sharp and a#b and \\#not', []],
     ['---\ntags: [one]\n# comment\n---\n\n#body', ['#body']],
   ])('%j', (input, wanted) => expect(parsedTags(input)).toEqual(wanted))
-
   test('never in code, maths, a comment, an address or a tag of HTML', () => {
     const doc = [
       '`#code` and $#x$ and %%#hidden%% and <!-- #gone -->',
@@ -70,17 +63,14 @@ describe('what the parser reads as a tag', () => {
       '',
       'https://orden.dev/#top and <https://orden.dev/#also> and <a href="#x">',
     ].join('\n')
-
     expect(parsedTags(doc)).toEqual([])
   })
 })
-
 describe('a tag in the preview', () => {
   test.each([
     ['Filed under #work/orden today', [{ text: '#work/orden', className: 'tag', tag: 'work/orden' }]],
     ['[see #this](https://orden.dev) and ![#alt](pic.png)', []],
   ])('%j', (input, wanted) => expect(pills(input)).toEqual(wanted))
-
   test.each([
     [
       'Filed #work today',
@@ -89,31 +79,25 @@ describe('a tag in the preview', () => {
     ],
     ['Filed #work today', [{ text: '#work', className: 'tag', tag: 'work' }], 'Filed #work today'.length],
   ])('%j', (input, wanted, extra) => expect(pills(input, extra)).toEqual(wanted))
-
   test('promises a press only in an editor that can answer one', () => {
     expect(pills('A #tag')[0]?.title).toBeUndefined()
-
     const asked: string[] = []
     const answering = tagOpener.of((tag) => asked.push(tag))
     const [pill] = pills('A #tag', undefined, [answering])
-
     expect(pill?.title).toBe(tagTitle(state('', 0, [answering])))
     expect(pill?.title).toMatch(/search the tag/)
   })
 })
-
 describe('the preview’s work on tags', () => {
   test('is the viewport’s, however long the note', () => {
     const line = (n: number) => `Line ${n} is filed under #work/n${n} and #reading.`
     const long = Array.from({ length: 2_000 }, (_, n) => line(n)).join('\n')
     const short = Array.from({ length: 100 }, (_, n) => line(n)).join('\n')
-
     const window = (doc: string) => {
       const from = doc.indexOf(line(40))
       const to = doc.indexOf(line(70))
       return { from, to }
     }
-
     const counted = (doc: string) => {
       const shown = window(doc)
       const built = buildDecorations(state(doc, 0, [], shown.to), [shown])
@@ -123,7 +107,6 @@ describe('the preview’s work on tags', () => {
       })
       return tags
     }
-
     const drawn = counted(long)
     expect(drawn).toBe(counted(short))
     expect(drawn).toBe(30 * 2)

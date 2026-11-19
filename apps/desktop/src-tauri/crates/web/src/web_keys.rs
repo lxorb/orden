@@ -1,14 +1,12 @@
 use serde::Serialize;
 
 pub const PRESSED: &str = "orden://web-key";
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Held {
     pub ctrl: bool,
     pub shift: bool,
     pub alt: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Pressed {
     key: &'static str,
@@ -18,13 +16,11 @@ pub struct Pressed {
     repeat: bool,
     down: bool,
 }
-
 impl Pressed {
     #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
     fn keeps_page(&self) -> bool {
         self.code == "F11"
     }
-
     pub const fn with_ctrl(key: &'static str, code: &'static str, shift: bool) -> Self {
         Self {
             key,
@@ -39,7 +35,6 @@ impl Pressed {
         }
     }
 }
-
 pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     let pressed = |key, code| Pressed {
         key,
@@ -48,7 +43,6 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         repeat,
         down,
     };
-
     if !down {
         return match vk {
             0x11 => Some(pressed("Control", "ControlLeft")),
@@ -57,23 +51,18 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
             _ => None,
         };
     }
-
     if vk == 0x75 && !held.ctrl && !held.shift && !held.alt {
         return Some(pressed("F6", "F6"));
     }
-
     if vk == 0x7A && !held.ctrl && !held.alt {
         return Some(pressed("F11", "F11"));
     }
-
     if held.alt && !held.ctrl && !held.shift {
         return digit(vk).map(|(key, code)| pressed(key, code));
     }
-
     if !held.ctrl || held.alt {
         return None;
     }
-
     match (vk, held.shift) {
         (0x54, false) => Some(pressed("t", "KeyT")),
         (0x54, true) => Some(pressed("T", "KeyT")),
@@ -88,7 +77,6 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         _ => None,
     }
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     if !down || repeat || held.ctrl {
@@ -101,13 +89,11 @@ pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
         repeat,
         down,
     };
-
     if vk == 0x12 {
         return (!held.shift).then(|| pressed("Alt", "AltLeft"));
     }
     held.alt.then(|| pressed("Unidentified", ""))
 }
-
 fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
     const DIGITS: [(&str, &str); 10] = [
         ("0", "Digit0"),
@@ -121,11 +107,9 @@ fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
         ("8", "Digit8"),
         ("9", "Digit9"),
     ];
-
     let at = usize::try_from(vk.checked_sub(0x30)?).ok()?;
     DIGITS.get(at).copied()
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
     const LETTERS: [(&str, &str, &str); 26] = [
@@ -156,7 +140,6 @@ fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
         ("y", "Y", "KeyY"),
         ("z", "Z", "KeyZ"),
     ];
-
     let letter = vk
         .checked_sub(0x41)
         .and_then(|at| usize::try_from(at).ok())
@@ -166,13 +149,11 @@ fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
         None => digit(vk),
     }
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Chord {
     vk: u32,
     held: Held,
 }
-
 #[derive(Debug, serde::Deserialize)]
 pub struct Asked {
     code: String,
@@ -183,7 +164,6 @@ pub struct Asked {
     #[serde(default)]
     alt: bool,
 }
-
 impl Chord {
     fn of(asked: &Asked) -> Option<Self> {
         if asked.ctrl == asked.alt {
@@ -210,9 +190,7 @@ impl Chord {
         })
     }
 }
-
 static TAKEN: std::sync::RwLock<Vec<(String, Vec<Chord>)>> = std::sync::RwLock::new(Vec::new());
-
 fn take(window: &str, chords: Vec<Chord>) {
     let mut taken = TAKEN
         .write()
@@ -220,7 +198,6 @@ fn take(window: &str, chords: Vec<Chord>) {
     taken.retain(|(one, _)| one != window);
     taken.push((window.to_owned(), chords));
 }
-
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn app_chords(window: &str) -> Vec<Chord> {
     TAKEN
@@ -231,7 +208,6 @@ fn app_chords(window: &str) -> Vec<Chord> {
         .map(|(_, chords)| chords.clone())
         .unwrap_or_default()
 }
-
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn every_chord() -> Vec<Chord> {
     TAKEN
@@ -241,7 +217,6 @@ fn every_chord() -> Vec<Chord> {
         .flat_map(|(_, chords)| chords.iter().copied())
         .collect()
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Option<Pressed> {
     if !down || !taken.contains(&Chord { vk, held }) {
@@ -256,7 +231,6 @@ fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Opti
         down,
     })
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn heard_raw(
     vk: u32,
@@ -281,7 +255,6 @@ fn heard_raw(
     let said = meaning(vk, held, false, repeat)?;
     (grabbing || page()).then_some(said)
 }
-
 #[tauri::command(async)]
 pub fn web_keys_take(app: tauri::AppHandle, window: tauri::Window, chords: Vec<Asked>) -> bool {
     take(
@@ -290,17 +263,14 @@ pub fn web_keys_take(app: tauri::AppHandle, window: tauri::Window, chords: Vec<A
     );
     tells_alt(&app)
 }
-
 #[cfg(target_os = "linux")]
 fn tells_alt(app: &tauri::AppHandle) -> bool {
     grabbed::retake(app)
 }
-
 #[cfg(not(target_os = "linux"))]
 fn tells_alt(_app: &tauri::AppHandle) -> bool {
     false
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     if held.alt {
@@ -320,7 +290,6 @@ fn reloading(vk: u32, held: Held) -> Option<Pressed> {
         _ => None,
     }
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn vk_of(keyval: u32) -> Option<u32> {
     match keyval {
@@ -338,24 +307,20 @@ fn vk_of(keyval: u32) -> Option<u32> {
         _ => None,
     }
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn page_took_focus(mode: u8, detail: u8) -> bool {
     !matches!(mode, 1 | 2) && !matches!(detail, 5..=7)
 }
-
 #[cfg(target_os = "linux")]
 pub use grabbed::{focus_in, listen};
 
 #[cfg(not(target_os = "linux"))]
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
-
 #[cfg(not(target_os = "linux"))]
 pub fn focus_in(_pages: &[u32]) -> Option<u32> {
     None
 }
-
 #[cfg(target_os = "linux")]
 mod grabbed {
     use orden_base::Held as _;
@@ -383,9 +348,7 @@ mod grabbed {
         0x74, 0x77, 0x6E, 0x72, 0xFF09, 0xFF55, 0xFF56, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36,
         0x37, 0x38, 0x39, 0xFFC2, 0xFFC3, 0xFFC8,
     ];
-
     const LOCKS: [u16; 4] = [0, 0x02, 0x10, 0x12];
-
     fn held_by(state: u16) -> Held {
         Held {
             shift: state & 0x01 != 0,
@@ -393,11 +356,9 @@ mod grabbed {
             alt: state & 0x08 != 0,
         }
     }
-
     fn mask_of(held: Held) -> u16 {
         u16::from(held.shift) | (u16::from(held.ctrl) << 2) | (u16::from(held.alt) << 3)
     }
-
     pub(super) fn chords(taken: &[Chord]) -> Vec<(Keysym, u16)> {
         let mut every = Vec::new();
         for key in KEYS {
@@ -422,7 +383,6 @@ mod grabbed {
         }
         every
     }
-
     struct Grabs {
         x: RustConnection,
         root: Window,
@@ -430,21 +390,18 @@ mod grabbed {
         pages: Mutex<HashMap<u32, String>>,
         map: Mutex<Map>,
     }
-
     #[derive(Default)]
     struct Map {
         first: Keycode,
         per: usize,
         syms: Vec<Keysym>,
     }
-
     impl Map {
         fn keysym(&self, code: Keycode) -> Option<Keysym> {
             let at = usize::from(code.checked_sub(self.first)?) * self.per;
             let row = self.syms.get(at..at + self.per)?;
             row.iter().copied().find(|sym| vk_of(*sym).is_some())
         }
-
         fn keycodes(&self, sym: Keysym) -> Vec<Keycode> {
             (0..self.syms.len() / self.per.max(1))
                 .filter_map(|code| Keycode::try_from(code).ok()?.checked_add(self.first))
@@ -452,9 +409,7 @@ mod grabbed {
                 .collect()
         }
     }
-
     static GRABS: OnceLock<Option<Arc<Grabs>>> = OnceLock::new();
-
     impl Grabs {
         fn read_map(&self) {
             let setup = self.x.setup();
@@ -473,7 +428,6 @@ mod grabbed {
                 };
             }
         }
-
         fn grab(&self, page: u32) {
             let _ = self.x.ungrab_key(Grab::ANY, page, ModMask::ANY);
             let holder = self.pages.held().get(&page).cloned().unwrap_or_default();
@@ -495,11 +449,9 @@ mod grabbed {
             drop(map);
             let _ = self.x.flush();
         }
-
         fn pages(&self) -> Vec<u32> {
             self.pages.held().keys().copied().collect()
         }
-
         fn focused(&self, pages: &[u32]) -> Option<u32> {
             let mut at = self.x.get_input_focus().ok()?.reply().ok()?.focus;
             for _ in 0..16 {
@@ -514,7 +466,6 @@ mod grabbed {
             }
             None
         }
-
         fn heard(
             &self,
             app: &AppHandle,
@@ -559,7 +510,6 @@ mod grabbed {
                 let _ = app.emit_to(holder.as_str(), PRESSED, said);
             }
         }
-
         fn hear(&self, app: &AppHandle) {
             let mut grabbing: Option<(Keycode, String)> = None;
             while let Ok(event) = self.x.wait_for_event() {
@@ -621,7 +571,6 @@ mod grabbed {
             }
         }
     }
-
     fn told(app: &AppHandle, window: String, said: Pressed) {
         let telling = app.clone();
         let _ = app.run_on_main_thread(move || {
@@ -633,7 +582,6 @@ mod grabbed {
             let _ = telling.emit_to(window.as_str(), PRESSED, said);
         });
     }
-
     fn grabs(app: &AppHandle) -> Option<Arc<Grabs>> {
         GRABS
             .get_or_init(|| {
@@ -659,7 +607,6 @@ mod grabbed {
             })
             .clone()
     }
-
     fn raw_keys(x: &RustConnection, root: Window) -> bool {
         let version = x
             .xinput_xi_query_version(2, 2)
@@ -675,7 +622,6 @@ mod grabbed {
         x.xinput_xi_select_events(root, &[keys])
             .is_ok_and(|cookie| cookie.check().is_ok())
     }
-
     pub(super) fn retake(app: &AppHandle) -> bool {
         let Some(grabs) = grabs(app) else {
             return false;
@@ -685,11 +631,9 @@ mod grabbed {
         }
         grabs.raw
     }
-
     pub fn focus_in(pages: &[u32]) -> Option<u32> {
         GRABS.get()?.as_ref()?.focused(pages)
     }
-
     pub fn listen(webview: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
         let Some(page) = crate::host::x11_page(webview) else {
             return;
@@ -700,7 +644,6 @@ mod grabbed {
         let _ = grabs.x.change_window_attributes(page, &focus);
         grabs.grab(page);
     }
-
     #[cfg(test)]
     mod tests {
         use super::{chords, Map};
@@ -724,7 +667,6 @@ mod grabbed {
             assert_eq!(with.iter().filter(|one| **one == (0x31, 0x08)).count(), 1);
             assert_eq!(with.len(), before.len() + 1);
         }
-
         #[test]
         fn a_digit_under_shift_is_still_the_key_s() {
             let map = Map {
@@ -739,7 +681,6 @@ mod grabbed {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -752,13 +693,11 @@ mod tests {
         shift: false,
         alt: true,
     };
-
     const SHIFT: Held = Held {
         ctrl: false,
         shift: true,
         alt: false,
     };
-
     fn asked(code: &str, ctrl: bool, shift: bool, alt: bool) -> Option<Chord> {
         Chord::of(&Asked {
             code: code.into(),
@@ -767,7 +706,6 @@ mod tests {
             alt,
         })
     }
-
     #[test]
     fn a_chord_the_window_asks_for_is_taken_and_said_as_itself() {
         let taken = [asked("KeyE", false, false, true).expect("Alt and E")];
@@ -787,7 +725,6 @@ mod tests {
         assert_eq!(app_s(0x45, ALT, false, false, &taken), None);
         assert_eq!(app_s(0x45, ALT, true, false, &[]), None);
     }
-
     #[test]
     fn each_window_s_pages_hand_over_that_window_s_chords() {
         let e = asked("KeyE", false, false, true).expect("Alt and E");
@@ -804,7 +741,6 @@ mod tests {
         assert_eq!(app_chords("chords-second"), vec![f]);
         assert_eq!(app_chords("chords-never"), Vec::new());
     }
-
     #[test]
     fn a_page_keeps_typing_and_altgr_whatever_the_window_asks() {
         assert_eq!(asked("KeyE", false, false, false), None);
@@ -824,7 +760,6 @@ mod tests {
         };
         assert!(app_s(0x4A, held, true, false, &[ctrl]).is_some_and(|one| one.key == "J"));
     }
-
     #[test]
     fn a_raw_key_says_alt_in_a_page_and_leaves_every_chord_to_its_grab() {
         let taken = [asked("KeyE", false, false, true).expect("Alt and E")];
@@ -832,7 +767,6 @@ mod tests {
             heard_raw(vk, held, down, false, &taken, grabbing, || page)
                 .map(|one| (one.key, one.down))
         };
-
         assert_eq!(raw(0x12, ALT, true, false, true), Some(("Alt", true)));
         assert_eq!(
             raw(0x12, Held::default(), false, false, true),
@@ -864,7 +798,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn a_raw_key_asks_where_the_keyboard_is_only_when_it_has_to() {
         let asked = |vk, held, down, grabbing| {
@@ -881,7 +814,6 @@ mod tests {
         assert!(asked(0x12, ALT, true, false));
         assert!(asked(0x12, Held::default(), false, false));
     }
-
     #[test]
     fn every_engine_takes_the_chords_the_window_asks_for() {
         let source = include_str!("web_keys.rs");
@@ -899,7 +831,6 @@ mod tests {
         assert!(cef.contains("heard_raw("));
         assert!(include_str!("../../../src/lib.rs").contains("orden_web::web_keys::web_keys_take,"));
     }
-
     #[test]
     fn a_page_takes_the_keyboard_on_a_real_focus_in_only() {
         for mode in [0, 3] {
@@ -916,17 +847,14 @@ mod tests {
             assert!(!page_took_focus(0, detail));
         }
     }
-
     const CTRL: Held = Held {
         ctrl: true,
         shift: false,
         alt: false,
     };
-
     fn down(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
         meaning(vk, Held { shift, ..CTRL }, true, false).map(|one| (one.key, one.code))
     }
-
     #[test]
     fn the_browser_s_own_ctrl_chords_are_taken_and_the_rest_left_to_the_page() {
         for (vk, shift, taken) in [
@@ -958,7 +886,6 @@ mod tests {
             assert_eq!(down(vk, shift), taken, "{vk:#x} {shift}");
         }
     }
-
     #[test]
     fn and_f6_to_the_address_field() {
         let alone = |vk, held| meaning(vk, held, true, false).map(|one| one.key);
@@ -966,7 +893,6 @@ mod tests {
         assert_eq!(alone(0x75, SHIFT), None);
         assert_eq!(alone(0x75, CTRL), None);
     }
-
     #[test]
     fn finding_and_the_address_field_s_other_keys_are_the_page_s_first() {
         for shift in [false, true] {
@@ -978,7 +904,6 @@ mod tests {
         }
         assert_eq!(meaning(0x44, ALT, true, false), None);
     }
-
     #[test]
     fn a_chord_let_go_by_is_said_as_one_of_these() {
         let said =
@@ -991,7 +916,6 @@ mod tests {
         assert_eq!(said["repeat"], false);
         assert_eq!(said["down"], true);
     }
-
     #[test]
     fn reloading_is_f5_and_ctrl_r_with_shift_for_the_hard_one() {
         use super::reloading;
@@ -1007,7 +931,6 @@ mod tests {
         assert_eq!(key(0x52, Held::default()), None);
         assert_eq!(key(0x52, Held { alt: true, ..CTRL }), None);
     }
-
     #[test]
     fn gdk_names_the_keys_windows_does() {
         use super::vk_of;
@@ -1019,17 +942,14 @@ mod tests {
         assert_eq!(vk_of(0xFFE3), Some(0x11));
         assert_eq!(vk_of(0x20AC), None);
     }
-
     #[test]
     fn everything_else_is_the_page_s() {
         assert_eq!(meaning(0x74, Held::default(), true, false), None);
         assert_eq!(meaning(0x54, Held::default(), true, false), None);
     }
-
     #[test]
     fn alt_held_on_its_own_is_told_and_left_to_the_page() {
         let said = |vk, held, repeat| told(vk, held, true, repeat).map(|one| one.key);
-
         assert_eq!(said(0x12, Held::default(), false), Some("Alt"));
         assert_eq!(said(0x12, ALT, false), Some("Alt"));
         assert_eq!(said(0x12, ALT, true), None);
@@ -1039,7 +959,6 @@ mod tests {
         assert_eq!(meaning(0x12, ALT, true, false), None);
         assert_eq!(told(0x12, ALT, false, false), None);
     }
-
     #[test]
     fn altgr_and_alt_with_shift_are_never_a_hold() {
         assert_eq!(told(0x12, Held { alt: true, ..CTRL }, true, false), None);
@@ -1055,14 +974,12 @@ mod tests {
             Some("Unidentified")
         );
     }
-
     #[test]
     fn a_chord_with_alt_is_a_character_on_altgr_keyboards() {
         assert_eq!(meaning(0x54, Held { alt: true, ..CTRL }, true, false), None);
         assert_eq!(meaning(0x32, Held { alt: true, ..CTRL }, true, false), None);
         assert_eq!(meaning(0x37, Held { alt: true, ..CTRL }, true, false), None);
     }
-
     #[test]
     fn alt_and_a_digit_are_the_tabs_by_number_nought_included() {
         let alt = |shift| Held {
@@ -1071,19 +988,16 @@ mod tests {
             alt: true,
         };
         let pressed = |vk, held| meaning(vk, held, true, false).map(|one| (one.key, one.code));
-
         assert_eq!(pressed(0x31, alt(false)), Some(("1", "Digit1")));
         assert_eq!(pressed(0x33, alt(false)), Some(("3", "Digit3")));
         assert_eq!(pressed(0x39, alt(false)), Some(("9", "Digit9")));
         assert_eq!(pressed(0x30, alt(false)), Some(("0", "Digit0")));
         assert!(meaning(0x30, alt(false), true, false).is_some_and(|one| one.held.alt));
-
         assert_eq!(pressed(0x31, alt(true)), None);
         assert_eq!(pressed(0x44, alt(false)), None);
         assert_eq!(pressed(0x61, alt(false)), None);
         assert_eq!(down(0x30, false), None);
     }
-
     #[test]
     fn f11_and_shift_f11_are_the_window_s_and_leave_the_page_its_keyboard() {
         let filled = meaning(0x7A, SHIFT, true, false);
@@ -1091,7 +1005,6 @@ mod tests {
         assert_eq!(named, Some(("F11", "F11")));
         assert!(filled.as_ref().is_some_and(|one| one.held.shift));
         assert!(filled.is_some_and(|one| one.keeps_page()));
-
         let full = meaning(0x7A, Held::default(), true, false);
         assert!(full
             .as_ref()
@@ -1103,11 +1016,9 @@ mod tests {
         };
         assert_eq!(meaning(0x7A, with(true, false), true, false), None);
         assert_eq!(meaning(0x7A, with(false, true), true, false), None);
-
         assert!(meaning(0x54, CTRL, true, false).is_some_and(|one| !one.keeps_page()));
         assert!(meaning(0x75, Held::default(), true, false).is_some_and(|one| !one.keeps_page()));
     }
-
     #[test]
     fn a_modifier_let_go_of_is_told_and_nothing_else_released_is() {
         let up = |vk| meaning(vk, Held::default(), false, false).map(|one| one.key);
@@ -1116,7 +1027,6 @@ mod tests {
         assert_eq!(up(0x12), Some("Alt"));
         assert_eq!(up(0x54), None);
     }
-
     #[test]
     fn a_key_held_down_says_so() {
         let again = meaning(0x54, CTRL, true, true);

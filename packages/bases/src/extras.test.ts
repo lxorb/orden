@@ -10,14 +10,12 @@ import { fillTemplate, repeatDue, withoutTemplateKeys } from './templates'
 import type { Row } from './types'
 
 const day = (iso: string) => new Date(`${iso}T09:00:00`).getTime()
-
 describe('unique ids', () => {
   const bugs = [
     noteRow('Bugs/A.md', 'id: BUG-1', { ctime: day('2026-01-01') }),
     noteRow('Bugs/B.md', 'id: BUG-7', { ctime: day('2026-02-01') }),
     noteRow('Bugs/C.md', 'id: bug-3', { ctime: day('2026-03-01') }),
   ]
-
   test('the next is one past the highest, whatever case the prefix was written in', () => {
     expect(nextId(bugs, 'id', 'BUG')).toBe('BUG-8')
     expect(nextId([], 'id', 'BUG')).toBe('BUG-1')
@@ -26,7 +24,6 @@ describe('unique ids', () => {
     expect(idNumber('TASK-12', 'BUG')).toBeNull()
     expect(idText('', 3)).toBe('3')
   })
-
   test('two devices offline both made 8: one becomes 9, and both agree', () => {
     const older = noteRow('Bugs/Older.md', 'id: BUG-8', { ctime: day('2026-04-01') })
     const younger = noteRow('Bugs/Younger.md', 'id: BUG-8', { ctime: day('2026-04-02') })
@@ -34,7 +31,6 @@ describe('unique ids', () => {
     expect(repairs.map((one) => [one.row.path, one.id])).toEqual([['Bugs/Younger.md', 'BUG-9']])
     expect(idRepairs([...bugs, older, younger], 'id', 'BUG', false)).toEqual(repairs)
   })
-
   test('two devices that disagree on when the rows were made renumber the same one, and settle', () => {
     const paths = ['Bugs/X.md', 'Bugs/Y.md', 'Bugs/Z.md']
     const ctimes = {
@@ -46,7 +42,6 @@ describe('unique ids', () => {
       ...bugs,
       ...paths.map((path) => noteRow(path, { id: ids[path] ?? '' }, { ctime: ctimes[device][path as 'Bugs/X.md'] })),
     ]
-
     for (let round = 0; round < 3; round++) {
       const a = idRepairs(seenOn('A'), 'id', 'BUG', false)
       const b = idRepairs(seenOn('B'), 'id', 'BUG', false)
@@ -60,7 +55,6 @@ describe('unique ids', () => {
     expect(idRepairs(seenOn('A'), 'id', 'BUG', false)).toEqual([])
     expect(idRepairs(seenOn('B'), 'id', 'BUG', false)).toEqual([])
   })
-
   test('a duplicate is renumbered, not the note it was copied from', () => {
     const repairs = idRepairs(
       [
@@ -77,7 +71,6 @@ describe('unique ids', () => {
       ['Bugs/Crash copy.md', 'BUG-47'],
     ])
   })
-
   test('a copied folder is renumbered, not the folder it was copied from', () => {
     const repairs = idRepairs(
       [
@@ -92,7 +85,6 @@ describe('unique ids', () => {
     )
     expect(repairs.map((one) => one.row.path)).toEqual(['Projects copy/X.md', 'Trip copy/Trip copy.md'])
   })
-
   test('a name ending in a dot or a space comes before its copy', () => {
     for (const [original, copy] of [
       ['Bugs/v1..md', 'Bugs/v1. copy.md'],
@@ -107,7 +99,6 @@ describe('unique ids', () => {
       expect(repairs.map((one) => one.row.path)).toEqual([copy])
     }
   })
-
   test('devices that spell a name differently on disk still pick the same twin', () => {
     const spelled = {
       linux: { X: 'Bugs/Meeting: Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/\u00dcbel.md' },
@@ -118,7 +109,6 @@ describe('unique ids', () => {
       (['X', 'Y', 'Z'] as const).map((note) => noteRow(spelled[device][note], { id: ids[note] ?? '' }, { ctime: 1 }))
     const noteOf = (device: 'linux' | 'mac', path: string) =>
       (['X', 'Y', 'Z'] as const).find((note) => spelled[device][note] === path)
-
     for (let round = 0; round < 3; round++) {
       const linux = idRepairs(seenOn('linux'), 'id', 'BUG', false)
       const mac = idRepairs(seenOn('mac'), 'id', 'BUG', false)
@@ -131,7 +121,6 @@ describe('unique ids', () => {
     }
     expect(new Set(Object.values(ids)).size).toBe(3)
   })
-
   test('turned on, every row without one is numbered in the order they were made', () => {
     const rows = [
       noteRow('Bugs/Late.md', '', { ctime: day('2026-05-02') }),
@@ -145,7 +134,6 @@ describe('unique ids', () => {
     expect(idRepairs(rows, 'id', 'BUG', false)).toEqual([])
   })
 })
-
 describe('automations', () => {
   const base = readBase(`filters:
   and:
@@ -168,7 +156,6 @@ orden:
   const filling = { today: '2026-10-05', time: '09:30' }
   const was = noteRow('Bugs/Crash.md', 'status: Doing\nowner: Emil\npriority: low')
   const done = noteRow('Bugs/Crash.md', 'status: Done\nowner: Emil\npriority: high')
-
   test('reads every one that is one, in order', () => {
     expect(automations.map((one) => one.when)).toEqual([
       { property: 'status', is: 'Done' },
@@ -177,7 +164,6 @@ orden:
       { property: 'priority', is: 'high' },
     ])
   })
-
   test('a change fires what waits for it, together, as one effect', () => {
     expect(fired(automations, was, done, filling)).toEqual({
       set: { finished: { kind: 'date', iso: '2026-10-05' }, owner: null },
@@ -185,37 +171,31 @@ orden:
       notify: ['Crash moved'],
     })
   })
-
   test('fires once per change: an edit to a row already Done fires nothing', () => {
     const renamed = noteRow('Bugs/Crash.md', 'status: Done\nowner: Lucile\npriority: high')
     expect(fired(automations, done, renamed, filling)).toBeNull()
     expect(fired(automations, done, done, filling)).toBeNull()
   })
-
   test('an added row fires what waits for one, and nothing that waits for a change', () => {
     expect(fired(automations, undefined, done, filling)).toEqual({
       set: { status: 'To do' },
       notify: [],
     })
   })
-
   test('a switched-off one never fires; a task row never fires', () => {
     const low = noteRow('Bugs/Crash.md', 'status: Done\npriority: low')
     expect(fired(automations, low, done, filling)).toBeNull()
     const task = { ...done, kind: 'task' } as Row
     expect(fired(automations, was, task, filling)).toBeNull()
   })
-
   test('the effect is one change, so the edit it rides with is one undo', () => {
     const effect = fired(automations, was, done, filling)
     expect(Object.keys(effect?.set ?? {})).toEqual(['finished', 'owner'])
   })
-
   test('only the base own rows are its rows', () => {
     expect(inBase(base, done, contextAt())).toBe(true)
     expect(inBase(base, noteRow('Films/Heat.md'), contextAt())).toBe(false)
   })
-
   test('written back with every key it did not know kept', () => {
     const next = withAutomations(base, automations.slice(0, 1))
     const written = writeBase(next, '')
@@ -223,10 +203,8 @@ orden:
     expect(withAutomations(base, []).orden.kept.automations).toBeUndefined()
   })
 })
-
 describe('templates', () => {
   const filling = { title: 'Weekly review', today: '2026-10-05', time: '09:30' }
-
   test("Obsidian's placeholders, and dates relative to today", () => {
     expect(
       fillTemplate(
@@ -235,14 +213,12 @@ describe('templates', () => {
       ),
     ).toBe('# Weekly review\n2026-10-05 09:30 Monday 5 October 2026-10-12 2026/09/28 2026-11-05 {{other}}')
   })
-
   test("a template's own keys never reach the note", () => {
     expect(withoutTemplateKeys('---\nrepeat: every Monday\nmade: 2026-09-28\ntags: [review]\n---\n# x\n')).toBe(
       '---\ntags: [review]\n---\n# x\n',
     )
     expect(withoutTemplateKeys('---\nrepeat: every day\n---\n# x\n')).toBe('# x\n')
   })
-
   test('a repeating template owes one note for a missed stretch, listing what it missed', () => {
     const weekly = {
       repeat: 'every week on Monday',
@@ -259,7 +235,6 @@ describe('templates', () => {
     })
     expect(repeatDue({ repeat: 'whenever' }, '2026-10-05')).toBeNull()
   })
-
   test('a repeating template made more than four hundred times ago owes the note of today', () => {
     const daily = repeatDue({ repeat: 'every day', made: '2024-01-01' }, '2026-10-05')
     expect(daily?.day).toBe('2026-10-05')
@@ -269,7 +244,6 @@ describe('templates', () => {
     expect(repeatDue({ repeat: 'every week on Monday', made: '0001-01-01' }, '2026-10-05')?.day).toBe('2026-10-05')
   })
 })
-
 describe('conditional colour', () => {
   test('rules are written as nested ifs and read back', () => {
     const rules = [
@@ -287,7 +261,6 @@ describe('conditional colour', () => {
     expect(colourRules('"danger"')).toBeNull()
   })
 })
-
 describe('buttons', () => {
   const base = readBase(`orden:
   buttons:
@@ -299,7 +272,6 @@ describe('buttons', () => {
       command: app.tasks
       open: "https://example.com/{{title}}"
 `)
-
   test('a press sets its row and says what else to do', () => {
     const [done, follow] = readButtons(base)
     const filling = { title: 'Crash', today: '2026-10-05', time: '09:30' }
@@ -313,7 +285,6 @@ describe('buttons', () => {
       open: 'https://example.com/Crash',
     })
   })
-
   test('made, changed and taken away, keys it does not know kept', () => {
     const [done] = readButtons(base)
     if (!done) throw new Error('no button')
@@ -325,7 +296,6 @@ describe('buttons', () => {
     expect(readButtons(withButton(base, 'Done', null)).map((one) => one.name)).toEqual(['Follow up'])
   })
 })
-
 describe('CSV', () => {
   test('cells a spreadsheet reads, quoted where they must be', () => {
     expect(csvValue({ kind: 'date', iso: '2026-10-06', time: '16:00:00' })).toBe('2026-10-06 16:00')
@@ -337,7 +307,6 @@ describe('CSV', () => {
     )
   })
 })
-
 describe('the view keys lane 7 adds', () => {
   test('round-trip, and a file that says them gives itself back', () => {
     const yaml = `views:

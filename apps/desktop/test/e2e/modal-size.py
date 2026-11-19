@@ -1,22 +1,17 @@
 import sys
-
 from harness import Drive
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 WINDOWS = [(1280, 720), (1920, 1080), (2560, 1440), (2000, 1125)]
 SCALES = [1, 1.25, 1.5]
 PHOTOGRAPHED = [(1280, 720), (2000, 1125)]
-
 SHOTS_TOO = "--shots" in sys.argv
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -27,7 +22,6 @@ async () => {
   return note.path
 }
 """
-
 WRAPPED = """
 (selector) => {
   const root = document.querySelector(selector)
@@ -79,7 +73,6 @@ WRAPPED = """
   return { missing: false, wrapped }
 }
 """
-
 BOX = """
 (selector) => {
   const root = document.querySelector(selector)
@@ -104,9 +97,7 @@ BOX = """
   }
 }
 """
-
 SETTINGS = '[role="region"][aria-label="Settings"]'
-
 FRAME = """
 () => {
   const body = document.querySelector('[role="region"][aria-label="Settings"] .body')
@@ -127,25 +118,21 @@ FRAME = """
   return 'stood in'
 }
 """
-
 NAV_SCROLLS = """
 () => {
   const nav = document.querySelector('[role="region"][aria-label="Settings"] nav')
   return nav ? nav.scrollHeight > nav.clientHeight + 1 : null
 }
 """
-
 PANES = """
 () => [...document.querySelectorAll('[role="region"][aria-label="Settings"] nav .item')]
   .map((one) => one.textContent.trim())
 """
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def inside(name: str, box: dict | None) -> None:
     if box is None:
         wrong(f"{name}: not there")
@@ -159,14 +146,12 @@ def inside(name: str, box: dict | None) -> None:
         and box["x"] + box["width"] <= box["vw"] - room
         and box["y"] + box["height"] <= box["vh"] - room,
     )
-
 def unwrapped(page, name: str, selector: str) -> None:
     said = page.evaluate(WRAPPED, selector)
     if said["missing"]:
         wrong(f"{name}: not there")
         return
     check(f"{name}: no control's words wrap{': ' + '; '.join(said['wrapped']) if said['wrapped'] else ''}", not said["wrapped"])
-
 PANE = """
 (selector) => {
   const sheet = document.querySelector(selector)
@@ -177,12 +162,10 @@ PANE = """
   return { sheet: [one.x, one.y, one.width, one.height], pane: [other.x, other.y, other.width, other.height] }
 }
 """
-
 def settings(page, label: str) -> None:
     page.evaluate("() => window.ordenApp.settings.show('general')")
     page.wait_for_selector(SETTINGS)
     quiet(page)
-
     first = page.evaluate(BOX, SETTINGS)
     if first is None:
         wrong(f"[{label}] settings: not there")
@@ -203,7 +186,6 @@ def settings(page, label: str) -> None:
             f"[{label}] settings fills its pane's width ({held['sheet'][2]:.0f} of {held['pane'][2]:.0f})",
             held["sheet"][2] >= held["pane"][2] - 2,
         )
-
     sizes = set()
     for pane in page.evaluate(PANES):
         page.evaluate("() => { window.ordenApp.settings.listing = true }")
@@ -215,14 +197,12 @@ def settings(page, label: str) -> None:
         said = page.evaluate(WRAPPED, f"{SETTINGS} .body")
         if said["wrapped"]:
             wrong(f"[{label}] {pane}: words wrap: {'; '.join(said['wrapped'])}")
-
     check(f"[{label}] one size across every pane {sorted(sizes)}", len(sizes) == 1)
     page.evaluate("() => { window.ordenApp.settings.listing = true }")
     quiet(page, 40)
     unwrapped(page, f"[{label}] the list of panes", f"{SETTINGS} nav")
     if first and first["vh"] >= 720:
         check(f"[{label}] the list of panes fits without scrolling", page.evaluate(NAV_SCROLLS) is False)
-
     page.evaluate("() => { window.ordenApp.settings.listing = true }")
     page.locator(f"{SETTINGS} nav .item", has_text="Appearance").first.click()
     quiet(page, 40)
@@ -233,7 +213,6 @@ def settings(page, label: str) -> None:
         unwrapped(page, f"[{label}] Frame ({frame})", f"{SETTINGS} .body")
     page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_selector(SETTINGS, state="detached")
-
 def palette(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector('input[role="combobox"]')
@@ -244,7 +223,6 @@ def palette(page, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-palette")
     page.keyboard.press("Escape")
     page.wait_for_selector('input[role="combobox"]', state="detached")
-
 def picker(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector('input[role="combobox"]')
@@ -260,7 +238,6 @@ def picker(page, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-themes")
     page.keyboard.press("Escape")
     page.wait_for_selector(selector, state="detached")
-
 def question(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector('input[role="combobox"]')
@@ -276,7 +253,6 @@ def question(page, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-question")
     page.keyboard.press("Escape")
     page.wait_for_selector(selector, state="detached")
-
 def store(page, label: str, photograph: str | None) -> None:
     page.evaluate("() => { window.ordenApp.settings.show('appearance'); window.ordenApp.themeStore.open = true }")
     selector = '[role="dialog"][aria-label="Themes"]'
@@ -290,7 +266,6 @@ def store(page, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-store")
     page.evaluate("() => { window.ordenApp.themeStore.open = false; window.ordenApp.settings.open = false }")
     page.wait_for_selector(SETTINGS, state="detached")
-
 def icons(page, path: str, label: str, photograph: str | None) -> None:
     page.evaluate("(path) => window.ordenApp.iconChoice.file(path)", path)
     selector = '[role="dialog"][aria-label="Choose an icon"]'
@@ -302,7 +277,6 @@ def icons(page, path: str, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-icons")
     page.evaluate("() => window.ordenApp.iconChoice.close()")
     page.wait_for_selector(selector, state="detached")
-
 HOLD = """
 (path) => {
   const hour = 60 * 60 * 1000
@@ -323,7 +297,6 @@ HOLD = """
   ])
 }
 """
-
 def diverged(page, path: str, label: str, photograph: str | None) -> None:
     page.evaluate(HOLD, path)
     selector = '[role="dialog"][aria-label="Plan.md"]'
@@ -340,7 +313,6 @@ def diverged(page, path: str, label: str, photograph: str | None) -> None:
     page.keyboard.press("Escape")
     page.evaluate("() => window.__held?.stop()")
     page.wait_for_timeout(300)
-
 def drive(browser) -> None:
     for scale in SCALES:
         page = DRIVE.page(
@@ -356,7 +328,6 @@ def drive(browser) -> None:
         DRIVE.wait_for(page, "window.ordenApp.sync2", "the sync question's store")
         path = page.evaluate(SEED)
         quiet(page)
-
         for width, height in WINDOWS:
             viewport = {"width": round(width / scale), "height": round(height / scale)}
             page.set_viewport_size(viewport)
@@ -369,7 +340,6 @@ def drive(browser) -> None:
             diverged(page, path, label, None)
             store(page, label, None)
             icons(page, path, label, None)
-
         if scale == 1 and SHOTS_TOO:
             for width, height in PHOTOGRAPHED:
                 page.set_viewport_size({"width": width, "height": height})
@@ -394,7 +364,5 @@ def drive(browser) -> None:
                     store(page, name, name)
                     icons(page, path, name, name)
             page.evaluate("() => window.ordenApp.theme.setScheme('light')")
-
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive))

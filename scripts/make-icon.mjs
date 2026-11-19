@@ -7,10 +7,8 @@ import { GRID, INK, inSquircle, onBars, png, wash } from './mark.mjs'
 const TAURI = 'apps/desktop/src-tauri'
 const ICONS = join(TAURI, 'icons')
 const RES = join(TAURI, 'gen/android/app/src/main/res')
-
 const MAC = 824
 const ANDROID = (GRID * 72) / 108
-
 const tile =
   (size, shape = inSquircle) =>
   (x, y) => {
@@ -18,14 +16,12 @@ const tile =
     return onBars(x, y, size) ? INK : wash(x, y, size)
   }
 const edge = () => true
-
 const work = mkdtempSync(join(tmpdir(), 'orden-icon-'))
 const draw = (name, size, at) => {
   const path = join(work, name)
   writeFileSync(path, png(size, at))
   return path
 }
-
 const master = join(TAURI, 'icon-source.png')
 writeFileSync(master, png(GRID, tile(GRID)))
 draw('mac.png', GRID, tile(MAC))
@@ -44,7 +40,6 @@ writeFileSync(
     android_monochrome: 'android-mono.png',
   }),
 )
-
 const fan = (input, out) =>
   execSync(`pnpm --filter @orden/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`, {
     stdio: 'inherit',
@@ -55,7 +50,6 @@ const mobile = join(work, 'mobile')
 fan(master, desktop)
 fan(join(work, 'mac.png'), mac)
 fan(join(work, 'mobile.json'), mobile)
-
 for (const file of readdirSync(desktop)) {
   if (file.endsWith('.png') || file === 'icon.ico') copyFileSync(join(desktop, file), join(ICONS, file))
 }
@@ -72,10 +66,8 @@ for (const [density, size] of Object.entries(LEGACY)) {
   writeFileSync(join(dir, 'ic_launcher_round.png'), png(size, tile(GRID * 0.92, disc)))
 }
 cpSync(join(ICONS, 'android'), RES, { recursive: true })
-
 const web = 'apps/desktop/public'
 for (const size of [256, 512])
   writeFileSync(join(web, `icon-${size}.png`), png(size, tile(GRID, edge), { small: true }))
-
 rmSync(work, { recursive: true, force: true })
 console.log('the Orden icon, every platform')

@@ -12,7 +12,6 @@ pub enum Tool {
     Codex,
     Gemini,
 }
-
 impl Tool {
     pub fn command(self) -> &'static str {
         match self {
@@ -21,7 +20,6 @@ impl Tool {
             Self::Gemini => "gemini",
         }
     }
-
     pub fn find(self) -> Option<orden_base::program::Program> {
         let outright = match self {
             Self::ClaudeCode => "ORDEN_AI_CLAUDE_CODE",
@@ -31,11 +29,9 @@ impl Tool {
         orden_base::program::find(self.command(), outright)
     }
 }
-
 pub const SYSTEM: &str = "You are the assistant inside Orden, a markdown notes app. \
 The message starts with the app's instructions for this request; follow them exactly. \
 You have no tools: answer in words only.";
-
 pub fn session_system(mode: Option<Mode>) -> &'static str {
     match mode {
         None => SYSTEM,
@@ -71,7 +67,6 @@ Reply in the language of the request, briefly, saying what you did."
         }
     }
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Effort {
@@ -83,7 +78,6 @@ pub enum Effort {
     Xhigh,
     Max,
 }
-
 impl Effort {
     pub fn word(self, tool: Tool) -> Result<&'static str, String> {
         Ok(match (self, tool) {
@@ -100,14 +94,12 @@ impl Effort {
         })
     }
 }
-
 #[derive(Deserialize)]
 struct Row {
     name: String,
     #[serde(default)]
     annotations: Value,
 }
-
 pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
     let table: Vec<Row> =
         serde_json::from_str(include_str!("../mcp/tools.json")).unwrap_or_default();
@@ -118,24 +110,17 @@ pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
     let names = |rows: Vec<Row>| rows.into_iter().map(|row| row.name).collect();
     (names(listed), names(left))
 }
-
 pub const SERVER: &str = "orden";
-
 pub const TOKEN_VAR: &str = "ORDEN_MCP_TOKEN";
-
 pub const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
-
 pub fn with_thread(params: &mut Value, thread: &str) {
     params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
 }
-
 const TOOL_SECONDS: u64 = 600;
-
 pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] = [
     ("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "1"),
     ("MCP_TOOL_TIMEOUT", "600000"),
 ];
-
 pub fn mcp_config(orden: &Path) -> Value {
     json!({
         "mcpServers": {
@@ -143,7 +128,6 @@ pub fn mcp_config(orden: &Path) -> Value {
         }
     })
 }
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Shape<'a> {
     pub mode: Option<Mode>,
@@ -151,7 +135,6 @@ pub struct Shape<'a> {
     pub effort: Option<Effort>,
     pub without: &'a [String],
 }
-
 pub fn model_ok(model: &str) -> bool {
     !model.is_empty()
         && model.len() <= 100
@@ -160,19 +143,16 @@ pub fn model_ok(model: &str) -> bool {
             byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':' | b'[' | b']')
         })
 }
-
 pub fn checked_model(model: Option<&str>) -> Result<Option<&str>, String> {
     match model {
         Some(model) if !model_ok(model) => Err(format!("{model:?} is not a model name")),
         other => Ok(other),
     }
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Caps {
     flags: Vec<String>,
 }
-
 impl Caps {
     pub fn from_help(help: &str) -> Self {
         let mut flags: Vec<String> = help
@@ -184,14 +164,12 @@ impl Caps {
         flags.dedup();
         Self { flags }
     }
-
     fn has(&self, flag: &str) -> bool {
         self.flags
             .binary_search_by(|one| one.as_str().cmp(flag))
             .is_ok()
     }
 }
-
 fn claude_base(input: bool, partial: bool) -> Vec<String> {
     let mut args = vec!["-p".to_owned()];
     if input {
@@ -212,7 +190,6 @@ fn claude_base(input: bool, partial: bool) -> Vec<String> {
     );
     args
 }
-
 fn present(caps: &Caps, flags: &[&str]) -> Vec<String> {
     flags
         .iter()
@@ -220,7 +197,6 @@ fn present(caps: &Caps, flags: &[&str]) -> Vec<String> {
         .map(|flag| (*flag).to_owned())
         .collect()
 }
-
 pub fn ask(model: Option<&str>, caps: &Caps) -> Result<Vec<String>, String> {
     let model = checked_model(model)?;
     let mut args = claude_base(false, true);
@@ -234,7 +210,6 @@ pub fn ask(model: Option<&str>, caps: &Caps) -> Result<Vec<String>, String> {
     }
     Ok(args)
 }
-
 pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<String>, String> {
     if !caps.has("--input-format") {
         return Err("out of date".to_owned());
@@ -244,7 +219,6 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
         .effort
         .map(|one| one.word(Tool::ClaudeCode))
         .transpose()?;
-
     let mut args = claude_base(true, true);
     if let Some(mode) = shape.mode {
         let (listed, left) = tools_of(mode, shape.without);
@@ -288,14 +262,12 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
     }
     Ok(args)
 }
-
 pub fn claude_listing(caps: &Caps) -> Vec<String> {
     let mut args = claude_base(true, false);
     args.extend(["--system-prompt".to_owned(), SYSTEM.to_owned()]);
     args.extend(present(caps, &["--no-session-persistence", "--safe-mode"]));
     args
 }
-
 pub fn codex_server() -> Vec<String> {
     let mut args = vec!["app-server".to_owned()];
     for setting in [
@@ -312,7 +284,6 @@ pub fn codex_server() -> Vec<String> {
     }
     args
 }
-
 pub fn codex_thread(
     mode: Option<Mode>,
     model: Option<&str>,
@@ -346,13 +317,9 @@ pub fn codex_thread(
     }
     params
 }
-
 pub const GEMINI_SYSTEM_VAR: &str = "GEMINI_SYSTEM_MD";
-
 pub const GEMINI_SETTINGS_VAR: &str = "GEMINI_CLI_SYSTEM_SETTINGS_PATH";
-
 pub const GEMINI_TRUST_VAR: &str = "GEMINI_CLI_TRUST_WORKSPACE";
-
 const GEMINI_BUILTINS: [&str; 14] = [
     "run_shell_command",
     "write_file",
@@ -369,7 +336,6 @@ const GEMINI_BUILTINS: [&str; 14] = [
     "write_todos",
     "activate_skill",
 ];
-
 pub fn gemini_settings(mode: Option<Mode>, without: &[String], orden: &Path) -> Value {
     let mut settings = json!({
         "tools": { "exclude": GEMINI_BUILTINS },
@@ -396,7 +362,6 @@ pub fn gemini_settings(mode: Option<Mode>, without: &[String], orden: &Path) -> 
     }
     settings
 }
-
 pub fn gemini_turn(
     model: Option<&str>,
     resume: Option<&str>,
@@ -426,7 +391,6 @@ pub fn gemini_turn(
     }
     Ok(args)
 }
-
 fn session_ok(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 80
@@ -435,7 +399,6 @@ fn session_ok(id: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
 }
-
 pub fn status(tool: Tool) -> &'static [&'static str] {
     match tool {
         Tool::ClaudeCode => &["auth", "status", "--json"],
@@ -443,7 +406,6 @@ pub fn status(tool: Tool) -> &'static [&'static str] {
         Tool::Gemini => &["--version"],
     }
 }
-
 pub fn logout(tool: Tool) -> &'static [&'static str] {
     match tool {
         Tool::ClaudeCode => &["auth", "logout"],
@@ -451,9 +413,7 @@ pub fn logout(tool: Tool) -> &'static [&'static str] {
         Tool::Gemini => &[],
     }
 }
-
 pub const HELP: [&str; 1] = ["--help"];
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -463,16 +423,13 @@ mod tests {
         --no-session-persistence  Disable session persistence\n  \
         --permission-prompts <target>  Who answers\n  --input-format <format>\n  \
         --effort <level>\n  --restricted\n  --permission-mode <mode>";
-
     fn config() -> PathBuf {
         PathBuf::from("ai").join("orden-mcp.json")
     }
-
     fn value_of<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
         let at = args.iter().position(|one| one == flag)?;
         args.get(at + 1).map(String::as_str)
     }
-
     #[test]
     fn claude_runs_with_no_tools_no_servers_and_orden_s_prompt() {
         let args = ask(None, &Caps::default()).expect("args");
@@ -483,7 +440,6 @@ mod tests {
         assert!(!args.iter().any(|one| one.contains("skip-permissions")));
         assert_eq!(value_of(&args, "--system-prompt"), Some(SYSTEM));
     }
-
     #[test]
     fn every_fixed_argument_survives_cmd() {
         let caps = Caps::from_help(CLAUDE_HELP);
@@ -512,19 +468,16 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn optional_flags_only_where_the_help_names_them() {
         let bare = ask(None, &Caps::default()).expect("args");
         assert!(!bare.contains(&"--safe-mode".to_owned()));
-
         let caps = Caps::from_help(CLAUDE_HELP);
         let full = ask(None, &caps).expect("args");
         assert!(full.contains(&"--safe-mode".to_owned()));
         assert!(full.contains(&"--no-session-persistence".to_owned()));
         assert_eq!(value_of(&full, "--permission-prompts"), Some("none"));
     }
-
     #[test]
     fn a_session_lists_only_orden_and_only_its_mode_s_tools() {
         let caps = Caps::from_help(CLAUDE_HELP);
@@ -532,7 +485,6 @@ mod tests {
             mode: Some(mode),
             ..Shape::default()
         };
-
         let plan = claude_session(shape(Mode::Plan), &caps, &config()).expect("plan");
         assert_eq!(value_of(&plan, "--tools"), Some(""));
         assert_eq!(
@@ -553,7 +505,6 @@ mod tests {
         assert!(plan.contains(&"--restricted".to_owned()));
         assert_eq!(value_of(&plan, "--permission-mode"), Some("dontAsk"));
         assert_eq!(value_of(&plan, "--input-format"), Some("stream-json"));
-
         for mode in [Mode::Approve, Mode::Auto, Mode::Full] {
             let all = claude_session(shape(mode), &caps, &config()).expect("all");
             assert_eq!(value_of(&all, "--allowedTools"), Some("mcp__orden"));
@@ -564,12 +515,10 @@ mod tests {
             assert!(!all.iter().any(|one| one.contains("skip-permissions")));
             assert!(!all.iter().any(|one| one == "bypassPermissions"));
         }
-
         let words = claude_session(Shape::default(), &caps, &config()).expect("words");
         assert!(!words.contains(&"--mcp-config".to_owned()));
         assert!(!words.contains(&"--allowedTools".to_owned()));
     }
-
     #[test]
     fn a_thread_s_tools_left_out_are_never_shown() {
         let caps = Caps::from_help(CLAUDE_HELP);
@@ -586,7 +535,6 @@ mod tests {
         let denied = value_of(&args, "--disallowedTools").expect("denied");
         assert!(denied.contains("mcp__orden__browser_navigate"));
         assert!(denied.contains("mcp__orden__write_note"));
-
         let orden = PathBuf::from("orden");
         let folder = PathBuf::from("ai");
         let thread = codex_thread(Some(Mode::Auto), None, &without, &orden, &folder);
@@ -598,11 +546,9 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(enabled.contains(&"update_task"));
         assert!(!enabled.contains(&"browser_navigate") && !enabled.contains(&"write_note"));
-
         let unknown = ["no_such_tool".to_owned()];
         assert_eq!(tools_of(Mode::Full, &unknown), tools_of(Mode::Full, &[]));
     }
-
     #[test]
     fn a_session_takes_its_model_and_effort_as_values() {
         let caps = Caps::from_help(CLAUDE_HELP);
@@ -615,7 +561,6 @@ mod tests {
         let args = claude_session(shape, &caps, &config()).expect("args");
         assert_eq!(value_of(&args, "--model"), Some("sonnet[1m]"));
         assert_eq!(value_of(&args, "--effort"), Some("max"));
-
         let off = Shape {
             effort: Some(Effort::Off),
             ..shape
@@ -626,7 +571,6 @@ mod tests {
         assert!(!args.contains(&"--effort".to_owned()));
         assert!(claude_session(shape, &Caps::default(), &config()).is_err());
     }
-
     #[test]
     fn codex_serves_read_only_asking_nobody_with_its_tools_off() {
         let args = codex_server();
@@ -641,7 +585,6 @@ mod tests {
             assert!(args.contains(&setting.to_owned()), "{setting}");
         }
     }
-
     #[test]
     fn a_codex_thread_adds_orden_alone_with_its_mode_s_tools() {
         let orden = PathBuf::from("orden.exe");
@@ -670,7 +613,6 @@ mod tests {
             .expect("config")
             .keys()
             .all(|key| key.starts_with("mcp_servers.orden.")));
-
         let agent = codex_thread(Some(Mode::Full), None, &[], &orden, &folder);
         assert!(agent["config"]["mcp_servers.orden.enabled_tools"].is_null());
         let approve = codex_thread(Some(Mode::Approve), None, &[], &orden, &folder);
@@ -684,7 +626,6 @@ mod tests {
         assert!(agent.get("model").is_none());
         let words = codex_thread(None, None, &[], &orden, &folder);
         assert_eq!(words["config"], json!({}));
-
         let mut helped = codex_thread(Some(Mode::Full), None, &[], &orden, &folder);
         with_thread(&mut helped, "orden-thread-1");
         assert_eq!(
@@ -692,7 +633,6 @@ mod tests {
             json!({ THREAD_VAR: "orden-thread-1" })
         );
     }
-
     #[test]
     fn the_mcp_config_names_orden_alone_and_no_token() {
         let config = mcp_config(Path::new("orden.exe"));
@@ -701,7 +641,6 @@ mod tests {
         assert_eq!(servers["orden"]["args"], json!(["mcp"]));
         assert!(servers["orden"].get("env").is_none());
     }
-
     #[test]
     fn a_model_is_a_value_and_never_a_flag() {
         for good in [
@@ -731,7 +670,6 @@ mod tests {
             assert!(claude_session(shape, &Caps::from_help(CLAUDE_HELP), &config()).is_err());
         }
     }
-
     #[test]
     fn the_status_and_effort_words_are_each_program_s_own() {
         assert_eq!(status(Tool::ClaudeCode), ["auth", "status", "--json"]);
@@ -749,7 +687,6 @@ mod tests {
         assert!(serde_json::from_str::<Effort>("\"--max\"").is_err());
         assert!(serde_json::from_str::<Mode>("\"yolo\"").is_err());
     }
-
     #[test]
     fn a_gemini_turn_streams_with_orden_alone_and_resumes_its_session() {
         let caps = Caps::from_help("--output-format --skip-trust --resume --model");
@@ -761,7 +698,6 @@ mod tests {
         assert!(line.contains("--resume 5a7c-91"), "{line}");
         assert!(line.contains("--skip-trust"), "{line}");
         assert!(!line.contains("yolo"), "{line}");
-
         let older = Caps::from_help("--output-format");
         let first = gemini_turn(None, None, &older).expect("args");
         assert!(!first
@@ -772,7 +708,6 @@ mod tests {
         assert!(gemini_turn(None, Some("--yolo"), &caps).is_err());
         assert!(gemini_turn(None, Some("a b"), &caps).is_err());
     }
-
     #[test]
     fn gemini_s_settings_lend_orden_by_name_with_its_mode_s_tools_and_no_token() {
         let program = PathBuf::from("orden.exe");
@@ -789,7 +724,6 @@ mod tests {
         let excluded = plan["tools"]["exclude"].as_array().expect("excluded");
         assert!(excluded.contains(&json!("run_shell_command")));
         assert!(excluded.contains(&json!("write_file")));
-
         let full = gemini_settings(Some(Mode::Full), &[], &program);
         assert!(full["mcpServers"]["orden"]["includeTools"].is_null());
         let words = gemini_settings(None, &[], &program);

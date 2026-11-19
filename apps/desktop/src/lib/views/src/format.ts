@@ -13,13 +13,11 @@ export const FORMATS = [
   'email',
   'phone',
 ] as const
-
 export interface Shown {
   text: string
   href?: string
   share?: number
 }
-
 function number(value: number, options: Intl.NumberFormatOptions): string {
   try {
     return localNumber(value, options)
@@ -27,7 +25,6 @@ function number(value: number, options: Intl.NumberFormatOptions): string {
     return localNumber(value)
   }
 }
-
 export function formatted(value: Value, format: string | undefined): Shown | null {
   if (format === undefined || value === null) return null
   if (typeof value === 'number') {

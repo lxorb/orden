@@ -16,12 +16,10 @@ function pastedOver(doc: string, line: string, text: string): string {
   )
   return state.update(placed(state, text)).state.doc.toString()
 }
-
 describe('edit30 a line copied with a triple click, pasted over another triple-clicked line', () => {
   test('an item over an item keeps the list tight', () => {
     expect(pastedOver('- one\n- two\n- three', '- two', '- one\n')).toBe('- one\n- one\n- three')
   })
-
   test('a paragraph line over a paragraph line adds no blank line', () => {
     expect(pastedOver('First.\nSecond.\nThird.', 'Second.', 'First.\n')).toBe('First.\nFirst.\nThird.')
   })

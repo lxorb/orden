@@ -15,13 +15,11 @@ describe('a note’s card in a chat', () => {
     ].join('\n')
     expect(cardLines(note, 'Chapter 3')).toEqual(['The second experiment ran on the lab data.', 'Check the figures'])
   })
-
   test('keeps a heading that is not the name, and skips code', () => {
     expect(cardLines('# Plan\n```js\nlet a\n```\nGo', 'Notes')).toEqual(['Plan', 'Go'])
     expect(cardLines('', 'Empty')).toEqual([])
   })
 })
-
 describe('which note a message is about', () => {
   test('the first link to one, outside code, embeds and quotes', () => {
     expect(cardTarget('see [[Chapter 3#Figures|the figures]] and [[Plan]]')).toBe('Chapter 3')
@@ -31,7 +29,6 @@ describe('which note a message is about', () => {
     expect(cardTarget('no link')).toBeNull()
   })
 })
-
 describe('a card past code', () => {
   test('a tilde line inside a backtick block does not close it', () => {
     expect(cardLines('```\n~~~\nnot words\n```\nFirst\nSecond\n', 'Note')).toEqual(['First', 'Second'])

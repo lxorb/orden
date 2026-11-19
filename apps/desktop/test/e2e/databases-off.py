@@ -1,57 +1,44 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import MOD, Drive, experimental_on
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SHELF = """filters: 'file.inFolder("Reading")'
 views:
   - type: table
     name: Everything
     order: [file.name, note.status]
 """
-
 LIBRARY = "# Library\n\n![[Shelf.base]]\n\nAfter the shelf.\n"
 DUNE = "---\nstatus: reading\n---\n# Dune\n"
-
 WRITE = """async ([files]) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
   await ws.loadTree()
 }"""
-
 IN_TREE = """() => {
   const names = []
   const walk = (entry) => { for (const one of entry?.children ?? []) { names.push(one.name); walk(one) } }
   walk(window.ordenApp.workspace.shownTree)
   return names.includes('Shelf.base')
 }"""
-
 ON_DISK = """async () => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   return await ws.noteText(`${root}/Shelf.base`)
 }"""
-
 OPEN = """() => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   return window.tasks.openBaseFile(`${root}/Shelf.base`) ? 'opened' : 'refused'
 }"""
-
 BASE_TABS = "() => window.ordenApp.workspace.tabs.filter((one) => one.kind === 'view' && /\\.base$/.test(one.path ?? '')).length"
-
 BLOCK = "() => !!document.querySelector('.base-block')"
-
 ROWS = """() => [...document.querySelectorAll('.palette .orden-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim())"""
-
-
 def commands(page: Page, typed: str) -> list[str]:
     page.keyboard.press(f"{MOD}+Shift+p")
     wait_for(page, "() => !!document.querySelector('.palette input')", "the command palette")
@@ -61,8 +48,6 @@ def commands(page: Page, typed: str) -> list[str]:
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     return rows
-
-
 def switch(page: Page, on: bool) -> None:
     experimental_on(page)
     row = page.locator(".orden-setting", has_text="Databases").first
@@ -77,8 +62,6 @@ def switch(page: Page, on: bool) -> None:
         wrong("the switch did not move")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
-
 def off(page: Page, when: str) -> None:
     if page.evaluate(IN_TREE):
         wrong(f"[{when}] Shelf.base is in the file tree while databases are off")
@@ -94,8 +77,6 @@ def off(page: Page, when: str) -> None:
     if any("New database" in one for one in rows):
         wrong(f"[{when}] the palette offers New database while databases are off: {rows[:3]}")
     say(f"[{when}] nothing of databases shows; palette: {rows[:2]}")
-
-
 def on(page: Page) -> None:
     wait_for(page, IN_TREE, "Shelf.base back in the file tree")
     DRIVE.open_note(page, "Library")
@@ -118,8 +99,6 @@ def on(page: Page) -> None:
     quiet(page)
     DRIVE.shot(page, "on")
     say("databases on: in the tree, embedded, in the palette and opened")
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -127,23 +106,19 @@ def drive(browser: Browser) -> None:
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     page.evaluate(WRITE, [[["Reading/Dune.md", DUNE], ["Library.md", LIBRARY], ["Shelf.base", SHELF]]])
     wait_for(page, "() => window.tasks.rows.of().some((one) => one.path === 'Reading/Dune.md')", "the seeded rows")
-
     if page.evaluate("() => JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]')").count("experimental-bases"):
         wrong("databases start on")
     off(page, "first run")
     quiet(page)
     DRIVE.shot(page, "off")
-
     switch(page, True)
     on(page)
-
     switch(page, False)
     wait_for(page, f"() => ({BASE_TABS})() === 0", "the database tab closed when turned off")
     off(page, "turned off")
     kept = page.evaluate(ON_DISK)
     if kept != SHELF:
         wrong(f"Shelf.base changed on disk while off: {json.dumps(kept)}")
-
     page.reload()
     wait_for(page, "window.ordenApp?.tasks", "the app after a reload")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
@@ -168,12 +143,9 @@ def drive(browser: Browser) -> None:
         }"""
     )
     off(page, "after a reload")
-
     switch(page, True)
     on(page)
     if page.evaluate(ON_DISK) != SHELF:
         wrong("Shelf.base came back changed")
     page.close()
-
-
 raise SystemExit(DRIVE.run(drive, "databases stay out of sight until turned on, and come back whole"))

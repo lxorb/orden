@@ -16,7 +16,6 @@ import { PANDOC_FORMATS, EXPORT_FORMATS } from '../../export-formats/src/api'
 
 export const SETUP = 'page-setup'
 type Shelf = 'documents' | 'text' | 'web' | 'pictures' | 'other'
-
 const SHELVES: readonly { id: Shelf; label: string }[] = [
   { id: 'documents', label: 'Documents' },
   { id: 'text', label: 'Text' },
@@ -24,14 +23,12 @@ const SHELVES: readonly { id: Shelf; label: string }[] = [
   { id: 'pictures', label: 'Pictures' },
   { id: 'other', label: 'Other' },
 ]
-
 interface Kind {
   shelf: Shelf
   icon: IconNode
   name?: string
   option?: { id: string; label: string }
 }
-
 const KINDS: Record<string, Kind> = {
   pdf: { shelf: 'documents', icon: FileText },
   docx: { shelf: 'documents', icon: FileType },
@@ -54,15 +51,11 @@ const KINDS: Record<string, Kind> = {
   svg: { shelf: 'pictures', icon: FileImage, name: 'SVG' },
   copy: { shelf: 'other', icon: Copy, name: 'Save a copy' },
 }
-
 const ORDER = Object.keys(KINDS)
-
 const FOLDED = new Set(Object.values(KINDS).flatMap((one) => (one.option ? [`export-${one.option.id}`] : [])))
-
 export interface Choice extends MenuItem {
   id: string
 }
-
 export interface Tile {
   id: string
   name: string
@@ -70,13 +63,11 @@ export interface Tile {
   disabled: boolean
   option: { label: string; command: string } | null
 }
-
 export interface Shelved {
   id: Shelf
   label: string
   tiles: Tile[]
 }
-
 function nameOf(id: string): string {
   const own = KINDS[id]?.name
   if (own) return own
@@ -85,7 +76,6 @@ function nameOf(id: string): string {
   const pandoc = PANDOC_FORMATS.find((one) => one.id === id)
   return pandoc ? pandoc.label : id
 }
-
 export function shelved(choices: readonly Choice[], first: string | null = null): Shelved[] {
   const offered = new Set(choices.map((one) => one.id))
   const shelves = SHELVES.map((shelf) => ({
@@ -93,7 +83,6 @@ export function shelved(choices: readonly Choice[], first: string | null = null)
     label: shelf.label,
     tiles: [] as Tile[],
   }))
-
   for (const choice of choices) {
     if (choice.id === SETUP || FOLDED.has(choice.id) || !choice.id.startsWith('export-')) continue
     const id = choice.id.slice('export-'.length)
@@ -109,20 +98,16 @@ export function shelved(choices: readonly Choice[], first: string | null = null)
     }
     shelves.find((one) => one.id === (kind?.shelf ?? 'other'))?.tiles.push(tile)
   }
-
   const rank = (tile: Tile) => {
     const at = ORDER.indexOf(tile.id)
     return at < 0 ? ORDER.length : at
   }
   for (const shelf of shelves) shelf.tiles.sort((a, b) => rank(a) - rank(b))
-
   const full = shelves.filter((one) => one.tiles.length)
   const held = full.find((one) => one.tiles.some((tile) => tile.id === first))
   if (!held) return full
-
   held.tiles.sort((a, b) => Number(b.id === first) - Number(a.id === first))
   return [held, ...full.filter((one) => one !== held)]
 }
-
 export const commandFor = (tile: Tile, optioned: boolean): string =>
   tile.option && optioned ? tile.option.command : `export-${tile.id}`

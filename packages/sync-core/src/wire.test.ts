@@ -24,23 +24,19 @@ import {
 } from './wire'
 
 const bytes = (...values: number[]) => new Uint8Array(values)
-
 describe('the envelope', () => {
   test('carries JSON and bytes, and gives back both', () => {
     const value = { docs: [{ id: 'a', epoch: 1, sv: bytes(1, 2, 3) }], note: 'ünïcødé 😀' }
     expect(unframe(frame(value))).toEqual(value)
   })
-
   test('costs a few bytes a part, not a third of each', () => {
     const update = new Uint8Array(3000).fill(7)
     const framed = frame({ update })
     expect(framed.length).toBeLessThan(update.length + 40)
   })
-
   test('drops a key whose value is undefined, as JSON would', () => {
     expect(unframe(frame({ a: 1, b: undefined }))).toEqual({ a: 1 })
   })
-
   test('refuses what is not an envelope', () => {
     expect(unframe(bytes())).toBeNull()
     expect(unframe(bytes(2, 0, 0, 0, 0))).toBeNull()
@@ -49,7 +45,6 @@ describe('the envelope', () => {
     expect(unframe(good.subarray(0, good.length - 1))).toBeNull()
     expect(unframe(new Uint8Array([...good, 0]))).toBeNull()
   })
-
   test('a reference to a part there is not reads as nothing', () => {
     const header = new TextEncoder().encode(JSON.stringify({ sv: { $part: 4 } }))
     const body = new Uint8Array(1 + 4 + header.length + 4)
@@ -61,7 +56,6 @@ describe('the envelope', () => {
     expect(unframe(body)).toEqual({ sv: undefined })
     expect(pullRequestOf({ docs: [unframe(body)] })).toBeNull()
   })
-
   const framed: fc.Arbitrary<Framed> = fc.letrec<{ value: Framed }>((tie) => ({
     value: fc.oneof(
       { depthSize: 'small' },
@@ -78,7 +72,6 @@ describe('the envelope', () => {
       ),
     ),
   })).value
-
   test('property: frame then unframe is the value', () => {
     fc.assert(
       fc.property(framed, (value) => {
@@ -87,7 +80,6 @@ describe('the envelope', () => {
       { numRuns: 1000 },
     )
   })
-
   test('property: any bytes at all are read or refused, never thrown on', () => {
     fc.assert(
       fc.property(fc.uint8Array({ maxLength: 200 }), (input) => {
@@ -98,7 +90,6 @@ describe('the envelope', () => {
     )
   })
 })
-
 describe("the room's v2 messages", () => {
   test('an ACK carries its version and state vector', () => {
     expect(roomNews(ackFrame(41, bytes(1, 2, 3)))).toEqual({
@@ -109,27 +100,22 @@ describe("the room's v2 messages", () => {
     expect(roomNews(ackFrame(2 ** 40, bytes()))).toEqual({ t: 'ack', seq: 2 ** 40, sv: bytes() })
     expect(roomNews(bytes(100, 1, 2))).toBeNull()
   })
-
   test('an EPOCH carries the epoch and its base', () => {
     expect(roomNews(epochFrame(3, 'abc'))).toEqual({ t: 'epoch', epoch: 3, epochBase: 'abc' })
   })
-
   test('a y-protocols message is neither', () => {
     expect(roomNews(bytes(0, 0, 1, 0))).toBeNull()
     expect(roomNews(bytes(1, 5))).toBeNull()
     expect(roomNews(bytes(101, 123))).toBeNull()
   })
 })
-
 describe('entry ids', () => {
   const UNSAFE = ['../../Private/AGENTS.md', '..', 'a..b', 'a/b', 'a\\b', 'a\u0000b', 'a\nb']
-
   test('what devices and the account make are ids; a path is not', () => {
     const made = ['0f3a9c11aa22bb33cc44dd55ee66ff00', 'c81e728d-9d4c-4f6b-a1b2-3c4d5e6f7a8b', 'E']
     for (const id of made) expect(isEntryId(id)).toBe(true)
     for (const id of UNSAFE) expect(isEntryId(id)).toBe(false)
   })
-
   test('nothing new may be made under one', () => {
     for (const id of UNSAFE) {
       expect(opOf({ op: 'o', seen: 0, t: 'mkdir', id, parent: null, name: 'a' })).toBeNull()
@@ -137,13 +123,11 @@ describe('entry ids', () => {
       expect(opOf(create)).toBeNull()
     }
   })
-
   test('one the account already holds can still be moved off and deleted', () => {
     const id = '../../Private/AGENTS.md'
     expect(opOf({ op: 'o', seen: 0, t: 'delete', id })).toMatchObject({ t: 'delete', id })
     expect(opOf({ op: 'o', seen: 0, t: 'rename', id, name: 'b.md' })).toMatchObject({ id })
   })
-
   test('the feed leaves one out and reads the rest of its page', () => {
     const item = (id: string, parent: string | null = null) => ({
       id,
@@ -165,7 +149,6 @@ describe('entry ids', () => {
     expect(page?.items.map((one) => one.id)).toEqual(['kept'])
     expect(page?.cursor).toBe(3)
   })
-
   test('its delete still reaches a device that took it in before', () => {
     const gone = {
       id: '../../x',
@@ -182,7 +165,6 @@ describe('entry ids', () => {
     const page = feedPageOf({ items: [gone], cursor: 1, more: false })
     expect(page?.items.map((one) => one.id)).toEqual(['../../x'])
   })
-
   test('a name no disk holds is read under one it can, and the page still reads', () => {
     const item = (id: string, name: string, deleted = false) => ({
       id,
@@ -205,18 +187,15 @@ describe('entry ids', () => {
     expect(page?.items[0]?.name).toBe(`${'x'.repeat(252)}.md`)
     expect(page?.items[1]?.name).toBe('__')
     expect(page?.cursor).toBe(3)
-
     const gone = feedPageOf({ items: [item('a', '..', true)], cursor: 1, more: false })
     expect(gone?.items[0]).toMatchObject({ id: 'a', name: '__', deleted: true })
   })
-
   test('a name that is one stays as it is', () => {
     for (const name of ['Plan.md', 'x'.repeat(255), '...', 'a b']) expect(heldName(name)).toBe(name)
     expect(heldName('')).toBe('_')
     expect(heldName('.')).toBe('_')
     expect(heldName('a/b\u0000c')).toBe('a_b_c')
   })
-
   test('an answer to an op naming a note no disk holds is read under the feed’s name for it', () => {
     const long = `${'x'.repeat(300)}.md`
     const id = 'a'.repeat(32)
@@ -227,7 +206,6 @@ describe('entry ids', () => {
     expect(read?.results[0]).toEqual({ op: 'p1', ok: true, id, parent: null, name: heldName(long) })
   })
 })
-
 describe('names', () => {
   test('anything a platform might refuse is still a name; a slash and the dots are not', () => {
     for (const name of ['Plan.md', 'CON', 'a:b', 'trailing.', 'x'.repeat(255), '日本語.md']) {
@@ -238,7 +216,6 @@ describe('names', () => {
     }
   })
 })
-
 describe('tree ops', () => {
   test('every op reads back as itself', () => {
     const ops = [
@@ -272,18 +249,15 @@ describe('tree ops', () => {
     for (const op of ops) expect(opOf(op)).toEqual(op)
     expect(opsRequestOf({ ops })).toEqual({ ops })
   })
-
   test('a malformed op, a folder made by create, or a batch too long is refused', () => {
     expect(opOf({ op: '1', t: 'mkdir', id: 'f', parent: null, name: 'a/b', seen: 0 })).toBeNull()
     expect(opOf({ op: '1', t: 'create', id: 'f', kind: 'folder', parent: null, name: 'F', seen: 0 })).toBeNull()
     expect(opOf({ op: '1', t: 'delete', id: 'f', seen: -1 })).toBeNull()
     expect(opOf({ op: '1', t: 'explode', id: 'f', seen: 0 })).toBeNull()
     expect(opOf({ op: '', t: 'delete', id: 'f', seen: 0 })).toBeNull()
-
     const one = { op: '1', t: 'delete', id: 'f', seen: 0 }
     expect(opsRequestOf({ ops: Array.from({ length: OPS_BATCH + 1 }, () => one) })).toBeNull()
   })
-
   test('the answers read back as themselves', () => {
     const answer = {
       results: [
@@ -298,7 +272,6 @@ describe('tree ops', () => {
     expect(opsResponseOf({ results: [{ op: '1', refused: 'nope' }], cursor: 1 })).toBeNull()
   })
 })
-
 describe('the feed', () => {
   test('a page reads back as itself, optional fields and all', () => {
     const page = {
@@ -346,12 +319,10 @@ describe('the feed', () => {
     expect(feedPageOf({ ...page, device: 7 })).toEqual(page)
   })
 })
-
 describe('documents', () => {
   test('a pull and its answers survive the envelope', () => {
     const request = { docs: [{ id: 'n', epoch: 1, sv: bytes(0) }] }
     expect(pullRequestOf(unframe(frame(request)))).toEqual(request)
-
     const response = {
       docs: [
         { id: 'n', update: bytes(1, 2), seq: 7 },
@@ -361,7 +332,6 @@ describe('documents', () => {
     }
     expect(pullResponseOf(unframe(frame(response)))).toEqual(response)
   })
-
   test('a push and its answers survive the envelope', () => {
     const request = {
       docs: [
@@ -370,7 +340,6 @@ describe('documents', () => {
       ],
     }
     expect(pushRequestOf(unframe(frame(request)))).toEqual(request)
-
     const response = {
       docs: [
         { id: 'n', ok: true, seq: 4, sv: bytes(1) },
@@ -381,7 +350,6 @@ describe('documents', () => {
     }
     expect(pushResponseOf(unframe(frame(response)))).toEqual(response)
   })
-
   test('bytes where bytes belong, and no more documents than a batch', () => {
     expect(
       pushRequestOf({
@@ -392,7 +360,6 @@ describe('documents', () => {
     const one = { id: 'n', push: 'p', epoch: 1, seq: 1, base: bytes(0), update: bytes(1), at: 5 }
     expect(pushRequestOf({ docs: Array.from({ length: PUSH_BATCH + 1 }, () => one) })).toBeNull()
   })
-
   test('keep and snapshot', () => {
     expect(keepRequestOf({ id: 'n', text: 'words', device: 'laptop' })).toEqual({
       id: 'n',

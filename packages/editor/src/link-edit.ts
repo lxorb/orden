@@ -11,27 +11,21 @@ export interface LinkParts {
   label?: { text: string; written: { from: number; to: number } }
   words: string | null
 }
-
 const LINKS = new Set(['Link', 'Autolink', 'URL', 'Wikilink'])
-
 function linkToward(state: EditorState, pos: number, side: 1 | -1): SyntaxNode | null {
   const node = enclosingNamed(syntaxTree(state).resolveInner(pos, side), LINKS)
   if (node?.name !== 'URL') return node
-
   const parent = node.parent?.name
   if (parent === 'Link' || parent === 'Autolink') return node.parent
   return parent === 'Image' || parent === 'LinkReference' ? null : node
 }
-
 function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
   const open = node.firstChild
   const close = node.lastChild
   if (!open || !close || open === close) return null
   if (state.doc.sliceString(open.from, open.from + 1) === '!') return null
-
   const inner = open.from + 2
   const aliased = open.to > inner
-
   return {
     from: node.from,
     to: node.to,
@@ -39,10 +33,8 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
     words: state.doc.sliceString(aliased ? open.to : inner, close.from),
   }
 }
-
 const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
 const WHOLE_NOTE = 1e9
-
 function definedAddress(state: EditorState, tree: Tree, label: string): { from: number; to: number } | null {
   const key = labelKey(label)
   let first: SyntaxNode | null = null
@@ -60,13 +52,11 @@ function definedAddress(state: EditorState, tree: Tree, label: string): { from: 
   const angled = state.doc.sliceString(url.from, url.from + 1) === '<' && url.to - url.from > 2
   return angled ? { from: url.from + 1, to: url.to - 1 } : { from: url.from, to: url.to }
 }
-
 function addressOf(label: string): string {
   const text = label.trim().replace(/\s+/g, ' ')
   if (/^[^\s<>()\\]*$/.test(text)) return text
   return `<${text.replace(/</g, '%3C').replace(/>/g, '%3E')}>`
 }
-
 function writeAddress(state: EditorState, label: string, written: { from: number; to: number }) {
   const address = addressOf(label)
   const at = written.from + 1
@@ -78,7 +68,6 @@ function writeAddress(state: EditorState, label: string, written: { from: number
     annotations: isolateHistory.of('full'),
   })
 }
-
 function labelParts(
   state: EditorState,
   node: SyntaxNode,
@@ -95,15 +84,12 @@ function labelParts(
     },
   }
 }
-
 function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   const marks = node.getChildren('LinkMark')
   const pointer = node.name === 'URL' ? node : node.name === 'Autolink' ? node.getChild('URL') : linkAddress(node)
   const empty = marks[3] ? { from: marks[2]?.to ?? node.to, to: marks[3].from } : null
   const target = pointer ? { from: pointer.from, to: pointer.to } : (empty ?? { from: node.to, to: node.to })
-
   if (node.name !== 'Link') return { from: node.from, to: node.to, target, words: null }
-
   const open = marks[0]
   const close = marks[1]
   const parts = {
@@ -116,20 +102,16 @@ function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
     ? parts
     : { ...parts, ...labelParts(state, node, { from: open.to, to: close.from }) }
 }
-
 export function linkPartsAt(state: EditorState, pos: number): LinkParts | null {
   const node = linkToward(state, pos, 1) ?? linkToward(state, pos, -1)
   if (!node) return null
-
   return node.name === 'Wikilink' ? wikilinkParts(state, node) : markdownParts(state, node)
 }
-
 export const editLink =
   (pos: number): StateCommand =>
   ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     if (!parts) return false
-
     let target = parts.target
     if (parts.label) {
       const tree = ensureSyntaxTree(state, state.doc.length, WHOLE_NOTE)
@@ -141,7 +123,6 @@ export const editLink =
       }
       target = address
     }
-
     dispatch(
       state.update({
         selection: EditorSelection.range(target.from, target.to),
@@ -151,14 +132,12 @@ export const editLink =
     )
     return true
   }
-
 export const removeLink =
   (pos: number): StateCommand =>
   ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     const words = parts?.words ?? null
     if (!parts || words === null) return false
-
     dispatch(
       state.update({
         changes: { from: parts.from, to: parts.to, insert: words },

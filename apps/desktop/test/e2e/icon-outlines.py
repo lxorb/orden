@@ -1,28 +1,22 @@
 import io
 import math
 import sys
-
 from PIL import Image
 from playwright.sync_api import Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 failures = DRIVE.failures
 SHOTS = DRIVE.shots
-
 PATIENCE = 40
 SCALE = 2
-
 INK = 48
 CHROMA = 60
 COLOURED = 0.02
 RIM = 0.5
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -35,7 +29,6 @@ async () => {
   return note.path
 }
 """
-
 CELLS = """
 (grid) => {
   const at = grid.getBoundingClientRect()
@@ -53,12 +46,10 @@ CELLS = """
   })
 }
 """
-
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 def looked_at(shot: Image.Image, cell: dict) -> list[str]:
     left, top = math.ceil(cell["x"] * SCALE), math.ceil(cell["y"] * SCALE)
     wide = math.floor((cell["x"] + cell["w"]) * SCALE) - left
@@ -66,10 +57,8 @@ def looked_at(shot: Image.Image, cell: dict) -> list[str]:
     glyph = shot.crop((left, top, left + wide, top + tall)).convert("RGB")
     ground = shot.convert("RGB").getpixel((max(0, left - 3), max(0, top - 3)))
     pixels = glyph.load()
-
     def inked(x: int, y: int) -> bool:
         return sum(abs(a - b) for a, b in zip(pixels[x, y], ground)) > INK
-
     ink = coloured = 0
     for y in range(tall):
         for x in range(wide):
@@ -78,7 +67,6 @@ def looked_at(shot: Image.Image, cell: dict) -> list[str]:
             ink += 1
             if max(pixels[x, y]) - min(pixels[x, y]) > CHROMA:
                 coloured += 1
-
     wrong = []
     if cell["kind"] != "drawn":
         wrong.append(f"drawn as {cell['kind']}")
@@ -97,7 +85,6 @@ def looked_at(shot: Image.Image, cell: dict) -> list[str]:
     if cell["outline"] and min(sides) > RIM and corners:
         wrong.append("fills its box")
     return wrong
-
 def walk(page: Page) -> None:
     say(f"choosing for {page.evaluate(SEED)}")
     sheet = page.locator(".sheet")
@@ -105,7 +92,6 @@ def walk(page: Page) -> None:
     sheet.locator("label.tick input").check()
     sheet.locator("button.cell:has(svg.drawn)").first.wait_for(timeout=PATIENCE * 1000)
     page.wait_for_timeout(500)
-
     grid = sheet.locator(".grid")
     step = grid.evaluate("(grid) => grid.clientHeight")
     seen: dict[str, list[str]] = {}
@@ -124,7 +110,6 @@ def walk(page: Page) -> None:
             if at + step >= grid.evaluate("(grid) => grid.scrollHeight"):
                 break
         at += step - 60
-
     say(f"{len(seen)} cells over {screen} screens")
     wrong = {label: what for label, what in seen.items() if what}
     for label, what in list(wrong.items())[:40]:
@@ -133,7 +118,6 @@ def walk(page: Page) -> None:
     check(not wrong, f"every cell is drawn in one colour, inside its box ({len(wrong)} not)")
     for label in ("face with bags under eyes", "face in clouds", "flag switzerland", "family"):
         check(label in seen and not seen[label], f"`{label}` is an outline")
-
 def main() -> int:
     with DRIVE.session() as browser:
         context = browser.new_context(
@@ -146,7 +130,5 @@ def main() -> int:
             walk(page)
         finally:
             context.close()
-
     return DRIVE.verdict("every cell of the picker in One colour drawn in one colour, inside its box")
-
 sys.exit(main())

@@ -8,14 +8,12 @@ export function switched(base: Base, at: number, layout: Layout, rows: readonly 
   const view = next.views[at]
   if (!view) return next
   const kinds = 'notes'
-
   if (layout === 'kanban' && !view.groupBy) {
     const property =
       knownProperties(base, kinds, rows).find((one) => one.startsWith('note.') && optionsOf(base, one).length) ??
       'note.status'
     next = setGroup(next, at, { property, direction: 'ASC' })
   }
-
   if (layout === 'timeline' && !view.orden.date) {
     const date = knownProperties(base, kinds, rows).find(
       (one) => one.startsWith('note.') && editorOf(base, one, rows) === 'date',

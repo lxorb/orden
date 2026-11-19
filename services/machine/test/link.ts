@@ -7,7 +7,6 @@ export interface Link {
   text(session: string): string
   close(): void
 }
-
 export async function linked(url: string, secret: string): Promise<Link> {
   const socket = new WebSocket(`${url}/link`, { headers: { authorization: `Bearer ${secret}` } })
   const frames: OrdendFrame[] = []
@@ -33,7 +32,6 @@ export async function linked(url: string, secret: string): Promise<Link> {
     },
   }
 }
-
 export async function until(what: () => boolean | Promise<boolean>, timeout = 20_000): Promise<void> {
   const end = Date.now() + timeout
   while (!(await what())) {
@@ -41,7 +39,6 @@ export async function until(what: () => boolean | Promise<boolean>, timeout = 20
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 }
-
 export async function healthy(url: string, timeout = 120_000): Promise<void> {
   await until(async () => {
     try {
@@ -51,5 +48,4 @@ export async function healthy(url: string, timeout = 120_000): Promise<void> {
     }
   }, timeout)
 }
-
 export const bytes = (data: string): Uint8Array => new TextEncoder().encode(data)

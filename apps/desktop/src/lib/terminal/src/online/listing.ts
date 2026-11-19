@@ -10,7 +10,6 @@ export interface SessionRow {
   at: number | null
   listed: Listed
 }
-
 export function rowOf(one: Listed): SessionRow {
   const file = one.path === null ? null : termName(nameOf(one.path))
   const title = one.program !== null && one.title !== null ? programTitle(one.title) : null
@@ -23,12 +22,10 @@ export function rowOf(one: Listed): SessionRow {
     listed: one,
   }
 }
-
 export function rowsOf(listed: readonly Listed[]): SessionRow[] {
   const heard = (one: Listed) => one.at ?? -1
   return [...listed].sort((a, b) => heard(b) - heard(a) || (b.createdAt ?? 0) - (a.createdAt ?? 0)).map(rowOf)
 }
-
 export function opens(one: Listed): boolean {
   return one.term !== null && one.path !== null && !one.trashed
 }

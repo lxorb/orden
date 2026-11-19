@@ -3,11 +3,8 @@ use std::io::Read as _;
 use std::path::{Path, PathBuf};
 
 const MOST_BYTES: u64 = 512 * 1024 * 1024;
-
 const MOST_FILES: usize = 50_000;
-
 const SKIPPED: &str = "_metadata";
-
 struct Entry<'a> {
     name: &'a str,
     method: u16,
@@ -16,13 +13,11 @@ struct Entry<'a> {
     size: u64,
     at: usize,
 }
-
 pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
     let entries = entries(zip)?;
     if entries.len() > MOST_FILES {
         return Err("that extension has too many files".into());
     }
-
     fs::create_dir_all(into).map_err(|error| error.to_string())?;
     let mut total = 0u64;
     for entry in &entries {
@@ -34,7 +29,6 @@ pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
             fs::create_dir_all(&target).map_err(|error| error.to_string())?;
             continue;
         }
-
         total = total.saturating_add(entry.size);
         if total > MOST_BYTES {
             return Err("that extension is too large".into());
@@ -47,7 +41,6 @@ pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn place(name: &str) -> Result<Option<PathBuf>, String> {
     let refused = || {
         Err(format!(
@@ -62,7 +55,6 @@ fn place(name: &str) -> Result<Option<PathBuf>, String> {
     {
         return refused();
     }
-
     let parts: Vec<&str> = name.trim_end_matches('/').split('/').collect();
     if parts.iter().any(|part| {
         part.is_empty()
@@ -78,7 +70,6 @@ fn place(name: &str) -> Result<Option<PathBuf>, String> {
     }
     Ok(Some(parts.iter().collect()))
 }
-
 fn contents(zip: &[u8], entry: &Entry<'_>) -> Result<Vec<u8>, String> {
     let broken = || format!("that extension's archive is broken at {}", entry.name);
     let header = zip.get(entry.at..entry.at + 30).ok_or_else(broken)?;
@@ -88,7 +79,6 @@ fn contents(zip: &[u8], entry: &Entry<'_>) -> Result<Vec<u8>, String> {
     let start = entry.at + 30 + usize::from(u16_at(header, 26)) + usize::from(u16_at(header, 28));
     let packed = usize::try_from(entry.packed).map_err(|_| broken())?;
     let data = zip.get(start..start + packed).ok_or_else(broken)?;
-
     let size = usize::try_from(entry.size).map_err(|_| broken())?;
     let mut out = Vec::with_capacity(size.min(1 << 24));
     match entry.method {
@@ -116,7 +106,6 @@ fn contents(zip: &[u8], entry: &Entry<'_>) -> Result<Vec<u8>, String> {
     }
     Ok(out)
 }
-
 fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     let broken = || "that extension's archive is broken".to_string();
     let from = zip.len().saturating_sub(22 + usize::from(u16::MAX));
@@ -129,7 +118,6 @@ fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     if u32_at(zip, end + 16) == u32::MAX {
         return Err("that extension's archive is a zip64, which Orden does not read".into());
     }
-
     let mut entries = Vec::with_capacity(count.min(MOST_FILES + 1));
     for _ in 0..count {
         let fixed = zip.get(at..at + 46).ok_or_else(broken)?;
@@ -156,19 +144,16 @@ fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     }
     Ok(entries)
 }
-
 fn u16_at(bytes: &[u8], at: usize) -> u16 {
     bytes
         .get(at..at + 2)
         .map_or(0, |two| u16::from_le_bytes([two[0], two[1]]))
 }
-
 fn u32_at(bytes: &[u8], at: usize) -> u32 {
     bytes.get(at..at + 4).map_or(0, |four| {
         u32::from_le_bytes([four[0], four[1], four[2], four[3]])
     })
 }
-
 #[cfg(test)]
 pub(super) mod tests {
     use std::io::Write as _;
@@ -189,7 +174,6 @@ pub(super) mod tests {
             let named = u16::try_from(name.len()).expect("short");
             let packed_len = u32::try_from(deflated.len()).expect("small");
             let size = u32::try_from(bytes.len()).expect("small");
-
             out.extend_from_slice(&0x0403_4b50u32.to_le_bytes());
             out.extend_from_slice(&[20, 0, 0, 0, 8, 0, 0, 0, 0, 0]);
             out.extend_from_slice(&crc.sum().to_le_bytes());
@@ -199,7 +183,6 @@ pub(super) mod tests {
             out.extend_from_slice(&0u16.to_le_bytes());
             out.extend_from_slice(name.as_bytes());
             out.extend_from_slice(&deflated);
-
             central.extend_from_slice(&0x0201_4b50u32.to_le_bytes());
             central.extend_from_slice(&[20, 0, 20, 0, 0, 0, 8, 0, 0, 0, 0, 0]);
             central.extend_from_slice(&crc.sum().to_le_bytes());
@@ -223,13 +206,11 @@ pub(super) mod tests {
         out.extend_from_slice(&0u16.to_le_bytes());
         out
     }
-
     fn scratch(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!("orden-unzip-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }
-
     #[test]
     fn files_and_folders_are_written_and_the_store_s_record_is_not() {
         let dir = scratch("good");
@@ -246,7 +227,6 @@ pub(super) mod tests {
         assert!(!dir.join("_metadata").exists());
         let _ = std::fs::remove_dir_all(&dir);
     }
-
     #[test]
     fn a_name_that_climbs_out_is_refused() {
         for bad in [
@@ -263,7 +243,6 @@ pub(super) mod tests {
         }
         assert!(place("_locales/en/messages.json").expect("fine").is_some());
     }
-
     #[test]
     fn a_broken_archive_is_refused_before_anything_is_written() {
         let dir = scratch("bad");

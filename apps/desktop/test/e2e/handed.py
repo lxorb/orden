@@ -2,24 +2,19 @@ import base64
 import json
 import struct
 import zlib
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
-
 PHONE = {"width": 420, "height": 880}
 AGENT = (
     "Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
-
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
             struct.pack(">I", len(body))
@@ -27,7 +22,6 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
             + body
             + struct.pack(">I", zlib.crc32(kind + body))
         )
-
     rows = bytearray()
     for y in range(height):
         rows.append(0)
@@ -35,7 +29,6 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
             rows.append(tint[0] * (x + 1) // width)
             rows.append(tint[1] * (y + 1) // height)
             rows.append(tint[2])
-
     head = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     return (
         b"\x89PNG\r\n\x1a\n"
@@ -43,10 +36,8 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
         + chunk(b"IDAT", zlib.compress(bytes(rows), 9))
         + chunk(b"IEND", b"")
     )
-
 SHARED_PICTURE = png(240, 160, (250, 120, 60))
 TAKEN_PHOTO = png(200, 200, (90, 180, 250))
-
 ACTIVITY = """
 () => {
   const held = {
@@ -96,7 +87,6 @@ ACTIVITY = """
   }
 }
 """
-
 SPEECH = """
 () => {
   class Fake {
@@ -129,7 +119,6 @@ SPEECH = """
   delete window.webkitSpeechRecognition
 }
 """
-
 PICKERS = """
 () => {
   window.__pickers = []
@@ -142,7 +131,6 @@ PICKERS = """
   }
 }
 """
-
 SHARE_LINK = {
     "action": "android.intent.action.SEND",
     "subject": "A page worth keeping",
@@ -151,13 +139,11 @@ SHARE_LINK = {
         {"name": "shot.png", "mime": "image/png", "size": len(SHARED_PICTURE)},
     ],
 }
-
 SHARE_WORDS = {
     "action": "android.intent.action.SEND",
     "subject": "",
     "items": [{"name": "", "mime": "text/plain", "size": 0, "text": "one more thing"}],
 }
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -168,12 +154,10 @@ async (note) => {
   return { name: found.name, root: ws.activeSpace.root }
 }
 """
-
 NOTE = """# Handed
 
 Words already here.
 """
-
 STATE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -187,12 +171,10 @@ STATE = """
   }
 }
 """
-
 def started(page: Page) -> None:
     wait_for(page, "window.ordenApp", "the app")
     wait_for(page, "window.ordenApp.workspace.activeSpace", "a space")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
-
 def fresh(
     browser: Browser,
     finger: bool,
@@ -209,7 +191,6 @@ def fresh(
     )
     for one in ((ACTIVITY,) if activity else ()) + (SPEECH, PICKERS):
         context.add_init_script(f"({one})()")
-
     if share:
         waiting = json.dumps(json.dumps(share))
         bytes_of = json.dumps({"1": base64.b64encode(SHARED_PICTURE).decode()})
@@ -223,7 +204,6 @@ def fresh(
             }})()
             """
         )
-
     page = context.new_page()
     DRIVE.choosers(page)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
@@ -236,13 +216,11 @@ def fresh(
     page.goto(ORIGIN, wait_until="domcontentloaded")
     started(page)
     return page
-
 def palette(page: Page, words: str) -> None:
     page.keyboard.press("Control+o")
     page.wait_for_timeout(350)
     page.keyboard.type(f"> {words}")
     page.wait_for_timeout(450)
-
 def rows(page: Page) -> list[dict]:
     return page.evaluate(
         """() => [...document.querySelectorAll('.palette .orden-row')].map((one) => ({
@@ -250,12 +228,10 @@ def rows(page: Page) -> list[dict]:
              dim: one.classList.contains('dim'),
            }))"""
     )
-
 def shared_at_a_cold_start(page: Page) -> str:
     page.wait_for_selector(".sheet .orden-button", timeout=20000)
     page.wait_for_timeout(500)
     shot(page, "01-the-sheet-asks-at-a-cold-start")
-
     labels = page.evaluate(
         """() => [...document.querySelectorAll('.sheet .orden-button')]
              .map((one) => one.textContent.trim()).filter(Boolean)"""
@@ -263,9 +239,7 @@ def shared_at_a_cold_start(page: Page) -> str:
     say(f"[cold] the sheet offers {labels}")
     if "New note" not in labels:
         wrong(f"the sheet does not offer a note of its own: {labels}")
-
     page.locator(".sheet").get_by_role("button", name="New note", exact=True).click()
-
     wait_for(
         page,
         "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('A page worth keeping'))",
@@ -273,25 +247,19 @@ def shared_at_a_cold_start(page: Page) -> str:
         patience=30,
     )
     page.wait_for_timeout(900)
-
     state = page.evaluate(STATE)
     say(f"[cold] {json.dumps(state)}")
-
     if not (state["name"] or "").startswith("A page worth keeping"):
         wrong(f"the shared note was not opened: {state['name']!r}")
-
     doc = state["doc"]
     for wanted in ("source: https://example.test/a/plan", "date: 20", "# A page worth keeping"):
         if wanted not in doc:
             wrong(f"the note does not say {wanted!r}: {doc!r}")
-
     if "![](assets/shot.png)" not in doc:
         wrong(f"the picture is not drawn in the note: {doc!r}")
-
     done = page.evaluate("() => window.__android.said.done")
     if done != 1:
         wrong(f"the activity was told {done} times that the copies may go, not once")
-
     page.reload(wait_until="domcontentloaded")
     started(page)
     wait_for(page, "navigator.serviceWorker.controller", "the worker to take the page over")
@@ -303,7 +271,6 @@ def shared_at_a_cold_start(page: Page) -> str:
            }"""
     )
     page.wait_for_timeout(1600)
-
     drawn = page.evaluate(
         """() => {
              const image = document.querySelector('.cm-content img.orden-image')
@@ -319,7 +286,6 @@ def shared_at_a_cold_start(page: Page) -> str:
     )
     say(f"[cold] the picture as the editor drew it: {json.dumps(drawn)}")
     shot(page, "02-shared-at-a-cold-start")
-
     if not drawn:
         wrong("the shared picture is not in the note at all")
     else:
@@ -327,23 +293,18 @@ def shared_at_a_cold_start(page: Page) -> str:
             wrong(f"the picture is not beside the note: {drawn['src']}")
         if not drawn["complete"] or drawn["width"] < 1:
             wrong(f"the shared picture did not draw: {drawn}")
-
     return state["open"]
-
 def shared_while_it_is_open(page: Page) -> None:
     page.evaluate(SEED, NOTE)
     wait_for(page, "window.orden", "the editor")
     page.wait_for_timeout(500)
-
     page.evaluate(
         "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
-
     hand(page, SHARE_WORDS)
     page.wait_for_selector(".sheet .orden-button", timeout=10000)
     page.wait_for_timeout(500)
     shot(page, "03-the-sheet-asks")
-
     labels = page.evaluate(
         """() => [...document.querySelectorAll('.sheet .orden-button')]
              .map((one) => one.textContent.trim()).filter(Boolean)"""
@@ -351,40 +312,32 @@ def shared_while_it_is_open(page: Page) -> None:
     say(f"[open] the sheet offers {labels}")
     if not any(one.startswith("Add to") for one in labels):
         wrong(f"the sheet does not offer the note in front of you: {labels}")
-
     page.locator(".sheet").get_by_role("button", name="Add to Handed").click()
     page.wait_for_timeout(900)
-
     state = page.evaluate(STATE)
     say(f"[open] {json.dumps(state)}")
     shot(page, "04-added-to-the-open-note")
-
     if not (state["name"] or "").startswith("Handed"):
         wrong(f"the words went somewhere else: {state['name']!r}")
     if "one more thing" not in state["doc"]:
         wrong(f"the words did not land in the note: {state['doc']!r}")
     if state["doc"].count("one more thing") != 1:
         wrong(f"the words landed more than once: {state['doc']!r}")
-
 def dismissing_it_does_nothing(page: Page) -> None:
     before = page.evaluate(STATE)
     hand(page, SHARE_WORDS)
     page.wait_for_selector(".sheet .orden-button", timeout=10000)
     page.wait_for_timeout(400)
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(900)
-
     after = page.evaluate(STATE)
     say(f"[dismissed] {json.dumps(after)}")
-
     if after["doc"] != before["doc"]:
         wrong("dismissing the sheet wrote into the note anyway")
     if len(after["notes"]) != len(before["notes"]):
         wrong(f"dismissing the sheet made a note: {after['notes']}")
     if not page.evaluate("() => window.__android.said.done >= 3"):
         wrong("the activity was never told it could let the dismissed share go")
-
 def hand(page: Page, share: dict) -> None:
     page.evaluate(
         """([shared, bytes]) => {
@@ -395,7 +348,6 @@ def hand(page: Page, share: dict) -> None:
         [json.dumps(share), {}],
     )
     page.wait_for_timeout(300)
-
 def tile(page: Page, command: str) -> None:
     page.evaluate(
         """(command) => {
@@ -404,23 +356,19 @@ def tile(page: Page, command: str) -> None:
            }""",
         command,
     )
-
 def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     before = page.evaluate(STATE)
-
     tile(page, "new")
     page.wait_for_timeout(900)
     after = page.evaluate(STATE)
     say(f"[tile] new note: {json.dumps(after)}")
     if after["open"] is not None or after["doc"] != "" or after["name"] == before["name"]:
         wrong(f"the tile did not open a blank note: {json.dumps(after)}")
-
     palette(page, "Record")
     offered = next((one for one in rows(page) if one["label"] == "Record"), None)
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     say(f"[tile] the palette's own Record row: {json.dumps(offered)}")
-
     quiet = page.evaluate(STATE)
     tile(page, "record")
     page.wait_for_timeout(1200)
@@ -433,13 +381,11 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
         page.wait_for_timeout(900)
     elif started != quiet:
         wrong(f"a greyed Record row did something from a tile anyway: {json.dumps(started)}")
-
     quiet = page.evaluate(STATE)
     tile(page, "not-a-command")
     page.wait_for_timeout(700)
     if page.evaluate(STATE) != quiet:
         wrong("a command the app does not have did something anyway")
-
     page.evaluate(
         """(path) => {
              window.__android.handed = JSON.stringify({ command: '', open: path })
@@ -453,23 +399,19 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     shot(page, "05-a-widget-row-opened-a-note")
     if landed["open"] != note:
         wrong(f"the widget row opened {landed['open']!r} rather than {note!r}")
-
 def what_the_widget_draws(page: Page) -> None:
     said = page.evaluate("() => window.__android.said.widgets")
     if not said:
         wrong("the home screen was never told anything")
         return
-
     last = json.loads(said[-1])
     say(f"[widget] {json.dumps(last)}")
-
     if not last.get("title"):
         wrong(f"the widget has no heading: {last}")
     if not last.get("notes"):
         wrong(f"the widget lists nothing: {last}")
     if any(".md" in one["name"] for one in last["notes"]):
         wrong(f"the widget names notes by their files: {last['notes']}")
-
     page.evaluate(
         """(row) => {
              const ws = window.ordenApp.workspace
@@ -481,14 +423,12 @@ def what_the_widget_draws(page: Page) -> None:
         last["notes"][-1]["path"],
     )
     page.wait_for_timeout(900)
-
     listed = json.loads(page.evaluate("() => window.__android.said.widgets.at(-1)"))
     kept = page.evaluate("() => window.ordenApp.workspace.active.name")
     say(f"[widget] with {kept!r} kept open: {json.dumps(listed)}")
     first = (listed.get("notes") or [{}])[0].get("name")
     if first != kept.replace(".md", ""):
         wrong(f"the kept note is not at the top of the widget: {first!r} rather than {kept!r}")
-
 def the_camera_row(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -501,12 +441,10 @@ def the_camera_row(page: Page) -> None:
     page.evaluate(
         "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
-
     palette(page, "Photo")
     listed = rows(page)
     say(f"[camera] the palette offers {json.dumps(listed[:3])}")
     shot(page, "06-the-camera-row")
-
     photo = next((one for one in listed if one["label"] == "Photo"), None)
     if not photo:
         wrong("there is no camera row on a phone")
@@ -514,21 +452,18 @@ def the_camera_row(page: Page) -> None:
         return
     if photo["dim"]:
         wrong("the camera row is greyed out on a phone")
-
     with page.expect_file_chooser() as chooser:
         page.keyboard.press("Enter")
     chooser.value.set_files(
         {"name": "photo.png", "mimeType": "image/png", "buffer": TAKEN_PHOTO}
     )
     page.wait_for_timeout(1500)
-
     asked = page.evaluate("() => window.__pickers")
     say(f"[camera] the chooser it opened: {json.dumps(asked)}")
     if not any(one["capture"] == "environment" for one in asked):
         wrong(f"the row did not ask for the camera: {asked}")
     if not any(one["accept"] == "image/*" for one in asked):
         wrong(f"the row asked for the wrong kind of file: {asked}")
-
     state = page.evaluate(STATE)
     say(f"[camera] the note now says {state['doc']!r}")
     shot(page, "07-the-photo-in-the-note")
@@ -536,7 +471,6 @@ def the_camera_row(page: Page) -> None:
         wrong(f"the photograph was not drawn at the caret: {state['doc']!r}")
     if "assets/" not in state["doc"].split("![photo](")[-1]:
         wrong(f"the photograph did not land beside the note: {state['doc']!r}")
-
 def dictation(page: Page, phone: bool) -> None:
     where = "phone" if phone else "browser"
     palette(page, "Dictate")
@@ -549,10 +483,8 @@ def dictation(page: Page, phone: bool) -> None:
         return
     if row["dim"]:
         wrong(f"{where}: the dictation row is greyed out")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
-
     if phone:
         asked = page.evaluate("() => window.__android.said.listen")
         say(f"[{where}] the activity was told {json.dumps(asked)}")
@@ -576,7 +508,6 @@ def dictation(page: Page, phone: bool) -> None:
             wrong(f"the recogniser is listening in the wrong shape: {heard}")
         if not heard["lang"]:
             wrong("the recogniser was not told which language to listen in")
-
     listening = page.evaluate(
         """() => {
              const found = document.querySelector('.track[role=status]')
@@ -587,21 +518,18 @@ def dictation(page: Page, phone: bool) -> None:
     shot(page, f"08-listening-{where}")
     if listening != "Listening":
         wrong(f"{where}: nothing on screen says it is listening: {listening!r}")
-
     before = page.evaluate(STATE)["doc"]
     if not phone:
         page.evaluate("() => window.__speech.hear('and then we left', false)")
         page.wait_for_timeout(300)
         if page.evaluate(STATE)["doc"] != before:
             wrong("a half-heard sentence was written into the note")
-
     if phone:
         page.evaluate(
             """() => window.__ordenHeard(JSON.stringify({ state: 'listening', text: 'and then we left' }))"""
         )
     else:
         page.evaluate("() => window.__speech.hear('and then we left', true)")
-
     page.wait_for_timeout(500)
     state = page.evaluate(STATE)
     say(f"[{where}] the note now says {state['doc']!r}")
@@ -610,11 +538,9 @@ def dictation(page: Page, phone: bool) -> None:
         wrong(f"{where}: what it heard is not in the note: {state['doc']!r}")
     if before and not before.endswith((" ", "\n")) and " and then we left" not in state["doc"]:
         wrong(f"{where}: the sentence was glued onto the last word: {state['doc']!r}")
-
     palette(page, "Stop")
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
-
     if phone:
         asked = page.evaluate("() => window.__android.said.listen")
         say(f"[{where}] the activity was told {json.dumps(asked)}")
@@ -625,41 +551,32 @@ def dictation(page: Page, phone: bool) -> None:
         say(f"[{where}] stopped {stopped} times")
         if stopped < 1:
             wrong("the same row did not turn it off again")
-
     quiet = page.evaluate(
         "() => document.querySelector('.track[role=status]')?.getAttribute('aria-label') ?? null"
     )
     say(f"[{where}] the line now says {quiet!r}")
     if quiet == "Listening":
         wrong(f"{where}: the line still says it is listening")
-
 def on_a_desktop(browser: Browser) -> None:
     page = fresh(browser, finger=False, activity=False)
     page.evaluate(SEED, NOTE)
     page.wait_for_timeout(600)
-
     palette(page, "Photo")
     listed = rows(page)
     say(f"[desktop] the palette offers {json.dumps(listed[:3])}")
     shot(page, "10-no-camera-row-on-a-desktop")
-
     photo = next((one for one in listed if one["label"] == "Photo"), None)
     if photo and not photo["dim"]:
         wrong("a desktop is offered a camera row that would open the file chooser")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     if page.evaluate("() => '__ORDEN_SYSTEM__' in window"):
         wrong("the drive left an activity behind on a desktop")
-
     page.evaluate(
         "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
     dictation(page, phone=False)
-
     page.context.close()
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=True, share=SHARE_LINK)
     note = shared_at_a_cold_start(page)
@@ -670,14 +587,11 @@ def drive(browser: Browser) -> None:
     the_camera_row(page)
     dictation(page, phone=True)
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a phone ---")
         drive(browser)
         say("--- a desktop ---")
         on_a_desktop(browser)
-
     return DRIVE.verdict("what the phone hands over becomes a note, a command or a photograph")
-
 raise SystemExit(main())

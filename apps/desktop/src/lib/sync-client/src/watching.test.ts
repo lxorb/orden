@@ -12,7 +12,6 @@ vi.mock('../../crate/src/api', async (original) => ({
     return Promise.resolve()
   },
 }))
-
 const ROOT = '/home/me/.local/share/so.orden.Orden/Spaces/Two'
 const engine = {
   core: {
@@ -20,18 +19,15 @@ const engine = {
     spaces: new Map([['s', { row: { root: ROOT } }]]),
   },
 } as unknown as Engine
-
 describe('what the watch keeps', () => {
   test('a note in a space under a dotted folder: Linux’s own place for them', () => {
     expect(kept(engine, `${ROOT}/both.md`, false)).toBe(true)
   })
-
   test('what is dotted inside the space stays the app’s', () => {
     expect(kept(engine, `${ROOT}/.trash/both.md`, false)).toBe(false)
     expect(kept(engine, `${ROOT}/.hidden.md`, false)).toBe(false)
   })
 })
-
 describe('a launch scan', () => {
   const inside = 'shut/inside.md'
   const held = {
@@ -78,32 +74,27 @@ describe('a launch scan', () => {
     await scanned(how, ROOT)
     return removed
   }
-
   test('nothing under a folder that would not list is a delete', async () => {
     listing.answer = () =>
       Promise.resolve([{ path: `${ROOT}/shut`, dir: true, size: 0, mtime: 0, id: null, unlisted: true }])
     const removed = await scanIt(false)
     expect(removed.mock.calls).toEqual([[`${ROOT}/gone.md`]])
   })
-
   test('a folder that listed empty, and an answer that a file is gone, still are', async () => {
     listing.answer = () => Promise.resolve([{ path: `${ROOT}/shut`, dir: true, size: 0, mtime: 0, id: null }])
     const removed = await scanIt(false)
     expect(removed.mock.calls).toEqual([[`${ROOT}/shut/inside.md`], [`${ROOT}/gone.md`]])
   })
-
   test('nobody could look at the file: not a delete', async () => {
     listing.answer = () => Promise.resolve([])
     expect((await scanIt(true)).mock.calls).toEqual([])
   })
-
   test('a space that will not list deletes nothing', async () => {
     listing.answer = () => Promise.reject(new Error('would not list'))
     const removed = vi.fn()
     await expect(scanItRefused(removed)).rejects.toThrow('would not list')
     expect(removed).not.toHaveBeenCalled()
   })
-
   const scanItRefused = async (removed: () => void) => {
     const space = { id: 's', row: { root: ROOT }, entries: new Map(), key: (one: string) => one }
     const how = {
@@ -113,7 +104,6 @@ describe('a launch scan', () => {
     await scanned(how, ROOT)
   }
 })
-
 describe('what is heard while a first pass runs', () => {
   const started = async () => {
     const created = vi.fn(() => Promise.resolve())
@@ -154,36 +144,30 @@ describe('what is heard while a first pass runs', () => {
     return { created, watched, hear, passed: () => (ready = true) }
   }
   const file = { path: `${ROOT}/late.md`, dir: false, size: 5, mtime: 1, id: null }
-
   test('is read once it is over, not at the next launch', async () => {
     const { created, watched, hear, passed } = await started()
     await hear({ scan: true })
     await hear({ changes: [{ kind: 'created', ...file }] })
     expect(created).not.toHaveBeenCalled()
-
     listing.answer = () => Promise.resolve([file])
     passed()
     watched.caughtUp('s')
     await vi.waitFor(() => expect(created).toHaveBeenCalledWith(file.path, false, 'words'))
     watched.stop()
   })
-
   test('a watch lost in the middle of it counts as well', async () => {
     const { created, watched, hear, passed } = await started()
     await hear({ scan: true })
     await hear({ scan: true })
-
     listing.answer = () => Promise.resolve([file])
     passed()
     watched.caughtUp('s')
     await vi.waitFor(() => expect(created).toHaveBeenCalledTimes(1))
     watched.stop()
   })
-
   test('nothing heard but the start of the watch: the pass read all of that', async () => {
     const { created, watched, hear, passed } = await started()
     await hear({ scan: true })
-
     const asked = vi.fn(() => Promise.resolve([file]))
     listing.answer = asked
     passed()
@@ -194,7 +178,6 @@ describe('what is heard while a first pass runs', () => {
     watched.stop()
   })
 })
-
 describe('a rename another program makes', () => {
   const heardRename = async (from: string, to: string) => {
     const { providePort } = await import('@orden/contracts')
@@ -238,18 +221,15 @@ describe('a rename another program makes', () => {
     watched.stop()
     return copied
   }
-
   test('with something new already at the old name gives the moved note the old name’s lock', async () => {
     const copied = await heardRename(`${ROOT}/Diary.md`, `${ROOT}/Old/Diary.md`)
     expect(copied).toHaveBeenCalledWith(`${ROOT}/Diary.md`, `${ROOT}/Old/Diary.md`, ROOT, ROOT)
   })
-
   test('into a dotted folder gives the hidden note the lock it had', async () => {
     const copied = await heardRename(`${ROOT}/Diary.md`, `${ROOT}/.stash/Diary.md`)
     expect(copied).toHaveBeenCalledWith(`${ROOT}/Diary.md`, `${ROOT}/.stash/Diary.md`, ROOT, ROOT)
   })
 })
-
 describe('a note another program moves', () => {
   const OTHER = '/home/me/Spaces/Other'
   const hear = async (changes: unknown[], there: string[], count: number) => {
@@ -303,7 +283,6 @@ describe('a note another program moves', () => {
     watched.stop()
     return done
   }
-
   test('into a dotted folder gives it the lock before the note is let go of', async () => {
     const done = await hear(
       [
@@ -322,7 +301,6 @@ describe('a note another program moves', () => {
     )
     expect(done).toEqual([`copied ${ROOT}/Diary.md ${ROOT}/.trash/Diary.md`, `removed ${ROOT}/Diary.md`])
   })
-
   test('over a second note gives that note the lock before the first is let go of', async () => {
     const done = await hear(
       [
@@ -335,7 +313,6 @@ describe('a note another program moves', () => {
     expect(done[0]).toBe(`copied ${ROOT}/Diary.md ${ROOT}/Todo.md`)
     expect(done).toContain(`removed ${ROOT}/Diary.md`)
   })
-
   test('into another space carries its lock there and is let go of and made anew', async () => {
     const done = await hear(
       [

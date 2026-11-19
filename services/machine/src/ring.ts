@@ -1,25 +1,20 @@
 export const KEPT = 1024 * 1024
-
 interface Chunk {
   seq: number
   bytes: Uint8Array
 }
-
 export class Ring {
   private chunks: Chunk[] = []
   private held = 0
   private readonly limit: number
   end: number
-
   constructor(start = 0, limit = KEPT) {
     this.end = start
     this.limit = limit
   }
-
   get start(): number {
     return this.chunks[0]?.seq ?? this.end
   }
-
   append(bytes: Uint8Array): number {
     const seq = this.end
     if (bytes.length === 0) return seq
@@ -31,14 +26,12 @@ export class Ring {
     }
     return seq
   }
-
   skip(to: number): void {
     if (to <= this.end) return
     this.chunks = []
     this.held = 0
     this.end = to
   }
-
   since(since: number): Uint8Array | null {
     if (!Number.isSafeInteger(since) || since < this.start || since > this.end) return null
     const out = new Uint8Array(this.end - since)

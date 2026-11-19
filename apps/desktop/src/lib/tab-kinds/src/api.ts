@@ -1,7 +1,6 @@
 import { isTabKind, type TabKind, type TabKindTraits, type TabPanel } from '@orden/contracts'
 
 export { isTabKind, type TabKind, type TabKindTraits, type TabPanel }
-
 const PLAIN = {
   words: false,
   extension: null,
@@ -22,10 +21,8 @@ const PLAIN = {
   asksToMove: false,
   single: false,
 } as const
-
 const PAGED = ['outline', 'links'] as const
 const APART = { statusBar: false, fileDocument: false } as const
-
 export const TAB_KINDS = {
   note: {
     ...PLAIN,
@@ -86,11 +83,8 @@ export const TAB_KINDS = {
   time: { ...PLAIN, ...APART, mark: 'time', single: true },
   settings: { ...PLAIN, ...APART, mark: 'settings', preview: 'mark', single: true },
 } as const satisfies Record<TabKind, TabKindTraits>
-
 const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
-
 export function kindsWhere(trait: (traits: TabKindTraits) => boolean): TabKind[] {
   return KINDS.filter((kind) => trait(TAB_KINDS[kind]))
 }
-
 export { builtinName, readViewSpec, sameView, type ViewSpec, writeViewSpec } from './view-spec'

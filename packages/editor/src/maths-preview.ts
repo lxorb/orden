@@ -13,18 +13,15 @@ export interface MathsSpan {
   tex: string
   block: boolean
 }
-
 function mathsNode(tree: Tree, pos: number): SyntaxNode | null {
   for (const side of [-1, 1] as const)
     for (let node: SyntaxNode | null = tree.resolveInner(pos, side); node; node = node.parent)
       if (node.name === 'InlineMath' || node.name === 'BlockMath') return node
   return null
 }
-
 function texOf(read: (from: number, to: number) => string, node: SyntaxNode): string {
   const text = read(node.from, node.to)
   if (node.name === 'InlineMath') return text.slice(1, -1)
-
   const closed = node.getChildren('MathMark').length > 1
   let body = text.slice(2, closed ? -2 : undefined)
   let quoted = false
@@ -32,12 +29,10 @@ function texOf(read: (from: number, to: number) => string, node: SyntaxNode): st
   if (quoted) body = body.replace(/\n[ \t]*(?:>[ \t]?)*/g, '\n')
   return body.trim()
 }
-
 function spanOf(read: (from: number, to: number) => string, node: SyntaxNode | null): MathsSpan | null {
   if (!node) return null
   return { from: node.from, to: node.to, tex: texOf(read, node), block: node.name === 'BlockMath' }
 }
-
 export function mathsAtCaret(state: EditorState): MathsSpan | null {
   if (state.readOnly || state.facet(noReveal)) return null
   const { main } = state.selection
@@ -45,26 +40,21 @@ export function mathsAtCaret(state: EditorState): MathsSpan | null {
   if (!node || main.from < node.from || main.to > node.to) return null
   return spanOf((from, to) => state.doc.sliceString(from, to), node)
 }
-
 export const mathsInText = (text: string, offset: number): MathsSpan | null =>
   spanOf((from, to) => text.slice(from, to), mathsNode(ordenMarkdownParser.parse(text), offset))
-
 export interface Placement {
   top: number
   left: number
   above: boolean
   maxHeight: number | null
 }
-
 interface Box {
   top: number
   bottom: number
   left: number
   right: number
 }
-
 export const GAP = 6
-
 export function place(
   caret: Box,
   startLeft: number,
@@ -73,7 +63,6 @@ export function place(
   wasAbove: boolean | null,
 ): Placement | null {
   if (caret.bottom <= visible.top || caret.top >= visible.bottom) return null
-
   const roomAbove = caret.top - visible.top - GAP
   const roomBelow = visible.bottom - caret.bottom - GAP
   const fitsAbove = size.height <= roomAbove
@@ -84,11 +73,9 @@ export function place(
       : wasAbove === false && fitsBelow
         ? false
         : fitsAbove || (!fitsBelow && roomAbove >= roomBelow)
-
   const room = above ? roomAbove : roomBelow
   const height = Math.min(size.height, room)
   const left = Math.max(visible.left + GAP, Math.min(startLeft, visible.right - GAP - size.width))
-
   return {
     top: above ? caret.top - GAP - height : caret.bottom + GAP,
     left,
@@ -96,20 +83,16 @@ export function place(
     maxHeight: size.height > room ? Math.max(0, room) : null,
   }
 }
-
 const SLOW_MS = 12
 const PAUSE_MS = 140
-
 type Target =
   | (MathsSpan & { kind: 'note'; head: number; start: number })
   | (MathsSpan & { kind: 'cell'; cell: HTMLElement; caret: number })
-
 function focusedCell(view: EditorView): HTMLElement | null {
   const active = view.root.activeElement
   if (!(active instanceof HTMLElement) || active === view.contentDOM) return null
   return view.contentDOM.contains(active) && active.isContentEditable ? active : null
 }
-
 function caretIn(cell: HTMLElement): number | null {
   const selection = cell.ownerDocument.getSelection()
   if (!selection?.rangeCount || !selection.isCollapsed) return null
@@ -120,7 +103,6 @@ function caretIn(cell: HTMLElement): number | null {
   range.setEnd(focusNode, focusOffset)
   return range.toString().length
 }
-
 function cellRange(cell: HTMLElement, from: number, to: number): Range {
   const range = cell.ownerDocument.createRange()
   range.selectNodeContents(cell)
@@ -141,14 +123,12 @@ function cellRange(cell: HTMLElement, from: number, to: number): Range {
   }
   return range
 }
-
 const boxOf = (rect: DOMRect | { top: number; bottom: number; left: number; right: number }): Box => ({
   top: rect.top,
   bottom: rect.bottom,
   left: rect.left,
   right: rect.right,
 })
-
 class Preview implements PluginValue {
   readonly dom: HTMLElement
   private readonly body: HTMLElement
@@ -163,7 +143,6 @@ class Preview implements PluginValue {
   private frame = 0
   private timer: ReturnType<typeof setTimeout> | undefined
   private readonly unlisten: (() => void)[] = []
-
   constructor(private readonly view: EditorView) {
     const dom = document.createElement('div')
     dom.className = 'orden-maths-preview'
@@ -177,7 +156,6 @@ class Preview implements PluginValue {
     dom.append(this.body, this.error)
     view.dom.append(dom)
     this.dom = dom
-
     const doc = view.dom.ownerDocument
     const win = doc.defaultView
     const measure = () => this.measure()
@@ -205,7 +183,6 @@ class Preview implements PluginValue {
     })
     listen(view.contentDOM, 'focusout', () => queueMicrotask(() => this.follow()))
   }
-
   update(update: ViewUpdate) {
     if (update.docChanged) {
       this.dismissed = false
@@ -221,7 +198,6 @@ class Preview implements PluginValue {
       this.follow()
     }
   }
-
   follow() {
     const target = this.dismissed ? null : this.find()
     this.target = target
@@ -229,7 +205,6 @@ class Preview implements PluginValue {
       this.hide()
       return
     }
-
     const key = target.kind === 'note' ? target.from : target.cell
     if (key !== this.drawnFor) {
       this.drawnFor = key
@@ -240,7 +215,6 @@ class Preview implements PluginValue {
     if (target.tex !== this.wantedTex || this.drawnTex === null) this.schedule(target.tex)
     this.measure()
   }
-
   private find(): Target | null {
     const { view } = this
     const cell = focusedCell(view)
@@ -250,7 +224,6 @@ class Preview implements PluginValue {
       const span = caret === null ? null : mathsInText(cell.textContent, caret)
       return span && caret !== null ? { ...span, kind: 'cell', cell, caret } : null
     }
-
     if (!view.hasFocus) return null
     const span = mathsAtCaret(view.state)
     if (!span) return null
@@ -258,7 +231,6 @@ class Preview implements PluginValue {
     const start = span.block ? view.state.doc.lineAt(head).from : span.from
     return { ...span, kind: 'note', head, start }
   }
-
   private schedule(tex: string) {
     this.wantedTex = tex
     cancelAnimationFrame(this.frame)
@@ -266,17 +238,14 @@ class Preview implements PluginValue {
     if (this.slow) this.timer = setTimeout(() => this.draw(), PAUSE_MS)
     else this.frame = requestAnimationFrame(() => this.draw())
   }
-
   private draw() {
     const target = this.target
     if (!target) return
-
     const engine = mathsEngine()
     if (!engine) {
       void loadMaths().then(() => this.target && this.schedule(this.target.tex))
       return
     }
-
     const scratch = document.createElement('div')
     const started = performance.now()
     try {
@@ -295,23 +264,19 @@ class Preview implements PluginValue {
     this.slow = performance.now() - started > SLOW_MS
     this.measure()
   }
-
   private hide() {
     cancelAnimationFrame(this.frame)
     clearTimeout(this.timer)
     this.wantedTex = null
     if (!this.dom.hidden) this.dom.hidden = true
   }
-
   private measure() {
     if (!this.target || this.dismissed) return
     this.view.requestMeasure({ key: this, read: () => this.read(), write: (m) => this.write(m) })
   }
-
   private read() {
     const { view, target } = this
     if (!target) return null
-
     let caret: Box
     let startLeft: number
     if (target.kind === 'note') {
@@ -326,7 +291,6 @@ class Preview implements PluginValue {
       caret = boxOf(rect)
       startLeft = rect.left
     }
-
     const scroller = boxOf(view.scrollDOM.getBoundingClientRect())
     const visible = { ...scroller }
     for (const margins of view.state.facet(EditorView.scrollMargins)) {
@@ -340,7 +304,6 @@ class Preview implements PluginValue {
       visible.top = Math.max(visible.top, viewport.offsetTop)
       visible.bottom = Math.min(visible.bottom, viewport.offsetTop + viewport.height)
     }
-
     return {
       caret,
       startLeft,
@@ -349,7 +312,6 @@ class Preview implements PluginValue {
       font: getComputedStyle(view.contentDOM).fontSize,
     }
   }
-
   private write(measured: ReturnType<Preview['read']>) {
     const { dom } = this
     const nothing = !this.body.hasChildNodes() && this.error.hidden
@@ -357,14 +319,12 @@ class Preview implements PluginValue {
       dom.hidden = true
       return
     }
-
     const { caret, startLeft, visible, editor, font } = measured
     dom.style.fontSize = font
     dom.style.maxWidth = `${Math.max(0, visible.right - visible.left - 2 * GAP)}px`
     dom.style.maxHeight = ''
     dom.hidden = false
     const size = { width: dom.offsetWidth, height: dom.offsetHeight }
-
     const placement = place(caret, startLeft, visible, size, this.above)
     if (!placement) {
       dom.hidden = true
@@ -376,7 +336,6 @@ class Preview implements PluginValue {
     dom.style.top = `${placement.top - editor.top}px`
     dom.style.left = `${placement.left - editor.left}px`
   }
-
   destroy() {
     cancelAnimationFrame(this.frame)
     clearTimeout(this.timer)
@@ -384,7 +343,6 @@ class Preview implements PluginValue {
     this.dom.remove()
   }
 }
-
 export function openPreview(view: EditorView): PluginValue & { update(update: ViewUpdate): void } {
   const preview = new Preview(view)
   preview.follow()

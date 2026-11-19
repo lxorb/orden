@@ -1,5 +1,4 @@
 import sys
-
 import harness
 from harness import Drive
 
@@ -8,12 +7,10 @@ say = DRIVE.say
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -23,7 +20,6 @@ async () => {
   return ws.files.length
 }
 """
-
 KEYS = """
 (pixels) => {
   const seen = window.ordenApp.viewport
@@ -32,7 +28,6 @@ KEYS = """
   return { keyboard: seen.keyboard, typing: seen.typing }
 }
 """
-
 BAR = """
 () => {
   const bar = document.querySelector('.orden-bar.docked')
@@ -48,7 +43,6 @@ BAR = """
   }
 }
 """
-
 CARET = """
 () => {
   const view = window.orden
@@ -59,19 +53,14 @@ CARET = """
   return view.state.doc.line(1).text
 }
 """
-
 LINES = """
 () => window.orden.state.doc.toString().split('\\n').slice(0, 4)
 """
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def pulling(page, down: int, across: int = 0, hold: bool = False):
     return page.evaluate(PULL, {"down": down, "across": across, "hold": hold})
-
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
-
     context = browser.new_context(
         viewport={"width": 390, "height": 844},
         user_agent=PHONE_AGENT,
@@ -86,7 +75,6 @@ def drive(browser) -> None:
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED)} files")
     page.wait_for_timeout(700)
-
     say("--- the bar as it arrives ---")
     page.evaluate("() => window.ordenApp.toolbar.reset()")
     page.evaluate(CARET)
@@ -96,13 +84,11 @@ def drive(browser) -> None:
     say(f"the strip: {held}")
     page.screenshot(path=str(SHOTS / "default.png"))
     say("shot default.png")
-
     say("--- a button presses the command its key presses ---")
     page.evaluate(CARET)
     page.click('.orden-bar.docked button[aria-label="Bold"]')
     page.wait_for_timeout(300)
     say(f"after Bold: {page.evaluate(LINES)}")
-
     say("--- the reader's own list ---")
     page.evaluate(
         "() => { const bar = window.ordenApp.toolbar; bar.reset();"
@@ -113,12 +99,10 @@ def drive(browser) -> None:
     say(f"the strip now: {page.evaluate(BAR)}")
     page.screenshot(path=str(SHOTS / "chosen.png"))
     say("shot chosen.png")
-
     page.evaluate(CARET)
     page.click('.orden-bar.docked button[aria-label="Reading"]')
     page.wait_for_timeout(400)
     say(f"Reading from the bar turned the note: {page.evaluate('() => window.ordenApp.workspace.active.reading')}")
-
     say("--- the pane it is put together in ---")
     page.evaluate(KEYS, 0)
     page.evaluate("() => window.ordenApp.settings.show('mobile')")
@@ -126,7 +110,6 @@ def drive(browser) -> None:
     say(f"the pane says: {page.evaluate(PANE)}")
     page.screenshot(path=str(SHOTS / "pane.png"))
     say("shot pane.png")
-
     page.fill(".sheet .search input", "Footnote")
     page.wait_for_timeout(400)
     say(f"the list offers: {page.evaluate(OFFERS)}")
@@ -135,34 +118,27 @@ def drive(browser) -> None:
     say(f"after adding from the list: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
     page.screenshot(path=str(SHOTS / "added.png"))
     say("shot added.png")
-
     page.click('button[aria-label="Move down"]')
     page.wait_for_timeout(300)
     say(f"after one press of Move down: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
-
     page.click('button[aria-label="Take it off"]')
     page.wait_for_timeout(300)
     say(f"after Take it off: {page.evaluate('() => window.ordenApp.toolbar.ids')}")
-
     say("--- pulling the note down past its top ---")
     page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(500)
-
     say(f"a short pull: {pulling(page, 40)}")
     say(f"a long pull:  {pulling(page, 200, hold=True)}")
     page.wait_for_timeout(200)
     page.screenshot(path=str(SHOTS / "pulling.png"))
     say("shot pulling.png, with the finger still down")
-
     say(f"and on the lift the panel holds: {page.evaluate(LIFT)}")
     page.wait_for_timeout(600)
     page.screenshot(path=str(SHOTS / "pulled.png"))
     say(f"shot pulled.png; the panel is {page.evaluate(PANEL)}")
-
     say(f"a sideways drag: {pulling(page, 30, across=90)}")
     say(f"a scroll upwards: {pulling(page, -60)}")
     say(f"nothing is left held: {page.evaluate('() => window.ordenApp.pull.at === 0')}")
-
     page.evaluate("() => window.ordenApp.settings.show('mobile')")
     page.wait_for_timeout(600)
     page.click('button:text("Reset the bar")')
@@ -171,19 +147,15 @@ def drive(browser) -> None:
     say(f"and the account is told: {page.evaluate('() => window.ordenApp.toolbar.changed')}")
     page.screenshot(path=str(SHOTS / "reset.png"))
     say("shot reset.png")
-
     context.close()
-
 OFFERS = """
 () => [...document.querySelectorAll('.sheet .setting.button')]
   .map((one) => one.getAttribute('aria-label') ?? (one.querySelector('.name')?.textContent ?? '').trim())
   .slice(-4)
 """
-
 PANEL = """
 () => window.ordenApp.workspace.panel
 """
-
 PULL = """
 async ({ down, across, hold }) => {
   const view = window.orden
@@ -222,14 +194,12 @@ async ({ down, across, hold }) => {
   return { at, ready }
 }
 """
-
 LIFT = """
 () => {
   window.__pullFinger?.()
   return window.ordenApp.workspace.panel
 }
 """
-
 PANE = """
 () => {
   const sheet = document.querySelector('.sheet')
@@ -247,11 +217,8 @@ PANE = """
   return { rows: rows.length, marks: marks.slice(0, 12), named: named.slice(0, 12), touch }
 }
 """
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
-
     return DRIVE.verdict(f"shots in {SHOTS}")
-
 raise SystemExit(main())

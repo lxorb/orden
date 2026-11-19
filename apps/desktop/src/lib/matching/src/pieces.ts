@@ -5,7 +5,6 @@ export interface Piece {
   text: string
   hit: boolean
 }
-
 export function pieces(name: string, term: string): Piece[] {
   const hits = new Set<number>()
   for (const word of term.slice(0, LONGEST).split(/\s+/).filter(Boolean)) {
@@ -13,7 +12,6 @@ export function pieces(name: string, term: string): Piece[] {
     if (!at) return [{ text: name, hit: false }]
     for (const one of at) hits.add(one)
   }
-
   const out: Piece[] = []
   for (let index = 0; index < name.length; index++) {
     const hit = hits.has(index)
@@ -21,6 +19,5 @@ export function pieces(name: string, term: string): Piece[] {
     if (last?.hit === hit) last.text += name.charAt(index)
     else out.push({ text: name.charAt(index), hit })
   }
-
   return out
 }

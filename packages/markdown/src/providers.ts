@@ -1,7 +1,6 @@
 import { EMBEDDABLE } from './embeddable'
 
 export type Shape = 'video' | number
-
 export interface Provider {
   id: string
   name: string
@@ -10,13 +9,11 @@ export interface Provider {
   sandbox: string
   allow?: string
 }
-
 export interface WebEmbed {
   provider: Provider
   frame: string
   href: string
 }
-
 export interface Listed {
   id: string
   name: string
@@ -25,22 +22,17 @@ export interface Listed {
   hosts: readonly string[]
   frames: readonly (readonly [from: string, to: string])[]
 }
-
 interface Row extends Provider {
   hosts: readonly string[]
   frame: (url: URL) => string | null
 }
-
 const ID = /^[\w-]{1,64}$/
 const NAME = /^[\w.-]{1,80}$/
 const parts = (url: URL): string[] => url.pathname.split('/').filter(Boolean)
-
 const id = (piece: string | undefined): string | null => (piece !== undefined && ID.test(piece) ? piece : null)
-
 const quoted = (url: URL): string => encodeURIComponent(url.toString())
 const YOUTUBE = 'allow-scripts allow-same-origin allow-presentation'
 const PLAYER = 'encrypted-media; picture-in-picture; fullscreen'
-
 const ROWS: readonly Row[] = [
   {
     id: 'youtube',
@@ -56,7 +48,6 @@ const ROWS: readonly Row[] = [
       const shorts = path[0] === 'shorts' || path[0] === 'embed' || path[0] === 'live'
       const video = id(shorts ? path[1] : named)
       if (video === null) return null
-
       const at = seconds(url.searchParams.get('t'))
       return `https://www.youtube-nocookie.com/embed/${video}${at === null ? '' : `?start=${at}`}`
     },
@@ -103,7 +94,6 @@ const ROWS: readonly Row[] = [
       const thing = id(path[from + 1])
       if (thing === null || kind === undefined) return null
       if (!['track', 'album', 'playlist', 'episode', 'show', 'artist'].includes(kind)) return null
-
       return `https://open.spotify.com/embed/${kind}/${thing}`
     },
   },
@@ -128,7 +118,6 @@ const ROWS: readonly Row[] = [
       if (kind === undefined || !['file', 'design', 'proto', 'board', 'slides'].includes(kind)) {
         return null
       }
-
       return `https://www.figma.com/embed?embed_host=orden&url=${quoted(url)}`
     },
   },
@@ -169,87 +158,66 @@ const ROWS: readonly Row[] = [
     sandbox: YOUTUBE,
     frame: (url) => {
       if (url.hostname.endsWith('goo.gl')) return null
-
       const path = parts(url)
       if (path[0] !== 'maps' && url.pathname !== '/maps') return null
-
       const asked = url.searchParams.get('q') ?? placeOf(path) ?? pointOf(url.pathname)
       return asked === null ? null : `https://www.google.com/maps?q=${encodeURIComponent(asked)}&output=embed`
     },
   },
 ]
-
 function placeOf(path: readonly string[]): string | null {
   if (path[1] !== 'place' || path[2] === undefined) return null
-
   try {
     return decodeURIComponent(path[2]).replace(/\+/g, ' ') || null
   } catch {
     return null
   }
 }
-
 function pointOf(pathname: string): string | null {
   const found = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/.exec(pathname)
   return found === null ? null : `${found[1]},${found[2]}`
 }
-
 function seconds(written: string | null): number | null {
   if (written === null) return null
-
   const plain = /^(\d+)s?$/.exec(written)
   if (plain) return Number(plain[1])
-
   const parsed = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(written)
   if (!parsed || parsed[0] === '') return null
-
   const total = Number(parsed[1] ?? 0) * 3600 + Number(parsed[2] ?? 0) * 60 + Number(parsed[3] ?? 0)
   return total > 0 ? total : null
 }
-
 const hostOf = (url: URL): string => url.hostname.toLowerCase().replace(/^www\./, '')
 const LISTED = 'allow-scripts'
 const PIECE = /^[\w.:=@~-]{1,120}$/
-
 function filled(template: string, found: RegExpExecArray, url: URL): string | null {
   for (const marker of template.matchAll(/\$\d/g)) {
     const piece = found[Number(marker[0].slice(1))]
     if (piece === undefined || !PIECE.test(piece)) return null
   }
-
   return template.replace(/\$(?:path|url|\d)/g, (marker) => {
     if (marker === '$path') return url.pathname
     if (marker === '$url') return quoted(url)
-
     return found[Number(marker.slice(1))] ?? ''
   })
 }
-
 function listedFrame(row: Listed, url: URL): string | null {
   for (const [from, to] of row.frames) {
     const found = new RegExp(from).exec(url.pathname)
     if (found === null) continue
-
     const frame = filled(to, found, url)
     if (frame !== null) return frame
   }
-
   return null
 }
-
 function listed(url: URL, host: string): WebEmbed | null {
   for (const row of EMBEDDABLE) {
     if (!row.hosts.includes(host)) continue
-
     const frame = listedFrame(row, url)
     if (frame === null) continue
-
     return { provider: plainly(row), frame, href: url.toString() }
   }
-
   return null
 }
-
 const plainly = (row: Listed): Provider => ({
   id: row.id,
   name: row.name,
@@ -257,7 +225,6 @@ const plainly = (row: Listed): Provider => ({
   shape: row.shape,
   sandbox: LISTED,
 })
-
 export function webEmbed(address: string): WebEmbed | null {
   let url: URL
   try {
@@ -265,22 +232,16 @@ export function webEmbed(address: string): WebEmbed | null {
   } catch {
     return null
   }
-
   if (url.protocol !== 'https:') return null
-
   const host = hostOf(url)
   for (const row of ROWS) {
     if (!row.hosts.includes(host)) continue
-
     const frame = row.frame(url)
     if (frame === null) return null
-
     return { provider: named(row), frame, href: url.toString() }
   }
-
   return listed(url, host)
 }
-
 const named = (row: Row): Provider => ({
   id: row.id,
   name: row.name,
@@ -289,5 +250,4 @@ const named = (row: Row): Provider => ({
   sandbox: row.sandbox,
   ...(row.allow === undefined ? {} : { allow: row.allow }),
 })
-
 export const providers = (): Provider[] => [...ROWS.map(named), ...EMBEDDABLE.map(plainly)]

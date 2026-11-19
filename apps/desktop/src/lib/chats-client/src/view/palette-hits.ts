@@ -6,15 +6,12 @@ import { store } from './source.svelte'
 
 const UNDER_NOTES = 6
 const ALONE = 50
-
 const LINE = 140
-
 export async function messageHits(words: string): Promise<{ rows: PaletteMessage[]; only: boolean }> {
   const chats = store()
   if (!chats.ready || !chats.me) return { rows: [], only: false }
   const only = hasModifiers(chats.parse(words))
   const hits = (await chats.search(words)).slice(0, only ? ALONE : UNDER_NOTES)
-
   const members = new Map<string, Member[]>()
   for (const chat of new Set(hits.map((one) => one.chat))) {
     const listed = await chats.members(chat).catch(() => [])
@@ -23,7 +20,6 @@ export async function messageHits(words: string): Promise<{ rows: PaletteMessage
       listed.map((one) => ({ who: one.who, name: one.name ?? 'Deleted account' })),
     )
   }
-
   const rows = hits.flatMap(({ chat, message }): PaletteMessage[] => {
     const entry = chats.entry(chat)
     if (!entry?.path || message.deleted) return []

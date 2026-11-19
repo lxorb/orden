@@ -1,8 +1,6 @@
 
 from collections.abc import Callable
-
 from playwright.sync_api import Browser, Error as PlaywrightError, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -10,7 +8,6 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 WS = "window.ordenApp.workspace"
 ON_SCREEN = "ONLY-IN-THE-SESSION"
 IN_A_SET = "WORDS-IN-A-SET-OUT-OF-SIGHT"
-
 WATCH = """
 (() => {
   const armed = sessionStorage.getItem('launch-close');
@@ -43,14 +40,12 @@ WATCH = """
   }, 0);
 })();
 """
-
 def type_draft(page: Page, words: str) -> None:
     page.evaluate(f"()=>{WS}.openBlank()")
     page.wait_for_selector(".cm-content")
     page.locator(".cm-content").first.click()
     page.keyboard.type(words, delay=2)
     wait_for(page, f"()=>{WS}.active?.note.latest.includes({words!r})", "typed")
-
 def through_reload(page: Page, ask: Callable[[], object]) -> None:
     for _ in range(100):
         try:
@@ -61,7 +56,6 @@ def through_reload(page: Page, ask: Callable[[], object]) -> None:
                 raise
             page.wait_for_timeout(100)
     wrong("the page never came back from its reload")
-
 def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     page.evaluate(f"()=>{WS}.persist()")
     page.evaluate("(armed)=>sessionStorage.setItem('launch-close', armed)", armed)
@@ -88,7 +82,6 @@ def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     say(f"{armed}: both drafts back, {tabs} tabs")
     if tabs != total:
         wrong(f"{armed}: {tabs} tabs came back, not {total}")
-
 def drive(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     ctx.add_init_script(WATCH)
@@ -96,7 +89,6 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     first = page.evaluate(f"()=>{WS}.activeSpaceId")
     type_draft(page, ON_SCREEN)
-
     other = page.evaluate(f"async()=>{{const made=await {WS}.addSpace('Other'); return made?.id ?? made}}")
     page.evaluate(f"(id)=>{WS}.selectSpace(id)", other)
     wait_for(page, f"()=>{WS}.activeSpaceId==={other!r}", "in the other space")
@@ -112,9 +104,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, f"()=>{WS}.activeSpaceId==={first!r}", "back in the first space")
     total = page.evaluate(f"()=>{WS}.tabs.length")
     say(f"before: {total} tabs")
-
     kept_through(page, "persist", False, total)
     kept_through(page, "list up", True, total)
     kept_through(page, "set building", True, total)
-
 raise SystemExit(DRIVE.run(drive))

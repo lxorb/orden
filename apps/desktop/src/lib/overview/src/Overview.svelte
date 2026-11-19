@@ -56,12 +56,10 @@
   const MARGIN = 56
   const ROW = 60
   let barBottom = $state(0)
-
   function barOf(): number {
     const bar = document.querySelector('header[data-chrome="top"]')?.getBoundingClientRect()
     return bar && bar.height > 0 ? Math.max(0, bar.bottom) : 0
   }
-
   const roomTop = $derived((barBottom > 0 ? barBottom : ROW) + MARGIN / 2)
   let panes = $state<Record<string, { w: number; h: number }>>({})
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
@@ -76,13 +74,10 @@
     w: Math.max(width - 2 * MARGIN, 200),
     h: Math.max(height - roomTop - MARGIN, 160),
   })
-
   const spaceKey = $derived(workspace.activeSpaceId ?? 'global')
   const room = $derived<Box>(places.at(spaceKey) ?? { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h })
-
   let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
   let unmoved = false
-
   function lookAtSpace() {
     placeNew([spaceKey])
     const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
@@ -91,17 +86,13 @@
     if (!all || !cell) return
     camera = overlooking(wholeOf([cell]), wholeOf(cellBoxes), screenRoom, windowWide())
   }
-
   function windowWide(): number {
     const wide = resting.map((one) => one.w).sort((a, b) => a - b)
     return wide[Math.floor(wide.length / 2)] ?? screenRoom.w * WIDEST
   }
-
   const wholeOf = (cells: readonly Cell[]): Box =>
     around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
-
   const CELLS_APART = 4
-
   function nameWide(key: string): number {
     const name = [...document.querySelectorAll<HTMLElement>('[data-space-name]')].find(
       (one) => one.dataset.spaceName === key,
@@ -110,16 +101,13 @@
     const wide = name && name.offsetWidth > 0 ? name.offsetWidth : said.length * 13
     return wide * SPACE_NAMES_MOST
   }
-
   const outlineFor = (key: string, boxes: readonly Box[]): Outline | null =>
     outlineOf(boxes.map(captioned), NAME_ROOM, nameWide(key))
-
   function outlineAt(key: string): Outline | null {
     const inside = resting.filter((slot) => cellOf.get(slot.id) === key && !heldIds.has(slot.id))
     if (inside.length) return outlineFor(key, inside)
     return outlineOf([standIn(placeOf(key))], NAME_ROOM, nameWide(key))
   }
-
   function cellAlone(key: string): Outline | null {
     const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
     if (!panesOf) return null
@@ -128,15 +116,12 @@
     if (slots.length) return outlineFor(key, slots)
     return outlineOf([standIn(corner)], NAME_ROOM, nameWide(key))
   }
-
   function standIn(place: Box): Box {
     const w = (place.w * WIDEST) / 2
     const h = (w * place.h) / Math.max(place.w, 1)
     return { x: place.x + (place.w - w) / 2, y: place.y + (place.h - h) / 2, w, h }
   }
-
   const placeOf = (key: string): Box => (key === spaceKey ? room : (places.at(key) ?? room))
-
   function packedPlaces(keys: readonly string[], taken: readonly Outline[], middle: Point) {
     const cells = keys.flatMap((key) => {
       const outline = cellAlone(key)
@@ -150,7 +135,6 @@
     }
     return out
   }
-
   function placeNew(keys: readonly string[]) {
     const fresh = keys.filter((key) => !places.at(key))
     if (!fresh.length) return
@@ -164,7 +148,6 @@
       : { x: screenRoom.w / 2, y: screenRoom.h / 2 }
     places.arrange(packedPlaces(fresh, taken, middle))
   }
-
   async function tidy() {
     const keys = [spaceKey, ...shownKeys.filter((key) => key !== spaceKey)]
     places.tidy(packedPlaces(keys, [], { x: 0, y: 0 }))
@@ -172,11 +155,9 @@
     await laidOut()
     flyTo(lookingAt(wholeOf(cellBoxes), screenRoom))
   }
-
   let flyGoal: Camera | null = null
   let flyFrame = 0
   let flyLast = 0
-
   function flyTo(goal: Camera) {
     if (stillness()) {
       camera = goal
@@ -187,7 +168,6 @@
     flyLast = performance.now()
     flyFrame = requestAnimationFrame(flying)
   }
-
   function flying(now: number) {
     const goal = flyGoal
     if (!goal) return (flyFrame = 0)
@@ -208,48 +188,38 @@
       flyFrame = 0
     } else flyFrame = requestAnimationFrame(flying)
   }
-
   function handTakes() {
     unmoved = false
     flyGoal = null
     cancelAnimationFrame(flyFrame)
     flyFrame = 0
   }
-
   const NAMES_MOST = 2.5
   const SPACE_NAMES_MOST = 2
   const NAME_ROOM = 72
   const CAPTION_ROOM = 8 + 20 * NAMES_MOST
-
   const shapeOf = (paneId: string): number => {
     const measured = shownBox(paneId)
     const box = panes[paneId] ?? (measured && { w: measured.width, h: measured.height })
     return box && box.w > 0 && box.h > 0 ? box.w / box.h : 16 / 10
   }
-
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
-
   places.own(workspace.windowSlot)
-
   const ALL = 'orden:overview-spaces'
   let all = $state(storedText(ALL) !== 'this')
-
   function showAll(on: boolean) {
     all = on
     keep(ALL, on ? 'all' : 'this')
   }
-
   let sets = $state<{ frameOf: (key: string) => Frame | null } | null>(null)
   $effect(() => {
     if (all && !sets) return whenLoaded(spaceSets, (one) => (sets = one.sets))
   })
-
   const shownKeys = $derived.by((): string[] => {
     const others = all && sets && workspace.activeSpaceId ? workspace.shownSpaces : []
     const keys = others.map((one) => one.id).filter((key) => key !== spaceKey && sets?.frameOf(key))
     return [spaceKey, ...keys]
   })
-
   $effect(() => {
     const keys = shownKeys
     untrack(() => {
@@ -259,7 +229,6 @@
       if (unmoved && shown && out) lookAtSpace()
     })
   })
-
   function apartAll() {
     const taken: Outline[] = []
     const order = [...cellBoxes].sort((a, b) => Number(b.key === spaceKey) - Number(a.key === spaceKey))
@@ -278,7 +247,6 @@
       taken.push(shifted(outline, spot.x, spot.y))
     }
   }
-
   let held = $state<{
     id: string
     fx: number
@@ -290,9 +258,7 @@
     with: readonly { id: string; dx: number; dy: number; w: number; h: number }[]
     whole: string | null
   } | null>(null)
-
   let chosen = $state<readonly string[]>([])
-
   const heldBoxes = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
     const boxes = new Map<string, Box>()
@@ -302,9 +268,7 @@
     for (const one of held.with) boxes.set(one.id, { x: box.x + one.dx, y: box.y + one.dy, w: one.w, h: one.h })
     return boxes
   })
-
   const heldIds = $derived<ReadonlySet<string>>(new Set(held ? [held.id, ...held.with.map((one) => one.id)] : []))
-
   const gridCells = $derived(
     shownKeys.flatMap((key) => {
       const own = key === spaceKey
@@ -320,7 +284,6 @@
       ]
     }),
   )
-
   const resting = $derived.by(() => {
     const put = places.windows
     const all = gridCells.flatMap((one) => one.slots)
@@ -330,7 +293,6 @@
     })
     return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), 0, false)
   })
-
   const cellOf = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
     const map = new Map(gridCells.flatMap((one) => one.slots.map((slot) => [slot.id, one.key] as const)))
@@ -338,7 +300,6 @@
     if (landing?.kind === 'space') for (const id of heldIds) map.set(id, landing.key)
     return map
   })
-
   const slots = $derived.by((): Slot[] => {
     const id = held?.id
     const key = id ? cellOf.get(id) : undefined
@@ -349,10 +310,8 @@
       return by ? { ...slot, x: slot.x + by.x, y: slot.y + by.y } : slot
     })
   })
-
   let aside = $state<Record<string, Point>>({})
   const offsetOf = (key: string): Point | null => aside[key] ?? null
-
   function pushAside() {
     const whole = held?.whole
     const carried = whole ? outlineFor(whole, [...heldBoxes.values()]) : null
@@ -363,7 +322,6 @@
     })
     aside = pushedAside(carried, others, CELLS_APART, aside)
   }
-
   const laid = $derived({
     slots,
     seams: gridCells.flatMap((one) =>
@@ -373,7 +331,6 @@
       ),
     ),
   })
-
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
       const inside = resting.filter((slot) => cellOf.get(slot.id) === one.key && !heldIds.has(slot.id))
@@ -382,7 +339,6 @@
       return { key: one.key, box: lying ? captioned(lying) : standIn(placeOf(one.key)) }
     }),
   )
-
   const cellsShown = $derived(
     all
       ? cellBoxes.map((one) => ({
@@ -393,7 +349,6 @@
         }))
       : [],
   )
-
   const byId = $derived(new Map(workspace.tabs.map((tab) => [tab.id, tab])))
   const slotOf = $derived(new Map(laid.slots.map((slot) => [slot.id, slot])))
   const unzoom = $derived(Math.max(1, 1 / camera.zoom))
@@ -403,16 +358,13 @@
       return tab ? [{ slot, tab }] : []
     }),
   )
-
   function faceOf(slot: Slot) {
     const pane = panes[slot.paneId]
     if (pane && pane.w > 0) return { w: pane.w, h: pane.w * (slot.h / slot.w) }
     return { w: slot.w * 3, h: slot.h * 3 }
   }
-
   const captioned = (box: Box): Box => ({ ...box, h: box.h + CAPTION_ROOM })
   const CAPTION_NEAR = 60
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const flights = new Map<string, Flight>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -423,7 +375,6 @@
   const closers = new Map<string, HTMLElement>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const arrived = new Set<string>()
-
   function insideOf(key: string): Box[] {
     const boxes: Box[] = []
     for (const slot of laid.slots) {
@@ -436,7 +387,6 @@
     const by = offsetOf(key)
     return [by ? { ...empty, x: empty.x + by.x, y: empty.y + by.y } : empty]
   }
-
   function homeOf(tab: Tab, slot: Slot): Pose {
     if (workspace.panes.at(tab.paneId)?.activeTabId === tab.id) {
       const laidOut = panesAsWindows.get(tab.id)
@@ -453,21 +403,17 @@
     if (chip && chip.width > 0 && chip.right > 0 && chip.left < width) return onCanvas(chip, 1)
     return { ...lifted(slot), alpha: 0 }
   }
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const riders = new Map<string, { dx: number; dy: number; width: number }>()
-
   function rides(id: string, box: DOMRect) {
     const chip = marked('box', id)?.getBoundingClientRect()
     if (!chip || chip.width <= 0) return void riders.delete(id)
     riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width })
   }
-
   function onCanvas(box: DOMRect, tab: number): Pose {
     const { x, y, w, h } = boxToCanvas(camera, { x: box.x, y: box.y, w: box.width, h: box.height })
     return { x, y, w, h, tab, alpha: 1 }
   }
-
   const lying = (slot: Slot): Pose => ({
     x: slot.x,
     y: slot.y,
@@ -476,7 +422,6 @@
     tab: 0,
     alpha: 1,
   })
-
   function lifted(slot: Slot): Pose {
     const less = 0.9
     return {
@@ -488,7 +433,6 @@
       alpha: 0,
     }
   }
-
   let at = $state<string | null>(null)
   let frameAsked = 0
   let last = 0
@@ -498,7 +442,6 @@
   let entered = 0
   let stood = true
   const STANDS = 1500
-
   function readying(done: Promise<unknown>) {
     if (started) return
     unready++
@@ -507,13 +450,11 @@
     }
     void done.then(settled, settled)
   }
-
   function fly() {
     if (frameAsked) return
     last = performance.now()
     frameAsked = requestAnimationFrame(tick)
   }
-
   function tick(now: number) {
     frameAsked = 0
     if (!started && ((unready > 0 && now - entered < READY) || (!stood && now - entered < STANDS))) {
@@ -543,15 +484,12 @@
       if (!out) gone()
     }
   }
-
   let onTheWay = $state(false)
-
   const stageSize = $derived.by(() => {
     const boxes = Object.values(panes).filter((one) => one.w > 0 && one.h > 0)
     const widest = boxes.sort((a, b) => b.w * b.h - a.w * a.h)[0]
     return { w: Math.round(widest?.w ?? 1200), h: Math.round(widest?.h ?? 800) }
   })
-
   function landed() {
     if (!onTheWay) return
     onTheWay = false
@@ -562,12 +500,10 @@
     }
     for (const id of flights.keys()) paint(id)
   }
-
   function stackOf(id: string): string {
     if (heldIds.has(id)) return 'calc(var(--z-bar) - 1)'
     return id === workspace.activeTabId ? 'var(--z-float)' : 'var(--z-popover)'
   }
-
   const opening = spring(0, SHARE)
   let canvasNode = $state<HTMLElement>()
   let top = $state<HTMLElement>()
@@ -575,7 +511,6 @@
   let bar: HTMLElement | null = null
   let opens: HTMLElement[] = []
   let slides: HTMLElement[] = []
-
   function opensOf() {
     opens = [
       ...document.querySelectorAll<HTMLElement>(
@@ -585,20 +520,16 @@
     slides = [...document.querySelectorAll<HTMLElement>("[data-chrome='start'], [data-chrome='end']")]
     bar = document.querySelector<HTMLElement>("header[data-chrome='top']")
   }
-
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
     for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
     for (const one of slides) one.style.setProperty('--overview-slide', value)
     bar?.style.setProperty('--overview-bar', value)
   }
-
   let started = true
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const homes = new Map<string, Pose>()
   const NEAR = 14
-
   function fromHome(id: string): number | null {
     const home = homes.get(id)
     const pose = flights.get(id)?.pose
@@ -607,7 +538,6 @@
       Math.abs(pose.x - home.x) + Math.abs(pose.y - home.y) + Math.abs(pose.w - home.w) + Math.abs(pose.h - home.h)
     return off * camera.zoom
   }
-
   function awayFromStrip() {
     if (!started) return
     const away: string[] = []
@@ -625,7 +555,6 @@
     if (away.join(' ') !== tabOverview.out.join(' ')) tabOverview.out = away
     if (lifted.join(' ') !== tabOverview.lifted.join(' ')) tabOverview.lifted = lifted
   }
-
   function begin() {
     started = true
     onTheWay = true
@@ -633,7 +562,6 @@
     opensOf()
     for (const id of flights.keys()) paint(id)
   }
-
   function paint(id: string) {
     const flight = flights.get(id)
     const parts = elements.get(id)
@@ -664,7 +592,6 @@
     closer.style.translate = `${camera.x + (slot.x + slot.w) * camera.zoom}px ${cornerY}px`
     closer.style.visibility = cornerY < barBottom ? 'hidden' : ''
   }
-
   function paintRider(id: string, near: number | null = null) {
     const node = riderNodes.get(id)
     if (!node) return
@@ -686,10 +613,8 @@
     node.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
     node.style.opacity = String(alpha)
   }
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const riderNodes = new Map<string, HTMLElement>()
-
   function riding(node: HTMLElement, id: string) {
     const copy = ridersDrawn[id]
     if (copy) node.replaceChildren(copy)
@@ -701,12 +626,10 @@
       },
     }
   }
-
   function movesAsWindow(id: string): boolean {
     const pane = byId.get(id)?.paneId
     return panesAsWindows.has(id) && !!pane && workspace.panes.at(pane)?.activeTabId === id
   }
-
   function movePane(id: string, pose: Pose) {
     const one = panesAsWindows.get(id)
     if (!one) return
@@ -718,7 +641,6 @@
       pointerEvents: 'none',
     })
   }
-
   $effect(() => {
     const looking = { ...camera }
     untrack(() => {
@@ -726,13 +648,10 @@
       for (const id of flights.keys()) paint(id)
     })
   })
-
   const PANE_STYLES = ['transform', 'transform-origin', 'clip-path', 'opacity', 'z-index', 'pointer-events']
-
   function putBack(node: HTMLElement) {
     for (const name of PANE_STYLES) node.style.removeProperty(name)
   }
-
   function aimAll() {
     const hands = untrack(() => heldIds)
     for (const { slot, tab } of untrack(() => windows)) {
@@ -762,12 +681,9 @@
     }
     fly()
   }
-
   let corner = 0
-
   const cardCorner = (): number =>
     parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-radius')) || 0
-
   function cornersOf(node: HTMLElement): Corners {
     const style = getComputedStyle(node)
     const of = (one: string) => parseFloat(one) || 0
@@ -778,7 +694,6 @@
       of(style.borderBottomLeftRadius),
     ]
   }
-
   function enter() {
     const again = shown
     if (!again) {
@@ -837,7 +752,6 @@
       aimAll()
     }
   }
-
   function measure() {
     const measured: Record<string, { w: number; h: number }> = {}
     for (const pane of workspace.panes.all) {
@@ -846,13 +760,10 @@
     }
     panes = measured
   }
-
   $effect(() => arrivedIn(spaceKey))
-
   function arrivedIn(space: string) {
     if (space && untrack(() => shown && out)) untrack(lookAtSpace)
   }
-
   function leave() {
     held = null
     pressed = null
@@ -871,7 +782,6 @@
     if (started) onTheWay = true
     aimAll()
   }
-
   function gone() {
     homes.clear()
     shown = false
@@ -893,14 +803,11 @@
     opens = []
     slides = []
   }
-
   const close = () => (tabOverview.open = false)
-
   $effect(() => {
     if (tabOverview.open) untrack(enter)
     else if (untrack(() => shown)) untrack(leave)
   })
-
   let layers = 0
   $effect(() => {
     if (!shown || !tabOverview.open) return
@@ -908,11 +815,9 @@
     layers = overlays.depth
     return gone
   })
-
   function holdKeys() {
     ;(elements.get(at ?? '')?.window ?? canvasNode)?.focus({ preventScroll: true })
   }
-
   function keysLost() {
     if (!shown || !tabOverview.open || overlays.depth > layers) return
     const at = document.activeElement
@@ -921,7 +826,6 @@
   $effect(() => {
     if (windows.length) queueMicrotask(keysLost)
   })
-
   function keptFromBehind(event: FocusEvent) {
     if (!shown || !tabOverview.open || overlays.depth > layers) return
     const to = event.target
@@ -930,14 +834,11 @@
     holdKeys()
   }
   $effect(() => closeOnBack(shown && tabOverview.open, close))
-
   let arriving: string[] = []
   let arrivals = $state(0)
-
   $effect(() => {
     if (arrivals) untrack(flyIn)
   })
-
   function flyIn() {
     const come = arriving.filter((id) => elements.has(id) && !flights.has(id))
     arriving = []
@@ -953,7 +854,6 @@
     for (const id of come) paint(id)
     aimAll()
   }
-
   function placed(node: HTMLElement, id: string) {
     const face = node.querySelector<HTMLElement>(':scope > .face-box')
     const chip = node.querySelector<HTMLElement>(':scope > .chip')
@@ -970,7 +870,6 @@
       },
     }
   }
-
   function named(node: HTMLElement, id: string) {
     captions.set(id, node)
     return {
@@ -979,11 +878,9 @@
       },
     }
   }
-
   function holdingTab(node: HTMLElement, copy: HTMLElement | undefined) {
     if (copy) node.replaceChildren(copy)
   }
-
   function closing(node: HTMLElement, id: string) {
     closers.set(id, node)
     return {
@@ -992,40 +889,32 @@
       },
     }
   }
-
   function shut(event: MouseEvent, tab: Tab) {
     event.stopPropagation()
     void workspace.closeAsking(tab.id)
   }
-
   $effect(() => relaid(laid))
-
   function relaid(now: Laid) {
     if (now.slots.length && untrack(() => shown)) untrack(aimAll)
   }
-
   function open(tab: Tab) {
     workspace.activate(tab.id)
     if (workspace.panes.at(tab.paneId)) close()
     else void cameForward(tab).then(close)
   }
-
   async function cameForward(tab: Tab) {
     for (let wait = 0; wait < 60 && !workspace.panes.at(tab.paneId); wait++) {
       await new Promise((go) => requestAnimationFrame(go))
     }
   }
-
   let pressed: { id: string; x: number; y: number; pointer: number; whole: string | null } | null = null
   let dragged = false
-
   function down(event: PointerEvent, id: string) {
     if (event.button !== 0 || !out) return
     pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId, whole: null }
     dragged = false
     event.stopPropagation()
   }
-
   function clicked(event: MouseEvent, tab: Tab) {
     if (dragged) {
       dragged = false
@@ -1037,7 +926,6 @@
     }
     open(tab)
   }
-
   function carriedWith(id: string, whole: string | null): string[] {
     const lying = (one: string) => flights.has(one) && resting.some((slot) => slot.id === one)
     if (whole)
@@ -1049,7 +937,6 @@
     chosen = []
     return [id]
   }
-
   function moved(event: PointerEvent) {
     if (pressed?.pointer !== event.pointerId) return
     const id = pressed.id
@@ -1094,7 +981,6 @@
     for (const one of heldIds) follow(one)
     fly()
   }
-
   function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
     if (!held || held.whole) return null
     const from = held.from
@@ -1104,7 +990,6 @@
     const cell = all ? cellAt(cells, now, point.x, point.y, camera.zoom) : from
     return cell === from ? null : { kind: 'space', key: cell }
   }
-
   function pushedNow(): { key: string; boxes: Box[] } | null {
     if (!held) return null
     const boxes = [...heldIds].flatMap((id) => {
@@ -1113,9 +998,7 @@
     })
     return { key: held.landing?.key ?? held.from, boxes }
   }
-
   let hand: Point = { x: 0, y: 0 }
-
   function follow(id: string) {
     const box = heldBoxes.get(id)
     const flight = flights.get(id)
@@ -1123,7 +1006,6 @@
     flight.hold(box.x, box.y, box.w, box.h)
     paint(id)
   }
-
   function up(event: PointerEvent) {
     if (pressed?.pointer !== event.pointerId) return
     pressed = null
@@ -1165,7 +1047,6 @@
     }
     aimAll()
   }
-
   async function settleApart(key: string, itself: boolean) {
     await laidOut()
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read here and thrown away
@@ -1193,7 +1074,6 @@
       outlines.set(mover, shifted(outline, spot.x, spot.y))
     }
   }
-
   function shiftSpace(key: string, dx: number, dy: number) {
     const own = resting.filter((one) => cellOf.get(one.id) === key)
     places.keepWindows(
@@ -1203,14 +1083,12 @@
     const place = places.at(key)
     if (place) places.arrange({ [key]: { ...place, x: place.x + dx, y: place.y + dy } })
   }
-
   function cancelled() {
     pressed = null
     held = null
     aside = {}
     aimAll()
   }
-
   async function carry(
     ids: readonly string[],
     landing: Landing & { kind: 'space' },
@@ -1235,7 +1113,6 @@
     }
     drop(ids, landing)
   }
-
   function drop(ids: readonly string[], landing: Landing) {
     if (landing.kind === 'space') {
       void spaceMoving()
@@ -1249,7 +1126,6 @@
     if (!id) return
     const into = stripPlace(tabsOf(landing.paneId), id, landing.before)
     if (into === null) return
-
     const fronts = workspace.panes.all.map((one) => [one.id, one.activeTabId] as const)
     const working = workspace.activeTabId
     workspace.moveTab(id, landing.paneId, into)
@@ -1257,7 +1133,6 @@
     for (const [pane, front] of fronts) if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)
     if (working && paneOf(working)) workspace.activate(working)
   }
-
   function keyed(event: KeyboardEvent) {
     if (overlays.depth > layers) return
     const undo = shortcuts.pressed('edit.undo', event)
@@ -1284,12 +1159,10 @@
     camera = showing(camera, next.slot, screenRoom)
     elements.get(next.tab.id)?.window.focus({ preventScroll: true })
   }
-
   const spaces = $derived(workspace.shownSpaces)
   let zoomGoal: { zoom: number; at: Point; ease: number } | null = null
   let zoomFrame = 0
   let zoomLast = 0
-
   function zooming(now: number) {
     const goal = zoomGoal
     if (!goal) return (zoomFrame = 0)
@@ -1300,7 +1173,6 @@
       zoomFrame = 0
     } else zoomFrame = requestAnimationFrame(zooming)
   }
-
   function wheeled(node: HTMLElement) {
     const turn = (event: WheelEvent) => {
       event.preventDefault()
@@ -1325,11 +1197,9 @@
       },
     }
   }
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read by the handlers, never rendered
   const touching = new Map<number, Point>()
   let panning = false
-
   function grounded(event: PointerEvent) {
     if (!(event.target instanceof Element) || !event.target.closest('.floor')) return
     const space = out && event.button === 0 && !touching.size ? nameAt(event) : null
@@ -1364,7 +1234,6 @@
     event.target.setPointerCapture(event.pointerId)
     panning = touching.size > 1
   }
-
   function nameAt(point: { clientX: number; clientY: number }): string | null {
     for (const name of document.querySelectorAll<HTMLElement>('[data-space-name]')) {
       const box = name.getBoundingClientRect()
@@ -1373,7 +1242,6 @@
     }
     return null
   }
-
   let carrying = $state<{
     key: string
     pointer: number
@@ -1381,7 +1249,6 @@
     y: number
     moving: boolean
   } | null>(null)
-
   function carried(event: PointerEvent) {
     const one = carrying
     if (one?.pointer !== event.pointerId) return
@@ -1399,7 +1266,6 @@
     const pushed = pushedAside(shifted(outline, by.x, by.y), others, CELLS_APART, aside)
     aside = { ...pushed, [one.key]: by }
   }
-
   function setDown(event: PointerEvent) {
     const one = carrying
     if (one?.pointer !== event.pointerId) return
@@ -1413,7 +1279,6 @@
     }
     void settleApart(one.key, true)
   }
-
   function dragging(event: PointerEvent) {
     if (carrying) return carried(event)
     if (pressed?.whole && pressed.pointer === event.pointerId) return moved(event)
@@ -1437,7 +1302,6 @@
     camera = panned(camera, now.x - was.x, now.y - was.y)
     touching.set(event.pointerId, now)
   }
-
   function letGo(event: PointerEvent) {
     if (carrying) return setDown(event)
     if (pressed?.whole && pressed.pointer === event.pointerId) {
@@ -1613,27 +1477,22 @@
     inherits: false;
     initial-value: 0;
   }
-
   @property --overview-bar {
     syntax: '<number>';
     inherits: false;
     initial-value: 0;
   }
-
   @property --overview-lift {
     syntax: '<number>';
     inherits: false;
     initial-value: 1;
   }
-
   :global(html[data-overview='slide'] [data-chrome='start']) {
     translate: calc(-100% * var(--overview-slide, 0)) 0;
   }
-
   :global(html[data-overview='slide'] [data-chrome='end']) {
     translate: calc(100% * var(--overview-slide, 0)) 0;
   }
-
   :global(
     html[data-overview]
       :is(header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle]):not(
@@ -1645,7 +1504,6 @@
     opacity: calc(1 - var(--overview-open, 1));
     pointer-events: none;
   }
-
   .canvas {
     --overview-caption: var(--text-base);
     --overview-cell-name: calc(var(--text-base) * 1.6);
@@ -1657,13 +1515,11 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .floor {
     position: fixed;
     inset: 0;
     z-index: var(--z-raised);
   }
-
   .top {
     position: fixed;
     z-index: var(--z-bar);
@@ -1675,11 +1531,9 @@
     translate: -50% calc(-50% + (1 - var(--overview-open, 0)) * -8px);
     opacity: var(--overview-open, 0);
   }
-
   .tidy {
     white-space: nowrap;
   }
-
   .under {
     --overview-caption: var(--text-base);
     --overview-cell-name: calc(var(--text-base) * 1.6);
@@ -1691,7 +1545,6 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .world {
     position: absolute;
     top: 0;
@@ -1700,7 +1553,6 @@
     height: 0;
     transform-origin: 0 0;
   }
-
   .seams {
     position: absolute;
     top: 0;
@@ -1709,7 +1561,6 @@
     pointer-events: none;
     opacity: var(--overview-open, 0);
   }
-
   .seams path {
     fill: none;
     stroke: color-mix(in srgb, var(--accent) 55%, var(--muted));
@@ -1717,7 +1568,6 @@
     stroke-linecap: round;
     stroke-dasharray: none;
   }
-
   .window {
     position: fixed;
     top: 0;
@@ -1737,53 +1587,44 @@
     touch-action: none;
     pointer-events: auto;
   }
-
   :global(html[data-overview] header[data-chrome='top']) {
     z-index: var(--z-bar);
   }
-
   .window,
   .closer,
   .rider {
     z-index: var(--z-popover);
   }
-
   .window.is-front,
   .closer.is-front,
   .rider.is-front {
     z-index: var(--z-float);
   }
-
   .window.is-held,
   .closer.is-held {
     z-index: calc(var(--z-bar) - 1);
   }
-
   .window.is-held {
     box-shadow:
       var(--shadow-lg),
       0 32px 80px -16px rgb(0 0 0 / 0.35);
     cursor: grabbing;
   }
-
   .face-box {
     position: absolute;
     top: 0;
     left: 0;
     transform-origin: 0 0;
   }
-
   .chip.is-copy {
     background: none;
   }
-
   .chip-copy {
     position: relative;
     display: block;
     width: 100%;
     height: 100%;
   }
-
   .chip {
     position: absolute;
     top: 0;
@@ -1794,7 +1635,6 @@
     background: var(--tab-active, var(--surface));
     pointer-events: none;
   }
-
   .chip-inner {
     display: flex;
     align-items: center;
@@ -1804,13 +1644,11 @@
     color: var(--text);
     white-space: nowrap;
   }
-
   .chip-name,
   .caption-name {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .ring {
     --ring: 1.5px;
     position: absolute;
@@ -1823,29 +1661,24 @@
     border-radius: inherit;
     pointer-events: none;
   }
-
   .window.unsaved .ring {
     --ring: 2px;
     border-style: dashed;
     border-color: color-mix(in srgb, var(--muted) 75%, transparent);
   }
-
   .window:hover .ring {
     border-color: var(--line-strong);
   }
-
   .window.is-chosen .ring {
     --ring: 3px;
     border-style: solid;
     border-color: var(--accent);
   }
-
   .window.is-at:focus-visible .ring {
     --ring: 2.5px;
     border-style: solid;
     border-color: var(--accent);
   }
-
   .rider {
     position: fixed;
     top: 0;
@@ -1854,7 +1687,6 @@
     transform-origin: 0 0;
     pointer-events: none;
   }
-
   .closer {
     --closer-size: 22px;
     position: fixed;
@@ -1881,36 +1713,30 @@
       color var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
   }
-
   .closer :global(.orden-cross) {
     width: 12px;
     height: 12px;
     stroke-width: 2.25;
   }
-
   .window:hover + .closer,
   .closer:hover,
   .closer:focus-visible {
     opacity: var(--near, 0);
     pointer-events: auto;
   }
-
   .closer.is-held {
     visibility: hidden;
   }
-
   .closer:hover,
   .closer:focus-visible {
     color: color-mix(in srgb, var(--danger) 86%, var(--text-strong));
     background: linear-gradient(var(--surface-hover), var(--surface-hover)), var(--surface-2);
     transform: scale(1.18) translate(-50%, -50%);
   }
-
   .closer:active {
     background: linear-gradient(var(--surface-press), var(--surface-press)), var(--surface-2);
     transform: scale(0.94) translate(-50%, -50%);
   }
-
   .caption {
     position: absolute;
     top: 0;

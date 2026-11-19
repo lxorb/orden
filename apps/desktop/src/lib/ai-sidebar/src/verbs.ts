@@ -22,19 +22,15 @@ const VERBS: Record<string, string> = Object.fromEntries(
     Delegated: 'run_agent',
   }).flatMap(([verb, names]) => names.split(' ').map((name) => [name, verb])),
 )
-
 export function bareName(verb: string): string {
   return verb.replace(/^mcp__.+?__/, '')
 }
-
 export function verbOf(verb: string): string | null {
   return VERBS[bareName(verb)] ?? null
 }
-
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
-
 function host(url: string): string {
   try {
     return new URL(url).host || url
@@ -42,11 +38,9 @@ function host(url: string): string {
     return url
   }
 }
-
 function noteName(path: string): string {
   return nameOf(path).replace(/\.(?:md|markdown|canvas|pdf)$/i, '')
 }
-
 export function objectOf(args: unknown): string {
   const said = record(args)
   for (const field of ['path', 'to', 'from', 'note', 'file']) {
@@ -61,7 +55,6 @@ export function objectOf(args: unknown): string {
   }
   return ''
 }
-
 export function helperOf(part: { verb: string; result?: { text: string; agent?: string } | undefined }): string | null {
   const name = bareName(part.verb)
   if (name !== 'run_agent' && name !== 'agent_result') return null

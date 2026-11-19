@@ -4,7 +4,6 @@ import type { Remote } from './engine'
 import { keepsRow } from './fold'
 
 export const CHAT = `c_${'a'.repeat(32)}`
-
 export const messageOf = (seq: number, more: Partial<Message> = {}): Message => ({
   id: `m${seq}`,
   seq,
@@ -21,7 +20,6 @@ export const messageOf = (seq: number, more: Partial<Message> = {}): Message => 
   replies: 0,
   ...more,
 })
-
 export const chatRow = (id: string, more: Partial<ChatRow> = {}): ChatRow => ({
   id,
   space: 'space',
@@ -37,7 +35,6 @@ export const chatRow = (id: string, more: Partial<ChatRow> = {}): ChatRow => ({
   meta: { topic: '', posting: 'writers', slowmode: 0 },
   ...more,
 })
-
 export function random(seed: number): () => number {
   let state = seed >>> 0 || 1
   return () => {
@@ -47,21 +44,17 @@ export function random(seed: number): () => number {
     return (state >>> 0) / 2 ** 32
   }
 }
-
 export class Account {
   readonly log: Logged[] = []
   private clock = 1_000_000
-
   state(): Map<string, Message> {
     const state = chatState()
     for (const event of this.log) apply(state, event)
     return state.messages
   }
-
   head(): number {
     return this.log.at(-1)?.seq ?? 0
   }
-
   place(who: Who, event: Event): Result {
     const had = this.log.find((one) => one.id === event.id)
     if (had) return { id: event.id, seq: had.seq, at: had.at }
@@ -82,7 +75,6 @@ export class Account {
     this.log.push(logged)
     return { id: event.id, seq: logged.seq, at: logged.at }
   }
-
   remote(who: Who, online: () => boolean): Remote {
     const head = () =>
       chatRow(CHAT, {

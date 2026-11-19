@@ -2,7 +2,6 @@
     not(any(target_os = "linux", target_os = "windows", target_os = "macos")),
     allow(dead_code)
 )]
-
 #[cfg(target_os = "linux")]
 mod audio;
 #[cfg(target_os = "linux")]
@@ -38,22 +37,18 @@ use mac::{capture, clipboard, input};
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 mod audio {
     pub struct Sound;
-
     impl Sound {
         pub fn start(_monitor: &str) -> Option<Sound> {
             None
         }
-
         #[allow(clippy::unused_self)]
         pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
             None
         }
     }
 }
-
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 const MOST_COPIED: usize = 200 * 1024;
-
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 fn clipped(text: &str) -> &str {
     let mut end = text.len().min(MOST_COPIED);
@@ -74,7 +69,6 @@ use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, Webview};
 
 const REFUSED: &str = "only the app's own windows may host an application";
-
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum Run {
@@ -89,7 +83,6 @@ pub enum Run {
         cwd: Option<String>,
     },
 }
-
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub struct View {
     pub width: f64,
@@ -98,17 +91,14 @@ pub struct View {
     #[serde(default = "sixty")]
     pub hz: f64,
 }
-
 fn sixty() -> f64 {
     60.0
 }
-
 #[derive(Clone, Debug)]
 pub struct Screen {
     pub display: String,
     pub hz: f64,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Said {
     pub state: &'static str,
@@ -116,14 +106,12 @@ pub struct Said {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub why: Option<&'static str>,
 }
-
 impl Said {
     const RUNNING: Said = Said {
         state: "running",
         code: None,
         why: None,
     };
-
     fn ended(stopped: bool, code: Option<i32>) -> Said {
         Said {
             state: if stopped { "stopped" } else { "exited" },
@@ -132,7 +120,6 @@ impl Said {
         }
     }
 }
-
 struct Running {
     pid: u32,
     events: Mutex<Option<Channel<Said>>>,
@@ -151,13 +138,11 @@ struct Running {
     #[cfg(target_os = "macos")]
     clipboard: Arc<clipboard::Clipboard>,
 }
-
 impl Running {
     fn watched_by(&self, events: Channel<Said>) {
         *self.events.held() = Some(events);
         self.tell(Said::RUNNING);
     }
-
     fn tell(&self, said: Said) {
         let events = self.events.held();
         if let Some(channel) = events.as_ref() {
@@ -165,18 +150,15 @@ impl Running {
         }
     }
 }
-
 #[derive(Default)]
 struct Starting {
     keys: Mutex<HashSet<String>>,
     done: Condvar,
 }
-
 struct Claim<'a> {
     starting: &'a Starting,
     key: String,
 }
-
 impl Starting {
     fn claim(&self, key: &str) -> Claim<'_> {
         let mut keys = self.keys.held();
@@ -193,14 +175,12 @@ impl Starting {
         }
     }
 }
-
 impl Drop for Claim<'_> {
     fn drop(&mut self) {
         self.starting.keys.held().remove(&self.key);
         self.starting.done.notify_all();
     }
 }
-
 #[derive(Default)]
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
@@ -210,12 +190,10 @@ pub struct Hosted {
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     peers: Mutex<HashMap<String, stream::Peer>>,
 }
-
 impl Hosted {
     fn apps(&self) -> MutexGuard<'_, HashMap<String, Arc<Running>>> {
         self.apps.held()
     }
-
     fn kept(&self, key: &str, running: &Arc<Running>) -> bool {
         let mut apps = self.apps();
         if self.closing.load(Ordering::SeqCst) {
@@ -224,25 +202,21 @@ impl Hosted {
         apps.insert(key.to_owned(), running.clone());
         true
     }
-
     fn closed(&self) -> Vec<Arc<Running>> {
         let mut apps = self.apps();
         self.closing.store(true, Ordering::SeqCst);
         apps.drain().map(|(_, one)| one).collect()
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     fn peers(&self) -> MutexGuard<'_, HashMap<String, stream::Peer>> {
         self.peers.held()
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     fn end_peer(&self, key: &str) {
         let gone = self.peers().remove(key);
         drop(gone);
     }
 }
-
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn hosting(app: &AppHandle, key: &str, running: &Arc<Running>) {
     if !app.state::<Hosted>().kept(key, running) {
@@ -250,7 +224,6 @@ fn hosting(app: &AppHandle, key: &str, running: &Arc<Running>) {
     }
     running.tell(Said::RUNNING);
 }
-
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn let_go(app: &AppHandle, key: &str, running: &Arc<Running>) -> bool {
     let hosted = app.state::<Hosted>();
@@ -265,25 +238,21 @@ fn let_go(app: &AppHandle, key: &str, running: &Arc<Running>) -> bool {
     }
     running.stopping.load(Ordering::SeqCst)
 }
-
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn still_running(apps: &HashMap<String, Arc<Running>>, key: &str, running: &Arc<Running>) -> bool {
     apps.get(key).is_some_and(|one| Arc::ptr_eq(one, running))
 }
-
 fn owner(webview: &Webview) -> Result<(), String> {
     orden_base::labels::own_window(webview)
         .map(drop)
         .map_err(|_| REFUSED.to_owned())
 }
-
 fn found(webview: &Webview, key: &str) -> Result<Option<Arc<Running>>, String> {
     owner(webview)?;
     usable(key)?;
     let running = webview.state::<Hosted>().apps().get(key).cloned();
     Ok(running)
 }
-
 fn usable(key: &str) -> Result<(), String> {
     let fits = !key.is_empty()
         && key.len() <= 128
@@ -296,7 +265,6 @@ fn usable(key: &str) -> Result<(), String> {
         Err("not an application's key".to_owned())
     }
 }
-
 #[tauri::command]
 pub async fn apps_installed(webview: Webview) -> Result<Vec<installed::Listed>, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Vec<installed::Listed>, String> {
@@ -305,7 +273,6 @@ pub async fn apps_installed(webview: Webview) -> Result<Vec<installed::Listed>, 
     })
     .await
 }
-
 #[tauri::command]
 pub async fn apps_start(
     webview: Webview,
@@ -323,7 +290,6 @@ pub async fn apps_start(
             running.watched_by(events);
             return Ok(());
         }
-
         let (argv, cwd) = match &run {
             Run::Installed { id } => {
                 let entry = installed::find(id).ok_or("missing")?;
@@ -355,7 +321,6 @@ pub async fn apps_start(
     })
     .await
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn run_on_its_display(
     _app: AppHandle,
@@ -367,17 +332,14 @@ fn run_on_its_display(
 ) -> Result<(), String> {
     Err("isolation".to_owned())
 }
-
 #[cfg(target_os = "windows")]
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn desk_size(view: View) -> (u32, u32) {
     let side = |css: f64| ((css * view.dpr).round().clamp(64.0, 8192.0) as u32) & !1;
     (side(view.width), side(view.height))
 }
-
 #[cfg(target_os = "windows")]
 const HANDED_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
-
 #[cfg(target_os = "windows")]
 fn run_on_its_display(
     app: AppHandle,
@@ -416,7 +378,6 @@ fn run_on_its_display(
         desktop: Mutex::new(Some(desktop)),
     });
     hosting(&app, &key, &running);
-
     std::thread::spawn(move || {
         let code = program.wait();
         let handed = began.elapsed() < HANDED_WITHIN && !desk.shown.load(Ordering::SeqCst);
@@ -432,7 +393,6 @@ fn run_on_its_display(
     });
     Ok(())
 }
-
 #[cfg(target_os = "macos")]
 fn run_on_its_display(
     app: AppHandle,
@@ -487,7 +447,6 @@ fn run_on_its_display(
         clipboard: clipboard::Clipboard::open(process),
     });
     hosting(&app, &key, &running);
-
     std::thread::spawn(move || {
         let code = child.wait().ok().and_then(|status| status.code());
         let placer = running.placer.held().take();
@@ -499,7 +458,6 @@ fn run_on_its_display(
     });
     Ok(())
 }
-
 #[cfg(target_os = "linux")]
 fn run_on_its_display(
     app: AppHandle,
@@ -546,7 +504,6 @@ fn run_on_its_display(
         .process_group(0)
         .spawn()
         .map_err(|_| "failed")?;
-
     let running = Arc::new(Running {
         pid: child.id(),
         events: Mutex::new(Some(events)),
@@ -559,7 +516,6 @@ fn run_on_its_display(
         sink: Mutex::new(sink),
     });
     hosting(&app, &key, &running);
-
     std::thread::spawn(move || {
         let status = child.wait().ok();
         let display = running.display.held().take();
@@ -571,7 +527,6 @@ fn run_on_its_display(
     });
     Ok(())
 }
-
 #[tauri::command]
 pub async fn apps_watch(
     webview: Webview,
@@ -586,7 +541,6 @@ pub async fn apps_watch(
     })
     .await
 }
-
 #[tauri::command]
 pub async fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -602,7 +556,6 @@ pub async fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
     })
     .await
 }
-
 #[tauri::command]
 pub async fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -614,10 +567,8 @@ pub async fn apps_view(webview: Webview, key: String, view: View) -> Result<(), 
     })
     .await
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn view_here(_running: &Running, _view: View) {}
-
 #[cfg(target_os = "windows")]
 fn view_here(running: &Running, view: View) {
     let (width, height) = desk_size(view);
@@ -626,7 +577,6 @@ fn view_here(running: &Running, view: View) {
         desktop.fit(width, height);
     }
 }
-
 #[cfg(target_os = "macos")]
 fn view_here(running: &Running, view: View) {
     let (width, height) = mac::display::screen(view.width, view.height, view.dpr);
@@ -635,7 +585,6 @@ fn view_here(running: &Running, view: View) {
         display.fit(width, height, view.dpr);
     }
 }
-
 #[cfg(target_os = "linux")]
 fn view_here(running: &Running, view: View) {
     let (width, height) = display::screen(view.width, view.height, view.dpr);
@@ -644,7 +593,6 @@ fn view_here(running: &Running, view: View) {
         let _ = display.fit(width, height, view.dpr);
     }
 }
-
 #[tauri::command]
 pub async fn apps_signal(
     webview: Webview,
@@ -658,13 +606,11 @@ pub async fn apps_signal(
     })
     .await
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
     data.contains("\"offer\"")
         .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
 }
-
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
     use stream::FromViewer;
@@ -710,7 +656,6 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
         }
     }
 }
-
 #[cfg(target_os = "linux")]
 fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     let clipboard = running
@@ -721,17 +666,14 @@ fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<St
     let sound = running.sink.held().as_ref().map(audio::Sink::monitor);
     (clipboard, sound)
 }
-
 #[cfg(target_os = "windows")]
 fn shared_of(_running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     (None, None)
 }
-
 #[cfg(target_os = "macos")]
 fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     (Some(running.clipboard.clone()), None)
 }
-
 fn end(running: &Arc<Running>, grace: std::time::Duration) {
     running.stopping.store(true, Ordering::SeqCst);
     let pid = running.pid;
@@ -750,14 +692,12 @@ fn end(running: &Arc<Running>, grace: std::time::Duration) {
         });
     }
 }
-
 #[derive(Clone, Copy)]
 enum Signal {
     Ask,
     End,
     Kill,
 }
-
 #[cfg(unix)]
 #[allow(unsafe_code)]
 fn signal(pid: u32, what: Signal) -> bool {
@@ -771,7 +711,6 @@ fn signal(pid: u32, what: Signal) -> bool {
     };
     unsafe { libc::kill(-group, number) == 0 }
 }
-
 #[cfg(windows)]
 fn signal(pid: u32, what: Signal) -> bool {
     let alive = desk::alive(pid);
@@ -782,12 +721,10 @@ fn signal(pid: u32, what: Signal) -> bool {
     }
     alive
 }
-
 #[cfg(not(any(unix, windows)))]
 fn signal(_pid: u32, _what: Signal) -> bool {
     false
 }
-
 pub fn end_all(app: &AppHandle) {
     let Some(hosted) = app.try_state::<Hosted>() else {
         return;
@@ -803,7 +740,6 @@ pub fn end_all(app: &AppHandle) {
     }
     std::thread::spawn(move || drop(all));
 }
-
 fn allowed_file(app: &AppHandle) -> Option<PathBuf> {
     Some(
         app.path()
@@ -813,11 +749,9 @@ fn allowed_file(app: &AppHandle) -> Option<PathBuf> {
             .join("allowed.json"),
     )
 }
-
 fn allowed_key(path: &str, args: &[String], cwd: Option<&str>) -> String {
     serde_json::json!([path, args, cwd]).to_string()
 }
-
 fn allowed_here(
     app: &AppHandle,
     hosted: &Hosted,
@@ -841,7 +775,6 @@ fn allowed_here(
             return true;
         }
     }
-
     let line = shown_line(path, args);
     let yes = app
         .dialog()
@@ -858,7 +791,6 @@ fn allowed_here(
     if !yes {
         return false;
     }
-
     let mut kept = hosted.allowed.held();
     let known = kept.get_or_insert_with(HashSet::new);
     known.insert(key);
@@ -875,7 +807,6 @@ fn allowed_here(
     }
     true
 }
-
 fn shown_line(path: &str, args: &[String]) -> String {
     std::iter::once(path)
         .chain(args.iter().map(String::as_str))
@@ -889,7 +820,6 @@ fn shown_line(path: &str, args: &[String]) -> String {
         .collect::<Vec<_>>()
         .join(" ")
 }
-
 #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
 fn needed(here: bool, what: &str) -> bool {
     assert!(
@@ -898,12 +828,10 @@ fn needed(here: bool, what: &str) -> bool {
     );
     here
 }
-
 #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
 fn in_time(test: impl FnOnce() + Send + 'static) {
     within(std::time::Duration::from_secs(120), test);
 }
-
 #[cfg(all(
     test,
     any(target_os = "linux", target_os = "windows", target_os = "macos")
@@ -921,7 +849,6 @@ fn within(limit: std::time::Duration, test: impl FnOnce() + Send + 'static) {
         std::panic::resume_unwind(panic);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -946,7 +873,6 @@ mod tests {
         assert_eq!(failed.downcast_ref::<&str>(), Some(&"its own words"));
         within(std::time::Duration::from_secs(5), || {});
     }
-
     #[test]
     fn reads_what_the_window_asks_to_run() {
         let installed: Run =
@@ -962,7 +888,6 @@ mod tests {
         );
         assert!(serde_json::from_str::<Run>(r#"{"kind":"shell","line":"rm -rf ~"}"#).is_err());
     }
-
     #[test]
     fn remembers_a_program_by_its_path_its_arguments_and_its_folder() {
         let one = allowed_key("/usr/bin/xterm", &["-e".to_owned(), "top".to_owned()], None);
@@ -987,7 +912,6 @@ mod tests {
             allowed_key("/usr/bin/xterm", &["-e".to_owned(), "top".to_owned()], None)
         );
     }
-
     #[test]
     fn shows_the_line_it_asks_about_as_it_would_be_typed() {
         assert_eq!(
@@ -998,7 +922,6 @@ mod tests {
             r#""/opt/My App/run" --x "say \"hi\"""#
         );
     }
-
     #[test]
     fn starts_one_program_for_a_key_however_many_ask_at_once() {
         let starting = Arc::new(Starting::default());
@@ -1025,7 +948,6 @@ mod tests {
         let _other = starting.claim("other");
         let _same = starting.claim("same");
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn idle() -> Arc<Running> {
         Arc::new(Running {
@@ -1044,7 +966,6 @@ mod tests {
             desktop: Mutex::new(None),
         })
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[test]
     fn nothing_is_kept_once_the_app_has_begun_to_close() {
@@ -1054,7 +975,6 @@ mod tests {
         assert!(!hosted.kept("after", &idle()));
         assert!(hosted.apps().is_empty());
     }
-
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[test]
     fn a_viewer_answered_after_its_app_ended_or_was_replaced_is_not_kept() {
@@ -1068,7 +988,6 @@ mod tests {
         hosted.apps().remove("a");
         assert!(!still_running(&hosted.apps(), "a", &second));
     }
-
     #[test]
     fn takes_a_key_of_an_id_and_nothing_else() {
         assert!(usable("n_8f2c-01").is_ok());

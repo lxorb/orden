@@ -6,7 +6,6 @@ import { AA, ratio, rgbOf } from '../../ui-controls/src/legibility'
 import { FIXED_PALETTE, terminalGround, terminalPalette, type TerminalTokens } from './look'
 
 const THEMES = fileURLToPath(new URL('../../../../../../packages/themes/src/', import.meta.url))
-
 function block(file: string, selector: string): Record<string, string> {
   const css = readFileSync(`${THEMES}${file}`, 'utf8')
   const at = css.indexOf(`${selector} {`)
@@ -16,9 +15,7 @@ function block(file: string, selector: string): Record<string, string> {
     [...body.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((one): [string, string] => [one[1] ?? '', (one[2] ?? '').trim()]),
   )
 }
-
 const plain = (said: string | undefined) => (said ?? '').replace(/\s*\/\s*[\d.]+\s*\)/, ')')
-
 function tokensOf(theme: Record<string, string>, light: boolean): TerminalTokens {
   return {
     light,
@@ -40,10 +37,8 @@ function tokensOf(theme: Record<string, string>, light: boolean): TerminalTokens
     },
   }
 }
-
 const DARK = tokensOf(block('tokens.css', "[data-theme='dark']"), false)
 const LIGHT = tokensOf(block('tokens.css', "[data-theme='light']"), true)
-
 const SCHEMES: [string, TerminalTokens][] = [
   ['dark', DARK],
   ['light', LIGHT],
@@ -68,17 +63,14 @@ const SCHEMES: [string, TerminalTokens][] = [
     ),
   ],
 ]
-
 const HUES = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'] as const
 const bright = (name: string) => `bright${name[0]?.toUpperCase() ?? ''}${name.slice(1)}`
-
 function on(palette: Record<string, unknown>, name: string): number {
   const one = rgbOf(String(palette[name]))
   const ground = rgbOf(String(palette.background))
   if (!one || !ground) throw new Error(`${name} is no colour`)
   return ratio(one, ground)
 }
-
 describe('a terminal in the theme', () => {
   test.each(SCHEMES)('in %s, every hue and its bright half read on the ground, apart', (_, tokens) => {
     const palette = terminalPalette(tokens) as Record<string, unknown>
@@ -92,7 +84,6 @@ describe('a terminal in the theme', () => {
     expect(on(palette, 'foreground')).toBeGreaterThanOrEqual(AA)
     expect(palette.cursor).toBe(tokens.accent)
   })
-
   test('a theme whose hues are too pale for its ground has them moved until they read', () => {
     const pale: TerminalTokens = {
       ...LIGHT,
@@ -109,7 +100,6 @@ describe('a terminal in the theme', () => {
     const palette = terminalPalette(pale) as Record<string, unknown>
     for (const name of HUES) expect(on(palette, name)).toBeGreaterThanOrEqual(AA)
   })
-
   test('a theme that sets the terminal itself is taken at its word', () => {
     const tokens = DARK
     const palette = terminalPalette({
@@ -121,7 +111,6 @@ describe('a terminal in the theme', () => {
     expect(palette.selectionBackground).toBe('rgba(1, 2, 3, 0.5)')
     expect(palette.green).toBe(terminalPalette(tokens).green)
   })
-
   test('the fixed palette a reader can keep instead reads too', () => {
     const palette = FIXED_PALETTE as Record<string, unknown>
     for (const name of HUES) {
@@ -131,18 +120,15 @@ describe('a terminal in the theme', () => {
     expect(on(palette, 'brightBlack')).toBeGreaterThanOrEqual(3)
   })
 })
-
 describe("the ground a terminal's open tab stands on", () => {
   test('is the one the terminal draws', () => {
     expect(terminalGround(FIXED_PALETTE)).toBe('#16181d')
     expect(terminalGround({ background: '#0b0d10' })).toBe('#0b0d10')
   })
-
   test('is none where the terminal is see-through and stands on the pane', () => {
     expect(terminalGround({ background: 'rgba(22, 24, 29, 0)' })).toBeNull()
     expect(terminalGround({})).toBeNull()
   })
-
   test("is what the strip wears on a terminal's open tab", () => {
     const tabs = readFileSync(join(import.meta.dirname, '../../tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/\.tab\.onterminal \{\s*--tab-ground: var\(--terminal-paper,/)

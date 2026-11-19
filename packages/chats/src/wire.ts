@@ -32,17 +32,13 @@ import type {
 } from './types'
 
 export const socketPath = (chat: string): string => `/v2/chats/${encodeURIComponent(chat)}/socket`
-
 export const REFUSALS = ['role', 'gone', 'posting', 'slow', 'rate', 'large', 'invalid'] as const
-
 export type Refusal = (typeof REFUSALS)[number]
-
 export type ClientFrame =
   | { t: 'hello'; since?: number }
   | { t: 'send'; event: Event }
   | { t: 'typing'; parent?: string }
   | { t: 'read'; seq: number }
-
 export type ServerFrame =
   | { t: 'events'; events: Logged[] }
   | { t: 'behind'; seq: number }
@@ -52,9 +48,7 @@ export type ServerFrame =
   | { t: 'read'; who: Who; seq: number }
   | { t: 'here'; who: Who[] }
   | { t: 'profile'; who: Who }
-
 export const text = (frame: ClientFrame | ServerFrame | ChatPoke): string => JSON.stringify(frame)
-
 export interface ChatPoke {
   t: 'chat'
   chat: string
@@ -63,7 +57,6 @@ export interface ChatPoke {
   by: Who
   mention: boolean
 }
-
 export interface ChatRow {
   id: string
   space: string
@@ -78,45 +71,33 @@ export interface ChatRow {
   mutedUntil: number | null
   meta: Meta
 }
-
 export interface ChatList {
   chats: ChatRow[]
 }
-
 export interface NewChat {
   space: string
 }
-
 export interface EventsPage {
   events: Logged[]
   more: boolean
 }
-
 export interface StatePage {
   messages: Message[]
   meta: Meta
   seq: number
   next: number | null
 }
-
 export interface PostEvents {
   events: Event[]
 }
-
 export type Result = { id: string; seq: number; at: number } | { id: string; refused: Refusal }
-
 export interface Results {
   results: Result[]
 }
-
 const ID = /^[0-9A-Za-z_-]{1,64}$/
-
 const WHO = /^(user|guest|program):[0-9A-Za-z_-]{1,64}$/
-
 const HASH = /^[0-9a-f]{64}$/
-
 const LONGEST_EMOJI = 64
-
 const LONGEST_NAME = 255
 const LONGEST_URL = 2048
 const LONGEST_TITLE = 300
@@ -124,41 +105,24 @@ const LONGEST_SITE = 100
 const LONGEST_TEXT = 1000
 const LONGEST_AGENT = 100
 const LONGEST_DEVICE = 200
-
 const MOST_PIXELS = 100_000
-
 const MOST_SECONDS = 24 * 60 * 60
-
 const MOST_HISTORY = 100
-
 type Fields = Record<string, unknown>
-
 const isRecord = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const isId = (value: unknown): value is string => typeof value === 'string' && ID.test(value)
-
 export const isWho = (value: unknown): value is Who => typeof value === 'string' && WHO.test(value)
-
 const isMention = (value: unknown): value is Mention => value === 'here' || value === 'everyone' || isWho(value)
-
 const isHash = (value: unknown): value is string => typeof value === 'string' && HASH.test(value)
-
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-
 const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
-
 const isText = (value: unknown, most: number): value is string => typeof value === 'string' && value.length <= most
-
 const isLine = (value: unknown, most: number): value is string => isText(value, most) && value.trim().length > 0
-
 const isEmoji = (value: unknown): value is string => isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
-
 const isUrl = (value: unknown): value is string => isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
-
 const oneOf = <T>(list: readonly T[], value: unknown): value is T => list.some((one) => one === value)
-
 function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | null): T[] | null {
   if (!Array.isArray(value) || value.length > most) return null
   const out: T[] = []
@@ -169,25 +133,18 @@ function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | nu
   }
   return out
 }
-
 const optional = <T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined =>
   value === undefined ? undefined : check(value)
-
 function filled<T extends object>(base: T, extra: { [K in keyof T]?: T[K] | null | undefined }): T | null {
   const given = Object.entries(extra)
   if (given.some(([, one]) => one === null)) return null
   for (const [key, one] of given) if (one !== undefined) Object.assign(base, { [key]: one })
   return base
 }
-
 const idOf = (value: unknown): string | null => (isId(value) ? value : null)
-
 const whoOf = (value: unknown): Who | null => (isWho(value) ? value : null)
-
 const mentionOf = (value: unknown): Mention | null => (isMention(value) ? value : null)
-
 const answerOf = (value: unknown): number | null => (isCount(value) && value < MOST_ANSWERS ? value : null)
-
 function parsed(raw: string): unknown {
   try {
     return JSON.parse(raw)
@@ -195,7 +152,6 @@ function parsed(raw: string): unknown {
     return undefined
   }
 }
-
 export function fileRefOf(value: unknown): FileRef | null {
   if (!isRecord(value)) return null
   const { hash, name, size, type } = value
@@ -216,7 +172,6 @@ export function fileRefOf(value: unknown): FileRef | null {
     },
   )
 }
-
 function previewOf(value: unknown): Preview | null {
   if (!isRecord(value) || !isUrl(value.url) || !isLine(value.title, LONGEST_TITLE)) return null
   return filled<Preview>(
@@ -228,7 +183,6 @@ function previewOf(value: unknown): Preview | null {
     },
   )
 }
-
 function pollOf(value: unknown): Poll | null {
   if (!isRecord(value) || !isLine(value.question, LONGEST_QUESTION)) return null
   if (typeof value.several !== 'boolean') return null
@@ -239,12 +193,10 @@ function pollOf(value: unknown): Poll | null {
     { ends: optional(value.ends, (one) => (isTime(one) ? one : null)) },
   )
 }
-
 function viaOf(value: unknown): { agent: string } | null {
   if (!isRecord(value) || !isLine(value.agent, LONGEST_AGENT)) return null
   return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(value.agent) ? null : { agent: value.agent }
 }
-
 function postOf(value: Fields): Post | null {
   const { id, message, body } = value
   if (!isId(id) || !isId(message) || !isText(body, MOST_BODY)) return null
@@ -272,14 +224,12 @@ function postOf(value: Fields): Post | null {
     },
   )
 }
-
 function metaKeysOf(value: Fields): Partial<Meta> | null {
   const topic = optional(value.topic, (one) => (isText(one, LONGEST_TOPIC) ? one : null))
   const posting = optional(value.posting, (one) => (oneOf<Posting>(['writers', 'owner'], one) ? one : null))
   const slowmode = optional(value.slowmode, (one) => (isCount(one) && one <= MOST_SLOWMODE ? one : null))
   return filled<Partial<Meta>>({}, { topic, posting, slowmode })
 }
-
 export function eventOf(value: unknown): Event | null {
   if (!isRecord(value) || !isId(value.id)) return null
   const { id } = value
@@ -294,7 +244,6 @@ export function eventOf(value: unknown): Event | null {
     if (!meta || Object.keys(meta).length === 0) return null
     return { kind: 'meta', id, ...meta }
   }
-
   const { target } = value
   if (!isId(target)) return null
   switch (value.kind) {
@@ -319,7 +268,6 @@ export function eventOf(value: unknown): Event | null {
       return null
   }
 }
-
 export function loggedOf(value: unknown): Logged | null {
   if (!isRecord(value)) return null
   const { seq, at, author, device, madeAt } = value
@@ -330,10 +278,8 @@ export function loggedOf(value: unknown): Logged | null {
   if (!event) return null
   return filled<Logged>({ ...event, seq, at, author }, { device, madeAt })
 }
-
 const wordingOf = (value: unknown): Wording | null =>
   isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at) ? { body: value.body, at: value.at } : null
-
 function votesOf(value: unknown): Record<Who, number[]> | null {
   if (!isRecord(value)) return null
   const votes: Record<Who, number[]> = {}
@@ -344,7 +290,6 @@ function votesOf(value: unknown): Record<Who, number[]> | null {
   }
   return votes
 }
-
 function reactionsOf(value: unknown): Record<string, Who[]> | null {
   if (!isRecord(value)) return null
   const reactions: [string, Who[]][] = []
@@ -355,20 +300,17 @@ function reactionsOf(value: unknown): Record<string, Who[]> | null {
   }
   return Object.fromEntries(reactions)
 }
-
 export function messageOf(value: unknown): Message | null {
   if (!isRecord(value)) return null
   const { id, seq, at, author, body, alsoToChat, pinned, deleted, replies } = value
   if (!isId(id) || !isCount(seq) || !isTime(at) || !isWho(author) || !isText(body, MOST_BODY)) return null
   if (typeof alsoToChat !== 'boolean' || typeof pinned !== 'boolean' || typeof deleted !== 'boolean') return null
   if (!isCount(replies)) return null
-
   const files = listOf(value.files, MOST_FILES, fileRefOf)
   const mentions = listOf(value.mentions, MOST_MEMBERS + 2, mentionOf)
   const reactions = reactionsOf(value.reactions)
   const history = listOf(value.history, MOST_HISTORY, wordingOf)
   if (!files || !mentions || !reactions || !history) return null
-
   const message: Message = {
     id,
     seq,
@@ -397,7 +339,6 @@ export function messageOf(value: unknown): Message | null {
   })
   return filled(message, { parent, quote, preview, via, editedAt, lastReplyAt, poll })
 }
-
 function metaOf(value: unknown): Meta | null {
   if (!isRecord(value)) return null
   const meta = metaKeysOf(value)
@@ -405,7 +346,6 @@ function metaOf(value: unknown): Meta | null {
   if (topic === undefined || posting === undefined || slowmode === undefined) return null
   return { topic, posting, slowmode }
 }
-
 export function clientFrameOf(raw: string): ClientFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -426,7 +366,6 @@ export function clientFrameOf(raw: string): ClientFrame | null {
       return null
   }
 }
-
 export function serverFrameOf(raw: string): ServerFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -461,14 +400,12 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return null
   }
 }
-
 export function chatPokeOf(value: unknown): ChatPoke | null {
   if (!isRecord(value) || value.t !== 'chat') return null
   const { chat, seq, at, by, mention } = value
   if (!isChatId(chat) || !isCount(seq) || !isTime(at) || !isWho(by) || typeof mention !== 'boolean') return null
   return { t: 'chat', chat, seq, at, by, mention }
 }
-
 export function chatRowOf(value: unknown): ChatRow | null {
   if (!isRecord(value)) return null
   const { id, space, members, lastSeq, lastAt, lastBy, readSeq, mentions, notify, mutedUntil } = value
@@ -495,7 +432,6 @@ export function chatRowOf(value: unknown): ChatRow | null {
     meta,
   }
 }
-
 export function chatListOf(value: unknown): ChatList | null {
   if (!isRecord(value) || !Array.isArray(value.chats)) return null
   const chats: ChatRow[] = []
@@ -505,29 +441,24 @@ export function chatListOf(value: unknown): ChatList | null {
   }
   return { chats }
 }
-
 export const newChatOf = (value: unknown): NewChat | null =>
   isRecord(value) && isLine(value.space, LONGEST_DEVICE) ? { space: value.space } : null
-
 export function eventsPageOf(value: unknown): EventsPage | null {
   if (!isRecord(value) || typeof value.more !== 'boolean') return null
   const events = listOf(value.events, MOST_PAGE, loggedOf)
   return events && { events, more: value.more }
 }
-
 export function statePageOf(value: unknown): StatePage | null {
   if (!isRecord(value) || !isCount(value.seq) || !(value.next === null || isCount(value.next))) return null
   const messages = listOf(value.messages, Number.MAX_SAFE_INTEGER, messageOf)
   const meta = metaOf(value.meta)
   return messages && meta && { messages, meta, seq: value.seq, next: value.next }
 }
-
 export function postEventsOf(value: unknown): PostEvents | null {
   if (!isRecord(value)) return null
   const events = listOf(value.events, MOST_POSTED, eventOf)
   return events && events.length > 0 ? { events } : null
 }
-
 function resultOf(value: unknown): Result | null {
   if (!isRecord(value) || !isId(value.id)) return null
   if (value.refused !== undefined) {
@@ -535,7 +466,6 @@ function resultOf(value: unknown): Result | null {
   }
   return isCount(value.seq) && isTime(value.at) ? { id: value.id, seq: value.seq, at: value.at } : null
 }
-
 export function resultsOf(value: unknown): Results | null {
   if (!isRecord(value)) return null
   const results = listOf(value.results, MOST_POSTED, resultOf)

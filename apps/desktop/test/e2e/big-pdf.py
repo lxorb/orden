@@ -1,26 +1,17 @@
 import base64
 import os
-
 from playwright.sync_api import Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wait_for = DRIVE.say, DRIVE.wait_for
 ORIGIN = DRIVE.origin
-
 PAGES = int(os.environ.get("ORDEN_PDF_PAGES") or 1000)
-
 TURNED = 600
-
 AGAIN = 300
-
 LONG = 100
-
 REFERENCE = 45.8
-
 SETTLE = 4000
-
 BENCH = """
 () => {
   const started = performance.now()
@@ -35,7 +26,6 @@ BENCH = """
   return kept > 0 ? performance.now() - started : -1
 }
 """
-
 OBSERVE = """
 window.__longTasks = []
 new PerformanceObserver((list) => {
@@ -44,7 +34,6 @@ new PerformanceObserver((list) => {
   }
 }).observe({ type: 'longtask', buffered: true })
 """
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -64,13 +53,11 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 SHEETS = """
 () => [...document.querySelectorAll('.pages')]
   .filter((one) => one.checkVisibility())
   .flatMap((one) => [...one.querySelectorAll('.sheet')])
 """
-
 DRAWN = f"""
 (count, number) => window.ordenApp.pages.current?.store.count === count &&
   ({SHEETS.strip()})().some(
@@ -78,7 +65,6 @@ DRAWN = f"""
       one.querySelector('canvas.there'),
   )
 """
-
 OPEN = f"""
 async ({{ path, count, patience }}) => {{
   const started = performance.now()
@@ -96,7 +82,6 @@ async ({{ path, count, patience }}) => {{
   return {{ started, shown: shown ?? performance.now() - started, first: performance.now() - started }}
 }}
 """
-
 TO_END = f"""
 async ({{ count, patience }}) => {{
   const started = performance.now()
@@ -112,7 +97,6 @@ async ({{ count, patience }}) => {{
   return {{ started, last: performance.now() - started, mounted: sheets().length }}
 }}
 """
-
 def paper(count: int) -> bytes:
     objects: dict[int, bytes] = {}
     font = 3
@@ -134,7 +118,6 @@ def paper(count: int) -> bytes:
         kids.append(f"{page} 0 R")
     objects[1] = b"<</Type/Catalog/Pages 2 0 R>>"
     objects[2] = f"<</Type/Pages/Kids[{' '.join(kids)}]/Count {count}>>".encode("latin-1")
-
     out = bytearray(b"%PDF-1.4\n")
     places: dict[int, int] = {}
     for number in sorted(objects):
@@ -147,7 +130,6 @@ def paper(count: int) -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
 THUMBNAILS = """
 () => {
   const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
@@ -161,7 +143,6 @@ THUMBNAILS = """
   }
 }
 """
-
 HOLD_FIRST = """
 () => {
   const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
@@ -170,7 +151,6 @@ HOLD_FIRST = """
   return document.activeElement === first
 }
 """
-
 HELD = """
 () => {
   const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
@@ -181,7 +161,6 @@ HELD = """
   }
 }
 """
-
 LIST_TO_END = """
 () => {
   const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
@@ -194,14 +173,11 @@ LIST_TO_END = """
   }
 }
 """
-
 def long_in(tasks: list[dict[str, float]], start: float, end: float, line: float) -> list[dict[str, float]]:
     return [one for one in tasks if start <= one["start"] < end and one["duration"] > line]
-
 def told(what: str, long: list[dict[str, float]]) -> None:
     for one in long:
         say(f"  {what}: a long task at {one['start']:.0f} ms, {one['duration']:.0f} ms")
-
 def main() -> int:
     with DRIVE.session() as browser:
         context = browser.new_context(viewport={"width": 1180, "height": 820})
@@ -210,7 +186,6 @@ def main() -> int:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         wait_for(page, "window.ordenApp?.workspace?.activeSpace", "a space")
         wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
-
         made = paper(PAGES)
         root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
         path = f"{root}/Thick.pdf"
@@ -220,7 +195,6 @@ def main() -> int:
                 say(f"FAILED: {one} never reached the space")
                 return 1
         say(f"a PDF of {PAGES} pages, {len(made) / 1024 / 1024:.1f} MB, is in the space")
-
         warm = page.evaluate(OPEN, {"path": thin, "count": 2, "patience": 60000})
         if warm["first"] is None:
             say("FAILED: a PDF of two pages never showed its first")
@@ -236,20 +210,17 @@ def main() -> int:
             f" is one over {line:.0f} ms, and the first page is due in {turned_in:.0f} ms when the PDF"
             f" turns into its page note and in {again_in:.0f} ms when that note opens again"
         )
-
         opened = page.evaluate(OPEN, {"path": path, "count": PAGES, "patience": 60000})
         page.wait_for_timeout(SETTLE)
         ended = page.evaluate(TO_END, {"count": PAGES, "patience": 30000})
         page.wait_for_timeout(1000)
         mounted = page.evaluate(f"() => ({SHEETS.strip()})().length")
-
         closing = page.evaluate("() => performance.now()")
         page.evaluate("() => window.ordenApp.workspace.closeActive()")
         page.wait_for_timeout(1500)
         reopened = page.evaluate(OPEN, {"path": f"{root}/Thick.pages", "count": PAGES, "patience": 60000})
         page.wait_for_timeout(SETTLE)
         tasks = page.evaluate("() => window.__longTasks")
-
         page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
         page.wait_for_timeout(SETTLE)
         listed = page.evaluate(THUMBNAILS)
@@ -262,9 +233,7 @@ def main() -> int:
         page.wait_for_timeout(SETTLE)
         turned = page.evaluate("() => window.ordenApp.pages.current?.store.showing ?? null")
         context.close()
-
     failed = False
-
     def timed(what: str, said: dict[str, float | None], budget: float) -> None:
         nonlocal failed
         first = said["first"]
@@ -276,7 +245,6 @@ def main() -> int:
         if first > budget:
             say(f"FAILED: {what}, the page it landed on took longer than {budget:.0f} ms")
             failed = True
-
     def held(what: str, start: float, end: float) -> None:
         nonlocal failed
         long = long_in(tasks, start, end, line)
@@ -284,25 +252,20 @@ def main() -> int:
         if long:
             say(f"FAILED: {len(long)} long tasks {what}")
             failed = True
-
     timed("turned into its page note", opened, turned_in)
     held("while the PDF opened and settled", opened["started"], ended["started"])
-
     if ended["last"] is None:
         say(f"FAILED: the last page was never drawn, {ended['mounted']} sheets were on the page")
         failed = True
     else:
         say(f"the last page drawn {ended['last']:.0f} ms after the turn to it")
     held("on the way to the last page", ended["started"], closing)
-
     say(f"{mounted} of {PAGES} sheets are in the document")
     if mounted > 40:
         say("FAILED: the sheets out of sight are still in the document")
         failed = True
-
     timed("its page note opened again", reopened, again_in)
     held("while the page note opened again", reopened["started"], float("inf"))
-
     say(f"the page list holds {listed['count']} thumbnails, and {bottom['count']} scrolled to its end, the last page {bottom['last']}")
     if listed["count"] > 40 or bottom["count"] > 40:
         say("FAILED: the page list holds thumbnails far out of sight")
@@ -314,7 +277,5 @@ def main() -> int:
     if bottom["last"] != PAGES or not bottom["drawn"]:
         say("FAILED: the end of the page list does not show the last page drawn")
         failed = True
-
     return 1 if failed else 0
-
 raise SystemExit(main())

@@ -7,27 +7,21 @@ use icu_properties::{CodePointMapData, CodePointSetData};
 pub fn tags_in(body: &str) -> Vec<String> {
     let mut found = Vec::new();
     let (front, close) = front_matter::block(body).map_or((0, 0), |one| (one.end, one.close));
-
     read_front(body, front, close, &mut found);
     read_inline(body, front, &mut found);
-
     found
 }
-
 fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
     if front == 0 {
         return;
     }
-
     let mut at = body.find('\n').map_or(front, |one| one + 1);
-
     while at < front {
         let end = body[at..]
             .find('\n')
             .map_or(front, |one| at + one)
             .min(front);
         let line = &body[at..end];
-
         if let Some(rest) = key_value(line) {
             let value = at + line.len() - rest.len();
             if let Some(closes) = front_matter::value_closes_at(body, value, close) {
@@ -41,14 +35,12 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
             at = read_items(body, end + 1, front, found);
             continue;
         }
-
         if end >= front {
             break;
         }
         at = end + 1;
     }
 }
-
 fn without_comment(line: &str) -> &str {
     let opens = line.match_indices("# ").map(|(at, _)| at).find(|&at| {
         line[..at]
@@ -58,29 +50,23 @@ fn without_comment(line: &str) -> &str {
     });
     opens.map_or(line, |at| &line[..at])
 }
-
 fn key_value(line: &str) -> Option<&str> {
     let lowered = line.to_ascii_lowercase();
-
     for key in ["tags:", "tag:"] {
         if lowered.starts_with(key) {
             return Some(&line[key.len()..]);
         }
     }
-
     None
 }
-
 fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) -> usize {
     let mut at = from;
-
     while at < front {
         let end = body[at..]
             .find('\n')
             .map_or(front, |one| at + one)
             .min(front);
         let line = &body[at..end];
-
         if line.trim().is_empty() || line.trim_start().starts_with('#') {
             if end >= front {
                 return front;
@@ -88,21 +74,17 @@ fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) ->
             at = end + 1;
             continue;
         }
-
         let Some(item) = line.trim_start().strip_prefix('-') else {
             return at;
         };
-
         read_values(without_comment(item), found);
         if end >= front {
             return front;
         }
         at = end + 1;
     }
-
     at
 }
-
 fn read_values(text: &str, found: &mut Vec<String>) {
     for piece in text.split(|one: char| one.is_whitespace() || ",[]'\"".contains(one)) {
         let name = piece.strip_prefix('#').unwrap_or(piece);
@@ -111,16 +93,13 @@ fn read_values(text: &str, found: &mut Vec<String>) {
         }
     }
 }
-
 fn named(name: &str) -> bool {
     let mut letters = name.chars();
     let Some(first) = letters.next() else {
         return false;
     };
-
     name_start(first) && letters.all(name_char) && !name.chars().all(char::is_numeric)
 }
-
 fn name_start(one: char) -> bool {
     let category = CodePointMapData::<GeneralCategory>::new().get(one);
     GeneralCategoryGroup::Letter.contains(category)
@@ -128,11 +107,9 @@ fn name_start(one: char) -> bool {
         || GeneralCategoryGroup::Number.contains(category)
         || CodePointSetData::new::<ExtendedPictographic>().contains(one)
 }
-
 fn name_char(one: char) -> bool {
     name_start(one) || "-_/".contains(one)
 }
-
 fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
     for block in blocks(&body[front..]) {
         if !block.contains('#') {
@@ -142,29 +119,23 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
         let mut at = 0;
         while let Some(hash) = block[at..].find('#') {
             let start = at + hash;
-
             let before = &block[..start];
             let opens =
                 opens_tag(before) && !code.iter().any(|&(from, to)| (from..to).contains(&start));
-
             let rest = &block[start + 1..];
             let name = closed_by(
                 rest.find(|one: char| !name_char(one))
                     .map_or(rest, |end| &rest[..end]),
                 before.len() - before.trim_end_matches('_').len(),
             );
-
             if opens && named(name) {
                 found.push(block[start..start + 1 + name.len()].to_string());
             }
-
             at = start + 1 + name.len();
         }
     }
 }
-
 const MARKS: &[char] = &['*', '_', '~', '='];
-
 fn opens_tag(before: &str) -> bool {
     let bare = before.trim_end_matches(MARKS);
     let Some(one) = bare.chars().next_back() else {
@@ -180,7 +151,6 @@ fn opens_tag(before: &str) -> bool {
         _ => one.is_whitespace(),
     }
 }
-
 fn closed_by(name: &str, underscores: usize) -> &str {
     if underscores == 0 || name.len() < underscores {
         return name;
@@ -196,18 +166,15 @@ fn closed_by(name: &str, underscores: usize) -> &str {
         ""
     }
 }
-
 fn blocks(words: &str) -> Vec<&str> {
     let mut out = Vec::new();
     let mut code = CodeBlocks::default();
     let mut start: Option<usize> = None;
     let mut at = 0;
-
     for whole in words.split_inclusive('\n') {
         let line = whole.trim_end_matches(['\n', '\r']);
         let words_line = code.line(line) == CodeLine::Words;
         let blank = line.trim_start().is_empty();
-
         if !words_line || blank || opens_block(line) {
             if let Some(from) = start.take() {
                 out.push(words[from..at].trim_end_matches(['\n', '\r']));
@@ -220,7 +187,6 @@ fn blocks(words: &str) -> Vec<&str> {
                 start = None;
             }
         }
-
         at += whole.len();
     }
     if let Some(from) = start {
@@ -228,7 +194,6 @@ fn blocks(words: &str) -> Vec<&str> {
     }
     out
 }
-
 fn opens_block(line: &str) -> bool {
     let rest = line.trim_start_matches(' ');
     if line.len() - rest.len() > 3 {
@@ -244,17 +209,14 @@ fn opens_block(line: &str) -> bool {
     };
     marker.is_some_and(ends_marker) || rest.starts_with('>') || heading(line)
 }
-
 fn heading(line: &str) -> bool {
     let rest = line.trim_start_matches(' ');
     let hashes = rest.bytes().take_while(|&one| one == b'#').count();
     line.len() - rest.len() <= 3 && (1..=6).contains(&hashes) && ends_marker(&rest[hashes..])
 }
-
 fn ends_marker(after: &str) -> bool {
     after.is_empty() || after.starts_with([' ', '\t'])
 }
-
 fn code_spans(line: &str) -> Vec<(usize, usize)> {
     let bytes = line.as_bytes();
     let mut spans = Vec::new();
@@ -276,11 +238,9 @@ fn code_spans(line: &str) -> Vec<(usize, usize)> {
     }
     spans
 }
-
 fn backticks_at(bytes: &[u8], at: usize) -> usize {
     bytes[at..].iter().take_while(|&&one| one == b'`').count()
 }
-
 fn closing_run(bytes: &[u8], from: usize, length: usize) -> Option<usize> {
     let mut at = from;
     while at < bytes.len() {
@@ -296,7 +256,6 @@ fn closing_run(bytes: &[u8], from: usize, length: usize) -> Option<usize> {
     }
     None
 }
-
 #[cfg(test)]
 mod tests {
     use super::tags_in;
@@ -322,7 +281,6 @@ mod tests {
         );
         assert_eq!(tags_in("#a #a #b").len(), 3);
     }
-
     #[test]
     fn code_inline_or_fenced_holds_no_tag() {
         assert_eq!(tags_in("```\n#notatag\n```\n#real"), vec!["#real"]);
@@ -357,7 +315,6 @@ mod tests {
         assert_eq!(tags_in("```a`a\n#yes"), vec!["#yes"]);
         assert_eq!(tags_in("> ```\n> #no\n#yes"), vec!["#yes"]);
     }
-
     #[test]
     fn the_front_matter_lists_tags_on_its_key_in_any_shape() {
         assert_eq!(
@@ -424,7 +381,6 @@ mod tests {
             vec!["#work", "#orden"]
         );
     }
-
     #[test]
     fn a_tag_in_emphasis_counts_and_a_link_to_a_heading_does_not() {
         assert_eq!(
@@ -437,7 +393,6 @@ mod tests {
         );
         assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
     }
-
     #[test]
     fn reads_the_parity_rows() {
         let rows: [(&str, &[&str]); 11] = [

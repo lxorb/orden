@@ -1,20 +1,13 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from settling import HIDE_CARET, quiet
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
-
 NOTE = (
     "---\n"
     'tags: ["a, b", c]\n'
@@ -29,7 +22,6 @@ NOTE = (
     "\n"
     "The last line, where the caret waits.\n"
 )
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -40,7 +32,6 @@ async (note) => {
   return found.name
 }
 """
-
 PILLS = """
 (scope) => [...document.querySelectorAll(`${scope} .tag`)].map((one) => {
   const look = getComputedStyle(one)
@@ -54,13 +45,9 @@ PILLS = """
   }
 })
 """
-
-
 def is_true(claim: bool, what: str) -> None:
     if not claim:
         wrong(what)
-
-
 def reading(page: Page, on: bool) -> None:
     if bool(page.evaluate("() => !!document.querySelector('article#write')")) == on:
         return
@@ -70,24 +57,18 @@ def reading(page: Page, on: bool) -> None:
     else:
         wait_for(page, "document.querySelector('.cm-content .tag')", "the editor")
     quiet(page)
-
-
 def pills_in_the_editor(page: Page, label: str) -> None:
     pills = page.evaluate(PILLS, ".cm-content")
     say(f"[editor {label}] {json.dumps(pills, ensure_ascii=False)}")
-
     is_true(
         [one["tag"] for one in pills] == ["work/orden", "reading", "item"],
         f"[{label}] the editor drew {[one['tag'] for one in pills]} as tags",
     )
     for one in pills:
         is_true(one["washed"] and one["round"], f"[{label}] {one['text']} is not a pill")
-
-
 def pills_in_the_reading_view(page: Page, label: str) -> None:
     pills = page.evaluate(PILLS, "article#write")
     say(f"[reading {label}] {json.dumps(pills, ensure_ascii=False)}")
-
     is_true(
         [one["tag"] for one in pills] == ["work/orden", "reading", "item"],
         f"[{label}] the reading view drew {[one['tag'] for one in pills]} as tags",
@@ -95,25 +76,19 @@ def pills_in_the_reading_view(page: Page, label: str) -> None:
     for one in pills:
         is_true(one["element"] == "a", f"[{label}] {one['text']} is not a link to press")
         is_true(one["washed"] and one["round"], f"[{label}] {one['text']} is not a pill")
-
-
 def the_caret_in_a_tag(page: Page) -> None:
     tag = page.locator(".cm-content .tag[data-tag='reading']")
     box = tag.bounding_box()
     assert box is not None
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     quiet(page)
-
     pills = {one["tag"]: one for one in page.evaluate(PILLS, ".cm-content")}
     is_true(pills["reading"]["open"], "the tag the caret is in is not open")
     is_true(not pills["reading"]["washed"], "the tag the caret is in still wears its wash")
     is_true(not pills["work/orden"]["open"], "a tag the caret is not in opened")
     shot(page, "02-caret-in-a-tag")
-
     page.locator(".cm-line", has_text="The last line").click()
     quiet(page)
-
-
 def pressing_a_tag(page: Page) -> None:
     page.evaluate("() => window.ordenApp.search.ask('')")
     tag = page.locator(".cm-content .tag[data-tag='work/orden']")
@@ -125,12 +100,10 @@ def pressing_a_tag(page: Page) -> None:
         "the search panel is not showing",
     )
     shot(page, "03-editor-press")
-
     reading(page, True)
     page.evaluate("() => window.ordenApp.search.ask('')")
     page.locator("article#write a.tag[data-tag='reading']").click()
     wait_for(page, "window.ordenApp.search.text === 'tag:reading'", "the reading view's press")
-
     page.evaluate("() => window.ordenApp.search.ask('')")
     page.locator("article#write a.tag[data-tag='item']").focus()
     page.keyboard.press("Enter")
@@ -140,8 +113,6 @@ def pressing_a_tag(page: Page) -> None:
         f"a press took the window to {page.evaluate('() => location.hash')}",
     )
     reading(page, False)
-
-
 def the_schemes(page: Page) -> None:
     looks = [("default", "light"), ("default", "dark"), ("contrast", "light"), ("contrast", "dark")]
     for theme, scheme in looks:
@@ -149,7 +120,6 @@ def the_schemes(page: Page) -> None:
         page.evaluate("(which) => window.ordenApp.theme.setScheme(which)", scheme)
         page.wait_for_timeout(300)
         label = f"{theme}-{scheme}"
-
         reading(page, False)
         pills_in_the_editor(page, label)
         shot(page, f"01-editor-{label}")
@@ -157,25 +127,19 @@ def the_schemes(page: Page) -> None:
         pills_in_the_reading_view(page, label)
         shot(page, f"04-reading-{label}")
         reading(page, False)
-
     page.evaluate("() => window.ordenApp.theme.select('default')")
     page.evaluate("() => window.ordenApp.theme.setScheme('dark')")
     page.wait_for_timeout(300)
-
-
 def the_pointer(page: Page) -> None:
     at = {"x": 0.0, "y": 0.0}
-
     def hidden() -> str:
         return (
             f"(() => {{ const one = document.elementFromPoint({at['x']}, {at['y']});"
             " return !!one && getComputedStyle(one).cursor === 'none' })()"
         )
-
     def move(x: float, y: float) -> None:
         at["x"], at["y"] = x, y
         page.mouse.move(x, y)
-
     line = page.locator(".cm-line", has_text="The last line")
     box = line.bounding_box()
     assert box is not None
@@ -183,19 +147,15 @@ def the_pointer(page: Page) -> None:
     page.mouse.click(at["x"], at["y"])
     quiet(page)
     is_true(not page.evaluate(hidden()), "the pointer was hidden before anything was typed")
-
     page.keyboard.press("ArrowLeft")
     page.keyboard.press("Control+b")
     page.keyboard.press("Control+b")
     is_true(not page.evaluate(hidden()), "a shortcut or an arrow hid the pointer")
-
     page.keyboard.type(" more")
     wait_for(page, hidden(), "the pointer to hide", patience=3)
-
     move(box["x"] + 40, box["y"] + 3)
     move(box["x"] + 60, box["y"] + 5)
     wait_for(page, f"!{hidden()}", "the pointer to come back", patience=3)
-
     page.mouse.down()
     page.keyboard.type("x")
     is_true(not page.evaluate(hidden()), "typing with a button held hid the pointer")
@@ -205,8 +165,6 @@ def the_pointer(page: Page) -> None:
     move(box["x"] + 80, box["y"] + 6)
     page.keyboard.press("Control+z")
     quiet(page)
-
-
 def the_format_bar(page: Page) -> None:
     bar = "() => !!document.querySelector('.orden-bar-at')"
     line = page.locator(".cm-line", has_text="The last line")
@@ -215,17 +173,13 @@ def the_format_bar(page: Page) -> None:
     page.keyboard.press("Shift+Home")
     wait_for(page, bar.replace("() => ", ""), "the format bar over a selection", patience=5)
     shot(page, "07-format-bar")
-
     page.keyboard.press("Control+e")
     wait_for(page, "document.querySelector('article#write')", "the reading view")
     quiet(page)
     is_true(not page.evaluate(bar), "the format bar stayed over the reading view")
     shot(page, "08-format-bar-reading")
-
     page.keyboard.press("Control+e")
     quiet(page)
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 860}, color_scheme="dark")
     context.add_init_script(HIDE_CARET)
@@ -236,18 +190,12 @@ def drive(browser: Browser) -> None:
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     wait_for(page, "document.querySelector('.cm-content .tag')", "the tags to be drawn")
     quiet(page)
-
     the_schemes(page)
     the_caret_in_a_tag(page)
     pressing_a_tag(page)
     the_pointer(page)
     the_format_bar(page)
-
     context.close()
-
-
 def main() -> int:
     return DRIVE.run(drive, "tags, the pointer and the format bar all behave")
-
-
 raise SystemExit(main())

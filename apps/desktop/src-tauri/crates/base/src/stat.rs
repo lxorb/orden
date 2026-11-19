@@ -7,13 +7,11 @@ pub struct Stat {
     pub front: i64,
     pub ticks: u64,
 }
-
 impl Stat {
     pub fn gone(&self) -> bool {
         matches!(self.state.as_str(), "Z" | "X")
     }
 }
-
 pub fn of(text: &str) -> Option<Stat> {
     let rest = &text[text.rfind(')')? + 1..];
     let fields: Vec<&str> = rest.split_whitespace().collect();
@@ -28,12 +26,10 @@ pub fn of(text: &str) -> Option<Stat> {
         ticks: user + system,
     })
 }
-
 #[cfg(target_os = "linux")]
 pub fn read(pid: impl std::fmt::Display) -> Option<Stat> {
     of(&std::fs::read_to_string(format!("/proc/{pid}/stat")).ok()?)
 }
-
 pub fn running(pid: u32) -> bool {
     if cfg!(windows) {
         let listed = std::process::Command::new("tasklist")
@@ -51,7 +47,6 @@ pub fn running(pid: u32) -> bool {
         !state.is_empty() && !state.starts_with('Z')
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,7 +71,6 @@ mod tests {
             .gone());
         assert_eq!(of("garbage"), None);
     }
-
     #[test]
     fn this_process_runs_and_one_that_ended_does_not() {
         assert!(running(std::process::id()));

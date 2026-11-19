@@ -12,7 +12,6 @@ const COLORS: Record<VaultColor, () => string> = {
   blue: () => 'Blue',
   grey: () => 'Grey',
 }
-
 export function colorName(color: VaultColor): string {
   return COLORS[color]()
 }

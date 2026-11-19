@@ -10,10 +10,8 @@
     load: () => Promise<T>
     children: Snippet<[T]>
   } = $props()
-
   let got = $state<{ one: T } | null>(null)
   let asking = false
-
   $effect(() => {
     if (!open || asking) return
     asking = true

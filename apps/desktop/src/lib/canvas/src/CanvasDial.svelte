@@ -19,9 +19,7 @@
     reading: string
     onvalue: (value: number) => void
   } = $props()
-
   const fill = $derived(((value - least) / (most - least)) * 100)
-
   function by(steps: number) {
     onvalue(Math.min(most, Math.max(least, Math.round((value + steps * step) / step) * step)))
   }
@@ -57,7 +55,6 @@
     align-items: center;
     gap: var(--space-2);
   }
-
   .reading {
     flex: none;
     width: 3rem;
@@ -66,12 +63,10 @@
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
-
   input {
     flex: 1;
     min-width: 0;
   }
-
   button {
     flex: none;
     display: grid;
@@ -86,11 +81,9 @@
     cursor: default;
     transition: background var(--dur-instant) var(--ease-out);
   }
-
   button:active:not(:disabled) {
     background: var(--press);
   }
-
   :global([data-touch]) button {
     width: var(--touch-target);
     height: var(--touch-target);

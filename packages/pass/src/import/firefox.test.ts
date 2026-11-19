@@ -7,7 +7,6 @@ const CSV = [
   '"https://shop.example.co.uk","café","pw2","","","{b}","1600000000000","",""',
   '"chrome://FirefoxAccounts","x","y","Firefox Accounts credentials","","{c}","1","1","1"',
 ].join('\r\n')
-
 describe('parseFirefox', () => {
   it('reads logins, both addresses and the times', () => {
     const { vaults } = parseFirefox(CSV)

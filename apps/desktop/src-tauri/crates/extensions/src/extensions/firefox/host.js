@@ -1,13 +1,10 @@
 importScripts('/orden/firefox.js')
-
 const LAYER = globalThis.__ordenLayer
 const PORT = '__orden'
-
 const early = []
 const firstHeard = (path) => (details) => early.push({ path, details })
 chrome.runtime.onInstalled.addListener(firstHeard('runtime.onInstalled'))
 chrome.runtime.onStartup.addListener(firstHeard('runtime.onStartup'))
-
 function resolve(path) {
   let owner = null
   let at = chrome
@@ -17,7 +14,6 @@ function resolve(path) {
   }
   return { owner, at }
 }
-
 function said(value) {
   try {
     return JSON.parse(JSON.stringify(value ?? null))
@@ -25,12 +21,10 @@ function said(value) {
     return null
   }
 }
-
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== PORT || port.sender?.id !== chrome.runtime.id) return
   const heard = new Map()
   const opened = new Map()
-
   port.onMessage.addListener(async (asked) => {
     if (asked.kind === 'call') {
       const { owner, at } = resolve(asked.path)
@@ -114,7 +108,6 @@ chrome.runtime.onConnect.addListener((port) => {
       heard.delete(asked.key)
     }
   })
-
   port.onDisconnect.addListener(() => {
     for (const one of heard.values()) one.at.removeListener(one.send)
     heard.clear()
@@ -122,9 +115,7 @@ chrome.runtime.onConnect.addListener((port) => {
     opened.clear()
   })
 })
-
 let opening = null
-
 function page() {
   opening ??= (async () => {
     const url = chrome.runtime.getURL(LAYER.background)
@@ -142,7 +133,6 @@ function page() {
   })
   return opening
 }
-
 if (LAYER.background && chrome.offscreen) {
   void page().catch((error) => console.error('The background page did not open:', error))
   chrome.runtime.onStartup.addListener(() => void page().catch(() => undefined))

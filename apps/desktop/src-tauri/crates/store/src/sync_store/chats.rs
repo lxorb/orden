@@ -13,20 +13,15 @@ use super::store::{files_of, migrated_with, set_aside, Refused};
 use orden_base::paths::{cannot, made};
 
 const MIGRATIONS: [&str; 1] = [include_str!("chats.sql")];
-
 const PATIENCE: Duration = Duration::from_secs(5);
-
 const MOST_ROWS: u32 = 5000;
-
 #[derive(Default)]
 pub struct ChatStores(Mutex<Option<(String, PathBuf, ChatStore)>>);
-
 impl ChatStores {
     fn lock(&self) -> MutexGuard<'_, Option<(String, PathBuf, ChatStore)>> {
         self.0.held()
     }
 }
-
 #[derive(Deserialize, Debug)]
 #[serde(
     tag = "t",
@@ -73,7 +68,6 @@ pub enum Ask {
     Outbox,
     Drafts,
 }
-
 #[derive(Deserialize, Debug)]
 #[serde(
     tag = "t",
@@ -133,16 +127,13 @@ pub enum Change {
         chat: String,
     },
 }
-
 pub struct ChatStore {
     conn: Connection,
 }
-
 struct Failed {
     said: String,
     damaged: bool,
 }
-
 impl From<rusqlite::Error> for Failed {
     fn from(error: rusqlite::Error) -> Self {
         Self {
@@ -151,29 +142,23 @@ impl From<rusqlite::Error> for Failed {
         }
     }
 }
-
 fn damaged(error: &rusqlite::Error) -> bool {
     error
         .sqlite_error_code()
         .is_some_and(|code| matches!(code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase))
 }
-
 fn whole(value: i64) -> Sql {
     Sql::Integer(value)
 }
-
 fn text(value: &str) -> Sql {
     Sql::Text(value.to_owned())
 }
-
 fn maybe_text(value: Option<&String>) -> Sql {
     value.map_or(Sql::Null, |one| Sql::Text(one.clone()))
 }
-
 fn slots(count: usize) -> String {
     vec!["?"; count].join(", ")
 }
-
 fn quoted(words: &str, prefix: bool) -> String {
     let inner = words.replace('"', "\"\"");
     if prefix {
@@ -182,9 +167,7 @@ fn quoted(words: &str, prefix: bool) -> String {
         format!("\"{inner}\"")
     }
 }
-
 const MESSAGE: &str = "chat, id, seq, upto, json, marks";
-
 impl ChatStore {
     pub fn open(path: &Path) -> Result<Self, String> {
         if let Some(folder) = path.parent() {
@@ -198,7 +181,6 @@ impl ChatStore {
             other => other.map_err(|refused| refused.said()),
         }
     }
-
     fn opened(path: &Path) -> Result<Self, Refused> {
         let conn = Connection::open(path)?;
         conn.busy_timeout(PATIENCE)?;
@@ -207,7 +189,6 @@ impl ChatStore {
         migrated_with(&conn, &MIGRATIONS)?;
         Ok(Self { conn })
     }
-
     fn read(&mut self, asks: &[Ask]) -> Result<Vec<Json>, Failed> {
         let snapshot = self
             .conn
@@ -218,7 +199,6 @@ impl ChatStore {
         }
         Ok(answers)
     }
-
     fn write(&mut self, changes: &[Change]) -> Result<(), Failed> {
         let batch = self
             .conn
@@ -229,14 +209,12 @@ impl ChatStore {
         batch.commit()?;
         Ok(())
     }
-
     fn close(self) -> Result<(), String> {
         self.conn
             .close()
             .map_err(|(_, error)| format!("the chats' store would not close: {error}"))
     }
 }
-
 fn rows(conn: &Connection, sql: &str, values: &[Sql]) -> Result<Vec<Json>, Failed> {
     let mut statement = conn.prepare_cached(sql)?;
     let names: Vec<String> = statement
@@ -263,7 +241,6 @@ fn rows(conn: &Connection, sql: &str, values: &[Sql]) -> Result<Vec<Json>, Faile
     }
     Ok(out)
 }
-
 fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     Ok(match ask {
         Ask::Chats => Json::Array(rows(
@@ -317,7 +294,6 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
         Ask::Drafts => Json::Array(rows(conn, "select chat, text, at from drafts", &[])?),
     })
 }
-
 fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     let Ask::Search {
         chats,
@@ -381,7 +357,6 @@ fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     );
     Ok(Json::Array(rows(conn, &sql, &values)?))
 }
-
 fn window(
     conn: &Connection,
     chat: &str,
@@ -420,7 +395,6 @@ fn window(
             &[text(chat), key.clone(), whole(from), whole(many)],
         )
     };
-
     if let Some(around) = around {
         let half = limit / 2;
         let mut out = older(around, half)?;
@@ -432,13 +406,11 @@ fn window(
     }
     older(before.unwrap_or(i64::MAX), limit)
 }
-
 fn run(conn: &Connection, sql: &str, values: &[Sql]) -> Result<(), Failed> {
     conn.prepare_cached(sql)?
         .execute(params_from_iter(values))?;
     Ok(())
 }
-
 fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
     match change {
         Change::Chat {
@@ -507,7 +479,6 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
         }
     }
 }
-
 fn message(conn: &Connection, change: &Change) -> Result<(), Failed> {
     let Change::Message {
         chat,
@@ -553,12 +524,10 @@ fn message(conn: &Connection, change: &Change) -> Result<(), Failed> {
         ],
     )
 }
-
 fn chats_path(app: &AppHandle, account: &str) -> Result<PathBuf, String> {
     let store = super::store_path(app, account)?;
     Ok(store.with_extension("chats.db"))
 }
-
 fn with_chats<T>(
     app: &AppHandle,
     account: &str,
@@ -590,12 +559,10 @@ fn with_chats<T>(
         Err(failed) => Err(failed.said),
     }
 }
-
 #[tauri::command(async)]
 pub fn chat_store_read(app: AppHandle, account: String, asks: Vec<Ask>) -> Result<Json, String> {
     with_chats(&app, &account, |store| store.read(&asks).map(Json::Array))
 }
-
 #[tauri::command(async)]
 pub fn chat_store_write(
     app: AppHandle,
@@ -604,7 +571,6 @@ pub fn chat_store_write(
 ) -> Result<(), String> {
     with_chats(&app, &account, |store| store.write(&changes))
 }
-
 #[tauri::command(async)]
 pub fn chat_store_forget(app: AppHandle, account: String) -> Result<(), String> {
     let path = chats_path(&app, &account)?;
@@ -626,7 +592,6 @@ pub fn chat_store_forget(app: AppHandle, account: String) -> Result<(), String> 
     }
     Ok(())
 }
-
 #[cfg(test)]
 mod tests {
     use super::{Ask, Change, ChatStore};
@@ -636,14 +601,12 @@ mod tests {
     fn opened(path: &Path) -> ChatStore {
         ChatStore::open(path).expect("a chats' store")
     }
-
     fn write(store: &mut ChatStore, changes: Json) {
         let changes: Vec<Change> = serde_json::from_value(changes).expect("changes");
         if let Err(failed) = store.write(&changes) {
             panic!("{}", failed.said);
         }
     }
-
     fn ask(store: &mut ChatStore, ask: Json) -> Json {
         let asks: Vec<Ask> = serde_json::from_value(json!([ask])).expect("a question");
         match store.read(&asks) {
@@ -651,7 +614,6 @@ mod tests {
             Err(failed) => panic!("{}", failed.said),
         }
     }
-
     fn message(chat: &str, seq: i64, body: &str) -> Json {
         json!({
             "t": "message", "chat": chat, "id": format!("m{seq}"), "seq": seq, "at": seq * 1000,
@@ -660,7 +622,6 @@ mod tests {
             "upto": seq, "json": "{}",
         })
     }
-
     fn seqs(rows: &Json) -> Vec<i64> {
         rows.as_array()
             .expect("rows")
@@ -668,14 +629,12 @@ mod tests {
             .map(|row| row["seq"].as_i64().expect("a seq"))
             .collect()
     }
-
     #[test]
     fn a_window_is_oldest_first_on_every_side() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.chats.db"));
         let all: Vec<Json> = (1..=20).map(|seq| message("c", seq, "hello")).collect();
         write(&mut store, Json::Array(all));
-
         let newest = ask(
             &mut store,
             json!({ "t": "window", "chat": "c", "limit": 3 }),
@@ -702,7 +661,6 @@ mod tests {
         );
         assert_eq!(seqs(&other), Vec::<i64>::new());
     }
-
     #[test]
     fn replies_are_a_window_of_their_own() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -714,7 +672,6 @@ mod tests {
             &mut store,
             json!([message("c", 1, "a question"), reply, message("c", 3, "on")]),
         );
-
         let chat = ask(
             &mut store,
             json!({ "t": "window", "chat": "c", "limit": 10 }),
@@ -726,7 +683,6 @@ mod tests {
         );
         assert_eq!(seqs(&replies), [2]);
     }
-
     #[test]
     fn words_are_found_by_their_start_without_accents_and_follow_edits() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -739,7 +695,6 @@ mod tests {
                 message("d", 3, "café in another chat"),
             ]),
         );
-
         let found = ask(
             &mut store,
             json!({ "t": "search", "words": ["cafe"], "limit": 10 }),
@@ -765,7 +720,6 @@ mod tests {
             json!({ "t": "search", "words": ["\"NEAR(("], "limit": 10 }),
         );
         assert_eq!(seqs(&odd), Vec::<i64>::new(), "typed syntax is only words");
-
         write(&mut store, json!([message("c", 1, "Meet at the bar")]));
         let gone = ask(
             &mut store,
@@ -777,7 +731,6 @@ mod tests {
             json!({ "t": "search", "words": ["bar"], "limit": 10 }),
         );
         assert_eq!(seqs(&now), [1]);
-
         write(
             &mut store,
             json!([{ "t": "unmessage", "chat": "c", "id": "m1" }]),
@@ -788,7 +741,6 @@ mod tests {
         );
         assert_eq!(seqs(&none), Vec::<i64>::new());
     }
-
     #[test]
     fn unread_counts_somebody_elses_messages_past_the_place() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -801,7 +753,6 @@ mod tests {
         );
         assert_eq!(unread, json!(3), "5, 7 and 9 are user:b's");
     }
-
     #[test]
     fn the_outbox_and_drafts_outlive_the_store() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -816,7 +767,6 @@ mod tests {
             ]),
         );
         store.close().expect("closed");
-
         let mut again = opened(&path);
         let outbox = ask(&mut again, json!({ "t": "outbox" }));
         let ids: Vec<&str> = outbox
@@ -831,7 +781,6 @@ mod tests {
             ask(&mut again, json!({ "t": "drafts" }))[0]["text"],
             json!("half a thought")
         );
-
         write(
             &mut again,
             json!([{ "t": "unqueue", "id": "e1" }, { "t": "forget", "chat": "c" }]),
@@ -844,7 +793,6 @@ mod tests {
         );
         assert_eq!(ask(&mut again, json!({ "t": "drafts" })), json!([]));
     }
-
     #[test]
     fn a_file_that_is_not_a_store_is_set_aside() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -853,7 +801,6 @@ mod tests {
         let mut store = opened(&path);
         assert_eq!(ask(&mut store, json!({ "t": "chats" })), json!([]));
     }
-
     #[test]
     fn a_window_of_a_hundred_thousand_is_quick() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -864,7 +811,6 @@ mod tests {
                 .collect();
             write(&mut store, Json::Array(batch));
         }
-
         for place in [73_210, 61_377, 84_052, 12_904, 95_118] {
             steps(&store);
             let around = ask(
@@ -876,7 +822,6 @@ mod tests {
             assert!(took < 10_000, "the window around {place} took {took} steps");
         }
     }
-
     #[allow(unsafe_code)]
     fn steps(store: &ChatStore) -> i64 {
         use rusqlite::ffi;

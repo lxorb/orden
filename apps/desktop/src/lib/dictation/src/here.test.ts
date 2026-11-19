@@ -6,7 +6,6 @@ const world = vi.hoisted(() => ({
   opened: 0,
   fetched: 0,
 }))
-
 vi.mock('./local.svelte', () => ({
   local: {
     get ready() {
@@ -28,21 +27,17 @@ vi.mock('../../crate/src/native', () => ({
     return Promise.resolve('Hallo Jürgen')
   },
 }))
-
 const { hearsHere } = await import('./listening')
-
 beforeEach(() => {
   Object.assign(world, { ready: true, opened: 0, fetched: 0 })
   world.calls.length = 0
 })
-
 describe('a stretch heard on this computer', () => {
   test('goes as the names, then the samples, once the model is open', async () => {
     const hears = await hearsHere(['Jürgen Weißmüller', 'Tauri'])
     expect(world.opened).toBe(1)
     const samples = new Float32Array([0.5, -0.25, 0])
     expect(await hears(samples, 'a prompt', 3)).toBe('Hallo Jürgen')
-
     const [call] = world.calls
     expect(call?.command).toBe('dictation_local_hear')
     const body = call?.body as Uint8Array
@@ -52,7 +47,6 @@ describe('a stretch heard on this computer', () => {
     const sound = body.slice(4 + length)
     expect([...new Float32Array(sound.buffer)]).toEqual([0.5, -0.25, 0])
   })
-
   test('goes without the names on a live pass, which is not biased towards them', async () => {
     const hears = await hearsHere(['Tauri'])
     await hears(new Float32Array([1]), '', 1)
@@ -60,7 +54,6 @@ describe('a stretch heard on this computer', () => {
     expect(new DataView(body.buffer).getUint32(0, true)).toBe(0)
     expect(body.byteLength).toBe(4 + 4)
   })
-
   test('is a part of a longer buffer sent as itself', async () => {
     const hears = await hearsHere([])
     const all = new Float32Array([1, 2, 3, 4])
@@ -69,7 +62,6 @@ describe('a stretch heard on this computer', () => {
     expect(body.byteLength).toBe(4 + 8)
     expect([...new Float32Array(body.slice(4).buffer)]).toEqual([2, 3])
   })
-
   test('is not sent while the model is downloading, which it starts', async () => {
     world.ready = false
     await expect(hearsHere([])).rejects.toThrow('The speech model is still downloading.')

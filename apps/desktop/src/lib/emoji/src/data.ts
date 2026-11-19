@@ -7,7 +7,6 @@ export interface EmojiData {
   groups: { label: string; emojis: string[] }[]
   toned: ReadonlySet<string>
 }
-
 export const emojiData: () => Promise<EmojiData> = door(async () => {
   const set = setNamed(EMOJI_SET)
   if (!set) throw new Error('no emoji set')
@@ -18,7 +17,6 @@ export const emojiData: () => Promise<EmojiData> = door(async () => {
     toned,
   }
 })
-
 export function findEmoji(data: EmojiData, query: string): string[] {
   return rankIcons(data.entries, query, 96)
 }

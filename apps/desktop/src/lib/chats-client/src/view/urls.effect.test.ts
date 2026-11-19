@@ -7,9 +7,7 @@ import { elapse } from '../../../../../test/effects/settle'
 
 const { useStore } = await import('./source.svelte')
 const { fileUrl } = await import('./urls.svelte')
-
 type Ask = (chat: string, hash: string) => Promise<string | null>
-
 const storeOf = (me: Who | null, ask: Ask) => ({ me, fileUrl: ask }) as unknown as Chats
 const use = (ask: Ask) => useStore(storeOf('user:a', ask))
 function outage() {
@@ -18,7 +16,6 @@ function outage() {
   use(ask)
   return state
 }
-
 function row(chat: string, hash: string): { shown: () => string | null; close: () => void } {
   let shown: string | null = null
   const close = root(() => {
@@ -30,62 +27,50 @@ function row(chat: string, hash: string): { shown: () => string | null; close: (
   flushSync()
   return { shown: () => shown, close }
 }
-
 const wait = (ms: number) => elapse(ms)
-
 beforeEach(() => {
   vi.useFakeTimers()
   vi.spyOn(Math, 'random').mockReturnValue(0.5)
 })
-
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
-
 test('a file whose fetch failed is asked again while its row draws it, and kept once it lands', async () => {
   const ask = vi.fn<Ask>().mockResolvedValueOnce(null).mockResolvedValue('blob:ok')
   use(ask)
   const view = row('c1', 'h1')
-
   await wait(0)
   expect(view.shown()).toBeNull()
   await wait(60_000)
   expect(view.shown()).toBe('blob:ok')
   expect(ask).toHaveBeenCalledTimes(2)
-
   await wait(30 * 60_000)
   expect(ask).toHaveBeenCalledTimes(2)
   view.close()
 })
-
 test('a rejected fetch is asked again too', async () => {
   const ask = vi.fn<Ask>().mockRejectedValueOnce(new Error('offline')).mockResolvedValue('blob:ok')
   use(ask)
   const view = row('c1', 'h2')
-
   await wait(60_000)
   expect(view.shown()).toBe('blob:ok')
   view.close()
 })
-
 test('a file no row draws any more is not asked again', async () => {
   const ask = vi.fn<Ask>().mockResolvedValue(null)
   use(ask)
   const view = row('c1', 'h3')
   await wait(0)
   view.close()
-
   await wait(60 * 60_000)
   expect(ask).toHaveBeenCalledTimes(1)
   expect(vi.getTimerCount()).toBe(0)
 })
-
 test('a file that never lands is asked with growing waits, then every five minutes while drawn', async () => {
   const ask = vi.fn<Ask>().mockResolvedValue(null)
   use(ask)
   const view = row('c1', 'h4')
-
   await wait(10 * 60_000)
   const early = ask.mock.calls.length
   expect(early).toBeGreaterThan(2)
@@ -95,7 +80,6 @@ test('a file that never lands is asked with growing waits, then every five minut
   expect(ask.mock.calls.length - early).toBeLessThanOrEqual(13)
   view.close()
 })
-
 test('a server down for six minutes: the picture comes back, and a reopened chat draws it', async () => {
   const server = outage()
   const first = row('c1', 'h9')
@@ -108,7 +92,6 @@ test('a server down for six minutes: the picture comes back, and a reopened chat
   expect(again.shown()).toBe('blob:ok')
   again.close()
 })
-
 test('a chat closed during an outage and opened after it asks again', async () => {
   const server = outage()
   const first = row('c1', 'h10')
@@ -121,7 +104,6 @@ test('a chat closed during an outage and opened after it asks again', async () =
   expect(again.shown()).toBe('blob:ok')
   again.close()
 })
-
 test('online before the network works does not end the retries', async () => {
   const server = outage()
   const view = row('c1', 'h11')
@@ -133,19 +115,16 @@ test('online before the network works does not end the retries', async () => {
   expect(view.shown()).toBe('blob:ok')
   view.close()
 })
-
 test('coming back online asks at once', async () => {
   const ask = vi.fn<Ask>().mockResolvedValueOnce(null).mockResolvedValue('blob:ok')
   use(ask)
   const view = row('c1', 'h5')
-
   await wait(0)
   window.dispatchEvent(new Event('online'))
   await wait(0)
   expect(view.shown()).toBe('blob:ok')
   view.close()
 })
-
 test('online while an ask is on its way starts no second chain (review of #990, M1)', async () => {
   let open = 0
   let most = 0
@@ -160,7 +139,6 @@ test('online while an ask is on its way starts no second chain (review of #990, 
   })
   use(ask)
   const view = row('c1', 'h6')
-
   let flaps = 0
   for (let second = 0; second < 30 * 60; second++) {
     if (flaps < 5 && open > 0) {
@@ -175,7 +153,6 @@ test('online while an ask is on its way starts no second chain (review of #990, 
   expect(ask.mock.calls.length).toBeLessThanOrEqual(8 + 5 + 7)
   view.close()
 })
-
 test('another account starts from nothing, and the last one asks no more', async () => {
   const before = vi.fn<Ask>().mockResolvedValue('blob:a')
   const failing = vi.fn<Ask>().mockResolvedValue(null)
@@ -184,21 +161,18 @@ test('another account starts from nothing, and the last one asks no more', async
   const missing = row('c1', 'h8')
   await wait(0)
   expect(seen.shown()).toBe('blob:a')
-
   const after = vi.fn<Ask>().mockResolvedValue('blob:b')
   useStore(storeOf('user:b', after))
   flushSync()
   expect(seen.shown()).toBeNull()
   await wait(0)
   expect(seen.shown()).toBe('blob:b')
-
   await wait(60 * 60_000)
   expect(before).toHaveBeenCalledTimes(1)
   expect(failing).toHaveBeenCalledTimes(1)
   seen.close()
   missing.close()
 })
-
 test('letting one file go redraws only the rows of that file (review of #990, L3)', async () => {
   const ask = vi.fn<Ask>((_chat, hash) => Promise.resolve(hash === 'h13' ? 'blob:ok' : null))
   use(ask)
@@ -219,7 +193,6 @@ test('letting one file go redraws only the rows of that file (review of #990, L3
   failing.close()
   close()
 })
-
 test('signing out and back in as the same reader asks again: the last addresses were let go (review of #990, M1)', async () => {
   let n = 0
   const ask = vi.fn<Ask>(() => Promise.resolve(`blob:${++n}`))
@@ -229,11 +202,9 @@ test('signing out and back in as the same reader asks again: the last addresses 
   await wait(0)
   expect(before.shown()).toBe('blob:1')
   before.close()
-
   fake.me = null
   fake.fileEpoch++
   fake.me = 'user:a'
-
   const after = row('c1', 'h14')
   await wait(0)
   expect(after.shown()).toBe('blob:2')

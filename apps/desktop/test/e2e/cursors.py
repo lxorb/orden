@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 CTRL_D = {"edit.select-word": "Mod-d", "app.deselect-tab": None}
-
 NOTE = (
     "# Cursors\n\n"
     "alpha one alpha\n"
@@ -16,7 +12,6 @@ NOTE = (
     "gamma one gamma\n"
     "delta one delta\n"
 )
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -25,7 +20,6 @@ async (note) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 STATE = """
 () => ({
   ranges: window.orden.state.selection.ranges.map((one) => [one.from, one.to]),
@@ -37,7 +31,6 @@ STATE = """
   doc: window.orden.state.doc.toString(),
 })
 """
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     context.add_init_script(f"localStorage.setItem('orden:shortcuts', {json.dumps(json.dumps(CTRL_D))})")
@@ -52,7 +45,6 @@ def fresh(browser: Browser) -> Page:
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     page.wait_for_timeout(400)
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -63,11 +55,9 @@ def fresh(browser: Browser) -> Page:
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
     return page
-
 def at(page: Page, offset: int) -> tuple[float, float]:
     box = page.evaluate("(at) => window.orden.coordsAtPos(at)", offset)
     return (box["left"] + 1, (box["top"] + box["bottom"]) / 2)
-
 def place(page: Page, offset: int) -> None:
     page.evaluate(
         """(at) => {
@@ -76,14 +66,11 @@ def place(page: Page, offset: int) -> None:
         }""",
         offset,
     )
-
 def state(page: Page) -> dict:
     return page.evaluate(STATE)
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
     doc = page.evaluate("() => window.orden.state.doc.toString()")
-
     place(page, doc.index("alpha one"))
     page.wait_for_timeout(200)
     x, y = at(page, doc.index("gamma one"))
@@ -91,7 +78,6 @@ def drive(browser: Browser) -> None:
     page.mouse.click(x, y)
     page.keyboard.up("Alt")
     page.wait_for_timeout(400)
-
     two = state(page)
     say(f"[alt-click] {json.dumps({'ranges': two['ranges'], 'carets': two['carets']})}")
     shot(page, "01-two-cursors")
@@ -99,7 +85,6 @@ def drive(browser: Browser) -> None:
         wrong(f"alt and a click did not add a cursor: {two['ranges']}")
     if two["carets"] < 2:
         wrong(f"only {two['carets']} carets are drawn for {len(two['ranges'])} cursors")
-
     page.keyboard.type("X")
     page.wait_for_timeout(400)
     typed = state(page)
@@ -108,14 +93,12 @@ def drive(browser: Browser) -> None:
         wrong(f"typing reached {typed['doc'].count('X')} cursors, not 2")
     page.keyboard.press("Control+z")
     page.wait_for_timeout(300)
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     one = state(page)
     say(f"[escape] {len(one['ranges'])} range")
     if len(one["ranges"]) != 1:
         wrong(f"Escape left {len(one['ranges'])} cursors, not one")
-
     place(page, doc.index("one") + 1)
     page.wait_for_timeout(200)
     page.keyboard.press("Control+d")
@@ -127,7 +110,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the first press did not take the word: {first['text']}")
     if first["blocks"] < 1:
         wrong("a selected word draws no block")
-
     page.keyboard.press("Control+d")
     page.keyboard.press("Control+d")
     page.wait_for_timeout(400)
@@ -138,10 +120,8 @@ def drive(browser: Browser) -> None:
         wrong(f"the presses after did not add the next ones: {more['text']}")
     if more["blocks"] != 3:
         wrong(f"three ranges drew {more['blocks']} smoothed blocks")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     top = at(page, doc.index("alpha one") + 6)
     bottom = at(page, doc.index("delta one") + 6)
     page.keyboard.down("Alt")
@@ -153,7 +133,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.up("Shift")
     page.keyboard.up("Alt")
     page.wait_for_timeout(500)
-
     column = state(page)
     say(f"[alt-shift-drag] {json.dumps({'text': column['text'], 'blocks': column['blocks']})}")
     shot(page, "05-column")
@@ -161,7 +140,6 @@ def drive(browser: Browser) -> None:
         wrong(f"a drag down four lines took {len(column['ranges'])} ranges")
     if column["blocks"] != len([one for one in column["text"] if one]):
         wrong(f"{len(column['ranges'])} ranges drew {column['blocks']} blocks")
-
     page.keyboard.down("Alt")
     page.wait_for_timeout(300)
     pointer = page.evaluate(
@@ -172,16 +150,12 @@ def drive(browser: Browser) -> None:
     if pointer != "crosshair":
         wrong(f"Alt does not say it is doing something: the pointer is {pointer}")
     shot(page, "06-crosshair")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     left = state(page)
     if len(left["ranges"]) != 1:
         wrong(f"Escape after a column left {len(left['ranges'])} cursors")
-
     page.context.close()
-
 def main() -> int:
     return DRIVE.run(drive, "several cursors, a column of them, and one again on Escape")
-
 raise SystemExit(main())

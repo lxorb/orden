@@ -2,7 +2,6 @@ import { askInChunks, AT_A_TIME, type Env, places, type User } from '../../../sy
 import { PROFILE_COLUMNS, type Presence, type ProfileRow } from './profile'
 
 export const MOST_PEOPLE = 200
-
 const SHARES_WITH = `(
   u.id = ?1
   or exists (
@@ -17,7 +16,6 @@ const SHARES_WITH = `(
      where a.email = ?2 and a.joined_at is not null
        and b.email = u.email and b.joined_at is not null
        and (a.item = '' or b.item = '' or a.item = b.item)))`
-
 export async function seenAmong(
   env: Env,
   asker: User,
@@ -40,7 +38,6 @@ export async function seenAmong(
     AT_A_TIME,
   )
 }
-
 export async function facesIn(
   env: Env,
   asker: string,
@@ -49,7 +46,6 @@ export async function facesIn(
 ): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>()
   if (!spaceIds.length) return out
-
   const found = await askInChunks(
     spaceIds,
     async (chunk) => {
@@ -69,7 +65,6 @@ export async function facesIn(
     },
     AT_A_TIME / 2,
   )
-
   for (const row of found) {
     if (row.user_id === asker) continue
     const held = out.get(row.space_id) ?? []

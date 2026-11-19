@@ -11,7 +11,6 @@ import { GONE_KEPT, goneRow, outgoingBytes } from './records'
 import { put, remove, type Change, type EntryRow } from './store'
 
 export { kindOfName }
-
 function freshId(core: Core): string {
   let out = ''
   for (let part = 0; part < 4; part += 1) {
@@ -21,13 +20,11 @@ function freshId(core: Core): string {
   }
   return out
 }
-
 function queue(core: Core, space: SpaceState, op: Op): Change[] {
   const { one, change } = core.outgoing(space, { t: 'op', op }, op.seen)
   space.queue(one)
   return [change, core.counterRow()]
 }
-
 function folderFor(core: Core, space: SpaceState, path: string, changes: Change[]): string | null {
   const known = space.folderAt(path)
   if (known !== undefined) return known
@@ -48,7 +45,6 @@ function folderFor(core: Core, space: SpaceState, path: string, changes: Change[
   )
   return id
 }
-
 function entryRow(
   space: SpaceState,
   id: string,
@@ -72,7 +68,6 @@ function entryRow(
     deleted: false,
   }
 }
-
 export interface Made {
   path: string
   folder: boolean
@@ -81,7 +76,6 @@ export interface Made {
   id?: string
   kind?: EntryKind
 }
-
 export async function made(core: Core, space: SpaceState, what: Made): Promise<{ id: string; changes: Change[] }> {
   if (inForeignCopy(what.path) || hiddenPath(what.path)) return { id: freshId(core), changes: [] }
   const changes: Change[] = []
@@ -93,7 +87,6 @@ export async function made(core: Core, space: SpaceState, what: Made): Promise<{
   const bytes = kind === 'file' ? await fileMade(core, space, entry) : null
   if (kind === 'file' && !bytes) return { id, changes }
   space.entries.set(id, entry)
-
   const seen = space.row.cursor
   const op: Op = what.folder
     ? { op: core.nextId('o'), t: 'mkdir', id, parent, name, seen }
@@ -110,7 +103,6 @@ export async function made(core: Core, space: SpaceState, what: Made): Promise<{
   if (op.t === 'create' && mergeable !== undefined) op.mergeable = { text: mergeable }
   if (op.t === 'create' && bytes) op.hash = bytes.hash
   changes.push(...queue(core, space, op))
-
   const shape = shapeOf(kind)
   if (shape) {
     const doc = core.made(id, shape, 1)
@@ -124,7 +116,6 @@ export async function made(core: Core, space: SpaceState, what: Made): Promise<{
   }
   return { id, changes }
 }
-
 export function mergeableAfter(space: SpaceState, entry: EntryRow, text: string): Change[] {
   const one = space.outbox.find(
     (op) => op.record.t === 'op' && !op.record.sent && op.record.op.t === 'create' && op.record.op.id === entry.id,
@@ -134,7 +125,6 @@ export function mergeableAfter(space: SpaceState, entry: EntryRow, text: string)
   one.row = { ...one.row, op: outgoingBytes(one.record) }
   return [put('outbox', one.row)]
 }
-
 export function atOrUnder(space: SpaceState, path: string): EntryRow[] {
   const key = space.key(path)
   const inside = space.key(`${path}${SEP}`)
@@ -144,7 +134,6 @@ export function atOrUnder(space: SpaceState, path: string): EntryRow[] {
     return at === key || at.startsWith(inside)
   })
 }
-
 export function moved(core: Core, space: SpaceState, from: string, to: string): Change[] {
   const entry = space.at(from)
   if (!entry) return []
@@ -156,18 +145,15 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   space.changed()
   return changes
 }
-
 function keptName(space: SpaceState, entry: EntryRow, from: string, to: string): string {
   const had = space.shown().entries.get(entry.id)?.name
   const name = nameOf(to)
   return had !== undefined && (nameOf(from) === name || placedAs(space, entry.id, name)) ? had : name
 }
-
 function placedAs(space: SpaceState, id: string, name: string): boolean {
   const placed = space.paths().get(id)
   return placed !== undefined && nameOf(placed) === name
 }
-
 export function intended(
   core: Core,
   space: SpaceState,
@@ -181,7 +167,6 @@ export function intended(
   space.changed()
   return changes
 }
-
 export function carried(space: SpaceState, from: string, to: string): Change[] {
   const changes: Change[] = []
   for (const one of atOrUnder(space, from)) {
@@ -191,7 +176,6 @@ export function carried(space: SpaceState, from: string, to: string): Change[] {
   space.changed()
   return changes
 }
-
 function placing(core: Core, space: SpaceState, entry: EntryRow, parent: string | null, name: string): Change[] {
   const seen = space.row.cursor
   const shown = space.shown().entries.get(entry.id)
@@ -203,7 +187,6 @@ function placing(core: Core, space: SpaceState, entry: EntryRow, parent: string 
   if (shown?.name !== name) op.name = name
   return queue(core, space, op)
 }
-
 export function placed(core: Core, space: SpaceState, places: ReadonlyMap<string, string>): Change[] {
   const changes: Change[] = []
   for (const [id, pos] of places) {
@@ -213,7 +196,6 @@ export function placed(core: Core, space: SpaceState, places: ReadonlyMap<string
   space.changed()
   return changes
 }
-
 export function described(core: Core, space: SpaceState, patches: ReadonlyMap<string, MetaPatch>): Change[] {
   const changes: Change[] = []
   for (const [id, meta] of patches) {
@@ -223,7 +205,6 @@ export function described(core: Core, space: SpaceState, patches: ReadonlyMap<st
   space.changed()
   return changes
 }
-
 export function dropUnmade(core: Core, space: SpaceState, ids: Iterable<string>): Change[] {
   const changes: Change[] = []
   for (const id of ids) {
@@ -241,7 +222,6 @@ export function dropUnmade(core: Core, space: SpaceState, ids: Iterable<string>)
   }
   return changes
 }
-
 export function unsynced(core: Core, space: SpaceState, entry: EntryRow): Change[] {
   const changes: Change[] = []
   if (entry.local_path) {
@@ -255,7 +235,6 @@ export function unsynced(core: Core, space: SpaceState, entry: EntryRow): Change
   space.changed()
   return changes
 }
-
 function inside(space: SpaceState, folder: string): EntryRow[] {
   const holds = (id: string | null, depth = 0): boolean => {
     if (id === null || depth > space.entries.size) return false
@@ -264,13 +243,11 @@ function inside(space: SpaceState, folder: string): EntryRow[] {
   }
   return [...space.entries.values()].filter((one) => !one.deleted && one.id !== folder && holds(one.parent))
 }
-
 export function removed(core: Core, space: SpaceState, path: string, back?: string): Change[] {
   const entry = space.at(path)
   if (!entry) return []
   const changes: Change[] = []
   const gone = atOrUnder(space, path)
-
   let seen = space.row.cursor
   const wanted = core.wanted(space.id)
   for (const one of new Set([...gone, ...inside(space, entry.id)])) {
@@ -278,7 +255,6 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
     if (space.keepsFew && !core.hasDoc(one.id)) continue
     seen = Math.min(seen, core.numbers.get(one.id)?.pulled ?? 0)
   }
-
   space.gone.delete(entry.id)
   const paths = new Map(gone.map((one) => [one.id, one.local_path]))
   space.gone.set(entry.id, back === undefined ? { paths } : { paths, back })
@@ -288,7 +264,6 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
     space.gone.delete(id)
   }
   changes.push(put('meta', goneRow(space.id, space.gone)))
-
   for (const one of gone) {
     one.local_path = ''
     changes.push(put('entries', { ...one }))
@@ -300,11 +275,9 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
   space.changed()
   return changes
 }
-
 function here(space: SpaceState, entry: EntryRow): boolean {
   return entry.local_path !== '' && space.shown().entries.get(entry.id)?.deleted === false
 }
-
 function making(space: SpaceState, id: string, unsent = false): boolean {
   return space.outbox.some(
     (one) =>
@@ -314,7 +287,6 @@ function making(space: SpaceState, id: string, unsent = false): boolean {
       !(unsent && one.record.sent),
   )
 }
-
 function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   const one = space.outbox.find(
     (op) => op.record.t === 'op' && !op.record.sent && op.record.op.t === 'delete' && op.record.op.id === id,
@@ -325,13 +297,11 @@ function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   space.changed()
   return true
 }
-
 export async function restored(core: Core, space: SpaceState, id: string, path: string): Promise<Change[] | null> {
   const top = space.entries.get(id)
   if (!top) return null
   const holder = space.at(path)
   if (holder && (holder.id !== id || !here(space, top))) return holder.id === id ? [] : null
-
   const back: { entry: EntryRow; at: string }[] = []
   const was = space.gone.get(id)?.paths
   const from = was?.get(id)
@@ -356,7 +326,6 @@ export async function restored(core: Core, space: SpaceState, id: string, path: 
     }
     walk(top, path, 0)
   }
-
   const stays = here(space, top)
   const changes: Change[] = []
   const full = (at: string) => core.world.join(space.row.root, at)
@@ -430,13 +399,11 @@ export async function restored(core: Core, space: SpaceState, id: string, path: 
     const seen = space.row.cursor
     changes.push(...queue(core, space, { op: core.nextId('o'), t: 'restore', id: entry.id, seen }))
   }
-
   for (const copy of copies) {
     if (homeOf(copy.at) !== copy.at) continue
     if (!(await core.world.disk.exists(full(copy.at)))) continue
     await core.world.disk.remove(full(copy.at), copy.kind === 'folder' ? 'folder' : 'file').catch(() => undefined)
   }
-
   const now = space.shown().entries.get(id)
   const name = nameOf(path)
   if (
@@ -453,9 +420,7 @@ export async function restored(core: Core, space: SpaceState, id: string, path: 
   space.changed()
   return changes
 }
-
 const unstacking = new WeakMap<SpaceState, Set<string>>()
-
 export function unstackedNames(core: Core, space: SpaceState): Change[] {
   if (space.row.role === 'read') return []
   const tried = unstacking.get(space) ?? new Set<string>()

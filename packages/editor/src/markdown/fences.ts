@@ -8,14 +8,12 @@ import { BACKTICK, isSpace, TILDE } from './syntax'
 
 function fenceEnd(line: Line): number {
   if (line.next !== BACKTICK && line.next !== TILDE) return -1
-
   let pos = line.pos + 1
   while (pos < line.text.length && line.text.charCodeAt(pos) === line.next) pos++
   if (pos < line.pos + 3) return -1
   if (line.next === BACKTICK && line.text.includes('`', pos)) return -1
   return pos
 }
-
 function closerEnd(line: Line, mark: number, length: number): number {
   let pos = line.pos
   if (line.indent - line.baseIndent < 4) while (pos < line.text.length && line.text.charCodeAt(pos) === mark) pos++
@@ -23,21 +21,16 @@ function closerEnd(line: Line, mark: number, length: number): number {
   if (line.skipSpace(pos) === line.text.length) return pos
   return fenceName(line.text.slice(line.pos)) === null ? -1 : line.text.trimEnd().length
 }
-
 const insideContainers = (cx: BlockContext, line: Line): boolean => (line as Line & { depth: number }).depth >= cx.depth
-
 interface LineReadingState {
   line: Line
   stack: object[]
 }
-
 const unclosed = new WeakMap<BlockContext, Map<number, number>>()
-
 function closerAhead(cx: BlockContext, line: Line, mark: number, length: number): boolean {
   const atTop = cx.depth === 1
   const shortest = atTop ? unclosed.get(cx)?.get(mark) : undefined
   if (shortest !== undefined && length >= shortest) return false
-
   const found = scanForCloser(cx, line, mark, length)
   if (!found && atTop) {
     const seen = unclosed.get(cx) ?? new Map<number, number>()
@@ -46,14 +39,12 @@ function closerAhead(cx: BlockContext, line: Line, mark: number, length: number)
   }
   return found
 }
-
 function scanForCloser(cx: BlockContext, line: Line, mark: number, length: number): boolean {
   const state = cx as unknown as LineReadingState
   const context = { ...state }
   const { markers, ...fields } = state.line
   const savedMarkers = markers.slice()
   const blocks = state.stack.map((block) => ({ ...block }))
-
   try {
     while (cx.nextLine() && insideContainers(cx, line)) if (closerEnd(line, mark, length) >= 0) return true
     return false
@@ -68,7 +59,6 @@ function scanForCloser(cx: BlockContext, line: Line, mark: number, length: numbe
     })
   }
 }
-
 function addCodeText(cx: BlockContext, marks: Element[], from: number, to: number) {
   const last = marks.at(-1)
   const name = last ? cx.parser.nodeSet.types[last.type]?.name : undefined
@@ -78,26 +68,19 @@ function addCodeText(cx: BlockContext, marks: Element[], from: number, to: numbe
     marks.push(cx.elt('CodeText', from, to))
   }
 }
-
 function opensFence(node: { from: number; to: number }, input: Input): boolean {
   if (node.to - node.from < 3) return false
   const start = input.read(node.from, node.from + 3)
   return start === '```' || start === '~~~'
 }
-
 const openFences = new WeakMap<Tree, readonly number[]>()
-
 let declining: number[] | null = null
-
 interface Outer {
   readonly baseParse?: PartialParse | null | undefined
 }
-
 const parsedFrom = new WeakMap<Tree, Input>()
-
 function watchDeclines(parse: PartialParse, input: Input): PartialParse & Outer {
   const found: number[] = []
-
   return {
     get parsedPos() {
       return parse.parsedPos
@@ -127,10 +110,8 @@ function watchDeclines(parse: PartialParse, input: Input): PartialParse & Outer 
     },
   }
 }
-
 function scanForOpenFences(tree: Tree, input: Input): readonly number[] {
   const found: number[] = []
-
   tree.iterate({
     enter(node) {
       if (!node.type.is('Block')) return false
@@ -140,58 +121,46 @@ function scanForOpenFences(tree: Tree, input: Input): readonly number[] {
       return false
     },
   })
-
   openFences.set(tree, found)
   return found
 }
-
 function leafBlockAt(tree: Tree, pos: number): { from: number; to: number } {
   let found = tree.resolveInner(pos, 1)
   for (const node of enclosing(found)) {
     found = node
     if (node.type.is('LeafBlock')) break
   }
-
   return { from: found.from, to: found.to }
 }
-
 function withoutUnclosedFences(fragments: readonly TreeFragment[], input: Input): readonly TreeFragment[] {
   const out: TreeFragment[] = []
   let changed = false
-
   for (const fragment of fragments) {
     const { tree, offset } = fragment
     const open = openFences.get(tree) ?? scanForOpenFences(tree, input)
     let from = fragment.from
-
     for (const position of open) {
       const block = leafBlockAt(tree, position)
       const blockFrom = block.from - offset
       const blockTo = block.to - offset
       if (blockFrom < from || blockTo > fragment.to) continue
-
       if (blockFrom > from) {
         out.push(new TreeFragment(from, blockFrom, tree, offset, from === fragment.from && fragment.openStart, true))
       }
       from = blockTo
       changed = true
     }
-
     if (from === fragment.from) out.push(fragment)
     else if (from < fragment.to) out.push(new TreeFragment(from, fragment.to, tree, offset, true, fragment.openEnd))
   }
-
   return changed ? out : fragments
 }
-
 function withoutFrontMatter(fragments: readonly TreeFragment[], input: Input): readonly TreeFragment[] {
   const opening = input.read(0, Math.min(4, input.length))
   if (!opening.startsWith('---') && !opening.startsWith('\uFEFF---')) return fragments
-
   const text = input.read(0, input.length)
   const line = text.indexOf('\n')
   const to = frontMatterBlock(text)?.to ?? (line === -1 ? text.length : line + 1)
-
   const out: TreeFragment[] = []
   for (const fragment of fragments) {
     if (fragment.from >= to) out.push(fragment)
@@ -201,24 +170,20 @@ function withoutFrontMatter(fragments: readonly TreeFragment[], input: Input): r
   }
   return out
 }
-
 function startsLine(input: Input, at: number): boolean {
   return at === 0 || input.read(at - 1, at) === '\n'
 }
-
 function lineStartIn(fragment: TreeFragment, input: Input, before: Input): number | null {
   const { from, to, offset } = fragment
   if (startsLine(input, from) && startsLine(before, from + offset)) return from
   const lineEnd = input.read(from, to).indexOf('\n')
   return lineEnd < 0 ? null : from + lineEnd + 1
 }
-
 function sameCommentState(fragment: TreeFragment, input: Input, before: Input): boolean {
   const at = lineStartIn(fragment, input, before)
   if (at === null) return true
   return commentStateAt(input, at) === commentStateAt(before, at + fragment.offset)
 }
-
 function withoutStaleComments(fragments: readonly TreeFragment[], input: Input): readonly TreeFragment[] {
   const kept: TreeFragment[] = []
   let end = 0
@@ -244,26 +209,20 @@ function withoutStaleComments(fragments: readonly TreeFragment[], input: Input):
   }
   return kept.length === fragments.length ? fragments : kept
 }
-
 function parserOf(parse: PartialParse): MarkdownParser | null {
   const own = (parse as { parser?: MarkdownParser }).parser
   if (own) return own
   return (parse as { baseParse?: { parser?: MarkdownParser } }).baseParse?.parser ?? null
 }
-
 const alreadyCut = new WeakSet<readonly TreeFragment[]>()
-
 const FencedCode: MarkdownConfig = {
   wrap(inner, input, fragments, ranges) {
     if (alreadyCut.has(fragments)) return inner
     if (fragments.length === 0) return watchDeclines(inner, input)
-
     const cut = withoutStaleComments(withoutUnclosedFences(withoutFrontMatter(fragments, input), input), input)
     if (cut === fragments) return watchDeclines(inner, input)
-
     const parser = parserOf(inner)
     if (!parser) return watchDeclines(inner, input)
-
     alreadyCut.add(cut)
     return watchDeclines(parser.startParse(input, cut, ranges), input)
   },
@@ -273,22 +232,18 @@ const FencedCode: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         const end = fenceEnd(line)
         if (end < 0) return false
-
         const mark = line.next
         const length = end - line.pos
         if (!closerAhead(cx, line, mark, length)) {
           declining?.push(cx.lineStart + line.pos)
           return false
         }
-
         const from = cx.lineStart + line.pos
         const infoFrom = line.skipSpace(end)
         let infoTo = line.text.length
         while (infoTo > infoFrom && isSpace(line.text.charCodeAt(infoTo - 1))) infoTo--
-
         const marks: Element[] = [cx.elt('CodeMark', from, from + length)]
         if (infoFrom < infoTo) marks.push(cx.elt('CodeInfo', cx.lineStart + infoFrom, cx.lineStart + infoTo))
-
         for (
           let first = true, empty = true, hasLine = false;
           cx.nextLine() && insideContainers(cx, line);
@@ -302,7 +257,6 @@ const FencedCode: MarkdownConfig = {
             cx.nextLine()
             break
           }
-
           hasLine = true
           if (!first) {
             addCodeText(cx, marks, cx.lineStart - 1, cx.lineStart)
@@ -316,12 +270,10 @@ const FencedCode: MarkdownConfig = {
             empty = false
           }
         }
-
         cx.addElement(cx.elt('FencedCode', from, cx.prevLineEnd(), marks))
         return true
       },
     },
   ],
 }
-
 export { FencedCode }

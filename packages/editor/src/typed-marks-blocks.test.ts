@@ -12,7 +12,6 @@ beforeAll(async () => {
   await loadCompletion()
   await loadLineCommands()
 })
-
 function typedOver(doc: string, character: string): string {
   let state = parsed(
     EditorState.create({
@@ -25,7 +24,6 @@ function typedOver(doc: string, character: string): string {
       ],
     }),
   )
-
   const view = {
     get state() {
       return state
@@ -35,14 +33,12 @@ function typedOver(doc: string, character: string): string {
       state = state.update(spec).state
     },
   } as unknown as EditorView
-
   const { from, to } = state.selection.main
   for (const handler of state.facet(EditorView.inputHandler)) {
     if (handler(view, from, to, character, () => state.update({}))) return state.doc.toString()
   }
   return state.update({ changes: { from, to, insert: character } }).state.doc.toString()
 }
-
 describe('a mark typed over several italic paragraphs', () => {
   test('a typed star adds a star on each, as it does on one paragraph', () => {
     expect(typedOver('*one*', '*')).toBe('**one**')

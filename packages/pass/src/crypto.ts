@@ -3,7 +3,6 @@ import { base64, fromUtf8, joined, randomBytes, unbase64, utf8 } from './bytes'
 import { type KdfParams, kdfParamsIn } from './kdf'
 
 export { KdfTooCostly, kdfParamsIn, PASSWORD_KDF, PIN_KDF, type KdfParams } from './kdf'
-
 export type Label =
   | 'root'
   | 'private'
@@ -17,14 +16,12 @@ export type Label =
   | 'export'
   | 'version'
   | 'sign'
-
 export class WrongSecret extends Error {
   constructor(message = 'pass: wrong secret') {
     super(message)
     this.name = 'WrongSecret'
   }
 }
-
 const KEY = 32
 const NONCE = 12
 const TAG = 16
@@ -32,25 +29,20 @@ const POINT = 65
 const SALT_MIN = 8
 const CURVE = { name: 'ECDH', namedCurve: 'P-256' } as const
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
-
 export function newKey(): Uint8Array<ArrayBuffer> {
   return randomBytes(KEY)
 }
-
 function contextOf(prefix: string, label: Label, context: string[]): Uint8Array<ArrayBuffer> {
   if (context.some((one) => one.includes('\n'))) throw new Error('pass: context holds a newline')
   return utf8(`${prefix}\n${label}\n${context.join('\n')}`)
 }
-
 async function aesKey(key: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   if (key.length !== KEY) throw new Error('pass: a key is 32 bytes')
   return await subtle().importKey('raw', key, 'AES-GCM', false, ['encrypt', 'decrypt'])
 }
-
 function plainBytes(plain: Uint8Array | string): Uint8Array<ArrayBuffer> {
   return typeof plain === 'string' ? utf8(plain) : joined(plain)
 }
-
 export async function sealBytes(
   key: Uint8Array<ArrayBuffer>,
   plain: Uint8Array | string,
@@ -63,7 +55,6 @@ export async function sealBytes(
   const sealed = await subtle().encrypt({ name: 'AES-GCM', iv: nonce, additionalData }, sealing, plainBytes(plain))
   return joined(nonce, new Uint8Array(sealed))
 }
-
 export async function seal(
   key: Uint8Array<ArrayBuffer>,
   plain: Uint8Array | string,
@@ -72,7 +63,6 @@ export async function seal(
 ): Promise<string> {
   return base64(await sealBytes(key, plain, label, ...context))
 }
-
 function sealedBytes(sealed: string, least: number): Uint8Array<ArrayBuffer> {
   let all: Uint8Array<ArrayBuffer>
   try {
@@ -83,7 +73,6 @@ function sealedBytes(sealed: string, least: number): Uint8Array<ArrayBuffer> {
   if (all.length < least) throw new WrongSecret()
   return all
 }
-
 export async function openBytes(
   key: Uint8Array<ArrayBuffer>,
   all: Uint8Array<ArrayBuffer>,
@@ -105,7 +94,6 @@ export async function openBytes(
     throw new WrongSecret()
   }
 }
-
 export async function open(
   key: Uint8Array<ArrayBuffer>,
   sealed: string,
@@ -114,7 +102,6 @@ export async function open(
 ): Promise<Uint8Array<ArrayBuffer>> {
   return await openBytes(key, sealedBytes(sealed, NONCE + TAG), label, ...context)
 }
-
 export async function openText(
   key: Uint8Array<ArrayBuffer>,
   sealed: string,
@@ -128,7 +115,6 @@ export async function openText(
     throw new WrongSecret()
   }
 }
-
 export async function subkey(
   key: Uint8Array<ArrayBuffer>,
   info: string | Uint8Array,
@@ -142,15 +128,11 @@ export async function subkey(
   )
   return new Uint8Array(bits)
 }
-
 export type Stretcher = (secret: string, salt: Uint8Array, params: KdfParams) => Promise<Uint8Array<ArrayBuffer>>
-
 let stretcher: Stretcher | null = null
-
 export function useStretcher(next: Stretcher | null): void {
   stretcher = next
 }
-
 export async function stretch(secret: string, salt: Uint8Array, params: KdfParams): Promise<Uint8Array<ArrayBuffer>> {
   const checked = kdfParamsIn(params)
   if (checked === null) throw new WrongSecret('pass: key stretching parameters out of range')
@@ -168,12 +150,10 @@ export async function stretch(secret: string, salt: Uint8Array, params: KdfParam
   })
   return joined(stretched)
 }
-
 export interface Pair {
   pub: string
   priv: JsonWebKey
 }
-
 export async function newPair(): Promise<Pair> {
   const pair = await subtle().generateKey(CURVE, true, ['deriveBits'])
   return {
@@ -181,7 +161,6 @@ export async function newPair(): Promise<Pair> {
     priv: await subtle().exportKey('jwk', pair.privateKey),
   }
 }
-
 async function wrapping(
   secret: CryptoKey,
   them: CryptoKey,
@@ -198,7 +177,6 @@ async function wrapping(
     ['encrypt', 'decrypt'],
   )
 }
-
 export async function wrapTo(
   key: Uint8Array<ArrayBuffer>,
   pub: string,
@@ -216,7 +194,6 @@ export async function wrapTo(
   const sealed = await subtle().encrypt({ name: 'AES-GCM', iv: nonce }, sealing, key)
   return base64(joined(ephemeral, nonce, new Uint8Array(sealed)))
 }
-
 export async function unwrapWith(
   wrapped: string,
   pair: Pair,
@@ -241,7 +218,6 @@ export async function unwrapWith(
     throw new WrongSecret()
   }
 }
-
 export async function fingerprintOf(pub: string): Promise<string> {
   const digest = new Uint8Array(await subtle().digest('SHA-256', unbase64(pub)))
   const hex = [...digest.slice(0, 16)].map((one) => one.toString(16).padStart(2, '0')).join('')

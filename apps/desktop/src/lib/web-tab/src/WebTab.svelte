@@ -67,18 +67,14 @@
   const UNSEEN = 0.01
   const page = $derived(pages.of(tab.id))
   const pictured = $derived(page.shot !== null && (page.layering !== 'under' || page.heldAt !== null))
-
   let hole = $state<HTMLElement>()
   let marked = $state(true)
   const worn = $derived(agentMarks.on[tab.id] ?? null)
   const FRAME = 2
-
   function rect(): Rect | null {
     if (page.filling) return { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight }
-
     const box = hole?.getBoundingClientRect()
     if (!box || box.width < 1 || box.height < 1) return null
-
     const inset = worn ? FRAME : 0
     return {
       x: box.x + inset,
@@ -87,7 +83,6 @@
       height: box.height - inset * 2,
     }
   }
-
   function coverOf(box: Rect): { box: Rect; cut: Cut | null } {
     if (page.filling) return { box, cut: null }
     if (filling.by !== null || (workspace.panes.dragging?.tabId ?? null) !== null) return { box, cut: ALL }
@@ -97,7 +92,6 @@
     watchLayers(layers)
     return { box, cut: cutOf(box, layers) }
   }
-
   let watched: Element[] = []
   function watchLayers(layers: readonly Layer[]) {
     if (!watching) return
@@ -106,7 +100,6 @@
     for (const one of now) if (!watched.includes(one)) watching.observe(one)
     watched = now
   }
-
   function frameOf(): Frame | null {
     const window = { width: innerWidth, height: innerHeight }
     if (page.filling) {
@@ -117,7 +110,6 @@
     const pane = hole?.closest('[data-pane]')
     return area && pane ? { window, area: boxOf(area), pane: boxOf(pane) } : null
   }
-
   let scheduled = 0
   let told = ''
   let grounded = false
@@ -125,9 +117,7 @@
   let last: Rect | null = null
   let ready = false
   let leaving = 0
-
   const watching = typeof ResizeObserver === 'function' ? new ResizeObserver(() => now()) : null
-
   $effect(() => {
     const room = hole
     if (!room || !watching) return
@@ -139,7 +129,6 @@
       unshift()
     }
   })
-
   $effect(() => {
     const room = hole
     if (!room || page.layering !== 'under' || typeof MutationObserver !== 'function') return
@@ -153,29 +142,22 @@
     holding.observe(document.documentElement, { attributes: true })
     return () => holding.disconnect()
   })
-
   $effect(() => heldOrLet(pages.still, page.heldAt))
-
   function heldOrLet(..._now: unknown[]) {
     untrack(now)
   }
-
   function follow(_cause?: unknown) {
     if (!isDesktop || !ready) return
-
     cancelAnimationFrame(scheduled)
     scheduled = requestAnimationFrame(look)
   }
-
   function now() {
     if (!isDesktop || !ready) return
     cancelAnimationFrame(scheduled)
     look()
   }
-
   function look() {
     if (!isDesktop || !ready || own) return
-
     if (page.heldAt || (pages.still && !page.shown)) {
       if (!grounded) {
         const at = page.heldAt !== null && page.layering === 'under' ? last : null
@@ -186,7 +168,6 @@
       return
     }
     grounded = false
-
     const box = rect()
     if (!box) {
       underlaid(tab.id, null)
@@ -196,7 +177,6 @@
       }
       return
     }
-
     const covered = coverOf(box)
     const at = covered.box
     const under = page.layering === 'under'
@@ -208,29 +188,24 @@
     const corner = page.filling ? ([0, 0] as const) : cardCorner(hole)
     underlaid(tab.id, under && page.live && seen ? { ...at, corner } : null)
     if (under && hole && fading(hole)) follow()
-
     if (visible) leaving = 0
     else if (overlays.depth === 0) {
       if (leaving === 0) leaving = Date.now() + LEAVING
       if (Date.now() < leaving) follow()
     }
     if (!visible && hole && moving(hole)) follow()
-
     const frame = frameOf()
     const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio, opacity, corner])
     if (said === told && page.live) return
-
     told = said
     page.space = space
     if (!page.live) page.own = apart
     if (under) void pages.show(tab.id, address, at, true, { cut, frame, opacity, corner })
     else void pages.show(tab.id, address, at, visible, { cut, frame, corner })
   }
-
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
   const own = $derived(isOwnPage(address))
   const choosing = $derived(workspace.isNewTab(tab))
-
   $effect(() => {
     if (!own) return
     untrack(() => {
@@ -239,11 +214,9 @@
       page.icon = HISTORY_MARK
     })
   })
-
   const space = $derived(workspace.spaceOf(tab.note))
   const book = webData.history()
   const apart = $derived(apartOf(tab))
-
   $effect(() => {
     const now = apart
     untrack(() => {
@@ -252,7 +225,6 @@
       void pages.rehouse(tab.id, now, said)
     })
   })
-
   onMount(() => {
     const asking = () => {
       ready = true
@@ -260,7 +232,6 @@
     }
     if (startup.reached('rooms')) asking()
     else void startup.turn('rooms').then(asking)
-
     window.addEventListener('resize', follow)
     const unscale = watchScale(follow)
     const mac = /Mac|iPhone|iPad/.test(navigator.userAgent)
@@ -271,10 +242,8 @@
     }
     window.addEventListener('pointerdown', pressed, true)
     window.addEventListener('keydown', pressed, true)
-
     const unwatch = overlays.watch(follow)
     const unarrive = watchArrivals(now)
-
     return () => {
       cancelAnimationFrame(scheduled)
       watching?.disconnect()
@@ -285,21 +254,17 @@
       unscale()
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
-
       const held = pages.peek(tab.id)
       pages.typing(tab.id, false)
-
       if (held?.filling) {
         held.filling = false
         void invoke('web_unfill', { tab: tab.id }).catch(() => undefined)
         void filling.give(tab.id)
       }
-
       underlaid(tab.id, null)
       if (last) pages.hide(tab.id, last)
     }
   })
-
   $effect(() => {
     const said = page.notice
     if (said === null) return
@@ -308,35 +273,27 @@
     }, 4000)
     return () => clearTimeout(gone)
   })
-
   $effect(() => follow(worn !== null))
-
   $effect(() => follow(page.live))
-
   $effect(() => {
     untrack(() => {
       told = ''
       follow()
     })
   })
-
   $effect(() => follow(workspace.panes.dragging))
-
   $effect(() => follow(swiping.turn))
   $effect(() => {
     if (swiping.tab === tab.id && swiping.stage === 'tracking') untrack(() => pages.freshen(tab.id))
   })
-
   $effect(() => {
     const on = page.filling
     untrack(() => void (on ? filling.take(tab.id) : filling.give(tab.id)))
   })
   $effect(() => follow([page.filling, filling.by]))
-
   $effect(() => {
     const here = site
     if (!page.live || page.loading || !here) return
-
     untrack(() => {
       const aside = asideFor(tab.id, page)
       page.zoom = zoomOf(here, aside)
@@ -344,30 +301,24 @@
       mute(tab.id, page, isMuted(here, aside))
     })
   })
-
   $effect(() => {
     if (page.url !== null && page.url !== tab.address) workspace.webWalked(tab, page.url)
   })
-
   $effect(() => {
     if (movedOn(page.landed, page.url)) untrack(() => workspace.keep(tab.id))
   })
-
   $effect(() => {
     const title = page.title
     untrack(() => workspace.webNamed(tab, title))
   })
-
   $effect(() => {
     page.path = tab.path
   })
-
   $effect(() => {
     const url = page.url
     const icon = page.kept
     const path = tab.path
     if (url === null || path === null) return
-
     untrack(() =>
       keepPage({
         path,
@@ -378,15 +329,12 @@
       }),
     )
   })
-
   function clip() {
     void clipPage(tab.id, space, { url: page.url, title: page.title })
   }
-
   $effect(() => {
     if (address) marked = true
   })
-
   let showingSite = $state(false)
   let showingDownloads = $state(false)
   const extending = isDesktop
@@ -399,7 +347,6 @@
   const addable = $derived(
     onStore !== null && !extensions.list.some((one) => one.id === onStore || one.addon === onStore) ? onStore : null,
   )
-
   $effect(() => {
     const url = page.url
     if (!extending || !url) {
@@ -410,7 +357,6 @@
       if (page.url === url) onStore = id
     })
   })
-
   $effect(() => {
     if (isDesktop && passOn())
       return whenLoaded(
@@ -418,22 +364,18 @@
         ({ autofill }) => void autofill.start(),
       )
   })
-
   const passBubble = $derived(passOn() ? passBubbles.of(tab.id) : null)
-
   onMount(() => {
     if (extending) void extensions.start()
     return () => {
       if (extensions.popped?.tab === tab.id) extensions.close()
     }
   })
-
   function under(anchor: HTMLElement): number {
     const bar = head?.getBoundingClientRect()
     const button = anchor.getBoundingClientRect()
     return bar ? Math.max(0, bar.right - button.right) : 0
   }
-
   async function pressExtension(one: Extension, anchor: HTMLElement | null) {
     showingExtensions = false
     if (one.popup) {
@@ -445,19 +387,15 @@
     const options = await extensions.optionsOf(one.id)
     if (options) workspace.openPage(options, 'front', tab.id)
   }
-
   const site = $derived(siteOf(page.url))
   const takeover = $derived(agentMarks.takeovers[tab.id] ?? null)
-
   $effect(() => {
     if (!page.find.open || page.loading) return
     untrack(() => seek(tab.id, page, page.find.query, 'fresh'))
   })
-
   function onKeydown(event: KeyboardEvent) {
     if (!focused || !isDesktop || !page.live) return
     if (event.defaultPrevented || keyElsewhere(event, root)) return
-
     const either = (id: string) => shortcuts.pressed(id, event) || shortcuts.pressed(`${id}.alt`, event)
     const look = shortcuts.pressed('edit.find', event)
       ? 'find'
@@ -466,7 +404,6 @@
         : either('edit.find-previous')
           ? 'previous'
           : null
-
     if (look) {
       event.preventDefault()
       sought(tab.id, page, look)
@@ -478,7 +415,6 @@
       void muteSite(tab.id, !page.muted)
     }
   }
-
   async function showTrail(forward: boolean, event: MouseEvent) {
     event.preventDefault()
     const { urls, at } = await pages.trail(tab.id)
@@ -488,11 +424,9 @@
     }))
     menu.show(event, rows, { title: forward ? 'Forward' : 'Back' })
   }
-
   function zoomTo(factor: number) {
     zoomPageTo(tab.id, page, factor)
   }
-
   const actions: WebActions = {
     newTab: () => workspace.newTab(tab.paneId),
     get newPrivate() {
@@ -765,33 +699,27 @@
     display: flex;
     flex-direction: column;
   }
-
   .head {
     position: relative;
     z-index: var(--z-raised);
     flex: none;
   }
-
   .head.gone {
     display: none;
   }
-
   .hole {
     position: relative;
     flex: 1;
     min-height: 0;
     background: var(--bg);
   }
-
   .hole.under {
     background: none;
   }
-
   :global(html[data-underlay]),
   :global([data-underlay]) {
     background: none !important;
   }
-
   :global(:not(html)[data-underlay])::before {
     content: '';
     position: fixed;
@@ -803,19 +731,15 @@
     pointer-events: none;
     clip-path: var(--underlay-clip);
   }
-
   :global(body[data-underlay])::before {
     background: var(--window-ground);
   }
-
   :global(main[data-underlay])::before {
     background: var(--shell-ground);
   }
-
   :global(main > .middle[data-underlay])::before {
     background: var(--chrome-ground);
   }
-
   .waiting {
     margin: 0;
     padding: var(--space-1) var(--space-3);
@@ -823,7 +747,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .unplayable {
     display: flex;
     align-items: center;
@@ -833,20 +756,17 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .unplayable p {
     flex: 1;
     min-width: 0;
     margin: 0;
     color: var(--muted);
   }
-
   .hole.still {
     background-repeat: no-repeat;
     background-position: top left;
     background-size: 100% auto;
   }
-
   .framed {
     flex: 1;
     min-height: 0;
@@ -854,7 +774,6 @@
     border: none;
     background: var(--bg);
   }
-
   .hole,
   .framed,
   .card {
@@ -862,15 +781,12 @@
     outline-offset: -2px;
     transition: outline-color var(--dur-base) var(--ease-out);
   }
-
   .acted {
     outline-color: var(--agent);
   }
-
   .acted.resting {
     outline-color: var(--muted);
   }
-
   .card {
     flex: 1;
     min-height: 0;
@@ -884,32 +800,27 @@
     font-family: var(--font-ui);
     text-align: center;
   }
-
   .mark {
     width: calc(var(--icon-lg) * 2);
     height: calc(var(--icon-lg) * 2);
     border-radius: var(--radius-row);
   }
-
   .name {
     margin: 0;
     color: var(--text-strong);
     font-size: var(--text-row);
   }
-
   .rows {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
     justify-content: center;
   }
-
   .site {
     margin: 0;
     font-size: var(--text-sm);
     overflow-wrap: anywhere;
   }
-
   .why {
     max-width: 36em;
     margin: 0;

@@ -13,12 +13,10 @@ export interface Entering {
   demoted?: () => void
   holds: () => boolean
 }
-
 export abstract class JoinedRoom {
   protected readonly door: RoomDoor
   protected scheme: 'dark' | 'light'
   protected left = false
-
   constructor(private readonly entering: Entering) {
     this.scheme = entering.scheme
     this.door = this.opened(entering, {
@@ -40,31 +38,23 @@ export abstract class JoinedRoom {
       },
     })
   }
-
   protected opened(_entering: Entering, opening: Opening): RoomDoor {
     return new RoomDoor(opening)
   }
-
   rename(person: string | undefined, worn?: Worn) {
     this.door.rename(person, worn)
   }
-
   repaint(scheme: 'dark' | 'light') {
     if (scheme === this.scheme) return
-
     this.scheme = scheme
     this.showPresent()
   }
-
   protected holds(): boolean {
     return !this.left && this.entering.holds()
   }
-
   protected rebuilt(): void {
     // Nothing for a room that keeps nothing across a rebuild.
   }
-
   protected abstract together(): Promise<void> | void
-
   protected abstract showPresent(): void
 }

@@ -49,13 +49,9 @@ export type PortMap = AccountPorts &
   VoicePorts &
   WebPorts &
   WorkspacePorts
-
 export type PortName = keyof PortMap
-
 const provided = new Map<PortName, unknown>()
-
 const waiting = new Map<PortName, ((port: unknown) => void)[]>()
-
 export function providePort<Name extends PortName>(name: Name, port: PortMap[Name]): () => void {
   provided.set(name, port)
   const uses = waiting.get(name) ?? []
@@ -65,7 +61,6 @@ export function providePort<Name extends PortName>(name: Name, port: PortMap[Nam
     if (provided.get(name) === port) provided.delete(name)
   }
 }
-
 export function portOf<Name extends PortName>(name: Name): Result<PortMap[Name]> {
   const port = provided.get(name) as PortMap[Name] | undefined
   if (port === undefined) {
@@ -73,15 +68,12 @@ export function portOf<Name extends PortName>(name: Name): Result<PortMap[Name]>
   }
   return ok(port)
 }
-
 export function needPort<Name extends PortName>(name: Name): PortMap[Name] {
   const found = portOf(name)
   if (!found.ok) throw new Error(found.error.message)
   return found.value
 }
-
 export const portProvided = (name: PortName): boolean => provided.has(name)
-
 export function whenPortProvided<Name extends PortName>(name: Name, use: (port: PortMap[Name]) => void): void {
   const port = provided.get(name) as PortMap[Name] | undefined
   if (port !== undefined) {
@@ -92,9 +84,7 @@ export function whenPortProvided<Name extends PortName>(name: Name, use: (port: 
   uses.push(use as (port: unknown) => void)
   waiting.set(name, uses)
 }
-
 const heldEdits = new Set<() => void>()
-
 export function holdEdits(flush: () => void): () => void {
   const held = () => flush()
   heldEdits.add(held)
@@ -102,28 +92,20 @@ export function holdEdits(flush: () => void): () => void {
     heldEdits.delete(held)
   }
 }
-
 export function flushHeldEdits(): void {
   for (const flush of [...heldEdits]) flush()
 }
-
 export function mayStop(why: StopReason): Promise<boolean> {
   const port = provided.get('quit.ask') as StopAskingPort | undefined
   return port ? port.mayStop(why) : Promise.resolve(true)
 }
-
 export const syncStore = (): SyncStorePort | null => (provided.get('sync.store') as SyncStorePort | undefined) ?? null
-
 export const searching = (): SearchPort | null => (provided.get('search') as SearchPort | undefined) ?? null
-
 export const webPages = (): WebPagesPort => (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
-
 export const workspaceNotes = (): WorkspaceNotesPort =>
   (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES
-
 export const workspaceView = (): WorkspaceViewPort =>
   (provided.get('workspace.view') as WorkspaceViewPort | undefined) ?? NO_WORKSPACE_VIEW
-
 export const settingsWindow = (): SettingsWindowPort =>
   (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
     open: false,
@@ -131,19 +113,15 @@ export const settingsWindow = (): SettingsWindowPort =>
     historyOpen: false,
     show: () => undefined,
   }
-
 export function askSheet(id: SheetId): Promise<void> {
   const port = provided.get('shell.sheets') as SheetsPort | undefined
   return port ? port.ask(id) : Promise.resolve()
 }
-
 export function showQuickAdd(prefill?: QuickAddPrefill): void {
   ;(provided.get('quick-add.show') as QuickAddPort | undefined)?.show(prefill)
 }
-
 export function sayNotice(words: string): void {
   ;(provided.get('shell.notice') as NoticePort | undefined)?.say(words)
 }
-
 export const focusEditorRegion = (): boolean =>
   (provided.get('shell.focus') as ShellFocusPort | undefined)?.editor() ?? false

@@ -17,15 +17,12 @@ interface Online {
   Bindings: Env
   Variables: Variables
 }
-
 export const online = new Hono<Online>()
-
 const on: MiddlewareHandler<Online> = async (context, next) => {
   if (!(await serviceOf(context.env)).on) return context.json({ error: NOT_FOUND }, 404)
   await next()
 }
 online.use('*', on)
-
 interface MachineRow {
   id: string
   user_id: string
@@ -49,7 +46,6 @@ interface MachineRow {
   disk_used: number
   disk_total: number
 }
-
 async function machineOf(env: Env, userId: string): Promise<MachineRow | null> {
   return await env.DB.prepare(
     `select id, user_id, state, created_at, woke_at, slept_at, home_bytes, backup_at, held,
@@ -60,7 +56,6 @@ async function machineOf(env: Env, userId: string): Promise<MachineRow | null> {
     .bind(userId)
     .first<MachineRow>()
 }
-
 async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
   const had = await machineOf(env, userId)
   if (had) return had
@@ -76,9 +71,7 @@ async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
   if (made.id === id) await audit(env, id, 'made', { who: userId })
   return made
 }
-
 const asked = (machine: MachineRow) => ({ 'x-orden-user': machine.user_id })
-
 function specOf(machine: MachineRow) {
   if (!machine.spec) return null
   let spec: unknown
@@ -93,7 +86,6 @@ function specOf(machine: MachineRow) {
   }
   return { cores, memory, disk }
 }
-
 function serverOf(machine: MachineRow, at: number) {
   const spec = specOf(machine)
   const made = machine.server_id !== null
@@ -111,9 +103,7 @@ function serverOf(machine: MachineRow, at: number) {
     spent: made ? spentOn(machine, at) : null,
   }
 }
-
 const refused = (error: Refusal) => ({ error })
-
 online.get('/machine', async (context) => {
   const user = context.get('user')
   const at = now()
@@ -138,12 +128,10 @@ online.get('/machine', async (context) => {
     resetAt: resetAt(at),
   })
 })
-
 online.get('/types', async (context) => {
   const offers = await offersOf(context.env, now())
   return offers ? context.json(offers) : context.json({ error: NOT_FOUND }, 404)
 })
-
 online.post('/machine/type', async (context) => {
   const env = context.env
   const user = context.get('user')
@@ -153,7 +141,6 @@ online.post('/machine/type', async (context) => {
   const location = body.text('location', 40)
   if (body.problem || !name) return context.json({ error: 'type' }, 400)
   if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
-
   const offers = await offersOf(env, at)
   if (!offers) return context.json({ error: NOT_FOUND }, 404)
   const machine = await ensureMachine(env, user.id)
@@ -166,7 +153,6 @@ online.post('/machine/type', async (context) => {
   if (machine.state === 'starting' || machine.state === 'stopping') {
     return context.json({ error: 'busy' }, 409)
   }
-
   const spec = JSON.stringify({ cores: offer.cores, memory: offer.memoryGb, disk: offer.diskGb })
   if (!made) {
     await env.DB.prepare(
@@ -177,7 +163,6 @@ online.post('/machine/type', async (context) => {
       .run()
     return context.json({ state: machine.state })
   }
-
   const had = specOf(machine)
   if (had && offer.diskGb < had.disk) return context.json({ error: 'disk' }, 409)
   const current = offers.types.find((one) => one.name === machine.size)
@@ -197,13 +182,11 @@ online.post('/machine/type', async (context) => {
     state: answer ? (await answer.json<{ state: string }>()).state : machine.state,
   })
 })
-
 online.post('/machine/start', async (context) => {
   const user = context.get('user')
   const refusal = await whyNotWake(context.env, user.id, now())
   if (refusal) return context.json(refused(refusal), refusal === 'list' ? 403 : 409)
   if (!(await mayStart(context.env, user.id))) return context.json(refused('rate'), 429)
-
   const machine = await ensureMachine(context.env, user.id)
   await audit(context.env, machine.id, 'start', { who: user.id })
   const answer = await askMachine(context.env, machine.id, 'start', asked(machine))
@@ -211,7 +194,6 @@ online.post('/machine/start', async (context) => {
     state: answer ? (await answer.json<{ state: string }>()).state : 'asleep',
   })
 })
-
 online.post('/machine/stop', async (context) => {
   const user = context.get('user')
   const machine = await machineOf(context.env, user.id)
@@ -232,7 +214,6 @@ online.post('/machine/stop', async (context) => {
   })
   return context.json({ state: 'asleep' })
 })
-
 online.post('/terms', async (context) => {
   const env = context.env
   const user = context.get('user')
@@ -241,20 +222,16 @@ online.post('/terms', async (context) => {
   const term = body.text('term', 200)
   const named = body.text('session', 200)
   if (body.problem) return context.json({ error: body.problem }, 400)
-
   if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
   if (!term) return await makeSession(context, env, user.id, null)
-
   const file = await env.DB.prepare('select id, space_id from notes where id = ? and deleted = 0')
     .bind(term)
     .first<{ id: string; space_id: string }>()
   const reached = file ? ((await reachedSpace(env, who, file.space_id)) ?? (await reachedItem(env, who, file))) : null
   if (!file || !reached) return context.json({ error: NOT_FOUND }, 404)
   if (reached.role === 'read') return context.json(refused('role'), 403)
-
   const adopted = named ? await adopt(env, user.id, term, named) : null
   if (adopted) return context.json(adopted)
-
   const had = await env.DB.prepare('select machine, session, user_id, ended_at from term_sessions where term = ?')
     .bind(term)
     .first<{ machine: string; session: string; user_id: string; ended_at: number | null }>()
@@ -262,14 +239,11 @@ online.post('/terms', async (context) => {
     return context.json({ v: 1, machine: had.machine, session: had.session })
   }
   if (had) return context.json(refused('gone'), 409)
-
   if (named && (await adoptable(env, user.id, named))) {
     return context.json(refused('gone'), 409)
   }
-
   return await makeSession(context, env, user.id, term)
 })
-
 async function adoptable(env: Env, userId: string, session: string): Promise<boolean> {
   const row = await env.DB.prepare(
     `select 1 as one from term_sessions t
@@ -281,7 +255,6 @@ async function adoptable(env: Env, userId: string, session: string): Promise<boo
     .first<{ one: number }>()
   return row !== null
 }
-
 async function adopt(env: Env, userId: string, term: string, session: string) {
   const row = await env.DB.prepare(
     `update term_sessions set term = ?1
@@ -298,7 +271,6 @@ async function adopt(env: Env, userId: string, term: string, session: string) {
     .first<{ machine: string; session: string }>()
   return row && { v: 1, machine: row.machine, session: row.session }
 }
-
 async function makeSession(context: Context<Online>, env: Env, userId: string, term: string | null): Promise<Response> {
   const machine = await ensureMachine(env, userId)
   const { results: live } = await env.DB.prepare(
@@ -310,7 +282,6 @@ async function makeSession(context: Context<Online>, env: Env, userId: string, t
     return context.json({ ...refused('sessions'), sessions: live.map((one) => one.term) }, 409)
   }
   if (!(await mayMakeSession(env, userId))) return context.json(refused('rate'), 429)
-
   const session = `s_${newId().replaceAll('-', '')}`
   await env.DB.prepare(
     `insert into term_sessions (term, machine, session, user_id, created_at)
@@ -322,7 +293,6 @@ async function makeSession(context: Context<Online>, env: Env, userId: string, t
   await askHub(env, userId, 'terms')
   return context.json({ v: 1, machine: machine.id, session })
 }
-
 async function machineSessions(env: Env, userId: string): Promise<Map<string, SessionNow> | null> {
   const machine = await machineOf(env, userId)
   if (!machine) return null
@@ -330,7 +300,6 @@ async function machineSessions(env: Env, userId: string): Promise<Map<string, Se
   const said = answer?.ok ? await answer.json<{ sessions: SessionNow[] | null }>() : null
   return said?.sessions ? new Map(said.sessions.map((one) => [one.session, one])) : null
 }
-
 online.get('/terms', async (context) => {
   const user = context.get('user')
   const running = machineSessions(context.env, user.id)
@@ -387,7 +356,6 @@ online.get('/terms', async (context) => {
     ],
   })
 })
-
 async function ownSession(env: Env, userId: string, term: string) {
   return await env.DB.prepare(
     `select t.machine as machine, t.session as session, t.user_id as user_id
@@ -396,7 +364,6 @@ async function ownSession(env: Env, userId: string, term: string) {
     .bind(term, userId)
     .first<{ machine: string; session: string; user_id: string }>()
 }
-
 online.patch('/terms/:term', async (context) => {
   const user = context.get('user')
   const term = context.req.param('term')
@@ -407,7 +374,6 @@ online.patch('/terms/:term', async (context) => {
   }
   const own = await ownSession(context.env, user.id, term)
   if (!own) return context.json({ error: NOT_FOUND }, 404)
-
   await context.env.DB.prepare('update term_sessions set typing = ? where term = ?').bind(typing, term).run()
   await audit(context.env, own.machine, 'typing', { who: user.id, detail: typing })
   await askMachine(context.env, own.machine, 'typing', {
@@ -417,9 +383,7 @@ online.patch('/terms/:term', async (context) => {
   })
   return context.json({ typing })
 })
-
 const SESSION_ID = /^s_[A-Za-z0-9]{1,64}$/
-
 online.delete('/terms/:term', async (context) => {
   const user = context.get('user')
   const term = context.req.param('term')
@@ -440,7 +404,6 @@ online.delete('/terms/:term', async (context) => {
     await askHub(context.env, user.id, 'terms')
     return context.json({ ok: true })
   }
-
   await context.env.DB.prepare('update term_sessions set ended_at = ? where term = ?').bind(now(), term).run()
   await audit(context.env, own.machine, 'ended', { who: user.id })
   await askMachine(context.env, own.machine, 'end', {
@@ -450,7 +413,6 @@ online.delete('/terms/:term', async (context) => {
   await askHub(context.env, user.id, 'terms')
   return context.json({ ok: true })
 })
-
 online.get('/events', async (context) => {
   const user = context.get('user')
   const machine = await machineOf(context.env, user.id)

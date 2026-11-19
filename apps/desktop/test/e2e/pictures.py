@@ -5,17 +5,13 @@ import tempfile
 import zipfile
 import zlib
 from pathlib import Path
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
-
 def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
-
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
             struct.pack(">I", len(body))
@@ -23,7 +19,6 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
             + body
             + struct.pack(">I", zlib.crc32(kind + body))
         )
-
     rows = bytearray()
     for y in range(height):
         rows.append(0)
@@ -31,7 +26,6 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
             rows.append(tint[0] * (x + 1) // width)
             rows.append(tint[1] * (y + 1) // height)
             rows.append(tint[2])
-
     head = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     return (
         b"\x89PNG\r\n\x1a\n"
@@ -39,17 +33,13 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
         + chunk(b"IDAT", zlib.compress(bytes(rows), 9))
         + chunk(b"IEND", b"")
     )
-
 PASTED = base64.b64encode(png(220, 150, (250, 120, 60))).decode()
 DROPPED = base64.b64encode(png(180, 180, (70, 170, 250))).decode()
 IMPORTED = png(200, 130, (120, 220, 130))
-
 PLAN = "1a2b3c4d5e6f78901a2b3c4d5e6f7890"
 KIT = "aaaabbbbccccddddeeeeffff00001111"
-
 def notion_zip(into: Path) -> Path:
     path = into / "Export-4b7c1d2e.zip"
-
     with zipfile.ZipFile(path, "w") as zip_file:
         zip_file.writestr(
             f"Plan {PLAN}.md",
@@ -60,15 +50,12 @@ def notion_zip(into: Path) -> Path:
             f"# Kit list\n\nA tent and a stove.\n\n![](tent%20{KIT}.png)\n",
         )
         zip_file.writestr(f"Plan {PLAN}/tent {KIT}.png", IMPORTED)
-
     return path
-
 NOTE = """# Pictures
 
 Paste one here:
 
 """
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -79,7 +66,6 @@ async (note) => {
   return { name: found.name, root: ws.activeSpace.root }
 }
 """
-
 PASTE = """
 ([base64, name, selector]) => {
   const binary = atob(base64)
@@ -98,7 +84,6 @@ PASTE = """
   )
 }
 """
-
 DROP = """
 ([base64, name, selector]) => {
   const binary = atob(base64)
@@ -123,7 +108,6 @@ DROP = """
   )
 }
 """
-
 DRAWN = """
 () => {
   const seen = []
@@ -146,7 +130,6 @@ DRAWN = """
   }
 }
 """
-
 ASKED = """
 async (path) => {
   const answer = await fetch(path)
@@ -158,7 +141,6 @@ async (path) => {
   }
 }
 """
-
 OWN_CHUNK = """
 async () => {
   const found = [...document.querySelectorAll('script[src]')]
@@ -170,15 +152,12 @@ async () => {
   return { status: answer.status, type: answer.headers.get('content-type') }
 }
 """
-
 FIXTURES = Path(tempfile.gettempdir())
-
 def started(page: Page) -> dict:
     wait_for(page, "window.ordenApp", "the app")
     wait_for(page, "window.ordenApp.workspace.activeSpace", "a space")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     return page.evaluate("() => ({ root: window.ordenApp.workspace.activeSpace.root })")
-
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
         service_workers="allow",
@@ -199,14 +178,12 @@ def fresh(browser: Browser, finger: bool) -> Page:
     DRIVE.choosers(page)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-
     started(page)
     seeded = page.evaluate(SEED, NOTE)
     say(f"the space {seeded['root']} holds {seeded['name']}")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(600)
     return page
-
 def paste_into_note(page: Page, where: str) -> str:
     page.evaluate(PASTE, [PASTED, "pasted.png", ".cm-content"])
     wait_for(
@@ -214,36 +191,29 @@ def paste_into_note(page: Page, where: str) -> str:
         "window.ordenApp.workspace.active.doc.includes('](assets/')",
         f"[{where}] the paste to reach the note",
     )
-
     written = page.evaluate(
         "() => /!\\[\\]\\(([^)]+)\\)/.exec(window.ordenApp.workspace.active.doc)?.[1] ?? ''"
     )
     say(f"[{where}] the note now says ![]({written})")
     if not written.startswith("assets/"):
         wrong(f"{where}: the paste wrote {written!r}, not a path beside the note")
-
     page.wait_for_timeout(700)
     return written
-
 def expect_drawn(page: Page, where: str, most: int, wide: int | None = None) -> dict:
     state = page.evaluate(DRAWN)
     say(f"[{where}] {json.dumps(state)}")
-
     if not state["controlled"]:
         wrong(f"{where}: no worker is in front of the page, so nothing can answer")
     if len(state["images"]) != most:
         wrong(f"{where}: {len(state['images'])} pictures asked of the store, not {most}")
     if state["broken"]:
         wrong(f"{where}: {state['broken']} pictures wearing the missing placeholder")
-
     for image in state["images"]:
         if not image["complete"] or image["width"] < 1:
             wrong(f"{where}: {image['src']} did not draw ({image['width']}px wide)")
         if wide is not None and (image["left"] < 0 or image["left"] + image["drawn"] > wide):
             wrong(f"{where}: {image['src']} runs off a {wide}px screen: {image}")
-
     return state
-
 THREE = """
 (relative) => {
   const view = window.orden
@@ -269,16 +239,13 @@ THREE = """
   return name
 }
 """
-
 def three_ways(page: Page, where: str, relative: str) -> None:
     name = relative.split("/")[-1]
     page.evaluate("() => window.ordenApp.workspace.loadTree()")
     page.evaluate("() => window.ordenApp.links.build(window.ordenApp.workspace.activeSpace.root)")
     wait_for(page, f"window.ordenApp.links.fileNamed('{name}')", f"[{where}] the index to know it")
-
     page.evaluate(THREE, relative)
     page.wait_for_timeout(1200)
-
 OPEN_NAMED = """
 async (stem) => {
   const ws = window.ordenApp.workspace
@@ -289,60 +256,48 @@ async (stem) => {
   return found.path
 }
 """
-
 def imported(page: Page, where: str, zip_path: Path) -> None:
     page.wait_for_function("() => !!window.ordenApp.importing", timeout=20000)
     page.evaluate("() => window.ordenApp.importing.show()")
     page.wait_for_selector("button.drop", timeout=20000)
     page.wait_for_timeout(450)
-
     with page.expect_file_chooser() as chooser:
         page.click("button.drop")
     chooser.value.set_files(str(zip_path))
-
     page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=30000)
     say(f"[{where}] the sheet read a {page.evaluate('() => window.ordenApp.importing.format')}")
     page.click("button.orden-button")
     page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=60000)
     page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(400)
-
     opened = page.evaluate(OPEN_NAMED, "Kit list")
     if not opened:
         wrong(f"{where}: nothing called Kit list arrived")
         return
-
     page.wait_for_timeout(1200)
     say(f"[{where}] {opened} says {page.evaluate('() => window.ordenApp.workspace.active.doc')!r}")
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
-
     relative = paste_into_note(page, "editor")
     shot(page, "01-editor-pasted")
     expect_drawn(page, "editor", 1)
-
     three_ways(page, "editor", relative)
     shot(page, "02-editor-three-ways")
     expect_drawn(page, "editor three ways", 3)
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "03-reading-three-ways")
     expect_drawn(page, "reading", 3)
-
     page.reload(wait_until="domcontentloaded")
     started(page)
     page.wait_for_timeout(1400)
     shot(page, "04-editor-after-reload")
     expect_drawn(page, "editor after a reload", 3)
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "05-reading-after-reload")
     expect_drawn(page, "reading after a reload", 3)
-
     space = root.strip("/")
     name = relative.split("/")[-1]
     hit = page.evaluate(ASKED, f"/asset/{space}/{relative}")
@@ -355,26 +310,21 @@ def drive(browser: Browser) -> None:
         wrong(f"the worker answered with {hit['bytes']} bytes")
     if "immutable" not in (hit["cache"] or ""):
         wrong(f"a picture named {name} was not offered for keeping: {hit['cache']!r}")
-
     miss = page.evaluate(ASKED, f"/asset/{space}/assets/nowhere.png")
     say(f"[worker] a miss: {json.dumps(miss)}")
     if miss["status"] != 404:
         wrong(f"a picture that is not there answered {miss['status']}, not 404")
-
     chunk = page.evaluate(OWN_CHUNK)
     say(f"[worker] the app's own chunk: {json.dumps(chunk)}")
     if not chunk:
         wrong("the page carries no chunk under /assets/ to check")
     elif chunk["status"] != 200 or "javascript" not in (chunk["type"] or ""):
         wrong(f"the worker answered for the app's own code: {chunk}")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
-
     imported(page, "import", notion_zip(FIXTURES))
     shot(page, "06-editor-imported")
     expect_drawn(page, "the imported note", 1)
-
     brought = page.evaluate(
         "() => new URL(document.querySelector('img[src*=\"/asset/\"]').src).pathname"
     )
@@ -384,14 +334,12 @@ def drive(browser: Browser) -> None:
         wrong(f"the imported picture is served as {asked['type']!r}")
     if asked["cache"] != "no-cache":
         wrong(f"a picture named by a person was offered for keeping: {asked['cache']!r}")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "07-reading-imported")
     expect_drawn(page, "the imported note, read", 1)
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
-
     opened = "window.ordenApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
         page.evaluate("() => window.ordenApp.workspace.createCanvas()")
@@ -402,11 +350,9 @@ def drive(browser: Browser) -> None:
         wrong("no canvas ever opened")
         page.context.close()
         return
-
     page.wait_for_selector(".canvas", timeout=15000)
     page.evaluate(DROP, [DROPPED, "dropped.png", ".canvas"])
     page.wait_for_timeout(1600)
-
     plane = page.evaluate(
         """() => {
           const found = document.querySelector('.canvas img.picture')
@@ -429,49 +375,38 @@ def drive(browser: Browser) -> None:
             wrong(f"the picture on the plane did not draw: {plane}")
     if page.evaluate("() => document.querySelectorAll('.canvas .missing').length"):
         wrong("the plane says there is nothing there")
-
     page.context.close()
-
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
-
     relative = paste_into_note(page, "phone editor")
     shot(page, "10-phone-editor")
     expect_drawn(page, "phone editor", 1, wide=420)
-
     three_ways(page, "phone", relative)
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, "11-phone-reading")
     expect_drawn(page, "phone reading", 3, wide=420)
-
     page.reload(wait_until="domcontentloaded")
     started(page)
     page.wait_for_timeout(1400)
     shot(page, "12-phone-after-reload")
     expect_drawn(page, "phone editor after a reload", 3, wide=420)
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "13-phone-reading-after-reload")
     expect_drawn(page, "phone reading after a reload", 3, wide=420)
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
-
     imported(page, "phone import", notion_zip(FIXTURES))
     shot(page, "14-phone-imported")
     expect_drawn(page, "the imported note on a phone", 1, wide=420)
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "15-phone-reading-imported")
     expect_drawn(page, "the imported note read on a phone", 1, wide=420)
-
     page.context.close()
-
 def main() -> int:
     global FIXTURES
-
     with tempfile.TemporaryDirectory() as made:
         FIXTURES = Path(made)
         with DRIVE.session() as browser:
@@ -479,7 +414,5 @@ def main() -> int:
             drive(browser)
             say("--- a finger ---")
             finger(browser)
-
     return DRIVE.verdict("a picture pasted, named, imported and dropped draws everywhere")
-
 raise SystemExit(main())

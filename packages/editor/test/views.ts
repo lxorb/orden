@@ -5,7 +5,6 @@ export function noRects() {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 }
-
 export function keptViews(): EditorView[] {
   const open: EditorView[] = []
   beforeAll(noRects)

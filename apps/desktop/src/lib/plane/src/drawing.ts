@@ -20,18 +20,14 @@ export function drawingOf(open: {
     trusted: open.trusted ?? false,
   }
 }
-
 export async function planeSvg(plane: PlaneShown): Promise<string | null> {
   const drawing = drawingOf(plane)
   if (!drawing.canvas.nodes.length && !drawing.canvas.ink.length) return null
-
   const faces = await pdfFaces(drawing.canvas.nodes, { note: plane.note, root: drawing.root })
   const holder = document.createElement('div')
   holder.innerHTML = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, true, false, faces)
-
   const picture = holder.firstElementChild
   if (!(picture instanceof SVGSVGElement)) return null
-
   picture.removeAttribute('width')
   picture.removeAttribute('height')
   return picture.outerHTML

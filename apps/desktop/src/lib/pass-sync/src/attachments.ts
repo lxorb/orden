@@ -10,19 +10,16 @@ export interface Picked {
   type: string
   bytes: Uint8Array
 }
-
 export class NotHere extends Error {
   constructor() {
     super('pass: this file has not reached this device yet')
     this.name = 'NotHere'
   }
 }
-
 export async function accountFiles(): Promise<FileApi | null> {
   const { account, BASE } = await import('../../accounts/src/api')
   return account.user && account.token ? fileApi(BASE, account.token) : null
 }
-
 export async function keptAttachment(
   rows: QueueRows,
   itemKey: Uint8Array<ArrayBuffer>,
@@ -42,7 +39,6 @@ export async function keptAttachment(
     key: sealed.key,
   }
 }
-
 async function fetchedParts(remote: FileApi, item: Item, attachment: Attachment): Promise<FilePartRow[]> {
   const parts = partsOf(attachment.size)
   const rows: FilePartRow[] = []
@@ -53,7 +49,6 @@ async function fetchedParts(remote: FileApi, item: Item, attachment: Attachment)
   await writeFileParts(rows)
   return rows
 }
-
 export async function openedAttachment(
   itemKey: Uint8Array<ArrayBuffer>,
   item: Item,
@@ -69,12 +64,10 @@ export async function openedAttachment(
   const sorted = [...rows].sort((a, b) => a.part - b.part).map((one) => one.bytes)
   return await openFile(itemKey, item.id, attachment.id, attachment.key, sorted, attachment.size)
 }
-
 export async function forgottenAttachment(rows: QueueRows, vault: string, item: string, file: string): Promise<void> {
   await dropFileParts(item, file)
   await queuedRemoval(rows, vault, item, file)
 }
-
 export async function forgottenItemFiles(rows: QueueRows, items: readonly string[]): Promise<void> {
   for (const item of items) await dropFileParts(item)
   await droppedWaiting(rows, items)

@@ -7,16 +7,13 @@ export interface InternalEntry {
   modified: number
   size: number
 }
-
 interface Named {
   path: string
   entry: InternalEntry
 }
-
 export interface InternalTrashed extends Trashed {
   held: [string, InternalEntry][]
 }
-
 interface Stamped {
   path: string
   dir: boolean
@@ -24,14 +21,11 @@ interface Stamped {
   mtime: number
   id: string | null
 }
-
 export type InternalChange =
   | ({ kind: 'created' | 'modified' } & Stamped)
   | { kind: 'removed'; path: string; dir: boolean; id: string | null }
   | ({ kind: 'renamed'; from: string } & Stamped)
-
 type Channel = ReturnType<NonNullable<InternalWorld['channel']>>
-
 export interface InternalBytes {
   readText(key: string): Promise<string | null>
   writeText(key: string, text: string): Promise<void>
@@ -42,7 +36,6 @@ export interface InternalBytes {
   writeSlot(at: 0 | 1, text: string): Promise<void>
   where(key: string): string
 }
-
 export interface InternalWorld {
   now(): number
   key(): string
@@ -51,21 +44,17 @@ export interface InternalWorld {
   newest?: { read(): number; write(gen: number): void }
   channel?(name: string, heard: (message: unknown) => void): { post(message: unknown): void; close(): void }
 }
-
 interface Written {
   index: 1
   gen: number
   paths: Record<string, InternalEntry>
   trash: InternalTrashed[]
 }
-
 const STAMPS_AFTER = 2000
-
 function folderOf(path: string): string {
   const at = path.lastIndexOf('/')
   return at < 0 ? '' : path.slice(0, at)
 }
-
 function isEntry(value: unknown): value is InternalEntry {
   if (typeof value !== 'object' || value === null) return false
   const one = value as Record<string, unknown>
@@ -76,7 +65,6 @@ function isEntry(value: unknown): value is InternalEntry {
     typeof one.size === 'number'
   )
 }
-
 function readIndex(text: string | null): Written | null {
   if (!text) return null
   let value: unknown
@@ -120,7 +108,6 @@ function readIndex(text: string | null): Written | null {
   }
   return { index: 1, gen: said.gen, paths, trash }
 }
-
 export class InternalFolder {
   private paths = new Map<string, Named>()
   private trashed: InternalTrashed[] = []
@@ -131,7 +118,6 @@ export class InternalFolder {
   private stampTimer: ReturnType<typeof setTimeout> | undefined
   private stamps = new Map<string, { modified: number; size: number }>()
   private readonly channel: Channel | null
-
   private constructor(
     readonly name: string,
     readonly bytes: InternalBytes,
@@ -142,17 +128,14 @@ export class InternalFolder {
         this.fromAnother(message)
       }) ?? null
   }
-
   static async open(name: string, bytes: InternalBytes, world: InternalWorld): Promise<InternalFolder> {
     const folder = new InternalFolder(name, bytes, world)
     await folder.load()
     return folder
   }
-
   private keyOf(path: string): string {
     return this.world.foldsCase ? nameKey(path) : path.normalize('NFC')
   }
-
   private async load() {
     const [zero, one] = await Promise.all([this.bytes.slot(0), this.bytes.slot(1)])
     const a = readIndex(zero)
@@ -172,7 +155,6 @@ export class InternalFolder {
     }
     this.stale = false
   }
-
   private fromAnother(message: unknown) {
     if (typeof message !== 'object' || message === null) return
     const said = message as { gen?: unknown; changes?: unknown }
@@ -189,21 +171,17 @@ export class InternalFolder {
       this.tell(changes)
     })
   }
-
   async fresh(): Promise<void> {
     if (this.stale) await this.load()
   }
-
   heard(listener: (changes: InternalChange[]) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   private tell(changes: InternalChange[]) {
     if (!changes.length) return
     for (const listener of [...this.listeners]) listener(changes)
   }
-
   private async change(change: () => InternalChange[] | null): Promise<void> {
     const run = async () => {
       if ((this.world.newest?.read() ?? 0) > this.gen) this.stale = true
@@ -226,7 +204,6 @@ export class InternalFolder {
     }
     await (this.world.exclusive ? this.world.exclusive(`orden:internal:${this.name}`, run) : run())
   }
-
   private async persist() {
     clearTimeout(this.stampTimer)
     const written: Written = {
@@ -242,23 +219,18 @@ export class InternalFolder {
     this.holding = into
     this.stamps.clear()
   }
-
   private stampSoon() {
     clearTimeout(this.stampTimer)
     this.stampTimer = setTimeout(() => {
       void this.flush()
     }, STAMPS_AFTER)
   }
-
   async flush(): Promise<void> {
     if (this.retired) return
     if (this.stamps.size) await this.op(() => this.change(() => null))
   }
-
   private retired = false
-
   private doing = new Set<Promise<unknown>>()
-
   private async op<T>(run: () => Promise<T>): Promise<T> {
     if (this.retired) throw new Error(`${this.name} has moved or gone`)
     const doing = run()
@@ -269,40 +241,33 @@ export class InternalFolder {
       this.doing.delete(doing)
     }
   }
-
   async retire(): Promise<void> {
     this.retired = true
     while (this.doing.size) await Promise.allSettled([...this.doing])
     if (this.stamps.size) await this.change(() => null)
     this.close()
   }
-
   close() {
     clearTimeout(this.stampTimer)
     this.channel?.close()
     this.listeners.clear()
   }
-
   async at(path: string): Promise<InternalEntry | null> {
     await this.fresh()
     return this.atNow(path)
   }
-
   atNow(path: string): InternalEntry | null {
     return this.paths.get(this.keyOf(path))?.entry ?? null
   }
-
   private namedFor(path: string, key: string): Named | null {
     const asked = this.paths.get(this.keyOf(path))
     if (asked?.entry.key === key) return asked
     for (const one of this.paths.values()) if (one.entry.key === key) return one
     return null
   }
-
   private spelled(path: string): string {
     return this.paths.get(this.keyOf(path))?.path ?? path
   }
-
   async holds(path: string): Promise<boolean> {
     await this.fresh()
     if (!path) return true
@@ -311,12 +276,10 @@ export class InternalFolder {
     for (const key of this.paths.keys()) if (key.startsWith(inside)) return true
     return false
   }
-
   async list(): Promise<Named[]> {
     await this.fresh()
     return [...this.paths.values()].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   }
-
   private under(path: string): (Named & { rest: string; key: string })[] {
     const own = this.keyOf(path)
     const inside = `${own}/`
@@ -328,24 +291,20 @@ export class InternalFolder {
     }
     return out
   }
-
   private forget(going: readonly (Named & { key: string })[]) {
     for (const one of going) {
       this.paths.delete(one.key)
       this.stamps.delete(one.path)
     }
   }
-
   async readText(path: string): Promise<string | null> {
     const entry = await this.at(path)
     return entry?.key ? this.bytes.readText(entry.key) : null
   }
-
   async read(path: string): Promise<Uint8Array | null> {
     const entry = await this.at(path)
     return entry?.key ? this.bytes.read(entry.key) : null
   }
-
   private folders(path: string, at: number, changes: InternalChange[]) {
     const missing: string[] = []
     for (let folder = folderOf(path); folder; folder = folderOf(folder)) {
@@ -362,7 +321,6 @@ export class InternalFolder {
       changes.push({ kind: 'created', path: folder, dir: true, size: 0, mtime: at, id: null })
     }
   }
-
   async mkdir(path: string): Promise<void> {
     return this.op(async () => {
       if (!path) return
@@ -377,7 +335,6 @@ export class InternalFolder {
       })
     })
   }
-
   async write(path: string, what: string | Uint8Array): Promise<void> {
     return this.op(async () => {
       await this.fresh()
@@ -388,7 +345,6 @@ export class InternalFolder {
       const key = there?.key ?? this.newKey(path)
       if (typeof what === 'string') await this.bytes.writeText(key, what)
       else await this.bytes.write(key, what)
-
       if (there) {
         const now = this.namedFor(path, key)
         if (!now) return
@@ -417,7 +373,6 @@ export class InternalFolder {
       })
     })
   }
-
   async adopt(path: string, what: Uint8Array | null): Promise<void> {
     return this.op(async () => {
       await this.fresh()
@@ -438,18 +393,15 @@ export class InternalFolder {
       })
     })
   }
-
   save(): Promise<void> {
     return this.op(() => this.change(() => []))
   }
-
   private newKey(path: string): string {
     const name = path.slice(path.lastIndexOf('/') + 1)
     const dot = name.lastIndexOf('.')
     const extension = dot > 0 ? name.slice(dot).toLowerCase() : ''
     return `${this.world.key()}${/^\.[a-z0-9]{1,8}$/.test(extension) ? extension : ''}`
   }
-
   async move(from: string, to: string): Promise<void> {
     return this.op(async () => {
       if (from === to) return
@@ -490,7 +442,6 @@ export class InternalFolder {
       })
     })
   }
-
   async remove(path: string): Promise<void> {
     return this.op(async () => {
       let keys: string[] = []
@@ -505,12 +456,10 @@ export class InternalFolder {
       for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
     })
   }
-
   async trash(): Promise<InternalTrashed[]> {
     await this.fresh()
     return [...this.trashed]
   }
-
   async toTrash(
     path: string,
     item: Omit<InternalTrashed, 'held' | 'from'>,
@@ -539,7 +488,6 @@ export class InternalFolder {
       return taken
     })
   }
-
   async wordsToTrash(from: string, text: string, item: Omit<InternalTrashed, 'held' | 'from'>) {
     return this.op(async () => {
       const at = this.world.now()
@@ -555,7 +503,6 @@ export class InternalFolder {
       })
     })
   }
-
   async fromTrash(id: string, to: string): Promise<void> {
     return this.op(async () => {
       await this.change(() => {
@@ -584,7 +531,6 @@ export class InternalFolder {
       })
     })
   }
-
   async purge(id: string): Promise<void> {
     return this.op(async () => {
       let keys: string[] = []
@@ -599,7 +545,6 @@ export class InternalFolder {
     })
   }
 }
-
 function restOf(path: string, depth: number): string {
   return `/${path.split('/').slice(depth).join('/')}`
 }

@@ -27,7 +27,6 @@
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -38,12 +37,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .said {
     flex: 1;
     min-width: 0;
   }
-
   .back {
     padding: var(--space-1) var(--space-2);
     border: none;
@@ -55,11 +52,9 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .back:hover {
     background: var(--accent-soft);
   }
-
   .back:active {
     transform: scale(0.97);
   }

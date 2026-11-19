@@ -9,31 +9,23 @@ use crate::launch;
 use orden_base::labels::document_windows;
 
 const QUIT: &str = "orden://quit";
-
 const QUIT_ASK: &str = "orden://quit-ask";
-
 const UPDATE_SETTLE: &str = "orden://update-settle";
-
 const SETTLE_WAIT: Duration = Duration::from_secs(4);
-
 #[derive(Default)]
 pub struct Quitting(AtomicU8);
-
 const RUNNING: u8 = 0;
 const ASKING: u8 = 1;
 const LEAVING: u8 = 2;
 const CONFIRMING: u8 = 3;
-
 impl Quitting {
     fn now(&self) -> u8 {
         self.0.load(Ordering::SeqCst)
     }
-
     fn set(&self, to: u8) {
         self.0.store(to, Ordering::SeqCst);
     }
 }
-
 #[derive(Default)]
 pub struct Installer {
     taken: AtomicBool,
@@ -41,16 +33,13 @@ pub struct Installer {
     unanswered: Mutex<HashSet<String>>,
     answered: Condvar,
 }
-
 impl Installer {
     fn take(&self) -> bool {
         !self.taken.swap(true, Ordering::SeqCst)
     }
-
     fn release(&self) {
         self.taken.store(false, Ordering::SeqCst);
     }
-
     fn closing(&self, label: &str, others: impl IntoIterator<Item = String>) -> usize {
         let mut closing = self.closing.held();
         closing.insert(label.to_owned());
@@ -59,22 +48,18 @@ impl Installer {
             .filter(|other| !closing.contains(other))
             .count()
     }
-
     fn expect(&self, labels: impl IntoIterator<Item = String>) {
         *self.lock() = labels.into_iter().collect();
     }
-
     fn heard(&self, label: &str) {
         if self.lock().remove(label) {
             self.answered.notify_all();
         }
     }
-
     fn gone(&self, label: &str) {
         self.closing.held().remove(label);
         self.heard(label);
     }
-
     fn wait(&self, within: Duration) -> Vec<String> {
         let (left, _) = self
             .answered
@@ -82,18 +67,15 @@ impl Installer {
             .unwrap_or_else(PoisonError::into_inner);
         left.iter().cloned().collect()
     }
-
     fn lock(&self) -> std::sync::MutexGuard<'_, HashSet<String>> {
         self.unanswered.held()
     }
 }
-
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     builder
         .manage(Quitting::default())
         .manage(Installer::default())
 }
-
 pub fn on_event(app: &AppHandle, event: RunEvent) {
     match event {
         #[cfg(target_os = "macos")]
@@ -113,16 +95,13 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 );
             });
         }
-
         #[cfg(target_os = "macos")]
         RunEvent::Ready => asked_to_quit::listen(app),
-
         #[cfg(target_os = "macos")]
         RunEvent::Reopen {
             has_visible_windows: false,
             ..
         } => launch::reopen(app),
-
         RunEvent::ExitRequested { code, api, .. } => {
             #[cfg(target_os = "macos")]
             if code == Some(tauri::RESTART_EXIT_CODE) {
@@ -130,7 +109,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             }
             exit_requested(app, code, &api);
         }
-
         RunEvent::Exit => {
             orden_crashes::crashes::ended_well();
             orden_pty::terminal::end_all(app);
@@ -139,12 +117,10 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             orden_agents::stop::quitting();
             orden_reminders::notices::clear_all(app);
         }
-
         RunEvent::WindowEvent {
             event: WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }),
             ..
         } => orden_documents::dropped_paths::dropped(app, &paths),
-
         RunEvent::WindowEvent {
             label,
             event: WindowEvent::Focused(true),
@@ -155,7 +131,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             }
             orden_web::keyboard::window_came_back(app, &label);
         }
-
         RunEvent::WindowEvent {
             label,
             event: WindowEvent::Destroyed,
@@ -180,15 +155,12 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 leave(app);
             }
         }
-
         _ => {}
     }
 }
-
 fn installer_may_start(closing: bool, now: u8, others: usize) -> bool {
     !closing || now == ASKING || others == 0
 }
-
 #[tauri::command]
 pub fn update_may_install(webview: tauri::Webview, closing: bool) -> bool {
     if !cfg!(windows) {
@@ -207,12 +179,10 @@ pub fn update_may_install(webview: tauri::Webview, closing: bool) -> bool {
     };
     installer_may_start(closing, state(app).now(), others) && installer.take()
 }
-
 #[tauri::command]
 pub fn update_install_failed(app: AppHandle) {
     app.state::<Installer>().release();
 }
-
 #[tauri::command]
 pub fn update_settled(webview: tauri::Webview) {
     webview
@@ -220,10 +190,8 @@ pub fn update_settled(webview: tauri::Webview) {
         .state::<Installer>()
         .heard(webview.label());
 }
-
 pub fn before_installer(app: &AppHandle, from: &str) {
     orden_placement::placement::note_every_window(app);
-
     let installer = app.state::<Installer>();
     let others: Vec<String> = listening_windows(app, Some(from))
         .iter()
@@ -238,13 +206,11 @@ pub fn before_installer(app: &AppHandle, from: &str) {
         orden_base::trace::mark("update: installer starting with a window not settled");
     }
 }
-
 pub fn quit(app: &AppHandle) {
     let quitting = state(app);
     if quitting.now() == ASKING || quitting.now() == LEAVING {
         return;
     }
-
     let windows = listening_windows(app, None);
     let asker = windows
         .iter()
@@ -255,7 +221,6 @@ pub fn quit(app: &AppHandle) {
                 .find(|window| window.is_visible().unwrap_or(false))
         })
         .or_else(|| windows.first());
-
     let Some(asker) = asker else {
         quit_now(app);
         return;
@@ -263,7 +228,6 @@ pub fn quit(app: &AppHandle) {
     quitting.set(CONFIRMING);
     let _ = app.emit_to(asker.label(), QUIT_ASK, ());
 }
-
 fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window> {
     let pending = app.try_state::<launch::Pending>();
     document_windows(app)
@@ -276,7 +240,6 @@ fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window
         })
         .collect()
 }
-
 #[tauri::command(async)]
 pub fn quit_confirmed(webview: tauri::Webview) {
     let app = webview.app_handle();
@@ -284,7 +247,6 @@ pub fn quit_confirmed(webview: tauri::Webview) {
         quit_now(app);
     }
 }
-
 #[tauri::command]
 pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
     listening_windows(webview.app_handle(), Some(webview.label()))
@@ -292,7 +254,6 @@ pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
         .map(|window| window.label().to_owned())
         .collect()
 }
-
 #[tauri::command(async)]
 pub fn quit_show(webview: tauri::Webview) {
     let window = webview.window();
@@ -306,26 +267,21 @@ pub fn quit_show(webview: tauri::Webview) {
     }
     orden_placement::placement::raised(&window);
 }
-
 pub fn quit_now(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
-
     orden_placement::placement::note_every_window(app);
-
     let windows = document_windows(app);
     if windows.is_empty() {
         leave(app);
         return;
     }
-
     let pending = app.try_state::<launch::Pending>();
     for window in windows {
         let label = window.label().to_owned();
         let listening = pending
             .as_ref()
             .is_some_and(|pending| pending.is_listening(&label));
-
         let (app, going) = (app.clone(), window.clone());
         let ask = move || {
             if listening {
@@ -334,11 +290,9 @@ pub fn quit_now(app: &AppHandle) {
                 let _ = going.destroy();
             }
         };
-
         orden_web::web_cookies::kept(&window, ask);
     }
 }
-
 #[tauri::command]
 pub fn keep_running(app: AppHandle) {
     let quitting = state(&app);
@@ -348,7 +302,6 @@ pub fn keep_running(app: AppHandle) {
     #[cfg(target_os = "macos")]
     asked_to_quit::answer(&app, false);
 }
-
 #[cfg(target_os = "macos")]
 fn front_to_the_next() {
     use objc2::sel;
@@ -368,7 +321,6 @@ fn front_to_the_next() {
         app.yieldActivationToApplicationWithBundleIdentifier(&ours);
     }
 }
-
 #[cfg(target_os = "macos")]
 mod asked_to_quit {
     use objc2::runtime::{AnyObject, Imp, Sel};
@@ -380,19 +332,13 @@ mod asked_to_quit {
     use tauri::{AppHandle, Emitter as _};
 
     static APP: OnceLock<AppHandle> = OnceLock::new();
-
     const CANCEL: usize = 0;
     const NOW: usize = 1;
     const LATER: usize = 2;
-
     const HOLD: f64 = 1.0;
-
     const QUIT_HOLD: &str = "orden://quit-hold";
-
     static WAITING: AtomicBool = AtomicBool::new(false);
-
     type ShouldTerminate = extern "C-unwind" fn(&AnyObject, Sel, *mut AnyObject) -> usize;
-
     #[allow(
         unsafe_code,
         reason = "adding a method to a class AppKit owns is the Objective-C runtime's own call, which has no safe wrapper"
@@ -409,7 +355,6 @@ mod asked_to_quit {
         };
         let object: &AnyObject = delegate.as_ref();
         let answer: ShouldTerminate = should_terminate;
-
         unsafe {
             let class = ffi::object_getClass(std::ptr::from_ref(object)).cast_mut();
             let imp = std::mem::transmute::<ShouldTerminate, Imp>(answer);
@@ -421,7 +366,6 @@ mod asked_to_quit {
             );
         }
     }
-
     extern "C-unwind" fn should_terminate(_: &AnyObject, _: Sel, _: *mut AnyObject) -> usize {
         let Some(app) = APP.get() else {
             return NOW;
@@ -433,16 +377,13 @@ mod asked_to_quit {
             hold_to_quit(app);
             return CANCEL;
         }
-
         super::quit(app);
         if super::state(app).now() == super::LEAVING {
             return NOW;
         }
-
         WAITING.store(true, Ordering::SeqCst);
         LATER
     }
-
     fn let_go_early() -> bool {
         let Some(main) = MainThreadMarker::new() else {
             return false;
@@ -482,7 +423,6 @@ mod asked_to_quit {
         }
         false
     }
-
     fn hold_to_quit(app: &AppHandle) {
         if let Some(window) = orden_base::labels::document_windows(app)
             .into_iter()
@@ -491,13 +431,11 @@ mod asked_to_quit {
             let _ = app.emit_to(window.label(), QUIT_HOLD, ());
         }
     }
-
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
         use tauri::Manager as _;
         if !WAITING.swap(false, Ordering::SeqCst) {
             return false;
         }
-
         let reply = move || {
             if let Some(main) = MainThreadMarker::new() {
                 NSApplication::sharedApplication(main).replyToApplicationShouldTerminate(yes);
@@ -511,7 +449,6 @@ mod asked_to_quit {
         true
     }
 }
-
 fn leave(app: &AppHandle) {
     state(app).set(LEAVING);
     #[cfg(target_os = "macos")]
@@ -520,7 +457,6 @@ fn leave(app: &AppHandle) {
     }
     app.exit(0);
 }
-
 fn exit_requested(app: &AppHandle, code: Option<i32>, api: &ExitRequestApi) {
     let quitting = state(app);
     match on_exit(code, quitting.now(), cfg!(target_os = "macos")) {
@@ -534,28 +470,23 @@ fn exit_requested(app: &AppHandle, code: Option<i32>, api: &ExitRequestApi) {
         }
     }
 }
-
 fn state(app: &AppHandle) -> tauri::State<'_, Quitting> {
     app.state::<Quitting>()
 }
-
 pub fn leaving(app: &AppHandle) -> bool {
     app.try_state::<Quitting>()
         .is_some_and(|quitting| matches!(quitting.now(), ASKING | LEAVING))
 }
-
 #[derive(Debug, PartialEq, Eq)]
 enum Exit {
     Pass,
     Stay,
     Ask,
 }
-
 fn on_exit(code: Option<i32>, now: u8, mac: bool) -> Exit {
     if code == Some(tauri::RESTART_EXIT_CODE) || now == LEAVING {
         return Exit::Pass;
     }
-
     match code {
         None if now == ASKING || now == CONFIRMING || !mac => Exit::Pass,
         None => Exit::Stay,
@@ -563,7 +494,6 @@ fn on_exit(code: Option<i32>, now: u8, mac: bool) -> Exit {
         Some(_) => Exit::Pass,
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -578,20 +508,17 @@ mod tests {
         assert!(installer_may_start(true, RUNNING, 0));
         assert!(!installer_may_start(true, CONFIRMING, 2));
     }
-
     #[test]
     fn a_quit_or_a_restart_starts_the_installer_with_windows_open() {
         assert!(installer_may_start(true, ASKING, 2));
         assert!(installer_may_start(false, RUNNING, 2));
     }
-
     #[test]
     fn the_installer_is_started_once() {
         let installer = Installer::default();
         assert!(installer.take());
         assert!(!installer.take());
     }
-
     #[test]
     fn an_installer_that_did_not_start_may_be_tried_again() {
         let installer = Installer::default();
@@ -599,14 +526,12 @@ mod tests {
         installer.release();
         assert!(installer.take());
     }
-
     #[test]
     fn of_two_windows_closing_together_the_second_is_the_last() {
         let installer = Installer::default();
         assert_eq!(installer.closing("a", ["b".to_owned()]), 1);
         assert_eq!(installer.closing("b", ["a".to_owned()]), 0);
     }
-
     #[test]
     fn a_window_gone_is_no_longer_closing() {
         let installer = Installer::default();
@@ -614,7 +539,6 @@ mod tests {
         installer.gone("a");
         assert_eq!(installer.closing("b", ["a".to_owned()]), 1);
     }
-
     #[test]
     fn a_window_gone_ends_the_wait_for_it() {
         let installer = Installer::default();
@@ -622,25 +546,21 @@ mod tests {
         installer.gone("a");
         assert!(installer.wait(Duration::from_secs(3600)).is_empty());
     }
-
     #[test]
     fn nothing_to_wait_for_is_not_waited_for() {
         let installer = Installer::default();
         assert!(installer.wait(Duration::from_secs(3600)).is_empty());
     }
-
     #[test]
     fn every_window_answering_ends_the_wait() {
         let installer = Arc::new(Installer::default());
         installer.expect(["a".to_owned(), "b".to_owned()]);
         installer.heard("a");
-
         let answering = installer.clone();
         let answer = std::thread::spawn(move || answering.heard("b"));
         assert!(installer.wait(Duration::from_secs(3600)).is_empty());
         answer.join().expect("the answer");
     }
-
     #[test]
     fn a_window_that_does_not_answer_is_given_up_on() {
         let installer = Installer::default();
@@ -648,7 +568,6 @@ mod tests {
         installer.heard("b");
         assert_eq!(installer.wait(Duration::ZERO), vec!["a".to_owned()]);
     }
-
     #[test]
     fn a_window_not_waited_for_is_ignored() {
         let installer = Installer::default();
@@ -656,38 +575,32 @@ mod tests {
         installer.heard("z");
         assert_eq!(installer.wait(Duration::ZERO), vec!["a".to_owned()]);
     }
-
     #[test]
     fn a_mac_app_outlives_its_last_window() {
         assert_eq!(on_exit(None, RUNNING, true), Exit::Stay);
     }
-
     #[test]
     fn elsewhere_the_last_window_still_ends_the_app() {
         assert_eq!(on_exit(None, RUNNING, false), Exit::Pass);
         assert_eq!(on_exit(Some(0), RUNNING, false), Exit::Pass);
     }
-
     #[test]
     fn quitting_on_a_mac_asks_every_window_first() {
         assert_eq!(on_exit(Some(0), RUNNING, true), Exit::Ask);
         assert_eq!(on_exit(Some(0), ASKING, true), Exit::Ask);
     }
-
     #[test]
     fn the_exit_after_every_window_said_yes_goes_through() {
         assert_eq!(on_exit(None, ASKING, true), Exit::Pass);
         assert_eq!(on_exit(Some(0), LEAVING, true), Exit::Pass);
         assert_eq!(on_exit(None, LEAVING, true), Exit::Pass);
     }
-
     #[test]
     fn a_quit_being_confirmed_ends_with_its_last_window() {
         assert_eq!(on_exit(None, CONFIRMING, true), Exit::Pass);
         assert_eq!(on_exit(None, CONFIRMING, false), Exit::Pass);
         assert_eq!(on_exit(Some(0), CONFIRMING, true), Exit::Ask);
     }
-
     #[test]
     fn a_restart_is_never_held() {
         assert_eq!(

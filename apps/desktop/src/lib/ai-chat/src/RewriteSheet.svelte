@@ -77,12 +77,10 @@
     width: 100%;
     padding: var(--space-1) 0;
   }
-
   .pick {
     flex: none;
     width: 11rem;
   }
-
   .diff {
     max-height: 34vh;
     overflow: auto;
@@ -94,37 +92,30 @@
     font-size: var(--text-xs);
     line-height: 1.6;
   }
-
   .change {
     padding: 0 var(--space-3);
     color: var(--muted-strong);
     white-space: pre-wrap;
   }
-
   .change.added {
     background: color-mix(in srgb, var(--success) 14%, transparent);
     color: var(--text-strong);
   }
-
   .change.removed {
     background: color-mix(in srgb, var(--danger) 14%, transparent);
     color: var(--text-strong);
   }
-
   ins,
   del {
     margin-inline-end: var(--space-2);
     text-decoration: none;
   }
-
   ins {
     color: var(--success);
   }
-
   del {
     color: var(--danger);
   }
-
   .answers {
     display: flex;
     align-items: center;

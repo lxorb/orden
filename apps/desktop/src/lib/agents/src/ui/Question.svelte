@@ -9,11 +9,8 @@
   import { shownHost } from '@orden/scan/web-address'
 
   const { activity, approval }: { activity: Activity; approval: Approval } = $props()
-
   const chat = $derived(approval.site?.startsWith('chat:') === true)
-
   const site = $derived(approval.site === undefined || chat ? null : shownHost(approval.site))
-
   const icon = $derived.by(() => {
     const tab = approval.tab
     const web = tab !== undefined && workspace.tabs.some((one) => one.id === tab && one.kind === 'web')
@@ -21,9 +18,7 @@
     return (web ? pages.of(tab).icon : null) ?? pages.faviconOf(approval.site) ?? null
   })
   let marked = $state(true)
-
   let answering = $state(false)
-
   async function answer(allow: boolean, always = false) {
     if (answering) return
     answering = true
@@ -33,7 +28,6 @@
       answering = false
     }
   }
-
   function goThere() {
     const tab = approval.tab
     if (tab === undefined) return
@@ -86,7 +80,6 @@
     background: var(--surface-3);
     font-family: var(--font-ui);
   }
-
   .what {
     margin: 0;
     display: flex;
@@ -97,7 +90,6 @@
     font-size: var(--text-row);
     font-weight: var(--weight-strong);
   }
-
   .site {
     min-width: 0;
     overflow: hidden;
@@ -105,21 +97,18 @@
     white-space: nowrap;
     unicode-bidi: isolate;
   }
-
   .mark {
     width: var(--icon-md);
     height: var(--icon-md);
     flex: none;
     border-radius: var(--radius-sm);
   }
-
   .summary {
     margin: 0;
     color: var(--muted-strong);
     font-size: var(--text-sm);
     overflow-wrap: anywhere;
   }
-
   .rows {
     display: flex;
     flex-wrap: wrap;
@@ -127,7 +116,6 @@
     gap: var(--space-2);
     margin-top: var(--space-2);
   }
-
   .always {
     align-self: flex-end;
     padding: var(--space-1) var(--space-2);
@@ -140,13 +128,11 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .always:hover:not(:disabled) {
       background: var(--surface-hover);
     }
   }
-
   .always:active:not(:disabled) {
     background: var(--surface-press);
   }

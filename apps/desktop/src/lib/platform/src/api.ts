@@ -135,5 +135,4 @@ export const iCloud = () => import('./icloud-placeholder')
 export { imagePath, imageUrl, isRemote } from './images'
 export { takeKeyboard } from './take-keyboard'
 export { isPlugin, markPlugin } from './plugin'
-
 export const stallWatch = () => import('./stalls')

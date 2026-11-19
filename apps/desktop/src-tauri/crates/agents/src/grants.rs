@@ -10,7 +10,6 @@ use crate::verbs::Category;
 use orden_base::paths::{config_dir, made, write_privately};
 
 const TOKEN_BYTES: usize = 32;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum Scope {
     #[serde(rename = "context")]
@@ -60,7 +59,6 @@ pub enum Scope {
     #[serde(rename = "agents")]
     Agents,
 }
-
 impl Scope {
     pub const ALL: [Scope; 23] = [
         Scope::Context,
@@ -88,20 +86,17 @@ impl Scope {
         Scope::Agents,
     ];
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Every {
     All,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Spaces {
     All(Every),
     Named(Vec<String>),
 }
-
 impl Spaces {
     pub fn reach(&self, space: &str) -> bool {
         match self {
@@ -110,7 +105,6 @@ impl Spaces {
         }
     }
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SiteRule {
@@ -118,7 +112,6 @@ pub enum SiteRule {
     Deny,
     AgentStore,
 }
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
@@ -127,7 +120,6 @@ pub enum Mode {
     Confirm,
     Autonomous,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Limits {
     pub tabs: u32,
@@ -136,7 +128,6 @@ pub struct Limits {
     #[serde(default)]
     pub memory: u32,
 }
-
 impl Default for Limits {
     fn default() -> Self {
         Limits {
@@ -147,7 +138,6 @@ impl Default for Limits {
         }
     }
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grant {
     pub id: String,
@@ -174,7 +164,6 @@ pub struct Grant {
     #[serde(default)]
     pub built_in: bool,
 }
-
 impl Grant {
     pub fn own(id: String, client: &str) -> Self {
         Grant {
@@ -202,7 +191,6 @@ impl Grant {
             built_in: false,
         }
     }
-
     pub fn third_party(id: String, client: &str) -> Self {
         let mut grant = Grant::own(id, client);
         grant.scopes.retain(|one| {
@@ -226,41 +214,34 @@ impl Grant {
         grant.mode = Mode::Confirm;
         grant
     }
-
     #[must_use]
     pub fn with_full_permissions(mut self) -> Self {
         self.mode = Mode::Autonomous;
         self.scopes = Scope::ALL.into_iter().collect();
         self
     }
-
     pub fn holds(&self, scope: Scope) -> bool {
         self.mode == Mode::Autonomous || self.scopes.contains(&scope)
     }
-
     pub fn asks(&self, category: Category) -> bool {
         let on = self.asks.get(&category).copied().unwrap_or(true);
         on && self.mode != Mode::Autonomous
     }
-
     pub fn asks_nothing(&self) -> bool {
         self.mode == Mode::Autonomous
     }
-
     pub fn always(&self, site: &str, category: Category) -> bool {
         self.always
             .get(site)
             .is_some_and(|categories| categories.contains(&category))
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Kept {
     #[serde(flatten)]
     grant: Grant,
     token: String,
 }
-
 #[derive(Default, Serialize, Deserialize)]
 struct File {
     #[serde(default)]
@@ -272,17 +253,11 @@ struct File {
     #[serde(default)]
     orden: bool,
 }
-
 pub const SIDEBAR: &str = "Orden ";
-
 const SIDEBAR_BEFORE: &str = "nib \u{b7} ";
-
 const SIDEBAR_DOTTED: &str = "Orden \u{b7} ";
-
 pub const BUILT_IN: &str = "orden-";
-
 pub const BUILT_IN_BEFORE: &str = "nib-";
-
 fn as_orden(grant: &mut Grant) {
     for label in [&mut grant.client, &mut grant.name] {
         if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
@@ -290,7 +265,6 @@ fn as_orden(grant: &mut Grant) {
         }
     }
 }
-
 fn undotted(grant: &mut Grant) {
     let Some(rest) = grant.client.strip_prefix(SIDEBAR_DOTTED) else {
         return;
@@ -300,23 +274,19 @@ fn undotted(grant: &mut Grant) {
         grant.name = format!("{SIDEBAR}{rest}");
     }
 }
-
 fn was_built_in(grant: &Grant) -> bool {
     grant.id.starts_with(BUILT_IN_BEFORE) && grant.client.starts_with(SIDEBAR)
 }
-
 fn built_in_id(grant: &Grant, taken: &[String]) -> Option<String> {
     let rest = grant.id.strip_prefix(BUILT_IN_BEFORE)?;
     let id = format!("{BUILT_IN}{rest}");
     (grant.built_in && !taken.contains(&id)).then_some(id)
 }
-
 fn with_helpers(grant: &mut Grant) {
     if grant.holds(Scope::Context) && !grant.holds(Scope::Agents) {
         grant.scopes.push(Scope::Agents);
     }
 }
-
 fn with_chats(grant: &mut Grant) {
     if !grant.holds(Scope::Context) {
         return;
@@ -330,12 +300,9 @@ fn with_chats(grant: &mut Grant) {
         }
     }
 }
-
 const BUSY: &str = "the agents cannot be read just now";
-
 #[derive(Default)]
 pub struct Grants(Mutex<Option<Vec<Kept>>>, Mutex<()>);
-
 impl Grants {
     fn with<T>(
         &self,
@@ -355,7 +322,6 @@ impl Grants {
         let kept = held.as_mut().ok_or(BUSY)?;
         Ok(with(kept))
     }
-
     fn changed<T>(
         &self,
         app: &AppHandle,
@@ -369,7 +335,6 @@ impl Grants {
         drop(writing);
         Ok(made)
     }
-
     pub fn by_token(&self, app: &AppHandle, token: &str) -> Option<Grant> {
         let said = hashed(token);
         self.with(app, |kept| {
@@ -384,7 +349,6 @@ impl Grants {
         .ok()
         .flatten()
     }
-
     pub fn by_id(&self, app: &AppHandle, id: &str) -> Option<Grant> {
         self.with(app, |kept| {
             kept.iter()
@@ -394,13 +358,11 @@ impl Grants {
         .ok()
         .flatten()
     }
-
     pub fn all(&self, app: &AppHandle) -> Result<Vec<Grant>, String> {
         self.with(app, |kept| {
             kept.iter().map(|one| one.grant.clone()).collect()
         })
     }
-
     pub fn mint(
         &self,
         app: &AppHandle,
@@ -418,7 +380,6 @@ impl Grants {
             Ok((grant, token))
         })
     }
-
     pub fn replace(&self, app: &AppHandle, grants: Vec<Grant>) -> Result<Vec<Grant>, String> {
         self.changed(app, |kept| {
             let mut next = Vec::with_capacity(kept.len());
@@ -444,7 +405,6 @@ impl Grants {
             Ok(kept.iter().map(|one| one.grant.clone()).collect())
         })
     }
-
     pub fn change(
         &self,
         app: &AppHandle,
@@ -460,7 +420,6 @@ impl Grants {
         })
     }
 }
-
 pub fn cached(id: &str) -> Option<Grant> {
     crate::AGENTS
         .get()?
@@ -473,11 +432,9 @@ pub fn cached(id: &str) -> Option<Grant> {
         .find(|one| one.grant.id == id)
         .map(|one| one.grant.clone())
 }
-
 fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join("agents.json"))
 }
-
 fn read(path: &std::path::Path) -> Vec<Kept> {
     std::fs::read_to_string(path)
         .ok()
@@ -513,7 +470,6 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
         })
         .unwrap_or_default()
 }
-
 fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         made(dir)?;
@@ -527,7 +483,6 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     .map_err(|error| format!("could not write the agents: {error}"))?;
     write_privately(path, text.as_bytes())
 }
-
 fn free_id(client: &str, taken: &[&str]) -> String {
     let mut stem = String::new();
     for one in client.chars().flat_map(char::to_lowercase) {
@@ -549,7 +504,6 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     } else {
         stem
     };
-
     if !taken.contains(&stem) {
         return stem.to_string();
     }
@@ -558,18 +512,15 @@ fn free_id(client: &str, taken: &[&str]) -> String {
         .find(|one| !taken.contains(&one.as_str()))
         .unwrap_or_else(|| stem.to_string())
 }
-
 pub fn fresh_token() -> Result<String, String> {
     let mut bytes = [0_u8; TOKEN_BYTES];
     getrandom::fill(&mut bytes)
         .map_err(|error| format!("no randomness to make a token from: {error}"))?;
     Ok(hex(&bytes))
 }
-
 pub fn hashed(token: &str) -> String {
     hex(&Sha256::digest(token.as_bytes()))
 }
-
 pub(crate) fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     let mut out = String::with_capacity(bytes.len() * 2);
@@ -578,7 +529,6 @@ pub(crate) fn hex(bytes: &[u8]) -> String {
     }
     out
 }
-
 pub fn same(one: &str, other: &str) -> bool {
     if one.len() != other.len() {
         return false;
@@ -589,13 +539,11 @@ pub fn same(one: &str, other: &str) -> bool {
     }
     differences == 0
 }
-
 #[tauri::command(async)]
 pub fn agents_read(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Grant>, String> {
     orden_base::labels::from_the_app(&webview)?;
     crate::state(&app).grants.all(&app)
 }
-
 #[tauri::command(async)]
 pub fn agents_write(
     webview: tauri::Webview,
@@ -605,7 +553,6 @@ pub fn agents_write(
     orden_base::labels::from_the_app(&webview)?;
     crate::state(&app).grants.replace(&app, grants)
 }
-
 #[tauri::command(async)]
 pub fn agents_mint(
     webview: tauri::Webview,
@@ -622,20 +569,17 @@ pub fn agents_mint(
         .mint(&app, name, Grant::third_party)?;
     Ok(Minted { grant, token })
 }
-
 #[derive(Serialize)]
 pub struct Minted {
     pub grant: Grant,
     pub token: String,
 }
-
 #[cfg(test)]
 impl Grants {
     fn from(kept: Vec<Kept>) -> Self {
         Grants(Mutex::new(Some(kept)), Mutex::default())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -646,14 +590,12 @@ mod tests {
             token: hashed(token),
         }
     }
-
     fn written(text: &str) -> (tempfile::TempDir, PathBuf) {
         let dir = tempfile::tempdir().expect("dir");
         let path = dir.path().join("agents.json");
         std::fs::write(&path, text).expect("write");
         (dir, path)
     }
-
     #[test]
     fn a_grant_round_trips_through_the_file_shape() {
         let mut grant = Grant::own("claude-code".into(), "Claude Code");
@@ -666,7 +608,6 @@ mod tests {
             .always
             .insert("shop.example".into(), vec![Category::Paying]);
         grant.spaces = Spaces::Named(vec!["Research".into()]);
-
         let text = serde_json::to_string(&File {
             agents: vec![Kept {
                 grant: grant.clone(),
@@ -691,7 +632,6 @@ mod tests {
             .expect("scopes")
             .contains(&"browser.reader".into()));
     }
-
     #[test]
     fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
         let kept = |id: &str, client: &str, name: &str| {
@@ -731,13 +671,11 @@ mod tests {
         assert_eq!(read[0].grant.id, "orden-anthropic");
         assert_eq!(read[1].grant.id, "orden-openai");
         assert_eq!(read[3].grant.id, "x");
-
         let mut named = read.clone();
         named[2].grant.name = "nib · mine".into();
         write(&path, &named).expect("write again");
         assert_eq!(super::read(&path)[2].grant.name, "nib · mine");
     }
-
     #[test]
     fn a_sidebar_grant_named_with_a_dot_loses_the_dot_and_nothing_else() {
         let kept = |id: &str, client: &str, name: &str| {
@@ -782,7 +720,6 @@ mod tests {
         );
         assert!(read[0].grant.built_in);
     }
-
     #[test]
     fn a_grant_from_before_chats_reads_and_posts_where_it_reads_and_writes_notes() {
         let mut own = Grant::own("a".into(), "A");
@@ -806,13 +743,11 @@ mod tests {
         assert!(read[0].grant.holds(Scope::ChatsRead));
         assert!(!read[0].grant.holds(Scope::ChatsWrite));
         assert!(!read[1].grant.holds(Scope::ChatsRead));
-
         let mut taken = read.clone();
         taken[0].grant.scopes.retain(|one| *one != Scope::ChatsRead);
         write(&path, &taken).expect("write again");
         assert!(!super::read(&path)[0].grant.holds(Scope::ChatsRead));
     }
-
     #[test]
     fn every_space_is_the_word_all() {
         let all: Spaces = serde_json::from_str("\"all\"").expect("all");
@@ -823,7 +758,6 @@ mod tests {
         assert!(!some.reach("B"));
         assert_eq!(serde_json::to_string(&all).expect("json"), "\"all\"");
     }
-
     #[test]
     fn the_defaults_are_emils() {
         let own = Grant::own("a".into(), "A");
@@ -855,7 +789,6 @@ mod tests {
                 memory: 0
             }
         );
-
         let other = Grant::third_party("b".into(), "B");
         assert!(!other.holds(Scope::Context));
         assert!(!other.holds(Scope::BrowserReader));
@@ -869,7 +802,6 @@ mod tests {
         assert!(!other.holds(Scope::Applications));
         assert_eq!(other.mode, Mode::Confirm);
     }
-
     #[test]
     fn a_token_finds_its_grant_and_no_other() {
         let grants = Grants::from(vec![kept("a", "one"), kept("b", "two")]);
@@ -889,7 +821,6 @@ mod tests {
         assert_eq!(found("three"), None);
         assert_eq!(found(""), None);
     }
-
     #[test]
     fn a_hash_is_the_same_only_when_every_byte_is() {
         let one = hashed("token");
@@ -899,7 +830,6 @@ mod tests {
         assert_eq!(one.len(), 64);
         assert_ne!(one, "token");
     }
-
     #[test]
     fn a_fresh_token_is_64_hex_characters_and_never_the_same_twice() {
         let one = fresh_token().expect("token");
@@ -908,7 +838,6 @@ mod tests {
         assert!(one.bytes().all(|byte| byte.is_ascii_hexdigit()));
         assert_ne!(one, two);
     }
-
     #[test]
     fn a_built_in_grant_from_before_the_rename_goes_by_orden_unless_that_id_is_taken() {
         let built = |id: &str| {
@@ -930,7 +859,6 @@ mod tests {
         mine.built_in = false;
         assert_eq!(built_in_id(&mine, &none), None);
     }
-
     #[test]
     fn only_the_apps_label_makes_a_kept_grant_built_in() {
         let kept = |id: &str, client: &str| Grant::own(id.into(), client);
@@ -939,7 +867,6 @@ mod tests {
         assert!(!was_built_in(&kept("nib-2", "nib")));
         assert!(!was_built_in(&kept("orden-claude", "Orden Claude")));
     }
-
     #[test]
     fn an_id_comes_from_the_name_and_is_free() {
         assert_eq!(free_id("Claude Code", &[]), "claude-code");

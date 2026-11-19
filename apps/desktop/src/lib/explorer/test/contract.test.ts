@@ -9,7 +9,6 @@ describe('a folder', () => {
     expect(crumbsOf('/home/me').map((one) => one.path)).toEqual(['/', '/home', '/home/me'])
     expect(parentOf('/home/me')).toBe('/home')
   })
-
   test('lists folders first, names as a person counts them, and hidden files only when asked', () => {
     const entry = (name: string, more: Partial<Entry> = {}): Entry => ({
       name,
@@ -32,7 +31,6 @@ describe('a folder', () => {
     expect(names(true)).toContain('.hidden')
   })
 })
-
 test('the way back and forward is kept in the tab and survives being written and read again', () => {
   const start = { folder: '/a', back: [], ahead: [] }
   const there = wentTo(wentTo(start, '/b'), '/c')

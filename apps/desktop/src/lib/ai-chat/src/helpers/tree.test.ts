@@ -6,7 +6,6 @@ import type { Provider } from '../../../ai-providers/src/providers'
 
 const written = vi.hoisted(() => [] as string[])
 const lists = vi.hoisted(() => new Map<string, string[]>())
-
 vi.mock('../chat/threads', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../chat/threads')>()),
   keepThread: (thread: Thread) => {
@@ -15,7 +14,6 @@ vi.mock('../chat/threads', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'Notes', root: '/n' }],
@@ -23,7 +21,6 @@ vi.mock('../../../workspace/src/api', () => ({
     leftOutOf: () => [],
   },
 }))
-
 vi.mock('../../../search/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../search/src/api')>()),
   searchSpace: (
@@ -37,15 +34,12 @@ vi.mock('../../../search/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const { helpers } = await import('./helpers.svelte')
 const { batch, fork, subtask } = await import('../commands/helpers')
 const { branchThread, newThread } = await import('../chat/threads')
-
 const { changesOf } = await import('../review/changes')
 type Roads = Parameters<typeof helpers.start>[1]
 type Tree = Thread & { helpers?: string[] }
-
 const model = (id: string): ModelInfo => ({
   id,
   name: id,
@@ -57,7 +51,6 @@ const model = (id: string): ModelInfo => ({
 const CLAUDE: Provider = { id: 'claude-code', kind: 'claude-code', name: '', model: '' }
 const CODEX: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
 const stopped: Ended = { stop: 'stopped', turn: null, usage: null }
-
 const turns: {
   thread: Thread
   signal: AbortSignal | undefined
@@ -70,7 +63,6 @@ function held(thread: Thread, signal?: AbortSignal): Promise<Ended> {
   })
 }
 const finished: Ended = { stop: 'end', turn: null, usage: null }
-
 const roads: Roads = {
   offered: () =>
     Promise.resolve([
@@ -79,7 +71,6 @@ const roads: Roads = {
     ]),
   run: (thread, _text, signal) => held(thread, signal),
 }
-
 const adopted = vi.fn((_thread: Thread) => undefined)
 const host = {
   turn: (thread: Thread, _text: string, once?: { signal?: AbortSignal }) => held(thread, once?.signal),
@@ -87,14 +78,12 @@ const host = {
   touched: vi.fn(),
   line: vi.fn(),
 } as unknown as Host
-
 const top = (): Tree => ({
   ...newThread('Notes', CLAUDE.id, 'opus', 'auto', 'full'),
   id: `top-${crypto.randomUUID()}`,
   created: 0,
   updated: 0,
 })
-
 const asked = (from: Thread) => ({
   parent: from,
   space: 'Notes',
@@ -103,7 +92,6 @@ const asked = (from: Thread) => ({
   model: 'astra',
   mode: from.mode,
 })
-
 const editBy = (thread: string) => ({
   id: 'orden-codex:1',
   agent: 'orden-codex',
@@ -112,14 +100,12 @@ const editBy = (thread: string) => ({
   spots: [],
   thread,
 })
-
 async function started(count: number): Promise<Thread> {
   await vi.waitFor(() => expect(turns).toHaveLength(count))
   const last = turns.at(-1)?.thread
   if (!last) throw new Error('started')
   return last
 }
-
 beforeEach(() => {
   for (const one of helpers.all) helpers.stop(one.id)
   helpers.all = []
@@ -127,7 +113,6 @@ beforeEach(() => {
   written.length = 0
   lists.clear()
 })
-
 describe('the review of the top thread', () => {
   test('takes in a run_agent helper a /subtask started', async () => {
     const thread = top()
@@ -135,13 +120,11 @@ describe('the review of the top thread', () => {
     const sub = await started(1)
     const helper = await helpers.start(asked(sub), roads)
     if ('refused' in helper) throw new Error(helper.refused)
-
     expect(thread.helpers).toEqual([sub.id, helper.id])
     expect(changesOf(thread, [editBy(helper.id)], () => null, new Set())).toHaveLength(1)
     expect(written).toContain(thread.id)
     helpers.stopUnder(thread.id)
   })
-
   test('takes in a /subtask typed in a run_agent helper', async () => {
     const thread = top()
     const helper = await helpers.start(asked(thread), roads)
@@ -149,12 +132,10 @@ describe('the review of the top thread', () => {
     const under = await started(1)
     void subtask(host, under, 'look closer')
     const sub = await started(2)
-
     expect(thread.helpers).toEqual([helper.id, sub.id])
     helpers.stopUnder(thread.id)
   })
 })
-
 describe('stopping the top thread', () => {
   test('stops a run_agent helper a /batch note started', async () => {
     const thread = top()
@@ -163,14 +144,11 @@ describe('stopping the top thread', () => {
     const helper = await helpers.start(asked(note), roads)
     if ('refused' in helper) throw new Error(helper.refused)
     await started(2)
-
     helpers.stopUnder(thread.id)
-
     expect(turns.map((one) => one.signal?.aborted)).toEqual([true, true])
     expect(thread.helpers).toEqual([note.id, helper.id])
   })
 })
-
 describe('work the reader starts later', () => {
   test('in a /fork copy is not the top thread’s to stop or review', async () => {
     const thread = top()
@@ -181,14 +159,11 @@ describe('work the reader starts later', () => {
     const helper = await helpers.start(asked(copy), roads)
     if ('refused' in helper) throw new Error(helper.refused)
     await started(1)
-
     helpers.stopUnder(thread.id)
-
     expect(turns[0]?.signal?.aborted).toBe(false)
     expect(thread.helpers ?? []).toEqual([])
     helpers.stopUnder(copy.id)
   })
-
   test('in a /subtask thread once its task ended is not the top thread’s', async () => {
     const thread = top()
     const asking = subtask(host, thread, 'tidy')
@@ -198,14 +173,11 @@ describe('work the reader starts later', () => {
     const helper = await helpers.start(asked(sub), roads)
     if ('refused' in helper) throw new Error(helper.refused)
     await started(2)
-
     helpers.stopUnder(thread.id)
-
     expect(turns[1]?.signal?.aborted).toBe(false)
     expect(thread.helpers).toEqual([sub.id])
     helpers.stopUnder(sub.id)
   })
-
   test('under a deleted thread is not walked up to it', async () => {
     const thread = top()
     const first = await helpers.start(asked(thread), roads)
@@ -217,7 +189,6 @@ describe('work the reader starts later', () => {
     if (!('refused' in second)) expect(thread.helpers).toEqual([first.id])
   })
 })
-
 describe('a branch', () => {
   test('of a thread has started nothing', () => {
     const thread: Tree = { ...top(), turns: [{ id: 'u1', role: 'you', at: 1, parts: [] }] }
@@ -226,14 +197,12 @@ describe('a branch', () => {
     expect(copy.helpers).toBeUndefined()
   })
 })
-
 describe('what is written down', () => {
   test('after /fork with a prompt holds the copy in the parent’s list', async () => {
     const thread = top()
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     fork(host, thread, 'go on alone')
     const copy = await started(1)
-
     expect(lists.get(thread.id)).toEqual([copy.id])
     helpers.stopUnder(thread.id)
   })

@@ -11,7 +11,6 @@ import { parsed } from '../../test/parsed'
 import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
 
 const looked = vi.hoisted(() => ({ paragraphs: 0 }))
-
 vi.mock('../wikilink/embed', async (original) => {
   const actual = await original<typeof import('../wikilink/embed')>()
   return {
@@ -22,7 +21,6 @@ vi.mock('../wikilink/embed', async (original) => {
     },
   }
 })
-
 function state(doc: string, cursor = 0) {
   return parsed(
     EditorState.create({
@@ -36,7 +34,6 @@ function state(doc: string, cursor = 0) {
     }),
   )
 }
-
 function described(set: DecorationSet, doc: string): string[] {
   const out: string[] = []
   set.between(0, doc.length, (from, to, value) => {
@@ -50,7 +47,6 @@ function described(set: DecorationSet, doc: string): string[] {
   })
   return out
 }
-
 function widgetsIn(set: DecorationSet): unknown[] {
   const out: unknown[] = []
   set.between(0, Number.MAX_SAFE_INTEGER, (_from, _to, value) => {
@@ -58,9 +54,7 @@ function widgetsIn(set: DecorationSet): unknown[] {
   })
   return out
 }
-
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n'
-
 describe('the blocks drawn after an edit', () => {
   test('in a note with a contents list, look again at the list and the edit, and no more', () => {
     const doc = `[toc]\n\n${Array.from({ length: 80 }, (_, i) => `## H${i}\n\npara ${i}\n\n${TABLE}\n`).join('')}`
@@ -73,11 +67,9 @@ describe('the blocks drawn after an edit', () => {
       )
     const before = widgetsIn(current.field(blockDecorations).decorations)
     looked.paragraphs = 0
-
     const at = doc.indexOf('## H40') + 4
     current = parsed(current.update({ changes: { from: at, insert: 'renamed ' } }).state)
     current = parsed(current.update({ changes: { from: current.doc.length, insert: '\n## Last\n' } }).state)
-
     const after = current.field(blockDecorations).decorations
     expect(looked.paragraphs).toBeLessThan(10)
     expect(widgetsIn(after).filter((widget, index) => widget === before[index])).toHaveLength(80)
@@ -85,18 +77,15 @@ describe('the blocks drawn after an edit', () => {
     expect(contents(after)[0]).toContain('Hrenamed 40')
     expect(contents(after)[0]?.at(-1)).toBe('Last')
   })
-
   test('only the blocks around the edit are looked at again', () => {
     const doc = Array.from({ length: 60 }, (_, i) => `para ${i}\n\n${TABLE}\n`).join('')
     let current = state(doc, 2)
     current = current.update({ selection: EditorSelection.cursor(3) }).state
     const before = widgetsIn(current.field(blockDecorations).decorations)
     const at = doc.indexOf('| 1 |', doc.indexOf('para 30')) + 3
-
     const edited = current.update({ changes: { from: at, insert: 'z' } }).state
     const parsedWhole = syntaxTree(edited).length === edited.doc.length
     current = parsed(edited)
-
     const after = widgetsIn(current.field(blockDecorations).decorations)
     expect(after).toHaveLength(60)
     expect(after.slice(0, 30).filter((widget, index) => widget === before[index])).toHaveLength(30)
@@ -105,21 +94,18 @@ describe('the blocks drawn after an edit', () => {
       described(buildBlockDecorations(current), current.doc.toString()),
     )
   })
-
   test('an edit whose parse runs out of time on a busy machine keeps the blocks before it', () => {
     const doc = Array.from({ length: 60 }, (_, i) => `para ${i}\n\n${TABLE}\n`).join('')
     let current = state(doc, 2)
     current = current.update({ selection: EditorSelection.cursor(3) }).state
     const before = widgetsIn(current.field(blockDecorations).decorations)
     const at = doc.indexOf('| 1 |', doc.indexOf('para 30')) + 3
-
     let clock = Date.now()
     const busy = vi.spyOn(Date, 'now').mockImplementation(() => (clock += 50))
     const edited = current.update({ changes: { from: at, insert: 'z' } }).state
     busy.mockRestore()
     expect(syntaxTree(edited).length).toBeLessThan(edited.doc.length)
     current = parsed(edited)
-
     const after = widgetsIn(current.field(blockDecorations).decorations)
     expect(after).toHaveLength(60)
     expect(after.slice(0, 30).filter((widget, index) => widget === before[index])).toHaveLength(30)
@@ -127,7 +113,6 @@ describe('the blocks drawn after an edit', () => {
       described(buildBlockDecorations(current), current.doc.toString()),
     )
   })
-
   test('an edit inside a long list looks again at the items around it', () => {
     const doc = `# K\n\n${Array.from({ length: 300 }, (_, i) => `- item ${i}\n`).join('')}\n${TABLE}`
     let current = state(doc, 2)
@@ -135,16 +120,13 @@ describe('the blocks drawn after an edit', () => {
     const table = widgetsIn(current.field(blockDecorations).decorations)
     const at = doc.indexOf('item 150') + 4
     looked.paragraphs = 0
-
     current = parsed(current.update({ changes: { from: at, insert: ' | x\n- [ ] ' } }).state)
-
     expect(looked.paragraphs).toBeLessThan(10)
     expect(widgetsIn(current.field(blockDecorations).decorations)).toEqual(table)
     expect(described(current.field(blockDecorations).decorations, current.doc.toString())).toEqual(
       described(buildBlockDecorations(current), current.doc.toString()),
     )
   })
-
   test('are what drawing the whole note again would draw, whatever the edit', () => {
     let seed = 11
     const random = (below: number) => {
@@ -209,7 +191,6 @@ describe('the blocks drawn after an edit', () => {
       }
     }
   })
-
   test('are what drawing the whole note would draw while its parse catches up', () => {
     const doc = Array.from({ length: 400 }, (_, i) => `p ${i}\n\n${TABLE}\n$$\nx${i}\n$$\n\n- a\n`).join('')
     let current = EditorState.create({
@@ -241,7 +222,6 @@ describe('the blocks drawn after an edit', () => {
     }
     expect(short).toBeGreaterThan(3)
   })
-
   test('after a replace of every match, are what drawing the whole note would draw', () => {
     const doc = Array.from({ length: 300 }, (_, at) =>
       at % 7 === 0 ? `- a list a ${at}` : at % 11 === 0 ? `$$\na\n$$` : `a b a b ${at}`,
@@ -258,7 +238,6 @@ describe('the blocks drawn after an edit', () => {
       described(buildBlockDecorations(after), text),
     )
   })
-
   test('a replace of every match is drawn in time that grows with the matches', () => {
     const made = new Map<number, { base: EditorState; spec: TransactionSpec }>()
     const replaced = (lines: number) => {
@@ -275,11 +254,9 @@ describe('the blocks drawn after an edit', () => {
       }
       return one.base.update(one.spec).state.field(blockDecorations)
     }
-
     expect(growth(replaced, 400)).toBeLessThan(GROWS_AT_MOST)
   })
 })
-
 describe('a note embed whose neighbour line changes', () => {
   const shownAndReopened = (doc: string, cursor: number, ...specs: TransactionSpec[]) => {
     let current = state(doc, cursor)
@@ -297,7 +274,6 @@ describe('a note embed whose neighbour line changes', () => {
       reopened: words(buildBlockDecorations(current)),
     }
   }
-
   test('is drawn once Enter opens a blank line between it and a list below', () => {
     const doc = '![[Other]]\n- item\n\nend'
     const start = doc.indexOf('- item')
@@ -314,7 +290,6 @@ describe('a note embed whose neighbour line changes', () => {
     expect(reopened).toEqual(['![[Other]]'])
     expect(shown).toEqual(reopened)
   })
-
   test('is no longer drawn once the blank line under it is taken out from below', () => {
     const doc = '![[Other]]\n\nitem\n\nend'
     const start = doc.indexOf('item')

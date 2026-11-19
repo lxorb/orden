@@ -11,13 +11,11 @@ const TAURI = join(ROOT, 'apps/desktop/src-tauri')
 const ICONS = join(TAURI, 'icons')
 const RES = join(TAURI, 'gen/android/app/src/main/res')
 const DENSITIES = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']
-
 interface Picture {
   size: number
   colourType: number
   alpha: (x: number, y: number) => number
 }
-
 function decode(bytes: Buffer): Picture {
   let at = 8
   let size = 0
@@ -62,7 +60,6 @@ function decode(bytes: Buffer): Picture {
   }
 }
 const picture = (...parts: string[]) => decode(readFileSync(join(...parts)))
-
 function icns1024(): Picture {
   const bytes = readFileSync(join(ICONS, 'icon.icns'))
   for (let at = 8; at < bytes.length;) {
@@ -72,7 +69,6 @@ function icns1024(): Picture {
   }
   throw new Error('icon.icns has no 1024 entry')
 }
-
 describe('the desktop icons', () => {
   test('every icon tauri.conf.json bundles exists', () => {
     const conf = JSON.parse(readFileSync(join(TAURI, 'tauri.conf.json'), 'utf8')) as {
@@ -80,24 +76,19 @@ describe('the desktop icons', () => {
     }
     for (const icon of conf.bundle.icon) expect(existsSync(join(TAURI, icon)), icon).toBe(true)
   })
-
   test('the master is a 1024 squircle with clear corners', () => {
     const master = picture(TAURI, 'icon-source.png')
-
     expect(master.size).toBe(1024)
     expect(master.alpha(4, 4)).toBe(0)
     expect(master.alpha(512, 2)).toBe(255)
     expect(master.alpha(512, 512)).toBe(255)
   })
-
   test('the Mac icon keeps the clear margin of Apple’s grid', () => {
     const mac = icns1024()
-
     expect(mac.size).toBe(1024)
     expect(mac.alpha(512, 90)).toBe(0)
     expect(mac.alpha(512, 110)).toBe(255)
   })
-
   test('the Windows icons are squircles too', () => {
     for (const file of ['32x32.png', '128x128.png', 'icon.png', 'Square150x150Logo.png']) {
       const icon = picture(ICONS, file)
@@ -106,7 +97,6 @@ describe('the desktop icons', () => {
     }
   })
 })
-
 describe('the document icons', () => {
   const DOCUMENTS = join(ICONS, 'documents')
   const opened = (
@@ -119,7 +109,6 @@ describe('the document icons', () => {
     expect(icon.alpha(icon.size - 1, 0), name).toBe(0)
     expect(icon.alpha(icon.size >> 1, icon.size >> 1), name).toBe(255)
   }
-
   test('every type Orden opens has its drawing and nothing else is drawn', () => {
     const files = readdirSync(DOCUMENTS).sort()
     const types = [...new Set(files.map((file) => file.replace(/(-\w+)?\.\w+$/, '')))]
@@ -130,7 +119,6 @@ describe('the document icons', () => {
       }
     }
   })
-
   test('every drawing is a page in the wash of Pass with the type in ink, no mark or badge', () => {
     for (const ext of opened) {
       for (const file of [`${ext}.svg`, `${ext}-mid.svg`, `${ext}-small.svg`]) {
@@ -145,7 +133,6 @@ describe('the document icons', () => {
       }
     }
   })
-
   test('the Windows icon holds every size Explorer asks for, each a page', () => {
     for (const ext of opened) {
       const bytes = readFileSync(join(DOCUMENTS, `${ext}.ico`))
@@ -166,7 +153,6 @@ describe('the document icons', () => {
       expect(sizes).toEqual([16, 20, 24, 32, 40, 48, 64, 256])
     }
   })
-
   test('the Mac icon holds every size Finder asks for, each a page', () => {
     const SIZES: Record<string, number> = {
       icp4: 16,
@@ -199,7 +185,6 @@ describe('the document icons', () => {
     }
   })
 })
-
 describe('the mobile icons', () => {
   test('iOS is drawn to the edge', () => {
     for (const file of readdirSync(join(ICONS, 'ios'))) {
@@ -207,7 +192,6 @@ describe('the mobile icons', () => {
       expect(icon.alpha(0, 0), file).toBe(255)
     }
   })
-
   test('Android ships an adaptive icon, in the project the app builds from', () => {
     for (const dir of [join(ICONS, 'android'), RES]) {
       const adaptive = readFileSync(join(dir, 'mipmap-anydpi-v26', 'ic_launcher.xml'), 'utf8')
@@ -221,7 +205,6 @@ describe('the mobile icons', () => {
       }
     }
   })
-
   test('the Android bars stay inside the safe circle', () => {
     for (const layer of ['foreground', 'monochrome']) {
       const fg = picture(RES, 'mipmap-xxxhdpi', `ic_launcher_${layer}.png`)
@@ -235,12 +218,10 @@ describe('the mobile icons', () => {
     }
   })
 })
-
 describe('the other places the mark appears', () => {
   test('the web app carries it at the size its names say', () => {
     for (const size of [256, 512]) expect(picture(ROOT, 'apps/desktop/public', `icon-${size}.png`).size).toBe(size)
   })
-
   test('Pass on the web carries its own at the sizes its manifest says', () => {
     const manifest = JSON.parse(readFileSync(join(ROOT, 'apps/desktop/public/pass.webmanifest'), 'utf8')) as {
       icons: { src: string; sizes: string }[]
@@ -252,7 +233,6 @@ describe('the other places the mark appears', () => {
       expect(picture(ROOT, 'apps/desktop/public', icon.src.slice(1)).size, icon.src).toBe(size)
     }
   })
-
   test('Pass on the web rounds its icon as the Pass mark does in the app', () => {
     const PUBLIC = join(ROOT, 'apps/desktop/public')
     const third = /--radius-third:\s*([\d.]+)/.exec(
@@ -262,7 +242,6 @@ describe('the other places the mark appears', () => {
     const tile = /<rect id="tile" width="(\d+)" height="\1" rx="(\d+)"/.exec(svg)
     expect(tile, 'pass.svg has a tile').not.toBeNull()
     expect(Number(tile?.[2]) / Number(tile?.[1])).toBeCloseTo(Number(third), 2)
-
     const page = readFileSync(join(ROOT, 'apps/desktop/pass.html'), 'utf8')
     const manifest = JSON.parse(readFileSync(join(PUBLIC, 'pass.webmanifest'), 'utf8')) as {
       icons: { src: string }[]
@@ -291,12 +270,10 @@ describe('the other places the mark appears', () => {
       ] as const)
         expect(icon.alpha(x, y), `${file} edge`).toBe(255)
     }
-
     const touch = /<link rel="apple-touch-icon" href="\/([^"]+)"/.exec(page)?.[1] ?? ''
     const ios = picture(PUBLIC, touch)
     expect(ios.alpha(0, 0), 'iOS rounds the touch icon itself and paints clear corners black').toBe(255)
   })
-
   test('the Even icons are greyscale', () => {
     const made = mkdtempSync(join(tmpdir(), 'even-icon-'))
     execFileSync(process.execPath, [join(ROOT, 'scripts/even-icon.mjs'), made])

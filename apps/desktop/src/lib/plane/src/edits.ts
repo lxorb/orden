@@ -29,15 +29,12 @@ import { erased, nearStroke, strokeBox, transformed } from './ink'
 
 function replacing(canvas: Canvas, nodes: readonly CanvasNode[]): Canvas {
   if (!nodes.length) return canvas
-
   const byId = new Map(nodes.map((node) => [node.id, node]))
   return { ...canvas, nodes: canvas.nodes.map((node) => byId.get(node.id) ?? node) }
 }
-
 function nodeById(canvas: Canvas, id: string): CanvasNode | undefined {
   return canvas.nodes.find((node) => node.id === id)
 }
-
 export function reacher(canvas: Canvas): (picked: readonly string[]) => Set<string> {
   const groups = new Map<string, CanvasNode>()
   for (const node of canvas.nodes) if (node.type === 'group') groups.set(node.id, node)
@@ -48,18 +45,15 @@ export function reacher(canvas: Canvas): (picked: readonly string[]) => Set<stri
       canvas.nodes.filter((node) => !node.locked),
       boxOf,
     ))
-
   return (picked) => {
     const going = new Set(picked)
     if (!groups.size) return going
-
     const chosen = [...going].flatMap((id) => {
       const group = groups.get(id)
       return group ? [group] : []
     })
     const reached = gathered(chosen, going, inside)
     if (!reached.length || !canvas.ink.length) return going
-
     strokes ??= containing(canvas.ink, strokeBox)
     for (const group of reached) {
       for (const stroke of strokes(boxOf(group))) going.add(stroke.id)
@@ -67,25 +61,20 @@ export function reacher(canvas: Canvas): (picked: readonly string[]) => Set<stri
     return going
   }
 }
-
 export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
   return reacher(canvas)(picked)
 }
-
 export function idSet(ids: readonly string[]): ReadonlySet<string> {
   return new Set(ids)
 }
-
 export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null {
   if (!picked.length) return null
-
   const wanted = new Set(picked)
   return bounds([
     ...canvas.nodes.filter((node) => wanted.has(node.id)),
     ...canvas.ink.filter((stroke) => wanted.has(stroke.id)).map(strokeBox),
   ])
 }
-
 export function planeBox(canvas: Canvas): Box | null {
   const byId = new Map(canvas.nodes.map((node) => [node.id, node]))
   const edges = canvas.edges.flatMap((edge) => {
@@ -93,22 +82,17 @@ export function planeBox(canvas: Canvas): Box | null {
     const to = byId.get(edge.toNode)
     return from && to ? [edgeBox(edgeEnds(edge, boxOf(from), boxOf(to)))] : []
   })
-
   return bounds([...canvas.nodes, ...canvas.ink.map(strokeBox), ...edges])
 }
-
 const INK_STEPS = 10
-
 export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, dy: number): Canvas {
   const moving = reach(canvas, picked)
   if (!moving.size || (!dx && !dy)) return canvas
-
   const whole = canvas.nodes.some((node) => moving.has(node.id))
   const step = whole ? 1 : INK_STEPS
   const across = Math.round(dx * step) / step
   const down = Math.round(dy * step) / step
   if (!across && !down) return canvas
-
   return {
     ...canvas,
     nodes: canvas.nodes.map((node) => (moving.has(node.id) ? { ...node, x: node.x + across, y: node.y + down } : node)),
@@ -126,9 +110,7 @@ export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, d
     ),
   }
 }
-
 const LEAST = GRID * 2
-
 export function resizedPick(
   canvas: Canvas,
   picked: readonly string[],
@@ -139,20 +121,16 @@ export function resizedPick(
 ): Canvas {
   const was = pickedBox(canvas, picked)
   if (!was || was.width < 1 || was.height < 1) return canvas
-
   const pulled = resizedBox(was, handle, dx, dy, LEAST)
   const now = aspect ? keptAspect(was, pulled, handle, LEAST) : pulled
   const sx = now.width / was.width
   const sy = now.height / was.height
   if (sx === 1 && sy === 1 && now.x === was.x && now.y === was.y) return canvas
-
   const wanted = new Set(picked)
-
   return {
     ...canvas,
     nodes: canvas.nodes.map((node) => {
       if (!wanted.has(node.id)) return node
-
       return {
         ...node,
         x: Math.round(now.x + (node.x - was.x) * sx),
@@ -175,7 +153,6 @@ export function resizedPick(
     ),
   }
 }
-
 export function turnedInk(
   canvas: Canvas,
   picked: readonly string[],
@@ -184,7 +161,6 @@ export function turnedInk(
 ): Canvas {
   const wanted = new Set(picked)
   if (!turn) return canvas
-
   return {
     ...canvas,
     ink: canvas.ink.map((stroke) =>
@@ -192,15 +168,12 @@ export function turnedInk(
     ),
   }
 }
-
 export function withNode(canvas: Canvas, node: CanvasNode): Canvas {
   return { ...canvas, nodes: [...canvas.nodes, node] }
 }
-
 export function withGroup(canvas: Canvas, group: CanvasNode): Canvas {
   return { ...canvas, nodes: [group, ...canvas.nodes] }
 }
-
 export function withShape(
   canvas: Canvas,
   shape: Shape,
@@ -215,7 +188,6 @@ export function withShape(
     width: Math.max(1, Math.round(Math.abs(to.x - from.x))),
     height: Math.max(1, Math.round(Math.abs(to.y - from.y))),
   }
-
   const node: CanvasNode = {
     id,
     type: 'shape',
@@ -224,16 +196,12 @@ export function withShape(
     ...(colour === undefined ? {} : { color: colour }),
     ...(isLineShape(shape) && (to.y - from.y) * (to.x - from.x) < 0 ? { up: true } : {}),
   }
-
   return { canvas: withNode(canvas, node), id }
 }
-
 const FRAME_ROOM = GRID * 2
-
 export function grouped(canvas: Canvas, picked: readonly string[]): { canvas: Canvas; id: string } {
   const box = pickedBox(canvas, picked)
   if (!box) return { canvas, id: '' }
-
   const id = freshId()
   const group: CanvasNode = {
     id,
@@ -243,15 +211,12 @@ export function grouped(canvas: Canvas, picked: readonly string[]): { canvas: Ca
     width: Math.round(box.width + 2 * FRAME_ROOM),
     height: Math.round(box.height + 2 * FRAME_ROOM),
   }
-
   return { canvas: withGroup(canvas, group), id }
 }
-
 export function ungrouped(canvas: Canvas, picked: readonly string[]): { canvas: Canvas; ids: string[] } {
   const wanted = new Set(picked)
   const going = canvas.nodes.filter((node) => node.type === 'group' && wanted.has(node.id))
   if (!going.length) return { canvas, ids: [] }
-
   const gone = new Set(going.map((group) => group.id))
   const held = new Set<string>()
   for (const group of going) {
@@ -259,7 +224,6 @@ export function ungrouped(canvas: Canvas, picked: readonly string[]): { canvas: 
       if (!gone.has(id)) held.add(id)
     }
   }
-
   return {
     canvas: {
       ...canvas,
@@ -269,45 +233,35 @@ export function ungrouped(canvas: Canvas, picked: readonly string[]): { canvas: 
     ids: [...held],
   }
 }
-
 export function reattached(canvas: Canvas, id: string, end: 'from' | 'to', node: string): Canvas {
   const edge = canvas.edges.find((one) => one.id === id)
   if (!edge || !nodeById(canvas, node)) return canvas
   if ((end === 'from' ? edge.toNode : edge.fromNode) === node) return canvas
   if ((end === 'from' ? edge.fromNode : edge.toNode) === node) return canvas
-
   const moved: CanvasEdge = { ...edge, ...(end === 'from' ? { fromNode: node } : { toNode: node }) }
   const sideless = put(moved, end === 'from' ? 'fromSide' : 'toSide', null)
-
   return { ...canvas, edges: canvas.edges.map((one) => (one.id === id ? sideless : one)) }
 }
-
 export function withStroke(canvas: Canvas, stroke: InkStroke): Canvas {
   return { ...canvas, ink: [...canvas.ink, stroke] }
 }
-
 function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]): Canvas {
   let changed = false
   const ink: InkStroke[] = []
-
   for (const stroke of canvas.ink) {
     const pieces = cut(stroke)
     if (pieces.length === 1 && pieces[0] === stroke) {
       ink.push(stroke)
       continue
     }
-
     changed = true
     ink.push(...pieces)
   }
-
   return changed ? { ...canvas, ink } : canvas
 }
-
 export function rubbedOut(canvas: Canvas, ats: readonly Point[], reach: number, whole: boolean): Canvas {
   const way = bounds(ats.map((at) => ({ ...at, width: 0, height: 0 })))
   if (!way) return canvas
-
   return cutInk(canvas, (stroke) => {
     const box = strokeBox(stroke)
     const room = reach + stroke.size / 2 + 1
@@ -318,7 +272,6 @@ export function rubbedOut(canvas: Canvas, ats: readonly Point[], reach: number, 
       height: way.height + room * 2,
     }
     if (!overlaps(box, near)) return [stroke]
-
     let pieces: InkStroke[] = [stroke]
     for (const at of ats) {
       if (!pieces.length) break
@@ -329,48 +282,37 @@ export function rubbedOut(canvas: Canvas, ats: readonly Point[], reach: number, 
     return pieces
   })
 }
-
 export function withText(canvas: Canvas, id: string, text: string): Canvas {
   const node = nodeById(canvas, id)
   if (!node) return canvas
-
   if (node.type === 'shape') {
     if ((node.text ?? '') === text) return canvas
     return replacing(canvas, [put(node, 'text', text.trim() ? text : null)])
   }
-
   if (node.type !== 'text' || node.text === text) return canvas
-
   return replacing(canvas, [{ ...node, text }])
 }
-
 export function withLabel(canvas: Canvas, id: string, label: string): Canvas {
   const node = nodeById(canvas, id)
   if (node?.type === 'group') return replacing(canvas, [put(node, 'label', label.trim() || null)])
-
   return {
     ...canvas,
     edges: canvas.edges.map((edge) => (edge.id === id ? put(edge, 'label', label.trim() || null) : edge)),
   }
 }
-
 export function withEnds(canvas: Canvas, picked: readonly string[], from: boolean, to: boolean): Canvas {
   const chosen = new Set(picked)
-
   return {
     ...canvas,
     edges: canvas.edges.map((edge) => {
       if (!chosen.has(edge.id)) return edge
-
       const one = put(edge, 'fromEnd', from ? 'arrow' : null)
       return put(one, 'toEnd', to ? null : 'none')
     }),
   }
 }
-
 export function coloured(canvas: Canvas, picked: readonly string[], colour: string | null): Canvas {
   const chosen = new Set(picked)
-
   return {
     ...canvas,
     nodes: canvas.nodes.map((node) => (chosen.has(node.id) ? put(node, 'color', colour) : node)),
@@ -380,10 +322,8 @@ export function coloured(canvas: Canvas, picked: readonly string[], colour: stri
       : canvas.ink,
   }
 }
-
 export function locking(canvas: Canvas, ids: readonly string[], locked: boolean): Canvas {
   const chosen = new Set(ids)
-
   return {
     ...canvas,
     nodes: canvas.nodes.map((node) =>
@@ -391,25 +331,20 @@ export function locking(canvas: Canvas, ids: readonly string[], locked: boolean)
     ),
   }
 }
-
 export function sized(canvas: Canvas, picked: readonly string[], size: number): Canvas {
   const chosen = new Set(picked)
-
   return {
     ...canvas,
     ink: canvas.ink.map((stroke) => (chosen.has(stroke.id) ? { ...stroke, size } : stroke)),
   }
 }
-
 function put<T extends object, K extends keyof T & string>(one: T, key: K, value: T[K] | null): T {
   const rest = Object.fromEntries(Object.entries(one).filter(([name]) => name !== key))
   return { ...rest, ...(value === null ? {} : { [key]: value }) } as T
 }
-
 export function removed(canvas: Canvas, picked: readonly string[]): Canvas {
   const going = reach(canvas, picked)
   if (!going.size) return canvas
-
   return {
     ...canvas,
     nodes: canvas.nodes.filter((node) => !going.has(node.id)),
@@ -417,7 +352,6 @@ export function removed(canvas: Canvas, picked: readonly string[]): Canvas {
     ink: canvas.ink.filter((stroke) => !going.has(stroke.id)),
   }
 }
-
 export function connected(
   canvas: Canvas,
   fromNode: string,
@@ -428,13 +362,11 @@ export function connected(
 ): { canvas: Canvas; id: string | null } {
   if (fromNode === toNode) return { canvas, id: null }
   if (!nodeById(canvas, fromNode) || !nodeById(canvas, toNode)) return { canvas, id: null }
-
   const already = canvas.edges.find(
     (edge) =>
       edge.fromNode === fromNode && edge.toNode === toNode && edge.fromSide === fromSide && edge.toSide === toSide,
   )
   if (already) return { canvas, id: already.id }
-
   const edge: CanvasEdge = {
     id: freshId(),
     fromNode,
@@ -445,12 +377,9 @@ export function connected(
   }
   return { canvas: { ...canvas, edges: [...canvas.edges, edge] }, id: edge.id }
 }
-
 const COPY_OFFSET = GRID
-
 export function subset(canvas: Canvas, picked: readonly string[]): Canvas {
   const taking = reach(canvas, picked)
-
   return {
     nodes: canvas.nodes.filter((node) => taking.has(node.id)),
     edges: canvas.edges.filter((edge) => taking.has(edge.fromNode) && taking.has(edge.toNode)),
@@ -459,10 +388,8 @@ export function subset(canvas: Canvas, picked: readonly string[]): Canvas {
     gone: {},
   }
 }
-
 export function pasted(canvas: Canvas, incoming: Canvas, dx = 0, dy = 0): { canvas: Canvas; ids: string[] } {
   if (!incoming.nodes.length && !incoming.ink.length) return { canvas, ids: [] }
-
   const renamed = new Map(incoming.nodes.map((node) => [node.id, freshId()]))
   const nodes: CanvasNode[] = incoming.nodes.map((node) => ({
     ...node,
@@ -470,7 +397,6 @@ export function pasted(canvas: Canvas, incoming: Canvas, dx = 0, dy = 0): { canv
     x: node.x + dx,
     y: node.y + dy,
   }))
-
   const edges = incoming.edges
     .filter((edge) => renamed.has(edge.fromNode) && renamed.has(edge.toNode))
     .map((edge) => ({
@@ -479,12 +405,10 @@ export function pasted(canvas: Canvas, incoming: Canvas, dx = 0, dy = 0): { canv
       fromNode: renamed.get(edge.fromNode) ?? edge.fromNode,
       toNode: renamed.get(edge.toNode) ?? edge.toNode,
     }))
-
   const ink = incoming.ink.map((stroke) => ({
     ...transformed(stroke, { dx, dy, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } }),
     id: freshId(),
   }))
-
   return {
     canvas: {
       ...canvas,
@@ -495,7 +419,6 @@ export function pasted(canvas: Canvas, incoming: Canvas, dx = 0, dy = 0): { canv
     ids: [...nodes.map((node) => node.id), ...ink.map((stroke) => stroke.id)],
   }
 }
-
 export function copied(
   canvas: Canvas,
   picked: readonly string[],
@@ -504,7 +427,6 @@ export function copied(
 ): { canvas: Canvas; ids: string[] } {
   return pasted(canvas, subset(canvas, picked), dx, dy)
 }
-
 export function placedAt(at: { x: number; y: number }, width: number, height: number): Box {
   return {
     x: snapped(at.x - width / 2),

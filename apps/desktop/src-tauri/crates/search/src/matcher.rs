@@ -12,24 +12,20 @@ use crate::tags::tags_in;
 use crate::tasks::task_at;
 
 const LINE: usize = 200;
-
 #[derive(Clone, Copy)]
 struct Region {
     from: usize,
     to: usize,
 }
-
 struct Span {
     from: usize,
     to: usize,
 }
-
 #[derive(Serialize, Clone)]
 pub struct Range {
     pub(crate) from: usize,
     pub(crate) to: usize,
 }
-
 #[derive(Serialize, Clone)]
 pub struct Hit {
     path: String,
@@ -40,7 +36,6 @@ pub struct Hit {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     bare: bool,
 }
-
 pub struct Note<'a> {
     pub path: &'a str,
     pub relative: &'a str,
@@ -48,7 +43,6 @@ pub struct Note<'a> {
     pub body: &'a str,
     lowered: OnceCell<String>,
 }
-
 impl<'a> Note<'a> {
     #[must_use]
     pub fn new(path: &'a str, relative: &'a str, name: &'a str, body: &'a str) -> Self {
@@ -60,12 +54,10 @@ impl<'a> Note<'a> {
             lowered: OnceCell::new(),
         }
     }
-
     pub(crate) fn folded(&self) -> &str {
         self.lowered.get_or_init(|| fold(self.body))
     }
 }
-
 enum Term {
     All(Vec<Term>),
     Any(Vec<Term>),
@@ -97,14 +89,12 @@ enum Term {
         bare: bool,
     },
 }
-
 #[derive(Default)]
 struct Needs {
     tags: bool,
     front: bool,
     units: [bool; UNITS],
 }
-
 struct Facts<'a> {
     body: &'a str,
     starts: OnceCell<Vec<usize>>,
@@ -113,12 +103,10 @@ struct Facts<'a> {
     units: [Vec<Region>; UNITS],
     budget: Cell<usize>,
 }
-
 impl Facts<'_> {
     fn starts(&self) -> &[usize] {
         self.starts.get_or_init(|| line_starts(self.body))
     }
-
     fn units_of(&self, unit: Unit) -> Units<'_> {
         if matches!(unit, Unit::Line) {
             Units::Lines {
@@ -131,7 +119,6 @@ impl Facts<'_> {
         }
     }
 }
-
 enum Units<'a> {
     Lines {
         body: &'a str,
@@ -140,24 +127,20 @@ enum Units<'a> {
     },
     Held(std::slice::Iter<'a, Region>),
 }
-
 impl Iterator for Units<'_> {
     type Item = Region;
-
     fn next(&mut self) -> Option<Region> {
         match self {
             Units::Lines { body, starts, at } => {
                 let from = *starts.get(*at)?;
                 let to = line_end(body, starts, *at);
                 *at += 1;
-
                 Some(Region { from, to })
             }
             Units::Held(rest) => rest.next().copied(),
         }
     }
 }
-
 fn slot(unit: Unit) -> usize {
     match unit {
         Unit::Line => 0,
@@ -168,16 +151,13 @@ fn slot(unit: Unit) -> usize {
         Unit::TaskDone => 5,
     }
 }
-
 const UNITS: usize = 6;
-
 #[derive(Copy, Clone)]
 enum Wanted {
     Any,
     Todo,
     Done,
 }
-
 impl Wanted {
     fn takes(self, done: bool) -> bool {
         match self {
@@ -187,7 +167,6 @@ impl Wanted {
         }
     }
 }
-
 fn task_state(unit: Unit) -> Option<Wanted> {
     match unit {
         Unit::Task => Some(Wanted::Any),
@@ -196,7 +175,6 @@ fn task_state(unit: Unit) -> Option<Wanted> {
         Unit::Line | Unit::Block | Unit::Section => None,
     }
 }
-
 fn fold_char(one: char) -> char {
     let mut lower = one.to_lowercase();
     match (lower.next(), lower.next()) {
@@ -204,12 +182,10 @@ fn fold_char(one: char) -> char {
         _ => one,
     }
 }
-
 pub(crate) fn fold(text: &str) -> String {
     if text.is_ascii() {
         return text.to_ascii_lowercase();
     }
-
     let mut out = String::with_capacity(text.len());
     for one in text.chars() {
         out.push(if one.is_ascii() {
@@ -218,20 +194,16 @@ pub(crate) fn fold(text: &str) -> String {
             fold_char(one)
         });
     }
-
     out
 }
-
 fn line_starts(body: &str) -> Vec<usize> {
     let mut starts = vec![0];
     starts.extend(body.match_indices('\n').map(|(at, _)| at + 1));
     starts
 }
-
 fn line_at(starts: &[usize], offset: usize) -> usize {
     let mut low = 0;
     let mut high = starts.len().saturating_sub(1);
-
     while low < high {
         let middle = low + (high - low).div_ceil(2);
         if starts.get(middle).is_some_and(|start| *start <= offset) {
@@ -240,24 +212,19 @@ fn line_at(starts: &[usize], offset: usize) -> usize {
             high = middle.saturating_sub(1);
         }
     }
-
     low
 }
-
 fn is_heading(line: &str) -> bool {
     let rest = line.trim_start_matches(' ');
     if line.len() - rest.len() > 3 {
         return false;
     }
-
     let hashes = rest.chars().take_while(|one| *one == '#').count();
     if hashes == 0 || hashes > 6 {
         return false;
     }
-
     rest.chars().nth(hashes).is_none_or(char::is_whitespace)
 }
-
 fn line_end(body: &str, starts: &[usize], index: usize) -> usize {
     let Some(&next) = starts.get(index + 1) else {
         return body.len();
@@ -269,14 +236,11 @@ fn line_end(body: &str, starts: &[usize], index: usize) -> usize {
         next - 1
     }
 }
-
 fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
     let end_of = |index: usize| line_end(body, starts, index);
     let mut code = CodeBlocks::default();
-
     if let Some(state) = task_state(unit) {
         let mut found = Vec::new();
-
         for (index, &start) in starts.iter().enumerate() {
             let end = end_of(index);
             let text = body.get(start..end).unwrap_or_default();
@@ -289,20 +253,16 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
             if !state.takes(task.done) {
                 continue;
             }
-
             found.push(Region {
                 from: start + task.marker,
                 to: end,
             });
         }
-
         return found;
     }
-
     let sectioned = matches!(unit, Unit::Section);
     let mut out = Vec::new();
     let mut open: Option<usize> = None;
-
     for (index, &start) in starts.iter().enumerate() {
         let text = body.get(start..end_of(index)).unwrap_or_default();
         let previous = if index == 0 { start } else { end_of(index - 1) };
@@ -311,7 +271,6 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         } else {
             text.trim().is_empty()
         };
-
         if breaks {
             if let Some(from) = open.take() {
                 out.push(Region { from, to: previous });
@@ -323,63 +282,50 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
             open = Some(start);
         }
     }
-
     if let Some(from) = open {
         out.push(Region {
             from,
             to: body.len(),
         });
     }
-
     out
 }
-
 fn front_matter(body: &str) -> HashMap<String, Vec<String>> {
     let mut out = HashMap::new();
     let Some(block) = front_matter_block(body) else {
         return out;
     };
-
     for line in body[block.from..block.close].lines() {
         if line.starts_with(char::is_whitespace) {
             continue;
         }
-
         let Some((name, _)) = crate::front_matter::key_of(line) else {
             continue;
         };
         if name.is_empty() {
             continue;
         }
-
         out.entry(name.to_lowercase())
             .or_insert_with(|| crate::front_matter::list(body, &block, &name));
     }
-
     out
 }
-
 fn literals(hay: &str, needle: &str, region: Region) -> Option<Vec<Span>> {
     if needle.is_empty() {
         return None;
     }
-
     let mut out = Vec::new();
     let mut at = region.from;
-
     while at <= region.to {
         let Some(found) = hay.get(at..region.to).and_then(|rest| rest.find(needle)) else {
             break;
         };
-
         let from = at + found;
         at = from + needle.len();
         out.push(Span { from, to: at });
     }
-
     (!out.is_empty()).then_some(out)
 }
-
 fn patterned(
     pattern: &Pattern,
     body: &str,
@@ -387,17 +333,14 @@ fn patterned(
     budget: &Cell<usize>,
 ) -> Option<Vec<Span>> {
     let slice = body.get(region.from..region.to)?;
-
     let mut found = pattern.find_within(slice, 0, budget)?;
     let mut out = Vec::new();
-
     loop {
         let at = if found.to == found.from {
             let letter = slice
                 .get(found.from..)
                 .and_then(|rest| rest.chars().next())
                 .map_or(1, char::len_utf8);
-
             found.from + letter
         } else {
             out.push(Span {
@@ -406,7 +349,6 @@ fn patterned(
             });
             found.to
         };
-
         if at > slice.len() {
             break;
         }
@@ -415,16 +357,13 @@ fn patterned(
         };
         found = next;
     }
-
     (!out.is_empty()).then_some(out)
 }
-
 fn clip(one: Region, other: Region) -> Option<Region> {
     let from = one.from.max(other.from);
     let to = one.to.min(other.to);
     (from <= to).then_some(Region { from, to })
 }
-
 pub(crate) fn utf16_at(text: &str, byte: usize) -> usize {
     text.get(..byte)
         .unwrap_or_default()
@@ -432,12 +371,10 @@ pub(crate) fn utf16_at(text: &str, byte: usize) -> usize {
         .map(char::len_utf16)
         .sum()
 }
-
 pub struct Matcher {
     root: Term,
     needs: Needs,
 }
-
 impl Matcher {
     #[must_use]
     pub fn new(query: Query) -> Self {
@@ -445,23 +382,19 @@ impl Matcher {
         let root = compile(query, &mut needs);
         Self { root, needs }
     }
-
     #[must_use]
     pub fn hits(&self, note: &Note, most: usize) -> Vec<Hit> {
         if most == 0 {
             return Vec::new();
         }
-
         let facts = self.facts(note.body);
         let whole = Region {
             from: 0,
             to: note.body.len(),
         };
-
         let Some(mut spans) = walk(&self.root, note, &facts, whole) else {
             return Vec::new();
         };
-
         if spans.is_empty() {
             let past = past_front_matter(note.body, facts.starts());
             let line = (past..facts.starts().len())
@@ -471,16 +404,12 @@ impl Matcher {
                         .is_empty()
                 })
                 .unwrap_or(0);
-
             return vec![row(note, facts.starts(), line, &[])];
         }
-
         spans.sort_by_key(|span| span.from);
-
         let mut out: Vec<Hit> = Vec::new();
         let mut current: Vec<Span> = Vec::new();
         let mut at: Option<usize> = None;
-
         for span in spans {
             let line = line_at(facts.starts(), span.from);
             if at != Some(line) {
@@ -495,15 +424,12 @@ impl Matcher {
             }
             current.push(span);
         }
-
         if let Some(previous) = at {
             out.push(row(note, facts.starts(), previous, &current));
         }
-
         out.truncate(most);
         out
     }
-
     fn facts<'a>(&self, body: &'a str) -> Facts<'a> {
         let wanted = self.needs.units.iter().any(|one| *one);
         let starts = if wanted {
@@ -511,7 +437,6 @@ impl Matcher {
         } else {
             OnceCell::new()
         };
-
         let unit_of = |unit: Unit| {
             if self.needs.units[slot(unit)] && !matches!(unit, Unit::Line) {
                 units_in(body, starts.get().map_or(&[][..], Vec::as_slice), unit)
@@ -527,7 +452,6 @@ impl Matcher {
             unit_of(Unit::TaskTodo),
             unit_of(Unit::TaskDone),
         ];
-
         Facts {
             body,
             tags: if self.needs.tags {
@@ -549,7 +473,6 @@ impl Matcher {
         }
     }
 }
-
 fn patterned_in(term: &Term) -> bool {
     match term {
         Term::Regex(_) => true,
@@ -558,7 +481,6 @@ fn patterned_in(term: &Term) -> bool {
         _ => false,
     }
 }
-
 fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<Span>> {
     match term {
         Term::All(of) => {
@@ -568,7 +490,6 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             }
             Some(out)
         }
-
         Term::Any(of) => {
             let mut out = Vec::new();
             let mut answered = false;
@@ -580,13 +501,11 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             }
             answered.then_some(out)
         }
-
         Term::Not(of) => {
             let found = walk(of, note, facts, region);
             let undecided = facts.budget.get() == 0 && patterned_in(of);
             (found.is_none() && !undecided).then(Vec::new)
         }
-
         Term::Text {
             needle,
             folded,
@@ -603,26 +522,20 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             } else {
                 region
             };
-
             literals(
                 if *folded { note.folded() } else { note.body },
                 needle,
                 within,
             )
         }
-
         Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region, &facts.budget),
-
         Term::Path { needle, folded } => holds(note.relative, needle, *folded).then(Vec::new),
-
         Term::File { needle, folded } => holds(note.name, needle, *folded).then(Vec::new),
-
         Term::Tag(wanted) => facts
             .tags
             .iter()
             .any(|tag| tag == wanted || under(tag, wanted))
             .then(Vec::new),
-
         Term::Property {
             name,
             value,
@@ -630,7 +543,6 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             upto,
         } => {
             let held = facts.front.get(name);
-
             if matches!(compare, Compare::Null) {
                 return held
                     .is_none_or(|all| {
@@ -639,7 +551,6 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
                     })
                     .then(Vec::new);
             }
-
             let held = held?;
             match value {
                 None => Some(Vec::new()),
@@ -649,11 +560,9 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
                     .then(Vec::new),
             }
         }
-
         Term::Scope { unit, of, bare } => {
             let mut out = Vec::new();
             let mut answered = false;
-
             for one in facts.units_of(*unit) {
                 let Some(within) = clip(one, region) else {
                     continue;
@@ -670,12 +579,10 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
                     }
                 }
             }
-
             answered.then_some(out)
         }
     }
 }
-
 fn tag_path(tag: &str) -> String {
     tag.to_lowercase()
         .split('/')
@@ -683,38 +590,31 @@ fn tag_path(tag: &str) -> String {
         .collect::<Vec<_>>()
         .join("/")
 }
-
 fn under(tag: &str, parent: &str) -> bool {
     tag.starts_with(parent) && tag.as_bytes().get(parent.len()) == Some(&b'/')
 }
-
 fn words_in(body: &str) -> usize {
     front_matter_block(body).map_or(0, |block| (block.end + 1).min(body.len()))
 }
-
 fn past_front_matter(body: &str, starts: &[usize]) -> usize {
     let Some(block) = front_matter_block(body) else {
         return 0;
     };
-
     starts
         .iter()
         .position(|&start| start > block.close)
         .unwrap_or(starts.len())
 }
-
 fn a_number(said: &str) -> bool {
     let bytes = said.as_bytes();
     let mut at = usize::from(bytes.first() == Some(&b'-'));
     let digits = at;
-
     while matches!(bytes.get(at), Some(b'0'..=b'9')) {
         at += 1;
     }
     if at == digits {
         return false;
     }
-
     if bytes.get(at) == Some(&b'.') {
         at += 1;
         let after = at;
@@ -725,16 +625,13 @@ fn a_number(said: &str) -> bool {
             return false;
         }
     }
-
     at == bytes.len()
 }
-
 fn wall_clock(said: &str) -> Option<&str> {
     let bytes = said.as_bytes();
     let digits = |at: usize, many: usize| {
         (0..many).all(|step| matches!(bytes.get(at + step), Some(b'0'..=b'9')))
     };
-
     if !(digits(0, 4)
         && bytes.get(4) == Some(&b'-')
         && digits(5, 2)
@@ -746,7 +643,6 @@ fn wall_clock(said: &str) -> Option<&str> {
     if bytes.len() == 10 {
         return Some(said);
     }
-
     if !matches!(bytes.get(10), Some(b'T' | b't' | b' ')) {
         return None;
     }
@@ -758,7 +654,6 @@ fn wall_clock(said: &str) -> Option<&str> {
         at += 3;
     }
     let clock = at;
-
     if bytes.get(at) == Some(&b'.') && digits(at + 1, 1) {
         at += 1;
         while digits(at, 1) {
@@ -779,29 +674,23 @@ fn wall_clock(said: &str) -> Option<&str> {
         }
         _ => {}
     }
-
     (at == bytes.len()).then(|| &said[..clock])
 }
-
 fn order(value: &str, asked: &str) -> Ordering {
     let one = value.trim();
     let other = asked.trim();
-
     if a_number(one) && a_number(other) {
         let here: f64 = one.parse().unwrap_or(f64::NAN);
         let there: f64 = other.parse().unwrap_or(f64::NAN);
         return here.partial_cmp(&there).unwrap_or(Ordering::Equal);
     }
-
     if let (Some(here), Some(there)) = (wall_clock(one), wall_clock(other)) {
         let shared = here.len().min(there.len());
         let even = |said: &str| said[..shared].replacen([' ', 't'], "T", 1);
         return even(here).cmp(&even(there));
     }
-
     one.to_lowercase().cmp(&other.to_lowercase())
 }
-
 fn alike(value: &str, asked: &str) -> bool {
     let one = value.trim();
     let other = asked.trim();
@@ -813,7 +702,6 @@ fn alike(value: &str, asked: &str) -> bool {
         one.to_lowercase() == other.to_lowercase()
     }
 }
-
 fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) -> bool {
     let ordered = !matches!(compare, Compare::Has | Compare::Is);
     if ordered && matches!(value.trim(), "" | "~" | "null" | "Null" | "NULL") {
@@ -833,7 +721,6 @@ fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) 
         Compare::Null => false,
     }
 }
-
 fn holds(hay: &str, needle: &str, folded: bool) -> bool {
     if folded {
         hay.to_lowercase().contains(needle)
@@ -841,20 +728,17 @@ fn holds(hay: &str, needle: &str, folded: bool) -> bool {
         hay.contains(needle)
     }
 }
-
 fn line_text<'a>(body: &'a str, starts: &[usize], line: usize) -> &'a str {
     let from = starts.get(line).copied().unwrap_or_default();
     let to = starts.get(line + 1).map_or(body.len(), |next| next - 1);
     body.get(from..to).unwrap_or_default()
 }
-
 fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
     let from = starts.get(line).copied().unwrap_or_default();
     let raw = line_text(note.body, starts, line);
     let lead = raw.len() - raw.trim_start_matches(is_space).len();
     let trimmed = raw.trim_matches(is_space);
     let text: String = trimmed.chars().take(LINE).collect();
-
     let mut ranges = Vec::new();
     for span in spans {
         let start = span.from.saturating_sub(from + lead);
@@ -866,7 +750,6 @@ fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
             });
         }
     }
-
     Hit {
         path: note.path.to_string(),
         name: note.name.to_string(),
@@ -876,25 +759,21 @@ fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
         bare: !spans.iter().any(|span| span.from < span.to),
     }
 }
-
 fn compile(query: Query, needs: &mut Needs) -> Term {
     match query {
         Query::All { of } => Term::All(of.into_iter().map(|one| compile(one, needs)).collect()),
         Query::Any { of } => Term::Any(of.into_iter().map(|one| compile(one, needs)).collect()),
         Query::Not { of } => Term::Not(Box::new(compile(*of, needs))),
-
         Query::Text { text, fold: folded } => Term::Text {
             needle: if folded { fold(&text) } else { text },
             folded,
             body: false,
         },
-
         Query::Content { text, fold: folded } => Term::Text {
             needle: if folded { fold(&text) } else { text },
             folded,
             body: true,
         },
-
         Query::Regex {
             source,
             fold,
@@ -904,22 +783,18 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
         } else {
             Pattern::compile(&source, fold)
         }),
-
         Query::Path { text, fold: folded } => Term::Path {
             needle: if folded { text.to_lowercase() } else { text },
             folded,
         },
-
         Query::File { text, fold: folded } => Term::File {
             needle: if folded { text.to_lowercase() } else { text },
             folded,
         },
-
         Query::Tag { tag } => {
             needs.tags = true;
             Term::Tag(tag_path(&tag))
         }
-
         Query::Property {
             name,
             value,
@@ -934,7 +809,6 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
                 upto,
             }
         }
-
         Query::Scope { unit, of } => {
             needs.units[slot(unit)] = true;
             let bare = matches!(&*of, Query::All { of } if of.is_empty());
@@ -946,21 +820,17 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{line_at, line_starts, Matcher, Note};
     use crate::query::Query;
 
     const NOTE: &str = "---\nstatus: done\nproject: Orden\n---\n\n# Meeting notes #work/2026\n\nAlpha met Beta on Monday.\nGamma was away.\n\n## Later\n\nBeta wrote it up. #done\n\n```\n#notatag\n```\n";
-
     const CLOSE: &str = "alpha here\nbeta there\n\nalpha and beta\n";
-
     fn matcher(json: &str) -> Matcher {
         let query: Query = serde_json::from_str(json).expect("a query the app could have sent");
         Matcher::new(query)
     }
-
     fn note(body: &str) -> Note<'_> {
         Note::new(
             "/space/Work/Meeting.md",
@@ -969,19 +839,15 @@ mod tests {
             body,
         )
     }
-
     #[test]
     fn a_note_folds_itself_once() {
         let note = note("The Quarter Plan");
-
         assert_eq!(note.folded(), "the quarter plan");
         assert!(std::ptr::eq(note.folded(), note.folded()));
     }
-
     fn answers(json: &str, body: &str) -> bool {
         !matcher(json).hits(&note(body), 50).is_empty()
     }
-
     fn lines(json: &str, body: &str) -> Vec<String> {
         matcher(json)
             .hits(&note(body), 50)
@@ -989,7 +855,6 @@ mod tests {
             .map(|hit| hit.text)
             .collect()
     }
-
     fn marked(json: &str, body: &str) -> Vec<String> {
         matcher(json)
             .hits(&note(body), 50)
@@ -1007,39 +872,30 @@ mod tests {
             })
             .collect()
     }
-
     fn text(word: &str) -> String {
         format!(r#"{{"kind":"text","text":"{word}","fold":true}}"#)
     }
-
     fn exact(word: &str) -> String {
         format!(r#"{{"kind":"text","text":"{word}","fold":false}}"#)
     }
-
     fn content(word: &str) -> String {
         format!(r#"{{"kind":"content","text":"{word}","fold":true}}"#)
     }
-
     fn all(parts: &[String]) -> String {
         format!(r#"{{"kind":"all","of":[{}]}}"#, parts.join(","))
     }
-
     fn any(parts: &[String]) -> String {
         format!(r#"{{"kind":"any","of":[{}]}}"#, parts.join(","))
     }
-
     fn without(part: &str) -> String {
         format!(r#"{{"kind":"not","of":{part}}}"#)
     }
-
     fn scope(unit: &str, part: &str) -> String {
         format!(r#"{{"kind":"scope","unit":"{unit}","of":{part}}}"#)
     }
-
     fn pattern(source: &str, fold: bool) -> String {
         format!(r#"{{"kind":"regex","source":"{source}","fold":{fold}}}"#)
     }
-
     #[test]
     fn a_pattern_the_page_refused_finds_nothing() {
         let refused = r#"{"kind":"regex","source":"(\\d+\\.?)+","fold":false,"refused":true}"#;
@@ -1051,7 +907,6 @@ mod tests {
         let not = format!(r#"{{"kind":"not","of":{refused}}}"#);
         assert!(answers(&not, "Version 1.2.3 shipped"));
     }
-
     #[test]
     fn a_section_and_a_task_stop_at_nothing_inside_a_code_fence() {
         let body = "# One\nalpha\n```sh\n# comment\n```\nbeta\n";
@@ -1066,7 +921,6 @@ mod tests {
         let body = "```\n- [ ] not a task\n```\n- [ ] a task\n";
         assert_eq!(lines(&scope("task", &text("task")), body), ["- [ ] a task"]);
     }
-
     #[test]
     fn a_line_is_shown_without_the_marks_the_web_trims_off_it() {
         assert_eq!(
@@ -1078,7 +932,6 @@ mod tests {
             vec!["\u{85}alpha"]
         );
     }
-
     #[test]
     fn words_match_anywhere_folded_in_any_order_one_row_per_line() {
         assert!(answers(&text("alpha"), NOTE));
@@ -1103,7 +956,6 @@ mod tests {
         assert!(answers(&path("work/"), NOTE));
         assert!(!answers(&path("Drafts/"), NOTE));
     }
-
     #[test]
     fn excluding_turns_a_match_into_a_miss() {
         assert!(!answers(
@@ -1117,7 +969,6 @@ mod tests {
         assert!(answers(&without(&text("zeta")), NOTE));
         assert!(!answers(&without(&text("alpha")), NOTE));
     }
-
     #[test]
     fn or_takes_either_side() {
         assert!(answers(&any(&[text("zeta"), text("gamma")]), NOTE));
@@ -1127,7 +978,6 @@ mod tests {
             ["Gamma was away."]
         );
     }
-
     #[test]
     fn file_reads_the_note_name_and_shows_a_line_it_never_says() {
         let file = |one: &str| format!(r#"{{"kind":"file","text":"{one}","fold":true}}"#);
@@ -1138,14 +988,12 @@ mod tests {
             ["# Meeting notes #work/2026"]
         );
         assert!(marked(&file("Meeting"), NOTE).is_empty());
-
         assert_eq!(
             lines(&file("Meeting"), "\nthe first words\n"),
             ["the first words"]
         );
         assert_eq!(lines(&file("Meeting"), "---\nstatus: done\n"), ["---"]);
     }
-
     #[test]
     fn content_asks_the_notes_own_words_and_not_its_front_matter() {
         assert!(answers(&text("orden"), NOTE));
@@ -1156,7 +1004,6 @@ mod tests {
         assert!(answers(&content("alpha"), CLOSE));
         assert!(answers(&content("status"), "---\nstatus: done\n"));
     }
-
     #[test]
     fn content_brings_back_the_line_folded_like_any_other_word() {
         assert_eq!(lines(&content("GAMMA"), NOTE), ["Gamma was away."]);
@@ -1170,7 +1017,6 @@ mod tests {
             NOTE
         ));
     }
-
     #[test]
     fn a_tag_matches_itself_and_its_children() {
         let tag = |one: &str| format!(r#"{{"kind":"tag","tag":"{one}"}}"#);
@@ -1186,14 +1032,12 @@ mod tests {
         assert!(answers(&tag("a"), "see #a//b here\n"));
         assert!(answers(&tag("a//b"), "see #a/b here\n"));
     }
-
     #[test]
     fn front_matter_answers_for_a_key_and_for_what_it_says() {
         let key = |one: &str| format!(r#"{{"kind":"property","name":"{one}","value":null}}"#);
         let pair = |one: &str, said: &str| {
             format!(r#"{{"kind":"property","name":"{one}","value":"{said}"}}"#)
         };
-
         assert!(answers(&key("status"), NOTE));
         assert!(!answers(&key("due"), NOTE));
         assert!(answers(&pair("status", "done"), NOTE));
@@ -1201,7 +1045,6 @@ mod tests {
         assert!(!answers(&key("later"), NOTE));
         assert!(!answers(&key("status"), "status: done\n"));
     }
-
     #[test]
     fn front_matter_answers_for_every_member_of_a_list_and_a_value_however_written() {
         let pair = |one: &str, said: &str, compare: &str| {
@@ -1212,7 +1055,6 @@ mod tests {
         let missing = |one: &str| {
             format!(r#"{{"kind":"property","name":"{one}","value":null,"compare":"null"}}"#)
         };
-
         let listed = "---\nauthors:\n  - Herbert\n  - Ursula\ntags: [a, b] # old\n---\n\nWords.\n";
         assert!(answers(&pair("authors", "herbert", "has"), listed));
         assert!(answers(&pair("authors", "Ursula", "is"), listed));
@@ -1221,13 +1063,11 @@ mod tests {
         assert!(answers(&pair("tags", "b", "is"), listed));
         assert!(!answers(&pair("tags", "old", "has"), listed));
         assert!(!answers(&missing("authors"), listed));
-
         let quoted = "---\nstatus: \"done\"\nnext: done # soon\nempty:\n---\n";
         assert!(answers(&pair("status", "done", "is"), quoted));
         assert!(answers(&pair("next", "done", "is"), quoted));
         assert!(answers(&missing("empty"), quoted));
     }
-
     #[test]
     fn front_matter_keys_and_lists_are_read_as_the_web_search_reads_them() {
         let pair = |one: &str, said: &str, compare: &str| {
@@ -1235,32 +1075,27 @@ mod tests {
                 r#"{{"kind":"property","name":"{one}","value":"{said}","compare":"{compare}"}}"#
             )
         };
-
         let written = "---\n\"status\": done\nauthors: ['Doe, Jane', Other]\n---\n";
         assert!(answers(&pair("status", "done", "is"), written));
         assert!(answers(&pair("authors", "Doe, Jane", "is"), written));
         assert!(!answers(&pair("authors", "Jane'", "is"), written));
     }
-
     #[test]
     fn a_date_and_time_asked_for_is_held_against_one_written_with_a_space() {
         let pair = |said: &str, compare: &str| {
             format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
         };
         let note = "---\ndue: 2024-01-01 11:00\n---\n";
-
         assert!(answers(&pair("2024-01-01T10:00", "gt"), note));
         assert!(!answers(&pair("2024-01-01T12:00", "gt"), note));
         assert!(answers(&pair("DUE", "has"), "---\ndue: Due soon\n---\n"));
     }
-
     #[test]
     fn a_bare_day_is_the_whole_of_that_day_against_a_time_written_on_it() {
         let pair = |said: &str, compare: &str| {
             format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
         };
         let due = |said: &str| format!("---\ndue: {said}\n---\n\nWords.\n");
-
         assert!(answers(
             &pair("2026-11-15", "lte"),
             &due("2026-11-15 10:00")
@@ -1290,7 +1125,6 @@ mod tests {
         assert!(answers(&pair("5", "is"), "---\nn: 5.0\ndue: 5.0\n---\n"));
         assert!(!answers(&pair("5", "is"), "---\ndue: 50\n---\n"));
     }
-
     #[test]
     fn a_key_yaml_reads_as_null_holds_nothing() {
         let null = r#"{"kind":"property","name":"n","value":null,"compare":"null"}"#;
@@ -1306,27 +1140,22 @@ mod tests {
             "---\ntags:\n  - a\n  # later\n  - b\n---\n"
         ));
     }
-
     #[test]
     fn a_block_nobody_closed_holds_no_keys() {
         const OPEN: &str = "---\nstatus: done\n\n# Plan\n";
-
         let key = |one: &str| format!(r#"{{"kind":"property","name":"{one}","value":null}}"#);
         let pair = |one: &str, said: &str| {
             format!(r#"{{"kind":"property","name":"{one}","value":"{said}"}}"#)
         };
         let file = |one: &str| format!(r#"{{"kind":"file","text":"{one}","fold":true}}"#);
-
         assert!(!answers(&key("status"), OPEN));
         assert!(!answers(&pair("status", "done"), OPEN));
         assert_eq!(lines(&file("Meeting"), OPEN), ["---"]);
     }
-
     #[test]
     fn front_matter_is_held_against_a_number_a_date_or_a_range() {
         const NUMBERS: &str =
             "---\nduration: 4\ndue: 2026-09-01\npages: 150\nstatus: done\nempty:\n---\n\nWords.\n";
-
         let held = |name: &str, said: &str, compare: &str| {
             format!(
                 r#"{{"kind":"property","name":"{name}","value":"{said}","compare":"{compare}"}}"#
@@ -1340,44 +1169,35 @@ mod tests {
         let missing = |name: &str| {
             format!(r#"{{"kind":"property","name":"{name}","value":null,"compare":"null"}}"#)
         };
-
         assert!(answers(&held("duration", "5", "lt"), NUMBERS));
         assert!(!answers(&held("duration", "4", "lt"), NUMBERS));
         assert!(answers(&held("duration", "4", "lte"), NUMBERS));
         assert!(answers(&held("duration", "3", "gt"), NUMBERS));
         assert!(!answers(&held("duration", "5", "gte"), NUMBERS));
-
         assert!(answers(&held("due", "2026-08-31", "gt"), NUMBERS));
         assert!(answers(&held("due", "2026-10-01", "lt"), NUMBERS));
         assert!(!answers(&held("due", "2026-09-02", "gt"), NUMBERS));
-
         assert!(answers(&ranged("pages", "100", "200"), NUMBERS));
         assert!(answers(&ranged("pages", "150", "150"), NUMBERS));
         assert!(!answers(&ranged("pages", "151", "200"), NUMBERS));
-
         assert!(answers(&held("status", "don", "has"), NUMBERS));
         assert!(!answers(&held("status", "don", "is"), NUMBERS));
         assert!(answers(&held("status", "done", "is"), NUMBERS));
-
         assert!(answers(&missing("missing"), NUMBERS));
         assert!(!answers(&missing("status"), NUMBERS));
         assert!(answers(&missing("empty"), NUMBERS));
-
         assert!(answers(&held("status", "a", "gt"), NUMBERS));
         assert!(!answers(&held("status", "z", "gt"), NUMBERS));
         assert!(!answers(&held("due", "5", "gt"), NUMBERS));
         assert!(answers(&held("due", "5", "lt"), NUMBERS));
     }
-
     #[test]
     fn a_task_is_a_unit_and_the_row_is_the_task() {
         const TASKS: &str = "# This week\n\n- [ ] write the plan\n- [x] read the paper\n- [ ] send the ledger\n    - [X] a nested one that is done\n- not a task at all\n";
-
         assert_eq!(
             lines(&scope("task", &text("plan")), TASKS),
             vec!["- [ ] write the plan".to_string()]
         );
-
         assert_eq!(
             lines(&scope("task-todo", &text("the")), TASKS),
             vec![
@@ -1389,7 +1209,6 @@ mod tests {
             lines(&scope("task-done", &text("the")), TASKS),
             vec!["- [x] read the paper".to_string()]
         );
-
         let bare = all(&[]);
         assert_eq!(
             lines(&scope("task-todo", &bare), TASKS),
@@ -1399,12 +1218,10 @@ mod tests {
             ]
         );
         assert_eq!(lines(&scope("task", &bare), TASKS).len(), 4);
-
         assert_eq!(
             lines(&scope("task-done", &text("nested")), TASKS),
             vec!["- [X] a nested one that is done".to_string()]
         );
-
         assert!(!answers(&scope("task", &exact("not a task")), TASKS));
         assert!(!answers(&scope("task-done", &text("x")), TASKS));
         assert_eq!(
@@ -1417,7 +1234,6 @@ mod tests {
         ));
         assert!(!answers(&scope("task-todo", &bare), NOTE));
     }
-
     #[test]
     fn patterns_match_what_they_describe() {
         assert!(answers(&pattern("G[a-z]+a", false), NOTE));
@@ -1427,14 +1243,12 @@ mod tests {
         assert_eq!(marked(&pattern("B[a-z]+a on", false), NOTE), ["Beta on"]);
         assert!(!answers(&pattern("([a-", false), NOTE));
         let body = "のnoteのanotherのnote\n";
-
         assert_eq!(marked(&pattern("note", false), body), ["note", "note"]);
         assert_eq!(marked(&pattern("の.", false), body), ["のn", "のa", "のn"]);
         let body = "a done\r\nb\r\n";
         assert!(answers(&scope("line", &pattern("done$", false)), body));
         assert!(!answers(&scope("line", &pattern("b.$", false)), body));
     }
-
     #[test]
     fn a_pattern_finds_its_match_in_a_note_of_a_few_pages() {
         let body = format!(
@@ -1448,7 +1262,6 @@ mod tests {
             &body
         ));
     }
-
     #[test]
     fn a_pattern_that_runs_out_never_counts_as_missing() {
         let body = format!("{}\n", "a".repeat(30)).repeat(2000);
@@ -1464,20 +1277,16 @@ mod tests {
             &body
         ));
     }
-
     #[test]
     fn a_pattern_that_cannot_finish_costs_one_note_one_budget() {
         let line = format!("{}\n", "a".repeat(30));
         let body = line.repeat(2000);
         let query = scope("line", &pattern("(a+)+b", false));
-
         let started = std::time::Instant::now();
         assert!(!answers(&query, &body));
         let spent = started.elapsed();
-
         assert!(spent.as_secs() < 5, "{spent:?} for 2000 lines");
     }
-
     #[test]
     fn nearness_holds_terms_to_one_line_and_one_paragraph() {
         let line = scope("line", &all(&[text("alpha"), text("beta")]));
@@ -1496,29 +1305,23 @@ mod tests {
             CLOSE
         ));
     }
-
     #[test]
     fn nearness_holds_terms_to_one_section() {
         let body = "# One\n\nalpha\n\nbeta\n\n# Two\n\ngamma\n";
         let together = scope("section", &all(&[text("alpha"), text("beta")]));
         let apart = scope("section", &all(&[text("beta"), text("gamma")]));
-
         assert!(answers(&together, body));
         assert!(!answers(&apart, body));
-
         let before = "alpha beta\n\n# One\n\ngamma\n";
         assert!(answers(&together, before));
         assert!(!answers(&apart, before));
     }
-
     #[test]
     fn nearness_excludes_within_the_line_it_is_given() {
         let one = scope("line", &all(&[text("alpha"), without(&text("beta"))]));
-
         assert!(answers(&one, CLOSE));
         assert!(!answers(&one, "alpha beta\n"));
     }
-
     #[test]
     fn a_row_trims_the_line_and_moves_the_mark_with_it() {
         assert_eq!(
@@ -1527,7 +1330,6 @@ mod tests {
         );
         assert_eq!(marked(&text("beta"), "   indented Beta here\n"), ["Beta"]);
     }
-
     #[test]
     fn a_row_cuts_a_very_long_line_short() {
         let body = format!("{} beta\n", "x".repeat(400));
@@ -1536,7 +1338,6 @@ mod tests {
         assert_eq!(first.text.chars().count(), 200);
         assert!(first.ranges.is_empty());
     }
-
     #[test]
     fn a_row_with_no_words_to_replace_says_so() {
         let body = "- [ ] buy milk\n- [ ] call Ana\nmilk here\n";
@@ -1549,7 +1350,6 @@ mod tests {
                 .collect()
         };
         let task_todo = scope("task-todo", &all(&[]));
-
         assert_eq!(
             shape(&task_todo),
             [
@@ -1567,17 +1367,14 @@ mod tests {
         );
         let path = r#"{"kind":"path","text":"Meeting","fold":true}"#;
         assert_eq!(shape(path), [serde_json::json!(["- [ ] buy milk", true])]);
-
         let long = format!("{} beta\n", "x".repeat(400));
         let hits = matcher(&text("beta")).hits(&note(&long), 10);
         assert!(!hits.first().expect("a hit").bare);
     }
-
     #[test]
     fn a_row_counts_marks_and_lines_the_way_the_app_does() {
         let hits = matcher(&text("gamma")).hits(&note(NOTE), 10);
         assert_eq!(hits.first().map(|hit| hit.line), Some(8));
-
         let many = "beta\n".repeat(20);
         assert_eq!(matcher(&text("beta")).hits(&note(&many), 3).len(), 3);
         let hits = matcher(&text("beta")).hits(&note("\u{1f600} beta\n"), 10);

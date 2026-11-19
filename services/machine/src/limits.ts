@@ -3,16 +3,13 @@ import { join } from 'node:path'
 import { sessionStates } from './proc'
 
 export const PIDS_MAX = 4096
-
 const KEPT_FOR_ORDEND = 512 * 1024 * 1024
-
 export function memoryMax(meminfo: string): number | null {
   const kib = Number(/^MemTotal:\s+(\d+) kB$/m.exec(meminfo)?.[1])
   if (!Number.isSafeInteger(kib) || kib <= 0) return null
   const most = kib * 1024 - KEPT_FOR_ORDEND
   return most >= KEPT_FOR_ORDEND ? most : null
 }
-
 export interface User {
   name: string
   uid: number
@@ -20,7 +17,6 @@ export interface User {
   home: string
   shell: string
 }
-
 export function userOf(name: string, passwd = '/etc/passwd'): User | null {
   let lines: string[]
   try {
@@ -35,14 +31,11 @@ export function userOf(name: string, passwd = '/etc/passwd'): User | null {
   }
   return null
 }
-
 const PRLIMIT = '/usr/bin/prlimit'
 export const SETPRIV = '/usr/bin/setpriv'
-
 export function asUser(user: User, command: string[]): string[] {
   return [SETPRIV, `--reuid=${String(user.uid)}`, `--regid=${String(user.gid)}`, '--init-groups', '--', ...command]
 }
-
 export function shellCommand(
   shell: string,
   user: User | null,
@@ -58,14 +51,11 @@ export function shellCommand(
   const [file = shell, ...args] = command
   return { file, args }
 }
-
 export class Cgroups {
   private readonly base: string
-
   private constructor(base: string) {
     this.base = base
   }
-
   static open(pidsMax: number, root = '/sys/fs/cgroup'): Cgroups | null {
     if (!existsSync(join(root, 'cgroup.controllers'))) return null
     const base = join(root, existsSync(join(root, 'nibd')) ? 'nibd' : 'ordend')
@@ -80,11 +70,9 @@ export class Cgroups {
       return null
     }
   }
-
   dirOf(session: string): string {
     return join(this.base, session)
   }
-
   kill(session: string): boolean {
     const dir = join(this.base, session)
     try {
@@ -102,7 +90,6 @@ export class Cgroups {
     return true
   }
 }
-
 export function enterCgroup(dir: string, pid: number): boolean {
   try {
     mkdirSync(dir, { recursive: true })
@@ -112,7 +99,6 @@ export function enterCgroup(dir: string, pid: number): boolean {
     return false
   }
 }
-
 function fenceMemory(root: string, base: string): void {
   try {
     const most = memoryMax(readFileSync('/proc/meminfo', 'utf8'))
@@ -123,7 +109,6 @@ function fenceMemory(root: string, base: string): void {
     // No memory controller here: the machine's own limit is the only one.
   }
 }
-
 function enable(root: string, controller: string): void {
   try {
     appendFileSync(join(root, 'cgroup.subtree_control'), controller)
@@ -143,7 +128,6 @@ function enable(root: string, controller: string): void {
   }
   appendFileSync(join(root, 'cgroup.subtree_control'), controller)
 }
-
 export function killSession(shell: number): void {
   const until = Date.now() + 5000
   let still = 0
@@ -162,10 +146,8 @@ export function killSession(shell: number): void {
     signal(left, 'SIGKILL')
   }
 }
-
 const SETTLED = new Set(['T', 't', 'Z', 'X'])
 const DEAD = new Set(['Z', 'X'])
-
 function signal(processes: [pid: number, state: string][], name: NodeJS.Signals): void {
   for (const [pid] of processes) {
     try {

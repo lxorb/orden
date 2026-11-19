@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
@@ -7,24 +6,20 @@ import { createInterface } from 'node:readline'
 
 const [tool, ...args] = process.argv.slice(2)
 const mode = process.env.FAKE_AI_CLI_MODE ?? 'answer'
-
 const say = (event) => process.stdout.write(`${JSON.stringify(event)}\n`)
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const has = (flag) => args.includes(flag)
 const after = (flag) => (has(flag) ? args[args.indexOf(flag) + 1] : undefined)
-
 async function question() {
   let text = ''
   for await (const chunk of process.stdin) text += chunk
   const lines = text.split(/\r?\n/).map((line) => line.trim())
   return lines.filter((line) => line && !/^<\/?[a-z]+>$/.test(line)).at(-1) ?? ''
 }
-
 function refuse(why) {
   process.stderr.write(`fake-ai-cli: ${why}\n`)
   process.exitCode = 2
 }
-
 function mcp(home) {
   const file = join(home, 'fake-mcp.json')
   let servers = {}
@@ -56,7 +51,6 @@ function mcp(home) {
   } else return refuse(`mcp ${verb} is not faked`)
   writeFileSync(file, JSON.stringify(servers))
 }
-
 function hang() {
   const child = spawn(process.execPath, ['-e', 'setInterval(Date.now, 1000)'], {
     stdio: 'ignore',
@@ -66,7 +60,6 @@ function hang() {
   }
   setInterval(Date.now, 1000)
 }
-
 function linesIn(heard, ended) {
   const reader = createInterface({ input: process.stdin })
   reader.on('line', (line) => {
@@ -81,7 +74,6 @@ function linesIn(heard, ended) {
   })
   reader.on('close', ended)
 }
-
 const CLAUDE_HELP = [
   '  --safe-mode  all customizations disabled',
   '  --no-session-persistence',
@@ -91,9 +83,7 @@ const CLAUDE_HELP = [
   '  --restricted',
   '  --permission-mode <mode>',
 ].join('\n')
-
 const RESETS = 1790819400
-
 async function claude() {
   if (has('--version')) {
     console.log('9.9.9 (Claude Code)')
@@ -123,13 +113,11 @@ async function claude() {
     process.exitCode = signedIn ? 0 : 1
     return
   }
-
   if (!has('-p')) return refuse('only -p is faked')
   if (after('--tools') !== '') return refuse('asked with tools')
   if (!has('--strict-mcp-config')) return refuse('asked with the MCP servers of whoever runs it')
   if (!after('--system-prompt')) return refuse('asked without a system prompt')
   if (after('--input-format') === 'stream-json') return claudeSession()
-
   const asked = (await question()).trim()
   const session = 'fake-session'
   say({
@@ -140,7 +128,6 @@ async function claude() {
     mcp_servers: [],
     session_id: session,
   })
-
   if (mode === 'signed-out') {
     say({
       type: 'result',
@@ -167,7 +154,6 @@ async function claude() {
     process.exitCode = 1
     return
   }
-
   const model = after('--model') ?? 'claude-fake-1'
   say({ type: 'stream_event', event: { type: 'message_start', message: { model, content: [] } } })
   const words = `You asked: ${asked}`.split(/(?<= )/)
@@ -197,7 +183,6 @@ async function claude() {
     session_id: session,
   })
 }
-
 function claudeServers() {
   const file = after('--mcp-config')
   if (!file) return []
@@ -208,7 +193,6 @@ function claudeServers() {
   if (nib.args?.join(' ') !== 'mcp' || nib.env) throw new Error('nib is not run as orden mcp')
   return has('--safe-mode') ? [] : [{ name: 'orden', status: 'connected' }]
 }
-
 function claudeSession() {
   let servers
   try {
@@ -220,7 +204,6 @@ function claudeSession() {
   if (allowed.some((one) => !one.startsWith('mcp__orden'))) return refuse('asked with tools')
   if (after('--permission-mode') !== 'dontAsk') return refuse('asked with a permission mode')
   if (has('--safe-mode') || has('--dangerously-skip-permissions')) return refuse('asked unsafely')
-
   const session = 'fake-session'
   const state = {
     model: after('--model') ?? 'claude-fake-1',
@@ -230,10 +213,8 @@ function claudeSession() {
   }
   const queue = []
   let draining = Promise.resolve()
-
   const answer = (id, response) =>
     say({ type: 'control_response', response: { subtype: 'success', request_id: id, response } })
-
   function control(message) {
     const id = message.request_id
     const request = message.request ?? {}
@@ -282,7 +263,6 @@ function claudeSession() {
         })
     }
   }
-
   const result = (text, extra = {}) =>
     say({
       type: 'result',
@@ -292,7 +272,6 @@ function claudeSession() {
       session_id: session,
       ...extra,
     })
-
   async function turn(text) {
     say({
       type: 'system',
@@ -336,7 +315,6 @@ function claudeSession() {
         session_id: session,
       })
     }
-
     state.running = true
     state.interrupted = false
     const usage = { input_tokens: 500, cache_read_input_tokens: 20, output_tokens: 0 }
@@ -414,7 +392,6 @@ function claudeSession() {
       },
     })
   }
-
   linesIn(
     (message) => {
       if (message.type === 'control_request') return control(message)
@@ -434,7 +411,6 @@ function claudeSession() {
     () => void draining,
   )
 }
-
 async function codex() {
   if (has('--version')) {
     console.log('codex-cli 9.9.9')
@@ -462,18 +438,15 @@ async function codex() {
   }
   appServer()
 }
-
 function appServer() {
   let ready = false
   let threads = 0
   let turns = 0
   const running = new Map()
   const waiting = new Map()
-
   const reply = (id, result) => say({ id, result })
   const fail = (id, message, code = -32600) => say({ id, error: { code, message } })
   const tell = (method, params) => say({ method, params })
-
   function startThread(id, params) {
     if (params.sandbox !== 'read-only') return fail(id, 'not read-only')
     if (params.approvalPolicy !== 'never') return fail(id, 'asks somebody')
@@ -494,7 +467,6 @@ function appServer() {
     })
     tell('thread/started', { thread })
   }
-
   async function runTurn(threadId, turn, text) {
     tell('turn/started', { threadId, turn: { id: turn.id, status: 'inProgress', items: [] } })
     if (mode === 'hang') return hang()
@@ -568,7 +540,6 @@ function appServer() {
     running.delete(threadId)
     tell('turn/completed', { threadId, turn: { id: turn.id, status, error: null } })
   }
-
   function request({ id, method, params = {} }) {
     if (method === 'initialize') {
       ready = true
@@ -666,7 +637,6 @@ function appServer() {
         return fail(id, `no ${method}`, -32601)
     }
   }
-
   linesIn(
     (message) => {
       if (message.method && message.id !== undefined) return request(message)
@@ -680,7 +650,6 @@ function appServer() {
     () => undefined,
   )
 }
-
 const GEMINI_HELP = [
   '  -m, --model  Model',
   '  -o, --output-format  The format of the CLI output.',
@@ -688,7 +657,6 @@ const GEMINI_HELP = [
   '  -r, --resume  Resume a previous session.',
   '  --skip-trust  Trust the current workspace for this session.',
 ].join('\n')
-
 async function gemini() {
   if (has('--version')) {
     console.log('0.99.0')
@@ -708,7 +676,6 @@ async function gemini() {
   const settings = JSON.parse(readFileSync(process.env.GEMINI_CLI_SYSTEM_SETTINGS_PATH, 'utf8'))
   if (!settings.tools?.exclude?.includes('run_shell_command')) return refuse('the shell is on')
   if (mode === 'hang') return hang()
-
   const asked = await question()
   const at = () => new Date().toISOString()
   const resumed = after('--resume')
@@ -761,7 +728,6 @@ async function gemini() {
     stats: { total_tokens: 15, input_tokens: 12, output_tokens: 3, cached: 2, input: 10 },
   })
 }
-
 if (tool === 'claude') await claude()
 else if (tool === 'codex') await codex()
 else if (tool === 'gemini') await gemini()

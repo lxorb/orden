@@ -9,7 +9,6 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-
 import harness
 from harness import Drive
 
@@ -18,9 +17,7 @@ say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 ROOT = harness.ROOT
-
 EMAIL = "sync-drive@example.com"
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -29,50 +26,37 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 request = functools.partial(harness.request, refused=True)
-
 def totp(secret_hex: str, at: float | None = None) -> str:
     step = int((at if at is not None else time.time()) // 30)
     digest = hmac.new(bytes.fromhex(secret_hex), struct.pack(">Q", step), hashlib.sha1).digest()
     offset = digest[19] & 15
     value = struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF
-
     return str(value % 1_000_000).zfill(6)
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"OPENAI_KEY_SECRET": "a secret for the drive"})
-
     def account(self, device: str = "the drive") -> tuple[str, str]:  # type: ignore[override]
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
-
         self.sql(f"insert into users (id, email, created_at) values ('{user}', '{EMAIL}', {now});")
-
         return self.session(user, device), user
-
     def session(self, user: str, device: str) -> str:
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
-
         self.sql(
             "insert into sessions (token_hash, user_id, created_at, expires_at, id, name,"
             f" last_used_at) values ('{digest}', '{user}', {now}, {now + 86400000},"
             f" '{uuid.uuid4().hex[:16]}', '{device}', {now});"
         )
-
         return token
-
 def pane_rows(page) -> list[str]:
     return page.evaluate(
         """() => [...document.querySelectorAll('.pane .setting, .pane .action')]
              .map((one) => one.textContent.replace(/\\s+/g, ' ').trim())
              .filter(Boolean)"""
     )
-
 def opened(browser, name: str, width: int, height: int, agent: str, finger: bool, token: str):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -82,9 +66,7 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
         color_scheme="dark" if not finger else "light",
         device_scale_factor=2,
     )
-
     context.add_init_script(f"try {{ localStorage.setItem('orden:session', '{token}') }} catch {{}}")
-
     page = context.new_page()
     page.set_default_timeout(20000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
@@ -97,23 +79,18 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=40000)
     page.wait_for_function("() => !!window.ordenApp.account.user", timeout=40000)
-
     return context, page
-
 def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, width, height, agent, finger):
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     context, page = opened(browser, name, width, height, agent, finger, token)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
-
     page.wait_for_function(
         "() => window.ordenApp.workspace.activeSpace && window.ordenApp.sync.status !== 'off'",
         timeout=40000,
     )
-
     space = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     made = page.evaluate(
         """async () => {
@@ -122,16 +99,13 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
         }"""
     )
     say(f"[{name}] wrote {made.replace(chr(92), '/').split('/')[-1]}")
-
     page.evaluate("() => window.ordenApp.sync.nudge()")
     page.wait_for_function(
         "(path) => !!window.ordenApp.sync.tracked(path)", arg=made, timeout=40000
     )
-
     tracked = page.evaluate("(path) => window.ordenApp.sync.tracked(path)", made)
     held = request(f"/v1/notes/{tracked['id']}/versions", token)
     say(f"[{name}] the account holds {len(held.get('versions', []))} version(s): {held.get('versions')}")
-
     worker.sql("update note_versions set at = at - 600000;")
     page.evaluate(
         """async (path) => {
@@ -145,10 +119,8 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     )
     page.evaluate("() => window.ordenApp.sync.nudge()")
     page.wait_for_timeout(4000)
-
     held = request(f"/v1/notes/{tracked['id']}/versions", token)
     say(f"[{name}] and now {len(held.get('versions', []))}, by {[one['by'] for one in held.get('versions', [])]}")
-
     page.evaluate("() => (window.ordenApp.settings.historyOpen = true)")
     page.wait_for_timeout(900)
     shot("history")
@@ -156,22 +128,18 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     say(f"[{name}] the history sheet lists: {rows}")
     page.evaluate("() => (window.ordenApp.settings.historyOpen = false)")
     page.wait_for_timeout(400)
-
     page.evaluate("() => window.ordenApp.settings.show('sync')")
     page.wait_for_timeout(900)
     shot("pane")
-
     page.evaluate("() => window.ordenApp.modes.setConflicts('newest')")
     page.wait_for_timeout(1200)
     settings = request("/v1/settings", token)
     say(f"[{name}] the account's conflict rule is {settings.get('settings', {}).get('conflicts')!r}")
-
     say(f"[{name}] the pane offers: {pane_rows(page)}")
     page.evaluate("() => window.ordenApp.modes.setKeepVersions(365)")
     page.wait_for_timeout(1200)
     kept = request("/v1/settings", token).get("settings", {}).get("keepVersions")
     say(f"[{name}] the account keeps versions for {kept} days")
-
     day = 24 * 60 * 60 * 1000
     for age in [2, 40, 70, 100, 200, 300]:
         worker.sql(
@@ -179,7 +147,6 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
             f" ('{tracked['id']}', cast(strftime('%s','now') as integer) * 1000 - {age * day},"
             f" 'aged-{age}', 120, 'the drive');"
         )
-
     page.evaluate("() => (window.ordenApp.settings.historyOpen = true)")
     page.wait_for_timeout(1500)
     months = page.evaluate(
@@ -191,16 +158,13 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     page.wait_for_timeout(300)
     page.evaluate("() => window.ordenApp.settings.show('sync')")
     page.wait_for_timeout(600)
-
     passes = page.evaluate("() => window.ordenApp.sync.status")
     log = page.evaluate(
         """() => [...document.querySelectorAll('.pass')].map((one) => one.textContent.replace(/\\s+/g, ' ').trim())"""
     )
     say(f"[{name}] sync is {passes}; the log says: {log[:3]}")
-
     page.evaluate("() => window.ordenApp.settings.show('account')")
     page.wait_for_timeout(900)
-
     turn = page.query_selector('button:has-text("Turn on")')
     if turn:
         turn.click()
@@ -210,12 +174,10 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
         page.fill('input[aria-label="Code from the app"]', totp(base64.b32decode(padded).hex()))
         page.click('button:has-text("Confirm")')
         page.wait_for_timeout(1500)
-
     say(f"[{name}] the account pane says: {pane_rows(page)}")
     shot("account")
     page.evaluate("() => window.ordenApp.settings.show('sync')")
     page.wait_for_timeout(300)
-
     remote = page.evaluate(
         "() => window.ordenApp.sync.remoteIdFor(window.ordenApp.workspace.activeSpace.root)"
     )
@@ -225,46 +187,35 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
         {"at": int(time.time() * 1000) - 300000, "dry": True},
     )
     say(f"[{name}] a rollback to five minutes ago would change {asked.get('notes')} note(s)")
-
     context.close()
     return remote
-
 def second_factor(worker: Worker, token: str) -> None:
     begun = request("/v1/second", token, {})
     if "secret" not in begun:
         say(f"the second factor could not be begun: {begun}")
         return
-
     padded = begun["secret"] + "=" * (-len(begun["secret"]) % 8)
     secret = base64.b32decode(padded).hex()
-
     done = request("/v1/second/confirm", token, {"holding": begun["holding"], "code": totp(secret)})
     say(f"the second factor is on, with {len(done.get('recovery', []))} recovery codes")
-
     state = request("/v1/second", token)
     say(f"and the pane would say: on={state.get('on')} codesLeft={state.get('codesLeft')}")
-
     refused = request("/v1/second", token, {"code": "000000"}, method="DELETE")
     say(f"a wrong code turning it off: {refused.get('status')} {refused.get('error')!r}")
-
     off = request("/v1/second", token, {"code": totp(secret)}, method="DELETE")
     say(f"the right one: on={off.get('on')}")
-
 def sessions(worker: Worker, token: str, user: str) -> None:
     other = worker.session(user, "another laptop")
     listed = request("/v1/sessions", token)
     say(f"signed in on: {[(one['name'], one['current']) for one in listed.get('sessions', [])]}")
-
     theirs = next((one for one in listed.get("sessions", []) if not one["current"]), None)
     if theirs:
         request(f"/v1/sessions/{theirs['id']}", token, method="DELETE")
         after = request("/v1/sessions", other)
         say(f"after ending it, that session answers {after.get('status', 200)}")
-
 def headless(worker: Worker, token: str, space: str) -> None:
     minted = request("/v1/mcp/token", token, {"readOnly": False})
     program = minted.get("token", "")
-
     with tempfile.TemporaryDirectory(prefix="orden-ci-") as held:
         folder = Path(held)
         done = subprocess.run(
@@ -276,11 +227,9 @@ def headless(worker: Worker, token: str, space: str) -> None:
             env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
             check=False,
         )
-
         say(f"nib-sync pull said: {done.stdout.strip() or done.stderr.strip()}")
         landed = sorted(one.name for one in folder.rglob("*.md"))
         say(f"and left: {landed}")
-
         if landed:
             (folder / "from-ci.md").write_text("# From CI\n\nWritten by the action.\n", "utf-8")
             pushed = subprocess.run(
@@ -293,7 +242,6 @@ def headless(worker: Worker, token: str, space: str) -> None:
                 check=False,
             )
             say(f"nib-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")
-
 def page_note(browser, token: str, space: str) -> None:
     paper = (
         '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],'
@@ -305,7 +253,6 @@ def page_note(browser, token: str, space: str) -> None:
     if landed != "Journal.pages":
         say("FAILED: the account would not take a page note")
         return
-
     context, page = opened(browser, "pages", 1280, 860, DESKTOP_AGENT, False, token)
     try:
         page.wait_for_function(
@@ -321,24 +268,17 @@ def page_note(browser, token: str, space: str) -> None:
         say(f"FAILED: the page note never reached a second device: {error}")
     finally:
         context.close()
-
 def main() -> int:
     out = DRIVE.shots
     worker = Worker()
-
     worker.start()
-
     with DRIVE.session() as browser:
         token, user = worker.account()
         say("an account with nothing in it; the app makes its own space")
-
         say("--- the second factor ---")
         second_factor(worker, token)
-
         worker.session(user, "another laptop")
-
         remote = ""
-
         for one in [
             ("desktop", 1440, 900, DESKTOP_AGENT, False),
             ("phone", 390, 844, PHONE_AGENT, True),
@@ -348,8 +288,6 @@ def main() -> int:
         say("--- a page note across two devices ---")
         if remote:
             page_note(browser, token, remote)
-
     say(f"shots in {out}")
     return 0
-
 raise SystemExit(main())

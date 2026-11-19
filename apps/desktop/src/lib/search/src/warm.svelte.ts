@@ -13,24 +13,19 @@ class Warm {
       .then((pdf) => pdf.papers())
       .then((one) => one.hearPapers((held) => (this.papers = held))),
   )
-
   readonly said = $derived(said(this.held, this.papers))
-
   async forSpace(root: string): Promise<void> {
     this.root = root
     this.held = null
-
     await startup.turn('search')
     void this.hearing().catch(() => undefined)
     if (this.root !== root) return
-
     if (!isNative) {
       await warmSpace(root, (warmth) => {
         this.held = warmth
       })
       return
     }
-
     mark('warm_search asked')
     const kept = internal.routed ? await warmInternal(root).catch(() => null) : null
     const found = kept ?? (await invoke<unknown>('warm_search', { root }).catch(() => null))
@@ -38,5 +33,4 @@ class Warm {
     if (this.root === root && isWarmth(found)) this.held = found
   }
 }
-
 export const warm = new Warm()

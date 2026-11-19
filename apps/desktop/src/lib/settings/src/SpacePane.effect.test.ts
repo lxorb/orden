@@ -13,7 +13,6 @@ const disk = vi.hoisted(() => ({
   held: null as Promise<void> | null,
   shut: false,
 }))
-
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: () => Promise.resolve(null),
@@ -62,17 +61,13 @@ vi.mock('../../file-writes/src/api', async (original) => ({
     return Promise.resolve()
   },
 }))
-
 const { settings } = await import('./window.svelte')
 const { settleUp, stillWriting } = await import('../../parting/src/api')
 disk.tabs = () => settings.section
 const SpacePane = (await import('./SpacePane.svelte')).default
-
 const settled = () => new Promise((resolve) => setTimeout(resolve))
-
 let target: HTMLElement
 let close: (() => void) | undefined
-
 async function shown() {
   const made = mount(SpacePane, { target })
   close = () => void unmount(made)
@@ -83,13 +78,11 @@ async function shown() {
   if (!box) throw new Error('no field')
   return box
 }
-
 function typed(box: HTMLTextAreaElement, words: string) {
   box.value = words
   box.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
 }
-
 beforeEach(() => {
   disk.files.clear()
   disk.writes = []
@@ -104,13 +97,11 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   close?.()
   close = undefined
   target.remove()
 })
-
 describe('Settings > Space', () => {
   test('shows what the file at the top of the space in front says', async () => {
     disk.files.set('/space/AGENTS.md', '# Rules')
@@ -118,7 +109,6 @@ describe('Settings > Space', () => {
     expect(box.value).toBe('# Rules')
     expect(target.textContent).toContain('Plans')
   })
-
   test('is about the space it was asked for', async () => {
     disk.files.set('/other/AGENTS.md', '# Theirs')
     settings.space = '/other'
@@ -126,7 +116,6 @@ describe('Settings > Space', () => {
     expect(box.value).toBe('# Theirs')
     expect(target.textContent).toContain('Other')
   })
-
   test('opened and closed, it makes no file', async () => {
     await shown()
     close?.()
@@ -135,7 +124,6 @@ describe('Settings > Space', () => {
     expect(disk.made).toEqual([])
     expect(disk.writes).toEqual([])
   })
-
   test('takes the caret when the hint asked for it, and only then', async () => {
     let box = await shown()
     expect(document.activeElement).not.toBe(box)
@@ -145,7 +133,6 @@ describe('Settings > Space', () => {
     expect(document.activeElement).toBe(box)
     expect(settings.landsOnField).toBe(false)
   })
-
   test('words typed and the settings closed at once are written', async () => {
     disk.files.set('/space/AGENTS.md', '# Rules')
     const box = await shown()
@@ -156,7 +143,6 @@ describe('Settings > Space', () => {
     await settled()
     expect(disk.files.get('/space/AGENTS.md')).toBe('# Rules\n- tea')
   })
-
   test('words typed where there is no file make it, through the app’s write', async () => {
     const box = await shown()
     typed(box, '# New')
@@ -165,7 +151,6 @@ describe('Settings > Space', () => {
     await settled()
     expect(disk.made).toEqual(['/space/AGENTS.md'])
   })
-
   test('a reader reads', async () => {
     disk.writable = false
     disk.files.set('/space/AGENTS.md', '# Theirs')
@@ -176,7 +161,6 @@ describe('Settings > Space', () => {
     await settled()
     expect(disk.writes).toEqual([])
   })
-
   test('while the file is read, it is a field still to be filled, never a blank', async () => {
     let read: () => void = () => undefined
     disk.held = new Promise((done) => (read = done))
@@ -190,7 +174,6 @@ describe('Settings > Space', () => {
     expect(box.readOnly).toBe(false)
     expect(box.value).toBe('# Rules')
   })
-
   test('a reader reads its words as words, and an empty file still as a field', async () => {
     disk.writable = false
     disk.files.set('/space/AGENTS.md', '# Theirs')
@@ -202,7 +185,6 @@ describe('Settings > Space', () => {
     expect(empty.readOnly).toBe(true)
     expect(empty.classList.contains('read')).toBe(false)
   })
-
   test('a file that arrives from sync or an agent appears', async () => {
     const box = await shown()
     disk.heard?.('/space/AGENTS.md', '# Arrived')
@@ -212,7 +194,6 @@ describe('Settings > Space', () => {
     flushSync()
     expect(box.value).toBe('# Arrived')
   })
-
   test('the tabs changing behind it neither reads the file again nor takes the words typed', async () => {
     disk.reactive = true
     disk.files.set('/space/AGENTS.md', '# Rules')
@@ -227,7 +208,6 @@ describe('Settings > Space', () => {
     expect(box.value).toBe('# Rules, typing')
     expect(target.querySelector('textarea')).toBe(box)
   })
-
   test('a window going takes the words typed with it, and waits for them', async () => {
     disk.files.set('/space/AGENTS.md', '# Rules')
     const box = await shown()
@@ -238,7 +218,6 @@ describe('Settings > Space', () => {
     await settled()
     expect(disk.files.get('/space/AGENTS.md')).toBe('# Rules, last keys')
   })
-
   test('a space no longer on the list locks the field and is not made again', async () => {
     settings.space = '/gone'
     const box = await shown()
@@ -248,7 +227,6 @@ describe('Settings > Space', () => {
     await settled()
     expect(disk.made).toEqual([])
   })
-
   test('the file made tells the listing of the space it is in, not the one now asked for', async () => {
     const { workspace } = await import('../../workspace/src/api')
     // eslint-disable-next-line @typescript-eslint/unbound-method -- a mock, only ever read
@@ -263,7 +241,6 @@ describe('Settings > Space', () => {
     expect(disk.made).toEqual(['/space/AGENTS.md'])
     expect(reads).toHaveBeenCalled()
   })
-
   test('neither shows nor takes the instructions of a locked space', async () => {
     disk.files.set('/space/AGENTS.md', '# Private rules')
     disk.shut = true

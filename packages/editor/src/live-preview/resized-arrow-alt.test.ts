@@ -10,7 +10,6 @@ import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { livePreview } from '.'
 
 const DROPPED = 'Trip\n\n![Before > after](day-1.png)\n![](day-2.png)\n![](day-3.png)\n\nend'
-
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
@@ -23,7 +22,6 @@ beforeAll(() => {
     get: () => 800,
   })
 })
-
 function opened(doc: string): EditorView {
   return new EditorView({
     state: parsed(
@@ -36,14 +34,12 @@ function opened(doc: string): EditorView {
     parent: document.body,
   })
 }
-
 function halved(view: EditorView) {
   const handle = view.contentDOM.querySelector<HTMLElement>('.orden-image-handle[data-corner="se"]')
   handle?.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true, clientX: 800 }))
   handle?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 400 }))
   handle?.dispatchEvent(new MouseEvent('pointerup', { button: 0, bubbles: true, clientX: 400 }))
 }
-
 test('resizing a picture whose alt text holds a > keeps the pictures under it in the reading view', () => {
   const view = opened(DROPPED)
   halved(view)

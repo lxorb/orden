@@ -22,10 +22,8 @@ const book = noteRow(
   },
   { tags: ['book/sf', 'classic'], links: ['Textbook', 'Frank Herbert'] },
 )
-
 const run = (source: string, row: Row | null = book, formulas: Record<string, string> = {}): Value =>
   compile(source).evaluate(row, context, formulas)
-
 const DOCUMENTED: [string, Value][] = [
   ['"hello".contains("ell")', true],
   ['"hello".containsAll("h", "e")', true],
@@ -124,13 +122,11 @@ const DOCUMENTED: [string, Value][] = [
   ['duration("5h") * 2', { kind: 'duration', ms: 36_000_000, months: 0 }],
   ['today()', { kind: 'date', iso: '2026-10-04' }],
 ]
-
 describe('every documented function', () => {
   test.each(DOCUMENTED)('%s', (source, expected) => {
     expect(run(source)).toEqual(expected)
   })
 })
-
 describe('the operators', () => {
   test.each<[string, Value]>([
     ['1 + 2 * 3', 7],
@@ -157,7 +153,6 @@ describe('the operators', () => {
     expect(run(source)).toEqual(expected)
   })
 })
-
 describe('properties', () => {
   test.each<[string, Value]>([
     ['price', 12.5],
@@ -201,7 +196,6 @@ describe('properties', () => {
     expect(run(source)).toEqual(expected)
   })
 })
-
 describe('formulas', () => {
   const formulas = {
     ppu: '(price / age).toFixed(2)',
@@ -209,27 +203,22 @@ describe('formulas', () => {
     twice: 'number(formula.ppu) * 2',
     loop: 'formula.loop + 1',
   }
-
   test('read each other, as the help page writes them', () => {
     expect(run('formula.ppu', book, formulas)).toBe('2.50')
     expect(run('formula.formatted_price', book, formulas)).toBe('12.50 dollars')
     expect(run('formula.twice', book, formulas)).toBe(5)
   })
-
   test('a formula that reaches itself is an error, not a loop', () => {
     expect(() => run('formula.loop', book, formulas)).toThrow(BasesError)
   })
-
   test('a formula nobody wrote is nothing', () => {
     expect(run('formula.nope', book, formulas)).toBeNull()
   })
 })
-
 describe('this', () => {
   const author = noteRow('People/Frank Herbert.md', { born: 1920, related: ['x'] })
   const resolve = (target: string) => (target === 'Frank Herbert' ? 'People/Frank Herbert.md' : null)
   const withThis = { ...context, this: author, resolve }
-
   test('is the embedding note: its file, its properties, a link to it', () => {
     expect(compile('this.file.name').evaluate(book, withThis)).toBe('Frank Herbert.md')
     expect(compile('this.born').evaluate(book, withThis)).toBe(1920)
@@ -238,12 +227,10 @@ describe('this', () => {
     expect(compile('file.hasLink(this)').evaluate(book, withThis)).toBe(true)
     expect(compile('file.hasLink(this.file)').evaluate(book, withThis)).toBe(true)
   })
-
   test('is nothing where nothing embeds the base', () => {
     expect(run('this')).toBeNull()
     expect(run('this.file.name')).toBeNull()
   })
-
   test('a link reaches the file it points at', () => {
     const lookup = {
       ...withThis,
@@ -255,7 +242,6 @@ describe('this', () => {
     expect(compile('note.price').local).toBe(true)
   })
 })
-
 describe('mistakes', () => {
   test.each([
     ['price +', 'The expression ends too soon'],
@@ -267,7 +253,6 @@ describe('mistakes', () => {
   ])('%s says "%s"', (source, message) => {
     expect(() => compile(source)).toThrow(message)
   })
-
   test('say where', () => {
     try {
       compile('price + * 2')
@@ -276,13 +261,11 @@ describe('mistakes', () => {
       expect((error as BasesError).at).toBe(8)
     }
   })
-
   test('a method a value does not have is an error when run', () => {
     expect(() => run('(5).lower()')).toThrow('number has no lower()')
     expect(() => run('number("abc")')).toThrow(BasesError)
   })
 })
-
 describe('what Object.prototype holds is no property', () => {
   test.each([
     'note.constructor',
@@ -297,7 +280,6 @@ describe('what Object.prototype holds is no property', () => {
     expect(run(source)).toBeNull()
   })
 })
-
 describe('a pattern in a base of ones own', () => {
   test.each([
     ['/^[a-z]+(-[a-z]+)*$/.matches("a-b-c")', true],
@@ -313,16 +295,13 @@ describe('a pattern in a base of ones own', () => {
   ] as [string, Value][])('%s answers as it always did', (source, wanted) => {
     expect(run(source)).toEqual(wanted)
   })
-
   test('a long value is read like a short one', () => {
     const wide = 'x'.repeat(5000)
     expect(run(`/\\d+(\\.\\d+)?|x/.matches("${wide}")`)).toBe(true)
   })
 })
-
 describe('a pattern in a base somebody else could have written', () => {
   const safe = (source: string) => patternAllowed(new RegExp(source))
-
   test.each([
     /(a+)+$/,
     /(a*)*$/,
@@ -352,7 +331,6 @@ describe('a pattern in a base somebody else could have written', () => {
   ])('%s is refused, measured and not run', (pattern) => {
     expect(patternAllowed(pattern)).toBe(false)
   })
-
   test.each([
     '^abc$',
     '^(foo|bar)+$',
@@ -366,18 +344,15 @@ describe('a pattern in a base somebody else could have written', () => {
   ])('/%s/ may run', (source) => {
     expect(safe(source)).toBe(true)
   })
-
   test('a counted repeat that is not one is read as what it is', () => {
     expect(patternAllowed(new RegExp('^(\\u{61})+$'))).toBe(true)
     expect(patternAllowed(/^\p{L}+$/u)).toBe(true)
   })
-
   const guardedBase = (formula: string) =>
     ({
       ...readBase(`formulas:\n  f: ${JSON.stringify(formula)}\nviews:\n  - type: table\n    name: T\n`),
       guarded: true,
     }) as Base
-
   test('names the pattern that is refused, wherever in the base it is written', () => {
     expect(refusedPattern(guardedBase('/(a+)+$/.matches("x")'))).toBe('/(a+)+$/')
     expect(
@@ -390,7 +365,6 @@ describe('a pattern in a base somebody else could have written', () => {
     expect(refusedPattern(guardedBase('/^(foo|bar)+$/.matches("x")'))).toBeNull()
     expect(refusedPattern(readBase('views:\n  - type: table\n    name: T\n'))).toBeNull()
   })
-
   test('a guarded base refuses a value too long to read rather than start on it', () => {
     const base = guardedBase('/x$/.matches(note.long)')
     const row = noteRow('A.md', { long: 'x'.repeat(2000), short: 'x' })
@@ -398,7 +372,6 @@ describe('a pattern in a base somebody else could have written', () => {
     expect(cellValue({ ...base, formulas: { f: '/x$/.matches(note.short)' } }, 'formula.f', row, context)).toBe(true)
     expect(cellValue({ ...base, guarded: false }, 'formula.f', row, context)).toBe(true)
   })
-
   test('a guarded base spends a share of the clock on patterns and no more', () => {
     let now = 0
     let step = 0
@@ -418,7 +391,6 @@ describe('a pattern in a base somebody else could have written', () => {
       clock.mockRestore()
     }
   })
-
   test('a base of the reader still refuses a pattern that backtracks without end', () => {
     const own = readBase(
       'formulas:\n  f: "/(a+)+b/.matches(note.x)"\n  g: "/a+!/.matches(note.x)"\nviews:\n  - type: table\n    name: T\n',
@@ -429,13 +401,11 @@ describe('a pattern in a base somebody else could have written', () => {
     expect(Date.now() - started).toBeLessThan(1500)
     expect(cellValue(own, 'formula.g', row, context)).toBe(true)
   })
-
   test('the flag is no part of the file', () => {
     const base = readBase('views:\n  - type: table\n    name: T\n')
     expect(writeBase({ ...base, guarded: true })).toBe(writeBase(base))
   })
 })
-
 test.each<[unknown, ...Parameters<typeof run>]>([
   [false, 'file.hasProperty("toString")'],
   [false, 'file.hasProperty("__proto__")'],

@@ -6,11 +6,9 @@ interface Origin {
   indexedDB: IDBFactory
   local: Map<string, string>
 }
-
 function origin(): Origin {
   return { indexedDB: new IDBFactory(), local: new Map() }
 }
-
 function at(place: Origin) {
   vi.stubGlobal('indexedDB', place.indexedDB)
   vi.stubGlobal('localStorage', {
@@ -23,7 +21,6 @@ function at(place: Origin) {
     },
   })
 }
-
 function opened(name: string, version: number, make: (db: IDBDatabase) => void) {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(name, version)
@@ -32,13 +29,11 @@ function opened(name: string, version: number, make: (db: IDBDatabase) => void) 
     request.onerror = () => reject(request.error ?? new Error('open'))
   })
 }
-
 function notesShape(db: IDBDatabase) {
   db.createObjectStore('files', { keyPath: 'path' })
   db.createObjectStore('meta')
   db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true }).createIndex('notePath', 'notePath')
 }
-
 function write(db: IDBDatabase, store: string, value: unknown, key?: IDBValidKey) {
   return new Promise<void>((resolve, reject) => {
     const writing = db.transaction(store, 'readwrite')
@@ -47,7 +42,6 @@ function write(db: IDBDatabase, store: string, value: unknown, key?: IDBValidKey
     writing.onerror = () => reject(writing.error ?? new Error('write'))
   })
 }
-
 function all(db: IDBDatabase, store: string) {
   return new Promise<{ keys: IDBValidKey[]; values: unknown[] }>((resolve, reject) => {
     const reading = db.transaction(store, 'readonly').objectStore(store)
@@ -57,15 +51,12 @@ function all(db: IDBDatabase, store: string) {
     values.onerror = () => reject(values.error ?? new Error('read'))
   })
 }
-
 let before: Origin
 let now: Origin
-
 beforeEach(() => {
   before = origin()
   now = origin()
 })
-
 describe('what the old address holds', () => {
   test('is every database, every store and every key', async () => {
     at(before)
@@ -75,9 +66,7 @@ describe('what the old address holds', () => {
     await write(db, 'snapshots', { notePath: '/Notes/Mine.md', content: 'earlier' })
     db.close()
     before.local.set('orden:session', '{"token":"t"}')
-
     const handoff = await pack()
-
     expect(isHandoff(handoff)).toBe(true)
     expect(isEmpty(handoff)).toBe(false)
     const notes = handoff.databases.find((one) => one.name === 'orden')
@@ -88,16 +77,13 @@ describe('what the old address holds', () => {
     ])
     expect(handoff.local).toEqual([['orden:session', '{"token":"t"}']])
   })
-
   test('is nothing at an address that was never used, and asking leaves nothing behind', async () => {
     at(before)
     const handoff = await pack()
-
     expect(isEmpty(handoff)).toBe(true)
     expect(await indexedDB.databases()).toEqual([])
   })
 })
-
 describe('the new address, given it', () => {
   test('holds what the old one held, in place of its own welcome note', async () => {
     at(before)
@@ -108,14 +94,11 @@ describe('the new address, given it', () => {
     old.close()
     before.local.set('orden:session', '{"token":"t"}')
     const handoff = await pack()
-
     at(now)
     const fresh = await opened('orden', 2, notesShape)
     await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome to Orden' })
     now.local.set('orden:accent', 'teal')
-
     await unpack(handoff)
-
     expect((await all(fresh, 'files')).values).toEqual([{ path: '/Notes/Mine.md', content: 'written in a browser' }])
     expect(await all(fresh, 'meta')).toEqual({ keys: ['seeded'], values: ['yes'] })
     expect((await all(fresh, 'snapshots')).values).toEqual([{ id: 1, notePath: '/Notes/Mine.md', content: 'earlier' }])
@@ -123,14 +106,12 @@ describe('the new address, given it', () => {
     expect(now.local.get('orden:session')).toBe('{"token":"t"}')
     expect(now.local.get('orden:accent')).toBe('teal')
   })
-
   test('lists what came over, when the old address had no listing of its own', async () => {
     at(before)
     const old = await opened('orden', 1, notesShape)
     await write(old, 'files', { path: '/Notes/Mine.md', content: 'old words', modified: 5 })
     old.close()
     const handoff = await pack()
-
     at(now)
     const fresh = await opened('orden', 2, (db) => {
       notesShape(db)
@@ -139,13 +120,10 @@ describe('the new address, given it', () => {
     })
     await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome', modified: 1 })
     await write(fresh, 'stats', { path: '/Notes/Read me.md', modified: 1, created: 1, size: 9 })
-
     await unpack(handoff)
-
     expect((await all(fresh, 'stats')).values).toEqual([{ path: '/Notes/Mine.md', modified: 5, created: 5, size: 9 }])
     fresh.close()
   })
-
   test('makes a database it did not have, stores and indexes as they were', async () => {
     at(before)
     const old = await opened('orden-pictures', 3, (db) => {
@@ -154,10 +132,8 @@ describe('the new address, given it', () => {
     await write(old, 'kept', { id: 'a', at: 5 })
     old.close()
     const handoff = await pack()
-
     at(now)
     await unpack(handoff)
-
     const made = await opened('orden-pictures', 3, () => undefined)
     expect(made.version).toBe(3)
     const index = made.transaction('kept').objectStore('kept').index('by')
@@ -166,7 +142,6 @@ describe('the new address, given it', () => {
     made.close()
   })
 })
-
 describe('a message', () => {
   test('is a handoff only when it says so', () => {
     expect(isHandoff({ kind: 'orden-handoff', databases: [], local: [] })).toBe(true)

@@ -6,17 +6,13 @@ import struct
 import subprocess
 import tempfile
 from pathlib import Path
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SECONDS = 6
 AT = 3
-
 def wav() -> bytes:
     rate = 22_050
     frames = bytearray()
@@ -25,7 +21,6 @@ def wav() -> bytes:
     head = b"RIFF" + struct.pack("<I", 36 + len(frames)) + b"WAVEfmt "
     head += struct.pack("<IHHIIHH", 16, 1, 1, rate, rate * 2, 2, 16)
     return head + b"data" + struct.pack("<I", len(frames)) + bytes(frames)
-
 def clips() -> dict[str, bytes]:
     made = {"/Media/assets/tone.wav": wav()}
     if not shutil.which("ffmpeg"):
@@ -38,7 +33,6 @@ def clips() -> dict[str, bytes]:
         if ran.returncode == 0:
             made[f"/Media/assets/{name}"] = out.read_bytes()
     return made
-
 PUT = """
 async (rows) => {
   const db = await new Promise((done, failed) => {
@@ -54,7 +48,6 @@ async (rows) => {
   })
 }
 """
-
 PLAY = """
 async ([src, tag, at]) => {
   const player = document.createElement(tag)
@@ -85,7 +78,6 @@ async ([src, tag, at]) => {
   return out
 }
 """
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(service_workers="allow")
     page = context.new_page()
@@ -93,10 +85,8 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.active", "the app")
     wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
-
     files = clips()
     page.evaluate(PUT, [{"path": path, "type": "", "data": base64.b64encode(data).decode(), "modified": 1} for path, data in files.items()])
-
     for path in files:
         tag = "audio" if path.endswith(".wav") else "video"
         played = page.evaluate(PLAY, [f"/asset{path}", tag, AT])
@@ -109,5 +99,4 @@ def drive(browser: Browser) -> None:
         if played["seeked"] is None or abs(played["seeked"] - AT) > 0.5:
             wrong(f"{path} was moved to {AT} seconds and stood at {played['seeked']}")
     context.close()
-
 raise SystemExit(DRIVE.run(drive))

@@ -16,29 +16,22 @@ import {
 } from './wire'
 
 type Piece = Record<string, unknown>
-
 interface Content {
   role: 'user' | 'model'
   parts: Piece[]
 }
-
 export const UNSIGNED = 'skip_thought_signature_validator'
-
 const MADE = 'gemini-call-'
-
 const REFUSED = new Set(['SAFETY', 'RECITATION', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'IMAGE_SAFETY', 'LANGUAGE'])
-
 function picture(one: { mime: string; data: string }): Piece {
   return { inlineData: { mimeType: one.mime, data: one.data } }
 }
-
 function userContent(step: Extract<Step, { role: 'user' }>): Content {
   return {
     role: 'user',
     parts: [...(step.text ? [{ text: step.text }] : []), ...step.images.map(picture)],
   }
 }
-
 function callPart(call: Call, first: boolean): Piece {
   return {
     functionCall: {
@@ -49,7 +42,6 @@ function callPart(call: Call, first: boolean): Piece {
     ...(first ? { thoughtSignature: UNSIGNED } : {}),
   }
 }
-
 function resultContent(results: readonly { id: string; name: string; output: ToolOutput }[]) {
   const parts: Piece[] = results.map((one) => ({
     functionResponse: {
@@ -61,7 +53,6 @@ function resultContent(results: readonly { id: string; name: string; output: Too
   for (const one of results) parts.push(...one.output.images.map(picture))
   return { role: 'user' as const, parts }
 }
-
 export function contentsOf(steps: readonly Step[]): Content[] {
   const out: Content[] = []
   for (const step of steps) {
@@ -88,7 +79,6 @@ export function contentsOf(steps: readonly Step[]): Content[] {
   }
   return out.filter((one) => one.parts.length)
 }
-
 export const gemini: Wire = {
   request(ask: Ask) {
     const thinks = ask.model.thinking !== false && learnt(ask.provider.id, ask.model.id).reasons !== false
@@ -117,16 +107,13 @@ export const gemini: Wire = {
     }
     return { url: geminiUrl(ask.provider, ask.model.id), body, headers: {} }
   },
-
   reader(window) {
     return new GeminiReader(window)
   },
-
   results(results) {
     return [resultContent(results.map((one) => ({ id: one.call.id, name: one.call.name, output: one.output })))]
   },
 }
-
 class GeminiReader extends PartsReader implements Reader {
   private readonly kept: Piece[] = []
   private readonly calls: Call[] = []
@@ -134,7 +121,6 @@ class GeminiReader extends PartsReader implements Reader {
   private blocked = ''
   private usage: Usage | undefined
   private readonly made = crypto.randomUUID()
-
   heard(event: unknown): Heard {
     const said = record(event)
     if (said.error) return { changed: [], trouble: said }
@@ -142,15 +128,12 @@ class GeminiReader extends PartsReader implements Reader {
     const model = text(said.modelVersion)
     if (said.usageMetadata) this.usage = geminiUsage(said.usageMetadata, this.window)
     this.blocked = text(record(said.promptFeedback).blockReason) || this.blocked
-
     const candidate = record(Array.isArray(said.candidates) ? said.candidates[0] : null)
     this.finish = text(candidate.finishReason) || this.finish
     const parts = record(candidate.content).parts
     if (Array.isArray(parts)) for (const piece of parts.map(record)) changed.push(...this.took(piece))
-
     return { changed, ...(model ? { model } : {}), ...(this.usage ? { usage: this.usage } : {}) }
   }
-
   private took(piece: Piece): number[] {
     const signature = text(piece.thoughtSignature)
     const call = record(piece.functionCall)
@@ -171,7 +154,6 @@ class GeminiReader extends PartsReader implements Reader {
     if (!piece.text) return []
     return [thought ? this.think(piece.text) : this.say(piece.text)]
   }
-
   private keep(words: string, thought: boolean, signature: string): void {
     const last = this.kept.at(-1)
     const same =
@@ -194,16 +176,13 @@ class GeminiReader extends PartsReader implements Reader {
       ...(signature ? { thoughtSignature: signature } : {}),
     })
   }
-
   protected override say(words: string): number {
     this.thinking = null
     return super.say(words)
   }
-
   finished(saidDone: boolean): boolean {
     return saidDone || this.finish !== '' || this.blocked !== ''
   }
-
   answer(): Answer {
     const parts = this.kept.filter((one) => typeof one.text !== 'string' || one.text || one.thoughtSignature)
     const ending = endingOf(this.finish, this.blocked, this.calls.length > 0)
@@ -215,7 +194,6 @@ class GeminiReader extends PartsReader implements Reader {
     }
   }
 }
-
 function endingOf(finish: string, blocked: string, calls: boolean): Ending {
   if (blocked || REFUSED.has(finish)) return 'refusal'
   if (calls) return 'tool'

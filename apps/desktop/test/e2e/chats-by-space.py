@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 START = """
 async () => {
   const { seeded } = await import('/src/lib/chats-client/src/view/seed.ts')
@@ -18,10 +16,8 @@ async () => {
   return space.name
 }
 """
-
 LISTED = """() => [...document.querySelectorAll('.chats .space, .chats .entry')].map((one) =>
   one.classList.contains('space') ? `# ${one.textContent.trim()}` : one.textContent.trim())"""
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 760}, color_scheme=scheme)
@@ -43,5 +39,4 @@ def drive(browser: Browser) -> None:
         DRIVE.settled(page)
         shot(page, f"{scheme}-chats-by-space", clip={"x": 0, "y": 0, "width": 320, "height": 520})
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "two chats with one name stand under the spaces they belong to"))

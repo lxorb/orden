@@ -1,14 +1,11 @@
 import io
 import json
-
 from PIL import Image
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 NOTE = """# Plan
 
 Before the code, ==a plain mark== and ==🔴 a red one==.
@@ -19,7 +16,6 @@ const hello = 'world'
 
 After it.
 """
-
 SYSTEM = """
 () => {
   const probe = document.createElement('div')
@@ -30,7 +26,6 @@ SYSTEM = """
   return out
 }
 """
-
 SPACERS = """
 () => [...document.querySelectorAll('.cm-line.orden-code-open, .cm-line.orden-code-close, .cm-line.orden-frontmatter')].map((line) => {
   const style = getComputedStyle(line)
@@ -38,7 +33,6 @@ SPACERS = """
   return { line: line.className, sides: sides.map((side) => [side, style[`border${side}Color`]]) }
 })
 """
-
 CONTROLS = """
 () => {
   const style = (one) => getComputedStyle(one)
@@ -53,10 +47,8 @@ CONTROLS = """
   }
 }
 """
-
 def system(page: Page) -> dict[str, str]:
     return page.evaluate(SYSTEM)
-
 def track_ends(page: Page, canvas: str) -> list[str]:
     bad = []
     for at, slider in enumerate(page.locator("[role=dialog] .orden-slider").all()):
@@ -70,7 +62,6 @@ def track_ends(page: Page, canvas: str) -> list[str]:
             if all(sum(abs(a - b) for a, b in zip(pixel, ground)) < 60 for pixel in column):
                 bad.append(f"slider {at} has nothing drawn at x={x} of {wide}")
     return bad
-
 WORDS_BOX = """
 (button) => {
   const range = document.createRange()
@@ -80,7 +71,6 @@ WORDS_BOX = """
   return [words.left - box.left, words.top - box.top, words.width, words.height]
 }
 """
-
 def words_unseen(page: Page) -> list[str]:
     bad = []
     for button in page.locator("[role=dialog] .orden-segmented button.on").all():
@@ -98,7 +88,6 @@ def words_unseen(page: Page) -> list[str]:
         if not inside or near < len(inside) * 0.2:
             bad.append(f"the chosen segment {button.text_content()!r} has its words on a plate of their own, {near} of {len(inside)} pixels its ground")
     return bad
-
 def drive_scheme(browser: Browser, scheme: str) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 800}, forced_colors="active", color_scheme=scheme)
     page = context.new_page()
@@ -115,7 +104,6 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     colours = system(page)
     say(f"[{scheme}] system colours {json.dumps(colours)}")
     DRIVE.shot(page, f"{scheme}-note")
-
     page.evaluate("() => window.orden.dispatch({ selection: { anchor: window.orden.state.doc.length } })")
     page.wait_for_timeout(300)
     marks = page.evaluate("() => [...document.querySelectorAll('.cm-content .orden-highlight')].map((one) => [one.textContent, getComputedStyle(one).backgroundColor])")
@@ -124,18 +112,15 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     for words, colour in marks:
         if colour != colours["mark"]:
             wrong(f"[{scheme}] the highlight {words!r} is painted {colour}, not the system's mark {colours['mark']}")
-
     edge = page.evaluate(
         "() => { const s = getComputedStyle(document.querySelector('.cm-line.orden-code-open'), '::after'); return [s.borderTopStyle, s.borderTopColor, s.borderLeftStyle] }"
     )
     if edge[0] != "solid" or edge[1] != colours["text"] or edge[2] != "solid":
         wrong(f"[{scheme}] the code block has no edge of its own to tell it from the words: {edge}")
-
     for one in page.evaluate(SPACERS):
         for side, colour in one["sides"]:
             if colour != colours["canvas"]:
                 wrong(f"[{scheme}] {one['line']}: the room on its {side.lower()} is drawn as a bar of {colour}, not the window's {colours['canvas']}")
-
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(400)
     field = page.locator("[role=dialog] input[type=search], [role=dialog] input").first
@@ -147,7 +132,6 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     if ring[0] == "none" or ring[1] != colours["highlight"]:
         wrong(f"[{scheme}] the field being typed in looks like every other field: {ring}")
     page.keyboard.press("Backspace")
-
     for pane in ("appearance", "editor"):
         page.evaluate("(pane) => window.ordenApp.settings.show(pane)", pane)
         page.wait_for_timeout(500)
@@ -171,7 +155,6 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
             wrong(f"[{scheme}] {pane}: {one}")
         for one in track_ends(page, colours["canvas"]):
             wrong(f"[{scheme}] {pane}: {one}")
-
     page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Shift+P")
@@ -183,9 +166,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
         wrong(f"[{scheme}] the palette's current row looks like every other: {current}")
     DRIVE.shot(page, f"{scheme}-palette")
     context.close()
-
 def drive(browser: Browser) -> None:
     for scheme in ("dark", "light"):
         drive_scheme(browser, scheme)
-
 raise SystemExit(DRIVE.run(drive))

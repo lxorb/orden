@@ -10,17 +10,14 @@ function rows(pairs: readonly (readonly [string, string | number | null | undefi
     .map(([word, value]) => `${word}: ${value}`)
     .join('\n')
 }
-
 export function tokens(count: number): string {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(count >= 10_000_000 ? 0 : 1)}M`
   if (count >= 1_000) return `${Math.round(count / 1_000)}K`
   return String(count)
 }
-
 async function plansOf() {
   return (await (await import('../../../ai-providers/src/api')).localCli()).plans
 }
-
 export async function status(thread: Thread | null, provider: Provider | null): Promise<string> {
   if (!provider) return 'Add an AI provider in Settings first.'
   let plan: string | null = null
@@ -46,7 +43,6 @@ export async function status(thread: Thread | null, provider: Provider | null): 
     ['Version', __APP_VERSION__],
   ])
 }
-
 export async function usage(thread: Thread | null, provider: Provider | null): Promise<string> {
   const spent = thread?.spent
   const window = thread?.usage.window ?? null
@@ -65,7 +61,6 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
     ]) || '∅'
   )
 }
-
 export async function doctor(provider: Provider | null): Promise<string> {
   if (!provider) return 'Add an AI provider in Settings first.'
   const out: [string, string | null][] = [['Provider', KIND_NAMES[provider.kind]]]
@@ -85,7 +80,6 @@ export async function doctor(provider: Provider | null): Promise<string> {
   out.push(['Models', listed])
   return rows(out)
 }
-
 export async function sign(provider: Provider | null, out: boolean): Promise<void> {
   if (!provider || (!isLocal(provider.kind) && provider.kind !== 'chatgpt')) {
     settingsWindow().show('ai')

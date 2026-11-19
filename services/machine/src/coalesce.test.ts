@@ -3,14 +3,12 @@ import { Coalescer, ECHO_MS, ECHO_SENDS, FRAME_MS } from './coalesce'
 
 const bytes = (text: string) => new TextEncoder().encode(text)
 const text = (data: Uint8Array) => new TextDecoder().decode(data)
-
 beforeEach(() => {
   vi.useFakeTimers()
 })
 afterEach(() => {
   vi.useRealTimers()
 })
-
 function sender() {
   const sent: string[] = []
   const coalescer = new Coalescer(
@@ -19,13 +17,11 @@ function sender() {
   )
   return { sent, coalescer }
 }
-
 test('the first output after a quiet frame goes at once: an echo is never held', () => {
   const { sent, coalescer } = sender()
   coalescer.push(bytes('a'))
   expect(sent).toEqual(['a'])
 })
-
 test('what comes inside a frame waits for its end and goes as one', () => {
   const { sent, coalescer } = sender()
   coalescer.push(bytes('a'))
@@ -35,7 +31,6 @@ test('what comes inside a frame waits for its end and goes as one', () => {
   vi.advanceTimersByTime(FRAME_MS)
   expect(sent).toEqual(['a', 'bc'])
 })
-
 test('a flood is a frame at a time, not a send per read', () => {
   const { sent, coalescer } = sender()
   for (let i = 0; i < 1000; i++) {
@@ -46,7 +41,6 @@ test('a flood is a frame at a time, not a send per read', () => {
   expect(sent.join('')).toBe('x'.repeat(1000))
   expect(sent.length).toBeLessThanOrEqual(Math.ceil(1000 / FRAME_MS) + 2)
 })
-
 test('a flush of part sends that part now and the rest at the next frame', () => {
   const { sent, coalescer } = sender()
   coalescer.push(bytes('a'))
@@ -56,7 +50,6 @@ test('a flush of part sends that part now and the rest at the next frame', () =>
   vi.advanceTimersByTime(FRAME_MS)
   expect(sent).toEqual(['a', 'bc', 'd'])
 })
-
 function clocked() {
   const sent: { at: number; text: string }[] = []
   let now = 1000
@@ -72,7 +65,6 @@ function clocked() {
   }
   return { sent, coalescer, pass }
 }
-
 test('a key’s echo goes at once even inside a busy frame, not up to a frame later', () => {
   const { sent, coalescer, pass } = clocked()
   coalescer.push(bytes('-'))
@@ -85,7 +77,6 @@ test('a key’s echo goes at once even inside a busy frame, not up to a frame la
     { at: 1003, text: 'a' },
   ])
 })
-
 test('without a key the same output waits for the frame', () => {
   const { sent, coalescer, pass } = clocked()
   coalescer.push(bytes('-'))
@@ -95,7 +86,6 @@ test('without a key the same output waits for the frame', () => {
   pass(FRAME_MS)
   expect(sent.map((one) => one.at)).toEqual([1000, 1000 + FRAME_MS])
 })
-
 test('an echo in two reads goes as two sends, and a flood after them is coalesced', () => {
   const { sent, coalescer, pass } = clocked()
   coalescer.push(bytes('prompt'))
@@ -115,7 +105,6 @@ test('an echo in two reads goes as two sends, and a flood after them is coalesce
   ).toBe('x'.repeat(100))
   expect(sent.length - 1 - ECHO_SENDS).toBeLessThanOrEqual(Math.ceil(100 / FRAME_MS) + 2)
 })
-
 test('output long after a key is no echo of it', () => {
   const { sent, coalescer, pass } = clocked()
   coalescer.typed()
@@ -126,7 +115,6 @@ test('output long after a key is no echo of it', () => {
   pass(FRAME_MS)
   expect(sent.map((one) => one.text)).toEqual(['a', 'b'])
 })
-
 test('every key buys its own echo: fast typing is never a frame behind', () => {
   const { sent, coalescer, pass } = clocked()
   for (const key of 'hello') {

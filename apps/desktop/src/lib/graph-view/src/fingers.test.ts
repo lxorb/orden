@@ -8,7 +8,6 @@ describe('fingers on the graph', () => {
     expect(fingers.lead).toBe(1)
     expect(fingers.pinching).toBe(false)
     expect(fingers.move(1, { x: 110, y: 100 })).toBeNull()
-
     fingers.press(2, { x: 210, y: 100 })
     expect(fingers.pinching).toBe(true)
     expect(fingers.move(2, { x: 310, y: 100 })).toEqual({
@@ -18,7 +17,6 @@ describe('fingers on the graph', () => {
       dy: 0,
     })
   })
-
   test('a finger lifted out of a pinch hands the lead to the one left, from where it is', () => {
     const fingers = new Fingers()
     fingers.press(1, { x: 0, y: 0 })
@@ -29,7 +27,6 @@ describe('fingers on the graph', () => {
     expect(fingers.lift(2)).toBeNull()
     expect(fingers.lead).toBeNull()
   })
-
   test('a pointer it never saw pressed moves and lifts nothing', () => {
     const fingers = new Fingers()
     fingers.press(1, { x: 0, y: 0 })

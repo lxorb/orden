@@ -4,7 +4,6 @@ import hashlib
 import time
 import uuid
 from pathlib import Path
-
 import harness
 from harness import Drive
 
@@ -13,9 +12,7 @@ say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 APP = harness.APP
-
 EMAIL = "layers-drive@example.com"
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -24,14 +21,10 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 request = functools.partial(harness.request, refused=True)
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"OPENAI_KEY_SECRET": "a secret for the drive"})
-
     def account(self, device: str = "the drive") -> tuple[str, str]:  # type: ignore[override]
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
@@ -43,17 +36,13 @@ class Worker(harness.Worker):
             f" last_used_at) values ('{digest}', '{user}', {now}, {now + 86400000},"
             f" '{uuid.uuid4().hex[:16]}', '{device}', {now});"
         )
-
         return token, user
-
 def look(page, name: str, tag: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SHOTS / f"{name}-{tag}.png"))
-
 def panel(page) -> None:
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .name", timeout=30000)
-
 def held(page, row) -> None:
     row.scroll_into_view_if_needed()
     box = row.bounding_box()
@@ -81,10 +70,8 @@ def held(page, row) -> None:
         at,
     )
     page.wait_for_timeout(900)
-
 def drive(browser, origin: str, name: str, width, height, agent, finger, token: str) -> list[str]:
     wrong: list[str] = []
-
     context = browser.new_context(
         viewport={"width": width, "height": height},
         user_agent=agent,
@@ -94,20 +81,16 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         device_scale_factor=2,
     )
     context.add_init_script(f"try {{ localStorage.setItem('orden:session', '{token}') }} catch {{}}")
-
     page = context.new_page()
     page.set_default_timeout(20000)
-
     def hurt(words: str) -> None:
         wrong.append(f"[{name}] {words}")
         say(f"[{name}] {words}")
-
     page.on("pageerror", lambda error: hurt(f"PAGE ERROR: {error}"))
     page.on(
         "console",
         lambda one: hurt(f"console {one.type}: {one.text}") if one.type == "error" else None,
     )
-
     page.goto(origin, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=40000)
     page.wait_for_function("() => !!window.ordenApp.account.user", timeout=40000)
@@ -116,7 +99,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         timeout=60000,
     )
     page.wait_for_function("() => window.ordenApp.workspace.spaces.length >= 2", timeout=60000)
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -132,7 +114,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         f" sync is {page.evaluate('() => window.ordenApp.sync.status')},"
         f" panel is {page.evaluate('() => window.ordenApp.workspace.panel')!r}"
     )
-
     switcher = page.locator("aside .name")
     if not switcher.count():
         hurt("no switcher on the panel at all")
@@ -153,7 +134,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         page.wait_for_timeout(700)
         if page.locator(".spaces").count():
             hurt("the switcher did not close on a choice")
-
     panel(page)
     page.wait_for_timeout(600)
     rows = page.locator("aside .orden-row.row[data-path]")
@@ -165,7 +145,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         else:
             rows.first.click(button="right")
         page.wait_for_timeout(900)
-
         popup = page.locator("[role=menu].menu")
         there = bool(popup.count()) and popup.first.is_visible()
         items = page.locator("[role=menu].menu [role=menuitem]").count()
@@ -174,34 +153,27 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         if not there or not items:
             hurt("THE NOTE'S MENU DID NOT OPEN")
         look(page, name, "menu")
-
         if there and items:
             page.locator("[role=menu].menu [role=menuitem]").first.click()
             page.wait_for_timeout(800)
             if page.locator("[role=menu].menu").count():
                 hurt("the menu did not close on a choice")
-
     context.close()
     return wrong
-
 SHAPES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False),
     ("phone", 390, 844, PHONE_AGENT, True),
 ]
-
 def main() -> int:
     parse = argparse.ArgumentParser()
     parse.add_argument("--also", type=Path, default=None, help="a second built dist to drive")
     said = parse.parse_args()
-
     worker = Worker()
     builds: list[tuple[str, Path | None]] = [("main", None)]
     if said.also:
         builds.append(("shipped", said.also.resolve()))
-
     wrong: list[str] = []
     token: str | None = None
-
     with DRIVE.session() as browser:
         for which, folder in builds:
             worker.start(assets=folder)
@@ -211,20 +183,16 @@ def main() -> int:
                     for label in ("Field notes", "Ledger"):
                         made = request("/v1/spaces", token, {"name": label}, "POST")
                         say(f"the account holds {made.get('space', {}).get('name')!r}")
-
                 for shape in SHAPES:
                     wrong += drive(browser, ORIGIN, f"{which}-{shape[0]}", *shape[1:], token)
             finally:
                 worker.stop()
-
     say("")
     if wrong:
         say(f"{len(wrong)} thing(s) went wrong:")
         for one in wrong:
             say(f"  {one}")
         return 1
-
     say("both layers opened on every shape, and the console stayed quiet")
     return 0
-
 raise SystemExit(main())

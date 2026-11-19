@@ -25,17 +25,14 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .turning {
     animation: turn 1s linear infinite;
   }
-
   @media (prefers-reduced-motion: reduce) {
     .turning {
       animation: none;
     }
   }
-
   @keyframes turn {
     to {
       rotate: 1turn;

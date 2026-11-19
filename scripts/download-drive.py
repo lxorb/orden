@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import sys
@@ -10,14 +9,11 @@ from linux_app import run
 OUT, FOLDER, SERVED = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
 WHOLE = 65536 * 200
 failures = []
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 def listed():
     return run("window.__TAURI_INTERNALS__.invoke('web_downloads')") or []
-
 def tab():
     for _ in range(60):
         found = run(
@@ -28,16 +24,13 @@ def tab():
             return found
         time.sleep(0.5)
     raise SystemExit("::error::there is no web tab")
-
 def send(to):
     run(f"window.__TAURI_INTERNALS__.invoke('web_navigate', {{ tab: {json.dumps(tab())}, url: {json.dumps(to)} }}).then(() => 'sent')")
-
 def served():
     try:
         return SERVED.read_text()
     except OSError:
         return ""
-
 time.sleep(2)
 send("http://127.0.0.1:8765/slow")
 going = None
@@ -49,7 +42,6 @@ for _ in range(60):
 if not going:
     raise SystemExit("::error::the slow file never started")
 print(f"on its way: {going['name']}, {going.get('received', 0)} of {going.get('total')} bytes")
-
 run(f"window.__TAURI_INTERNALS__.invoke('web_download_cancel', {{ id: {going['id']} }}).then(() => 'stopped')")
 for _ in range(40):
     if "/slow" in served():
@@ -69,7 +61,6 @@ if state != "cancelled":
 left = [one.name for one in FOLDER.iterdir()] if FOLDER.exists() else []
 if any(name.startswith("report") and not name.endswith(".crdownload") for name in left):
     fail(f"the stopped download left a file: {left}")
-
 send("http://127.0.0.1:8765/fast")
 done = None
 for _ in range(60):

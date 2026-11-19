@@ -5,7 +5,6 @@ import { mergeCanvasFiles, merged, stamped, TOMBSTONE_KEPT } from './canvas-merg
 function card(id: string, text = id, x = 0): CanvasNode {
   return { id, type: 'text', x, y: 0, width: 100, height: 50, text }
 }
-
 function stroke(id: string, x = 0): InkStroke {
   return {
     id,
@@ -18,19 +17,15 @@ function stroke(id: string, x = 0): InkStroke {
     ],
   }
 }
-
 function plane(over: Partial<Canvas> = {}): Canvas {
   return { ...emptyCanvas(), ...over }
 }
-
 const ids = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
-
 describe('stamping an edit', () => {
   test('gives everything a time the first time it is seen', () => {
     const after = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     expect(after.at).toEqual({ a: 100, b: 100 })
   })
-
   test('leaves the time of anything the edit handed straight back', () => {
     const a = card('a')
     const b = card('b')
@@ -38,7 +33,6 @@ describe('stamping an edit', () => {
     const after = stamped(before, { ...before, nodes: [a, { ...b, x: 40 }] }, 200)
     expect(after.at).toEqual({ a: 100, b: 200 })
   })
-
   test('buries what the edit took away, and only that; digs one back up when it comes back, so an undo is not undone by a sync', () => {
     const before = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     const after = stamped(before, { ...before, nodes: [before.nodes[0]!] }, 200)
@@ -50,19 +44,16 @@ describe('stamping an edit', () => {
     expect(back.gone).toEqual({})
     expect(back.at).toEqual({ a: 300 })
   })
-
   test('forgets a tombstone older than the window, so a file does not grow for ever', () => {
     const old = plane({ nodes: [card('a')], gone: { ancient: 1 } })
     const after = stamped(old, { ...old, nodes: [card('a')] }, TOMBSTONE_KEPT + 2)
     expect(after.gone).toEqual({})
   })
-
   test('stamps a stroke of ink like anything else', () => {
     const after = stamped(plane(), plane({ ink: [stroke('s')] }), 100)
     expect(after.at).toEqual({ s: 100 })
   })
 })
-
 describe('merging two copies of a canvas', () => {
   test('a canvas read without times keeps each side’s edit to its own card', () => {
     const [a, b, c] = [card('a'), card('b'), card('c')]
@@ -75,14 +66,12 @@ describe('merging two copies of a canvas', () => {
     }
     expect(typed.at).toEqual({ a: 200 })
   })
-
   test('keeps everything both sides added', () => {
     const shared = stamped(plane(), plane({ nodes: [card('shared')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [...shared.nodes, card('mine')] }, 200)
     const theirs = stamped(shared, { ...shared, nodes: [...shared.nodes, card('yours')] }, 210)
     expect(ids(merged(ours, theirs, 1000)).sort()).toEqual(['mine', 'shared', 'yours'])
   })
-
   test('keeps both strokes when two pens are on one plane', () => {
     const shared = stamped(plane(), plane({ ink: [stroke('a')] }), 100)
     const ours = stamped(shared, { ...shared, ink: [...shared.ink, stroke('mine', 50)] }, 200)
@@ -93,7 +82,6 @@ describe('merging two copies of a canvas', () => {
         .sort(),
     ).toEqual(['a', 'mine', 'yours'])
   })
-
   test('takes the later of two versions of the same card', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a', 'first')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [card('a', 'ours')] }, 200)
@@ -102,7 +90,6 @@ describe('merging two copies of a canvas', () => {
     expect(both.nodes[0]).toMatchObject({ text: 'theirs' })
     expect(both.at.a).toBe(300)
   })
-
   test('lets a delete beat an edit made before it', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [card('a', 'edited')] }, 150)
@@ -110,7 +97,6 @@ describe('merging two copies of a canvas', () => {
     expect(ids(merged(ours, theirs, 1000))).toEqual(['a'])
     expect(merged(ours, theirs, 1000).gone.b).toBe(300)
   })
-
   test('lets an edit made after a delete bring the card back', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     const deleted = stamped(shared, { ...shared, nodes: [shared.nodes[0]!] }, 200)
@@ -119,14 +105,12 @@ describe('merging two copies of a canvas', () => {
     expect(ids(both).sort()).toEqual(['a', 'b'])
     expect(both.nodes.find((node) => node.id === 'b')).toMatchObject({ text: 'still here' })
   })
-
   test('is the same whichever side asks', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b'), card('c')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [card('a', 'ours'), card('b'), card('c'), card('d')] }, 200)
     const theirs = stamped(shared, { ...shared, nodes: [card('a'), card('b', 'theirs'), card('e')] }, 250)
     expect(writeCanvas(merged(ours, theirs, 1000))).toBe(writeCanvas(merged(theirs, ours, 1000)))
   })
-
   test('drops an edge whose card the merge did not keep', () => {
     const shared = stamped(
       plane(),
@@ -139,7 +123,6 @@ describe('merging two copies of a canvas', () => {
     const ours = stamped(shared, { ...shared, nodes: [shared.nodes[0]!] }, 300)
     expect(merged(ours, shared, 1000).edges).toEqual([])
   })
-
   test('keeps the time of an edge or a stroke it kept over a tombstone', () => {
     const now = 10_000_000
     const ours = plane({
@@ -160,7 +143,6 @@ describe('merging two copies of a canvas', () => {
       expect(twice.ink.map((one) => one.id)).toEqual(['s'])
     }
   })
-
   test('and keeps them through the files the sync writes, merge after merge', () => {
     const now = 10_000_000
     const ours = writeCanvas(
@@ -183,7 +165,6 @@ describe('merging two copies of a canvas', () => {
     expect(twice.edges.map((edge) => edge.id)).toEqual(['e'])
     expect(twice.ink.map((one) => one.id)).toEqual(['s'])
   })
-
   test('forgets the time of an edge or a stroke a tombstone did take', () => {
     const now = 10_000_000
     const ours = plane({ ink: [stroke('s')], at: { s: now - 5000 } })
@@ -193,12 +174,10 @@ describe('merging two copies of a canvas', () => {
     expect(one.at).toEqual({})
     expect(one.gone).toEqual({ s: now - 1000 })
   })
-
   test('keeps a canvas neither side changed exactly as it was', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     expect(writeCanvas(merged(shared, shared, 1000))).toBe(writeCanvas(shared))
   })
-
   test('keeps a card where the side that moved it later put it', () => {
     const ours = plane({ nodes: [card('b'), card('a')], at: { a: 200, b: 100 } })
     const theirs = plane({
@@ -208,7 +187,6 @@ describe('merging two copies of a canvas', () => {
     expect(ids(merged(ours, theirs, 1000))).toEqual(['b', 'a', 'c'])
     expect(ids(merged(theirs, ours, 1000))).toEqual(['b', 'a', 'c'])
   })
-
   test('settles a tie without either side having to ask the other', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a', 'first')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [card('a', 'ours')] }, 200)
@@ -216,26 +194,22 @@ describe('merging two copies of a canvas', () => {
     expect(merged(ours, theirs, 1000)).toEqual(merged(theirs, ours, 1000))
   })
 })
-
 describe('merging two canvas files', () => {
   test('is the union of what each one holds', () => {
     const ours = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))
     const theirs = writeCanvas(stamped(plane(), plane({ nodes: [card('b')] }), 100))
     expect(ids(readCanvas(mergeCanvasFiles(ours, theirs))).sort()).toEqual(['a', 'b'])
   })
-
   test('hands back what it was given when the two are the same file', () => {
     const ours = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))
     expect(mergeCanvasFiles(ours, ours)).toBe(ours)
   })
-
   test('takes the side that has something when the other has nothing at all', () => {
     const ours = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))
     expect(mergeCanvasFiles(ours, '')).toBe(ours)
     expect(mergeCanvasFiles('', ours)).toBe(ours)
     expect(mergeCanvasFiles('not json', ours)).toBe(ours)
   })
-
   test('reads back as a canvas', () => {
     const ours = writeCanvas(stamped(plane(), plane({ nodes: [card('a')], ink: [stroke('s')] }), 100))
     const theirs = writeCanvas(stamped(plane(), plane({ nodes: [card('b')] }), 120))
@@ -244,7 +218,6 @@ describe('merging two canvas files', () => {
     expect(both.ink.map((one) => one.id)).toEqual(['s'])
   })
 })
-
 describe('the icon two copies of a canvas wear', () => {
   test('is kept from whichever side has one; is nothing where neither does; and where both name one, the same one on both devices', () => {
     expect(merged(plane({ icon: 'rocket' }), plane(), 1000).icon).toBe('rocket')
@@ -255,21 +228,18 @@ describe('the icon two copies of a canvas wear', () => {
     expect(merged(ours, theirs, 1000).icon).toBe('anchor')
     expect(merged(theirs, ours, 1000).icon).toBe('anchor')
   })
-
   test('and its colour comes with it, from the side whose icon was kept', () => {
     const ours = plane({ icon: 'anchor', iconColor: 'teal' })
     const theirs = plane({ icon: 'rocket', iconColor: 'violet' })
     expect(merged(ours, theirs, 1000)).toMatchObject({ icon: 'anchor', iconColor: 'teal' })
     expect(merged(theirs, ours, 1000)).toMatchObject({ icon: 'anchor', iconColor: 'teal' })
   })
-
   test('a colour on one side of the same icon is kept', () => {
     const ours = plane({ icon: 'rocket', iconColor: 'violet' })
     const theirs = plane({ icon: 'rocket' })
     expect(merged(ours, theirs, 1000).iconColor).toBe('violet')
     expect(merged(theirs, ours, 1000).iconColor).toBe('violet')
   })
-
   test('survives a merge with a copy that has cards and no icon', () => {
     const ours = writeCanvas(plane({ icon: 'rocket' }))
     const theirs = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 120))
@@ -278,7 +248,6 @@ describe('the icon two copies of a canvas wear', () => {
     expect(ids(both)).toEqual(['a'])
   })
 })
-
 describe('what stamping an edit compares', () => {
   function counted(count: number) {
     const reads = { ids: 0 }
@@ -294,7 +263,6 @@ describe('what stamping an edit compares', () => {
     })
     return { reads, ink }
   }
-
   test('is the stroke that was drawn, not the plane it was drawn on', () => {
     const { reads, ink } = counted(600)
     const before = stamped(plane(), plane({ ink }), 1000)
@@ -306,7 +274,6 @@ describe('what stamping an edit compares', () => {
     expect(after.at.s0).toBe(1000)
     expect(after.at.s599).toBe(1000)
   })
-
   test('and one stroke erased is the one stroke, with a tombstone for it', () => {
     const { ink } = counted(600)
     const before = stamped(plane(), plane({ ink }), 1000)
@@ -316,7 +283,6 @@ describe('what stamping an edit compares', () => {
     expect(after.at.s599).toBeUndefined()
     expect(after.at.s0).toBe(1000)
   })
-
   test('and strokes cut far apart are only those strokes, not all that lies between', () => {
     const { reads, ink } = counted(600)
     const before = stamped(plane(), plane({ ink }), 1000)
@@ -333,7 +299,6 @@ describe('what stamping an edit compares', () => {
     expect(out.gone).toEqual({})
     expect(out.moved).toBeUndefined()
   })
-
   test('and strokes cut far apart hold in mind only those strokes, not all that lies between', () => {
     const { ink } = counted(600)
     const before = stamped(plane(), plane({ ink }), 1000)
@@ -357,7 +322,6 @@ describe('what stamping an edit compares', () => {
     }
     expect(held).toBeLessThan(60)
   })
-
   test('and a stroke carried across others that stay is the one that moved', () => {
     const before = stamped(
       plane(),
@@ -372,7 +336,6 @@ describe('what stamping an edit compares', () => {
     expect(swapped.moved).toEqual({ b: 2000 })
     expect(swapped.at.a).toBe(2000)
   })
-
   test('and a stroke rubbed out between others leaves a tombstone, and nothing moved', () => {
     const before = stamped(plane(), plane({ ink: [stroke('a'), stroke('b'), stroke('c'), stroke('d')] }), 1000)
     const out = stamped(before, { ...before, ink: [before.ink[0]!, before.ink[2]!, stroke('e')] }, 2000)
@@ -380,7 +343,6 @@ describe('what stamping an edit compares', () => {
     expect(out.at).toEqual({ a: 1000, c: 1000, e: 2000 })
     expect(out.moved).toBeUndefined()
   })
-
   test('and strokes laid in a new order are the ones that moved', () => {
     const before = stamped(plane(), plane({ ink: [stroke('a'), stroke('b'), stroke('c'), stroke('d')] }), 1000)
     const [a, b, c, d] = before.ink
@@ -388,14 +350,12 @@ describe('what stamping an edit compares', () => {
     expect(out.at).toEqual({ a: 1000, b: 2000, c: 1000, d: 1000 })
     expect(Object.keys(out.moved ?? {})).toHaveLength(1)
   })
-
   test('a plane read from a file times only what the edit touched, so the untouched lose to any edit elsewhere', () => {
     const arrived = plane({ nodes: [card('a'), card('b')], at: {} })
     const stampedNow = stamped(arrived, { ...arrived, nodes: [...arrived.nodes, card('c')] }, 3000)
     expect(stampedNow.at).toEqual({ c: 3000 })
   })
 })
-
 describe('ids an object would answer from its prototype', () => {
   const OBSIDIAN = JSON.stringify({
     nodes: [
@@ -404,14 +364,12 @@ describe('ids an object would answer from its prototype', () => {
     ],
     edges: [],
   })
-
   test('have no time until one is written, and the file stays readable', () => {
     const before = readCanvas(OBSIDIAN)
     const after = stamped(before, { ...before, nodes: [...before.nodes, card('a')] }, 100)
     expect(after.at).toEqual({ a: 100 })
     expect(ids(readCanvas(writeCanvas(after)))).toEqual(['constructor', 'toString', 'a'])
   })
-
   test('keep their times through a merge, `__proto__` among them', () => {
     const ours = stamped(plane(), plane({ nodes: [card('__proto__'), card('constructor')] }), 100)
     const theirs = stamped(ours, { ...ours, nodes: [card('constructor', 'moved')] }, 200)
@@ -422,7 +380,6 @@ describe('ids an object would answer from its prototype', () => {
     expect(both.nodes[0]).toMatchObject({ text: 'moved' })
     expect(Object.entries(both.gone)).toEqual([['__proto__', 200]])
   })
-
   test('are not taken for a time on a canvas built on a plain object', () => {
     const one = { ...plane({ nodes: [card('constructor')] }), at: { constructor: 50 }, gone: {} }
     const other = { ...plane({ nodes: [card('constructor', 'other')] }), at: {}, gone: {} }
@@ -430,7 +387,6 @@ describe('ids an object would answer from its prototype', () => {
     expect(merged(other, one, 100).nodes[0]).toMatchObject({ text: 'constructor' })
   })
 })
-
 describe('merging two canvas files somebody else wrote in too', () => {
   const drawing = {
     id: 'x',
@@ -450,7 +406,6 @@ describe('merging two canvas files somebody else wrote in too', () => {
     width: 200,
     height: 60,
   })
-
   const ours = JSON.stringify({
     nodes: [drawing, { ...card('c', 'hello'), styleAttributes: { shape: 'pill' } }],
     edges: [{ id: 'e', fromNode: 'x', toNode: 'c' }],
@@ -462,7 +417,6 @@ describe('merging two canvas files somebody else wrote in too', () => {
     edges: [],
     orden: { version: 1, at: { c: 100, d: 200 }, later: true },
   })
-
   test('keeps them, from whichever side held them', () => {
     const file = JSON.parse(mergeCanvasFiles(ours, theirs, 300)) as {
       nodes: { id: string; styleAttributes?: unknown }[]
@@ -477,11 +431,9 @@ describe('merging two canvas files somebody else wrote in too', () => {
     expect(file.metadata).toEqual({ version: '1.0-1.0' })
     expect(file.orden.later).toBe(true)
   })
-
   test('is the same file whichever side asks', () => {
     expect(mergeCanvasFiles(theirs, ours, 300)).toBe(mergeCanvasFiles(ours, theirs, 300))
   })
-
   test('lets an edge go with the card the merge did not keep', () => {
     const deleted = JSON.stringify({
       nodes: [drawing],
@@ -495,7 +447,6 @@ describe('merging two canvas files somebody else wrote in too', () => {
     expect(file.nodes.map((node) => node.id)).toEqual(['x'])
     expect(file.edges).toEqual([])
   })
-
   test('counts a file of nothing but another app’s nodes as a canvas; writes a canvas with nothing unread in it exactly as before', () => {
     const only = JSON.stringify({ nodes: [drawing], edges: [] })
     const plain = writeCanvas(plane({ nodes: [card('c', 'hello') as CanvasNode], at: { c: 100 } }))
@@ -506,11 +457,9 @@ describe('merging two canvas files somebody else wrote in too', () => {
     expect(mergeCanvasFiles(one, two, 300)).toBe(writeCanvas(merged(readCanvas(one), readCanvas(two), 300)))
   })
 })
-
 describe('merging two copies after another app changed one of them', () => {
   const drawing = { id: 'x', type: 'excalidraw', x: 100, y: 0, width: 200, height: 100 }
   const card = { id: 'c', type: 'text', text: 'hello', x: 300, y: 0, width: 200, height: 60 }
-
   const written = writeCanvas(
     readCanvas(
       JSON.stringify({
@@ -539,7 +488,6 @@ describe('merging two copies after another app changed one of them', () => {
     file.nodes = file.nodes.filter((one) => one.id !== 'x')
     file.edges = []
   }
-
   test('records what it wrote, and counts nothing changed in its own file', () => {
     expect(parse(written).orden.outside).toBeDefined()
     const extras = readCanvas(written).extras
@@ -550,7 +498,6 @@ describe('merging two copies after another app changed one of them', () => {
     ])
     expect(extras?.buried.size).toBe(0)
   })
-
   test('keeps the version another app changed, whichever side asks', () => {
     const moved = outside(written, (file) => {
       moveTo(50)(file)
@@ -563,7 +510,6 @@ describe('merging two copies after another app changed one of them', () => {
     expect(file.nodes.find((node) => node.id === 'x')?.x).toBe(50)
     expect(file.nodes.find((node) => node.id === 'c')?.styleAttributes).toEqual({ shape: 'square' })
   })
-
   test('leaves what another app threw away gone, and its edge with it', () => {
     const thrown = outside(written, throwAway)
     for (const merged of [mergeCanvasFiles(written, thrown, 300), mergeCanvasFiles(thrown, written, 300)]) {
@@ -572,7 +518,6 @@ describe('merging two copies after another app changed one of them', () => {
       expect(file.edges).toEqual([])
     }
   })
-
   test('keeps one thrown away on one side and changed on the other: it was still wanted', () => {
     const thrown = outside(written, throwAway)
     const moved = outside(written, moveTo(50))
@@ -580,7 +525,6 @@ describe('merging two copies after another app changed one of them', () => {
       expect(parse(merged).nodes.find((node) => node.id === 'x')?.x).toBe(50)
     }
   })
-
   test('keeps the change through a write, against a copy that never saw it', () => {
     const once = mergeCanvasFiles(written, outside(written, moveTo(50)), 300)
     expect(readCanvas(once).extras?.generations.get('node:x')).toBe(1)
@@ -592,7 +536,6 @@ describe('merging two copies after another app changed one of them', () => {
       expect(parse(again).nodes.map((node) => node.id)).toEqual(['c'])
     }
   })
-
   test('keeps everything from two files Orden never wrote, as before', () => {
     const plain = JSON.stringify({ nodes: [drawing], edges: [] })
     const other = JSON.stringify({ nodes: [{ ...drawing, id: 'y' }], edges: [] })
@@ -603,7 +546,6 @@ describe('merging two copies after another app changed one of them', () => {
     ).toEqual(['x', 'y'])
   })
 })
-
 describe('the order of the stack', () => {
   const base = (...ids: string[]) => {
     const things = ids.map((id) => card(id))
@@ -614,14 +556,12 @@ describe('the order of the stack', () => {
     nodes: ids.map((id) => canvas.nodes.find((node) => node.id === id)!),
   })
   const order = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
-
   test('stamped records a move even where every object is the very same one', () => {
     const before = base('a', 'b', 'c')
     const after = stamped(before, moved(before, 'b', 'c', 'a'), 200)
     expect(after.moved).toEqual({ a: 200 })
     expect(after.at).toEqual({ a: 100, b: 100, c: 100 })
   })
-
   test('stamped stamps nothing more than what moved, wherever in the list it was; a swap of the first two survives the merge', () => {
     const before = base('a', 'b', 'c', 'd', 'e')
     const after = stamped(before, moved(before, 'a', 'd', 'b', 'c', 'e'), 200)
@@ -632,21 +572,18 @@ describe('the order of the stack', () => {
     expect(order(merged(ours, theirs, 300))).toEqual(['b', 'a', 'c'])
     expect(order(merged(theirs, ours, 300))).toEqual(['b', 'a', 'c'])
   })
-
   test('sending to the back survives the merge', () => {
     const theirs = base('a', 'b', 'c')
     const ours = stamped(theirs, moved(theirs, 'c', 'a', 'b'), 200)
     expect(order(merged(ours, theirs, 300))).toEqual(['c', 'a', 'b'])
     expect(order(merged(theirs, ours, 300))).toEqual(['c', 'a', 'b'])
   })
-
   test('one step back survives the merge', () => {
     const theirs = base('a', 'b', 'c')
     const ours = stamped(theirs, moved(theirs, 'a', 'c', 'b'), 200)
     expect(order(merged(ours, theirs, 300))).toEqual(['a', 'c', 'b'])
     expect(order(merged(theirs, ours, 300))).toEqual(['a', 'c', 'b'])
   })
-
   test('brought to the front, it sits over what the other side added before that', () => {
     const start = base('a', 'b')
     const ours = stamped(start, moved(start, 'b', 'a'), 300)
@@ -654,7 +591,6 @@ describe('the order of the stack', () => {
     expect(order(merged(ours, theirs, 400))).toEqual(['b', 'x', 'y', 'a'])
     expect(order(merged(theirs, ours, 400))).toEqual(['b', 'x', 'y', 'a'])
   })
-
   test('and under what the other side added after it', () => {
     const start = base('a', 'b')
     const ours = stamped(start, moved(start, 'b', 'a'), 200)
@@ -662,7 +598,6 @@ describe('the order of the stack', () => {
     expect(order(merged(ours, theirs, 400))).toEqual(['b', 'a', 'x'])
     expect(order(merged(theirs, ours, 400))).toEqual(['b', 'a', 'x'])
   })
-
   test('what each side added stays where that side put it among the rest; two copies that disagree with no times to go on come out the same either way', () => {
     const start = base('a', 'b')
     const ours = stamped(start, { ...start, nodes: [card('m'), ...start.nodes] }, 200)
@@ -673,13 +608,11 @@ describe('the order of the stack', () => {
     const other = plane({ nodes: [card('c'), card('b'), card('a')] })
     expect(order(merged(one, other, 100))).toEqual(order(merged(other, one, 100)))
   })
-
   test('an id a hand wrote twice comes out once, and takes nothing with it', () => {
     const one = plane({ nodes: [card('a'), card('a'), card('b')] })
     const other = plane({ nodes: [card('a'), card('b'), card('c')] })
     expect(order(merged(one, other, 100))).toEqual(['a', 'b', 'c'])
   })
-
   describe('never at the price of what a card says', () => {
     const start = { ...plane({ nodes: [card('x', 'a'), card('y', 'y')] }), at: { x: 5, y: 5 } }
     const typed = (canvas: Canvas, text: string) => ({
@@ -719,21 +652,18 @@ describe('the order of the stack', () => {
       expect(merged(a, b, 30).moved).toBeUndefined()
     })
   })
-
   test('a thing the other side does not hold stands, whatever that side says of its moves', () => {
     const ours = { ...plane({ nodes: [card('x')] }), at: { x: 5 } }
     const theirs = plane({ moved: { x: 9 } })
     expect(order(merged(ours, theirs, 100))).toEqual(['x'])
     expect(order(merged(theirs, ours, 100))).toEqual(['x'])
   })
-
   test.fails('words typed on one side outlive a later drag of a stale copy', () => {
     const start = { ...plane({ nodes: [card('x', 'draft')] }), at: { x: 1 } }
     const a = stamped(start, { ...start, nodes: [card('x', 'draft', 50)] }, 3)
     const b = stamped(start, { ...start, nodes: [card('x', 'final')] }, 2)
     expect(merged(a, b, 4).nodes[0]).toMatchObject({ text: 'final', x: 50 })
   })
-
   describe('kept from edit to edit', () => {
     const before = base('a', 'b', 'c')
     const shifted = stamped(before, moved(before, 'b', 'c', 'a'), 200)
@@ -761,7 +691,6 @@ describe('the order of the stack', () => {
       expect(less.moved).toBeUndefined()
     })
   })
-
   describe('in the file', () => {
     test('a plane nothing was moved on writes nothing new', () => {
       const file = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))
@@ -806,7 +735,6 @@ describe('the order of the stack', () => {
       expect(both.moved).toBeUndefined()
     })
   })
-
   test('a merge is the same the second time', () => {
     const start = base('a', 'b', 'c')
     const ours = stamped(start, moved(start, 'c', 'a', 'b'), 200)

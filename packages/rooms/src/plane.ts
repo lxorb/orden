@@ -18,21 +18,15 @@ export const PLANE = 'canvas'
 export const BURIED = 'gone'
 export const EXTRAS = 'extras'
 const HELD = 'held'
-
 type ThingKind = 'node' | 'edge' | 'ink'
-
 const KIND = 'kind'
 const AT = 'at'
 const Z = 'z'
 const MOVED = 'moved'
 const ADDED: readonly string[] = [KIND, AT, Z, MOVED]
-
 export const planeOf = (doc: Y.Doc): Y.Map<Y.Map<unknown>> => doc.getMap(PLANE)
-
 export const buriedOf = (doc: Y.Doc): Y.Map<number> => doc.getMap(BURIED)
-
 export const rootsOf = (doc: Y.Doc): Y.Map<unknown>[] => [doc.getMap(PLANE), doc.getMap(BURIED), doc.getMap(EXTRAS)]
-
 function putExtras(doc: Y.Doc, canvas: Canvas) {
   const held = doc.getMap<string>(EXTRAS)
   const text = holdsExtras(canvas.extras) ? extrasText(canvas.extras) : null
@@ -42,31 +36,22 @@ function putExtras(doc: Y.Doc, canvas: Canvas) {
     held.set(HELD, text)
   }
 }
-
 export function seedExtras(doc: Y.Doc, canvas: Canvas) {
   if (holdsExtras(canvas.extras)) putExtras(doc, canvas)
 }
-
 const isInk = (thing: Thing): thing is InkStroke => 'points' in thing
-
 const isEdge = (thing: Thing): thing is CanvasEdge => 'fromNode' in thing
-
 const kindOf = (thing: Thing): ThingKind => (isInk(thing) ? 'ink' : isEdge(thing) ? 'edge' : 'node')
-
 const fieldsOf = (thing: Thing): Record<string, unknown> =>
   isInk(thing) ? { ...thing, points: packed(thing.points) } : { ...thing }
-
 function same(one: unknown, other: unknown): boolean {
   if (one === other) return true
   if (!Array.isArray(one) || !Array.isArray(other)) return false
-
   return one.length === other.length && one.every((value, at) => value === other[at])
 }
-
 function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z?: number): boolean {
   const fields = fieldsOf(thing)
   const held = plane.get(thing.id)
-
   if (!held) {
     const made = new Y.Map<unknown>()
     for (const [key, value] of Object.entries(fields)) made.set(key, shared(key, value))
@@ -76,7 +61,6 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z?: number)
     plane.set(thing.id, made)
     return true
   }
-
   for (const [key, value] of Object.entries(fields)) {
     const current = held.get(key)
     if (key === WORDS && typeof value === 'string' && current instanceof Y.Text) {
@@ -85,36 +69,28 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z?: number)
     }
     if (!same(current, value)) held.set(key, shared(key, value))
   }
-
   for (const key of [...held.keys()]) {
     if (ADDED.includes(key) || key in fields) continue
     held.delete(key)
   }
-
   if (held.get(AT) !== at) held.set(AT, at)
   return false
 }
-
 const WORDS = 'text'
-
 const shared = (key: string, value: unknown): unknown =>
   key === WORDS && typeof value === 'string' ? new Y.Text(value) : value
-
 function rewrite(text: Y.Text, wanted: string) {
   const change = fold(text.toJSON(), wanted)
   if (!change) return
   if (change.to > change.from) text.delete(change.from, change.to - change.from)
   if (change.insert) text.insert(change.from, change.insert)
 }
-
 interface Placing {
   id: string
   z: number
   record: Y.Map<unknown>
 }
-
 const under = (one: Placing, other: Placing): boolean => (one.z !== other.z ? one.z < other.z : one.id < other.id)
-
 function slotted(
   plane: Y.Map<Y.Map<unknown>>,
   after: readonly Thing[],
@@ -126,12 +102,10 @@ function slotted(
     const record = plane.get(thing.id)
     return record ? { id: thing.id, z: placeOf(record), record } : null
   }
-
   const floor = near(after[hunk.at - 1])
   if (floor === null) return false
   let low = floor
   let run: Placing[] = []
-
   const settle = (high: Placing | undefined): boolean => {
     if (low && high && !under(low, high)) return false
     if (run.length && !between(run, low?.z, high?.z)) return false
@@ -139,7 +113,6 @@ function slotted(
     low = high
     return true
   }
-
   for (const thing of hunk.is) {
     const record = plane.get(thing.id)
     if (!record) return false
@@ -147,11 +120,9 @@ function slotted(
     if (fresh.has(thing.id)) run.push(place)
     else if (!settle(place)) return false
   }
-
   const ceiling = near(after[hunk.at + hunk.is.length])
   return ceiling !== null && settle(ceiling)
 }
-
 function restack(
   plane: Y.Map<Y.Map<unknown>>,
   after: readonly Thing[],
@@ -162,28 +133,23 @@ function restack(
   const last = hunks[hunks.length - 1]
   if (!first || !last) return
   if (hunks.every((hunk) => slotted(plane, after, hunk, fresh))) return
-
   const head = first.at
   const end = last.at + last.is.length
   const middle = after.slice(head, end)
   if (!middle.length) return
-
   const placed = (thing: Thing | undefined): Placing[] => {
     const record = thing && plane.get(thing.id)
     return thing && record ? [{ id: thing.id, z: placeOf(record), record }] : []
   }
-
   const [floor] = placed(after[head - 1])
   const [ceiling] = placed(after[end])
   const places = middle.flatMap(placed)
   const inside = places.filter(
     (place) => !fresh.has(place.id) && (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)),
   )
-
   const kept = standing(inside, under)
   if (kept.size === places.length) return
   const stays = new Set(inside.filter((_, index) => kept.has(index)))
-
   let low = floor?.z
   let waiting: Placing[] = []
   for (const place of places) {
@@ -196,21 +162,17 @@ function restack(
       waiting.push(place)
     }
   }
-
   for (const thing of after.slice(end)) {
     const [place] = placed(thing)
     if (!place) continue
     if (between(waiting, low, place.z)) return
     waiting.push(place)
   }
-
   between(waiting, low, undefined)
 }
-
 function between(waiting: readonly Placing[], low?: number, high?: number): boolean {
   const count = waiting.length
   if (!count) return true
-
   const at = (one: number) => {
     if (low !== undefined && high !== undefined) {
       return low + ((high - low) * (one + 1)) / (count + 1)
@@ -218,7 +180,6 @@ function between(waiting: readonly Placing[], low?: number, high?: number): bool
     if (low !== undefined) return low + one + 1
     return (high ?? count) - (count - one)
   }
-
   if (low !== undefined && high !== undefined) {
     let last = low
     for (let one = 0; one < count; one++) {
@@ -227,32 +188,26 @@ function between(waiting: readonly Placing[], low?: number, high?: number): bool
       last = z
     }
   }
-
   waiting.forEach((place, one) => {
     place.z = at(one)
     place.record.set(Z, place.z)
   })
   return true
 }
-
 function things(canvas: Canvas): Map<string, Thing> {
   const out = new Map<string, Thing>()
   for (const thing of [...canvas.nodes, ...canvas.edges, ...canvas.ink]) out.set(thing.id, thing)
   return out
 }
-
 export function seedPlane(doc: Y.Doc, canvas: Canvas) {
   const plane = planeOf(doc)
   const buried = buriedOf(doc)
   let place = 0
-
   for (const thing of [...canvas.nodes, ...canvas.edges, ...canvas.ink]) {
     put(plane, thing, canvas.at[thing.id] ?? 0, place++)
   }
-
   for (const [id, when] of Object.entries(canvas.gone)) buried.set(id, when)
 }
-
 export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   const plane = planeOf(doc)
   const buried = buriedOf(doc)
@@ -265,42 +220,33 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
     for (const thing of hunk.was) was.set(thing.id, thing)
     for (const thing of hunk.is) is.set(thing.id, thing)
   }
-
   const fresh = new Set<string>()
   for (const [id, thing] of is) {
     if (was.get(id) === thing && plane.has(id)) continue
     if (put(plane, thing, after.at[id] ?? 0)) fresh.add(id)
   }
-
   for (const id of was.keys()) if (!is.has(id)) plane.delete(id)
-
   restack(plane, after.nodes, nodes, fresh)
   restack(plane, after.edges, edges, fresh)
   restack(plane, after.ink, ink, fresh)
-
   if (after.moved !== before.moved) {
     for (const [id, when] of Object.entries(after.moved ?? {})) {
       const record = plane.get(id)
       if (record && record.get(MOVED) !== when) record.set(MOVED, when)
     }
   }
-
   for (const [id, when] of Object.entries(after.gone)) {
     if (!plane.has(id) && buried.get(id) !== when) buried.set(id, when)
   }
-
   if (after.extras !== before.extras) {
     const was = holdsExtras(before.extras) ? extrasText(before.extras) : null
     const is = holdsExtras(after.extras) ? extrasText(after.extras) : null
     if (was !== is) putExtras(doc, after)
   }
-
   for (const id of [...buried.keys()]) if (plane.has(id)) buried.delete(id)
 }
-
 function read(record: Y.Map<unknown>, nodes: ReadonlySet<string>): Thing | null {
   const fields = record.toJSON()
-
   switch (fields[KIND]) {
     case 'ink':
       return strokeOf({ ...fields, points: Array.isArray(fields.points) ? fields.points : [] })
@@ -312,32 +258,25 @@ function read(record: Y.Map<unknown>, nodes: ReadonlySet<string>): Thing | null 
       return null
   }
 }
-
 function placeOf(record: Y.Map<unknown>): number {
   const z = record.get(Z)
   return typeof z === 'number' ? z : Number.MAX_SAFE_INTEGER
 }
-
 interface Placed<T extends Thing> {
   thing: T
   z: number
   id: string
 }
-
 const stacked = <T extends Thing>(a: Placed<T>, b: Placed<T>): number =>
   a.z !== b.z ? a.z - b.z : a.id < b.id ? -1 : 1
-
 const NO_NODES: ReadonlySet<string> = new Set<string>()
-
 function extrasOf(doc: Y.Doc, previous?: Canvas) {
   const text = doc.getMap<string>(EXTRAS).get(HELD)
   const mine = previous?.extras
   return text !== undefined && holdsExtras(mine) && extrasText(mine) === text ? mine : extrasRead(text)
 }
-
 function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>): Canvas | null {
   if (changed.size * 8 > previous.ink.length) return null
-
   const plane = planeOf(doc)
   const others = new Set([...previous.nodes, ...previous.edges].map((one) => one.id))
   const fresh: Placed<InkStroke>[] = []
@@ -350,7 +289,6 @@ function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>):
     if (!thing || !isInk(thing)) return null
     fresh.push({ thing, z: placeOf(record), id })
   }
-
   const ink = previous.ink.filter((one) => !changed.has(one.id))
   const placed = (one: InkStroke): Placed<InkStroke> => {
     const record = plane.get(one.id)
@@ -367,7 +305,6 @@ function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>):
     }
     ink.splice(low, 0, place.thing)
   }
-
   const at: Record<string, number> = {}
   for (const thing of [...previous.nodes, ...previous.edges]) at[thing.id] = previous.at[thing.id] ?? 0
   for (const thing of ink) {
@@ -375,7 +312,6 @@ function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>):
     const when = changed.has(id) ? plane.get(id)?.get(AT) : previous.at[id]
     at[id] = typeof when === 'number' ? when : 0
   }
-
   const kept = (times: Record<string, number> = {}) => {
     const out: Record<string, number> = {}
     for (const [id, when] of Object.entries(times)) if (!changed.has(id)) out[id] = when
@@ -390,10 +326,8 @@ function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>):
     const when = buried.get(id)
     if (typeof when === 'number') gone[id] = when
   }
-
   return canvasOf(doc, previous, { nodes: previous.nodes, edges: previous.edges, ink, at, gone }, moved)
 }
-
 function canvasOf(
   doc: Y.Doc,
   previous: Canvas | undefined,
@@ -407,61 +341,47 @@ function canvasOf(
     ...(holdsExtras(extras) ? { extras } : {}),
   }
 }
-
 export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<string>): Canvas {
   const quick = previous && changed ? inkChanged(doc, previous, changed) : null
   if (quick) return quick
-
   const plane = planeOf(doc)
   const kept = previous && changed ? things(previous) : null
   const held = (id: string) => (changed?.has(id) ? undefined : kept?.get(id))
-
   const nodes: Placed<CanvasNode>[] = []
   const later: { record: Y.Map<unknown>; z: number; id: string }[] = []
   const at: Record<string, number> = {}
   const moved: Record<string, number> = {}
-
   for (const [id, record] of plane) {
     const z = placeOf(record)
     const when = record.get(AT)
     at[id] = typeof when === 'number' ? when : 0
     const shifted = record.get(MOVED)
     if (typeof shifted === 'number') moved[id] = shifted
-
     if (record.get(KIND) !== 'node') {
       later.push({ record, z, id })
       continue
     }
-
     const already = held(id)
     const node = already && !isInk(already) && !isEdge(already) ? already : read(record, NO_NODES)
     if (node && !isInk(node) && !isEdge(node)) nodes.push({ thing: node, z, id })
   }
-
   nodes.sort(stacked)
   const there = new Set(nodes.map((one) => one.id))
-
   const edges: Placed<CanvasEdge>[] = []
   const ink: Placed<InkStroke>[] = []
-
   for (const { record, z, id } of later) {
     const thing = held(id) ?? read(record, there)
     if (!thing) continue
-
     if (isInk(thing)) ink.push({ thing, z, id })
     else if (isEdge(thing) && there.has(thing.fromNode) && there.has(thing.toNode)) {
       edges.push({ thing, z, id })
     }
   }
-
   edges.sort(stacked)
   ink.sort(stacked)
-
   const gone: Record<string, number> = {}
   for (const [id, when] of buriedOf(doc)) if (typeof when === 'number') gone[id] = when
-
   const bare = <T extends Thing>(list: Placed<T>[]) => list.map((one) => one.thing)
   return canvasOf(doc, previous, { nodes: bare(nodes), edges: bare(edges), ink: bare(ink), at, gone }, moved)
 }
-
 export const planeIsEmpty = (doc: Y.Doc): boolean => planeOf(doc).size === 0 && buriedOf(doc).size === 0

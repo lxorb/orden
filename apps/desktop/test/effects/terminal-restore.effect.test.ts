@@ -5,7 +5,6 @@ const files = new Map<string, unknown>()
 let system = 'windows'
 const KERNEL_FOLDER = '/Users/me/work/orden'
 let typing: ((data: string) => void) | null = null
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -21,14 +20,12 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-
 vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: unknown = null
   },
   invoke: () => Promise.resolve(null),
 }))
-
 vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 80
@@ -110,7 +107,6 @@ vi.mock('@xterm/addon-unicode11', () => ({
     activate = () => undefined
   },
 }))
-
 vi.stubGlobal(
   'ResizeObserver',
   class {
@@ -122,26 +118,21 @@ Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },
 })
-
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { flushSync } = await import('svelte')
 const { written } = await import('../../src/lib/parting/src/api')
-
 const ESC = '\x1b'
-
 const HISTORY = {
   cols: 100,
   rows: 20,
   at: Date.UTC(2026, 8, 30, 12, 2),
   text: 'PS C:\\work> npm run build\r\nfailed: 3 errors\r\nPS C:\\work> ',
 }
-
 const { localDate } = await import('../../src/lib/platform/src/region')
 const when = localDate(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
-
 function restored(key: string): InstanceType<typeof Tab> {
   const words = JSON.stringify({ shell: 'pwsh', folder: 'C:\\work', key })
   const doc = new NoteDoc(
@@ -152,40 +143,33 @@ function restored(key: string): InstanceType<typeof Tab> {
   workspace.tabs = [...workspace.tabs, tab]
   return tab
 }
-
 function placeFor(): HTMLElement {
   const place = document.createElement('div')
   document.body.append(place)
   return place
 }
-
 beforeEach(() => {
   system = 'windows'
   done.length = 0
   files.clear()
   shells.setRestoring(true)
 })
-
 afterEach(async () => {
   workspace.tabs = []
   flushSync()
   await written()
   document.body.innerHTML = ''
 })
-
 test('a restored terminal draws its history, at its own size, before its shell starts', async () => {
   system = 'macos'
   files.set('null/k1', HISTORY)
   const tab = restored('k1')
-
   await sessionOf(tab).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
-
   const writes = done.filter((one) => one.startsWith('write '))
   expect(writes).toHaveLength(2)
   expect(writes[0]).toBe(`write ${HISTORY.text}`)
   expect(writes[1]).toBe(`write ${ESC}[0m\r\n${ESC}[2mRestored ${when}${ESC}[22m\r\n`)
-
   expect(done).toEqual([
     'pty_held',
     'terminal_history_read',
@@ -198,17 +182,14 @@ test('a restored terminal draws its history, at its own size, before its shell s
     'pty_spawn 132x40',
   ])
 })
-
 test('on Windows the history goes above the screen before the shell starts', async () => {
   files.set('null/k7', HISTORY)
   await sessionOf(restored('k7')).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
-
   const writes = done.filter((one) => one.startsWith('write '))
   expect(writes).toHaveLength(2)
   expect(writes[0]).toBe(`write ${HISTORY.text}`)
   expect(writes[1]).toContain(`${'\r\n'.repeat(39)}${ESC}[H${ESC}[2mRestored `)
-
   expect(done).toEqual([
     'pty_held',
     'terminal_history_read',
@@ -221,73 +202,59 @@ test('on Windows the history goes above the screen before the shell starts', asy
     'pty_spawn 132x40',
   ])
 })
-
 test('a terminal with nothing kept starts its shell at once', async () => {
   await sessionOf(restored('k2')).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
-
   expect(done.filter((one) => one.startsWith('write '))).toEqual([])
   expect(done).toEqual(['pty_held', 'terminal_history_read', 'open', 'fit', 'resize 132x40', 'pty_spawn 132x40'])
 })
-
 test('with Restore history off nothing is read, and nothing is written', async () => {
   files.set('null/k3', HISTORY)
   shells.setRestoring(false)
   await written()
   done.length = 0
-
   const session = sessionOf(restored('k3'))
   await session.attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
   session.remember()
-
   expect(done).not.toContain('terminal_history_read')
   expect(done).not.toContain('terminal_history_write')
   expect(done.filter((one) => one.startsWith('write '))).toEqual([])
 })
-
 test('a duplicate running beside its original is given a key of its own', async () => {
   files.set('null/k4', HISTORY)
   const first = restored('k4')
   const second = restored('k4')
-
   await sessionOf(first).attach(placeFor(), false)
   await sessionOf(second).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.filter((one) => one.startsWith('pty_spawn'))).toHaveLength(2))
-
   expect(done.filter((one) => one === 'terminal_history_read')).toHaveLength(1)
   const key = (JSON.parse(second.doc) as { key: string }).key
   expect(key).not.toBe('k4')
   expect(key).toBeTruthy()
 })
-
 test('a closed tab takes its file with it and comes back from memory', async () => {
   files.set('null/k5', HISTORY)
   const tab = restored('k5')
   await sessionOf(tab).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
-
   workspace.tabs = workspace.tabs.filter((one) => one !== tab)
   flushSync()
   await written()
   expect(done).toContain('terminal_history_forget')
   expect(files.has('null/k5')).toBe(false)
-
   done.length = 0
   const again = restored('k5')
   await sessionOf(again).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
-
   expect(done).not.toContain('terminal_history_read')
   expect(done.find((one) => one.startsWith('write '))).toContain('the screen as it stands')
 })
-
 test('a Mac asks the kernel where the shell went, and the tab remembers it', async () => {
   system = 'macos'
   const tab = restored('k6')
   await sessionOf(tab).attach(placeFor(), false)
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
-
   typing?.('cd ~/work/orden\r')
   await vi.waitFor(() => expect(done).toContain('pty_folder'), { timeout: 2000 })
   await vi.waitFor(() => expect((JSON.parse(tab.doc) as { folder: string }).folder).toBe(KERNEL_FOLDER))

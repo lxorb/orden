@@ -6,7 +6,6 @@ interface Space {
   name: string
   root: string
 }
-
 const world = vi.hoisted(() => ({
   local: [] as Space[],
   remote: [] as { id: string; name: string; role: string; icon?: string }[],
@@ -14,7 +13,6 @@ const world = vi.hoisted(() => ({
   remembered: 0,
   order: [] as string[],
 }))
-
 vi.mock('../../accounts/src/api', () => ({
   account: {
     user: { id: 'u1' },
@@ -85,9 +83,7 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const { pairSpaces } = await import('../src/api')
-
 function engine() {
   const pairs = new Map<string, { spaceId: string; shared: boolean }>()
   const pairing: SyncPairing = {
@@ -101,7 +97,6 @@ function engine() {
   }
   return { pairing, pairs }
 }
-
 beforeEach(() => {
   world.local = []
   world.remote = []
@@ -109,7 +104,6 @@ beforeEach(() => {
   world.remembered = 0
   world.order = []
 })
-
 describe('pairing the spaces on this device with the account s', () => {
   test('brings a space of the account onto the device and pairs it', async () => {
     world.remote = [{ id: 'r1', name: 'Work', role: 'owner' }]
@@ -120,7 +114,6 @@ describe('pairing the spaces on this device with the account s', () => {
     expect(world.order).toEqual(['/Work'])
     expect(world.remembered).toBe(1)
   })
-
   test('makes a space the account lacks on the server and pairs it', async () => {
     world.local = [{ id: 'n', name: 'Notes', root: '/Notes' }]
     const { pairing, pairs } = engine()
@@ -128,7 +121,6 @@ describe('pairing the spaces on this device with the account s', () => {
     expect(world.made).toEqual(['Notes'])
     expect([...pairs]).toEqual([['/Notes', { spaceId: 'r-Notes', shared: false }]])
   })
-
   test('pairs a space of the same name instead of making a second', async () => {
     world.local = [{ id: 'n', name: 'Notes', root: '/Notes' }]
     world.remote = [{ id: 'r1', name: 'Notes', role: 'owner' }]
@@ -137,14 +129,12 @@ describe('pairing the spaces on this device with the account s', () => {
     expect(world.made).toEqual([])
     expect([...pairs]).toEqual([['/Notes', { spaceId: 'r1', shared: false }]])
   })
-
   test('a shared space is marked shared', async () => {
     world.remote = [{ id: 'r9', name: 'Team', role: 'write' }]
     const { pairing, pairs } = engine()
     await pairSpaces('t', pairing)
     expect(pairs.get('/Team')).toEqual({ spaceId: 'r9', shared: true })
   })
-
   test('asked twice at once, pairs once', async () => {
     world.local = [{ id: 'n', name: 'Notes', root: '/Notes' }]
     const { pairing } = engine()
@@ -153,7 +143,6 @@ describe('pairing the spaces on this device with the account s', () => {
     expect(world.remembered).toBe(1)
   })
 })
-
 describe('two engines pairing at once', () => {
   test('pair one after the other, so a space of the account comes down once', async () => {
     world.remote = [{ id: 'r1', name: 'Work', role: 'owner' }]

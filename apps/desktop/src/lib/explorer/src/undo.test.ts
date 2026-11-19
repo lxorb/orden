@@ -25,19 +25,15 @@ vi.mock('./commands', () => ({
   PROGRESS: 'explorer://progress',
   cancelJob: () => Promise.resolve(),
 }))
-
 const recorded: FileAction[] = []
 vi.mock('../../workspace/src/api', () => ({
   workspace: { tabs: [], undone: { record: (one: FileAction) => recorded.push(one) } },
 }))
-
 const { redoOutside, undoOutside } = await import('./undo')
-
 beforeEach(() => {
   asked.length = 0
   recorded.length = 0
 })
-
 describe("a file explorer's undo", () => {
   test('puts a move back and brings back what it replaced, newest first', async () => {
     await undoOutside({
@@ -49,7 +45,6 @@ describe("a file explorer's undo", () => {
     })
     expect(asked).toEqual(['move /b/a.txt>/a/a.txt', 'untrash /b/a.txt'])
   })
-
   test('takes a copy back into the trash rather than deleting it', async () => {
     await undoOutside({
       kind: 'outside',
@@ -57,7 +52,6 @@ describe("a file explorer's undo", () => {
     })
     expect(asked).toEqual(['trash /b/x'])
   })
-
   test('does it again under the names it had, and records that as a change of its own', async () => {
     const made = {
       kind: 'outside' as const,
@@ -83,7 +77,6 @@ describe("a file explorer's undo", () => {
       ],
     })
   })
-
   test('takes back names that swapped places through names of their own first', async () => {
     await undoOutside({
       kind: 'outside',

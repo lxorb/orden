@@ -1,17 +1,12 @@
 import sys
-
 from playwright.sync_api import Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong = DRIVE.say, DRIVE.wrong
 ORIGIN = DRIVE.origin
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 THESIS = "/spaces/Team/thesis.chat"
-
 START = """
 async () => {
   const { seeded } = await import('/src/lib/chats-client/src/view/seed.ts')
@@ -21,28 +16,22 @@ async () => {
   window.__chats = made
 }
 """
-
 OPEN = """
 async (path) => {
   const { openChat } = await import('/src/lib/chats-client/src/view/open.ts')
   openChat(path)
 }
 """
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     return DRIVE.waited(page, expression, what, patience)
-
 def shot(page: Page, name: str) -> None:
     DRIVE.settled(page)
     DRIVE.shot(page, name)
-
 def rows(page: Page) -> int:
     return page.evaluate("() => document.querySelectorAll('.chat-tab .message').length")  # type: ignore[no-any-return]
-
 def composer_type(page: Page, words: str) -> None:
     page.click(".chat-tab .composer .cm-content")
     page.keyboard.type(words, delay=10)
-
 def desktop(page: Page, scheme: str) -> None:
     DRIVE.open(page)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
@@ -55,7 +44,6 @@ def desktop(page: Page, scheme: str) -> None:
     wait_for(page, "document.querySelector('.chat-tab .new')", "the New line")
     wait_for(page, "document.querySelector('.chats .entry')", "the Chats panel's rows")
     shot(page, f"{scheme}-01-chat")
-
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = 0 }")
     DRIVE.settled(page)
     page.wait_for_timeout(300)
@@ -68,7 +56,6 @@ def desktop(page: Page, scheme: str) -> None:
     ]:
         if not page.query_selector(selector):
             wrong(f"no {what} in the chat")
-
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = box.scrollHeight }")
     composer_type(page, "Thanks @Lu")
     wait_for(page, "document.querySelector('.mentions')", "the mention menu")
@@ -92,7 +79,6 @@ def desktop(page: Page, scheme: str) -> None:
         if not bold:
             wrong("the markdown was not drawn")
     wait_for(page, "!document.querySelector('.chat-tab .message.pending')", "the post to be placed")
-
     last = page.query_selector_all(".chat-tab .message")[-1]
     last.hover()
     wait_for(page, "document.querySelector('.chat-tab .bar[role=toolbar]')", "the hover bar")
@@ -115,7 +101,6 @@ def desktop(page: Page, scheme: str) -> None:
         "![...document.querySelectorAll('.chat-tab .reactions .emoji')].some((one) => one.textContent === '🚀')",
         "the rocket taken back",
     )
-
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = 0 }")
     DRIVE.settled(page)
     if wait_for(page, "document.querySelector('.chat-tab .message .replies')", "a message with replies"):
@@ -131,7 +116,6 @@ def desktop(page: Page, scheme: str) -> None:
         shot(page, f"{scheme}-06-replies")
         page.keyboard.press("Escape")
         wait_for(page, "!document.querySelector('aside.replies')", "the replies to close")
-
     if wait_for(page, "document.querySelector('.chat-tab .grid .cell')", "a gallery"):
         page.query_selector(".chat-tab .grid .cell").scroll_into_view_if_needed()
         page.click(".chat-tab .grid .cell")
@@ -140,7 +124,6 @@ def desktop(page: Page, scheme: str) -> None:
         shot(page, f"{scheme}-07-lightbox")
         page.keyboard.press("Escape")
         wait_for(page, "!document.querySelector('.lightbox')", "the lightbox to close")
-
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = box.scrollHeight }")
     DRIVE.settled(page)
     page.evaluate(
@@ -156,7 +139,6 @@ def desktop(page: Page, scheme: str) -> None:
         )
         if bottom > 8:
             wrong(f"an arrival at the bottom left the reader {bottom}px above it")
-
 BIG = """
 async () => {
   const { bigChat } = await import('/src/lib/chats-client/src/view/seed.ts')
@@ -173,7 +155,6 @@ async () => {
   return performance.now() - started
 }
 """
-
 SCROLL = """
 async () => {
   const box = document.querySelector('.chat-tab .scroller')
@@ -199,7 +180,6 @@ async () => {
   }
 }
 """
-
 def big(page: Page) -> None:
     DRIVE.open(page)
     took = page.evaluate(BIG)
@@ -210,7 +190,6 @@ def big(page: Page) -> None:
         wrong(f"{measured['rows']} rows in the page; the window should hold about sixty")
     if measured["median"] > 20:
         wrong(f"a median frame of {measured['median']:.1f} ms while scrolling")
-
 def phone(page: Page, scheme: str) -> None:
     DRIVE.open(page)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
@@ -224,7 +203,6 @@ def phone(page: Page, scheme: str) -> None:
         page.click(".chat-tab .message .replies")
         wait_for(page, "document.querySelectorAll('aside.replies .message').length >= 3", "the replies")
         shot(page, f"{scheme}-09-phone-replies")
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -252,5 +230,4 @@ def main() -> int:
         big(page)
         page.context.close()
     return DRIVE.verdict("all good")
-
 raise SystemExit(main())

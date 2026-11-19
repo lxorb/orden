@@ -1,5 +1,4 @@
 #![allow(unsafe_code)]
-
 use orden_base::Held as _;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
@@ -27,29 +26,21 @@ use windows::Win32::System::Threading::{
 use super::{Place, Raw, MOST_FRAMES, MOST_THREADS};
 
 static MAIN: AtomicU32 = AtomicU32::new(0);
-
 static HELD: AtomicU32 = AtomicU32::new(0);
-
 static ASKING: Mutex<()> = Mutex::new(());
-
 pub fn start() {
     mark_main();
 }
-
 pub fn mark_main() {
     MAIN.store(unsafe { GetCurrentThreadId() }, Ordering::Relaxed);
 }
-
 pub fn is_main() -> bool {
     MAIN.load(Ordering::Relaxed) == unsafe { GetCurrentThreadId() }
 }
-
 pub struct Walking;
-
 pub fn walking() -> Walking {
     Walking
 }
-
 pub fn trace(ips: &mut [usize]) -> usize {
     let mut held = [std::ptr::null_mut(); MOST_FRAMES];
     let room = ips.len().min(held.len());
@@ -59,7 +50,6 @@ pub fn trace(ips: &mut [usize]) -> usize {
     }
     len
 }
-
 pub fn every_thread(within: Duration) -> Vec<Raw> {
     let _one_at_a_time = ASKING.held();
     let (told, heard) = mpsc::channel();
@@ -85,7 +75,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     }
     Vec::new()
 }
-
 fn walk_all() -> Vec<Raw> {
     let me = unsafe { GetCurrentThreadId() };
     let main = MAIN.load(Ordering::Relaxed);
@@ -96,7 +85,6 @@ fn walk_all() -> Vec<Raw> {
         .filter_map(|tid| walk_one(tid, tid == main))
         .collect()
 }
-
 fn thread_ids() -> Vec<u32> {
     let pid = unsafe { GetCurrentProcessId() };
     let Ok(snapshot) = (unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0) }) else {
@@ -119,7 +107,6 @@ fn thread_ids() -> Vec<u32> {
     }
     ids
 }
-
 fn walk_one(tid: u32, main: bool) -> Option<Raw> {
     let thread = unsafe {
         OpenThread(
@@ -153,7 +140,6 @@ fn walk_one(tid: u32, main: bool) -> Option<Raw> {
         ips: ips[..len].to_vec(),
     })
 }
-
 fn described(thread: HANDLE) -> String {
     let Ok(said) = (unsafe { GetThreadDescription(thread) }) else {
         return String::new();
@@ -164,7 +150,6 @@ fn described(thread: HANDLE) -> String {
     }
     name
 }
-
 pub fn blank() -> CONTEXT {
     let mut context: CONTEXT = unsafe { std::mem::zeroed() };
     #[cfg(target_arch = "x86_64")]
@@ -177,7 +162,6 @@ pub fn blank() -> CONTEXT {
     }
     context
 }
-
 #[cfg(target_arch = "x86_64")]
 fn registers(context: &CONTEXT) -> (usize, usize) {
     (
@@ -185,7 +169,6 @@ fn registers(context: &CONTEXT) -> (usize, usize) {
         usize::try_from(context.Rsp).unwrap_or(0),
     )
 }
-
 #[cfg(target_arch = "aarch64")]
 fn registers(context: &CONTEXT) -> (usize, usize) {
     (
@@ -193,7 +176,6 @@ fn registers(context: &CONTEXT) -> (usize, usize) {
         usize::try_from(context.Sp).unwrap_or(0),
     )
 }
-
 #[cfg(target_arch = "x86_64")]
 fn step_leaf(context: &mut CONTEXT, bounds: Option<(usize, usize)>) -> bool {
     let sp = usize::try_from(context.Rsp).unwrap_or(0);
@@ -204,13 +186,11 @@ fn step_leaf(context: &mut CONTEXT, bounds: Option<(usize, usize)>) -> bool {
     context.Rsp += 8;
     true
 }
-
 #[cfg(target_arch = "aarch64")]
 fn step_leaf(context: &mut CONTEXT, _bounds: Option<(usize, usize)>) -> bool {
     context.Pc = unsafe { context.Anonymous.Anonymous.Lr };
     true
 }
-
 pub fn unwind(context: &mut CONTEXT, ips: &mut [usize], bounds: Option<(usize, usize)>) -> usize {
     let mut len = 0;
     while len < ips.len() {
@@ -249,7 +229,6 @@ pub fn unwind(context: &mut CONTEXT, ips: &mut [usize], bounds: Option<(usize, u
     }
     len
 }
-
 pub fn place_of(ip: usize, into: &mut Place) {
     let mut module = HMODULE::default();
     if unsafe {

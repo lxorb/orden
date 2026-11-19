@@ -2,12 +2,9 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import '../test/storage'
 
 const { Protection } = await import('./protection.svelte')
-
 const ROOT = '/space'
 const deep = `${'Projects '.repeat(20).trim()}/${'Quarterly notes '.repeat(12).trim()}`
-
 beforeEach(() => localStorage.clear())
-
 describe('a locked note moved to a path too long to keep', () => {
   test('stays locked after the app starts again, under the folder above it that fits', () => {
     const protection = new Protection()
@@ -18,7 +15,6 @@ describe('a locked note moved to a path too long to keep', () => {
     expect(again.locked(`${ROOT}/${deep}/Diary.md`)).toBe(true)
     expect(again.agentsMay(`${ROOT}/${deep}/Diary.md`)).toBe(false)
   })
-
   test('stays locked when the account answers with the map it was sent', () => {
     const protection = new Protection()
     protection.adopt(ROOT, { 'Diary.md': 'password' }, 'u1')
@@ -28,7 +24,6 @@ describe('a locked note moved to a path too long to keep', () => {
     expect(protection.locked(`${ROOT}/${deep}/Diary.md`)).toBe(true)
   })
 })
-
 describe('a locked note or folder copied to a path too long to keep', () => {
   test('lands locked, by its own lock or the folder above it, and stays so after a start', () => {
     const protection = new Protection()
@@ -43,7 +38,6 @@ describe('a locked note or folder copied to a path too long to keep', () => {
       expect(one.agentsMay(`${ROOT}/${deep}/Private copy/Plan.md`)).toBe(false)
     }
   })
-
   test('locked by the reader there, stays locked', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/${deep}/Diary.md`, 'password')

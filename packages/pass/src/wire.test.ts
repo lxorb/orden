@@ -22,7 +22,6 @@ const KEYRING = {
   recovery: null,
   at: 1,
 }
-
 const VAULT = {
   id: 'vault-one',
   rev: 1,
@@ -37,7 +36,6 @@ const VAULT = {
   handovers: [],
   accepted: null,
 }
-
 const ITEM = {
   vault: 'vault-one',
   id: 'item-one',
@@ -48,7 +46,6 @@ const ITEM = {
   at: 5,
   deleted: false,
 }
-
 describe('base64 as the account keeps it', () => {
   test('is measured in bytes and must be written the one way', () => {
     expect(base64Length('')).toBe(0)
@@ -63,7 +60,6 @@ describe('base64 as the account keeps it', () => {
     expect(isBase64('AAAAAAAA', 1, 3)).toBe(false)
   })
 })
-
 describe('the shapes the account answers with', () => {
   test('read back what they are', () => {
     expect(keyringRowIn({ keyring: KEYRING, rev: 1 })).toEqual({ keyring: KEYRING, rev: 1 })
@@ -115,7 +111,6 @@ describe('the shapes the account answers with', () => {
     }
     expect(changesIn(changes)).toEqual(changes)
   })
-
   test('and refuse anything else', () => {
     expect(isPassId('short')).toBe(false)
     expect(isPassId('a/b/c/d/e')).toBe(false)
@@ -152,7 +147,6 @@ describe('the shapes the account answers with', () => {
     }
   })
 })
-
 function changesInvite() {
   return {
     vault: 'vault-one',

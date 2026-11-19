@@ -50,7 +50,6 @@ import { answeredCase } from '../src/space-paths'
 import { afterQuiet, LATE } from '../src/timing'
 
 const SRC = join(import.meta.dirname, '../src')
-
 describe('the module stands on its own', () => {
   test('nothing under src reaches past it by path but the crate, and the backends come through ports', () => {
     const reaching = readdirSync(SRC)
@@ -61,16 +60,13 @@ describe('the module stands on its own', () => {
       })
     expect(reaching).toEqual(['tauri.ts: ../../crate/src/api', 'tauri.ts: ../../crate/src/api'])
   })
-
   test('loads outside the app as the web build: no native host, no platform name', () => {
     expect(isNative).toBe(false)
     expect(platform()).toBe('')
   })
 })
-
 describe('paths on disk', () => {
   afterEach(() => answeredCase('/s', null))
-
   test('two spellings are one path only where the file system folds case', () => {
     expect(samePath('/s/Notes/A.md', '/s/Notes/A.md')).toBe(true)
     expect(samePath('/s/Notes/A.md', '/s/notes/a.md')).toBe(false)
@@ -78,7 +74,6 @@ describe('paths on disk', () => {
     expect(samePath('/s/Notes/A.md', '/s/notes/a.md')).toBe(true)
     expect(samePath('/s/Notes/A.md', '/s/notes/b.md')).toBe(false)
   })
-
   test('a path inside a folder is told by its rest, outside by nothing', () => {
     expect(within('/s/Notes', '/s/Notes/deep/a.md')).toBe('deep/a.md')
     expect(within('/s/Notes', '/s/Notes')).toBe('')
@@ -87,12 +82,10 @@ describe('paths on disk', () => {
     expect(withinSpace('/s', '/s/a/../b.md')).toBeNull()
     expect(withinSpace('/s', '/s/a/b.md')).toBe('a/b.md')
   })
-
   test('names and folders come off either separator', () => {
     expect(nameOf('C:\\Notes\\a.md')).toBe('a.md')
     expect(folderOf('/s/Notes/a.md')).toBe('/s/Notes')
   })
-
   test('a relative path typed by a caller stays inside the space', () => {
     expect(insideOnly('notes/./a.md')).toBe('notes/a.md')
     expect(insideOnly('../a.md')).toBeNull()
@@ -102,13 +95,11 @@ describe('paths on disk', () => {
     expect(insideOnly('a\u0000b')).toBeNull()
   })
 })
-
 describe('paths in the web store', () => {
   test('normalise folds separators, dots and doubled slashes', () => {
     expect(normalise('a//b/./c/../d\\e')).toBe('/a/b/d/e')
     expect(normalise('')).toBe('/')
   })
-
   test('under, hiddenUnder and spaceOf read the normalised path', () => {
     expect(under('/s', '/s/a.md')).toBe(true)
     expect(under('/s', '/sa/a.md')).toBe(false)
@@ -117,13 +108,11 @@ describe('paths in the web store', () => {
     expect(hiddenUnder('/.s', '/.s/x')).toBe(false)
     expect(spaceOf('/s/a/b')).toBe('/s')
   })
-
   test('a safe name drops what a file system refuses', () => {
     expect(safeName(' a:b?c ')).toBe('a b c')
     expect(safeName('...')).toBeNull()
     expect(safeName('x'.repeat(80))?.length).toBe(64)
   })
-
   test('an asset route goes there and back, and a foreign address is nobody’s', () => {
     expect(assetStorePath(assetRoute('/s/ü b.png'))).toBe('/s/ü b.png')
     expect(assetStorePath('https://example.com/asset/s/a.png')).toBe('/s/a.png')
@@ -135,7 +124,6 @@ describe('paths in the web store', () => {
     expect(mimeOfPath('a.xyz')).toBeNull()
   })
 })
-
 describe('note names', () => {
   test('a title becomes a file name without what a file system refuses', () => {
     expect(nameFromContent('# Hello: world?\nbody')).toBe('Hello world')
@@ -143,7 +131,6 @@ describe('note names', () => {
     expect(nameFromContent('# con')).toBe('_con')
     expect(nameFromContent('')).toBeNull()
   })
-
   test('endings, shown names and copies', () => {
     expect(endingOf('a.tar.gz')).toBe('.gz')
     expect(endingOf('a.pages')).toBe('.pages')
@@ -155,7 +142,6 @@ describe('note names', () => {
     expect(isReserved('LPT1.txt')).toBe(true)
     expect(isReserved('report.md')).toBe(false)
   })
-
   test('a typed name is refused for one reason at a time', () => {
     const naming = { extension: '.md', taken: ['Taken.md', 'Deck.pages.pdf'] }
     expect(nameFault({ ...naming, typed: '  ' })).toBe('empty')
@@ -172,7 +158,6 @@ describe('note names', () => {
     expect(nameToWrite('a', '')).toBe('a')
   })
 })
-
 describe('bytes', () => {
   test('base64 goes there and back, in chunks past 32k', async () => {
     const bytes = new Uint8Array(70_000).map((_, at) => at % 251)
@@ -185,16 +170,13 @@ describe('bytes', () => {
     expect(parseDataUri('nope')).toBeNull()
     expect(await sha256('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
   })
-
   test('a log line keeps no token', () => {
     expect(tokensOut('Bearer abcdefghijkl and ghp_abcdefghijklmnop')).toBe('Bearer <token> and <token>')
   })
 })
-
 describe('waiting', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
-
   test('backoff grows and is capped; only a server that may recover is retried', () => {
     expect(pollDelay(0, false)).toBe(20_000)
     expect(pollDelay(10, false)).toBe(120_000)
@@ -204,7 +186,6 @@ describe('waiting', () => {
     expect([408, 429, 500, 503].every(passing)).toBe(true)
     expect([400, 401, 404].some(passing)).toBe(false)
   })
-
   test('afterQuiet runs once the calls stop, and at most after its cap', () => {
     const ran = vi.fn()
     const later = afterQuiet(ran, 100, 250)
@@ -220,7 +201,6 @@ describe('waiting', () => {
     vi.advanceTimersByTime(1_000)
     expect(ran).toHaveBeenCalledTimes(2)
   })
-
   test('waited settles after its time', async () => {
     const done = vi.fn()
     void waited(30).then(done)
@@ -230,7 +210,6 @@ describe('waiting', () => {
     expect(done).toHaveBeenCalled()
   })
 })
-
 describe('what this machine keeps', () => {
   const memory = new Map<string, string>()
   const fake = {
@@ -238,13 +217,11 @@ describe('what this machine keeps', () => {
     setItem: (key: string, value: string) => void memory.set(key, value),
     removeItem: (key: string) => void memory.delete(key),
   }
-
   beforeEach(() => {
     memory.clear()
     vi.stubGlobal('localStorage', fake)
   })
   afterEach(() => vi.unstubAllGlobals())
-
   test('json goes in and comes out, and what is not json is null', () => {
     expect(keepJson('k', { a: 1 })).toBe(true)
     expect(stored('k')).toEqual({ a: 1 })
@@ -252,7 +229,6 @@ describe('what this machine keeps', () => {
     expect(stored('k')).toBeNull()
     expect(storedText('missing')).toBeNull()
   })
-
   test('a shared value is read again only when its text changed', () => {
     const read = vi.fn((value: unknown) => (typeof value === 'number' ? value : 0))
     const shared = new Shared('n', read)
@@ -266,20 +242,17 @@ describe('what this machine keeps', () => {
     expect(shared.get()).toBe(9)
     expect(read).toHaveBeenCalledTimes(2)
   })
-
   test('without storage nothing is kept and nothing throws', () => {
     vi.stubGlobal('localStorage', undefined)
     expect(keepJson('k', 1)).toBe(false)
     expect(stored('k')).toBeNull()
   })
-
   test('records fold with and without a key, and fill in what is missing', () => {
     expect(withOrWithout({ a: 1 }, 'b', 2)).toEqual({ a: 1, b: 2 })
     expect(withOrWithout({ a: 1, b: 2 }, 'b', null)).toEqual({ a: 1 })
     expect(filledIn({ a: 1 }, { a: 5, b: 2 })).toEqual({ a: 1, b: 2 })
     expect(filledIn({ a: 1 }, { a: 5 })).toBeNull()
   })
-
   test('meeting a server value: ours is folded in and told, theirs is taken as is', () => {
     const folding = { fold: (theirs: number, mine: number) => theirs + mine, same: Object.is }
     expect(meet(undefined, 'u', 1, 2, folding)).toEqual({ value: 3, tell: true })
@@ -288,7 +261,6 @@ describe('what this machine keeps', () => {
     expect(meet({ account: 'other' }, 'u', 1, 2, folding)).toEqual({ value: 3, tell: true })
   })
 })
-
 describe('a request in time', () => {
   test('gives up in time with the words the sheets show, and an abort from the caller stays its own', async () => {
     const never: typeof fetch = (_input, init) =>
@@ -311,7 +283,6 @@ describe('a request in time', () => {
     }
   })
 })
-
 describe('a dialog answered ahead', () => {
   test('is handed to the next dialog only, once', async () => {
     expect(dialogAnswer()).toBeNull()
@@ -321,7 +292,6 @@ describe('a dialog answered ahead', () => {
     expect(dialogAnswer()).toBeNull()
   })
 })
-
 describe('a folder that covers a path', () => {
   test('is the nearest kept folder above it, or the path itself', () => {
     const keys = new Set(['Old', 'Old/2019'])

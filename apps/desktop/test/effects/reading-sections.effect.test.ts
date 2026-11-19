@@ -4,7 +4,6 @@ import { world } from './reading-embed-world.svelte'
 import { idle } from './settle'
 
 const ROW = 24
-
 vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
 vi.mock('../../src/lib/reading/src/render', () => ({
   readingHtml: async (source: { text: string }) => {
@@ -34,7 +33,6 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     reachedOf: () => null,
   },
 }))
-
 const tab = {
   id: 't1',
   path: '/s/Trip.md',
@@ -50,7 +48,6 @@ const tab = {
     flush: () => undefined,
   },
 }
-
 vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     rootHolding: () => null,
@@ -60,13 +57,9 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
     toggleReading: () => undefined,
   },
 }))
-
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
 const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
@@ -77,11 +70,8 @@ afterEach(() => {
   tab.anchor = undefined
   top = 0
 })
-
 let top = 0
-
 const rowOf = (element: Element) => (element.parentElement ? [...element.parentElement.children].indexOf(element) : 0)
-
 Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
   value(this: Element) {
@@ -92,7 +82,6 @@ Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
 Element.prototype.scrollIntoView = function (this: Element) {
   top = rowOf(this) * ROW
 }
-
 const scrollTop = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop')
 Object.defineProperty(Element.prototype, 'scrollTop', {
   configurable: true,
@@ -108,7 +97,6 @@ Object.defineProperty(Element.prototype, 'scrollHeight', {
   configurable: true,
   get: () => 100000,
 })
-
 function laidOut(box: HTMLElement) {
   const page = box.querySelector('article')
   if (!page) throw new Error('no page')
@@ -123,7 +111,6 @@ function laidOut(box: HTMLElement) {
     },
   }
 }
-
 async function opened(doc: string) {
   world.doc = doc
   const target = document.createElement('div')
@@ -137,68 +124,51 @@ async function opened(doc: string) {
   if (!box) throw new Error('no scroller')
   return laidOut(box)
 }
-
 async function anotherNoteSaved() {
   world.version++
   flushSync()
   await idle(400)
   flushSync()
 }
-
 const lines = (count: number) =>
   Array.from({ length: count }, (_, at) => `Day ${String(at)} of the trip, see [[Plan]].`).join('\n\n')
-
 test('a reader deep in the last section stays there when another note is saved', async () => {
   const layout = await opened(`# Trip\n\nShort start.\n\n# Diary\n\n${lines(300)}`)
   layout.scrollTo(4800)
   await idle(50)
-
   await anotherNoteSaved()
-
   expect(Math.abs(layout.top - 4800)).toBeLessThan(ROW)
 })
-
 test('a reader deep in the words before the first heading stays there when another note is saved', async () => {
   const layout = await opened(`${lines(300)}\n\n# Later\n\nEnd.`)
   layout.scrollTo(4800)
   await idle(50)
-
   await anotherNoteSaved()
-
   expect(Math.abs(layout.top - 4800)).toBeLessThan(ROW)
 })
-
 test('a reader between two headings stays there when another note is saved', async () => {
   const layout = await opened(`# Trip\n\n${lines(300)}\n\n# Home\n\nEnd.`)
   layout.scrollTo(4800)
   await idle(50)
-
   await anotherNoteSaved()
-
   expect(Math.abs(layout.top - 4800)).toBeLessThan(ROW)
 })
-
 test('leaving the editor deep in the last section opens the reading view there, not at its heading', async () => {
   const doc = `# Trip\n\nShort start.\n\n# Diary\n\n${lines(300)}`
   tab.anchor = doc.indexOf('Day 200 ')
   const layout = await opened(doc)
-
   expect(layout.top).toBeGreaterThan(2000)
 })
-
 test('leaving the editor deep in the words before the first heading opens the reading view there, not at the top', async () => {
   const doc = `${lines(300)}\n\n# Later\n\nEnd.`
   tab.anchor = doc.indexOf('Day 200 ')
   const layout = await opened(doc)
-
   expect(layout.top).toBeGreaterThan(2000)
 })
-
 test('leaving the reading view deep in the last section hands the editor that place, not its heading', async () => {
   const doc = `# Trip\n\nShort start.\n\n# Diary\n\n${lines(300)}`
   const layout = await opened(doc)
   layout.scrollTo(4800)
   await idle(50)
-
   expect(tab.anchor ?? 0).toBeGreaterThan(doc.indexOf('Day 50 '))
 })

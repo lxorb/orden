@@ -1,15 +1,12 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 TABS = """() => [...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => {
   const r = one.getBoundingClientRect()
   return { id: one.dataset.tab, chosen: !!one.closest('.tab.active'), x: r.x + r.width / 2, y: r.y + r.height / 2 }
 })"""
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800})
     DRIVE.open(page)
@@ -18,7 +15,6 @@ def drive(browser: Browser) -> None:
     for name in names:
         DRIVE.open_note(page, name)
     page.wait_for_timeout(800)
-
     count = len(page.evaluate(TABS))
     for round_ in range(count - 1):
         page.mouse.move(640, 500)
@@ -39,5 +35,4 @@ def drive(browser: Browser) -> None:
         if not any(one["id"] == other["id"] and one["chosen"] for one in after):
             wrong(f"round {round_}: a click on a tab drawn as its mark did not choose it")
     say(f"{count} tabs, each chosen by a click on its mark, none closed")
-
 raise SystemExit(DRIVE.run(drive, "a click on a tab drawn as its mark chooses it"))

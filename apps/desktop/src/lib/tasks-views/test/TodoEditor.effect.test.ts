@@ -4,7 +4,6 @@ import { reactive } from '../../../../test/effects/runes.svelte'
 import type { Todo } from '../../tasks-model/src/api'
 
 const TodoEditor = (await import('../src/TodoEditor.svelte')).default
-
 const todo = (over: Partial<Todo>): Todo => ({
   id: 't1',
   title: 'Call Ann',
@@ -21,15 +20,12 @@ const todo = (over: Partial<Todo>): Todo => ({
   created: 1,
   ...over,
 })
-
 let close: (() => void) | undefined
-
 afterEach(() => {
   close?.()
   close = undefined
   document.body.replaceChildren()
 })
-
 function editor(first: Todo) {
   const target = document.createElement('div')
   document.body.append(target)
@@ -57,7 +53,6 @@ function editor(first: Todo) {
   }
   return { props, onchange, field }
 }
-
 describe('the todo editor, while the todo changes elsewhere', () => {
   test('shows the new title and description and does not write the old ones back on blur', () => {
     const { props, onchange, field } = editor(todo({}))
@@ -72,7 +67,6 @@ describe('the todo editor, while the todo changes elsewhere', () => {
     flushSync()
     expect(onchange).not.toHaveBeenCalled()
   })
-
   test('keeps what is being typed when the todo changes elsewhere', () => {
     const { props, onchange, field } = editor(todo({}))
     const title = field('Title')
@@ -86,7 +80,6 @@ describe('the todo editor, while the todo changes elsewhere', () => {
     flushSync()
     expect(onchange).toHaveBeenCalledWith({ title: 'Call Ann today' })
   })
-
   test('follows a change elsewhere after a blur that only trimmed what was typed', () => {
     const { props, onchange, field } = editor(todo({}))
     const title = field('Title')

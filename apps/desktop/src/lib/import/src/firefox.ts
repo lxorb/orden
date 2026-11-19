@@ -8,7 +8,6 @@ const ROOTS: [string, keyof typeof WORDS][] = [
   ['mobile______', 'mobile'],
 ]
 const TAGS = 'tags________'
-
 export function firefoxSidebar(session: unknown, bookmarks: unknown, name: string): Sidebar {
   const made = new Made()
   if (isObject(session)) {
@@ -16,10 +15,8 @@ export function firefoxSidebar(session: unknown, bookmarks: unknown, name: strin
     readSaved(list(session.savedGroups), open, made)
   }
   if (isObject(bookmarks)) readBookmarks(bookmarks, made)
-
   return made.sidebar(name)
 }
-
 function readWindows(session: Said, made: Made): Set<string> {
   const open = new Set<string>()
   const windows = list(session.windows).filter((one) => !one.isPrivate && !one.isPopup)
@@ -31,14 +28,12 @@ function readWindows(session: Said, made: Made): Set<string> {
       }),
     )
     for (const id of groups.keys()) open.add(id)
-
     for (const tab of list(window.tabs)) {
       const page = pageOf(tab)
       if (!page) continue
       const group = text(tab.groupId)
       const named = group ? groups.get(group) : undefined
       if (group && named !== undefined) made.folder(`group:${group}`, named, null)
-
       const pinned = tab.pinned === true
       made.tab({
         ...page,
@@ -51,14 +46,12 @@ function readWindows(session: Said, made: Made): Set<string> {
   }
   return open
 }
-
 function readSaved(saved: Said[], open: Set<string>, made: Made) {
   for (const group of saved) {
     const id = text(group.id)
     if (!id || open.has(id)) continue
     made.folder('saved', WORDS.savedGroups, null)
     made.folder(`saved:${id}`, text(group.name) ?? WORDS.group, 'saved')
-
     for (const one of list(group.tabs)) {
       const tab = isObject(one.state) ? one.state : one
       const page = pageOf(tab)
@@ -72,7 +65,6 @@ function readSaved(saved: Said[], open: Set<string>, made: Made) {
     }
   }
 }
-
 function pageOf(tab: Said): { title: string; url: string; icon: string | null } | null {
   const entries = list(tab.entries)
   const index = Math.min(Math.max(Number(tab.index) || entries.length, 1), entries.length)
@@ -81,12 +73,10 @@ function pageOf(tab: Said): { title: string; url: string; icon: string | null } 
   if (!url) return null
   return { title: text(entry?.title) ?? url, url, icon: siteMark(tab.image) }
 }
-
 function containerOf(value: unknown): number {
   const said = Number(value)
   return Number.isInteger(said) && said > 0 ? said : 0
 }
-
 const ROOT_NAMES: Record<string, string> = {
   toolbarFolder: 'toolbar_____',
   bookmarksMenuFolder: 'menu________',
@@ -94,14 +84,11 @@ const ROOT_NAMES: Record<string, string> = {
   mobileFolder: 'mobile______',
   tagsFolder: TAGS,
 }
-
 function rootOf(node: Said): string | null {
   const named = typeof node.root === 'string' ? ROOT_NAMES[node.root] : undefined
   return named ?? text(node.guid)
 }
-
 export type Spacing = (guid: string | null, around: string) => string
-
 export function readBookmarks(root: Said, made: Made, spacing: Spacing = (_, around) => around) {
   const roots = list(root.children).filter((one) => rootOf(one) !== TAGS)
   const known = ROOTS.flatMap(([guid, word]) => {
@@ -111,16 +98,13 @@ export function readBookmarks(root: Said, made: Made, spacing: Spacing = (_, aro
   const others = roots
     .filter((one) => !ROOTS.some(([guid]) => guid === rootOf(one)))
     .map((node) => ({ node, name: text(node.title) ?? WORDS.other }))
-
   const top: Step = { key: 'bookmarks', name: WORDS.bookmarks }
   for (const { node, name } of [...known, ...others]) {
     const steps = [top, { key: `bookmark:${rootOf(node) ?? name}`, name }]
     walk(node, steps, made, spacing, spacing(text(node.guid), made.space), 0)
   }
 }
-
 const DEEPEST = 64
-
 function walk(folder: Said, steps: readonly Step[], made: Made, spacing: Spacing, space: string, depth: number) {
   if (depth > DEEPEST) return
   list(folder.children).forEach((node, at) => {
@@ -146,17 +130,14 @@ function walk(folder: Said, steps: readonly Step[], made: Made, spacing: Spacing
     }
   })
 }
-
 const BOOKMARK = 1
 const FOLDER = 2
-
 function kindOf(node: Said): number | null {
   if (typeof node.typeCode === 'number') return node.typeCode
   if (node.type === 'text/x-moz-place') return BOOKMARK
   if (node.type === 'text/x-moz-place-container') return FOLDER
   return null
 }
-
 function addedOf(value: unknown): { added?: Date } {
   const micro = Number(value)
   if (!Number.isFinite(micro) || micro <= 0) return {}

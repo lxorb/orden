@@ -89,31 +89,25 @@ import { commandRows, commandRowsLoaded, runCommand, settingsWindow } from '@ord
 
 async function openCustomCss() {
   if (!isNative) return
-
   const path = await invoke<string>('custom_css_path')
   await workspace.open(path)
 }
-
 async function openSnippets() {
   if (!isNative) return
-
   const path = await invoke<string>('snippets_path')
   await workspace.open(path)
 }
-
 export function paletteCommands(view?: EditorView): Command[] {
   const folded = new Set(commandRows('export', view).map((one) => one.id))
   folded.delete('page-setup')
   return appCommands(view).filter((one) => !folded.has(one.id))
 }
-
 const entry = (id: string, view?: EditorView) => () =>
   void runEntry(id, {
     view,
     palette: () => undefined,
     fullscreen: () => void fullscreen.toggle(workspace.panes),
   })
-
 const keyed = (id: string, label: string, key: string, extra: Partial<Command> = {}, view?: EditorView): Command => ({
   id,
   label,
@@ -121,22 +115,18 @@ const keyed = (id: string, label: string, key: string, extra: Partial<Command> =
   run: entry(key, view),
   ...extra,
 })
-
 const commanded = (id: string, label: string, command: string, extra: Partial<Command> = {}): Command => ({
   id,
   label,
   run: () => void runCommand(command),
   ...extra,
 })
-
 function importCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
-
   const asked = (id: string) => () => {
     settingsWindow().show('import')
     void runCommand(id)
   }
-
   return [
     commanded('import', 'Import', 'import.show'),
     { id: 'import-obsidian', label: 'Import from Obsidian', run: asked('import.obsidian') },
@@ -144,34 +134,27 @@ function importCommands(): Command[] {
     ...(isDesktop ? [{ id: 'import-zen', label: 'Import from Zen', run: asked('import.zen') }] : []),
   ]
 }
-
 async function openLog() {
   if (!isDesktop) return
-
   const path = await invoke<string>('log_dir')
   const { reveal } = await import('../../files-out/src/api')
   await reveal(path)
 }
-
 async function openThemesFolder() {
   if (!isDesktop) return
-
   const dir = await invoke<string>('theme_dir')
   const { reveal } = await import('../../files-out/src/api')
   await reveal(dir)
   await theme.reload()
 }
-
 export interface Command extends MenuItem {
   id: string
   also?: readonly string[]
   byHand?: boolean
   ownWindow?: boolean
 }
-
 function agentRows(): Command[] {
   if (__EVEN_PLUGIN__ || !agentMarks.heard) return []
-
   return [
     {
       id: 'agents',
@@ -184,7 +167,6 @@ function agentRows(): Command[] {
     keyed('agents-stop', 'Stop agents', 'agents.stop', { ownWindow: true }),
   ]
 }
-
 function protectCommands(): Command[] {
   return [...protectEntries(workspace.active?.path), ...lockAllEntry()].map((row) => ({
     ...row,
@@ -192,17 +174,14 @@ function protectCommands(): Command[] {
     ownWindow: true,
   }))
 }
-
 function archiveCommand(): Command[] {
   return archiveEntry(workspace.active?.path).flatMap((entry) =>
     entry === DIVIDER ? [] : [{ id: 'archive', label: entry.label, run: entry.run }],
   )
 }
-
 function tabCommands(): Command[] {
   const id = workspace.activeTabId ?? ''
   const tab = workspace.active
-
   return [
     {
       id: 'close-right',
@@ -246,10 +225,8 @@ function tabCommands(): Command[] {
       : []),
   ]
 }
-
 function paneCommands(): Command[] {
   if (viewport.touch) return []
-
   return [
     keyed('split-right', 'Split right', 'pane.split-right', {
       disabled: !workspace.canSplit('row'),
@@ -276,12 +253,9 @@ function paneCommands(): Command[] {
     },
   ]
 }
-
 function layoutCommands(): Command[] {
   if (viewport.touch) return []
-
   const saved = workspace.layouts.all
-
   return [
     { id: 'save-layout', label: 'Save layout', run: () => void askForLayoutName() },
     ...saved.map((one) => ({
@@ -297,26 +271,21 @@ function layoutCommands(): Command[] {
     },
   ]
 }
-
 async function askForLayoutName() {
   const name = await prompt.ask({
     title: 'Name this layout',
     placeholder: 'Reading',
     confirmLabel: 'Save',
   })
-
   if (name) workspace.saveLayout(name)
 }
-
 async function askWhichLayoutToDelete() {
   const chosen = await prompt.find({
     title: 'Delete a layout',
     options: workspace.layouts.all.map((one) => ({ id: one.name, label: one.name })),
   })
-
   if (chosen) workspace.layouts.remove(chosen)
 }
-
 function lineCommands(view?: EditorView): Command[] {
   const row = (id: string, label: string, command: (view: EditorView) => boolean, writes = true): Command => ({
     id,
@@ -329,7 +298,6 @@ function lineCommands(view?: EditorView): Command[] {
       view.focus()
     },
   })
-
   return [
     row('view.fold', 'Fold', toggleFold, false),
     row('view.fold-all', 'Fold everything', foldHeadings, false),
@@ -360,7 +328,6 @@ function lineCommands(view?: EditorView): Command[] {
     row('edit.find-previous', 'Find previous', findPrevious, false),
   ]
 }
-
 interface Block {
   id: string
   label: () => string
@@ -368,20 +335,16 @@ interface Block {
   ready?: (view: EditorView | undefined) => boolean
   byHand?: boolean
 }
-
 function on(command: StateCommand) {
   return (view?: EditorView) => {
     if (!view) return
-
     command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
     view.focus()
   }
 }
-
 function block(id: string, label: () => string, command: StateCommand): Block {
   return { id, label, apply: on(command) }
 }
-
 const WRITTEN: Block[] = [
   ...[1, 2, 3, 4, 5, 6].map((level) =>
     block(`paragraph.heading-${level}`, () => `Heading ${level}`, setHeading(level)),
@@ -423,7 +386,6 @@ const WRITTEN: Block[] = [
     byHand: true,
   },
 ]
-
 const LINKED: Block[] = [
   block('format.link', () => 'Link', insertLink),
   block('paragraph.footnote', () => 'Footnote', insertFootnote),
@@ -432,7 +394,6 @@ const LINKED: Block[] = [
   block('paragraph.rule', () => 'Horizontal rule', insertHorizontalRule),
   block('page-break', () => 'Page break', insertPageBreak),
 ]
-
 function recorded(view?: EditorView): Block[] {
   return commandRows('record', view).map((row) => ({
     id: row.id,
@@ -445,16 +406,13 @@ function recorded(view?: EditorView): Block[] {
     byHand: row.byHand === true,
   }))
 }
-
 function blocks(view?: EditorView): Block[] {
   return [...WRITTEN, ...recorded(view), ...LINKED]
 }
-
 export function blockCommands(view?: EditorView): Command[] {
   return blocks(view).map((one) => {
     const hint = shortcuts.hint(one.id)
     const ready = one.ready ? one.ready(view) : !!view && !view.state.readOnly
-
     return {
       id: one.id,
       label: one.label(),
@@ -465,16 +423,13 @@ export function blockCommands(view?: EditorView): Command[] {
     }
   })
 }
-
 export function blockRows(): SlashBlock[] {
   return blocks().map((one) => ({ label: one.label(), run: one.apply }))
 }
-
 function moveCommand(): Command | null {
   const note = workspace.active
   const path = note?.path
   if (!path || !canWriteAt(path)) return null
-
   const targets = moveTargets({
     moving: path,
     tree: workspace.tree,
@@ -482,7 +437,6 @@ function moveCommand(): Command | null {
     here: workspace.activeSpace?.root ?? null,
   }).filter((target) => canWriteAt(target.id))
   if (!targets.length) return null
-
   const moved = async (into: string) => {
     const space = workspace.spaces.find((one) => samePath(one.root, into))
     if (space && space.id !== workspace.activeSpaceId) {
@@ -490,7 +444,6 @@ function moveCommand(): Command | null {
     }
     await workspace.moveMany([path], into)
   }
-
   return {
     id: 'move-note',
     label: 'Move this note',
@@ -498,13 +451,10 @@ function moveCommand(): Command | null {
       void prompt.find({ title: 'Move to', options: [...targets] }).then((into) => (into ? moved(into) : undefined)),
   }
 }
-
 function spaceCommands(): Command[] {
   const space = workspace.activeSpace
   if (!space) return []
-
   const moving = moveCommand()
-
   return [
     ...(moving ? [moving] : []),
     ...(workspace.shownSpaces.length > 1
@@ -548,18 +498,14 @@ function spaceCommands(): Command[] {
       : []),
   ]
 }
-
 export function tidies(path: string | null): boolean {
   return path === null || isMarkdownPath(path)
 }
-
 const shut = () => protection.locked(workspace.active?.path)
-
 export function appCommands(view?: EditorView): Command[] {
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
   const space = workspace.activeSpace
   const readOnly = space ? !canWriteAt(space.root) : false
-
   return without([
     ...(unsaved ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }] : []),
     { id: 'new', label: 'New note', hint: shortcuts.hint('app.new'), run: entry('app.new') },
@@ -708,12 +654,10 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => void copyNoteLink(),
           },
         ]),
-
     ...commandRows('export-picker', view),
     ...commandRows('export', view),
     ...spaceCommands(),
     { id: 'llm', label: 'Connect an LLM to your notes', run: () => settingsWindow().show('llm') },
-
     account.user
       ? {
           id: 'signout',
@@ -722,7 +666,6 @@ export function appCommands(view?: EditorView): Command[] {
           run: () => void account.leave(),
         }
       : { id: 'signin', label: 'Sign in', run: () => (account.open = true) },
-
     {
       id: 'reformat',
       label: 'Tidy up this note',
@@ -734,7 +677,6 @@ export function appCommands(view?: EditorView): Command[] {
           dispatch: (transaction: Transaction) => view.dispatch(transaction),
         }),
     },
-
     ...blockCommands(view),
     ...lineCommands(view),
     keyed('reading', workspace.active?.reading ? 'Leave reading' : 'Reading', 'app.reading', {
@@ -762,7 +704,6 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
-
     {
       id: 'punctuation',
       label: modes.punctuation ? 'Use straight quotes' : 'Use curly quotes',
@@ -773,7 +714,6 @@ export function appCommands(view?: EditorView): Command[] {
       label: modes.numbers ? 'Stop numbering headings' : 'Number headings',
       run: () => modes.toggleNumbers(view),
     },
-
     {
       id: 'line-numbers',
       label: modes.lineNumbers ? 'Hide code line numbers' : 'Show code line numbers',
@@ -798,11 +738,9 @@ export function appCommands(view?: EditorView): Command[] {
     { id: 'narrower', label: 'Narrower writing area', run: () => modes.stepWidth(-1, view) },
     { id: 'looser', label: 'Looser line spacing', run: () => modes.stepLineHeight(1, view) },
     { id: 'tighter', label: 'Tighter line spacing', run: () => modes.stepLineHeight(-1, view) },
-
     keyed('zoom-in', 'Zoom in', 'app.zoom-in'),
     keyed('zoom-out', 'Zoom out', 'app.zoom-out'),
     keyed('zoom-reset', 'Actual size', 'app.zoom-reset'),
-
     ...(isDesktop
       ? [
           {
@@ -812,7 +750,6 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
-
     {
       id: 'themes',
       label: 'Switch theme',
@@ -928,11 +865,9 @@ export function appCommands(view?: EditorView): Command[] {
     keyed('space-previous', 'Previous space', 'space.previous', {
       disabled: workspace.shownSpaces.length < 2,
     }),
-
     ...composerCommands(view),
   ])
 }
-
 const MAKES: Record<string, KindName> = {
   new: 'note',
   'new-unique': 'note',
@@ -946,14 +881,12 @@ const MAKES: Record<string, KindName> = {
   'new-online-terminal': 'online',
   'new-private': 'private',
 }
-
 function without(rows: Command[]): Command[] {
   return rows.filter((row) => {
     const kind = MAKES[row.id]
     return !kind || !turnedOff(kind)
   })
 }
-
 export async function runRow(id: string): Promise<boolean> {
   await commandRowsLoaded()
   const row = appCommands().find((one) => one.id === id)

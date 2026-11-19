@@ -19,11 +19,9 @@ const BUILT_IN: readonly Scope[] = [
   'terminal',
   'agents',
 ]
-
 function reachesAsFar(call: Call): void {
   const agent = call.caller.agent
   if (!agent || agent.builtIn) return
-
   const whole =
     agent.spaces === 'all' &&
     BUILT_IN.every((one) => holds(call.caller, one)) &&
@@ -35,14 +33,12 @@ function reachesAsFar(call: Call): void {
     )
   }
 }
-
 function askerOf(call: Call) {
   const agent = call.caller.agent
   const mode: Mode = agent ? modeOfGrant(agent.mode) : 'auto'
   const thread = 'thread' in call.caller ? (call.caller.thread ?? null) : null
   return { thread, mode, ...(agent ? { reach: agent } : {}) }
 }
-
 async function answered(
   ask: (helpers: Awaited<ReturnType<typeof helperRun>>) => Promise<unknown>,
 ): Promise<AgentAnswer> {
@@ -53,12 +49,10 @@ async function answered(
   }
   return done(said)
 }
-
 export async function runAgent(call: Call): Promise<AgentAnswer> {
   reachesAsFar(call)
   return await answered((helpers) => helpers.runAgent(call.args, askerOf(call), call.deadline))
 }
-
 export async function agentResult(call: Call): Promise<AgentAnswer> {
   reachesAsFar(call)
   return await answered((helpers) => helpers.agentResult(call.args, call.deadline))

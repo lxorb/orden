@@ -18,7 +18,6 @@ const PASS_AT_MOST = 3_000
 const ASK_EVERY = 250
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 const noteAt = (path: string) => invoke<string>('read_note', { path }).catch(() => null)
-
 async function termIdOf(path: string, until: number): Promise<string | null> {
   const { runner } = await import('../../../sync-client/src/api')
   for (;;) {
@@ -28,7 +27,6 @@ async function termIdOf(path: string, until: number): Promise<string | null> {
     await pause(LOOK_EVERY)
   }
 }
-
 async function sessionOf(id: string, path: string, until: number): Promise<string | null> {
   const { runner } = await import('../../../sync-client/src/api')
   const words = await noteAt(path)
@@ -51,12 +49,10 @@ async function sessionOf(id: string, path: string, until: number): Promise<strin
     }
   }
 }
-
 function refusalOf(error: unknown): string | null {
   const why = refusedOf(error)
   return why === 'list' || why === 'sessions' || why === 'signed-out' ? refusalWords(why) : null
 }
-
 async function socketName(path: string, until: number): Promise<{ name: string } | { refused: string }> {
   const { sync } = await import('../../../sync-store/src/api')
   if (sync.version === 1) {
@@ -76,16 +72,13 @@ async function socketName(path: string, until: number): Promise<{ name: string }
   const refused = await sessionOf(id, path, until)
   return refused === null ? { name: id } : { refused }
 }
-
 export interface Place {
   tab: () => string
   front: () => boolean
   offer: (url: string) => void
 }
-
 const FRAMES_A_SECOND = INPUT_RATE / 2
 const LANDS_WITHIN = 20_000
-
 export class OnlineSource implements Source {
   readonly remote = true
   private link: Link | null = null
@@ -94,7 +87,6 @@ export class OnlineSource implements Source {
   private sent = { second: 0, count: 0 }
   private diskSaid = false
   private readonly pictures = new Map<string, (path: string | null) => void>()
-
   constructor(
     private readonly path: () => string | null,
     private readonly words: () => string,
@@ -104,7 +96,6 @@ export class OnlineSource implements Source {
   ) {
     this.opener = new Opener(place.tab, build, (url) => this.link?.say({ t: 'callback', url }), place.offer)
   }
-
   async start(cols: number, rows: number, said: (what: Said) => void): Promise<void> {
     if (!account.accountToken) {
       said({ refused: refusalWords('signed-out') ?? '' })
@@ -122,7 +113,6 @@ export class OnlineSource implements Source {
       return
     }
     if (this.ended) return
-
     this.link = new Link(
       found.name,
       pageWorld(BASE, () => account.accountToken, this.device),
@@ -139,7 +129,6 @@ export class OnlineSource implements Source {
     )
     this.link.open()
   }
-
   private heard(frame: ServerFrame, said: (what: Said) => void): void {
     switch (frame.t) {
       case 'screen':
@@ -205,7 +194,6 @@ export class OnlineSource implements Source {
         return
     }
   }
-
   async write(data: string, binary: boolean): Promise<void> {
     if (binary) {
       const bytes = Uint8Array.from(data, (char) => char.charCodeAt(0) & 0xff)
@@ -220,7 +208,6 @@ export class OnlineSource implements Source {
       this.link?.say({ t: 'in', data: chunk })
     }
   }
-
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
     const id = crypto.randomUUID().replace(/-/g, '')
     const landed = new Promise<string | null>((settle) => this.pictures.set(id, settle))
@@ -240,7 +227,6 @@ export class OnlineSource implements Source {
       this.pictures.delete(id)
     }
   }
-
   private async paced(): Promise<void> {
     const now = Date.now()
     const second = Math.floor(now / 1000)
@@ -251,23 +237,18 @@ export class OnlineSource implements Source {
     }
     this.sent.count += 1
   }
-
   resize(cols: number, rows: number): void {
     this.link?.resize(cols, rows)
   }
-
   seen(): void {
     // Nothing to acknowledge: the socket is the back pressure (MOST_BEHIND in the wire).
   }
-
   again(): void {
     this.link?.say({ t: 'start' })
   }
-
   take(): void {
     this.link?.take()
   }
-
   end(): void {
     this.ended = true
     for (const settle of this.pictures.values()) settle(null)
@@ -276,14 +257,12 @@ export class OnlineSource implements Source {
     this.link = null
   }
 }
-
 export function onlineSource(path: () => string | null, words: () => string, place: Place): OnlineSource {
   return new OnlineSource(path, words, async () => (await import('../../../sync-client/src/api')).deviceId(), place, {
     pages: isDesktop && viewport.device !== 'phone',
     native: isNative,
   })
 }
-
 export async function cacheKey(words: string, path: string | null): Promise<string> {
   let term = termOf(words)
   if (!term && path !== null) {

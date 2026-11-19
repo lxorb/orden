@@ -8,9 +8,7 @@ const RESTARTS = (JSON.parse(process.env.ORDEND_SURVIVE_RESTARTS ?? '[]') as unk
   (one): one is string => typeof one === 'string',
 )
 const SESSION = 's_survive'
-
 const ticks = (seen: string) => [...seen.matchAll(/tick-(\d+)/g)].map((match) => Number(match[1]))
-
 async function joined(): Promise<Link> {
   await healthy(URL)
   const link = await linked(URL, SECRET)
@@ -18,7 +16,6 @@ async function joined(): Promise<Link> {
   link.send({ t: 'want', session: SESSION, since: 0 })
   return link
 }
-
 describe.runIf(URL)('a program on the machine', () => {
   test('goes on through every restart of ordend', async () => {
     let link = await joined()
@@ -32,7 +29,6 @@ describe.runIf(URL)('a program on the machine', () => {
     await until(() => ticks(link.text(SESSION)).length >= 3, 120_000)
     if (process.env.ORDEND_SURVIVE_CGROUP) expect(link.text(SESSION)).toContain(`/ordend/${SESSION}`)
     console.log(/holder-kb=\s*\d+/.exec(link.text(SESSION))?.[0])
-
     for (const restart of ['the link', ...RESTARTS]) {
       const before = ticks(link.text(SESSION)).at(-1) ?? 0
       if (restart === 'the link') link.send({ t: 'restart' })
@@ -46,7 +42,6 @@ describe.runIf(URL)('a program on the machine', () => {
       await until(() => (ticks(link.text(SESSION)).at(-1) ?? 0) > before + 2, 60_000)
       console.log(`${restart}: still counting, ${String(before)} before`)
     }
-
     link.send({ t: 'in', session: SESSION, data: bytes('\x03') })
     link.send({ t: 'close', session: SESSION })
     link.close()

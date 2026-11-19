@@ -13,9 +13,7 @@ use super::run::{self, Heard, Running};
 use super::say::{Message, Say};
 
 pub type Output = Arc<dyn Fn(Message) + Send + Sync>;
-
 pub type Base = Box<dyn Fn(&[String]) -> Command + Send + Sync>;
-
 pub struct Launch {
     pub base: Base,
     pub folder: PathBuf,
@@ -25,7 +23,6 @@ pub struct Launch {
     pub mode: Option<Mode>,
     pub without: Vec<String>,
 }
-
 #[derive(Default)]
 struct Held {
     session: Mutex<Option<String>>,
@@ -34,7 +31,6 @@ struct Held {
     starting: AtomicBool,
     hushed: AtomicBool,
 }
-
 pub struct Gemini {
     launch: Launch,
     files: PathBuf,
@@ -43,7 +39,6 @@ pub struct Gemini {
     held: Arc<Held>,
     output: Output,
 }
-
 impl Gemini {
     pub fn start(
         launch: Launch,
@@ -74,7 +69,6 @@ impl Gemini {
             output,
         })
     }
-
     pub fn say(&self, say: Say) -> Result<(), String> {
         match say {
             Say::Turn { text, images } => {
@@ -107,7 +101,6 @@ impl Gemini {
             Say::Goal { .. } => Err("Gemini CLI keeps no goal".into()),
         }
     }
-
     fn turn(&self, text: &str) -> Result<(), String> {
         {
             let running = self.held.running.held();
@@ -136,12 +129,10 @@ impl Gemini {
         }
         Ok(())
     }
-
     fn started(&self, text: &str) -> Result<(Running, Arc<AtomicBool>), String> {
         let session = self.held.session.held().clone();
         let model = self.model.held().clone();
         let command = self.command(model.as_deref(), session.as_deref())?;
-
         let held = Arc::clone(&self.held);
         let output = Arc::clone(&self.output);
         let answered = Arc::new(AtomicBool::new(false));
@@ -174,7 +165,6 @@ impl Gemini {
         started.close_input();
         Ok((started, finished))
     }
-
     fn command(&self, model: Option<&str>, session: Option<&str>) -> Result<Command, String> {
         let launch = &self.launch;
         let mut command = (launch.base)(&args::gemini_turn(model, session, &launch.caps)?);
@@ -190,7 +180,6 @@ impl Gemini {
         }
         Ok(command)
     }
-
     pub fn stop(&self) {
         let mut running = self.held.running.held();
         self.held.ended.store(true, Ordering::SeqCst);
@@ -204,12 +193,10 @@ impl Gemini {
         });
     }
 }
-
 struct Said {
     session: Option<String>,
     ended: bool,
 }
-
 fn said_in(line: &str) -> Option<Said> {
     let event: Value = serde_json::from_str(line).ok()?;
     let session = (event["type"] == "init")
@@ -220,7 +207,6 @@ fn said_in(line: &str) -> Option<Said> {
         ended: event["type"] == "result",
     })
 }
-
 pub fn standing(home: Option<&Home>) -> Value {
     let root = home
         .map(|one| one.dir().to_path_buf())
@@ -235,7 +221,6 @@ pub fn standing(home: Option<&Home>) -> Value {
         None => json!({ "signedIn": false }),
     }
 }
-
 pub fn standing_in(dir: &Path, outside_key: bool) -> Value {
     let read = |name: &str| -> Option<Value> {
         let text = std::fs::read_to_string(dir.join(name)).ok()?;
@@ -272,7 +257,6 @@ pub fn standing_in(dir: &Path, outside_key: bool) -> Value {
         .filter(|_| method == Some("google"));
     json!({ "signedIn": method.is_some(), "method": method, "email": email })
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -283,7 +267,6 @@ mod tests {
         std::fs::create_dir_all(&dir).expect("dir");
         dir
     }
-
     #[test]
     fn signed_in_with_google_names_the_account() {
         let dir = dir("google");
@@ -298,7 +281,6 @@ mod tests {
         assert_eq!(said["method"], "google");
         assert_eq!(said["email"], "heron@example.com");
     }
-
     #[test]
     fn a_key_in_its_env_file_or_outside_is_signed_in_by_key() {
         let dir = dir("key");
@@ -314,7 +296,6 @@ mod tests {
         assert_eq!(said["method"], "api-key");
         assert!(said["email"].is_null());
     }
-
     #[test]
     fn the_session_and_the_end_are_read_from_its_lines() {
         let init =
@@ -324,7 +305,6 @@ mod tests {
         assert!(said_in(r#"{"type":"result","status":"success"}"#).is_some_and(|one| one.ended));
         assert!(said_in("not json").is_none());
     }
-
     #[cfg(unix)]
     #[test]
     fn a_turn_said_after_it_was_closed_starts_nothing() {
@@ -356,7 +336,6 @@ mod tests {
         std::thread::sleep(Duration::from_millis(200));
         assert!(!started.load(Ordering::SeqCst));
     }
-
     #[cfg(unix)]
     #[test]
     fn stopping_waits_for_no_turn_that_is_still_starting() {

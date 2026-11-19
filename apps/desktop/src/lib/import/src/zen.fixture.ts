@@ -8,7 +8,6 @@ export function mozLz4Of(bytes: Uint8Array): Uint8Array {
     }
     length.push(rest)
   }
-
   const token = Math.min(bytes.length, 15) << 4
   const block = new Uint8Array([token, ...length, ...bytes])
   const out = new Uint8Array(12 + block.length)
@@ -17,7 +16,6 @@ export function mozLz4Of(bytes: Uint8Array): Uint8Array {
   out.set(block, 12)
   return out
 }
-
 export const SIDEBAR = {
   lastCollected: 1_760_000_000_000,
   spaces: [

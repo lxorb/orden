@@ -10,7 +10,6 @@ beforeEach(() => {
   hiddenKinds.restore()
   setWord(EXPERIMENTAL_WORD, true)
 })
-
 describe('a feature turned on and off while the app runs', () => {
   test('Pass starts once, and its tab closes and it goes quiet when turned off', () => {
     const said: string[] = []
@@ -34,7 +33,6 @@ describe('a feature turned on and off while the app runs', () => {
     flushSync()
     expect(said).toEqual(['run', 'off', 'off'])
   })
-
   test('the time tracker starts once it is turned on', () => {
     let ran = 0
     whenTimeOn(() => {
@@ -50,7 +48,6 @@ describe('a feature turned on and off while the app runs', () => {
     flushSync()
     expect(ran).toBe(1)
   })
-
   test('Chats closes its tabs, a restored one too, when turned off', () => {
     const said: string[] = []
     workspace.openView('', 'Team', '/space/Team.chat', {}, 'channel')

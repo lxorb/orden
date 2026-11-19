@@ -5,14 +5,11 @@
   import { openExternal, dur, fly, slide } from '../../../platform/src/api'
 
   const { client }: { client: 'claude' | 'chatgpt' | 'other' } = $props()
-
   const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors'
   const CHATGPT_PLUGINS = 'https://chatgpt.com/plugins'
   const CLAUDE_CODE = `claude mcp add --transport http orden ${MCP_URL}`
-
   let showCode = $state(false)
   let showConfig = $state(false)
-
   const config = (token?: string | null) =>
     JSON.stringify(
       {
@@ -141,11 +138,9 @@
     color: var(--muted-strong);
     line-height: 1.6;
   }
-
   .hint.spaced {
     margin-top: var(--space-3);
   }
-
   .switch .name {
     flex: 1;
     min-width: 0;
@@ -153,13 +148,11 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .steps-wrap {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
-
   .steps {
     margin: 0;
     padding: 0;
@@ -169,7 +162,6 @@
     flex-direction: column;
     gap: var(--space-4);
   }
-
   .steps li {
     position: relative;
     padding-inline-start: 34px;
@@ -178,7 +170,6 @@
     gap: var(--space-2);
     counter-increment: step;
   }
-
   .steps li::before {
     content: counter(step);
     position: absolute;
@@ -195,7 +186,6 @@
     line-height: 22px;
     text-align: center;
   }
-
   .steps li > p:first-child {
     margin: 0;
     min-height: 22px;
@@ -204,7 +194,6 @@
     color: var(--text);
     line-height: 22px;
   }
-
   .link,
   .disclose {
     align-self: flex-start;
@@ -217,13 +206,11 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   .link {
     display: block;
     color: var(--accent);
     text-align: start;
   }
-
   .disclose {
     display: inline-flex;
     align-items: center;
@@ -232,23 +219,19 @@
     color: var(--muted-strong);
     font-weight: var(--weight-strong);
   }
-
   @media (hover: hover) {
     .link:hover {
       color: var(--accent-hover);
     }
-
     .disclose:hover {
       color: var(--text-strong);
     }
   }
-
   .link:focus-visible,
   .disclose:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
-
   .chevron {
     width: 12px;
     height: 12px;
@@ -259,11 +242,9 @@
     stroke-linejoin: round;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .chevron.open {
     transform: rotate(90deg);
   }
-
   .disclosed,
   .fresh {
     display: flex;
@@ -271,15 +252,12 @@
     gap: var(--space-2);
     padding-inline-start: 17px;
   }
-
   .fresh {
     padding-inline-start: 0;
   }
-
   .orden-button {
     align-self: flex-start;
   }
-
   .switch {
     display: flex;
     align-items: center;

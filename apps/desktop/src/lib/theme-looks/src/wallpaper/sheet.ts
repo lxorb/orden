@@ -7,11 +7,9 @@ import { type Dials, picturesRule, wallpaperRule } from './look'
 import { dialsOf, wallpaperSettings } from './settings'
 
 const shown: Record<Scheme, Held | null | undefined> = { light: undefined, dark: undefined }
-
 export function showPicture(scheme: Scheme, held: Held | null | undefined): void {
   shown[scheme] = held
 }
-
 function dials(): Dials {
   const values = Object.fromEntries(
     wallpaperSettings().map((one) => [
@@ -21,7 +19,6 @@ function dials(): Dials {
   )
   return dialsOf(values)
 }
-
 export function wallpaperSheet(): string {
   const pictures = {
     light: shown.light === undefined ? heldWallpaper() : shown.light,

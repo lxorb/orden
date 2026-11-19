@@ -5,7 +5,6 @@ const SYNC = resolve(import.meta.dirname, '../services/sync')
 const WRANGLER = join(SYNC, 'node_modules/wrangler/bin/wrangler.js')
 const CONFIG = 'wrangler.jsonc'
 const ROOM = 512 * 1024 * 1024
-
 export function wrangler(args: string[]): string {
   const done = spawnSync(process.execPath, [WRANGLER, ...args], {
     cwd: SYNC,
@@ -20,11 +19,9 @@ export function wrangler(args: string[]): string {
   }
   return done.stdout
 }
-
 export function migrateLocal(state: string): string {
   return wrangler(['d1', 'migrations', 'apply', 'nib', '--local', '--persist-to', state, '--config', CONFIG])
 }
-
 export function sqlLocal(state: string, command: string, more: string[] = []): string {
   return wrangler([
     'd1',
@@ -40,7 +37,6 @@ export function sqlLocal(state: string, command: string, more: string[] = []): s
     ...more,
   ])
 }
-
 export function rowsLocal(state: string, command: string): Record<string, unknown>[] {
   const said = JSON.parse(sqlLocal(state, command, ['--json'])) as {
     results: Record<string, unknown>[]

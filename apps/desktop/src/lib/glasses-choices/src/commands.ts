@@ -11,7 +11,6 @@ export type Command =
   | { kind: 'voice'; on: boolean }
   | { kind: 'question'; asked: string }
   | { kind: 'task'; said: string }
-
 const NUMBERS: Readonly<Record<string, number>> = {
   zero: 0,
   one: 1,
@@ -43,7 +42,6 @@ const NUMBERS: Readonly<Record<string, number>> = {
   ninety: 90,
   hundred: 100,
 }
-
 export function bare(said: string): string {
   return said
     .toLowerCase()
@@ -53,53 +51,41 @@ export function bare(said: string): string {
     .replace(/\s+/gu, ' ')
     .trim()
 }
-
 export function numberIn(said: string): number | null {
   const words = bare(said).split(' ').filter(Boolean)
   if (!words.length) return null
-
   const digits = words.join('')
   if (/^\d+$/.test(digits)) return Number(digits)
-
   let total = 0
   let seen = false
   for (const word of words) {
     const value = NUMBERS[word]
     if (value === undefined) return null
-
     seen = true
     if (value === 100) total = Math.max(1, total) * 100
     else total += value
   }
-
   return seen ? total : null
 }
-
 export function likeness(heard: string, name: string): number {
   const said = bare(heard).split(' ').filter(Boolean)
   const real = bare(name).split(' ').filter(Boolean)
   if (!said.length || !real.length) return 0
-
   let hit = 0
   const left = [...real]
   for (const word of said) {
     const at = left.findIndex((one) => one === word || one.startsWith(word) || word.startsWith(one))
     if (at < 0) continue
-
     hit++
     left.splice(at, 1)
   }
-
   if (!hit) return 0
   return (hit / said.length) * 0.7 + (hit / real.length) * 0.3
 }
-
 const CLOSE = 0.25
-
 export function bestOf(heard: string, names: readonly string[]): string | null {
   let best: string | null = null
   let score = CLOSE
-
   for (const name of names) {
     const how = likeness(heard, name)
     if (how > score) {
@@ -107,10 +93,8 @@ export function bestOf(heard: string, names: readonly string[]): string | null {
       best = name
     }
   }
-
   return best
 }
-
 interface Phrase {
   id: string
   words: string[]
@@ -118,7 +102,6 @@ interface Phrase {
   label?: string
   takes?: true
 }
-
 const PHRASES: readonly Phrase[] = [
   {
     id: 'voice-on',
@@ -211,11 +194,9 @@ const PHRASES: readonly Phrase[] = [
     label: 'Close what is open',
   },
 ]
-
 export const DEFAULT_WORDS: Readonly<Record<string, string>> = Object.fromEntries(
   PHRASES.map((one) => [one.id, one.words.join(' ')]),
 )
-
 export function commandWords(): { id: string; label: string; said: string }[] {
   return PHRASES.filter((one) => one.label !== undefined).map((one) => ({
     id: one.id,
@@ -223,17 +204,14 @@ export function commandWords(): { id: string; label: string; said: string }[] {
     said: one.words.join(' '),
   }))
 }
-
 function named(kind: 'switchSpace' | 'switchNote', rest: string): Command {
   if (rest) return { kind, name: rest }
   return kind === 'switchSpace' ? { kind: 'spaces' } : { kind: 'notes' }
 }
-
 function counted(kind: 'page' | 'line', rest: string): Command | null {
   const number = numberIn(rest)
   return number !== null && number > 0 ? { kind, number } : null
 }
-
 function phrasesFor(words: Readonly<Record<string, string>>) {
   return PHRASES.map((one) => ({
     of: one.of,
@@ -245,31 +223,23 @@ function phrasesFor(words: Readonly<Record<string, string>>) {
     .filter((one) => one.words.length > 0)
     .sort((a, b) => b.words.length - a.words.length)
 }
-
 export function settled(said: string, words: Readonly<Record<string, string>> = {}): boolean {
   const heard = bare(said).split(' ').filter(Boolean)
   if (!heard.length) return false
-
   const phrases = phrasesFor(words)
   const said_ = (one: { words: string[] }) =>
     one.words.length === heard.length && one.words.every((word, at) => heard[at] === word)
-
   const exact = phrases.find(said_)
   if (!exact || exact.takes) return false
-
   return !phrases.some((one) => one.words.length > heard.length && heard.every((word, at) => one.words[at] === word))
 }
-
 export function commandIn(said: string, words: Readonly<Record<string, string>> = {}): Command | null {
   const heard = bare(said).split(' ').filter(Boolean)
   if (!heard.length) return null
-
   for (const phrase of phrasesFor(words)) {
     if (phrase.words.length > heard.length) continue
     if (!phrase.words.every((word, at) => heard[at] === word)) continue
-
     return phrase.of(heard.slice(phrase.words.length).join(' '))
   }
-
   return null
 }

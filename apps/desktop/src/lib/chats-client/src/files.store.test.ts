@@ -1,14 +1,12 @@
 import { expect, test, vi } from 'vitest'
 
 const server = vi.hoisted(() => ({ answers: [] as (Blob | null)[], asked: 0 }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isNative: false,
   isDesktop: false,
   invoke: () => Promise.resolve(),
 }))
-
 vi.mock('./http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./http')>()),
   fileOf: () => {
@@ -17,10 +15,8 @@ vi.mock('./http', async (importOriginal) => ({
   },
   putBlob: () => Promise.resolve(true),
 }))
-
 const { chats } = await import('./store.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-
 test('a failed fetch is not kept, a landed one is', async () => {
   server.answers = [null, new Blob(['x'])]
   expect(await chats.fileUrl('c1', 'h1')).toBeNull()
@@ -29,7 +25,6 @@ test('a failed fetch is not kept, a landed one is', async () => {
   expect(await chats.fileUrl('c1', 'h1')).toBe(url)
   expect(server.asked).toBe(2)
 })
-
 test('signing out forgets the addresses', async () => {
   server.asked = 0
   server.answers = [new Blob(['a']), new Blob(['b'])]
@@ -39,7 +34,6 @@ test('signing out forgets the addresses', async () => {
   expect(second).not.toBe(first)
   expect(server.asked).toBe(2)
 })
-
 test('a file the server does not know yet is asked again: a post names it before it lands', async () => {
   server.asked = 0
   server.answers = [null, new Blob(['x'])]
@@ -47,7 +41,6 @@ test('a file the server does not know yet is asked again: a post names it before
   expect(await chats.fileUrl('c3', 'h1')).toMatch(/^blob:/)
   expect(server.asked).toBe(2)
 })
-
 test("a reader who just signed in is never handed the last one's address", async () => {
   server.answers = [new Blob(['guest']), new Blob(['user'])]
   account.guest = { id: 'g1' } as typeof account.guest
@@ -64,7 +57,6 @@ test("a reader who just signed in is never handed the last one's address", async
   revoke.mockRestore()
   account.user = null
 })
-
 test('signing out lets go of the files it drew', async () => {
   server.answers = [new Blob(['a'])]
   const url = await chats.fileUrl('c4', 'h1')
@@ -72,13 +64,11 @@ test('signing out lets go of the files it drew', async () => {
   await chats.forget()
   expect(revoke).toHaveBeenCalledWith(url)
 })
-
 test('letting go of the addresses is told, so a view asks again', async () => {
   const was = chats.fileEpoch
   await chats.forget()
   expect(chats.fileEpoch).toBeGreaterThan(was)
 })
-
 test('a file put up keeps no copy of its bytes here: one taken off the composer is not held (review of #990, L1)', async () => {
   server.asked = 0
   server.answers = [new Blob(['x'])]

@@ -18,18 +18,12 @@
     view?: EditorView | undefined
     context?: (() => AppContext) | undefined
   } = $props()
-
   let at = $state<{ x: number; y: number } | null>(null)
-
   let over: EditorView | null = null
-
   let bar = $state<HTMLElement>()
   let colouring = $state(false)
-
   const keys = { across: true, rows: 'button' } as const
-
   let writing = $state(false)
-
   $effect(() => {
     const note = view?.contentDOM
     let live = true
@@ -39,7 +33,6 @@
         const at = document.activeElement
         writing = !!note && (at === note || (!!at && !!bar?.contains(at)))
       })
-
     follow()
     document.addEventListener('focusin', follow)
     document.addEventListener('focusout', follow)
@@ -49,80 +42,61 @@
       document.removeEventListener('focusout', follow)
     }
   })
-
   const docked = $derived(viewport.touch && viewport.typing && writing)
-
   $effect(() => {
     if (!docked) viewport.covered = 0
   })
-
   $effect(() => {
     if (view === over) return
     at = null
     colouring = false
   })
-
   $effect(() => {
     if (!docked && !at) colouring = false
   })
-
   export function follow(current: EditorView) {
     const range = current.state.selection.main
-
     const ours = bar?.contains(document.activeElement) ?? false
-
     if (range.empty || (!current.hasFocus && !ours) || current.state.readOnly || selectedImage(current.state)) {
       at = null
       colouring = false
       return
     }
-
     if (viewport.touch) {
       at = null
       return
     }
-
     const start = current.coordsAtPos(range.from)
     const end = current.coordsAtPos(range.to)
     if (!start || !end) {
       at = null
       return
     }
-
     const half = 150
     const middle = (start.left + end.right) / 2
     const x = Math.min(Math.max(middle, half), window.innerWidth - half)
-
     over = current
     at = { x, y: Math.min(start.top, end.top) }
   }
-
   function run(command: StateCommand) {
     if (!view) return
     command({ state: view.state, dispatch: (t: Transaction) => view.dispatch(t) })
     view.focus()
   }
-
   function act(id: string) {
     runEntry(id, context?.() ?? { view, palette: () => undefined, fullscreen: () => undefined }, 'button')
   }
-
   const HIGHLIGHT = 'format.highlight'
   const HANDWRITING = 'app.handwriting'
-
   const held = $derived(toolbar.ids)
-
   const dotFor = (tone: number | null) => (tone === null ? undefined : `var(--canvas-${tone})`)
-
   async function showColours(on: boolean) {
     const keyboard = bar?.contains(document.activeElement) ?? false
     colouring = on
     if (!keyboard) return
-
     await tick()
     bar?.querySelector<HTMLElement>('button.swatch')?.focus()
   }
-
   function pick(colour: HighlightColour) {
     modes.setHighlightTone(colour.tone)
     colouring = false
@@ -228,31 +202,25 @@
     border-radius: 0;
     border-width: 1px 0 0;
   }
-
   .docked button {
     flex: 1;
     min-width: 0;
     height: 44px;
     font-size: var(--text-base);
   }
-
   button :global(svg) {
     --mark: 1.2em;
-
     display: block;
     margin: 0 auto;
   }
-
   .low {
     display: inline-block;
     transform: translateY(0.2em);
   }
-
   .swatch {
     display: grid;
     place-items: center;
   }
-
   .swatch::after {
     content: '';
     display: block;
@@ -263,39 +231,32 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition: scale var(--dur-fast) var(--ease-spring);
   }
-
   .swatch:hover::after {
     scale: 1.14;
   }
-
   .swatch:active::after {
     scale: 1.04;
   }
-
   .swatch.on::after {
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent),
       0 0 0 2px var(--surface-3),
       0 0 0 3px var(--accent);
   }
-
   .swatch.bare::after {
     background: none;
     box-shadow: inset 0 0 0 2px var(--muted);
   }
-
   .swatch.bare.on::after {
     box-shadow:
       inset 0 0 0 2px var(--muted),
       0 0 0 2px var(--surface-3),
       0 0 0 3px var(--accent);
   }
-
   .swatch:hover,
   .swatch:active {
     background: none;
   }
-
   :global([data-touch]) .swatch::after {
     width: 20px;
     height: 20px;

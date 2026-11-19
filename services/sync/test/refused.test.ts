@@ -22,7 +22,6 @@ describe('what the service refuses with', () => {
     expect(refused.ROOM_AWAY).toBe('this room is not answering - try again')
     expect(refused.TOO_MANY_CHANGES).toBe('too many changes at once - try again in a minute')
   })
-
   test('and every one of them is lowercase, so it drops into a line of text', () => {
     for (const [name, sentence] of Object.entries(refused)) {
       expect(typeof sentence, name).toBe('string')
@@ -30,24 +29,18 @@ describe('what the service refuses with', () => {
     }
   })
 })
-
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
-
 const GENERATED = new Set(['style.ts', 'math.ts', 'script.ts'])
-
 function sources(dir: string, found: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) sources(path, found)
     else if (name.endsWith('.ts') && !GENERATED.has(name)) found.push(path)
   }
-
   return found
 }
-
 function literals(): Map<string, Set<string>> {
   const found = new Map<string, Set<string>>()
-
   for (const path of sources(SOURCE)) {
     const name = path.slice(SOURCE.length).replace(/\\/g, '/')
     for (const match of readFileSync(path, 'utf8').matchAll(/error:\s*'([^']{4,})'/g)) {
@@ -57,20 +50,16 @@ function literals(): Map<string, Set<string>> {
       found.set(sentence, where)
     }
   }
-
   return found
 }
-
 describe('a sentence two modules both send', () => {
   test('is named once rather than written twice', () => {
     const shared = [...literals()]
       .filter(([, where]) => where.size > 1)
       .map(([sentence, where]) => `${sentence} - ${[...where].sort().join(', ')}`)
       .sort()
-
     expect(shared, shared.join('\n')).toEqual([])
   })
-
   test('and the scan is looking at something', () => {
     expect(literals().size).toBeGreaterThan(40)
   })

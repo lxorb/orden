@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -12,24 +11,18 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk } = await import('../disk')
 disk.current = new Disk()
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pane } = await import('../../src/lib/panes/src/api')
 const Tree = (await import('../../src/lib/sidebar/src/Tree.svelte')).default
-
 const FIELD = '/space/Field notes'
 const LEDGER = '/space/Field notes/Ledger.md'
 const ATLAS = '/space/Field notes/Atlas.md'
 const PLAN = '/space/Plan.md'
-
 let list: ReturnType<typeof mount> | null = null
-
 const rowOf = (path: string) => document.querySelector<HTMLElement>(`[data-path="${path}"]`)
 const said = (path: string, name: string) => rowOf(path)?.getAttribute(name) ?? null
-
 beforeEach(async () => {
   HTMLElement.prototype.scrollIntoView = () => undefined
   const one = disk.current!
@@ -55,12 +48,10 @@ beforeEach(async () => {
   })
   flushSync()
 })
-
 afterEach(() => {
   if (list) void unmount(list)
   list = null
 })
-
 test('the list is a tree, and every row in it a treeitem', () => {
   const tree = document.querySelector('[role="tree"]')
   expect(tree?.getAttribute('aria-label')).toBe('Files')
@@ -71,29 +62,24 @@ test('the list is a tree, and every row in it a treeitem', () => {
     expect(holder.getAttribute('role')).toBe('none')
   }
 })
-
 test('a note inside another is one level deeper, and counted among its own', async () => {
   if (!workspace.isExpanded(FIELD)) workspace.toggleFolder(FIELD)
   flushSync()
   await vi.waitFor(() => expect(rowOf(LEDGER)).not.toBeNull(), { timeout: 10_000 })
-
   expect(said(FIELD, 'aria-level')).toBe('1')
   expect(said(FIELD, 'aria-expanded')).toBe('true')
   expect(said(LEDGER, 'aria-level')).toBe('2')
   expect(said(ATLAS, 'aria-level')).toBe('2')
-
   expect([said(ATLAS, 'aria-posinset'), said(ATLAS, 'aria-setsize')]).toEqual(['1', '2'])
   expect([said(LEDGER, 'aria-posinset'), said(LEDGER, 'aria-setsize')]).toEqual(['2', '2'])
   expect([said(FIELD, 'aria-posinset'), said(FIELD, 'aria-setsize')]).toEqual(['1', '2'])
   expect([said(PLAN, 'aria-posinset'), said(PLAN, 'aria-setsize')]).toEqual(['2', '2'])
 })
-
 test('a folder shut says so, and a row picked says it is selected', () => {
   if (workspace.isExpanded(FIELD)) workspace.toggleFolder(FIELD)
   flushSync()
   expect(said(FIELD, 'aria-expanded')).toBe('false')
   expect(said(PLAN, 'aria-expanded')).toBeNull()
-
   expect(said(PLAN, 'aria-selected')).toBe('false')
   workspace.select(PLAN)
   flushSync()

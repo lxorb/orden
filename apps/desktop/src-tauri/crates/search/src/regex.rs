@@ -2,43 +2,29 @@ use std::cell::Cell;
 use std::sync::LazyLock;
 
 pub const BUDGET: usize = 250_000;
-
 const BUDGET_PER_BYTE: usize = 400;
-
 const MOST_BUDGET: usize = 10_000_000;
-
 const LEAST_PER_BYTE: usize = 200;
-
 const MOST_FLOOR: usize = 100_000_000;
-
 const LETTERS_PER_STEP: usize = 4;
-
 #[must_use]
 pub fn budget_for(text: usize) -> usize {
     text.saturating_mul(BUDGET_PER_BYTE)
         .clamp(BUDGET, MOST_BUDGET)
         .max(text.saturating_mul(LEAST_PER_BYTE).min(MOST_FLOOR))
 }
-
 const PROGRAM_LIMIT: usize = 10_000;
-
 const REPEAT_LIMIT: usize = 1_000;
-
 const DEPTH_LIMIT: usize = 64;
-
 const SOURCE_LIMIT: usize = 4096;
-
 const UNSET: usize = usize::MAX;
-
 const FIRST_LIMIT: usize = 64;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Match {
     pub from: usize,
     pub to: usize,
     pub groups: Vec<String>,
 }
-
 pub struct Pattern {
     program: Program,
     groups: usize,
@@ -46,48 +32,40 @@ pub struct Pattern {
     first: Option<First>,
     lead: Option<Vec<Start>>,
 }
-
 struct Lead {
     prefix: Vec<Letter>,
     run: Letter,
 }
-
 enum Start {
     Run(Lead),
     Letters(First),
     Bounded(Bounded),
     Literal(Literal),
 }
-
 struct Literal {
     width: usize,
     letters: Vec<char>,
 }
-
 struct Bounded {
     run: Letter,
     most: usize,
     rest: usize,
 }
-
 enum Letter {
     Any,
     Char(char),
     Class(Class),
 }
-
 struct First {
     ascii: [bool; 128],
     wide: Vec<char>,
 }
-
 struct Program {
     steps: Vec<Step>,
     classes: Vec<Class>,
     cells: usize,
     backward: bool,
 }
-
 #[derive(Clone, Copy)]
 enum Step {
     Char(char),
@@ -119,7 +97,6 @@ enum Step {
     TakeOne,
     Done,
 }
-
 #[derive(Clone, Copy)]
 struct Resume {
     pc: usize,
@@ -127,7 +104,6 @@ struct Resume {
     undo: usize,
     floor: usize,
 }
-
 struct Run<'a> {
     text: &'a str,
     cells: Vec<usize>,
@@ -138,27 +114,23 @@ struct Run<'a> {
     floor: usize,
     back: bool,
 }
-
 #[derive(Clone)]
 struct Class {
     negated: bool,
     members: Vec<Member>,
 }
-
 #[derive(Clone, Copy)]
 enum Member {
     One(char),
     Span(char, char),
     Set(Kind, bool),
 }
-
 #[derive(Clone, Copy)]
 enum Kind {
     Digit,
     Word,
     Space,
 }
-
 enum Node {
     Char(char),
     Any,
@@ -174,33 +146,28 @@ enum Node {
     Alt(Vec<Node>),
     Repeat(Box<Node>, Limits),
 }
-
 #[derive(Clone, Copy)]
 struct Look {
     behind: bool,
     negated: bool,
 }
-
 #[derive(Clone, Copy)]
 struct Limits {
     min: usize,
     max: Option<usize>,
     lazy: bool,
 }
-
 enum Quantifier {
     Absent,
     Broken,
     Given(Limits),
 }
-
 impl Pattern {
     #[must_use]
     pub fn compile(source: &str, fold: bool) -> Option<Pattern> {
         if source.len() > SOURCE_LIMIT {
             return None;
         }
-
         let src: Vec<char> = source.chars().collect();
         let mut parser = Parser {
             src: &src,
@@ -209,13 +176,10 @@ impl Pattern {
             depth: 0,
             names: Vec::new(),
         };
-
         let mut node = parser.alternation()?;
-
         if parser.at != src.len() {
             return None;
         }
-
         let groups = parser.groups;
         called_back(&mut node, &parser.names, groups)?;
         let mut program = Program {
@@ -224,12 +188,10 @@ impl Pattern {
             cells: groups.checked_add(1)?.checked_mul(2)?,
             backward: false,
         };
-
         program.push(Step::Save(0))?;
         program.emit(&node)?;
         program.push(Step::Save(1))?;
         program.push(Step::Done)?;
-
         let lead = lead_of(&node, fold)
             .or_else(|| bounded_lead(&node, &program))
             .or_else(|| literal_lead(&node));
@@ -241,29 +203,22 @@ impl Pattern {
             lead,
         })
     }
-
     #[must_use]
     pub fn find_within(&self, text: &str, at: usize, budget: &Cell<usize>) -> Option<Match> {
         let mut start = at;
         let seen = Cell::new((usize::MAX, usize::MAX));
-
         while start <= text.len() {
             start = self.next_start(text, start)?;
-
             if let Some(cells) = self.attempt(text, start, budget) {
                 return Some(self.take(text, &cells, start));
             }
-
             if budget.get() == 0 {
                 return None;
             }
-
             start = self.past_lead(text, start, budget, &seen)?;
         }
-
         None
     }
-
     fn past_lead(
         &self,
         text: &str,
@@ -277,7 +232,6 @@ impl Pattern {
         let Some(starts) = &self.lead else {
             return next;
         };
-
         starts
             .iter()
             .filter_map(|one| match one {
@@ -290,7 +244,6 @@ impl Pattern {
             })
             .min()
     }
-
     fn past_literal(
         &self,
         text: &str,
@@ -319,7 +272,6 @@ impl Pattern {
         }
         Some(at.max(from))
     }
-
     fn literal_from(
         &self,
         text: &str,
@@ -367,7 +319,6 @@ impl Pattern {
         }
         charge(work).then_some(usize::MAX)
     }
-
     fn past_bounded(
         &self,
         text: &str,
@@ -386,7 +337,6 @@ impl Pattern {
                 None => return Some(text.len() + 1),
             }
         }
-
         let mut from = start;
         let mut scanned = 0;
         for (at, c) in ends {
@@ -412,7 +362,6 @@ impl Pattern {
         }
         Some(text.len() + 1)
     }
-
     fn past_run(
         &self,
         text: &str,
@@ -434,14 +383,12 @@ impl Pattern {
             .count();
         advanced(text, start, run.checked_add(1)?)
     }
-
     fn letter_from(&self, text: &str, from: usize, first: &First) -> Option<usize> {
         text.get(from..)?
             .char_indices()
             .find(|&(_, letter)| first.holds(letter, self.fold))
             .and_then(|(at, _)| from.checked_add(at))
     }
-
     fn holds(&self, wanted: &Letter, letter: char) -> bool {
         match wanted {
             Letter::Any => !ends_line(letter),
@@ -450,26 +397,21 @@ impl Pattern {
             Letter::Class(class) => class.holds(letter, self.fold),
         }
     }
-
     fn next_start(&self, text: &str, from: usize) -> Option<usize> {
         let Some(first) = &self.first else {
             return Some(from);
         };
-
         let rest = text.get(from..)?;
         let step = rest
             .char_indices()
             .find(|&(_, c)| first.holds(c, self.fold))
             .map(|(at, _)| at)?;
-
         from.checked_add(step)
     }
-
     fn attempt(&self, text: &str, start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
         let cells = vec![UNSET; self.program.cells];
         self.attempt_from(text, start, 0, cells, false, budget)
     }
-
     fn attempt_from(
         &self,
         text: &str,
@@ -489,7 +431,6 @@ impl Pattern {
             floor: start,
             back,
         };
-
         loop {
             if self.follow(&mut run, budget)? {
                 return Some(run.cells);
@@ -499,15 +440,12 @@ impl Pattern {
             }
         }
     }
-
     fn follow(&self, run: &mut Run, budget: &Cell<usize>) -> Option<bool> {
         loop {
             budget.set(budget.get().checked_sub(1)?);
-
             let Some(step) = self.program.steps.get(run.pc).copied() else {
                 return Some(false);
             };
-
             match step {
                 Step::Char(_) | Step::Any | Step::Class(_) => {
                     let read = if run.back { letter_before } else { letter_at };
@@ -517,7 +455,6 @@ impl Pattern {
                     if !self.accepts(step, letter) {
                         return Some(false);
                     }
-
                     if run.back {
                         run.pos -= letter.len_utf8();
                     } else {
@@ -547,7 +484,6 @@ impl Pattern {
                 }
                 Step::Clear { from, to } => {
                     budget.set(budget.get().saturating_sub(to.saturating_sub(from)));
-
                     for (cell, slot) in run.cells.iter_mut().enumerate().skip(from) {
                         if cell > to {
                             break;
@@ -599,13 +535,11 @@ impl Pattern {
             }
         }
     }
-
     fn looks(&self, run: &Run, behind: bool, budget: &Cell<usize>) -> Option<Seen> {
         let body = run.pc.checked_add(1)?;
         let seen = self.attempt_from(run.text, run.pos, body, run.cells.clone(), behind, budget);
         unless_spent(seen, budget)
     }
-
     fn called(&self, run: &Run, group: usize, budget: &Cell<usize>) -> Option<usize> {
         let Some((from, to)) = span(&run.cells, group) else {
             return Some(run.pos);
@@ -626,7 +560,6 @@ impl Pattern {
                 Box::new(wanted.chars()),
             )
         };
-
         let mut taken = 0;
         for want in wants.by_ref() {
             let got = letters.next()?;
@@ -640,14 +573,12 @@ impl Pattern {
             }
             taken += got.len_utf8();
         }
-
         if run.back {
             run.pos.checked_sub(taken)
         } else {
             run.pos.checked_add(taken)
         }
     }
-
     fn count(&self, run: &mut Run, most: usize, budget: &Cell<usize>) -> Option<bool> {
         let Some(letter) = self.program.steps.get(run.pc + 1).copied() else {
             return Some(false);
@@ -683,7 +614,6 @@ impl Pattern {
         run.pc += 3;
         Some(true)
     }
-
     fn counted(&self, run: &mut Run, step: Step, budget: &Cell<usize>) -> Option<bool> {
         match step {
             Step::Count(most) => self.count(run, most, budget),
@@ -691,7 +621,6 @@ impl Pattern {
             _ => self.take_one(run, budget),
         }
     }
-
     fn reach(&self, run: &mut Run, most: usize, budget: &Cell<usize>) -> Option<bool> {
         let from = run.pos;
         if !self.count(run, most, budget)? {
@@ -709,7 +638,6 @@ impl Pattern {
         run.pos = from;
         Some(true)
     }
-
     fn take_one(&self, run: &mut Run, budget: &Cell<usize>) -> Option<bool> {
         let reach = run.floor;
         let next = match self.program.steps.get(run.pc + 1).copied() {
@@ -749,7 +677,6 @@ impl Pattern {
         run.pc += 1;
         Some(true)
     }
-
     fn give_back(&self, run: &mut Run, budget: &Cell<usize>) -> Option<()> {
         let floor = run.floor;
         let next = match self.program.steps.get(run.pc + 1).copied() {
@@ -795,7 +722,6 @@ impl Pattern {
         }
         Some(())
     }
-
     fn accepts(&self, step: Step, c: char) -> bool {
         match step {
             Step::Char(wanted) => {
@@ -814,27 +740,22 @@ impl Pattern {
             _ => false,
         }
     }
-
     fn take(&self, text: &str, cells: &[usize], start: usize) -> Match {
         let (from, to) = span(cells, 0).unwrap_or((start, start));
         let mut groups = Vec::with_capacity(self.groups);
-
         for group in 1..=self.groups {
             let caught = span(cells, group)
                 .and_then(|(open, close)| text.get(open..close))
                 .map_or_else(String::new, str::to_owned);
             groups.push(caught);
         }
-
         Match { from, to, groups }
     }
 }
-
 enum Seen {
     Found(Vec<usize>),
     Missed,
 }
-
 fn unless_spent(seen: Option<Vec<usize>>, budget: &Cell<usize>) -> Option<Seen> {
     match seen {
         Some(cells) => Some(Seen::Found(cells)),
@@ -842,7 +763,6 @@ fn unless_spent(seen: Option<Vec<usize>>, budget: &Cell<usize>) -> Option<Seen> 
         None => Some(Seen::Missed),
     }
 }
-
 impl Run<'_> {
     fn adopt(&mut self, cells: Vec<usize>) {
         for (cell, now) in cells.into_iter().enumerate() {
@@ -855,12 +775,10 @@ impl Run<'_> {
             }
         }
     }
-
     fn backtrack(&mut self) -> bool {
         let Some(resume) = self.choices.pop() else {
             return false;
         };
-
         while self.trail.len() > resume.undo {
             let Some((cell, was)) = self.trail.pop() else {
                 break;
@@ -869,22 +787,18 @@ impl Run<'_> {
                 *slot = was;
             }
         }
-
         self.pc = resume.pc;
         self.pos = resume.pos;
         self.floor = resume.floor;
         true
     }
 }
-
 fn letter_at(text: &str, at: usize) -> Option<char> {
     text.get(at..).and_then(|rest| rest.chars().next())
 }
-
 fn letter_before(text: &str, at: usize) -> Option<char> {
     text.get(..at).and_then(|head| head.chars().next_back())
 }
-
 fn asserts(step: Step, text: &str, pos: usize) -> bool {
     match step {
         Step::Start => pos == 0,
@@ -896,39 +810,31 @@ fn asserts(step: Step, text: &str, pos: usize) -> bool {
         _ => false,
     }
 }
-
 fn span(cells: &[usize], group: usize) -> Option<(usize, usize)> {
     let open = group.checked_mul(2)?;
     let close = open.checked_add(1)?;
     let from = cells.get(open).copied()?;
     let to = cells.get(close).copied()?;
-
     if from == UNSET || to == UNSET || from > to {
         return None;
     }
-
     Some((from, to))
 }
-
 fn wordish(c: Option<char>) -> bool {
     c.is_some_and(is_word)
 }
-
 fn is_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
-
 fn ends_line(c: char) -> bool {
     matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}')
 }
-
 pub(crate) fn is_space(c: char) -> bool {
     let breaks = ends_line(c);
     let blanks = matches!(c, '\t' | '\u{b}' | '\u{c}' | ' ' | '\u{a0}' | '\u{feff}');
     let wide = matches!(c, '\u{1680}' | '\u{202f}' | '\u{205f}' | '\u{3000}');
     breaks || blanks || wide || ('\u{2000}'..='\u{200a}').contains(&c)
 }
-
 fn folded(c: char) -> char {
     let mut lower = c.to_lowercase();
     match (lower.next(), lower.next()) {
@@ -936,7 +842,6 @@ fn folded(c: char) -> char {
         _ => c,
     }
 }
-
 fn raised(c: char) -> char {
     let mut upper = c.to_uppercase();
     match (upper.next(), upper.next()) {
@@ -944,7 +849,6 @@ fn raised(c: char) -> char {
         _ => c,
     }
 }
-
 impl Kind {
     fn holds(self, c: char) -> bool {
         match self {
@@ -953,7 +857,6 @@ impl Kind {
             Kind::Space => is_space(c),
         }
     }
-
     fn members(self) -> &'static [char] {
         match self {
             Kind::Digit => &DIGITS,
@@ -962,30 +865,25 @@ impl Kind {
         }
     }
 }
-
 static DIGITS: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Digit));
 static WORDS: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Word));
 static SPACES: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Space));
-
 fn listed(kind: Kind) -> Vec<char> {
     let ceiling = match kind {
         Kind::Digit | Kind::Word => 0x7f,
         Kind::Space => 0xfeff,
     };
-
     (0..=ceiling)
         .filter_map(char::from_u32)
         .filter(|&c| kind.holds(c))
         .collect()
 }
-
 impl Class {
     fn holds(&self, c: char, fold: bool) -> bool {
         let inside = self.members.iter().any(|member| member.holds(c, fold));
         inside != self.negated
     }
 }
-
 impl Member {
     fn holds(self, c: char, fold: bool) -> bool {
         match self {
@@ -1005,7 +903,6 @@ impl Member {
         }
     }
 }
-
 struct Parser<'a> {
     src: &'a [char],
     at: usize,
@@ -1013,22 +910,18 @@ struct Parser<'a> {
     depth: usize,
     names: Vec<(String, usize)>,
 }
-
 impl Parser<'_> {
     fn peek(&self) -> Option<char> {
         self.src.get(self.at).copied()
     }
-
     fn ahead(&self, by: usize) -> Option<char> {
         self.src.get(self.at.checked_add(by)?).copied()
     }
-
     fn eat(&mut self) -> Option<char> {
         let c = self.peek()?;
         self.at += 1;
         Some(c)
     }
-
     fn eat_if(&mut self, c: char) -> bool {
         if self.peek() == Some(c) {
             self.at += 1;
@@ -1037,19 +930,16 @@ impl Parser<'_> {
             false
         }
     }
-
     fn alternation(&mut self) -> Option<Node> {
         let mut branches = vec![self.sequence()?];
         while self.eat_if('|') {
             branches.push(self.sequence()?);
         }
-
         if branches.len() == 1 {
             return branches.pop();
         }
         Some(Node::Alt(branches))
     }
-
     fn sequence(&mut self) -> Option<Node> {
         let mut terms = Vec::new();
         while let Some(c) = self.peek() {
@@ -1058,13 +948,11 @@ impl Parser<'_> {
             }
             terms.push(self.term()?);
         }
-
         if terms.len() == 1 {
             return terms.pop();
         }
         Some(Node::Seq(terms))
     }
-
     fn term(&mut self) -> Option<Node> {
         let atom = self.atom()?;
         match self.quantifier() {
@@ -1078,7 +966,6 @@ impl Parser<'_> {
             }
         }
     }
-
     fn quantifier_ahead(&self) -> bool {
         match self.peek() {
             Some('*' | '+' | '?') => true,
@@ -1086,7 +973,6 @@ impl Parser<'_> {
             _ => false,
         }
     }
-
     fn counted_ahead(&self) -> bool {
         let mut at = self.at.saturating_add(1);
         let digits = |from: usize| {
@@ -1094,7 +980,6 @@ impl Parser<'_> {
                 rest.iter().take_while(|c| c.is_ascii_digit()).count()
             })
         };
-
         let first = digits(at);
         if first == 0 {
             return false;
@@ -1106,7 +991,6 @@ impl Parser<'_> {
         }
         self.src.get(at) == Some(&'}')
     }
-
     fn atom(&mut self) -> Option<Node> {
         let c = self.eat()?;
         match c {
@@ -1126,7 +1010,6 @@ impl Parser<'_> {
             _ => Some(Node::Char(c)),
         }
     }
-
     fn group(&mut self) -> Option<Node> {
         let mut look = None;
         let number = if self.eat_if('?') {
@@ -1168,30 +1051,25 @@ impl Parser<'_> {
         } else {
             Some(self.capture()?)
         };
-
         self.depth += 1;
         if self.depth > DEPTH_LIMIT {
             return None;
         }
         let inner = self.alternation()?;
         self.depth = self.depth.saturating_sub(1);
-
         if !self.eat_if(')') {
             return None;
         }
-
         if let Some(look) = look {
             return Some(Node::Look(look, Box::new(inner)));
         }
         Some(Node::Group(number, Box::new(inner)))
     }
-
     fn capture(&mut self) -> Option<usize> {
         let given = self.groups;
         self.groups = self.groups.checked_add(1)?;
         Some(given)
     }
-
     fn name(&mut self) -> Option<String> {
         let mut name = String::new();
         loop {
@@ -1211,7 +1089,6 @@ impl Parser<'_> {
         }
         (!name.is_empty()).then_some(name)
     }
-
     fn coded(&mut self, c: char) -> Option<char> {
         match c {
             'x' => {
@@ -1258,7 +1135,6 @@ impl Parser<'_> {
             _ => None,
         }
     }
-
     fn hex(&mut self, count: usize) -> Option<u32> {
         let mut value: u32 = 0;
         for _ in 0..count {
@@ -1268,14 +1144,11 @@ impl Parser<'_> {
         }
         Some(value)
     }
-
     fn escape(&mut self) -> Option<Node> {
         let c = self.eat()?;
-
         if let Some((kind, negated)) = named_set(c) {
             return Some(one_set(kind, negated));
         }
-
         match c {
             'b' => Some(Node::Boundary(true)),
             'B' => Some(Node::Boundary(false)),
@@ -1299,35 +1172,29 @@ impl Parser<'_> {
             _ => literal_escape(c, self.peek()).map(Node::Char),
         }
     }
-
     fn class(&mut self) -> Option<Class> {
         let negated = self.eat_if('^');
         let mut members = Vec::new();
-
         if self.eat_if(']') {
             members.push(Member::One(']'));
         }
-
         loop {
             let c = self.peek()?;
             if c == ']' {
                 self.at += 1;
                 break;
             }
-
             if c == '-' {
                 self.at += 1;
                 members.push(Member::One('-'));
                 continue;
             }
-
             let first = self.class_atom()?;
             let ranged = self.peek() == Some('-') && !matches!(self.ahead(1), None | Some(']'));
             if !ranged {
                 members.push(first);
                 continue;
             }
-
             self.at += 1;
             let second = self.class_atom()?;
             match (first, second) {
@@ -1344,37 +1211,29 @@ impl Parser<'_> {
                 }
             }
         }
-
         Some(Class { negated, members })
     }
-
     fn class_atom(&mut self) -> Option<Member> {
         let c = self.eat()?;
         if c != '\\' {
             return Some(Member::One(c));
         }
-
         let escaped = self.eat()?;
         if let Some((kind, negated)) = named_set(escaped) {
             return Some(Member::Set(kind, negated));
         }
-
         if escaped == 'b' {
             return Some(Member::One('\u{8}'));
         }
-
         if matches!(escaped, 'x' | 'u' | 'c') {
             return self.coded(escaped).map(Member::One);
         }
-
         literal_escape(escaped, self.peek()).map(Member::One)
     }
-
     fn quantifier(&mut self) -> Quantifier {
         let Some(c) = self.peek() else {
             return Quantifier::Absent;
         };
-
         let (min, max) = match c {
             '*' => {
                 self.at += 1;
@@ -1399,18 +1258,15 @@ impl Parser<'_> {
             }
             _ => return Quantifier::Absent,
         };
-
         Quantifier::Given(Limits {
             min,
             max,
             lazy: self.eat_if('?'),
         })
     }
-
     fn braces(&mut self) -> Option<(usize, Option<usize>)> {
         self.at += 1;
         let min = self.number()?;
-
         let max = if self.eat_if(',') {
             if self.peek() == Some('}') {
                 None
@@ -1420,21 +1276,17 @@ impl Parser<'_> {
         } else {
             Some(min)
         };
-
         if !self.eat_if('}') {
             return None;
         }
         if max.is_some_and(|high| high < min) {
             return None;
         }
-
         Some((min, max))
     }
-
     fn number(&mut self) -> Option<usize> {
         let mut value: usize = 0;
         let mut seen = false;
-
         while let Some(digit) = self.peek().and_then(|c| c.to_digit(10)) {
             value = value
                 .checked_mul(10)?
@@ -1445,7 +1297,6 @@ impl Parser<'_> {
             seen = true;
             self.at += 1;
         }
-
         if seen {
             Some(value)
         } else {
@@ -1453,7 +1304,6 @@ impl Parser<'_> {
         }
     }
 }
-
 fn named_set(c: char) -> Option<(Kind, bool)> {
     match c {
         'd' => Some((Kind::Digit, false)),
@@ -1465,14 +1315,12 @@ fn named_set(c: char) -> Option<(Kind, bool)> {
         _ => None,
     }
 }
-
 fn one_set(kind: Kind, negated: bool) -> Node {
     Node::Class(Class {
         negated: false,
         members: vec![Member::Set(kind, negated)],
     })
 }
-
 fn literal_escape(c: char, next: Option<char>) -> Option<char> {
     match c {
         'n' => Some('\n'),
@@ -1485,13 +1333,11 @@ fn literal_escape(c: char, next: Option<char>) -> Option<char> {
         _ => None,
     }
 }
-
 impl First {
     fn new(chars: &[char]) -> Option<First> {
         if chars.is_empty() || chars.len() > FIRST_LIMIT {
             return None;
         }
-
         let mut ascii = [false; 128];
         let mut wide = Vec::new();
         for &c in chars {
@@ -1502,18 +1348,14 @@ impl First {
                 wide.push(c);
             }
         }
-
         Some(First { ascii, wide })
     }
-
     fn holds(&self, c: char, fold: bool) -> bool {
         if self.has(c) {
             return true;
         }
-
         fold && (self.has(folded(c)) || self.has(raised(c)))
     }
-
     fn has(&self, c: char) -> bool {
         usize::try_from(u32::from(c))
             .ok()
@@ -1522,7 +1364,6 @@ impl First {
             .unwrap_or_else(|| self.wide.contains(&c))
     }
 }
-
 fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
     match node {
         Node::Char(c) => {
@@ -1557,15 +1398,12 @@ fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
         | Node::Named(_) => None,
     }
 }
-
 const LONGEST_LEAD: usize = 16;
-
 fn lead_of(node: &Node, fold: bool) -> Option<Vec<Start>> {
     let free = !calls_back(node);
     let Node::Alt(branches) = unwrapped(node, free) else {
         return Some(vec![Start::Run(run_of(node, free)?)]);
     };
-
     let starts = branches
         .iter()
         .map(|branch| {
@@ -1581,7 +1419,6 @@ fn lead_of(node: &Node, fold: bool) -> Option<Vec<Start>> {
         .any(|one| matches!(one, Start::Run(_)))
         .then_some(starts)
 }
-
 fn bounded_lead(node: &Node, program: &Program) -> Option<Vec<Start>> {
     if calls_back(node) {
         return None;
@@ -1621,11 +1458,8 @@ fn bounded_lead(node: &Node, program: &Program) -> Option<Vec<Start>> {
         rest: count.checked_add(3)?,
     })])
 }
-
 const WIDEST_BEFORE_LITERAL: usize = 4096;
-
 const LONGEST_LITERAL: usize = 8;
-
 fn literal_lead(node: &Node) -> Option<Vec<Start>> {
     if calls_back(node) {
         return None;
@@ -1653,7 +1487,6 @@ fn literal_lead(node: &Node) -> Option<Vec<Start>> {
     }
     None
 }
-
 fn widest(node: &Node) -> Option<usize> {
     match node {
         Node::Char(_) | Node::Any | Node::Class(_) => Some(1),
@@ -1669,7 +1502,6 @@ fn widest(node: &Node) -> Option<usize> {
         Node::Repeat(..) | Node::Backref(_) | Node::Named(_) => None,
     }
 }
-
 fn unwrapped(node: &Node, free: bool) -> &Node {
     match node {
         Node::Group(None, inner) => unwrapped(inner, free),
@@ -1677,7 +1509,6 @@ fn unwrapped(node: &Node, free: bool) -> &Node {
         one => one,
     }
 }
-
 fn calls_back(node: &Node) -> bool {
     match node {
         Node::Backref(_) | Node::Named(_) => true,
@@ -1691,7 +1522,6 @@ fn calls_back(node: &Node) -> bool {
         | Node::Boundary(_) => false,
     }
 }
-
 fn flattened<'a>(node: &'a Node, free: bool, out: &mut Vec<&'a Node>) {
     match node {
         Node::Seq(nodes) => {
@@ -1704,11 +1534,9 @@ fn flattened<'a>(node: &'a Node, free: bool, out: &mut Vec<&'a Node>) {
         one => out.push(one),
     }
 }
-
 fn run_of(node: &Node, free: bool) -> Option<Lead> {
     let mut atoms = Vec::new();
     flattened(node, free, &mut atoms);
-
     let mut prefix = Vec::new();
     for one in atoms.into_iter().take(LONGEST_LEAD) {
         if let Node::Repeat(inner, Limits { max: None, .. }) = one {
@@ -1721,7 +1549,6 @@ fn run_of(node: &Node, free: bool) -> Option<Lead> {
     }
     None
 }
-
 fn one_letter(node: &Node, free: bool) -> Option<Letter> {
     match node {
         Node::Any => Some(Letter::Any),
@@ -1732,7 +1559,6 @@ fn one_letter(node: &Node, free: bool) -> Option<Letter> {
         _ => None,
     }
 }
-
 fn advanced(text: &str, from: usize, letters: usize) -> Option<usize> {
     let rest = text.get(from..)?;
     match rest.char_indices().nth(letters) {
@@ -1740,14 +1566,12 @@ fn advanced(text: &str, from: usize, letters: usize) -> Option<usize> {
         None => (rest.chars().count() == letters).then_some(text.len()),
     }
 }
-
 fn repeatable(atom: &Node) -> bool {
     !matches!(
         atom,
         Node::Look(..) | Node::Start | Node::End | Node::Boundary(_)
     )
 }
-
 fn called_back(node: &mut Node, names: &[(String, usize)], groups: usize) -> Option<()> {
     match node {
         Node::Named(name) => {
@@ -1776,12 +1600,10 @@ fn called_back(node: &mut Node, names: &[(String, usize)], groups: usize) -> Opt
     }
     Some(())
 }
-
 fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
     if class.negated {
         return None;
     }
-
     let mut out = Vec::new();
     for member in &class.members {
         match *member {
@@ -1804,10 +1626,8 @@ fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
             }
         }
     }
-
     Some(out)
 }
-
 fn spread(out: &mut Vec<char>, c: char, fold: bool) -> Option<()> {
     add(out, c)?;
     if fold {
@@ -1816,7 +1636,6 @@ fn spread(out: &mut Vec<char>, c: char, fold: bool) -> Option<()> {
     }
     Some(())
 }
-
 fn add(out: &mut Vec<char>, c: char) -> Option<()> {
     if out.contains(&c) {
         return Some(());
@@ -1824,33 +1643,27 @@ fn add(out: &mut Vec<char>, c: char) -> Option<()> {
     if out.len() >= FIRST_LIMIT {
         return None;
     }
-
     out.push(c);
     Some(())
 }
-
 impl Program {
     fn push(&mut self, step: Step) -> Option<usize> {
         if self.steps.len() >= PROGRAM_LIMIT {
             return None;
         }
-
         let at = self.steps.len();
         self.steps.push(step);
         Some(at)
     }
-
     fn patch(&mut self, at: usize, step: Step) -> Option<()> {
         *self.steps.get_mut(at)? = step;
         Some(())
     }
-
     fn cell(&mut self) -> Option<usize> {
         let taken = self.cells;
         self.cells = self.cells.checked_add(1)?;
         Some(taken)
     }
-
     fn emit(&mut self, node: &Node) -> Option<()> {
         match node {
             Node::Char(c) => {
@@ -1924,24 +1737,19 @@ impl Program {
             Node::Alt(branches) => self.emit_alt(branches)?,
             Node::Repeat(inner, limits) => self.emit_repeat(inner, *limits)?,
         }
-
         Some(())
     }
-
     fn emit_alt(&mut self, branches: &[Node]) -> Option<()> {
         let last = branches.len().checked_sub(1)?;
         let mut leaving = Vec::new();
-
         for (index, branch) in branches.iter().enumerate() {
             if index == last {
                 self.emit(branch)?;
                 break;
             }
-
             let split = self.push(Step::Jump(0))?;
             self.emit(branch)?;
             leaving.push(self.push(Step::Jump(0))?);
-
             let next = self.steps.len();
             let body = split.checked_add(1)?;
             self.patch(
@@ -1952,15 +1760,12 @@ impl Program {
                 },
             )?;
         }
-
         let after = self.steps.len();
         for jump in leaving {
             self.patch(jump, Step::Jump(after))?;
         }
-
         Some(())
     }
-
     fn emit_repeat(&mut self, node: &Node, limits: Limits) -> Option<()> {
         let clear = if let Some((low, high)) = groups_in(node) {
             let from = low.checked_add(1)?.checked_mul(2)?;
@@ -1969,11 +1774,9 @@ impl Program {
         } else {
             None
         };
-
         for _ in 0..limits.min {
             self.emit_round(node, clear)?;
         }
-
         if let Some(max) = limits.max {
             let spare = max.saturating_sub(limits.min);
             if spare > 1 && plain_letter(node) {
@@ -1992,14 +1795,12 @@ impl Program {
             self.emit_star(node, clear, limits.lazy)
         }
     }
-
     fn emit_round(&mut self, node: &Node, clear: Option<Step>) -> Option<()> {
         if let Some(step) = clear {
             self.push(step)?;
         }
         self.emit(node)
     }
-
     fn emit_star(&mut self, node: &Node, clear: Option<Step>, lazy: bool) -> Option<()> {
         let cell = self.cell()?;
         let split = self.push(Step::Jump(0))?;
@@ -2007,13 +1808,11 @@ impl Program {
         self.emit_round(node, clear)?;
         self.push(Step::Advanced(cell))?;
         self.push(Step::Jump(split))?;
-
         let after = self.steps.len();
         let body = split.checked_add(1)?;
         self.patch(split, branch(body, after, lazy))?;
         Some(())
     }
-
     fn emit_optional(
         &mut self,
         node: &Node,
@@ -2022,7 +1821,6 @@ impl Program {
         lazy: bool,
     ) -> Option<()> {
         let mut splits = Vec::new();
-
         for _ in 0..count {
             let cell = self.cell()?;
             splits.push(self.push(Step::Jump(0))?);
@@ -2030,17 +1828,14 @@ impl Program {
             self.emit_round(node, clear)?;
             self.push(Step::Advanced(cell))?;
         }
-
         let after = self.steps.len();
         for split in splits {
             let body = split.checked_add(1)?;
             self.patch(split, branch(body, after, lazy))?;
         }
-
         Some(())
     }
 }
-
 fn plain_letter(node: &Node) -> bool {
     match node {
         Node::Char(_) | Node::Any | Node::Class(_) => true,
@@ -2048,7 +1843,6 @@ fn plain_letter(node: &Node) -> bool {
         _ => false,
     }
 }
-
 fn branch(body: usize, after: usize, lazy: bool) -> Step {
     if lazy {
         Step::Split {
@@ -2062,7 +1856,6 @@ fn branch(body: usize, after: usize, lazy: bool) -> Step {
         }
     }
 }
-
 fn groups_in(node: &Node) -> Option<(usize, usize)> {
     match node {
         Node::Group(number, inner) => {
@@ -2081,7 +1874,6 @@ fn groups_in(node: &Node) -> Option<(usize, usize)> {
         _ => None,
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{Kind, Match, Pattern, BUDGET};
@@ -2090,34 +1882,27 @@ mod tests {
     fn find(pattern: &Pattern, text: &str, at: usize) -> Option<Match> {
         pattern.find_within(text, at, &Cell::new(BUDGET))
     }
-
     fn run(source: &str, subject: &str, fold: bool, from: usize) -> Option<Match> {
         find(&Pattern::compile(source, fold)?, subject, from)
     }
-
     fn first(source: &str, subject: &str) -> Option<String> {
         let found = run(source, subject, false, 0)?;
         Some(subject.get(found.from..found.to)?.to_owned())
     }
-
     fn folding(source: &str, subject: &str) -> Option<String> {
         let found = run(source, subject, true, 0)?;
         Some(subject.get(found.from..found.to)?.to_owned())
     }
-
     fn spans(source: &str, subject: &str, from: usize) -> Option<(usize, usize)> {
         let found = run(source, subject, false, from)?;
         Some((found.from, found.to))
     }
-
     fn caught(source: &str, subject: &str) -> Option<Vec<String>> {
         Some(run(source, subject, false, 0)?.groups)
     }
-
     fn words(list: &[&str]) -> Vec<String> {
         list.iter().copied().map(String::from).collect()
     }
-
     fn starts(source: &str, fold: bool) -> Option<Vec<char>> {
         let first = Pattern::compile(source, fold)?.first?;
         let mut out: Vec<char> = (0..128u32)
@@ -2128,16 +1913,13 @@ mod tests {
         out.sort_unstable();
         Some(out)
     }
-
     fn knows_start(source: &str) -> bool {
         Pattern::compile(source, false).is_some_and(|pattern| pattern.first.is_some())
     }
-
     fn without_filter(mut pattern: Pattern) -> Pattern {
         pattern.first = None;
         pattern
     }
-
     #[test]
     fn literal_text_matches_from_where_the_search_starts_leftmost_first() {
         assert_eq!(spans("foo", "a foo b", 0), Some((2, 5)));
@@ -2157,7 +1939,6 @@ mod tests {
         assert_eq!(first(".", "\u{2028}\u{2029}"), None);
         assert_eq!(first("a.", "aä").as_deref(), Some("aä"));
     }
-
     #[test]
     fn a_match_counts_in_bytes_the_way_a_span_does() {
         let found = Pattern::compile(r"\d+", false).and_then(|p| find(&p, "äöü42", 0));
@@ -2170,7 +1951,6 @@ mod tests {
             })
         );
     }
-
     #[test]
     fn a_class_holds_its_characters_ranges_and_escapes_the_way_the_browser_does() {
         assert_eq!(first("[abc]+", "xxcab!").as_deref(), Some("cab"));
@@ -2197,18 +1977,15 @@ mod tests {
         assert_eq!(first(r"\s+", "a \t b").as_deref(), Some(" \t "));
         assert_eq!(first(r"\S+", "  ab ").as_deref(), Some("ab"));
     }
-
     #[test]
     fn a_set_lists_itself_once() {
         let spaces = Kind::Space.members();
-
         assert!(std::ptr::eq(spaces, Kind::Space.members()));
         assert!(spaces.contains(&' ') && spaces.contains(&'\t'));
         assert!(!spaces.contains(&'a'));
         assert!(spaces.iter().all(|&one| Kind::Space.holds(one)));
         assert_eq!(Kind::Digit.members().len(), 10);
     }
-
     #[test]
     fn the_character_escapes_stand_for_their_characters() {
         assert_eq!(first(r"\.", "a.b").as_deref(), Some("."));
@@ -2225,7 +2002,6 @@ mod tests {
         );
         assert_eq!(first(r"\0", "a\0b").as_deref(), Some("\0"));
     }
-
     #[test]
     fn a_word_boundary_is_where_a_word_starts_or_ends() {
         assert_eq!(spans(r"\bfoo\b", "a foo bar", 0), Some((2, 5)));
@@ -2236,7 +2012,6 @@ mod tests {
         assert_eq!(spans(r"\bcat", "the cat", 4), Some((4, 7)));
         assert_eq!(spans(r"\bat", "the cat", 5), None);
     }
-
     #[test]
     fn the_anchors_are_the_two_ends_of_the_text() {
         assert_eq!(spans("^ab", "abc", 0), Some((0, 2)));
@@ -2249,7 +2024,6 @@ mod tests {
         assert_eq!(first("a$", "a\nb"), None);
         assert_eq!(spans("^a", "aa", 1), None);
     }
-
     #[test]
     fn groups_are_numbered_by_their_opening_bracket() {
         assert_eq!(
@@ -2263,7 +2037,6 @@ mod tests {
         assert_eq!(caught("(x)|(a)", "a"), Some(words(&["", "a"])));
         assert_eq!(caught(r"(\d+)?-(\w+)", "-ab"), Some(words(&["", "ab"])));
     }
-
     #[test]
     fn alternation_takes_the_leftmost_branch_that_lets_the_rest_succeed() {
         assert_eq!(first("a|ab", "ab").as_deref(), Some("a"));
@@ -2273,7 +2046,6 @@ mod tests {
         assert_eq!(first("(a|)", "b").as_deref(), Some(""));
         assert_eq!(first("x|y|z", "azb").as_deref(), Some("z"));
     }
-
     #[test]
     fn the_quantifiers_take_as_much_or_as_little_as_they_may() {
         assert_eq!(first("a*", "aaa").as_deref(), Some("aaa"));
@@ -2299,7 +2071,6 @@ mod tests {
         assert_eq!(caught("(a+)(a)", "aaa"), Some(words(&["aa", "a"])));
         assert_eq!(first(r"\d+3", "12345").as_deref(), Some("123"));
     }
-
     #[test]
     fn a_repetition_of_nothing_stops_and_forgets_the_round_before() {
         assert_eq!(spans("(a*)*", "b", 0), Some((0, 0)));
@@ -2313,7 +2084,6 @@ mod tests {
         assert_eq!(caught("(a?){1,2}", "a"), Some(words(&["a"])));
         assert_eq!(caught("([ab]??){1,2}", "ab"), Some(words(&["a"])));
     }
-
     #[test]
     fn folding_matches_either_case_on_both_sides() {
         assert_eq!(folding("HELLO", "say hello").as_deref(), Some("hello"));
@@ -2331,7 +2101,6 @@ mod tests {
         );
         assert_eq!(starts(r"\w", true).map(|set| set.len()), Some(63));
     }
-
     #[test]
     fn a_pattern_this_does_not_understand_does_not_compile() {
         for source in [
@@ -2378,7 +2147,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_look_around_asks_without_taking() {
         assert_eq!(spans("foo(?!bar)", "foobar foobaz", 0), Some((7, 10)));
@@ -2391,7 +2159,6 @@ mod tests {
         assert_eq!(caught("(?!(b))a", "a"), Some(words(&[""])));
         assert_eq!(folding("(?<=X)y", "xY").as_deref(), Some("Y"));
     }
-
     #[test]
     fn a_look_behind_of_any_length_reads_back_only_as_far_as_it_needs() {
         let pattern = Pattern::compile(r"(?<=status:\s*)\w+", false);
@@ -2412,7 +2179,6 @@ mod tests {
         assert_eq!(first(r"(?<=(\d+))x\1", "123x123").as_deref(), Some("x123"));
         assert_eq!(caught(r"(?<=(a+)(a+))b", "aaab"), Some(words(&["a", "aa"])));
     }
-
     fn every_hit(pattern: &Pattern, text: &str, budget: usize) -> Vec<(usize, usize)> {
         let budget = Cell::new(budget);
         let mut out = Vec::new();
@@ -2431,7 +2197,6 @@ mod tests {
         }
         out
     }
-
     #[test]
     fn a_pattern_led_by_a_long_run_finds_every_hit_on_long_lines() {
         let paragraphs = format!(
@@ -2465,7 +2230,6 @@ mod tests {
             assert_eq!(found.len(), hits, "{source}");
         }
     }
-
     #[test]
     fn skipping_past_a_leading_run_finds_what_trying_every_start_finds() {
         let texts = [
@@ -2522,7 +2286,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn a_counted_run_of_one_letter_finds_what_its_copies_written_out_find() {
         let texts = [
@@ -2586,7 +2349,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn a_bounded_run_before_a_word_finds_it_in_a_long_note() {
         let day = "we talked about the release and the schedule then wrote notes.\n";
@@ -2632,7 +2394,6 @@ mod tests {
             2
         );
     }
-
     #[test]
     fn words_counted_before_a_word_find_it_at_the_end_of_a_long_journal() {
         let day = "Day 1: we talked about the release and the schedule then wrote notes.\n\n";
@@ -2655,7 +2416,6 @@ mod tests {
             assert_eq!(found.len(), 1, "{source}");
         }
     }
-
     #[test]
     fn calling_a_long_group_back_spends_the_budget_it_reads() {
         let subject = "a".repeat(20_000);
@@ -2669,7 +2429,6 @@ mod tests {
         assert_eq!(pattern.find_within(&subject, 0, &budget), None);
         assert!(started.elapsed().as_secs() < 3, "{:?}", started.elapsed());
     }
-
     #[test]
     fn a_group_is_called_back_by_number_or_by_name() {
         assert_eq!(first(r"(\w)\1", "abccd").as_deref(), Some("cc"));
@@ -2682,7 +2441,6 @@ mod tests {
         assert_eq!(first(r"(a)|b\1", "b").as_deref(), Some("b"));
         assert_eq!(first(r"(ä)\1", "aää").as_deref(), Some("ää"));
     }
-
     #[test]
     fn a_letter_can_be_written_by_its_code() {
         assert_eq!(first(r"\x41", "zA").as_deref(), Some("A"));
@@ -2693,7 +2451,6 @@ mod tests {
         assert_eq!(first(r"[\x41-\x43]+", "ABCD").as_deref(), Some("ABC"));
         assert_eq!(first(r"[\u{1F600}]", "😀").as_deref(), Some("😀"));
     }
-
     #[test]
     fn a_brace_that_counts_nothing_is_a_brace() {
         assert_eq!(
@@ -2706,7 +2463,6 @@ mod tests {
         assert_eq!(first("a{2}{", "aa{").as_deref(), Some("aa{"));
         assert_eq!(first("}", "a}").as_deref(), Some("}"));
     }
-
     #[test]
     fn a_pattern_this_does_understand_compiles() {
         for source in [
@@ -2726,13 +2482,11 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_pattern_that_cannot_finish_gives_up_rather_than_hang() {
         let subject = "a".repeat(32);
         let pattern = Pattern::compile("(a+)+b", false);
         assert!(pattern.is_some(), "the pattern itself is a fine one");
-
         let started = std::time::Instant::now();
         assert_eq!(pattern.and_then(|p| find(&p, &subject, 0)), None);
         assert!(
@@ -2740,14 +2494,12 @@ mod tests {
             "the step budget should have stopped this long before now"
         );
     }
-
     #[test]
     fn a_pattern_longer_than_a_search_field_does_not_compile() {
         assert!(Pattern::compile(&"a".repeat(super::SOURCE_LIMIT), false).is_some());
         assert!(Pattern::compile(&"a".repeat(super::SOURCE_LIMIT + 1), false).is_none());
         assert!(Pattern::compile(&"a".repeat(4_000_000), false).is_none());
     }
-
     #[test]
     fn a_pattern_works_out_what_its_match_can_begin_with() {
         assert_eq!(starts("abc", false), Some(vec!['a']));
@@ -2763,7 +2515,6 @@ mod tests {
         assert_eq!(starts(r"\s", false).map(|set| set.len()), Some(25));
         assert_eq!(starts("ötest", false), Some(vec!['ö']));
     }
-
     #[test]
     fn a_pattern_that_could_begin_anywhere_gives_no_set_away() {
         for source in [
@@ -2798,7 +2549,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn the_set_of_first_characters_changes_no_answer() {
         let cases = [
@@ -2819,19 +2569,15 @@ mod tests {
             ("a*b", "xxb"),
             ("^a.*$", "abc"),
         ];
-
         assert!(knows_start("Z[a-z]+q"), "the first case should be filtered");
-
         for (source, subject) in cases {
             for fold in [false, true] {
                 let both = Pattern::compile(source, fold).zip(Pattern::compile(source, fold));
                 assert!(both.is_some(), "{source} should compile");
-
                 let Some((quick, plain)) = both else {
                     continue;
                 };
                 let plain = without_filter(plain);
-
                 for at in 0..=subject.len() {
                     if !subject.is_char_boundary(at) {
                         continue;
@@ -2845,7 +2591,6 @@ mod tests {
             }
         }
     }
-
     fn roll(seed: &mut u64, ceiling: usize) -> usize {
         *seed = seed
             .wrapping_mul(6_364_136_223_846_793_005)
@@ -2857,7 +2602,6 @@ mod tests {
             value % ceiling
         }
     }
-
     #[test]
     fn no_set_of_first_characters_hides_a_match() {
         let pieces = [
@@ -2868,10 +2612,8 @@ mod tests {
         let subjects = [
             "", "abc", "a1b2 c-_", "aAbB c", "Ö ö a", "  a1 z", "cab-cab",
         ];
-
         let mut seed: u64 = 0x5eed_1234;
         let mut checked = 0;
-
         for _ in 0..4000 {
             let mut source = String::new();
             for _ in 0..=roll(&mut seed, 5) {
@@ -2879,7 +2621,6 @@ mod tests {
                     source.push_str(piece);
                 }
             }
-
             let fold = roll(&mut seed, 2) == 0;
             let Some(subject) = subjects.get(roll(&mut seed, subjects.len())) else {
                 continue;
@@ -2889,7 +2630,6 @@ mod tests {
             else {
                 continue;
             };
-
             let plain = without_filter(plain);
             for at in 0..=subject.len() {
                 if !subject.is_char_boundary(at) {
@@ -2903,10 +2643,8 @@ mod tests {
             }
             checked += 1;
         }
-
         assert!(checked > 500, "only {checked} of the patterns compiled");
     }
-
     #[test]
     fn a_query_of_the_shape_search_sends_reads_the_line_it_is_given() {
         let line = "  ## A heading, and a #tag";

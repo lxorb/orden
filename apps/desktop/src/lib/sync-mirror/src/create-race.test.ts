@@ -9,7 +9,6 @@ const world = vi.hoisted(() => {
     created: number
     children: Entry[]
   }
-
   class Device {
     disk = new Map<string, string>()
     kept = new Map<string, string[]>()
@@ -17,21 +16,17 @@ const world = vi.hoisted(() => {
     rootShut = false
     refused = new Set<string>()
     refusedCopies = false
-
     keep(path: string, content: string) {
       if (!content.trim()) return
       const held = this.kept.get(path) ?? []
       if (held.at(-1) !== content) this.kept.set(path, [...held, content])
     }
   }
-
   const text = (value: unknown) => (typeof value === 'string' ? value : '')
   let here = new Device()
-
   function invoke<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
     const path = text(args.path)
     const answer = (value: unknown) => Promise.resolve(value as T)
-
     switch (command) {
       case 'read_note': {
         const held = here.disk.get(path)
@@ -110,19 +105,16 @@ const world = vi.hoisted(() => {
     }
     throw new Error(`no such command: ${command}`)
   }
-
   return {
     Device,
     invoke,
     use: (device: Device) => (here = device),
   }
 })
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: world.invoke,
 }))
-
 const { call, signIn, testEnv, worker } = await import('../test/service')
 type Env = ReturnType<typeof testEnv>
 const { newMirror } = await import('./mirror')
@@ -131,16 +123,13 @@ type Mirror = import('./mirror').Mirror
 type Clash = import('./conflicts').Clash
 type ConflictRule = import('./conflicts').ConflictRule
 type Device = InstanceType<typeof world.Device>
-
 const NOBODY = new Set<string>()
 const ROOT = '/Plans'
 const NOTE = `${ROOT}/plan.md`
 const COPY = 'from another device'
 const INBOX = `${ROOT}/.Inbox.md`
-
 let env: Env
 let account = { wordless: false, readsAway: false, filesSaid: [] as string[] }
-
 beforeEach(() => {
   env = testEnv()
   account = { wordless: false, readsAway: false, filesSaid: [] as string[] }
@@ -159,18 +148,15 @@ beforeEach(() => {
     return new Response(JSON.stringify({ note, error }), { status: 409 })
   })
 })
-
 afterEach(() => {
   vi.unstubAllGlobals()
   env.close()
 })
-
 async function person(email: string) {
   const token = await signIn(env, email)
   const me = await call<{ user?: { id: string } }>(env, '/v1/me', { token })
   return { token, id: me.json.user?.id ?? '' }
 }
-
 async function spaceOf(token: string, name = 'Plans'): Promise<string> {
   const made = await call<{ space?: { id: string } }>(env, '/v1/spaces', {
     token,
@@ -178,13 +164,11 @@ async function spaceOf(token: string, name = 'Plans'): Promise<string> {
   })
   return made.json.space?.id ?? ''
 }
-
 async function pass(device: Device, mirror: Mirror, token: string) {
   world.use(device)
   await pull(mirror, token, NOBODY)
   await push(mirror, token, NOBODY)
 }
-
 async function accountHolds(token: string, spaceId: string, path = 'plan.md') {
   const page = await call<{ notes: { id: string; path: string; deleted: boolean }[] }>(
     env,
@@ -200,13 +184,11 @@ async function accountHolds(token: string, spaceId: string, path = 'plan.md') {
     : null
   return { paths: live.map((one) => one.path).sort(), id: note?.id ?? '', ...body?.json }
 }
-
 const copies = (device: Device) => [...device.disk.keys()].filter((path) => path.includes(COPY))
 const sha = async (text: string) =>
   Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))))
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('')
-
 async function meetingInTheGap(path: string, ours: string, theirs: string) {
   const me = await person('a@example.com')
   const spaceId = await spaceOf(me.token)
@@ -221,18 +203,15 @@ async function meetingInTheGap(path: string, ours: string, theirs: string) {
   })
   return { me, spaceId, device, mirror }
 }
-
 describe('a create that meets a note made since the pull', () => {
   test('the other words stay, beside the ones written here', async () => {
     const { me, spaceId, device, mirror } = await meetingInTheGap('plan.md', 'words of A\n', 'words of B, only here\n')
     await push(mirror, me.token, NOBODY)
-
     expect(copies(device)).toHaveLength(1)
     expect(device.disk.get(copies(device)[0] ?? '')).toBe('words of B, only here\n')
     expect(device.disk.get(NOTE)).toBe('words of A\n')
     expect((await accountHolds(me.token, spaceId)).content).toBe('words of A\n')
   })
-
   test('the 409 itself carries the words, for an app already out there', async () => {
     const { me, spaceId } = await meetingInTheGap('plan.md', 'A\n', 'B\n')
     const again = await call<{ content?: string; note?: { id: string } }>(env, `/v1/spaces/${spaceId}/notes`, {
@@ -243,35 +222,29 @@ describe('a create that meets a note made since the pull', () => {
     expect(again.json.content).toBe('B\n')
     expect(again.json.note?.id).toBeTruthy()
   })
-
   test("the space's inbox keeps the tasks of both", async () => {
     const { me, spaceId, device, mirror } = await meetingInTheGap('.Inbox.md', '- [ ] from A\n', '- [ ] from B\n')
     await push(mirror, me.token, NOBODY)
-
     const held = await accountHolds(me.token, spaceId, '.Inbox.md')
     expect(held.content).toContain('- [ ] from A')
     expect(held.content).toContain('- [ ] from B')
     expect(device.disk.get(INBOX)).toContain('- [ ] from B')
   })
-
   test('a canvas keeps the cards of both', async () => {
     const card = (id: string) => ({ id, type: 'text', text: id, x: 0, y: 0, width: 9, height: 9 })
     const canvas = (id: string) => JSON.stringify({ nodes: [card(id)], edges: [] })
     const { me, spaceId, mirror } = await meetingInTheGap('board.canvas', canvas('mine'), canvas('theirs'))
     await push(mirror, me.token, NOBODY)
-
     const held = await accountHolds(me.token, spaceId, 'board.canvas')
     expect(held.content).toContain('"mine"')
     expect(held.content).toContain('"theirs"')
   })
-
   test('an account that sends no words is asked for them', async () => {
     const { me, device, mirror } = await meetingInTheGap('plan.md', 'A\n', 'B\n')
     account.wordless = true
     await push(mirror, me.token, NOBODY)
     expect(device.disk.get(copies(device)[0] ?? '')).toBe('B\n')
   })
-
   test('asked and not answered, nothing is written over, and the next pass asks again', async () => {
     const { me, spaceId, device, mirror } = await meetingInTheGap('plan.md', 'A\n', 'B\n')
     account.wordless = true
@@ -280,12 +253,10 @@ describe('a create that meets a note made since the pull', () => {
     expect(mirror.notes['plan.md']).toBeUndefined()
     account.readsAway = false
     expect((await accountHolds(me.token, spaceId)).content).toBe('B\n')
-
     await push(mirror, me.token, NOBODY)
     const words = [device.disk.get(NOTE), device.disk.get(copies(device)[0] ?? '')].sort()
     expect(words).toEqual(['A\n', 'B\n'])
   })
-
   test("this machine's own earlier create is paired, not copied", async () => {
     const { me, spaceId, device, mirror } = await meetingInTheGap(
       'plan.md',
@@ -294,7 +265,6 @@ describe('a create that meets a note made since the pull', () => {
     )
     mirror.offered = { 'plan.md': await sha('its own first words\n') }
     await push(mirror, me.token, NOBODY)
-
     expect(copies(device)).toEqual([])
     expect(mirror.notes['plan.md']).toBeDefined()
     await push(mirror, me.token, NOBODY)
@@ -302,11 +272,9 @@ describe('a create that meets a note made since the pull', () => {
     expect(copies(device)).toEqual([])
   })
 })
-
 describe('two machines, one writing between the pull and the push of the other', () => {
   const ONE = 'changed on one\n'
   const TWO = 'changed on two\n'
-
   async function apart(rule: ConflictRule) {
     const me = await person('h@example.com')
     const spaceId = await spaceOf(me.token)
@@ -317,57 +285,45 @@ describe('two machines, one writing between the pull and the push of the other',
     one.disk.set(NOTE, 'base\n')
     await pass(one, first, me.token)
     await pass(two, second, me.token)
-
     one.disk.set(NOTE, ONE)
     world.use(one)
     await pull(first, me.token, NOBODY)
     two.disk.set(NOTE, TWO)
     await pass(two, second, me.token)
-
     const clashes: Clash[] = []
     world.use(one)
     await push(first, me.token, NOBODY, { rule, clashed: (clash) => clashes.push(clash) })
     return { me, spaceId, one, two, first, second, clashes }
   }
-
   test('asked, the push puts the question and writes nothing over', async () => {
     const { me, spaceId, one, first, clashes } = await apart('ask')
-
     expect(clashes.map((clash) => [clash.path, clash.theirs])).toEqual([[NOTE, TWO]])
     expect(copies(one)).toEqual([])
     expect(one.disk.get(NOTE)).toBe(ONE)
     expect(first.notes['plan.md']?.hash).toBe('')
-
     world.use(one)
     await pull(first, me.token, NOBODY, { rule: 'ask', held: new Set([NOTE]) })
     await push(first, me.token, NOBODY, { rule: 'ask', held: new Set([NOTE]) })
-
     const there = await accountHolds(me.token, spaceId)
     expect(there.paths).toEqual(['plan.md'])
     expect(there.content).toBe(TWO)
     expect(one.disk.get(NOTE)).toBe(ONE)
   })
-
   test('newest, the newer words there are taken here, and ours kept as a version', async () => {
     const { me, spaceId, one, two, first, second, clashes } = await apart('newest')
-
     expect(clashes).toEqual([])
     expect(copies(one)).toEqual([])
     expect(one.disk.get(NOTE)).toBe(TWO)
     expect(one.kept.get(NOTE)).toContain(ONE)
-
     await pass(one, first, me.token)
     await pass(two, second, me.token)
     expect((await accountHolds(me.token, spaceId)).paths).toEqual(['plan.md'])
     expect(two.disk.get(NOTE)).toBe(TWO)
   })
-
   test('both, the other words stay beside ours on every machine', async () => {
     const { me, spaceId, one, two, first, second } = await apart('both')
-
     expect(copies(one).map((path) => one.disk.get(path))).toEqual([TWO])
     expect(one.disk.get(NOTE)).toBe(ONE)
-
     await pass(one, first, me.token)
     await pass(two, second, me.token)
     expect(two.disk.get(NOTE)).toBe(ONE)
@@ -375,11 +331,9 @@ describe('two machines, one writing between the pull and the push of the other',
     expect((await accountHolds(me.token, spaceId)).content).toBe(ONE)
   })
 })
-
 describe('a machine whose note is open in a room', () => {
   const ROOM = 'base\ntyped in the room\n'
   const PAST = 'base\nwritten past the room\n'
-
   async function writtenPast() {
     const me = await person('i@example.com')
     const spaceId = await spaceOf(me.token)
@@ -388,7 +342,6 @@ describe('a machine whose note is open in a room', () => {
     two.disk.set(NOTE, 'base\n')
     await pass(two, mirror, me.token)
     two.disk.set(NOTE, ROOM)
-
     const held = await accountHolds(me.token, spaceId)
     await call(env, `/v1/notes/${held.id}`, {
       method: 'PUT',
@@ -398,27 +351,20 @@ describe('a machine whose note is open in a room', () => {
     world.use(two)
     return { me, two, mirror }
   }
-
   test('leaves to the room words the account took from outside it', async () => {
     const { me, two, mirror } = await writtenPast()
-
     await pull(mirror, me.token, { has: () => true, words: () => ROOM })
-
     expect(two.disk.get(NOTE)).toBe(ROOM)
     expect(mirror.notes['plan.md']?.version).toBe(1)
     expect(copies(two)).toEqual([])
   })
-
   test('and takes them once the room holds them too', async () => {
     const { me, two, mirror } = await writtenPast()
-
     await pull(mirror, me.token, { has: () => true, words: () => PAST })
-
     expect(two.disk.get(NOTE)).toBe(PAST)
     expect(mirror.notes['plan.md']?.version).toBe(2)
   })
 })
-
 describe('a canvas open in a room', () => {
   const BOARD = `${ROOT}/board.canvas`
   const drawn = (text: string) =>
@@ -430,7 +376,6 @@ describe('a canvas open in a room', () => {
     const { readCanvas, writeCanvas } = await import('@orden/markdown/canvas')
     return writeCanvas(readCanvas(text))
   }
-
   async function drawnPast() {
     const me = await person('j@example.com')
     const spaceId = await spaceOf(me.token)
@@ -440,7 +385,6 @@ describe('a canvas open in a room', () => {
     await pass(two, mirror, me.token)
     const room = await asTheRoomWrites(drawn('drawn in the room'))
     two.disk.set(BOARD, room)
-
     const held = await accountHolds(me.token, spaceId, 'board.canvas')
     await call(env, `/v1/notes/${held.id}`, {
       method: 'PUT',
@@ -450,27 +394,20 @@ describe('a canvas open in a room', () => {
     world.use(two)
     return { me, two, mirror, room }
   }
-
   test('leaves to the room a canvas the account took from outside it', async () => {
     const { me, two, mirror, room } = await drawnPast()
-
     await pull(mirror, me.token, { has: () => true, words: () => room })
-
     expect(two.disk.get(BOARD)).toBe(room)
     expect(mirror.notes['board.canvas']?.version).toBe(1)
   })
-
   test('and takes it once the room holds the same canvas, however each writes it', async () => {
     const { me, two, mirror } = await drawnPast()
     const same = await asTheRoomWrites(drawn('drawn past the room'))
-
     await pull(mirror, me.token, { has: () => true, words: () => same })
-
     expect(two.disk.get(BOARD)).toBe(drawn('drawn past the room'))
     expect(mirror.notes['board.canvas']?.version).toBe(2)
   })
 })
-
 describe('a write refused for a rename made elsewhere', () => {
   test('the note stays at the name the account moved it to', async () => {
     const me = await person('c@example.com')
@@ -480,7 +417,6 @@ describe('a write refused for a rename made elsewhere', () => {
     const mirror = newMirror(spaceId, ROOT)
     await pass(device, mirror, me.token)
     const held = await accountHolds(me.token, spaceId)
-
     await call(env, `/v1/notes/${held.id}`, {
       method: 'PUT',
       token: me.token,
@@ -489,14 +425,12 @@ describe('a write refused for a rename made elsewhere', () => {
     device.disk.set(NOTE, 'first\nhere\n')
     world.use(device)
     await push(mirror, me.token, NOBODY)
-
     const after = await accountHolds(me.token, spaceId, 'renamed.md')
     expect(after.paths).toEqual(['renamed.md'])
     expect(after.content).toContain('here')
     expect(after.content).toContain('elsewhere')
   })
 })
-
 describe('a folder that will not list', () => {
   async function synced() {
     const me = await person('d@example.com')
@@ -509,7 +443,6 @@ describe('a folder that will not list', () => {
     await pass(device, mirror, me.token)
     return { me, spaceId, device, mirror }
   }
-
   test('nothing under it is deleted, and it is still known', async () => {
     const { me, spaceId, device, mirror } = await synced()
     device.shut.add(`${ROOT}/shut`)
@@ -517,7 +450,6 @@ describe('a folder that will not list', () => {
     expect((await accountHolds(me.token, spaceId)).paths).toEqual(['plan.md', 'shut/inside.md', 'shutter.md'])
     expect(mirror.notes['shut/inside.md']).toBeDefined()
   })
-
   test('a note beside it that did go is still a delete', async () => {
     const { me, spaceId, device, mirror } = await synced()
     device.shut.add(`${ROOT}/shut`)
@@ -525,7 +457,6 @@ describe('a folder that will not list', () => {
     await push(mirror, me.token, NOBODY)
     expect((await accountHolds(me.token, spaceId)).paths).toEqual(['plan.md', 'shut/inside.md'])
   })
-
   test('a space that will not list deletes nothing', async () => {
     const { me, spaceId, device, mirror } = await synced()
     device.rootShut = true
@@ -533,7 +464,6 @@ describe('a folder that will not list', () => {
     expect((await accountHolds(me.token, spaceId)).paths).toHaveLength(3)
   })
 })
-
 describe('a note the disk refuses on v1', () => {
   async function arrivals(...paths: string[]) {
     const me = await person('e@example.com')
@@ -546,7 +476,6 @@ describe('a note the disk refuses on v1', () => {
     }
     return { me, spaceId, device: new world.Device(), mirror: newMirror(spaceId, ROOT) }
   }
-
   test('the rest of the page lands, the cursor waits, and it lands once it can', async () => {
     const { me, device, mirror } = await arrivals('a.md', 'blocked.md', 'z.md')
     device.refused.add(`${ROOT}/blocked.md`)
@@ -558,13 +487,11 @@ describe('a note the disk refuses on v1', () => {
     expect(device.disk.get(`${ROOT}/z.md`)).toBe('words of z.md\n')
     expect(mirror.cursor).toBe(0)
     expect(mirror.notes['blocked.md']).toBeUndefined()
-
     device.refused.clear()
     await pull(mirror, me.token, NOBODY)
     expect(device.disk.get(`${ROOT}/blocked.md`)).toBe('words of blocked.md\n')
     expect(mirror.cursor).toBeGreaterThan(0)
   })
-
   test('and the push of the same pass goes on: it comes back as nothing new', async () => {
     const { me, spaceId, device, mirror } = await arrivals('blocked.md')
     device.refused.add(`${ROOT}/blocked.md`)
@@ -573,7 +500,6 @@ describe('a note the disk refuses on v1', () => {
     const held = await accountHolds(me.token, spaceId)
     expect(held.paths).toEqual(['blocked.md', 'mine.md'])
   })
-
   test('a name Windows keeps lands under that name, and is the note', async () => {
     const { me, spaceId, device, mirror } = await arrivals('Con.md')
     await pass(device, mirror, me.token)
@@ -582,7 +508,6 @@ describe('a note the disk refuses on v1', () => {
     await pass(device, mirror, me.token)
     expect((await accountHolds(me.token, spaceId)).paths).toEqual(['Con.md'])
   })
-
   test('a create whose copy the disk refuses stays unpaired, its words not written over', async () => {
     const { me, spaceId, device, mirror } = await meetingInTheGap('plan.md', 'A\n', 'B\n')
     device.refusedCopies = true
@@ -593,7 +518,6 @@ describe('a note the disk refuses on v1', () => {
     await push(mirror, me.token, NOBODY)
     expect(device.disk.get(copies(device)[0] ?? '')).toBe('B\n')
   })
-
   test('a delete told under a name no disk holds still takes the file it knew', async () => {
     const me = await person('f@example.com')
     const spaceId = await spaceOf(me.token)
@@ -611,7 +535,6 @@ describe('a note the disk refuses on v1', () => {
     expect(device.disk.has(NOTE)).toBe(false)
   })
 })
-
 describe('the files of a site under a folder that will not list', () => {
   test('stay on the list the account is told', async () => {
     const me = await person('g@example.com')
@@ -622,7 +545,6 @@ describe('the files of a site under a folder that will not list', () => {
     const mirror = newMirror(spaceId, ROOT)
     await pass(device, mirror, me.token)
     expect(Object.keys(mirror.files).sort()).toEqual(['open.pdf', 'shut/paper.pdf'])
-
     device.shut.add(`${ROOT}/shut`)
     device.disk.delete(`${ROOT}/open.pdf`)
     await push(mirror, me.token, NOBODY)

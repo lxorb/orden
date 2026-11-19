@@ -13,21 +13,17 @@ export interface Ask {
   limit: number
   excluded: string[]
 }
-
 export interface Warm {
   kind: 'warm'
   root: string
 }
-
 export type Answer =
   | { kind: 'found'; id: number; hits: Hit[]; loose: FuzzyHit[] }
   | { kind: 'done'; id: number }
   | { kind: 'at'; id: number; relative: string }
   | { kind: 'warmth'; warmth: Warmth }
-
 export function isAsk(value: unknown): value is Ask {
   if (!isRecord(value) || value.kind !== 'ask') return false
-
   return (
     typeof value.id === 'number' &&
     typeof value.root === 'string' &&
@@ -39,17 +35,14 @@ export function isAsk(value: unknown): value is Ask {
     value.excluded.every((one) => typeof one === 'string')
   )
 }
-
 export function isWarm(value: unknown): value is Warm {
   return isRecord(value) && value.kind === 'warm' && typeof value.root === 'string'
 }
-
 export function isAnswer(value: unknown): value is Answer {
   if (!isRecord(value)) return false
   if (value.kind === 'warmth') return isRecord(value.warmth)
   if (typeof value.id !== 'number') return false
   if (value.kind === 'done') return true
   if (value.kind === 'at') return typeof value.relative === 'string'
-
   return value.kind === 'found' && Array.isArray(value.hits) && Array.isArray(value.loose)
 }

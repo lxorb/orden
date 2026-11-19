@@ -7,7 +7,6 @@ export interface Sealed {
   body: string
   keyVersion: number
 }
-
 export function sealedIn(body: Body): Sealed | null {
   const rev = body.count('rev')
   const key = body.text('key', MOST_KEY_BYTES)

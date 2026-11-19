@@ -7,22 +7,18 @@ import { ChatSocket, chatLogs, say as sayInChat } from './chat-fakes'
 import { doorway, FakeSocket, running } from './room'
 
 let env: TestEnv
-
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(Date.UTC(2026, 9, 19, 12))
   env = testEnv()
 })
-
 afterEach(() => {
   vi.useRealTimers()
   env.close()
 })
-
 async function runOut(token: string): Promise<void> {
   env.db.prepare('update sessions set expires_at = 1 where token_hash = ?').run(await sha256(token))
 }
-
 describe('the doors', () => {
   test('hand a room the sign-in a socket arrived with', async () => {
     const token = await signIn(env, 'a@b.dev')
@@ -31,14 +27,12 @@ describe('the doors', () => {
       .note.id
     const door = doorway()
     env.ROOMS = door.ROOMS
-
     await call(env, `/rooms/${note}`, {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
     })
     expect(door.asked.at(-1)?.get('x-orden-login')).toBe(await sha256(token))
   })
 })
-
 describe('a room', () => {
   test('closes a socket whose session ran out, the next time anybody types', async () => {
     const owner = await signIn(env, 'owner@example.com')
@@ -54,7 +48,6 @@ describe('a room', () => {
     env.ROOMS = live.ROOMS
     const { room } = live.of(note)
     const who = (await call(env, '/v1/me', { token: owner })).json.user.id
-
     const enter = async (token: string) => {
       const socket = new FakeSocket()
       await room.enter(
@@ -67,14 +60,11 @@ describe('a room', () => {
     const kept = await enter(owner)
     const lost = await enter(laptop)
     await runOut(laptop)
-
     await room.webSocketMessage(kept as unknown as WebSocket, new Uint8Array([1, 0]).buffer)
-
     expect(lost.closedWith?.code).toBe(4401)
     expect(kept.closed).toBe(false)
     expect(env.db.prepare('select count(*) as held from room_sockets where note_id = ?').get(note)).toEqual({ held: 1 })
   })
-
   test('and asks at most once a minute', async () => {
     const owner = await signIn(env, 'owner@example.com')
     const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'S' } })).json.space.id
@@ -94,19 +84,16 @@ describe('a room', () => {
       { writes: true, who: 'someone', login: await sha256(owner) },
     )
     const said = new Uint8Array([1, 0]).buffer
-
     await room.webSocketMessage(socket as unknown as WebSocket, said)
     await runOut(owner)
     await room.webSocketMessage(socket as unknown as WebSocket, said)
     expect(socket.closed).toBe(false)
-
     vi.setSystemTime(Date.now() + 60_000)
     await room.webSocketMessage(socket as unknown as WebSocket, said)
     expect(socket.closedWith?.code).toBe(4401)
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
   })
 })
-
 describe('a chat', () => {
   test('closes a socket whose session ran out, the next time anybody says anything', async () => {
     const phone = await signIn(env, 'chat@example.com')
@@ -123,7 +110,6 @@ describe('a chat', () => {
       }),
     )
     const person: Person = { id: 'user-1', guest: false, who: 'user:user-1', role: 'owner' }
-
     const enter = async (token: string) => {
       const socket = new ChatSocket()
       await held.log.enter(socket as unknown as WebSocket, person, await sha256(token))
@@ -135,9 +121,7 @@ describe('a chat', () => {
     const lost = await enter(laptop)
     await runOut(laptop)
     vi.setSystemTime(Date.now() + 60_000)
-
     await sayInChat(held, kept, { t: 'typing' })
-
     expect(lost.closedWith?.code).toBe(4401)
     expect(kept.closed).toBe(false)
   })

@@ -10,7 +10,6 @@ describe("a folder's path bar", () => {
       { name: 'Pictures', path: '/home/me/Pictures' },
     ])
   })
-
   it('starts at the drive on Windows, and at the share on a network', () => {
     expect(crumbsOf('c:\\Users\\me')).toEqual([
       { name: 'C:', path: 'C:\\' },
@@ -22,13 +21,11 @@ describe("a folder's path bar", () => {
       '\\\\nas\\photos\\2026',
     ])
   })
-
   it('names a tab after its folder, and the top of a disk after its crumb', () => {
     expect(folderName('/home/me/Pictures')).toBe('Pictures')
     expect(folderName('/')).toBe('/')
     expect(folderName('D:\\')).toBe('D:')
   })
-
   it('has a folder above everywhere but the top', () => {
     expect(parentOf('/home/me')).toBe('/home')
     expect(parentOf('/home')).toBe('/')
@@ -37,15 +34,12 @@ describe("a folder's path bar", () => {
     expect(parentOf('C:\\')).toBeNull()
   })
 })
-
 describe('a typed location', () => {
   const here = '/home/me/Documents'
-
   it('is a path from the top of a disk as written, its dots walked', () => {
     expect(typedFolder('/etc/../usr/./share', here, '/home/me')).toBe('/usr/share')
     expect(typedFolder('D:/Photos/../Music', 'C:\\Users', null)).toBe('D:\\Music')
   })
-
   it('takes ~ as the home folder and anything else from the folder on screen', () => {
     expect(typedFolder('~', here, '/home/me')).toBe('/home/me')
     expect(typedFolder('~/Downloads', here, '/home/me')).toBe('/home/me/Downloads')
@@ -53,7 +47,6 @@ describe('a typed location', () => {
     expect(typedFolder('..', here, '/home/me')).toBe('/home/me')
     expect(typedFolder('Work', 'C:\\Users\\me', null)).toBe('C:\\Users\\me\\Work')
   })
-
   it('is nothing for nothing typed, and never climbs above the top', () => {
     expect(typedFolder('   ', here, null)).toBeNull()
     expect(typedFolder('/../../x', here, null)).toBe('/x')

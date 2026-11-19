@@ -1,17 +1,13 @@
 import io
 import re
-
 from PIL import Image
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 FLOOR = 4.5
-
 def site(ground: str, header: str, theme: str | None, title: str) -> str:
     meta = f'<meta name="theme-color" content="{theme}">' if theme else ""
     ink = "#ffffff" if ground in ("#0f0f0f",) or header in ("#d32f2f",) else "#111111"
@@ -24,7 +20,6 @@ def site(ground: str, header: str, theme: str | None, title: str) -> str:
 <header>{title}</header>
 <main><p>A page standing on a colour of its own, for the frame to take.</p></main>
 </body></html>"""
-
 PROTON = """<!doctype html><html><head><meta charset="utf-8"><title>Thank you for installing Proton Pass</title>
 <style>html, body { margin: 0; min-height: 100vh; color: #ffffff; font: 15px/1.5 system-ui, sans-serif; }
 main { padding: 48px; }</style></head><body><main><h1>Welcome to your new password manager!</h1></main>
@@ -35,7 +30,6 @@ main { padding: 48px; }</style></head><body><main><h1>Welcome to your new passwo
   document.head.append(meta)
   document.body.style.background = 'linear-gradient(#1b1340, #1d1c35 40%, #68556f)'
 }, 600)</script></body></html>"""
-
 PAGES = {
     "white": site("#ffffff", "#ffffff", None, "White"),
     "black": site("#0f0f0f", "#0f0f0f", None, "Black"),
@@ -45,7 +39,6 @@ PAGES = {
     "lightstale": site("#ffffff", "#ffffff", "#23272f", "Light, named black"),
     "proton": PROTON,
 }
-
 TOPS = {
     "white": (255, 255, 255),
     "black": (15, 15, 15),
@@ -55,16 +48,11 @@ TOPS = {
     "lightstale": (255, 255, 255),
     "proton": (27, 19, 64),
 }
-
 DARK = {"black", "darkstale", "proton"}
-
 LATE = {"proton": "#1b1340"}
-
 HUED = {"proton": 12}
 LIGHT = {"white", "lightstale"}
-
 MIDDLE = 0.179
-
 @DRIVE.answers
 def pages(request: harness.Files) -> bool:
     name = re.fullmatch(r"/glass/(\w+)\.html", request.path.split("?", 1)[0])
@@ -73,7 +61,6 @@ def pages(request: harness.Files) -> bool:
     if request.path == "/favicon.ico":
         return request.reply(b"", "image/x-icon", 404)
     return False
-
 INK = """
 (selector) => {
   const one = document.querySelector(selector)
@@ -88,7 +75,6 @@ INK = """
   return [parts[0] * scale, parts[1] * scale, parts[2] * scale]
 }
 """
-
 POINT = """
 ([selector, where]) => {
   const one = document.querySelector(selector)
@@ -101,7 +87,6 @@ POINT = """
   return [Math.round(box.left + box.width / 2), Math.round(box.top + box.height / 2)]
 }
 """
-
 BARE = """
 () => {
   const bar = document.querySelector("header[data-chrome='top']")
@@ -115,22 +100,17 @@ BARE = """
   return null
 }
 """
-
 def luminance(colour: tuple[float, ...]) -> float:
     def channel(one: float) -> float:
         value = one / 255
         return value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
-
     r, g, b = colour[:3]
     return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-
 def ratio(one: tuple[float, ...], two: tuple[float, ...]) -> float:
     high, low = sorted((luminance(one), luminance(two)), reverse=True)
     return round((high + 0.05) / (low + 0.05), 2)
-
 def near(one: tuple[int, ...], two: tuple[int, ...], by: int = 6) -> bool:
     return all(abs(a - b) <= by for a, b in zip(one[:3], two[:3]))
-
 def fresh(browser: Browser, scheme: str) -> Page:
     page = DRIVE.page(
         browser,
@@ -146,7 +126,6 @@ def fresh(browser: Browser, scheme: str) -> Page:
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     DRIVE.settled(page)
     return page
-
 def open_site(page: Page, name: str) -> None:
     address = f"{DRIVE.origin}/glass/{name}.html"
     page.evaluate("(address) => window.ordenApp.workspace.openPage(address)", address)
@@ -162,7 +141,6 @@ def open_site(page: Page, name: str) -> None:
         )
     page.wait_for_timeout(300)
     DRIVE.settled(page)
-
 def measure(page: Page, picture: Image.Image, where: str, selector: str, at: str = "middle") -> None:
     point = page.evaluate(BARE) if at == "bare" else page.evaluate(POINT, [selector, at])
     ink = page.evaluate(INK, selector)
@@ -175,7 +153,6 @@ def measure(page: Page, picture: Image.Image, where: str, selector: str, at: str
         say(f"ok   {where}: quiet words {seen}:1 on {ground[:3]}")
     else:
         wrong(f"{where}: quiet words {seen}:1 on {ground[:3]}, under {FLOOR}")
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = fresh(browser, scheme)
@@ -183,12 +160,10 @@ def drive(browser: Browser) -> None:
             open_site(page, name)
             path = shot(page, f"glass-{scheme}-{name}")
             picture = Image.open(io.BytesIO(path.read_bytes())).convert("RGB")
-
             label = f"[{scheme}, {name}]"
             measure(page, picture, f"{label} the title bar", "header[data-chrome='top'] .drag", "bare")
             measure(page, picture, f"{label} the list down the side", ".panels[data-chrome='start']", "foot")
             measure(page, picture, f"{label} the bar over the page", ".webbar", "start")
-
             frame = page.evaluate(BARE)
             if frame and name in DARK | LIGHT:
                 seen = picture.getpixel((frame[0], frame[1]))
@@ -197,14 +172,12 @@ def drive(browser: Browser) -> None:
                     say(f"ok   {label} the frame is {'dark' if dark else 'light'}: {seen[:3]}")
                 else:
                     wrong(f"{label} the frame {seen[:3]} is not as {'dark' if name in DARK else 'light'} as the page")
-
             if frame and name in HUED:
                 seen = picture.getpixel((frame[0], frame[1]))
                 if seen[2] - seen[0] >= HUED[name]:
                     say(f"ok   {label} the frame wears the page's hue: {seen[:3]}")
                 else:
                     wrong(f"{label} the frame {seen[:3]} is a grey over a coloured page")
-
             bar = page.evaluate(POINT, [".webbar", "start"])
             below = page.evaluate(POINT, [".webbar", "below"])
             if bar and below:
@@ -217,7 +190,5 @@ def drive(browser: Browser) -> None:
                     say(f"ok   {label} the bar runs into the page: {upper[:3]}")
                 else:
                     wrong(f"{label} the bar {upper[:3]} is not the page's top {lower[:3]}")
-
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "glass takes every page's colour and every word on it reads"))

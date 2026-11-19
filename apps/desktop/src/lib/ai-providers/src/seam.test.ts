@@ -6,11 +6,9 @@ let ending = { kind: 'end', code: 0, timedOut: false, stopped: false, err: '' }
 let hold = false
 let missing = false
 let held: { onmessage: (value: unknown) => void } | null = null
-
 class FakeChannel {
   onmessage: (value: unknown) => void = () => undefined
 }
-
 async function fakeInvoke(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   asked.push({ command, args })
   if (command === 'chatgpt_token') return 'plan-token'
@@ -28,7 +26,6 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
   }, 0)
   return null
 }
-
 vi.mock('../../crate/src/native', () => ({ Channel: FakeChannel, invoke: fakeInvoke }))
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
@@ -39,15 +36,12 @@ vi.mock('./keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./keys')>()),
   readKey: () => Promise.resolve('sk-key'),
 }))
-
 const fetched: { url: string; init: RequestInit }[] = []
 let reply: () => Response = () => new Response('')
-
 vi.stubGlobal('fetch', (url: string, init: RequestInit) => {
   fetched.push({ url, init })
   return Promise.resolve(reply())
 })
-
 const { complete, wasStopped } = await import('./complete')
 const { ai } = await import('./store.svelte')
 const { plans } = await import('./local/status.svelte')
@@ -57,7 +51,6 @@ const ASKED = [
   { role: 'system' as const, content: 'Be brief.' },
   { role: 'user' as const, content: 'What waits?' },
 ]
-
 beforeEach(() => {
   asked.length = 0
   fetched.length = 0
@@ -68,7 +61,6 @@ beforeEach(() => {
   held = null
   for (const one of [...ai.accounts]) ai.remove(one.id)
 })
-
 describe('which provider a feature asks', () => {
   test('the default, until a feature is given one of its own', () => {
     ai.add('openai')
@@ -81,7 +73,6 @@ describe('which provider a feature asks', () => {
     ai.use('ask', '')
     expect(ai.providerFor('ask')?.id).toBe('openai')
   })
-
   test('a provider taken away takes its features back to the default', () => {
     ai.add('openai')
     ai.update('openai', { model: 'gpt-5' })
@@ -91,7 +82,6 @@ describe('which provider a feature asks', () => {
     expect(ai.uses).toEqual({})
     expect(ai.providerFor('rewrite')?.id).toBe('openai')
   })
-
   test('a feature asks a provider, and its active account answers', () => {
     ai.add('openai')
     ai.update('openai', { model: 'gpt-5' })
@@ -103,13 +93,11 @@ describe('which provider a feature asks', () => {
     expect(ai.providerFor('ask')?.id).toBe('codex')
     expect(ai.providers.map((one) => one.id)).toEqual(['codex'])
   })
-
   test('a program on this machine needs no model to be asked', () => {
     ai.add('codex')
     expect(ai.providerFor('block')?.id).toBe('codex')
   })
 })
-
 describe('Claude Code on this machine', () => {
   const SAYS = [
     '{"type":"system","subtype":"init","model":"claude-opus-5-5[1m]","tools":[]}',
@@ -118,7 +106,6 @@ describe('Claude Code on this machine', () => {
     '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"wait."}}}',
     '{"type":"result","subtype":"success","is_error":false,"result":"Herons wait."}',
   ]
-
   test('is asked through the crate, with the whole conversation as one prompt', async () => {
     lines = SAYS
     const pieces: string[] = []
@@ -141,7 +128,6 @@ describe('Claude Code on this machine', () => {
     expect(call?.args.model).toBeNull()
     expect(call?.args.prompt).toBe('<instructions>\nBe brief.\n</instructions>\n\n<user>\nWhat waits?\n</user>')
   })
-
   test('a stop ends the program and throws as a stopped request does', async () => {
     lines = [SAYS[2] ?? '']
     hold = true
@@ -157,7 +143,6 @@ describe('Claude Code on this machine', () => {
     expect(wasStopped(thrown)).toBe(true)
     expect(asked.some((one) => one.command === 'ai_cli_stop')).toBe(true)
   })
-
   test('the plan at its limit is said in Orden’s words, and kept for the pane', async () => {
     lines = [
       '{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","rateLimitType":"five_hour"}}',
@@ -169,7 +154,6 @@ describe('Claude Code on this machine', () => {
     )
     expect(plans.of('claude-code').limit?.state).toBe('reached')
   })
-
   test('a program that is not installed says so', async () => {
     missing = true
     await expect(complete({ provider: CLAUDE_CODE, model: '', messages: ASKED })).rejects.toThrow(
@@ -177,10 +161,8 @@ describe('Claude Code on this machine', () => {
     )
   })
 })
-
 describe('a ChatGPT plan', () => {
   const events = (...said: object[]) => said.map((one) => `event: x\ndata: ${JSON.stringify(one)}\n\n`).join('')
-
   test('streams from the Responses API with the token of the hour and no system message', async () => {
     reply = () =>
       new Response(
@@ -206,7 +188,6 @@ describe('a ChatGPT plan', () => {
       stream: true,
     })
   })
-
   test('its limit is the reader’s plan, not a status code', async () => {
     reply = () =>
       new Response(
@@ -220,7 +201,6 @@ describe('a ChatGPT plan', () => {
     )
     expect(plans.chatgptLimit?.state).toBe('reached')
   })
-
   test('a response that failed mid-stream says why', async () => {
     reply = () =>
       new Response(

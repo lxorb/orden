@@ -5,15 +5,12 @@ export interface Shaped {
   key: string
   outline: Outline
 }
-
 export interface Shift {
   x: number
   y: number
 }
-
 export const meets = (a: Outline, b: Outline, gap: number): boolean => gapOf(a, b) < gap - 0.01
 const AROUND = 2
-
 export function packed(
   items: readonly Shaped[],
   gap: number,
@@ -56,7 +53,6 @@ export function packed(
   }
   return out
 }
-
 function clearAlong(pusher: Outline, box: Outline, x: number, y: number, gap: number): number {
   let low = 0
   let high = 64
@@ -68,7 +64,6 @@ function clearAlong(pusher: Outline, box: Outline, x: number, y: number, gap: nu
   }
   return high
 }
-
 export function pushedAside(
   held: Outline,
   others: readonly Shaped[],

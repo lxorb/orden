@@ -53,7 +53,6 @@
     overflow-y: auto;
     padding: 4px;
   }
-
   .row {
     display: flex;
     align-items: center;
@@ -69,23 +68,19 @@
     text-align: start;
     cursor: default;
   }
-
   .row.lit {
     background: var(--surface-hover);
     color: var(--text-strong);
   }
-
   .row.dim {
     opacity: 0.5;
   }
-
   .label {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .hint {
     flex: 1;
     min-width: 0;

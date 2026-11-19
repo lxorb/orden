@@ -5,9 +5,7 @@ export const RIGHT_AFTER = 25
 export const NIGHTLY = 200
 export const GRACE = 30 * 24 * 60 * 60 * 1000
 export const DEVICES_COUNT_FOR = 90 * 24 * 60 * 60 * 1000
-
 const HASHES_AT_ONCE = 10_000
-
 export function noteUnused(env: Env, spaceId: string, hashes: Iterable<string>, at: number): D1PreparedStatement[] {
   return chunks([...new Set(hashes)], HASHES_AT_ONCE).map((piece) =>
     env.DB.prepare(
@@ -17,7 +15,6 @@ export function noteUnused(env: Env, spaceId: string, hashes: Iterable<string>, 
     ).bind(spaceId, JSON.stringify(piece), at),
   )
 }
-
 export function noteUnusedBy(env: Env, userId: string, hashes: readonly string[], at: number): D1PreparedStatement {
   return env.DB.prepare(
     `insert into unused_blobs (user_id, hash, since)
@@ -25,7 +22,6 @@ export function noteUnusedBy(env: Env, userId: string, hashes: readonly string[]
         where user_id = ?1 and hash in (select value from json_each(?2)) ${RESTAMP}`,
   ).bind(userId, JSON.stringify(hashes), at)
 }
-
 export function noteChatFiles(env: Env, where: string, at: number, ...bound: string[]): D1PreparedStatement {
   return env.DB.prepare(
     `insert into unused_blobs (user_id, hash, since)
@@ -42,7 +38,6 @@ export function noteChatFiles(env: Env, where: string, at: number, ...bound: str
        ${RESTAMP}`,
   ).bind(at, ...bound)
 }
-
 export async function sweepUnused(
   env: Env,
   most = NIGHTLY,
@@ -61,7 +56,6 @@ export async function sweepUnused(
   )
     .bind(most, at - GRACE, asked?.user ?? '', asked?.since ?? 0, at - DEVICES_COUNT_FOR)
     .all<{ user_id: string; hash: string }>()
-
   const done = reading()
   let decided = 0
   for (const one of results) {

@@ -14,14 +14,12 @@ describe('parseXml', () => {
     expect(textAt(root, 'd')).toBe('<raw> & ')
     expect(textAt(root, 'missing', 'deeper')).toBe('')
   })
-
   it('refuses what is not well-formed', () => {
     expect(() => parseXml('<a><b></a>')).toThrow()
     expect(() => parseXml('<a>')).toThrow()
     expect(() => parseXml('<a/><b/>')).toThrow()
     expect(() => parseXml('plain')).toThrow()
   })
-
   it('leaves unknown entities as they are', () => {
     expect(decodeEntities('&nbsp; &#xZZ; &amp;')).toBe('&nbsp; &#xZZ; &')
   })

@@ -15,7 +15,6 @@ const FIT_NAMES: Record<Fit, string> = {
   tile: 'Tile',
   centre: 'Centre',
 }
-
 export function wallpaperSettings(): ThemeSetting[] {
   return [
     range('blur', 'Blur', 'How much the picture is blurred.', 0, 60, 28, 'px'),
@@ -49,11 +48,9 @@ export function wallpaperSettings(): ThemeSetting[] {
     contentSetting(),
   ]
 }
-
 function isFit(value: unknown): value is Fit {
   return FITS.includes(value as Fit)
 }
-
 export function dialsOf(values: Record<string, ThemeValue>): Dials {
   return {
     blur: Number(values.blur ?? 28),
@@ -64,13 +61,11 @@ export function dialsOf(values: Record<string, ThemeValue>): Dials {
     content: contentOf(values.content),
   }
 }
-
 export interface Tone {
   saturation: number
   tint: number
   colour: string
 }
-
 export function toneOf(values: Record<string, ThemeValue>, accent: string): Tone {
   const chosen = String(values['tint-colour'] ?? ACCENT_SWATCH)
   return {

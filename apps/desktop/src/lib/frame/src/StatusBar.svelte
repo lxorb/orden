@@ -13,24 +13,16 @@
     reading = false,
     vimMode = null,
   }: { doc?: string; reading?: boolean; vimMode?: VimMode | null } = $props()
-
   const paper = $derived.by(() => {
     const store = pages.of(workspace.active?.id)
     return store ? { at: store.showing, count: store.pages.length } : null
   })
-
   const plain = $derived(!paper && tooLongToParse(doc.length))
-
   let looking = $state(false)
-
   let held = $state(false)
-
   const asked = $derived(looking || held)
-
   const counts = $derived(asked ? countText(doc) : null)
-
   const chosen = $derived(asked && views.chosen > 0 ? countText(views.selectedText()) : null)
-
   const said = (part: number | undefined, whole: number) =>
     part === undefined ? localNumber(whole) : `${localNumber(part)}/${localNumber(whole)}`
 </script>
@@ -86,11 +78,9 @@
     -webkit-user-select: none;
     pointer-events: none;
   }
-
   .mode.writing {
     color: var(--accent);
   }
-
   footer {
     position: absolute;
     inset-inline-end: var(--card-room);
@@ -110,24 +100,19 @@
     -webkit-user-select: none;
     pointer-events: auto;
   }
-
   footer.looking {
     opacity: 1;
   }
-
   .reading {
     letter-spacing: 0.03em;
   }
-
   .page {
     color: var(--muted-strong);
   }
-
   :global([data-touch]) footer,
   :global([data-touch]) .mode {
     display: none;
   }
-
   :global([data-touch]) footer.paper {
     display: flex;
     pointer-events: none;

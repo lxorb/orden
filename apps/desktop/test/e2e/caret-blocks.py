@@ -1,9 +1,7 @@
 import json
 import shutil
 from pathlib import Path
-
 from playwright.sync_api import BrowserContext, Page
-
 import harness
 from harness import Drive
 
@@ -14,15 +12,12 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 ROOT = harness.ROOT
-
 PATIENCE = 60
-
 def opened(context: BrowserContext) -> Page:
     page = context.pages[0] if context.pages else context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     return page
-
 NOTE = """# Getting about
 
 above the formula
@@ -52,7 +47,6 @@ first section
 
 second section
 """
-
 WRITE = """
 async (text) => {
   const ws = window.ordenApp.workspace
@@ -63,7 +57,6 @@ async (text) => {
   return made
 }
 """
-
 SPANS = """
 () => {
   const doc = window.orden.state.doc
@@ -85,7 +78,6 @@ SPANS = """
   return found
 }
 """
-
 STATE = """
 () => ({
   head: window.orden.state.selection.main.head,
@@ -96,22 +88,18 @@ STATE = """
   },
 })
 """
-
 BLOCKS = ["formula", "diagram", "contents"]
-
 PRESSES = [
     ("from above", "ArrowDown"),
     ("from below", "ArrowUp"),
     ("from in front", "ArrowRight"),
     ("from behind", "ArrowLeft"),
 ]
-
 def caret_at(page: Page, at: int) -> None:
     page.evaluate(
         "(at) => window.orden.dispatch({ selection: { anchor: at }, scrollIntoView: true })", at
     )
     page.wait_for_timeout(120)
-
 def start_of(page: Page, span: dict, where: str) -> int:
     doc_end = page.evaluate("() => window.orden.state.doc.length")
     if where == "from above":
@@ -125,9 +113,7 @@ def start_of(page: Page, span: dict, where: str) -> int:
         )
     if where == "from in front":
         return max(0, span["from"] - 1)
-
     return min(doc_end, span["to"] + 1)
-
 def drive(playwright, profile: Path) -> None:
     context = DRIVE.persistent(
         playwright,
@@ -139,7 +125,6 @@ def drive(playwright, profile: Path) -> None:
         page = opened(context)
         made = page.evaluate(WRITE, NOTE)
         say(f"wrote {made}")
-
         wait_for(page, "() => !!window.orden", "the editor")
         wait_for(
             page,
@@ -150,13 +135,11 @@ def drive(playwright, profile: Path) -> None:
         )
         page.locator(".cm-content").first.screenshot(path=str(SHOTS / "drawn.png"))
         say("wrote drawn.png")
-
         spans = page.evaluate(SPANS)
         say(f"blocks: {json.dumps(spans)}")
         for name in BLOCKS:
             if name not in spans:
                 raise SystemExit(f"the note has no {name} in it, so nothing was measured")
-
         for name in BLOCKS:
             span = spans[name]
             for where, key in PRESSES:
@@ -164,20 +147,17 @@ def drive(playwright, profile: Path) -> None:
                 caret_at(page, start_of(page, span, where))
                 page.keyboard.press(key)
                 page.wait_for_timeout(200)
-
                 now = page.evaluate(STATE)
                 head = now["head"]
                 inside = span["from"] <= head <= span["to"]
                 opened_up = now["widgets"][name] == 0
                 say(f"{name} {where}: caret {head} in {span['from']}..{span['to']}, "
                     f"{name} widgets {now['widgets'][name]}")
-
                 if not inside:
                     wrong(f"{key} {where} skipped the {name}: caret {head}, "
                           f"block {span['from']}..{span['to']}")
                 elif not opened_up:
                     wrong(f"{key} {where} put the caret in the {name} without opening it")
-
         caret_at(page, 0)
         page.wait_for_timeout(200)
         closed = page.evaluate(STATE)
@@ -185,21 +165,16 @@ def drive(playwright, profile: Path) -> None:
             wrong(f"a block did not close behind the caret: {json.dumps(closed['widgets'])}")
         else:
             say("and every block closed again behind the caret")
-
         page.locator(".cm-content").first.screenshot(path=str(SHOTS / "closed.png"))
         say("wrote closed.png")
     finally:
         context.close()
-
 def main() -> int:
     profile = Path(ROOT / "target" / "caret-blocks-profile")
     if profile.exists():
         shutil.rmtree(profile, ignore_errors=True)
     profile.mkdir(parents=True, exist_ok=True)
-
     with DRIVE.session(playwright=True) as playwright:
         drive(playwright, profile)
-
     return DRIVE.verdict("every block opens to an arrow rather than standing in its way")
-
 raise SystemExit(main())

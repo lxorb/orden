@@ -15,16 +15,13 @@ export function showFieldMenu(event: MouseEvent, field: TextField): void {
   window.removeEventListener('keydown', onKey, true)
   window.addEventListener('keydown', onKey, true)
 }
-
 const MODIFIERS = ['Shift', 'Control', 'Alt', 'Meta']
-
 function onKey(event: KeyboardEvent): void {
   if (!menu.open || !menu.keepFocus) {
     window.removeEventListener('keydown', onKey, true)
     return
   }
   if (MODIFIERS.includes(event.key)) return
-
   const took = () => {
     event.preventDefault()
     event.stopImmediatePropagation()
@@ -37,23 +34,19 @@ function onKey(event: KeyboardEvent): void {
     menu.lit = stops[moved] ?? -1
     return
   }
-
   const row = menu.items[menu.lit]
   if (event.key === 'Escape' || event.key === 'Enter' || (event.key === ' ' && row)) took()
   menu.hide()
   if ((event.key === 'Enter' || event.key === ' ') && row) row.run()
 }
-
 function selects(field: TextField): boolean {
   const { selectionStart: from, selectionEnd: to } = field
   return from === null || to === null || from !== to
 }
-
 export function fieldEntries(field: TextField): MenuEntry[] {
   const locked = field.readOnly || field.disabled
   const secret = field instanceof HTMLInputElement && field.type === 'password'
   const selected = selects(field)
-
   return [
     {
       label: 'Cut',
@@ -82,15 +75,12 @@ export function fieldEntries(field: TextField): MenuEntry[] {
     },
   ]
 }
-
 async function pasteInto(field: TextField): Promise<void> {
   const text = await navigator.clipboard.readText().catch(() => '')
   if (!text) return
-
   field.focus()
   // eslint-disable-next-line @typescript-eslint/no-deprecated -- the only edit a field's own undo keeps
   if (document.execCommand('insertText', false, text)) return
-
   const end = field.value.length
   try {
     field.setRangeText(text, field.selectionStart ?? end, field.selectionEnd ?? end, 'end')

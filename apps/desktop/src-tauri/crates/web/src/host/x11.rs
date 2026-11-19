@@ -14,25 +14,20 @@ use x11rb::wrapper::ConnectionExt as _;
 use x11rb::CURRENT_TIME;
 
 pub(super) struct X11;
-
 fn failed(message: impl Into<String>) -> Failure {
     Failure::new("web-engine", FailureKind::Failed, message)
 }
-
 fn id_of(window: NativeWindow) -> Outcome<u32> {
     window
         .as_x11()
         .ok_or_else(|| Failure::new("web-engine", FailureKind::Invalid, "not an X11 window"))
 }
-
 static X: LazyLock<Option<RustConnection>> =
     LazyLock::new(|| x11rb::connect(None).ok().map(|(x, _)| x));
-
 impl WindowSystem for X11 {
     fn name(&self) -> &'static str {
         "x11"
     }
-
     fn move_resize(
         &self,
         window: NativeWindow,
@@ -41,11 +36,9 @@ impl WindowSystem for X11 {
     ) -> Outcome<String> {
         move_resize(id_of(window)?, edge.ewmh(), from).map_err(failed)
     }
-
     fn frame(&self, window: NativeWindow, scale: f64) -> Outcome<()> {
         frame(id_of(window)?, scale).map_err(failed)
     }
-
     fn float(&self, window: NativeWindow) -> Outcome<()> {
         let xid = id_of(window)?;
         let Some(x) = X.as_ref() else {
@@ -67,7 +60,6 @@ impl WindowSystem for X11 {
         }
         Ok(())
     }
-
     fn bare(&self, page: NativeWindow) {
         let (Some(window), Some(x)) = (page.as_x11(), X.as_ref()) else {
             return;
@@ -90,7 +82,6 @@ impl WindowSystem for X11 {
         }
         let _ = x.flush();
     }
-
     fn hide(&self, page: NativeWindow) {
         let (Some(window), Some(x)) = (page.as_x11(), X.as_ref()) else {
             return;
@@ -98,7 +89,6 @@ impl WindowSystem for X11 {
         let _ = x.unmap_window(window);
         let _ = x.sync();
     }
-
     fn desktop_scale(&self) -> Option<f64> {
         let (x, screen) = x11rb::connect(None).ok()?;
         let atom = |name: &str| {
@@ -127,13 +117,10 @@ impl WindowSystem for X11 {
         crate::page_scale::scale_of_dpi(crate::page_scale::xsettings_int(&data, "Xft/DPI")?)
     }
 }
-
 static FRAMED: LazyLock<Mutex<HashSet<u32>>> = LazyLock::new(Mutex::default);
-
 fn framed<T>(look: impl FnOnce(&mut HashSet<u32>) -> T) -> T {
     look(&mut FRAMED.held())
 }
-
 pub fn frame(window: u32, scale: f64) -> Result<(), String> {
     if !framed(|all| all.insert(window)) {
         return Ok(());
@@ -154,15 +141,12 @@ pub fn frame(window: u32, scale: f64) -> Result<(), String> {
     }
     started.map(|_| ())
 }
-
 const EDGE: f64 = 5.0;
 const CORNER: f64 = 14.0;
-
 struct Border {
     id: u32,
     direction: u32,
 }
-
 pub(super) fn place(
     direction: u32,
     arm: bool,
@@ -187,7 +171,6 @@ pub(super) fn place(
         _ => (0, c, e, tall - 2 * c),
     }
 }
-
 const CURSORS: [&str; 8] = [
     "top_left_corner",
     "top_side",
@@ -198,7 +181,6 @@ const CURSORS: [&str; 8] = [
     "bottom_left_corner",
     "left_side",
 ];
-
 struct Frame<'a> {
     x: &'a RustConnection,
     root: u32,
@@ -212,7 +194,6 @@ struct Frame<'a> {
     filling: [u32; 3],
     shown: bool,
 }
-
 impl Frame<'_> {
     #[allow(clippy::cast_possible_truncation)]
     fn run(
@@ -286,11 +267,9 @@ impl Frame<'_> {
         x.flush()?;
         edges.hear()
     }
-
     fn ours(&self, id: u32) -> bool {
         self.edges.iter().any(|(edge, _)| edge.id == id)
     }
-
     fn fit(&mut self, wide: i32, tall: i32) -> Result<(), Box<dyn std::error::Error>> {
         if (wide, tall) == self.size {
             return Ok(());
@@ -311,7 +290,6 @@ impl Frame<'_> {
         }
         Ok(())
     }
-
     fn raise(&self) -> Result<(), Box<dyn std::error::Error>> {
         for (edge, _) in &self.edges {
             self.x.configure_window(
@@ -321,7 +299,6 @@ impl Frame<'_> {
         }
         Ok(())
     }
-
     fn show(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self
             .x
@@ -346,7 +323,6 @@ impl Frame<'_> {
         }
         Ok(())
     }
-
     fn hear(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         loop {
             let event = self.x.wait_for_event()?;
@@ -406,7 +382,6 @@ impl Frame<'_> {
         }
     }
 }
-
 fn let_chromium_go(
     x: &RustConnection,
     root: u32,
@@ -481,7 +456,6 @@ fn let_chromium_go(
     }
     Err("the pointer was still held after 100 ms".into())
 }
-
 pub fn move_resize(
     xid: u32,
     direction: u32,
@@ -538,7 +512,6 @@ pub fn move_resize(
         from.0, from.1
     ))
 }
-
 #[cfg(test)]
 mod tests {
     use super::place;

@@ -12,15 +12,12 @@ use serde::Serialize;
 use orden_agents::family::{self, Family};
 
 const LONGEST_LINE: u64 = 8 << 20;
-
 const ERR_TAIL: usize = 16 << 10;
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Heard {
     Line(String),
     End(Ended),
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Ended {
@@ -29,7 +26,6 @@ pub struct Ended {
     pub stopped: bool,
     pub err: String,
 }
-
 struct Shared {
     child: Mutex<Option<Child>>,
     family: Family,
@@ -39,49 +35,40 @@ struct Shared {
     born: Instant,
     last: AtomicU64,
 }
-
 impl Shared {
     fn child(&self) -> MutexGuard<'_, Option<Child>> {
         self.child.held()
     }
-
     fn input(&self) -> MutexGuard<'_, Option<mpsc::Sender<Vec<u8>>>> {
         self.input.held()
     }
-
     fn end(&self) {
         let held = self.child();
         if held.is_some() {
             self.family.end();
         }
     }
-
     fn gone(&self) -> bool {
         self.child()
             .as_mut()
             .is_none_or(|child| matches!(child.try_wait(), Ok(Some(_))))
     }
-
     fn touch(&self) {
         let now = u64::try_from(self.born.elapsed().as_millis()).unwrap_or(u64::MAX);
         self.last.store(now, Ordering::SeqCst);
     }
-
     fn quiet_for(&self) -> Duration {
         let last = Duration::from_millis(self.last.load(Ordering::SeqCst));
         self.born.elapsed().saturating_sub(last)
     }
 }
-
 #[derive(Clone)]
 pub struct Running(Arc<Shared>);
-
 impl Running {
     pub fn stop(&self) {
         self.0.stopped.store(true, Ordering::SeqCst);
         self.0.end();
     }
-
     pub fn write_line(&self, line: &str) -> io::Result<()> {
         let mut held = self.0.input();
         let closed = || io::Error::new(io::ErrorKind::BrokenPipe, "the input is closed");
@@ -97,18 +84,15 @@ impl Running {
         self.0.touch();
         Ok(())
     }
-
     pub fn close_input(&self) {
         self.0.input().take();
     }
 }
-
 #[derive(Clone, Copy, Debug)]
 enum Limit {
     Total(Duration),
     Idle(Duration),
 }
-
 pub fn start(
     command: Command,
     input: Vec<u8>,
@@ -117,7 +101,6 @@ pub fn start(
 ) -> io::Result<Running> {
     launch(command, Some(input), Limit::Total(timeout), heard)
 }
-
 pub fn open(
     command: Command,
     idle: Duration,
@@ -125,7 +108,6 @@ pub fn open(
 ) -> io::Result<Running> {
     launch(command, None, Limit::Idle(idle), heard)
 }
-
 fn launch(
     mut command: Command,
     input: Option<Vec<u8>>,
@@ -140,7 +122,6 @@ fn launch(
     let stdin = child.stdin.take();
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
-
     let (once, kept) = match input {
         Some(bytes) => (stdin.map(|stdin| (stdin, bytes)), None),
         None => (None, stdin.map(writer)),
@@ -154,22 +135,18 @@ fn launch(
         born: Instant::now(),
         last: AtomicU64::new(0),
     });
-
     if let Some((mut stdin, input)) = once {
         thread::spawn(move || {
             let _ = stdin.write_all(&input);
         });
     }
-
     let err = stderr.map(|stderr| {
         let ending = Arc::clone(&shared);
         thread::spawn(move || tail(orden_base::printed::lapsing(stderr, move || ending.gone())))
     });
-
     let (done, waiting) = mpsc::channel::<()>();
     let watched = Arc::clone(&shared);
     thread::spawn(move || watch(&watched, &waiting, limit));
-
     let reading = Arc::clone(&shared);
     thread::spawn(move || {
         if let Some(stdout) = stdout {
@@ -191,10 +168,8 @@ fn launch(
             err,
         }));
     });
-
     Ok(Running(shared))
 }
-
 fn writer(mut stdin: ChildStdin) -> mpsc::Sender<Vec<u8>> {
     let (sent, lines) = mpsc::channel::<Vec<u8>>();
     thread::spawn(move || {
@@ -206,7 +181,6 @@ fn writer(mut stdin: ChildStdin) -> mpsc::Sender<Vec<u8>> {
     });
     sent
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Said {
@@ -214,13 +188,11 @@ pub struct Said {
     #[serde(flatten)]
     pub ended: Ended,
 }
-
 pub fn run_to_end(command: Command, timeout: Duration) -> io::Result<Said> {
     let (sent, heard) = mpsc::channel();
     start(command, Vec::new(), timeout, move |one| {
         let _ = sent.send(one);
     })?;
-
     let mut out = Vec::new();
     for one in heard {
         match one {
@@ -235,7 +207,6 @@ pub fn run_to_end(command: Command, timeout: Duration) -> io::Result<Said> {
     }
     Err(io::Error::other("the run ended without saying so"))
 }
-
 fn watch(shared: &Shared, waiting: &Receiver<()>, limit: Limit) {
     match limit {
         Limit::Total(timeout) => {
@@ -258,11 +229,9 @@ fn watch(shared: &Shared, waiting: &Receiver<()>, limit: Limit) {
     shared.timed_out.store(true, Ordering::SeqCst);
     shared.end();
 }
-
 fn lines(out: impl Read, heard: &impl Fn(Heard)) {
     let mut reader = BufReader::new(out);
     let mut line = Vec::new();
-
     loop {
         line.clear();
         match (&mut reader)
@@ -276,7 +245,6 @@ fn lines(out: impl Read, heard: &impl Fn(Heard)) {
             skip_line(&mut reader);
             continue;
         }
-
         let text = String::from_utf8_lossy(&line);
         let text = text.trim_end_matches(['\r', '\n']);
         if !text.is_empty() {
@@ -284,7 +252,6 @@ fn lines(out: impl Read, heard: &impl Fn(Heard)) {
         }
     }
 }
-
 fn skip_line(reader: &mut impl BufRead) {
     loop {
         let Ok(buffer) = reader.fill_buf() else {
@@ -301,7 +268,6 @@ fn skip_line(reader: &mut impl BufRead) {
         reader.consume(all);
     }
 }
-
 fn tail(mut err: impl Read) -> String {
     let mut kept = Vec::new();
     let mut chunk = [0_u8; 8192];
@@ -317,7 +283,6 @@ fn tail(mut err: impl Read) -> String {
     let from = kept.len().saturating_sub(ERR_TAIL);
     String::from_utf8_lossy(&kept[from..]).into_owned()
 }
-
 fn reap(shared: &Shared) -> Option<i32> {
     loop {
         {
@@ -338,7 +303,6 @@ fn reap(shared: &Shared) -> Option<i32> {
         thread::sleep(Duration::from_millis(15));
     }
 }
-
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
@@ -352,14 +316,12 @@ mod tests {
             let _ = sent.send(one);
         })
         .unwrap();
-
         let long = "x".repeat(1 << 20);
         let started = Instant::now();
         running.write_line(&long).unwrap();
         running.write_line("after").unwrap();
         running.close_input();
         assert!(started.elapsed() < Duration::from_millis(500));
-
         let lines: Vec<String> = heard
             .iter()
             .take_while(|one| matches!(one, Heard::Line(_)))
@@ -372,15 +334,12 @@ mod tests {
         assert_eq!(lines[0].len(), 1 << 20);
         assert_eq!(lines[1], "after");
     }
-
     #[test]
     fn a_program_that_leaves_something_holding_its_output_ends_when_it_does() {
         let mut command = Command::new("sh");
         command.args(["-c", "sleep 30 & echo said; echo told >&2"]);
         let started = Instant::now();
-
         let said = run_to_end(command, Duration::from_secs(20)).unwrap();
-
         assert_eq!(said.out, "said");
         assert_eq!(said.ended.err, "told\n");
         assert_eq!(said.ended.code, Some(0));

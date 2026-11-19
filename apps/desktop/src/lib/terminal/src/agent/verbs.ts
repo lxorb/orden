@@ -24,11 +24,9 @@ export const terminalVerbs = verbsOf({
   read_terminal: async (call) => readTerminal(await heldCall(call)),
   type_terminal: async (call) => typeTerminal(await heldCall(call)),
 })
-
 function callOf(args: AgentSaid, caller: AgentCaller): Call {
   return { verb: 'workspace_tabs', args, caller }
 }
-
 async function newTerminal(call: Call): Promise<string | null> {
   const list = await shells.ask()
   const named = maybe(call, 'shell')?.toLowerCase() ?? null
@@ -38,7 +36,6 @@ async function newTerminal(call: Call): Promise<string | null> {
     const names = list.map((one) => one.name).join(', ')
     throw new Refused('bad_arguments', `there is no shell ${named ?? ''}: ${names}`)
   }
-
   const cwd = maybe(call, 'cwd')
   const folder = cwd === null ? undefined : onDisk(placeFor(call, null), judged(cwd))
   const front = asksFront(call, 'a new tab in front')
@@ -50,7 +47,6 @@ async function newTerminal(call: Call): Promise<string | null> {
   })
   return openedBy(call, tab, front)?.id ?? null
 }
-
 export const terminalTabs: AgentTabKind = {
   open: (args, caller) => newTerminal(callOf(args, caller)),
   list: (args, caller) => listHeld(callOf(args, caller)),
@@ -60,7 +56,6 @@ export const terminalTabs: AgentTabKind = {
     return tab ? terminalSelection(tab, most) : null
   },
 }
-
 export const onlineTabs: AgentTabKind = {
   open: (args, caller) => newOnline(callOf(args, caller)),
   list: (args, caller) => listOnline(callOf(args, caller)),

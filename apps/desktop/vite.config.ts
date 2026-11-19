@@ -9,7 +9,6 @@ import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 
 const host = process.env.TAURI_DEV_HOST
-
 function appVersion(): string {
   try {
     const given: unknown = JSON.parse(process.env.TAURI_CONFIG ?? '{}')
@@ -20,12 +19,10 @@ function appVersion(): string {
   }
   return tauri.version
 }
-
 function stamp(serving: boolean): string {
   if (serving) return `${manifest.version} dev server started ${when()}`
   return `${manifest.version} ${commit(false) || 'unknown'} ${when()}`
 }
-
 function commit(serving: boolean): string {
   if (serving) return ''
   try {
@@ -34,11 +31,9 @@ function commit(serving: boolean): string {
     return ''
   }
 }
-
 function when(): string {
   return `${new Date().toISOString().slice(0, 16)}Z`
 }
-
 const everyPage = {
   postcssPlugin: 'orden-every-page',
   Rule(rule: { selector: string }) {
@@ -46,7 +41,6 @@ const everyPage = {
     if (wide !== rule.selector) rule.selector = wide
   },
 }
-
 export default defineConfig(({ command, mode }) => ({
   plugins: [svelte(), emojiOutlines()],
   define: {

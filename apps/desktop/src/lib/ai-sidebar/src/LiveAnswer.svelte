@@ -12,17 +12,14 @@
   const { text, draw, onfollow, onpicture }: Props = $props()
   let drawnFor = untrack(() => text)
   let html = $state(untrack(() => draw(text)))
-
   const redraw = atItsCost(() => {
     if (drawnFor === text) return
     drawnFor = text
     html = draw(text)
   })
-
   $effect(() => {
     if (text !== drawnFor) redraw()
   })
-
   onDestroy(() => redraw.cancel())
 </script>
 

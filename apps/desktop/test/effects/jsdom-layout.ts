@@ -5,20 +5,15 @@ class NoLayout {
   unobserve = () => undefined
   disconnect = () => undefined
 }
-
 globalThis.ResizeObserver = NoLayout
-
 function letGoOfFocusIn(node: Node) {
   const held = document.activeElement
   if (held instanceof HTMLElement && held !== document.body && node.contains(held)) held.blur()
 }
-
 type Native = (this: Node, ...args: unknown[]) => unknown
-
 function native(on: object, name: string): Native {
   return Object.getOwnPropertyDescriptor(on, name)?.value as Native
 }
-
 const remove = native(Element.prototype, 'remove')
 const replaceWith = native(Element.prototype, 'replaceWith')
 const replaceChildren = native(Element.prototype, 'replaceChildren')
@@ -26,7 +21,6 @@ const removeChild = native(Node.prototype, 'removeChild')
 const replaceChild = native(Node.prototype, 'replaceChild')
 const text = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent')
 const html = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML')
-
 Element.prototype.remove = function (this: Element) {
   letGoOfFocusIn(this)
   remove.call(this)
@@ -61,9 +55,7 @@ Object.defineProperty(Element.prototype, 'innerHTML', {
     html?.set?.call(this, value)
   },
 })
-
 const unfinished = new Set<() => void>()
-
 Element.prototype.animate = function animate() {
   const played = {
     cancel: () => undefined,
@@ -85,9 +77,7 @@ Element.prototype.animate = function animate() {
   unfinished.add(finish)
   return played as unknown as Animation
 }
-
 const ROUNDS = 20
-
 afterEach(() => {
   for (let round = 0; round < ROUNDS && unfinished.size; round++) {
     for (const finish of [...unfinished]) finish()

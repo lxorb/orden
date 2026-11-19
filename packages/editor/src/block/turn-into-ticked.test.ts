@@ -27,12 +27,10 @@ function turnedIntoTasks(doc: string, from: string, to: string): string {
   turnBlocksInto(view, at, 'task')
   return state.doc.toString()
 }
-
 describe('Turn into task over blocks that hold a ticked task', () => {
   test('a ticked task stays ticked', () => {
     expect(turnedIntoTasks('- [x] done\n- plain\n', 'done', 'plain')).toBe('- [x] done\n- [ ] plain\n')
   })
-
   test('a ticked task on its own stays ticked', () => {
     expect(turnedIntoTasks('- [x] done\n', 'done', 'done')).toBe('- [x] done\n')
   })

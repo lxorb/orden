@@ -25,7 +25,6 @@
   .switch-row {
     padding: var(--space-1) var(--space-3);
   }
-
   .switch-row + :global(.switch-row) {
     border-top: 1px solid var(--line);
   }

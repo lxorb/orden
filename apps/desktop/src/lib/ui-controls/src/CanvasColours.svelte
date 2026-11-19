@@ -17,9 +17,7 @@
     wheel?: boolean
     oncolour: (colour: string | null) => void
   } = $props()
-
   const DOTS = PRESET_COLOURS.map((one) => ({ colour: one, css: `var(--canvas-${one})` }))
-
   function choose(next: string | null) {
     tick()
     oncolour(next)
@@ -85,7 +83,6 @@
     grid-template-columns: repeat(8, minmax(0, 40px));
     gap: 2px;
   }
-
   .dot {
     display: grid;
     place-items: center;
@@ -96,7 +93,6 @@
     background: none;
     cursor: default;
   }
-
   .dot::after {
     content: '';
     display: block;
@@ -109,40 +105,33 @@
       scale var(--dur-fast) var(--ease-spring),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .dot:hover::after {
     scale: 1.12;
   }
-
   .dot:active::after {
     scale: 1.04;
   }
-
   .dot.on::after {
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent),
       0 0 0 2px var(--surface),
       0 0 0 4px var(--accent);
   }
-
   .bare::after {
     background: none;
     box-shadow: inset 0 0 0 2px var(--muted);
   }
-
   .bare.on::after {
     box-shadow:
       inset 0 0 0 2px var(--muted),
       0 0 0 2px var(--surface),
       0 0 0 4px var(--accent);
   }
-
   .wheel {
     position: relative;
     overflow: hidden;
     cursor: pointer;
   }
-
   .wheel::after {
     background: conic-gradient(
       from 0deg,
@@ -155,7 +144,6 @@
       var(--canvas-1)
     );
   }
-
   .wheel input {
     position: absolute;
     inset: 0;

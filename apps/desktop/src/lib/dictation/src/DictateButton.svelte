@@ -5,12 +5,10 @@
   import { type Dictates, voice } from './voice.svelte'
 
   const { owner, below = false }: { owner: Dictates; below?: boolean } = $props()
-
   const hearing = $derived(voice.of(owner))
   const asking = $derived(voice.asking === owner)
   let button = $state<HTMLButtonElement>()
   let pressed: { at: number; started: boolean } | null = null
-
   const title = $derived(
     hearing === 'finishing'
       ? 'Writing down what you said'
@@ -18,14 +16,12 @@
         ? shortcuts.tooltip('Dictate', 'field.dictate')
         : 'Stop dictating',
   )
-
   function down(event: PointerEvent) {
     if (event.button !== 0) return
     event.preventDefault()
     pressed = { at: performance.now(), started: hearing === 'idle' }
     if (hearing === 'idle') void voice.start(owner)
   }
-
   function up() {
     const was = pressed
     pressed = null
@@ -33,7 +29,6 @@
     if (!was.started) void voice.finish()
     else if (performance.now() - was.at >= HOLD && voice.asking !== owner) void voice.finish()
   }
-
   function clicked(event: MouseEvent) {
     if (event.detail === 0) void voice.toggle(owner)
   }
@@ -74,7 +69,6 @@
     flex: none;
     display: inline-grid;
   }
-
   .mic {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
@@ -84,38 +78,32 @@
       color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .mic svg {
     width: 14px;
     height: 14px;
     stroke-width: 1.4;
   }
-
   .mic.listening,
   .mic.listening:hover {
     background: var(--accent);
     color: var(--accent-ink);
     box-shadow: 0 0 0 calc(1px + var(--level) * 5px) var(--accent-line);
   }
-
   .mic.finishing {
     background: var(--accent-soft);
     color: var(--accent);
     animation: breathe calc(var(--dur-slow) * 3) var(--ease-in-out) infinite;
   }
-
   @keyframes breathe {
     50% {
       opacity: 0.45;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .mic.finishing {
       animation: none;
     }
   }
-
   :global([data-touch]) .mic {
     width: var(--row-height);
     height: var(--row-height);

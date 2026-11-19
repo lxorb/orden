@@ -11,7 +11,6 @@
     onadd: (adding: Adding) => Promise<string | null>
     onclose: () => void
   }
-
   const { open, offered, onadd, onclose }: Props = $props()
   const EXAMPLE_URL = 'http://localhost:11434'
   let maker = $state<Maker | null>(null)
@@ -25,36 +24,30 @@
   const roads = $derived(maker ? roadsOf(maker, offered) : [])
   const hint = $derived(road ? ROAD_HINTS[road] : '')
   const brand = $derived(makers.find((one) => one.id === maker) ?? null)
-
   const ready = $derived(!!road && !busy && (road === 'compatible' ? !!baseUrl.trim() : !keyed(road) || !!typed.trim()))
-
   $effect(() => {
     if (open) return
     maker = null
     road = null
     clear()
   })
-
   function clear() {
     typed = ''
     name = ''
     baseUrl = ''
     trouble = ''
   }
-
   function choose(one: Maker) {
     maker = one
     const offeredRoads = roadsOf(one, offered)
     road = offeredRoads.length === 1 ? (offeredRoads[0] ?? null) : null
     clear()
   }
-
   function back() {
     if (!road || roads.length <= 1) maker = null
     road = null
     clear()
   }
-
   async function add() {
     if (!road || !ready) return
     busy = true
@@ -163,11 +156,9 @@
     gap: var(--space-3);
     padding: 0 var(--space-2);
   }
-
   .tile,
   .road {
     --mark: var(--icon-lg);
-
     display: flex;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
@@ -179,24 +170,20 @@
     text-align: start;
     cursor: pointer;
   }
-
   .tile {
     flex-direction: column;
     align-items: flex-start;
     min-height: 6rem;
   }
-
   .road {
     align-items: center;
     gap: var(--space-3);
   }
-
   .tile:hover,
   .road:hover {
     border-color: var(--accent-line);
     background: var(--surface-hover);
   }
-
   .roads,
   .fields {
     display: flex;
@@ -204,18 +191,15 @@
     gap: var(--space-2);
     padding: 0 var(--space-2);
   }
-
   .tile-name {
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .tile-hint {
     margin: 0;
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .field {
     display: flex;
     flex-direction: column;
@@ -223,7 +207,6 @@
     font-size: var(--text-sm);
     color: var(--muted-strong);
   }
-
   .actions {
     display: flex;
     justify-content: flex-end;

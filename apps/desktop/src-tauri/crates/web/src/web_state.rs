@@ -7,15 +7,11 @@ mod restore_view;
 use tauri::{Manager as _, Webview};
 
 pub(super) const PATIENCE: std::time::Duration = std::time::Duration::from_secs(60);
-
 const DUMP: &str = include_str!("web_state/scripts/dump.js");
-
 const RESTORE: &str = include_str!("web_state/scripts/restore.js");
-
 fn ours(webview: &Webview) -> Result<(), String> {
     orden_base::labels::own_window(webview).map(drop)
 }
-
 #[tauri::command]
 pub async fn web_merge(
     webview: Webview,
@@ -47,7 +43,6 @@ pub async fn web_merge(
     };
     merge::merge(&webview, from, None, &origins, from_used_last).await
 }
-
 #[tauri::command]
 pub async fn web_copy(
     webview: Webview,
@@ -63,7 +58,6 @@ pub async fn web_copy(
         .collect();
     merge::merge(&webview, from, Some(into), &origins, true).await
 }
-
 fn copy_stores<'a>(from: &'a str, into: &'a str) -> Result<(&'a str, &'a str), String> {
     let (Some(from), Some(into)) = (
         crate::web_stores::named(Some(from))?,
@@ -76,7 +70,6 @@ fn copy_stores<'a>(from: &'a str, into: &'a str) -> Result<(&'a str, &'a str), S
     }
     Ok((from, into))
 }
-
 #[cfg(test)]
 mod tests {
     use super::copy_stores;

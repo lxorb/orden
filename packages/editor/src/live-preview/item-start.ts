@@ -20,27 +20,22 @@ import { readHighlight } from '@orden/markdown/highlights'
 import { quietMarks } from './reveal'
 
 export const landInWords = Annotation.define<boolean>()
-
 const QUOTE = /^(?:[ \t]*>[ \t]?)*/
 const ITEM = /^[ \t]*(?:([-*+])|\d+[.)])[ \t]+(\[[ xX]\][ \t]+)?/
 const HEADING = /^#{1,6}[ \t]+/
-
 interface Run {
   from: number
   to: number
 }
-
 function markAt(state: EditorState, pos: number, name: string): boolean {
   return syntaxTree(state).resolveInner(pos, 1).name === name
 }
-
 function hiddenRun(state: EditorState, line: Line): Run | null {
   const quiet = state.facet(quietMarks)
   const quote = QUOTE.exec(line.text)?.[0] ?? ''
   const first = line.from + (line.text.length - line.text.trimStart().length)
   let start: number | null = quote && quiet && markAt(state, first, 'QuoteMark') ? 0 : null
   let at = quote.length
-
   const rest = line.text.slice(at)
   const item = ITEM.exec(rest)
   const heading = HEADING.exec(rest)
@@ -54,16 +49,13 @@ function hiddenRun(state: EditorState, line: Line): Run | null {
     start ??= at
     at += heading[0].length
   }
-
   if (start === null || at <= start) return null
   return { from: line.from + start, to: line.from + at }
 }
-
 function kept(before: EditorState, after: EditorState, range: SelectionRange, at: number) {
   const line = after.doc.lineAt(range.head)
   const run = hiddenRun(after, line)
   if (!run || range.head >= run.to || range.head < run.from) return range
-
   const was = (before.selection.ranges[at] ?? before.selection.main).head
   const sameLine = was >= line.from && was <= line.to
   if (!range.empty) {
@@ -71,7 +63,6 @@ function kept(before: EditorState, after: EditorState, range: SelectionRange, at
   }
   return EditorSelection.cursor(run.to)
 }
-
 function backOutOfWords(view: EditorView, toward: Direction): boolean {
   const { state } = view
   const main = state.selection.main
@@ -87,7 +78,6 @@ function backOutOfWords(view: EditorView, toward: Direction): boolean {
   })
   return true
 }
-
 function placed(transaction: Transaction): boolean {
   if (transaction.annotation(Transaction.userEvent) !== undefined || isExternal(transaction)) {
     return false
@@ -95,7 +85,6 @@ function placed(transaction: Transaction): boolean {
   if (!transaction.effects.length) return false
   return transaction.newSelection.ranges.every((range) => range.empty)
 }
-
 function pushHeadingDown(view: EditorView): boolean {
   const { state } = view
   const main = state.selection.main
@@ -113,7 +102,6 @@ function pushHeadingDown(view: EditorView): boolean {
   })
   return true
 }
-
 const snapped = EditorState.transactionFilter.of((transaction) => {
   const asked = transaction.annotation(landInWords) === true
   if (!asked && (transaction.docChanged || !transaction.selection)) return transaction
@@ -129,16 +117,13 @@ const snapped = EditorState.transactionFilter.of((transaction) => {
     },
   ]
 })
-
 const INLINE_MARKS = new Set(['EmphasisMark', 'StrikethroughMark', 'SubscriptMark', 'SuperscriptMark', 'HighlightMark'])
-
 function hiddenMarkAt(state: EditorState, pos: number, side: -1 | 1): Run | null {
   const node = syntaxTree(state).resolveInner(pos, side)
   const inline = INLINE_MARKS.has(node.name) || (node.name === 'CodeMark' && node.parent?.name === 'InlineCode')
   if (!inline || (side < 0 ? node.to : node.from) !== pos) return null
   return { from: node.from, to: node.to }
 }
-
 function pastMarks(state: EditorState, pos: number, side: -1 | 1): number {
   let at = pos
   for (let mark = hiddenMarkAt(state, at, side); mark; mark = hiddenMarkAt(state, at, side)) {
@@ -146,13 +131,11 @@ function pastMarks(state: EditorState, pos: number, side: -1 | 1): number {
   }
   return at
 }
-
 function itemWordsAt(line: Line): number | null {
   const quote = QUOTE.exec(line.text)?.[0] ?? ''
   const item = ITEM.exec(line.text.slice(quote.length))
   return item ? line.from + quote.length + item[0].length : null
 }
-
 function soleLetterOfRun(state: EditorState, from: number, to: number): boolean {
   for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(from, 1); node; node = node.parent) {
     const inner = innerOf(node)
@@ -160,32 +143,27 @@ function soleLetterOfRun(state: EditorState, from: number, to: number): boolean 
   }
   return false
 }
-
 function besideMarks(view: EditorView, near: number, side: -1 | 1): boolean {
   view.dispatch({ selection: EditorSelection.cursor(near) })
   if (side > 0) return deleteCharForward(view)
   return deleteMarkupBackward(view) || deleteCharBackward(view)
 }
-
 function deleteBesideMarks(side: -1 | 1) {
   return (view: EditorView): boolean => {
     const { state } = view
     const main = state.selection.main
     if (!state.facet(quietMarks) || state.readOnly) return false
     if (state.selection.ranges.length > 1 || !main.empty) return false
-
     const head = main.head
     const near = pastMarks(state, head, side)
     const line = state.doc.lineAt(near)
     const edge = side < 0 ? [line.from, hiddenRun(state, line)?.to, itemWordsAt(line)] : [line.to]
     if (edge.includes(near)) return near !== head && besideMarks(view, near, side)
-
     const far = line.from + findClusterBreak(line.text, near - line.from, side > 0)
     const beyond = pastMarks(state, far, side)
     const whole = near === head ? pastMarks(state, head, side < 0 ? 1 : -1) : head
     const alone = beyond !== far && whole !== near && soleLetterOfRun(state, Math.min(far, near), Math.max(far, near))
     if (!alone && near === head) return false
-
     const [from, to] = alone ? (side < 0 ? [beyond, whole] : [whole, beyond]) : side < 0 ? [far, near] : [near, far]
     view.dispatch({
       changes: { from, to },
@@ -195,7 +173,6 @@ function deleteBesideMarks(side: -1 | 1) {
     return true
   }
 }
-
 const INLINE_RUNS = new Set([
   'Emphasis',
   'StrongEmphasis',
@@ -211,9 +188,7 @@ const INLINE_RUNS = new Set([
   'Autolink',
   'FootnoteRef',
 ])
-
 const TAG = /^<(\/?)([A-Za-z][\w-]*)/
-
 function tagPair(state: EditorState, node: SyntaxNode, side: -1 | 1): MarkedRun | null {
   const [, closing, name] = TAG.exec(state.sliceDoc(node.from, node.to)) ?? []
   if (!name || side < 0 !== (closing === '/')) return null
@@ -228,7 +203,6 @@ function tagPair(state: EditorState, node: SyntaxNode, side: -1 | 1): MarkedRun 
   }
   return null
 }
-
 function atHiddenEdge(view: EditorView, pos: number, side: -1 | 1): boolean {
   let found = false
   for (const ranges of view.state.facet(EditorView.atomicRanges)) {
@@ -238,20 +212,16 @@ function atHiddenEdge(view: EditorView, pos: number, side: -1 | 1): boolean {
   }
   return found
 }
-
 interface MarkedRun extends Run {
   inner: Run | null
 }
-
 const WORDY_RUNS = new Set(['Emphasis', 'StrongEmphasis', 'Strikethrough', 'Highlight', 'Subscript', 'Superscript'])
-
 function innerOf(node: SyntaxNode): Run | null {
   const open = node.firstChild
   const close = node.lastChild
   if (!open || !close || open === close || !open.name.endsWith('Mark')) return null
   return { from: open.to, to: close.from }
 }
-
 function runAt(state: EditorState, pos: number, side: -1 | 1): MarkedRun | null {
   let run: MarkedRun | null = null
   for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side); node; node = node.parent) {
@@ -268,14 +238,11 @@ function runAt(state: EditorState, pos: number, side: -1 | 1): MarkedRun | null 
   }
   return run
 }
-
 const SPACE = /\s/
-
 function wordsStart(state: EditorState, run: MarkedRun, inner: Run): number {
   if (state.sliceDoc(run.from, run.from + 2) !== '==') return inner.from
   return inner.from + readHighlight(state.sliceDoc(inner.from, inner.to)).from
 }
-
 function childrenIn(state: EditorState, run: MarkedRun, inner: Run): Run[] {
   const found: Run[] = []
   syntaxTree(state).iterate({
@@ -289,14 +256,12 @@ function childrenIn(state: EditorState, run: MarkedRun, inner: Run): Run[] {
   })
   return found
 }
-
 function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): ChangeSpec[] | null {
   const inner = run.inner
   if (!inner) return null
   const start = wordsStart(state, run, inner)
   const children = childrenIn(state, run, inner)
   const spaceAt = (pos: number) => SPACE.test(state.sliceDoc(pos, pos + 1))
-
   if (side < 0) {
     let unit = inner.to
     while (unit > start && !spaceAt(unit - 1)) {
@@ -308,7 +273,6 @@ function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): ChangeSpec[] 
     const broken = state.sliceDoc(gap, unit).includes('\n')
     return [{ from: gap, to: inner.to }, ...(broken ? [{ from: run.to, insert: '\n' }] : [])]
   }
-
   let unit = start
   while (unit < inner.to && !spaceAt(unit)) {
     unit = children.find((child) => child.from === unit)?.to ?? unit + 1
@@ -319,9 +283,7 @@ function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): ChangeSpec[] 
   const broken = state.sliceDoc(unit, gap).includes('\n')
   return [...(broken ? [{ from: run.from, insert: '\n' }] : []), { from: start, to: gap }]
 }
-
 const HELD_RUNS = new Set([...WORDY_RUNS, 'InlineCode'])
-
 function runHolding(state: EditorState, pos: number): MarkedRun | null {
   for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos); node; node = node.parent) {
     if (!HELD_RUNS.has(node.name)) continue
@@ -330,7 +292,6 @@ function runHolding(state: EditorState, pos: number): MarkedRun | null {
   }
   return null
 }
-
 function spacesFrom(state: EditorState, pos: number, side: -1 | 1, edge: number): number {
   let at = pos
   while (at !== edge && SPACE.test(side < 0 ? state.sliceDoc(at - 1, at) : state.sliceDoc(at, at + 1))) {
@@ -338,20 +299,17 @@ function spacesFrom(state: EditorState, pos: number, side: -1 | 1, edge: number)
   }
   return at
 }
-
 function deleteWordInsideRun(view: EditorView, side: -1 | 1): boolean {
   const { state } = view
   const head = state.selection.main.head
   const run = runHolding(state, head)
   const inner = run?.inner
   if (!run || !inner) return false
-
   const edge = side < 0 ? inner.from : inner.to
   if (head === edge) {
     view.dispatch({ selection: EditorSelection.cursor(side < 0 ? run.from : run.to) })
     return deleteWordOutside(view, side) || (side < 0 ? deleteGroupBackward(view) : deleteGroupForward(view))
   }
-
   const moved = view.moveByGroup(EditorSelection.cursor(head), side > 0).head
   const reach = side < 0 ? Math.max(moved, inner.from) : Math.min(moved, inner.to)
   const before = state.sliceDoc(inner.from, side < 0 ? reach : head)
@@ -368,7 +326,6 @@ function deleteWordInsideRun(view: EditorView, side: -1 | 1): boolean {
     from = spacesFrom(state, from, -1, inner.from)
     to = inner.to
   }
-
   view.dispatch({
     changes: { from, to },
     scrollIntoView: true,
@@ -376,7 +333,6 @@ function deleteWordInsideRun(view: EditorView, side: -1 | 1): boolean {
   })
   return true
 }
-
 function hiddenNear(view: EditorView, from: number, to: number, side: -1 | 1): number | null {
   let edge: number | null = null
   for (const ranges of view.state.facet(EditorView.atomicRanges)) {
@@ -388,13 +344,10 @@ function hiddenNear(view: EditorView, from: number, to: number, side: -1 | 1): n
   }
   return edge
 }
-
 const MARKED_LEAD = /^(?:[ \t]*>)*[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
-
 function markedLead(text: string): number {
   return MARKED_LEAD.exec(text)?.[0].length ?? 0
 }
-
 function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
   const { state } = view
   const head = state.selection.main.head
@@ -405,7 +358,6 @@ function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
     if (!/[ \t]/.test(next)) break
     at += side
   }
-
   const run = atHiddenEdge(view, at, side) ? runAt(state, at, side) : null
   if (run) {
     const changes = wordIn(state, run, side) ?? [side < 0 ? { from: run.from, to: head } : { from: head, to: run.to }]
@@ -416,7 +368,6 @@ function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
     })
     return true
   }
-
   const target = view.moveByGroup(EditorSelection.cursor(head), side > 0).head
   const [from, to] = side < 0 ? [target, head] : [head, target]
   const stop = from < to ? hiddenNear(view, from, to, side) : null
@@ -428,7 +379,6 @@ function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
   })
   return true
 }
-
 function deleteWordOverMarks(side: -1 | 1) {
   return (view: EditorView): boolean => {
     const { state } = view
@@ -438,22 +388,18 @@ function deleteWordOverMarks(side: -1 | 1) {
     return deleteWordOutside(view, side)
   }
 }
-
 const leadKept = EditorState.transactionFilter.of((transaction) => {
   if (!transaction.isUserEvent('delete.backward') || !transaction.docChanged) return transaction
   const { startState } = transaction
   if (startState.selection.ranges.length > 1 || !startState.selection.main.empty) return transaction
-
   const head = startState.selection.main.head
   const line = startState.doc.lineAt(head)
   const lead = line.from + markedLead(line.text)
   if (lead === line.from || head <= lead) return transaction
-
   const ranges: number[][] = []
   transaction.changes.iterChangedRanges((from, to) => ranges.push([from, to]))
   const [only] = ranges
   if (ranges.length !== 1 || only?.[0] !== line.from || only[1] !== head) return transaction
-
   return {
     changes: { from: lead, to: head },
     selection: EditorSelection.cursor(lead),
@@ -461,7 +407,6 @@ const leadKept = EditorState.transactionFilter.of((transaction) => {
     userEvent: 'delete.backward',
   }
 })
-
 export const itemStartBindings: BindingSpec[] = [
   { id: 'marks.heading-down', key: 'Enter', run: pushHeadingDown, contextual: true },
   { id: 'marks.backspace', key: 'Backspace', run: deleteBesideMarks(-1), contextual: true },
@@ -493,5 +438,4 @@ export const itemStartBindings: BindingSpec[] = [
     contextual: true,
   },
 ]
-
 export const itemStart = [snapped, leadKept, Prec.high(boundKeymap(itemStartBindings))]

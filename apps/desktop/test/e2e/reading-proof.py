@@ -1,7 +1,6 @@
 import importlib.util
 import json
 import sys
-
 import harness
 from harness import Drive
 
@@ -9,11 +8,8 @@ spec = importlib.util.spec_from_file_location("speed", harness.HERE / "speed.py"
 assert spec and spec.loader
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
-
 NEEDS = ("chromium",)
-
 DRIVE = Drive(__file__, served=False, fresh=False)
-
 PROBE = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -140,12 +136,10 @@ async () => {
   return out
 }
 """
-
 def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
     if harness.OWN_BUILD:
         harness.build()
-
     lane = m.Lane("after", harness.DIST, "big")
     lane.start()
     try:
@@ -157,15 +151,11 @@ def main() -> int:
             got = page.evaluate(PROBE)
     finally:
         lane.stop()
-
     (DRIVE.shots / f"{tag}.json").write_text(json.dumps(got), encoding="utf-8")
-
     print(f"bytes {got['bytes']}  blocks {got['blockCount']}  headings in source {got['headings']}")
     print(f"headings on the page {got['headingsOnPage']}  page height {got['pageHeight']}")
     print(f"worst landing error {got['worst']} px")
     for one in got["landings"]:
         print(f"  heading {one['index']:>3}: error {one['error']} px, anchor drift {one.get('drift')}")
-
     return DRIVE.verdict()
-
 raise SystemExit(main())

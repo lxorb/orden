@@ -9,14 +9,11 @@ export interface Keep {
   write(key: string, value: string): Promise<boolean>
   clear(key: string): Promise<void>
 }
-
 export const wrote = new Map<string, string>()
 export const read = new Map<string, string>()
-
 function some(value: string | null | undefined): string | null {
   return typeof value === 'string' && value !== '' ? value : null
 }
-
 const page: Keep = {
   name: 'localStorage',
   read: (key) => Promise.resolve(some(storedText(key))),
@@ -26,22 +23,17 @@ const page: Keep = {
     return Promise.resolve()
   },
 }
-
 const COOKIE_LIFE = 60 * 60 * 24 * 365
-
 export function cookieOf(key: string): string | null {
   const found = document.cookie
     .split(';')
     .map((one) => one.trim())
     .find((one) => one.startsWith(`${key}=`))
-
   return some(found ? decodeURIComponent(found.slice(key.length + 1)) : null)
 }
-
 export function writeCookie(key: string, value: string): void {
   document.cookie = `${key}=${encodeURIComponent(value)};path=/;max-age=${COOKIE_LIFE};samesite=lax`
 }
-
 const cookie: Keep = {
   name: 'cookie',
   read: (key) => Promise.resolve(cookieOf(key)),
@@ -54,7 +46,6 @@ const cookie: Keep = {
     return Promise.resolve()
   },
 }
-
 const shelf: Keep = {
   name: 'indexedDB',
   async read(key) {
@@ -71,7 +62,6 @@ const shelf: Keep = {
     await meta.remove(key)
   },
 }
-
 export const hostKeep: Keep = {
   name: 'host',
   async read(key) {
@@ -80,31 +70,24 @@ export const hostKeep: Keep = {
   async write(key, value) {
     const store = await connectStore()
     if (!store) return false
-
     for (const pause of [0, 200, 600]) {
       if (pause) await waited(pause)
       if (await store.write(key, value)) return true
     }
-
     return false
   },
   async clear(key) {
     await (await connectStore())?.write(key, '')
   },
 }
-
 export const THIS_PAGE: readonly Keep[] = [page, cookie, shelf]
-
 const KEEPS: readonly Keep[] = [...THIS_PAGE, hostKeep]
-
 const SESSION = 'orden:session'
-
 export interface Held {
   name: string
   value: string | null
   failed: boolean
 }
-
 export async function readAll(key: string, from: readonly Keep[] = KEEPS): Promise<Held[]> {
   return Promise.all(
     from.map(async (keep) => {
@@ -119,7 +102,6 @@ export async function readAll(key: string, from: readonly Keep[] = KEEPS): Promi
     }),
   )
 }
-
 async function writeAll(key: string, value: string): Promise<void> {
   await Promise.all(
     KEEPS.map(async (keep) => {
@@ -132,13 +114,10 @@ async function writeAll(key: string, value: string): Promise<void> {
     }),
   )
 }
-
 async function clearAll(key: string): Promise<void> {
   await Promise.all(KEEPS.map((keep) => keep.clear(key).catch(() => undefined)))
 }
-
 const SEEDED = 'orden:seeded'
-
 export const seedFlag = {
   async read() {
     return (await readAll(SEEDED)).some((one) => one.value === 'yes')
@@ -147,18 +126,14 @@ export const seedFlag = {
     await writeAll(SEEDED, 'yes')
   },
 }
-
 export const everywhere: Vault = {
   async read() {
     const held = await readAll(SESSION)
     const found = held.find((one) => one.value !== null)?.value ?? null
     if (!found) return null
-
     if (held.some((one) => one.value === null)) void writeAll(SESSION, found)
-
     return found
   },
-
   write: (token) => writeAll(SESSION, token),
   clear: () => clearAll(SESSION),
 }

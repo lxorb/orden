@@ -10,23 +10,16 @@ use std::time::{Duration, Instant};
 use super::known::{Seen, Space};
 
 const QUIET: Duration = Duration::from_millis(250);
-
 const LONGEST: Duration = Duration::from_secs(1);
-
 pub const MOST_CHANGES: usize = 500;
-
 const OVERFLOWING: usize = 256;
-
 const ROOT_CHECK: Duration = Duration::from_secs(2);
-
 const FAILED_GAP: Duration = Duration::from_secs(60);
-
 #[derive(Clone, Debug)]
 pub struct Root {
     pub given: PathBuf,
     pub real: PathBuf,
 }
-
 impl Root {
     fn inside(&self, path: &Path) -> Option<PathBuf> {
         path.strip_prefix(&self.real)
@@ -35,7 +28,6 @@ impl Root {
             .map(Path::to_path_buf)
     }
 }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Heard {
     pub root: usize,
@@ -44,28 +36,23 @@ pub struct Heard {
     pub gone: bool,
     pub unwatched: Option<Unwatched>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Unwatched {
     Folders,
     Limit,
 }
-
 pub type Sink = Box<dyn FnMut(Heard) -> bool + Send>;
-
 pub struct Watch {
     shared: Arc<Shared>,
     roots: Arc<Vec<Root>>,
     watcher: Arc<Mutex<RecommendedWatcher>>,
 }
-
 impl Drop for Watch {
     fn drop(&mut self) {
         self.shared.stop();
     }
 }
-
 impl Watch {
     fn let_go(self) {
         self.shared.stop();
@@ -75,30 +62,25 @@ impl Watch {
         }
     }
 }
-
 pub struct Armed {
     shared: Arc<Shared>,
     roots: Arc<Vec<Root>>,
     watcher: RecommendedWatcher,
     unwatched: Vec<Option<Unwatched>>,
 }
-
 #[cfg(test)]
 pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
     armed(roots)?.start(sink)
 }
-
 pub fn armed(roots: Vec<Root>) -> Result<Armed, String> {
     let roots = Arc::new(roots);
     let shared = Arc::new(Shared::new(roots.len()));
-
     let heard = Arc::clone(&shared);
     let resolving = Arc::clone(&roots);
     let mut watcher = notify::recommended_watcher(move |event| heard.heard(&resolving, event))
         .map_err(|error| format!("could not watch the spaces: {error}"))?;
     let unwatched: Vec<Option<Unwatched>> =
         roots.iter().map(|root| arm(&mut watcher, root)).collect();
-
     Ok(Armed {
         shared,
         roots,
@@ -106,7 +88,6 @@ pub fn armed(roots: Vec<Root>) -> Result<Armed, String> {
         unwatched,
     })
 }
-
 impl Armed {
     pub fn start(self, sink: Sink) -> Result<Watch, String> {
         let Self {
@@ -125,14 +106,12 @@ impl Armed {
             .name("space watch".into())
             .spawn(move || work(&settling, &working, &using, sink, unwatched))
             .map_err(|error| format!("could not start watching the spaces: {error}"))?;
-
         Ok(Watch {
             shared,
             roots,
             watcher,
         })
     }
-
     pub fn replacing(mut self, old: &mut Option<Watch>) -> Self {
         if !self.unwatched.contains(&Some(Unwatched::Limit)) {
             return self;
@@ -147,7 +126,6 @@ impl Armed {
         }
         self
     }
-
     pub fn start_in(
         self,
         running: &mut HashMap<PathBuf, Watch>,
@@ -169,7 +147,6 @@ impl Armed {
         }
     }
 }
-
 fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
     let error = watch_tree(watcher, &root.real).err()?;
     eprintln!(
@@ -182,7 +159,6 @@ fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
         Unwatched::Folders
     })
 }
-
 fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()> {
     let Err(error) = watcher.watch(dir, RecursiveMode::Recursive) else {
         return Ok(());
@@ -210,7 +186,6 @@ fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()
     }
     outcome
 }
-
 fn work(
     roots: &[Root],
     shared: &Shared,
@@ -232,7 +207,6 @@ fn work(
     }
     let mut released: Vec<BTreeSet<PathBuf>> = vec![BTreeSet::new(); roots.len()];
     let mut failed_at: Vec<Option<Instant>> = vec![None; roots.len()];
-
     while let Some(batch) = shared.next() {
         let mut heard = Vec::new();
         for (at, root) in roots.iter().enumerate() {
@@ -245,7 +219,6 @@ fn work(
             if failing {
                 failed_at[at] = Some(Instant::now());
             }
-
             if !root.real.is_dir() {
                 let _ = lock_watcher(watcher).unwatch(&root.real);
                 spaces[at] = None;
@@ -275,7 +248,6 @@ fn work(
                 heard.extend(seen.chunks(MOST_CHANGES).map(|some| Heard::seen(at, some)));
             }
         }
-
         moved_across(roots, &mut heard);
         for one in heard {
             if one.seen.is_empty() && !one.scan && !one.gone {
@@ -288,7 +260,6 @@ fn work(
         }
     }
 }
-
 fn moved_across(roots: &[Root], heard: &mut [Heard]) {
     let mut left: Vec<(usize, PathBuf, String)> = Vec::new();
     for one in heard.iter() {
@@ -304,7 +275,6 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
     if left.is_empty() {
         return;
     }
-
     let mut carried: Vec<(usize, PathBuf)> = Vec::new();
     for one in heard.iter_mut() {
         for seen in &mut one.seen {
@@ -327,7 +297,6 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
             };
         }
     }
-
     for one in heard.iter_mut() {
         let root = one.root;
         one.seen.retain(|seen| {
@@ -336,7 +305,6 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
         });
     }
 }
-
 impl Heard {
     fn seen(root: usize, seen: &[Seen]) -> Self {
         Self {
@@ -347,7 +315,6 @@ impl Heard {
             unwatched: None,
         }
     }
-
     fn scan(root: usize) -> Self {
         Self {
             root,
@@ -357,7 +324,6 @@ impl Heard {
             unwatched: None,
         }
     }
-
     fn gone(root: usize) -> Self {
         Self {
             root,
@@ -368,7 +334,6 @@ impl Heard {
         }
     }
 }
-
 fn named(roots: &[Root], paths: &[PathBuf]) -> Vec<usize> {
     let named: Vec<usize> = (0..roots.len())
         .filter(|at| paths.iter().any(|path| roots[*at].inside(path).is_some()))
@@ -379,16 +344,13 @@ fn named(roots: &[Root], paths: &[PathBuf]) -> Vec<usize> {
         named
     }
 }
-
 fn lock_watcher(watcher: &Mutex<RecommendedWatcher>) -> MutexGuard<'_, RecommendedWatcher> {
     watcher.held()
 }
-
 struct Shared {
     queue: Mutex<Queue>,
     wake: Condvar,
 }
-
 struct Queue {
     touched: Vec<BTreeSet<PathBuf>>,
     raw: Vec<usize>,
@@ -398,7 +360,6 @@ struct Queue {
     last: Option<Instant>,
     stopped: bool,
 }
-
 struct Batch {
     touched: Vec<BTreeSet<PathBuf>>,
     raw: Vec<usize>,
@@ -406,7 +367,6 @@ struct Batch {
     failed: Vec<bool>,
     cut: bool,
 }
-
 impl Batch {
     fn quiet(roots: usize) -> Self {
         Self {
@@ -418,7 +378,6 @@ impl Batch {
         }
     }
 }
-
 impl Shared {
     fn new(roots: usize) -> Self {
         Self {
@@ -434,28 +393,23 @@ impl Shared {
             wake: Condvar::new(),
         }
     }
-
     fn lock(&self) -> MutexGuard<'_, Queue> {
         self.queue.held()
     }
-
     fn stop(&self) {
         let mut queue = self.lock();
         queue.stopped = true;
         queue.touched.iter_mut().for_each(BTreeSet::clear);
         self.wake.notify_all();
     }
-
     fn stopped(&self) -> bool {
         self.lock().stopped
     }
-
     fn heard(&self, roots: &[Root], event: notify::Result<notify::Event>) {
         let mut queue = self.lock();
         if queue.stopped {
             return;
         }
-
         match event {
             Err(error) => {
                 for at in named(roots, &error.paths) {
@@ -486,13 +440,11 @@ impl Shared {
                 }
             }
         }
-
         let now = Instant::now();
         queue.first.get_or_insert(now);
         queue.last = Some(now);
         self.wake.notify_one();
     }
-
     fn touch_again(&self, root: usize, paths: &[PathBuf]) {
         if paths.is_empty() {
             return;
@@ -503,7 +455,6 @@ impl Shared {
         queue.first.get_or_insert(now);
         queue.last.get_or_insert(now);
     }
-
     fn next(&self) -> Option<Batch> {
         let mut queue = self.lock();
         loop {
@@ -521,7 +472,6 @@ impl Shared {
                 }
                 continue;
             };
-
             let now = Instant::now();
             let quiet = last + QUIET;
             let longest = first + LONGEST;
@@ -538,7 +488,6 @@ impl Shared {
                 queue.last = None;
                 return Some(batch);
             }
-
             queue = self
                 .wake
                 .wait_timeout(queue, quiet.min(longest) - now)
@@ -546,7 +495,6 @@ impl Shared {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{watch, Heard, Root, MOST_CHANGES, QUIET};
@@ -567,7 +515,6 @@ mod tests {
         }
         all
     }
-
     fn said(heard: &[Heard]) -> Vec<String> {
         heard
             .iter()
@@ -580,11 +527,9 @@ mod tests {
             })
             .collect()
     }
-
     fn slash(path: &Path) -> String {
         path.to_string_lossy().replace('\\', "/")
     }
-
     fn watching(dir: &Path) -> (super::Watch, Receiver<Heard>) {
         let (tell, heard) = channel();
         let root = Root {
@@ -595,7 +540,6 @@ mod tests {
             watch(vec![root], Box::new(move |one| tell.send(one).is_ok())).expect("watching");
         (watch, heard)
     }
-
     #[cfg(target_os = "linux")]
     fn holders(dir: &Path) -> usize {
         use std::os::unix::fs::MetadataExt;
@@ -611,7 +555,6 @@ mod tests {
             })
             .count()
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_refused_past_the_limit_is_armed_again_once_the_old_lets_go() {
@@ -626,7 +569,6 @@ mod tests {
                 real: root.clone(),
             }]
         };
-
         let mut old = Some(
             armed(spelled())
                 .expect("armed")
@@ -636,20 +578,17 @@ mod tests {
         let mut made = armed(spelled()).expect("armed");
         assert_eq!(holders(&root.join("Deep")), 2);
         made.unwatched[0] = Some(Unwatched::Limit);
-
         let (tell, heard) = channel();
         let _watch = made
             .replacing(&mut old)
             .start(Box::new(move |one| tell.send(one).is_ok()))
             .expect("started");
-
         assert!(old.is_none());
         assert_eq!(holders(&root.join("Deep")), 1, "the old one's are free");
         let first = until_quiet(&heard);
         assert!(first[0].scan);
         assert_eq!(first[0].unwatched, None);
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_armed_again_for_the_same_folder_takes_the_old_ones_place_past_the_limit() {
@@ -665,7 +604,6 @@ mod tests {
                 real: root.clone(),
             }]
         };
-
         let mut running = HashMap::new();
         armed(spelled())
             .expect("armed")
@@ -673,7 +611,6 @@ mod tests {
             .expect("started");
         let mut made = armed(spelled()).expect("armed");
         made.unwatched[0] = Some(Unwatched::Limit);
-
         let (tell, heard) = channel();
         made.start_in(
             &mut running,
@@ -681,7 +618,6 @@ mod tests {
             Box::new(move |one| tell.send(one).is_ok()),
         )
         .expect("started");
-
         assert_eq!(running.len(), 1);
         assert_eq!(holders(&root.join("Deep")), 1, "the old one's are free");
         let first = until_quiet(&heard);
@@ -690,7 +626,6 @@ mod tests {
         fs::write(root.join("Deep").join("Later.md"), "words").expect("a note");
         assert_eq!(said(&until_quiet(&heard)), ["created Deep/Later.md"]);
     }
-
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_not_refused_has_nothing_armed_twice() {
@@ -715,37 +650,29 @@ mod tests {
         assert_eq!(made.unwatched, vec![None]);
         assert_eq!(holders(&root), 2);
     }
-
     #[test]
     fn a_note_is_heard_through_its_whole_life() {
         let dir = tempfile::tempdir().expect("a folder");
         let root = dir.path();
         fs::write(root.join("Plan.md"), "words").expect("a note");
         let (_watch, heard) = watching(root);
-
         let first = until_quiet(&heard);
         assert_eq!(first.len(), 1);
         assert!(first[0].scan, "the watch says it is ready to be caught up");
-
         fs::write(root.join("Idea.md"), "new").expect("made");
         assert_eq!(said(&until_quiet(&heard)), ["created Idea.md"]);
-
         fs::write(root.join("Idea.md"), "new, and longer").expect("written");
         assert_eq!(said(&until_quiet(&heard)), ["modified Idea.md"]);
-
         fs::rename(root.join("Idea.md"), root.join("Thought.md")).expect("renamed");
         assert_eq!(said(&until_quiet(&heard)), ["renamed Idea.md Thought.md"]);
-
         fs::create_dir(root.join("Box")).expect("a folder");
         assert_eq!(said(&until_quiet(&heard)), ["created Box"]);
         fs::rename(root.join("Thought.md"), root.join("Box").join("Thought.md")).expect("moved");
         let moved = until_quiet(&heard);
         assert_eq!(said(&moved), ["renamed Thought.md Box/Thought.md"]);
-
         fs::remove_file(root.join("Box").join("Thought.md")).expect("deleted");
         assert_eq!(said(&until_quiet(&heard)), ["removed Box/Thought.md"]);
     }
-
     #[test]
     fn a_note_moved_to_another_space_is_renamed_into_it_and_not_removed() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -764,27 +691,23 @@ mod tests {
             .collect();
         let _watch = watch(roots, Box::new(move |one| tell.send(one).is_ok())).expect("watching");
         assert_eq!(until_quiet(&heard).len(), 2);
-
         fs::rename(one.join("Diary.md"), two.join("Diary.md")).expect("moved");
         let after = until_quiet(&heard);
         let from = slash(&one.join("Diary.md"));
         assert_eq!(said(&after), [format!("renamed {from} Diary.md")]);
         assert!(after.iter().all(|heard| heard.root == 1), "{after:?}");
     }
-
     #[test]
     fn a_burst_is_heard_in_bounded_batches() {
         let dir = tempfile::tempdir().expect("a folder");
         let root = dir.path();
         let (_watch, heard) = watching(root);
         assert!(until_quiet(&heard)[0].scan);
-
         let started = Instant::now();
         for at in 0..1000 {
             fs::write(root.join(format!("note-{at:04}.md")), format!("note {at}")).expect("a note");
         }
         let burst = until_quiet(&heard);
-
         let most = started.elapsed().as_millis() / QUIET.as_millis() + 1;
         assert!(
             burst.len() as u128 <= most,
@@ -813,7 +736,6 @@ mod tests {
             named.len()
         );
     }
-
     #[test]
     fn a_root_that_goes_is_gone_and_nothing_else() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -822,11 +744,9 @@ mod tests {
         fs::write(root.join("Plan.md"), "words").expect("a note");
         let (_watch, heard) = watching(&root);
         assert!(until_quiet(&heard)[0].scan);
-
         let renamed = dir.path().join("Renamed");
         fs::rename(&root, &renamed).expect("the space renamed");
         fs::write(renamed.join("Idea.md"), "new").expect("written in");
-
         let mut after = Vec::new();
         let started = Instant::now();
         while !after.iter().any(|one: &Heard| one.gone)
@@ -839,7 +759,6 @@ mod tests {
         assert!(after.iter().all(|one| one.seen.is_empty()), "{after:?}");
         assert!(after.iter().any(|one| one.gone), "{after:?}");
     }
-
     #[cfg(unix)]
     #[test]
     fn a_folder_that_cannot_be_watched_is_left_out_and_nothing_else() {
@@ -864,7 +783,6 @@ mod tests {
         }
         let _watch = watched.expect("watching");
         assert_eq!(until_quiet(&heard).iter().filter(|one| one.scan).count(), 2);
-
         fs::write(space.join("Box").join("Plan.md"), "new").expect("written");
         fs::write(other.join("Idea.md"), "new").expect("written");
         assert_eq!(

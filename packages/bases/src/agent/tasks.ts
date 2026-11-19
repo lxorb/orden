@@ -21,7 +21,6 @@ export class AgentError extends Error {
     this.name = 'AgentError'
   }
 }
-
 export interface TaskOut {
   at: string
   space: string
@@ -42,10 +41,8 @@ export interface TaskOut {
   done?: string
   parent?: number
 }
-
 export const atOf = (row: Pick<Row, 'path' | 'anchor'>): string =>
   `${row.path}#${row.anchor?.line ?? 0}:${row.anchor?.hash ?? ''}`
-
 export function readAt(at: unknown): { path: string; line: number; hash: string } {
   const found = typeof at === 'string' ? /^(.+)#(\d+):([0-9a-z]+)$/.exec(at.trim()) : null
   if (!found?.[1] || found[2] === undefined || !found[3]) {
@@ -53,9 +50,7 @@ export function readAt(at: unknown): { path: string; line: number; hash: string 
   }
   return { path: found[1], line: Number(found[2]), hash: found[3] }
 }
-
 const priorityOut = (priority: Priority) => (priority < NO_PRIORITY ? priority : undefined)
-
 export function taskOut(row: Row): TaskOut {
   const task = row.task
   const out: TaskOut = { at: atOf(row), space: row.space, text: task?.text ?? '' }
@@ -86,7 +81,6 @@ export function taskOut(row: Row): TaskOut {
   }
   return out
 }
-
 export function findTask(rows: readonly Row[], anchor: { line: number; hash: string }): Row | null {
   let best: Row | null = null
   for (const row of rows) {
@@ -96,35 +90,28 @@ export function findTask(rows: readonly Row[], anchor: { line: number; hash: str
   }
   return best
 }
-
 type Args = Record<string, unknown>
-
 const has = (args: Args, name: string) => name in args && args[name] !== undefined
-
 const words = (value: unknown): string =>
   typeof value === 'string' ? value : typeof value === 'number' ? String(value) : ''
-
 function dateArg(args: Args, name: string): string | null {
   const value = args[name]
   if (value === null || value === '') return null
   if (typeof value === 'string' && isDate(value.trim())) return value.trim()
   throw new AgentError('bad_arguments', `${name} is a date, YYYY-MM-DD, or null`)
 }
-
 function priorityArg(value: unknown): Priority {
   if (value === null) return NO_PRIORITY
   const number = typeof value === 'string' ? Number(value.trim().replace(/^p/i, '')) : value
   if (number === 1 || number === 2 || number === 3 || number === 4) return number
   throw new AgentError('bad_arguments', 'priority is 1 to 4, as Todoist numbers them (p1 is 1)')
 }
-
 function textArg(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value.trim() || /[\r\n]/.test(value.trim())) {
     throw new AgentError('bad_arguments', `${name} is one line of words`)
   }
   return value.trim()
 }
-
 function tagsArg(value: unknown): string[] {
   const list = typeof value === 'string' ? value.split(/[\s,]+/) : value
   if (!Array.isArray(list) || !list.every((one) => typeof one === 'string')) {
@@ -132,7 +119,6 @@ function tagsArg(value: unknown): string[] {
   }
   return [...new Set(list.map((one: string) => one.trim().replace(/^#/, '')).filter(Boolean))]
 }
-
 export function taskChange(args: Args): TaskChange {
   const change: TaskChange = {}
   for (const name of ['due', 'scheduled', 'start', 'deadline'] as const) {
@@ -186,7 +172,6 @@ export function taskChange(args: Args): TaskChange {
   if (has(args, 'tags')) change.tags = tagsArg(args.tags)
   return change
 }
-
 const bare = (text: string): TaskFields => ({
   text,
   status: ' ',
@@ -198,17 +183,13 @@ const bare = (text: string): TaskFields => ({
   dependsOn: [],
   fields: {},
 })
-
 export type ReadWords = (text: string) => Read
-
 export interface Read {
   fields: TaskFields
 }
-
 export const writtenFields: ReadWords = (text) => ({
   fields: readTask(`- [ ] ${text}`) ?? bare(text),
 })
-
 export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   const fields = args.fields !== null && typeof args.fields === 'object' ? (args.fields as Args) : {}
   const said = { ...fields, ...args }
@@ -216,7 +197,6 @@ export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   const words = read(text)
   const task: TaskFields = { ...words.fields }
   if (!task.text) throw new AgentError('bad_arguments', 'text needs words besides its fields')
-
   const change = taskChange(Object.fromEntries(Object.entries(said).filter(([key]) => key !== 'text')))
   for (const [key, value] of Object.entries(change)) {
     if (value === null) Reflect.deleteProperty(task, key)
@@ -224,7 +204,6 @@ export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   }
   return { ...words, fields: task }
 }
-
 export function taskBlock(text: string, line: number): { from: number; to: number; lines: string[] } {
   const all = text.split('\n')
   const first = all[line] ?? ''

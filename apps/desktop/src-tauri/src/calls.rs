@@ -9,11 +9,8 @@ use syn::visit::Visit;
 use syn::visit_mut::VisitMut;
 
 const DEEPEST: usize = 8;
-
 const AWAY: [&str; 3] = ["spawn", "spawn_blocking", "off_the_runtime"];
-
 const PEELED: [&str; 4] = ["unwrap", "expect", "unwrap_or_else", "map_err"];
-
 const MAIN: [&str; 13] = [
     "run_on_main_thread",
     "on_shortcut",
@@ -29,11 +26,8 @@ const MAIN: [&str; 13] = [
     "on_document_title_changed",
     "on_download",
 ];
-
 const GUARDS: [&str; 3] = ["MutexGuard", "RwLockReadGuard", "RwLockWriteGuard"];
-
 const TYPED_DEEPEST: usize = 16;
-
 const RELEASING: [&str; 5] = [
     "wait",
     "wait_timeout",
@@ -41,9 +35,7 @@ const RELEASING: [&str; 5] = [
     "wait_timeout_while",
     "wait_timeout_ms",
 ];
-
 const WIDEST: usize = 8;
-
 const DEREFS: [&str; 14] = [
     "Arc",
     "Rc",
@@ -60,11 +52,9 @@ const DEREFS: [&str; 14] = [
     "ManuallyDrop",
     "AssertUnwindSafe",
 ];
-
 const WRAPS: [&str; 10] = [
     "Arc", "Rc", "Box", "Mutex", "RwLock", "RefCell", "Cell", "OnceLock", "Pin", "LazyLock",
 ];
-
 const SAME: [&str; 22] = [
     "clone",
     "to_owned",
@@ -89,13 +79,10 @@ const SAME: [&str; 22] = [
     "into_inner",
     "get_or_init",
 ];
-
 const SEQUENCES: [&str; 9] = [
     "Vec", "VecDeque", "HashSet", "BTreeSet", "[]", "Iter", "Option", "IndexSet", "SmallVec",
 ];
-
 const MAPS: [&str; 3] = ["HashMap", "BTreeMap", "IndexMap"];
-
 const HANDLES: [&str; 12] = [
     "Weak",
     "State",
@@ -110,7 +97,6 @@ const HANDLES: [&str; 12] = [
     "WebviewWindow",
     "Webview",
 ];
-
 const STORING: [&str; 10] = [
     "push",
     "push_back",
@@ -123,9 +109,7 @@ const STORING: [&str; 10] = [
     "or_insert_with",
     "extend",
 ];
-
 const CLEARING: [&str; 4] = ["clear", "truncate", "retain", "retain_mut"];
-
 const OWNING: [&str; 17] = [
     "take",
     "remove",
@@ -145,7 +129,6 @@ const OWNING: [&str; 17] = [
     "remove_entry",
     "unwrap_or_default",
 ];
-
 const KEEPING: [&str; 10] = [
     "unwrap",
     "expect",
@@ -158,7 +141,6 @@ const KEEPING: [&str; 10] = [
     "into_values",
     "into_inner",
 ];
-
 #[derive(Default)]
 struct Function {
     said: String,
@@ -166,27 +148,23 @@ struct Function {
     takes: Vec<String>,
     held: Vec<Held>,
 }
-
 struct Held {
     lock: String,
     said: String,
     called: HashSet<String>,
     takes: Vec<String>,
 }
-
 #[derive(Default)]
 pub(crate) struct Waits {
     reached: HashSet<String>,
     locks: HashMap<String, String>,
     stops: HashSet<String>,
 }
-
 impl Waits {
     pub(crate) fn contains(&self, path: &str) -> bool {
         self.reached.contains(path)
     }
 }
-
 #[derive(Default)]
 pub(crate) struct Crate {
     functions: HashMap<String, Function>,
@@ -195,24 +173,19 @@ pub(crate) struct Crate {
     mains: Vec<String>,
     modules: usize,
 }
-
 impl Crate {
     pub(crate) fn commands(&self) -> &[String] {
         &self.commands
     }
-
     pub(crate) fn workers(&self) -> &[String] {
         &self.workers
     }
-
     pub(crate) fn mains(&self) -> &[String] {
         &self.mains
     }
-
     pub(crate) fn modules(&self) -> usize {
         self.modules
     }
-
     pub(crate) fn chain(&self, from: &str, words: &[&str], waits: &Waits) -> Vec<String> {
         let words: Vec<String> = words.iter().map(|one| spaced(one)).collect();
         let mut seen: HashSet<String> = HashSet::new();
@@ -243,11 +216,9 @@ impl Crate {
         }
         Vec::new()
     }
-
     pub(crate) fn reaching(&self, words: &[&str], stops: &[&str]) -> HashSet<String> {
         self.reached(words, stops, &HashSet::new())
     }
-
     pub(crate) fn waiting(&self, words: &[&str], stops: &[&str]) -> Waits {
         let stopped: HashSet<String> = stops.iter().map(|one| (*one).to_owned()).collect();
         let mut waits = Waits {
@@ -289,7 +260,6 @@ impl Crate {
             };
         }
     }
-
     pub(crate) fn saying(&self, says: impl Fn(&str) -> bool) -> HashSet<String> {
         let seeds: HashSet<String> = self
             .functions
@@ -299,7 +269,6 @@ impl Crate {
             .collect();
         self.reached(&[], &[], &seeds)
     }
-
     pub(crate) fn taking_held(
         &self,
         says: impl Fn(&str) -> bool,
@@ -376,7 +345,6 @@ impl Crate {
         found.sort();
         found
     }
-
     pub(crate) fn lock_orders(&self, stops: &[&str]) -> Vec<String> {
         let mut edges: Vec<(String, String, String)> = Vec::new();
         for (path, function) in &self.functions {
@@ -415,7 +383,6 @@ impl Crate {
         found.dedup();
         found
     }
-
     fn taken_below(&self, called: &HashSet<String>, stops: &[&str]) -> Vec<(String, String)> {
         let mut seen: HashSet<String> = HashSet::new();
         let mut going: Vec<String> = called.iter().cloned().collect();
@@ -433,7 +400,6 @@ impl Crate {
         }
         taken
     }
-
     pub(crate) fn held_across(
         &self,
         words: &[&str],
@@ -458,11 +424,9 @@ impl Crate {
         held.dedup();
         held
     }
-
     fn reached(&self, words: &[&str], stops: &[&str], seeds: &HashSet<String>) -> HashSet<String> {
         let words: Vec<String> = words.iter().map(|one| spaced(one)).collect();
         let going = |path: &String| !stops.contains(&path.as_str());
-
         let mut reached: HashSet<String> = self
             .functions
             .iter()
@@ -473,7 +437,6 @@ impl Crate {
             })
             .map(|(path, _)| path.clone())
             .collect();
-
         loop {
             let found: Vec<String> = self
                 .functions
@@ -492,19 +455,16 @@ impl Crate {
         }
     }
 }
-
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Target {
     os: &'static str,
     cef: bool,
 }
-
 impl Default for Target {
     fn default() -> Self {
         Self::WINDOWS
     }
 }
-
 impl Target {
     pub(crate) const WINDOWS: Self = Self {
         os: "windows",
@@ -518,7 +478,6 @@ impl Target {
         os: "linux",
         cef: true,
     };
-
     fn allows(self, attrs: &[syn::Attribute]) -> bool {
         attrs
             .iter()
@@ -528,7 +487,6 @@ impl Target {
                     .is_ok_and(|one| self.holds(&one))
             })
     }
-
     fn holds(self, said: &syn::Meta) -> bool {
         let name = said
             .path()
@@ -575,9 +533,7 @@ impl Target {
         }
     }
 }
-
 struct Cut(Target);
-
 impl VisitMut for Cut {
     fn visit_block_mut(&mut self, block: &mut syn::Block) {
         let target = self.0;
@@ -589,13 +545,11 @@ impl VisitMut for Cut {
         });
         syn::visit_mut::visit_block_mut(self, block);
     }
-
     fn visit_expr_match_mut(&mut self, matched: &mut syn::ExprMatch) {
         let target = self.0;
         matched.arms.retain(|arm| target.allows(&arm.attrs));
         syn::visit_mut::visit_expr_match_mut(self, matched);
     }
-
     fn visit_macro_mut(&mut self, called: &mut syn::Macro) {
         if let Ok(mut arguments) =
             called.parse_body_with(Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated)
@@ -607,7 +561,6 @@ impl VisitMut for Cut {
         }
     }
 }
-
 fn item_allowed(target: Target, item: &syn::Item) -> bool {
     match item {
         syn::Item::Fn(one) => target.allows(&one.attrs),
@@ -623,7 +576,6 @@ fn item_allowed(target: Target, item: &syn::Item) -> bool {
         _ => true,
     }
 }
-
 fn expr_attrs(expr: &syn::Expr) -> &[syn::Attribute] {
     match expr {
         syn::Expr::Block(one) => &one.attrs,
@@ -641,7 +593,6 @@ fn expr_attrs(expr: &syn::Expr) -> &[syn::Attribute] {
         _ => &[],
     }
 }
-
 pub(crate) fn read(lib: &Path, target: Target) -> Crate {
     let mut gathered = Gathered {
         target,
@@ -666,7 +617,6 @@ pub(crate) fn read(lib: &Path, target: Target) -> Crate {
     }
     gathered.resolved()
 }
-
 pub(crate) fn of(modules: &[(&str, &str)]) -> Crate {
     let mut gathered = Gathered::default();
     for (module, source) in modules {
@@ -675,19 +625,16 @@ pub(crate) fn of(modules: &[(&str, &str)]) -> Crate {
     }
     gathered.resolved()
 }
-
 pub(crate) fn called(source: &str) -> HashSet<String> {
     let mut found = Vec::new();
     calls(source.parse().expect("tokens"), &mut found);
     found.into_iter().map(|path| path.join("::")).collect()
 }
-
 #[derive(Clone, Default)]
 struct Scope {
     named: HashMap<String, Vec<Vec<String>>>,
     globs: Vec<Vec<String>>,
 }
-
 impl Scope {
     fn joined(&mut self, other: &Scope) {
         for (name, targets) in &other.named {
@@ -699,7 +646,6 @@ impl Scope {
         self.globs.extend(other.globs.iter().cloned());
     }
 }
-
 struct Found {
     path: String,
     module: String,
@@ -725,7 +671,6 @@ struct Found {
     closures: Closures,
     drops: Drops,
 }
-
 impl Found {
     fn place(&self) -> Place<'_> {
         (
@@ -736,15 +681,12 @@ impl Found {
         )
     }
 }
-
 type Bounds = HashMap<String, Vec<Vec<String>>>;
-
 #[derive(Clone, Default)]
 struct Enclosing {
     scope: Scope,
     bounds: Bounds,
 }
-
 impl Enclosing {
     fn with(&self, generics: &syn::Generics) -> Bounds {
         let mut bounds = self.bounds.clone();
@@ -754,7 +696,6 @@ impl Enclosing {
         bounds
     }
 }
-
 #[derive(Default)]
 struct Closures {
     stored: Vec<(Chain, String)>,
@@ -762,7 +703,6 @@ struct Closures {
     handed: Vec<(Vec<String>, usize, String)>,
     invoked: Vec<Chain>,
 }
-
 struct Site<'a> {
     module: &'a str,
     owner: Option<&'a str>,
@@ -771,13 +711,11 @@ struct Site<'a> {
     env: &'a Env,
     bounds: &'a Bounds,
 }
-
 enum Run {
     Main,
     Passed(Vec<String>),
     Stored,
 }
-
 #[derive(Default)]
 struct Locks {
     takes: Vec<(Key, Chain)>,
@@ -785,14 +723,12 @@ struct Locks {
     held: Vec<Hold>,
     handed: Vec<Handed>,
 }
-
 #[derive(Default)]
 struct Shape {
     accessor: bool,
     helper: bool,
     relay: bool,
 }
-
 fn locks_in(place: &str, module: &str, visit: impl FnOnce(&mut Taking, &mut Holding)) -> Locks {
     let mut taking = Taking {
         owner: place,
@@ -814,7 +750,6 @@ fn locks_in(place: &str, module: &str, visit: impl FnOnce(&mut Taking, &mut Hold
         handed: holding.handed,
     }
 }
-
 #[derive(Clone)]
 enum Key {
     Named(String),
@@ -823,14 +758,12 @@ enum Key {
     Field(Chain, String),
     Var(String),
 }
-
 #[derive(Clone)]
 enum Guard {
     Lock(Key, Chain),
     Through(Vec<String>, Option<Key>, bool),
     Method(String, Chain, bool),
 }
-
 struct Hold {
     guards: Vec<Guard>,
     calls: Vec<Vec<String>>,
@@ -838,21 +771,18 @@ struct Hold {
     said: String,
     takes: Vec<(Key, Chain)>,
 }
-
 struct Known<'a> {
     relays: &'a HashSet<String>,
     guarding: &'a HashSet<String>,
     accessors: &'a HashMap<String, Vec<String>>,
     helpers: &'a HashMap<String, Vec<String>>,
 }
-
 struct Handed {
     to: Vec<String>,
     calls: Vec<Vec<String>>,
     methods: Typed,
     said: String,
 }
-
 #[derive(Default)]
 struct Gathered {
     target: Target,
@@ -870,39 +800,30 @@ struct Gathered {
     implemented: HashMap<String, Vec<String>>,
     drops: std::cell::RefCell<HashMap<String, HashSet<String>>>,
 }
-
 #[derive(Default)]
 struct Body<'a> {
     nested: Vec<&'a syn::ItemFn>,
     scope: Scope,
 }
-
 macro_rules! nested_items_stay_out {
     ($a:lifetime) => {
         fn visit_item_fn(&mut self, _: &$a syn::ItemFn) {}
-
         fn visit_item_impl(&mut self, _: &$a syn::ItemImpl) {}
-
         fn visit_item_mod(&mut self, _: &$a syn::ItemMod) {}
     };
 }
-
 impl<'a> Visit<'a> for Body<'a> {
     fn visit_item_fn(&mut self, function: &'a syn::ItemFn) {
         if !tested(&function.attrs) {
             self.nested.push(function);
         }
     }
-
     fn visit_item_use(&mut self, used: &'a syn::ItemUse) {
         named(&used.tree, Vec::new(), &mut self.scope);
     }
-
     fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
     fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
 }
-
 impl Gathered {
     fn file(&mut self, module: &str, file: &Path, owns: bool) {
         let source = fs::read_to_string(file)
@@ -922,7 +843,6 @@ impl Gathered {
             &Scope::default(),
         );
     }
-
     fn items(
         &mut self,
         module: &str,
@@ -936,7 +856,6 @@ impl Gathered {
             scope: outer.clone(),
             bounds: Bounds::new(),
         };
-
         for item in items {
             if !item_allowed(self.target, item) {
                 continue;
@@ -1023,7 +942,6 @@ impl Gathered {
             }
         }
     }
-
     fn shaped(&mut self, module: &str, item: &syn::Item) {
         let named = |at: usize, field: &syn::Field| {
             field
@@ -1084,18 +1002,15 @@ impl Gathered {
             );
         }
     }
-
     fn module(&mut self, module: &str, inner: &syn::ItemMod, files: Option<(&Path, &Path)>) {
         let path = format!("{module}::{}", inner.ident);
         let name = inner.ident.to_string();
-
         if let Some((_, content)) = &inner.content {
             let nested = files.map(|(children, _)| children.join(&name));
             let files = nested.as_deref().map(|children| (children, children));
             self.items(&path, content, files, &Scope::default());
             return;
         }
-
         let Some((children, here)) = files else {
             return;
         };
@@ -1109,7 +1024,6 @@ impl Gathered {
         };
         self.file(&path, &file, owns);
     }
-
     fn function(
         &mut self,
         module: &str,
@@ -1123,19 +1037,16 @@ impl Gathered {
         let mut block = block.clone();
         Cut(self.target).visit_block_mut(&mut block);
         let block = &block;
-
         let mut body = Body::default();
         body.visit_block(block);
         let mut scope = outer.scope.clone();
         scope.joined(&body.scope);
         let bounds = outer.with(&sig.generics);
-
         let tokens = block.to_token_stream();
         let mut found = Vec::new();
         calls(tokens.clone(), &mut found);
         let mut said = String::from(" ");
         spoken(tokens, &mut said);
-
         let locks = locks_in(owner.unwrap_or(module), module, |taking, holding| {
             taking.visit_block(block);
             holding.visit_block(block);
@@ -1177,7 +1088,6 @@ impl Gathered {
             sig.inputs.to_token_stream(),
             sig.generics.to_token_stream()
         );
-
         let inner = Enclosing {
             scope: scope.clone(),
             bounds: Bounds::new(),
@@ -1192,7 +1102,6 @@ impl Gathered {
                 &inner,
             );
         }
-
         self.found.push(Found {
             path,
             module: module.to_owned(),
@@ -1225,7 +1134,6 @@ impl Gathered {
             drops,
         });
     }
-
     fn closures_of(
         &mut self,
         site: &Site<'_>,
@@ -1276,7 +1184,6 @@ impl Gathered {
         }
         closures
     }
-
     fn closure(&mut self, site: &Site<'_>, path: &str, body: &syn::Expr, run: Run) {
         let (module, owner) = (site.module, site.owner);
         let locks = locks_in(owner.unwrap_or(module), module, |taking, holding| {
@@ -1322,7 +1229,6 @@ impl Gathered {
             drops,
         });
     }
-
     fn resolved(mut self) -> Crate {
         self.known = self.found.iter().map(|one| one.path.clone()).collect();
         for (at, found) in self.found.iter().enumerate() {
@@ -1344,18 +1250,15 @@ impl Gathered {
             self.implemented.entry(owner).or_default().push(shape);
         }
         let slots = self.slots();
-
         let mut own = Crate {
             modules: self.modules.len(),
             ..Crate::default()
         };
-
         for (path, takes, held) in self.locked() {
             let function = own.functions.entry(path).or_default();
             function.takes.extend(takes);
             function.held.extend(held);
         }
-
         let relays_main: HashSet<String> = self
             .found
             .iter()
@@ -1368,7 +1271,6 @@ impl Gathered {
                 .iter()
                 .flat_map(|path| self.resolve(found, path))
                 .collect();
-
             let typed = self.typed(found, &found.methods);
             let dropped = self.implicit(found);
             let passed = self.passed(found);
@@ -1388,7 +1290,6 @@ impl Gathered {
             function.called.extend(dropped);
             function.called.extend(invoked);
             function.called.extend(passed);
-
             if found.command && !own.commands.contains(&found.path) {
                 own.commands.push(found.path.clone());
             }
@@ -1414,10 +1315,8 @@ impl Gathered {
                 own.mains.push(found.path.clone());
             }
         }
-
         own
     }
-
     fn passed(&self, found: &Found) -> Vec<String> {
         found
             .values
@@ -1441,7 +1340,6 @@ impl Gathered {
             .flat_map(|one| self.resolve(found, &one.value))
             .collect()
     }
-
     fn slots(&self) -> HashMap<String, Vec<String>> {
         let mut slots: HashMap<String, Vec<String>> = HashMap::new();
         for found in &self.found {
@@ -1466,11 +1364,9 @@ impl Gathered {
         }
         slots
     }
-
     fn slot_key(&self, found: &Found, slot: &Chain) -> Option<String> {
         self.slot_in(found, slot, &mut Vec::new())
     }
-
     fn slot_in(&self, found: &Found, slot: &Chain, visiting: &mut Vec<String>) -> Option<String> {
         if let Some(at) = slot
             .steps
@@ -1508,7 +1404,6 @@ impl Gathered {
             _ => None,
         }
     }
-
     fn implicit(&self, found: &Found) -> HashSet<String> {
         let mut called = HashSet::new();
         let drops = &found.drops;
@@ -1541,7 +1436,6 @@ impl Gathered {
         }
         called
     }
-
     fn owns(&self, found: &Found, chain: &Chain, visiting: &mut Vec<String>, depth: usize) -> bool {
         if depth > TYPED_DEEPEST {
             return false;
@@ -1610,7 +1504,6 @@ impl Gathered {
         }
         owned
     }
-
     fn locked(&self) -> Vec<(String, Vec<String>, Vec<Held>)> {
         let mut relays: HashSet<String> = HashSet::new();
         let mut takes: Vec<Vec<String>> = Vec::new();
@@ -1678,7 +1571,6 @@ impl Gathered {
             .map(|(found, keys)| (found.path.clone(), keys, self.held_in(found, &known)))
             .collect()
     }
-
     fn held_in(&self, found: &Found, known: &Known<'_>) -> Vec<Held> {
         let mut held = Vec::new();
         for hold in &found.locks.held {
@@ -1733,7 +1625,6 @@ impl Gathered {
         }
         held
     }
-
     fn guarded(
         &self,
         found: &Found,
@@ -1802,7 +1693,6 @@ impl Gathered {
             }
         }
     }
-
     fn taken_as(&self, found: &Found, call: &Chain) -> Taken {
         let Some((Step::Method(method, _), steps)) = call.steps.split_last() else {
             return Taken::Lock;
@@ -1834,21 +1724,18 @@ impl Gathered {
             Taken::Not(method.clone(), receiver)
         }
     }
-
     fn resolve(&self, found: &Found, path: &[String]) -> Vec<String> {
         self.absolute_in(found, path)
             .into_iter()
             .flat_map(|one| self.landing(&one, 0))
             .collect()
     }
-
     fn resolve_all(&self, found: &Found, calls: &[Vec<String>]) -> HashSet<String> {
         calls
             .iter()
             .flat_map(|path| self.resolve(found, path))
             .collect()
     }
-
     fn key(&self, found: &Found, key: &Key) -> String {
         match key {
             Key::Named(name) => name.clone(),
@@ -1873,14 +1760,12 @@ impl Gathered {
                 .unwrap_or_else(|| format!("?{name}@{}", found.module)),
         }
     }
-
     fn field_key(&self, found: &Found, base: &Chain, name: &str) -> Option<String> {
         self.types(found, base, &mut Vec::new(), 0)
             .iter()
             .find_map(|one| self.field_owner(one, name))
             .map(|owner| format!("{owner}::{name}"))
     }
-
     fn var_key(&self, found: &Found, name: &str, visiting: &mut Vec<String>) -> Option<String> {
         if visiting.iter().any(|one| one == name) || visiting.len() > TYPED_DEEPEST {
             return None;
@@ -1910,7 +1795,6 @@ impl Gathered {
         visiting.pop();
         key
     }
-
     fn field_owner(&self, ty: &Ty, name: &str) -> Option<String> {
         let mut at = Some(ty);
         while let Some(one) = at {
@@ -1925,7 +1809,6 @@ impl Gathered {
         }
         None
     }
-
     fn typed(&self, found: &Found, methods: &Typed) -> HashSet<String> {
         let mut called = HashSet::new();
         for (receiver, method) in methods {
@@ -1939,11 +1822,9 @@ impl Gathered {
         }
         called
     }
-
     fn dropping(&self, ty: &Ty, called: &mut HashSet<String>, depth: usize) {
         self.dropping_in(ty, called, &mut HashSet::new(), depth);
     }
-
     fn dropping_in(
         &self,
         ty: &Ty,
@@ -1961,7 +1842,6 @@ impl Gathered {
             self.dropping_in(one, called, seen, depth + 1);
         }
     }
-
     fn dropped_by(&self, name: &str, seen: &mut HashSet<String>, depth: usize) -> HashSet<String> {
         if let Some(known) = self.drops.borrow().get(name) {
             return known.clone();
@@ -1982,7 +1862,6 @@ impl Gathered {
             .insert(name.to_owned(), called.clone());
         called
     }
-
     fn targets(&self, ty: &Ty, method: &str) -> Vec<String> {
         let mut at = Some(ty);
         while let Some(one) = at {
@@ -2006,11 +1885,9 @@ impl Gathered {
         }
         Vec::new()
     }
-
     fn is_def(&self, name: &str) -> bool {
         self.defs.contains_key(name) || self.owners.contains(name)
     }
-
     fn ty_in(&self, place: Place<'_>, raw: &syn::Type, depth: usize) -> Option<Ty> {
         if depth > TYPED_DEEPEST {
             return None;
@@ -2073,7 +1950,6 @@ impl Gathered {
             _ => None,
         }
     }
-
     fn bounded<'b>(
         &self,
         place: Place<'_>,
@@ -2092,7 +1968,6 @@ impl Gathered {
                 .map(|one| Ty::plain(one))
         })
     }
-
     fn own_trait(&self, place: Place<'_>, shapes: &[Vec<String>]) -> Option<Ty> {
         shapes.iter().find_map(|shape| {
             self.absolute(place.0, place.1, place.2, shape, 0)
@@ -2101,16 +1976,13 @@ impl Gathered {
                 .map(|one| Ty::plain(&one))
         })
     }
-
     fn ty_of(&self, found: &Found, raw: &syn::Type) -> Option<Ty> {
         self.ty_in(found.place(), raw, 0)
     }
-
     fn def_ty(&self, owner: &str, raw: &syn::Type) -> Option<Ty> {
         let def = self.defs.get(owner)?;
         self.ty_in((&def.module, None, Some(owner), Some(&def.bounds)), raw, 0)
     }
-
     fn types(
         &self,
         found: &Found,
@@ -2156,7 +2028,6 @@ impl Gathered {
         }
         tys
     }
-
     fn rooted(
         &self,
         found: &Found,
@@ -2206,7 +2077,6 @@ impl Gathered {
             Root::Unknown => Vec::new(),
         }
     }
-
     fn def_named(&self, place: Place<'_>, path: &[String]) -> Vec<Ty> {
         self.absolute(place.0, place.1, place.2, path, 0)
             .into_iter()
@@ -2215,7 +2085,6 @@ impl Gathered {
             .into_iter()
             .collect()
     }
-
     fn returned(
         &self,
         found: &Found,
@@ -2278,7 +2147,6 @@ impl Gathered {
             _ => Vec::new(),
         }
     }
-
     fn stepped(&self, ty: &Ty, step: &Step) -> Vec<Ty> {
         let mut at = Some(ty);
         while let Some(one) = at {
@@ -2294,7 +2162,6 @@ impl Gathered {
             _ => Vec::new(),
         }
     }
-
     fn step_on(&self, ty: &Ty, step: &Step) -> Option<Vec<Ty>> {
         let kind = ty.last();
         let def = self.defs.get(&ty.name);
@@ -2336,7 +2203,6 @@ impl Gathered {
             Step::Method(method, _) => self.method_on(ty, method),
         }
     }
-
     fn method_on(&self, ty: &Ty, method: &str) -> Option<Vec<Ty>> {
         if self.is_def(&ty.name) {
             let tys: Vec<Ty> = self
@@ -2357,7 +2223,6 @@ impl Gathered {
         }
         std_method(ty, method).map(|one| vec![one])
     }
-
     fn absolute_in(&self, found: &Found, path: &[String]) -> Vec<String> {
         self.absolute(
             &found.module,
@@ -2367,7 +2232,6 @@ impl Gathered {
             0,
         )
     }
-
     fn absolute(
         &self,
         module: &str,
@@ -2382,7 +2246,6 @@ impl Gathered {
         if depth > DEEPEST {
             return Vec::new();
         }
-
         match first.as_str() {
             "crate" => vec![joined(
                 module.split("::").next().unwrap_or(module),
@@ -2406,7 +2269,6 @@ impl Gathered {
             _ => self.named(module, local, segments, depth),
         }
     }
-
     fn named(
         &self,
         module: &str,
@@ -2417,7 +2279,6 @@ impl Gathered {
         let first = &segments[0];
         let rest = &segments[1..];
         let scopes: Vec<&Scope> = local.into_iter().chain(self.modules.get(module)).collect();
-
         let mut found: Vec<String> = scopes
             .iter()
             .filter_map(|scope| scope.named.get(first))
@@ -2425,7 +2286,6 @@ impl Gathered {
             .flat_map(|target| self.absolute(module, None, None, target, depth + 1))
             .map(|base| joined(&base, rest))
             .collect();
-
         let here = joined(module, segments);
         let owner = format!("{module}::{first}");
         if self.owners.contains(&owner)
@@ -2439,7 +2299,6 @@ impl Gathered {
         if !found.is_empty() {
             return found;
         }
-
         scopes
             .iter()
             .flat_map(|scope| scope.globs.iter())
@@ -2447,7 +2306,6 @@ impl Gathered {
             .map(|base| joined(&base, segments))
             .collect()
     }
-
     fn landing(&self, path: &str, depth: usize) -> Vec<String> {
         let mut landed = self.landed(path, depth);
         if let Some((shape, method)) = path.rsplit_once("::") {
@@ -2461,7 +2319,6 @@ impl Gathered {
         }
         landed
     }
-
     fn landed(&self, path: &str, depth: usize) -> Vec<String> {
         if self.known.contains(path) {
             return vec![path.to_owned()];
@@ -2469,7 +2326,6 @@ impl Gathered {
         if depth > DEEPEST {
             return Vec::new();
         }
-
         let segments: Vec<String> = path.split("::").map(str::to_owned).collect();
         for at in (1..segments.len()).rev() {
             let base = segments[..at].join("::");
@@ -2492,7 +2348,6 @@ impl Gathered {
         Vec::new()
     }
 }
-
 fn joined(base: &str, rest: &[String]) -> String {
     let mut path = base.to_owned();
     for one in rest {
@@ -2501,7 +2356,6 @@ fn joined(base: &str, rest: &[String]) -> String {
     }
     path
 }
-
 fn named(tree: &syn::UseTree, mut prefix: Vec<String>, scope: &mut Scope) {
     match tree {
         syn::UseTree::Path(path) => {
@@ -2537,14 +2391,12 @@ fn named(tree: &syn::UseTree, mut prefix: Vec<String>, scope: &mut Scope) {
         }
     }
 }
-
 fn tested(attrs: &[syn::Attribute]) -> bool {
     attrs.iter().any(|attr| {
         attr.path().is_ident("cfg")
             && matches!(&attr.meta, syn::Meta::List(list) if list.tokens.to_string() == "test")
     })
 }
-
 fn placed(attrs: &[syn::Attribute], here: &Path) -> Option<PathBuf> {
     attrs.iter().find_map(|attr| {
         let syn::Meta::NameValue(pair) = &attr.meta else {
@@ -2563,14 +2415,12 @@ fn placed(attrs: &[syn::Attribute], here: &Path) -> Option<PathBuf> {
         Some(here.join(place.value()))
     })
 }
-
 fn owner_of(shape: &syn::Type) -> Option<String> {
     let syn::Type::Path(path) = shape else {
         return None;
     };
     path.path.segments.last().map(|one| one.ident.to_string())
 }
-
 fn worker(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
     attrs.iter().any(|attr| {
         let path = attr.path();
@@ -2582,7 +2432,6 @@ fn worker(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
         said == ["tauri", "command"]
     }) && !command(attrs, sig)
 }
-
 fn command(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
     sig.asyncness.is_none()
         && attrs.iter().any(|attr| {
@@ -2603,11 +2452,9 @@ fn command(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
                 }
         })
 }
-
 fn calls(stream: TokenStream, found: &mut Vec<Vec<String>>) {
     let tokens: Vec<TokenTree> = stream.into_iter().collect();
     let mut at = 0;
-
     while at < tokens.len() {
         if let TokenTree::Group(group) = &tokens[at] {
             if !away(&tokens, at) {
@@ -2625,7 +2472,6 @@ fn calls(stream: TokenStream, found: &mut Vec<Vec<String>>) {
             at += 1;
             continue;
         }
-
         let (path, next) = path_at(&tokens, at);
         if matches!(tokens.get(next), Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis)
         {
@@ -2634,7 +2480,6 @@ fn calls(stream: TokenStream, found: &mut Vec<Vec<String>>) {
         at = next;
     }
 }
-
 fn method_at(tokens: &[TokenTree], at: usize) -> Option<Vec<String>> {
     let TokenTree::Ident(name) = &tokens[at] else {
         return None;
@@ -2649,7 +2494,6 @@ fn method_at(tokens: &[TokenTree], at: usize) -> Option<Vec<String>> {
         at > 2 && matches!(&tokens[at - 3], TokenTree::Punct(colon) if colon.as_char() == ':');
     (on_self && !after_a_path).then(|| vec!["Self".to_owned(), name.to_string()])
 }
-
 fn not_a_call(tokens: &[TokenTree], at: usize) -> bool {
     match &tokens[at - 1] {
         TokenTree::Punct(punct) if punct.as_char() == '.' => true,
@@ -2660,11 +2504,9 @@ fn not_a_call(tokens: &[TokenTree], at: usize) -> bool {
         _ => false,
     }
 }
-
 fn path_at(tokens: &[TokenTree], from: usize) -> (Vec<String>, usize) {
     let mut path = vec![tokens[from].to_string()];
     let mut at = from + 1;
-
     while colons(tokens, at) {
         match tokens.get(at + 2) {
             Some(TokenTree::Ident(next)) => {
@@ -2677,10 +2519,8 @@ fn path_at(tokens: &[TokenTree], from: usize) -> (Vec<String>, usize) {
             _ => break,
         }
     }
-
     (path, at)
 }
-
 fn colons(tokens: &[TokenTree], at: usize) -> bool {
     matches!(
         (tokens.get(at), tokens.get(at + 1)),
@@ -2688,11 +2528,9 @@ fn colons(tokens: &[TokenTree], at: usize) -> bool {
             if one.as_char() == ':' && one.spacing() == Spacing::Joint && two.as_char() == ':'
     )
 }
-
 fn past_angles(tokens: &[TokenTree], from: usize) -> usize {
     let mut depth = 0usize;
     let mut at = from;
-
     while let Some(token) = tokens.get(at) {
         at += 1;
         let TokenTree::Punct(punct) = token else {
@@ -2709,25 +2547,20 @@ fn past_angles(tokens: &[TokenTree], from: usize) -> usize {
             _ => {}
         }
     }
-
     at
 }
-
 fn arrow(tokens: &[TokenTree], at: usize) -> bool {
     at > 0
         && matches!(&tokens[at - 1], TokenTree::Punct(dash) if dash.as_char() == '-' && dash.spacing() == Spacing::Joint)
 }
-
 fn away(tokens: &[TokenTree], at: usize) -> bool {
     matches!(&tokens[at], TokenTree::Group(group) if group.delimiter() == Delimiter::Parenthesis)
         && at > 0
         && matches!(&tokens[at - 1], TokenTree::Ident(word) if AWAY.iter().any(|one| word == one))
 }
-
 fn spoken(stream: TokenStream, said: &mut String) {
     told(stream, said, false);
 }
-
 fn told(stream: TokenStream, said: &mut String, handed_to_an_await: bool) {
     let tokens: Vec<TokenTree> = stream.into_iter().collect();
     for (at, token) in tokens.iter().enumerate() {
@@ -2769,7 +2602,6 @@ fn told(stream: TokenStream, said: &mut String, handed_to_an_await: bool) {
         }
     }
 }
-
 fn handed(tokens: &[TokenTree], at: usize) -> bool {
     matches!(tokens.get(at + 1), Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis)
         && match tokens.get(at + 2) {
@@ -2778,13 +2610,11 @@ fn handed(tokens: &[TokenTree], at: usize) -> bool {
             Some(_) => false,
         }
 }
-
 fn awaited(tokens: &[TokenTree], at: usize) -> bool {
     matches!(tokens.get(at + 1), Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis)
         && matches!(tokens.get(at + 2), Some(TokenTree::Punct(dot)) if dot.as_char() == '.')
         && matches!(tokens.get(at + 3), Some(TokenTree::Ident(word)) if word == "await")
 }
-
 pub(crate) fn spaced(word: &str) -> String {
     let mut said = String::from(" ");
     for letter in word.chars().filter(|one| !one.is_whitespace()) {
@@ -2803,7 +2633,6 @@ pub(crate) fn spaced(word: &str) -> String {
     }
     said
 }
-
 fn same_lock(one: &str, other: &str) -> bool {
     if one == "?" || other == "?" {
         return false;
@@ -2817,35 +2646,29 @@ fn same_lock(one: &str, other: &str) -> bool {
         (Some(one), Some(other)) => one == other,
     }
 }
-
 fn unknown(key: &str) -> Option<(&str, &str)> {
     key.strip_prefix('?')?.split_once('@')
 }
-
 fn top(module: &str) -> &str {
     let mut cut = module.match_indices("::").map(|(at, _)| at);
     cut.nth(1).map_or(module, |at| &module[..at])
 }
-
 fn segments(path: &syn::Path) -> Vec<String> {
     path.segments
         .iter()
         .map(|one| one.ident.to_string())
         .collect()
 }
-
 fn found_calls(tokens: TokenStream) -> Vec<Vec<String>> {
     let mut found = Vec::new();
     calls(tokens, &mut found);
     found
 }
-
 fn said_of(tokens: TokenStream) -> String {
     let mut said = String::from(" ");
     spoken(tokens, &mut said);
     said
 }
-
 fn key_of(expr: &syn::Expr, owner: &str, module: &str) -> Key {
     let unknown = |name: &str| Key::Named(format!("?{name}@{module}"));
     match expr {
@@ -2886,7 +2709,6 @@ fn key_of(expr: &syn::Expr, owner: &str, module: &str) -> Key {
         _ => Key::Named("?".to_owned()),
     }
 }
-
 fn guard_of(expr: &syn::Expr, owner: &str, module: &str) -> Option<Guard> {
     let mut at = expr;
     loop {
@@ -2920,7 +2742,6 @@ fn guard_of(expr: &syn::Expr, owner: &str, module: &str) -> Option<Guard> {
         _ => None,
     }
 }
-
 fn bound(pattern: &syn::Pat) -> Option<String> {
     match pattern {
         syn::Pat::Ident(name) => Some(name.ident.to_string()),
@@ -2928,7 +2749,6 @@ fn bound(pattern: &syn::Pat) -> Option<String> {
         _ => None,
     }
 }
-
 fn dropped(statement: &syn::Stmt, name: Option<&str>) -> bool {
     let (Some(name), syn::Stmt::Expr(syn::Expr::Call(call), _)) = (name, statement) else {
         return false;
@@ -2936,14 +2756,12 @@ fn dropped(statement: &syn::Stmt, name: Option<&str>) -> bool {
     matches!(&*call.func, syn::Expr::Path(path) if path.path.segments.last().is_some_and(|one| one.ident == "drop"))
         && matches!(call.args.first(), Some(syn::Expr::Path(path)) if path.path.is_ident(name))
 }
-
 struct Taking<'o> {
     owner: &'o str,
     module: &'o str,
     takes: Vec<(Key, Chain)>,
     passes: Vec<(Vec<String>, Key)>,
 }
-
 impl<'a> Visit<'a> for Taking<'_> {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if locked(call) {
@@ -2958,7 +2776,6 @@ impl<'a> Visit<'a> for Taking<'_> {
         }
         syn::visit::visit_expr_method_call(self, call);
     }
-
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if matches!(&*call.func, syn::Expr::Path(path) if path.path.segments.last().is_some_and(|one| AWAY.iter().any(|away| one.ident == away)))
         {
@@ -2970,16 +2787,13 @@ impl<'a> Visit<'a> for Taking<'_> {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     nested_items_stay_out!('a);
 }
-
 struct Temporaries<'o> {
     owner: &'o str,
     module: &'o str,
     found: Vec<Guard>,
 }
-
 impl<'a> Visit<'a> for Temporaries<'_> {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if locked(call) {
@@ -3003,7 +2817,6 @@ impl<'a> Visit<'a> for Temporaries<'_> {
         }
         syn::visit::visit_expr_method_call(self, call);
     }
-
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if let syn::Expr::Path(path) = &*call.func {
             self.found.push(Guard::Through(
@@ -3016,27 +2829,20 @@ impl<'a> Visit<'a> for Temporaries<'_> {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     fn visit_block(&mut self, _: &'a syn::Block) {}
-
     fn visit_expr_match(&mut self, matched: &'a syn::ExprMatch) {
         self.visit_expr(&matched.expr);
     }
-
     fn visit_expr_closure(&mut self, _: &'a syn::ExprClosure) {}
-
     fn visit_expr_async(&mut self, _: &'a syn::ExprAsync) {}
-
     fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
 }
-
 struct Holding<'o> {
     owner: &'o str,
     module: &'o str,
     held: Vec<Hold>,
     handed: Vec<Handed>,
 }
-
 impl Holding<'_> {
     fn hold(&mut self, guards: Vec<Guard>, tokens: TokenStream, methods: Typed) {
         let mut taking = Taking {
@@ -3056,7 +2862,6 @@ impl Holding<'_> {
             takes: taking.takes,
         });
     }
-
     fn temporaries(&mut self, expr: &syn::Expr) {
         match expr {
             syn::Expr::If(branched) if !matches!(&*branched.cond, syn::Expr::Let(_)) => {
@@ -3092,9 +2897,7 @@ impl Holding<'_> {
         );
     }
 }
-
 struct LockedFirst;
-
 impl VisitMut for LockedFirst {
     fn visit_expr_method_call_mut(&mut self, call: &mut syn::ExprMethodCall) {
         if locked(call) {
@@ -3105,7 +2908,6 @@ impl VisitMut for LockedFirst {
         syn::visit_mut::visit_expr_method_call_mut(self, call);
     }
 }
-
 impl<'a> Visit<'a> for Holding<'_> {
     fn visit_block(&mut self, block: &'a syn::Block) {
         for (at, statement) in block.stmts.iter().enumerate() {
@@ -3139,7 +2941,6 @@ impl<'a> Visit<'a> for Holding<'_> {
         }
         syn::visit::visit_block(self, block);
     }
-
     fn visit_expr_match(&mut self, matched: &'a syn::ExprMatch) {
         for arm in &matched.arms {
             if !matches!(&*arm.body, syn::Expr::Block(_)) {
@@ -3148,7 +2949,6 @@ impl<'a> Visit<'a> for Holding<'_> {
         }
         syn::visit::visit_expr_match(self, matched);
     }
-
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if let syn::Expr::Path(path) = &*call.func {
             for argument in &call.args {
@@ -3165,17 +2965,14 @@ impl<'a> Visit<'a> for Holding<'_> {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     nested_items_stay_out!('a);
 }
-
 #[derive(Default)]
 struct Mains {
     closures: Vec<syn::Expr>,
     named: Vec<Vec<String>>,
     passed: Vec<(Vec<String>, syn::Expr)>,
 }
-
 impl<'a> Visit<'a> for Mains {
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if let syn::Expr::Path(path) = &*call.func {
@@ -3188,7 +2985,6 @@ impl<'a> Visit<'a> for Mains {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     fn visit_macro(&mut self, called: &'a syn::Macro) {
         if called
             .path
@@ -3207,7 +3003,6 @@ impl<'a> Visit<'a> for Mains {
             }
         }
     }
-
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if MAIN.iter().any(|one| call.method == one) {
             for argument in &call.args {
@@ -3220,10 +3015,8 @@ impl<'a> Visit<'a> for Mains {
         }
         syn::visit::visit_expr_method_call(self, call);
     }
-
     nested_items_stay_out!('a);
 }
-
 #[derive(Clone)]
 enum Root {
     Me,
@@ -3234,7 +3027,6 @@ enum Root {
     Built(Vec<String>),
     Unknown,
 }
-
 #[derive(Clone)]
 enum Step {
     Field(String),
@@ -3244,13 +3036,11 @@ enum Step {
     Item,
     Tried,
 }
-
 #[derive(Clone)]
 struct Chain {
     root: Root,
     steps: Vec<Step>,
 }
-
 impl Chain {
     fn rooted(root: Root) -> Self {
         Self {
@@ -3258,23 +3048,18 @@ impl Chain {
             steps: Vec::new(),
         }
     }
-
     fn then(mut self, step: Step) -> Self {
         self.steps.push(step);
         self
     }
 }
-
 type Env = HashMap<String, Vec<Chain>>;
-
 type Typed = Vec<(Chain, String)>;
-
 #[derive(Clone, PartialEq)]
 struct Ty {
     name: String,
     args: Vec<Ty>,
 }
-
 impl Ty {
     fn plain(name: &str) -> Self {
         Self {
@@ -3282,22 +3067,18 @@ impl Ty {
             args: Vec::new(),
         }
     }
-
     fn wrapping(name: &str, inner: Ty) -> Self {
         Self {
             name: name.to_owned(),
             args: vec![inner],
         }
     }
-
     fn last(&self) -> &str {
         self.name.rsplit("::").next().unwrap_or(&self.name)
     }
-
     fn arg(&self, at: usize) -> Option<Ty> {
         self.args.get(at).cloned()
     }
-
     fn inside(&self) -> Option<&Ty> {
         DEREFS
             .contains(&self.last())
@@ -3305,20 +3086,17 @@ impl Ty {
             .flatten()
     }
 }
-
 struct Def {
     module: String,
     fields: HashMap<String, syn::Type>,
     bounds: Bounds,
 }
-
 fn member_name(member: &syn::Member) -> String {
     match member {
         syn::Member::Named(name) => name.to_string(),
         syn::Member::Unnamed(index) => index.index.to_string(),
     }
 }
-
 fn kinds_of(turbofish: Option<&syn::AngleBracketedGenericArguments>) -> Vec<syn::Type> {
     turbofish
         .map(|kinds| {
@@ -3333,7 +3111,6 @@ fn kinds_of(turbofish: Option<&syn::AngleBracketedGenericArguments>) -> Vec<syn:
         })
         .unwrap_or_default()
 }
-
 fn chain_of(expr: &syn::Expr) -> Chain {
     match expr {
         syn::Expr::Path(path) if path.qself.is_none() => {
@@ -3378,7 +3155,6 @@ fn chain_of(expr: &syn::Expr) -> Chain {
         _ => Chain::rooted(Root::Unknown),
     }
 }
-
 fn bind(pattern: &syn::Pat, chain: &Chain, env: &mut Env) {
     match pattern {
         syn::Pat::Ident(name) => {
@@ -3432,19 +3208,16 @@ fn bind(pattern: &syn::Pat, chain: &Chain, env: &mut Env) {
         _ => {}
     }
 }
-
 fn macro_arguments(called: &syn::Macro) -> Vec<syn::Expr> {
     called
         .parse_body_with(Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated)
         .map(|arguments| arguments.into_iter().collect())
         .unwrap_or_default()
 }
-
 #[derive(Default)]
 struct Bindings {
     env: Env,
 }
-
 impl Bindings {
     fn of(sig: &syn::Signature, block: &syn::Block) -> (Env, Vec<Option<syn::Type>>) {
         let mut bindings = Self::default();
@@ -3466,7 +3239,6 @@ impl Bindings {
         (bindings.env, taken)
     }
 }
-
 impl<'a> Visit<'a> for Bindings {
     fn visit_local(&mut self, local: &'a syn::Local) {
         let chain = local
@@ -3476,12 +3248,10 @@ impl<'a> Visit<'a> for Bindings {
         bind(&local.pat, &chain, &mut self.env);
         syn::visit::visit_local(self, local);
     }
-
     fn visit_expr_let(&mut self, matched: &'a syn::ExprLet) {
         bind(&matched.pat, &chain_of(&matched.expr), &mut self.env);
         syn::visit::visit_expr_let(self, matched);
     }
-
     fn visit_expr_match(&mut self, matched: &'a syn::ExprMatch) {
         let chain = chain_of(&matched.expr);
         for arm in &matched.arms {
@@ -3489,7 +3259,6 @@ impl<'a> Visit<'a> for Bindings {
         }
         syn::visit::visit_expr_match(self, matched);
     }
-
     fn visit_expr_for_loop(&mut self, looped: &'a syn::ExprForLoop) {
         bind(
             &looped.pat,
@@ -3498,41 +3267,34 @@ impl<'a> Visit<'a> for Bindings {
         );
         syn::visit::visit_expr_for_loop(self, looped);
     }
-
     fn visit_expr_closure(&mut self, closure: &'a syn::ExprClosure) {
         for input in &closure.inputs {
             bind(input, &Chain::rooted(Root::Unknown), &mut self.env);
         }
         syn::visit::visit_expr_closure(self, closure);
     }
-
     fn visit_macro(&mut self, called: &'a syn::Macro) {
         for argument in macro_arguments(called) {
             self.visit_expr(&argument);
         }
     }
-
     nested_items_stay_out!('a);
 }
-
 #[derive(Default)]
 struct Methods {
     found: Typed,
 }
-
 impl Methods {
     fn of_expr(expr: &syn::Expr) -> Typed {
         let mut methods = Self::default();
         methods.visit_expr(expr);
         methods.found
     }
-
     fn of_block(block: &syn::Block) -> Typed {
         let mut methods = Self::default();
         methods.visit_block(block);
         methods.found
     }
-
     fn of_statements(statements: &[syn::Stmt]) -> Typed {
         let mut methods = Self::default();
         for statement in statements {
@@ -3541,7 +3303,6 @@ impl Methods {
         methods.found
     }
 }
-
 impl<'a> Visit<'a> for Methods {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self")) {
@@ -3554,7 +3315,6 @@ impl<'a> Visit<'a> for Methods {
         }
         syn::visit::visit_expr_method_call(self, call);
     }
-
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         let Some(last) = (match &*call.func {
             syn::Expr::Path(path) => path.path.segments.last(),
@@ -3571,21 +3331,17 @@ impl<'a> Visit<'a> for Methods {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     fn visit_macro(&mut self, called: &'a syn::Macro) {
         for argument in macro_arguments(called) {
             self.visit_expr(&argument);
         }
     }
-
     nested_items_stay_out!('a);
 }
-
 enum Carried {
     Body(syn::Expr),
     Named(String),
 }
-
 fn carried(expr: &syn::Expr) -> Option<Carried> {
     match expr {
         syn::Expr::Closure(closure) => Some(Carried::Body((*closure.body).clone())),
@@ -3604,11 +3360,9 @@ fn carried(expr: &syn::Expr) -> Option<Carried> {
         _ => None,
     }
 }
-
 fn is_away(func: &syn::Expr) -> bool {
     matches!(func, syn::Expr::Path(path) if path.path.segments.last().is_some_and(|one| AWAY.iter().any(|away| one.ident == away)))
 }
-
 #[derive(Default)]
 struct Slots {
     stored: Vec<(Chain, Carried)>,
@@ -3616,7 +3370,6 @@ struct Slots {
     invoked: Vec<Chain>,
     away: usize,
 }
-
 impl Slots {
     fn elsewhere(&mut self, arguments: &Punctuated<syn::Expr, syn::Token![,]>) {
         self.away += 1;
@@ -3626,7 +3379,6 @@ impl Slots {
         self.away -= 1;
     }
 }
-
 impl<'a> Visit<'a> for Slots {
     fn visit_expr_struct(&mut self, built: &'a syn::ExprStruct) {
         if built.qself.is_none() {
@@ -3641,14 +3393,12 @@ impl<'a> Visit<'a> for Slots {
         }
         syn::visit::visit_expr_struct(self, built);
     }
-
     fn visit_expr_assign(&mut self, assigned: &'a syn::ExprAssign) {
         if let Some(one) = carried(&assigned.right) {
             self.stored.push((chain_of(&assigned.left), one));
         }
         syn::visit::visit_expr_assign(self, assigned);
     }
-
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if AWAY.iter().any(|one| call.method == one) {
             self.visit_expr(&call.receiver);
@@ -3664,7 +3414,6 @@ impl<'a> Visit<'a> for Slots {
         }
         syn::visit::visit_expr_method_call(self, call);
     }
-
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if is_away(&call.func) {
             self.elsewhere(&call.args);
@@ -3689,27 +3438,22 @@ impl<'a> Visit<'a> for Slots {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     fn visit_macro(&mut self, called: &'a syn::Macro) {
         for argument in macro_arguments(called) {
             self.visit_expr(&argument);
         }
     }
-
     nested_items_stay_out!('a);
 }
-
 struct Passed {
     to: Option<Vec<String>>,
     at: usize,
     value: Vec<String>,
 }
-
 #[derive(Default)]
 struct Values {
     found: Vec<Passed>,
 }
-
 impl Values {
     fn of(visit: impl FnOnce(&mut Self), env: &Env) -> Vec<Passed> {
         let mut values = Self::default();
@@ -3720,7 +3464,6 @@ impl Values {
             .filter(|one| !matches!(one.value.as_slice(), [name] if env.contains_key(name) || name == "self"))
             .collect()
     }
-
     fn passed(
         &mut self,
         to: Option<Vec<String>>,
@@ -3739,7 +3482,6 @@ impl Values {
         }
     }
 }
-
 impl<'a> Visit<'a> for Values {
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if is_away(&call.func) {
@@ -3752,7 +3494,6 @@ impl<'a> Visit<'a> for Values {
         self.passed(to, &call.args);
         syn::visit::visit_expr_call(self, call);
     }
-
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if AWAY.iter().any(|one| call.method == one) {
             self.visit_expr(&call.receiver);
@@ -3761,16 +3502,13 @@ impl<'a> Visit<'a> for Values {
         self.passed(None, &call.args);
         syn::visit::visit_expr_method_call(self, call);
     }
-
     fn visit_macro(&mut self, called: &'a syn::Macro) {
         for argument in macro_arguments(called) {
             self.visit_expr(&argument);
         }
     }
-
     nested_items_stay_out!('a);
 }
-
 #[derive(Default)]
 struct Drops {
     locals: Vec<(String, Chain)>,
@@ -3780,7 +3518,6 @@ struct Drops {
     cleared: Vec<Chain>,
     me: bool,
 }
-
 impl Drops {
     fn of(sig: &syn::Signature, block: &syn::Block) -> Self {
         let mut drops = Drops::default();
@@ -3804,7 +3541,6 @@ impl Drops {
         }
         drops
     }
-
     fn bind(&mut self, pattern: &syn::Pat, chain: &Chain) {
         let mut env = Env::new();
         bind(pattern, chain, &mut env);
@@ -3814,7 +3550,6 @@ impl Drops {
             }
         }
     }
-
     fn moving(&mut self, expr: &syn::Expr) {
         if let syn::Expr::Path(path) = expr {
             if let Some(one) = path.path.get_ident() {
@@ -3822,7 +3557,6 @@ impl Drops {
             }
         }
     }
-
     fn captured(&mut self, tokens: TokenStream) {
         for token in tokens {
             match token {
@@ -3835,7 +3569,6 @@ impl Drops {
         }
     }
 }
-
 fn flows_out(expr: &syn::Expr) -> Vec<String> {
     match expr {
         syn::Expr::Path(path) => path
@@ -3868,7 +3601,6 @@ fn flows_out(expr: &syn::Expr) -> Vec<String> {
         _ => Vec::new(),
     }
 }
-
 impl<'a> Visit<'a> for Drops {
     fn visit_local(&mut self, local: &'a syn::Local) {
         let Some(init) = &local.init else {
@@ -3884,18 +3616,15 @@ impl<'a> Visit<'a> for Drops {
         self.moved.extend(flows_out(&init.expr));
         syn::visit::visit_local(self, local);
     }
-
     fn visit_expr_let(&mut self, matched: &'a syn::ExprLet) {
         self.bind(&matched.pat, &chain_of(&matched.expr));
         syn::visit::visit_expr_let(self, matched);
     }
-
     fn visit_expr_for_loop(&mut self, looped: &'a syn::ExprForLoop) {
         self.bind(&looped.pat, &chain_of(&looped.expr).then(Step::Item));
         self.moving(&looped.expr);
         syn::visit::visit_expr_for_loop(self, looped);
     }
-
     fn visit_stmt(&mut self, statement: &'a syn::Stmt) {
         if let syn::Stmt::Expr(expr @ (syn::Expr::Call(_) | syn::Expr::MethodCall(_)), Some(_)) =
             statement
@@ -3906,13 +3635,11 @@ impl<'a> Visit<'a> for Drops {
         }
         syn::visit::visit_stmt(self, statement);
     }
-
     fn visit_expr_assign(&mut self, assigned: &'a syn::ExprAssign) {
         self.replaced.push(chain_of(&assigned.left));
         self.moved.extend(flows_out(&assigned.right));
         syn::visit::visit_expr_assign(self, assigned);
     }
-
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if AWAY.iter().any(|one| call.method == one) {
             self.captured(call.args.to_token_stream());
@@ -3927,7 +3654,6 @@ impl<'a> Visit<'a> for Drops {
         }
         syn::visit::visit_expr_method_call(self, call);
     }
-
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
         if is_away(&call.func) {
             self.captured(call.args.to_token_stream());
@@ -3938,7 +3664,6 @@ impl<'a> Visit<'a> for Drops {
         }
         syn::visit::visit_expr_call(self, call);
     }
-
     fn visit_expr_struct(&mut self, built: &'a syn::ExprStruct) {
         for field in &built.fields {
             self.moving(&field.expr);
@@ -3948,35 +3673,30 @@ impl<'a> Visit<'a> for Drops {
         }
         syn::visit::visit_expr_struct(self, built);
     }
-
     fn visit_expr_array(&mut self, array: &'a syn::ExprArray) {
         for one in &array.elems {
             self.moving(one);
         }
         syn::visit::visit_expr_array(self, array);
     }
-
     fn visit_expr_tuple(&mut self, tuple: &'a syn::ExprTuple) {
         for one in &tuple.elems {
             self.moving(one);
         }
         syn::visit::visit_expr_tuple(self, tuple);
     }
-
     fn visit_expr_return(&mut self, returned: &'a syn::ExprReturn) {
         if let Some(one) = &returned.expr {
             self.moved.extend(flows_out(one));
         }
         syn::visit::visit_expr_return(self, returned);
     }
-
     fn visit_expr_break(&mut self, broken: &'a syn::ExprBreak) {
         if let Some(one) = &broken.expr {
             self.moved.extend(flows_out(one));
         }
         syn::visit::visit_expr_break(self, broken);
     }
-
     fn visit_expr_closure(&mut self, closure: &'a syn::ExprClosure) {
         if closure.capture.is_some() {
             self.captured(closure.body.to_token_stream());
@@ -3984,14 +3704,12 @@ impl<'a> Visit<'a> for Drops {
         self.moved.extend(flows_out(&closure.body));
         syn::visit::visit_expr_closure(self, closure);
     }
-
     fn visit_expr_async(&mut self, block: &'a syn::ExprAsync) {
         if block.capture.is_some() {
             self.captured(block.block.to_token_stream());
         }
         syn::visit::visit_expr_async(self, block);
     }
-
     fn visit_macro(&mut self, called: &'a syn::Macro) {
         let vec = called.path.is_ident("vec");
         for argument in macro_arguments(called) {
@@ -4001,10 +3719,8 @@ impl<'a> Visit<'a> for Drops {
             self.visit_expr(&argument);
         }
     }
-
     nested_items_stay_out!('a);
 }
-
 fn bounds_of(generics: &syn::Generics) -> Bounds {
     let mut bounds = Bounds::new();
     let mut add = |name: String, said: &Punctuated<syn::TypeParamBound, syn::Token![+]>| {
@@ -4034,14 +3750,12 @@ fn bounds_of(generics: &syn::Generics) -> Bounds {
     }
     bounds
 }
-
 type Place<'a> = (
     &'a str,
     Option<&'a Scope>,
     Option<&'a str>,
     Option<&'a Bounds>,
 );
-
 fn unknown_key(name: &str, module: &str) -> String {
     if name.starts_with(|letter: char| letter.is_ascii_digit()) {
         "?".to_owned()
@@ -4049,7 +3763,6 @@ fn unknown_key(name: &str, module: &str) -> String {
         format!("?{name}@{module}")
     }
 }
-
 fn unify(input: &Ty, given: &Ty, generics: &[String], bound: &mut HashMap<String, Ty>) {
     if input.args.is_empty() && generics.contains(&input.name) {
         bound
@@ -4065,7 +3778,6 @@ fn unify(input: &Ty, given: &Ty, generics: &[String], bound: &mut HashMap<String
         unify(input, inside, generics, bound);
     }
 }
-
 fn substituted(ty: &Ty, bound: &HashMap<String, Ty>) -> Ty {
     if ty.args.is_empty() {
         if let Some(one) = bound.get(&ty.name) {
@@ -4077,7 +3789,6 @@ fn substituted(ty: &Ty, bound: &HashMap<String, Ty>) -> Ty {
         args: ty.args.iter().map(|one| substituted(one, bound)).collect(),
     }
 }
-
 fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
     let kind = ty.last();
     let first = ty.arg(0);
@@ -4151,7 +3862,6 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
         _ => None,
     }
 }
-
 fn locked(call: &syn::ExprMethodCall) -> bool {
     ["lock", "held", "read", "write"]
         .iter()
@@ -4159,21 +3869,17 @@ fn locked(call: &syn::ExprMethodCall) -> bool {
         && call.args.is_empty()
         && !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self"))
 }
-
 fn taking(call: &syn::ExprMethodCall) -> Chain {
     chain_of(&call.receiver).then(Step::Method(call.method.to_string(), Vec::new()))
 }
-
 enum Taken {
     Lock,
     Own(Chain),
     Not(String, Chain),
 }
-
 struct Released<'a> {
     name: &'a str,
 }
-
 impl VisitMut for Released<'_> {
     fn visit_block_mut(&mut self, block: &mut syn::Block) {
         if let Some(at) = block
@@ -4185,7 +3891,6 @@ impl VisitMut for Released<'_> {
         }
         syn::visit_mut::visit_block_mut(self, block);
     }
-
     fn visit_expr_mut(&mut self, expr: &mut syn::Expr) {
         if let syn::Expr::MethodCall(call) = expr {
             let handed = matches!(call.args.first(), Some(syn::Expr::Path(path)) if path.path.is_ident(self.name));
@@ -4202,14 +3907,12 @@ impl VisitMut for Released<'_> {
         syn::visit_mut::visit_expr_mut(self, expr);
     }
 }
-
 fn output_of(sig: &syn::Signature) -> Option<syn::Type> {
     match &sig.output {
         syn::ReturnType::Type(_, output) => Some((**output).clone()),
         syn::ReturnType::Default => None,
     }
 }
-
 fn generics_of(sig: &syn::Signature) -> Vec<String> {
     sig.generics
         .type_params()

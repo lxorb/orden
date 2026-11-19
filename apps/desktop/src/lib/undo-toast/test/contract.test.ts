@@ -2,14 +2,11 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { UNDO_LINGER, undoToast } from '../src/api'
 
 type FileAction = Parameters<typeof undoToast.heard>[0][number]
-
 const deleted = (path: string): FileAction => ({ kind: 'delete', path, content: '' })
-
 afterEach(() => {
   undoToast.dismiss()
   vi.useRealTimers()
 })
-
 describe('the undo toast', () => {
   test('offers a fresh delete, then goes after it lingers', () => {
     vi.useFakeTimers()
@@ -20,7 +17,6 @@ describe('the undo toast', () => {
     vi.advanceTimersByTime(UNDO_LINGER + 1)
     expect(undoToast.batch).toEqual([])
   })
-
   test('undoes its batch newest first through what holds the actions', async () => {
     const first = deleted('/a.md')
     const second = deleted('/b.md')

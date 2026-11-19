@@ -3,7 +3,6 @@ import { expect, test, vi } from 'vitest'
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 const { modes } = await import('../../modes/src/api')
-
 test('an arrow key moves the text size slider a rung, and a drag lands on the nearest', () => {
   modes.setZoom(1)
   modes.setZoom(1.05)

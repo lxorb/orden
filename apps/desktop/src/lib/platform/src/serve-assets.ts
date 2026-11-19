@@ -4,31 +4,25 @@ import { isNative } from './tauri'
 export function serveAssets(): void {
   if (isNative) return
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
-
   navigator.serviceWorker.addEventListener('controllerchange', drawAgain)
-
   void navigator.serviceWorker
     .register('/sw.js', { scope: '/' })
     .then(() => navigator.serviceWorker.ready)
     .then((held) => held.active?.postMessage({ ordenKeep: codeLoaded() }))
     .catch(() => undefined)
 }
-
 const BUILT = '/assets/'
-
 const codeLoaded = (): string[] =>
   performance
     .getEntriesByType('resource')
     .map((one) => new URL(one.name))
     .filter((url) => url.origin === location.origin && url.pathname.startsWith(BUILT))
     .map((url) => url.pathname)
-
 function drawAgain(): void {
   const under = `[src^="${ASSET_ROUTE}"]`
   const found = document.querySelectorAll<HTMLImageElement | HTMLMediaElement | HTMLSourceElement>(
     `img${under}, audio${under}, video${under}, source${under}`,
   )
-
   for (const one of found) {
     const { src } = one
     one.src = ''

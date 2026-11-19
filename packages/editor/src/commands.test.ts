@@ -47,33 +47,27 @@ function apply(
       extensions: [markdown({ base: markdownLanguage, extensions })],
     }),
   )
-
   let next = state
   const took = command({
     state,
     dispatch: (transaction: Transaction) => (next = transaction.state),
   })
-
   return {
     took,
     doc: next.doc.toString(),
     selection: [next.selection.main.from, next.selection.main.to],
   }
 }
-
 function marks(marked: string): { doc: string; from: number; to: number } {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[[\]|]/g, '')
-
   if (caret >= 0) return { doc, from: caret, to: caret }
   return { doc, from: marked.indexOf('['), to: marked.indexOf(']') - 1 }
 }
-
 function run(command: StateCommand, marked: string): string {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).doc
 }
-
 function stateOf(doc: string, at: number): EditorState {
   return parsed(
     EditorState.create({
@@ -83,33 +77,26 @@ function stateOf(doc: string, at: number): EditorState {
     }),
   )
 }
-
 function at(command: StateCommand, doc: string, offset: number): string {
   return apply(command, doc, offset).doc
 }
-
 function took(command: StateCommand, marked: string): boolean {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).took
 }
-
 function runSelection(command: StateCommand, marked: string): [number, number] {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).selection
 }
-
 describe('a block that holds its lines', () => {
   const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n| 5 | 6 |'
-
   test('a block goes under a table, not under the row the caret is in', () => {
     const said = apply(insertHorizontalRule, TABLE, TABLE.indexOf('2')).doc
     expect(said).toBe(`${TABLE}\n\n---\n`)
   })
-
   test('and under a fence, whatever line of it the caret is on', () => {
     expect(run(insertHorizontalRule, '```\nco|de\nmore\n```\nb')).toBe('```\ncode\nmore\n```\n\n---\n\nb')
   })
-
   test('and under maths', () => {
     const state = parsed(
       EditorState.create({
@@ -122,11 +109,9 @@ describe('a block that holds its lines', () => {
     insertHorizontalRule({ state, dispatch: (one: Transaction) => (next = one.state) })
     expect(next.doc.toString()).toBe('$$\na\nb\n$$\n\n---\n')
   })
-
   test('and under a quote, which a line of it does not end', () => {
     expect(run(insertHorizontalRule, '> on|e\n> two\n\nb')).toBe('> one\n> two\n\n---\n\n\nb')
   })
-
   test('a line moved with part of a table selected goes nowhere', () => {
     const doc = `words\n\n${TABLE}`
     const to = doc.indexOf('| a') + 3
@@ -134,26 +119,20 @@ describe('a block that holds its lines', () => {
     expect(apply(moveLineOver(-1), doc, 0, to).doc).toBe(doc)
   })
 })
-
 describe('inline wrapping', () => {
   const strong = toggleWrap('**')
-
   test('wraps a selection', () => {
     expect(run(strong, 'a [word] b')).toBe('a **word** b')
   })
-
   test('unwraps when the markers are outside the selection', () => {
     expect(run(strong, 'a **[word]** b')).toBe('a word b')
   })
-
   test('unwraps when the markers are inside the selection', () => {
     expect(run(strong, 'a [**word**] b')).toBe('a word b')
   })
-
   test('inserts empty markers at a caret', () => {
     expect(run(strong, 'a |b')).toBe('a ****b')
   })
-
   test('takes the marks off the run a caret stands in', () => {
     expect(at(strong, 'a **word** b', 5)).toBe('a word b')
     expect(at(strong, 'a __word__ b', 5)).toBe('a word b')
@@ -163,118 +142,94 @@ describe('inline wrapping', () => {
     expect(at(toggleWrap('`'), 'a `code` b', 5)).toBe('a code b')
     expect(at(toggleWrap('~~'), 'a ~~gone~~ b', 6)).toBe('a gone b')
   })
-
   test('and keeps the caret where it was in the words', () => {
     expect(apply(strong, 'a **word** b', 6).selection).toEqual([4, 4])
   })
-
   test('handles asymmetric markers', () => {
     expect(run(toggleWrap('<u>', '</u>'), '[x]')).toBe('<u>x</u>')
   })
-
   test('leaves the space and the line break at either edge outside the markers', () => {
     expect(run(strong, '[word\n]')).toBe('**word**\n')
     expect(run(strong, 'a[ word ]b')).toBe('a **word** b')
   })
-
   test('and takes the markers off again over the same selection', () => {
     expect(run(strong, '[**word**\n]')).toBe('word\n')
   })
-
   test('and keeps what was selected selected, inside the markers', () => {
     expect(runSelection(strong, '[word\n]')).toEqual([2, 6])
   })
-
   test('but a selection of nothing but space is wrapped as it is', () => {
     expect(run(strong, 'a[ ]b')).toBe('a** **b')
   })
 })
-
 describe('headings', () => {
   test('applies a level', () => {
     expect(run(setHeading(2), '|Title')).toBe('## Title')
   })
-
   test('replaces an existing level', () => {
     expect(run(setHeading(3), '# |Title')).toBe('### Title')
   })
-
   test('level zero returns to a paragraph', () => {
     expect(run(setHeading(0), '### |Title')).toBe('Title')
   })
-
   test('the level a line already is turns it back into a paragraph', () => {
     expect(run(setHeading(2), '## |Title')).toBe('Title')
     expect(run(setHeading(1), '# |Title')).toBe('Title')
     expect(run(setHeading(6), '###### |Title')).toBe('Title')
   })
-
   test('while another level replaces it, as before', () => {
     expect(run(setHeading(2), '### |Title')).toBe('## Title')
   })
-
   test('over several lines, all of them or none', () => {
     expect(run(setHeading(2), '[## One\nTwo]')).toBe('## One\n## Two')
     expect(run(setHeading(2), '[## One\n## Two]')).toBe('One\nTwo')
   })
-
   test('raises and lowers the level', () => {
     expect(run(shiftHeading(1), '## |Title')).toBe('### Title')
     expect(run(shiftHeading(-1), '## |Title')).toBe('# Title')
   })
-
   test('never goes past the ends of the scale', () => {
     expect(run(shiftHeading(1), '###### |Title')).toBe('###### Title')
     expect(run(shiftHeading(-1), '|Title')).toBe('Title')
   })
 })
-
 describe('line prefixes', () => {
   test('quotes and unquotes', () => {
     expect(run(toggleQuote, '|text')).toBe('> text')
     expect(run(toggleQuote, '> |text')).toBe('text')
   })
-
   test('toggles a bullet list', () => {
     expect(run(toggleBulletList, '|item')).toBe('- item')
     expect(run(toggleBulletList, '- |item')).toBe('item')
   })
-
   test('keeps a nested bullet nested when the list is made over it', () => {
     const doc = '- a\n  - b\nc'
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n  - b\n- c')
   })
-
   test('takes off a nested bullet and a task box, its lines going back with their parent', () => {
     const doc = '- a\n  - [ ] b\n  - c'
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\nb\nc')
   })
-
   test('leaves the line a selection ends in front of', () => {
     expect(apply(toggleBulletList, 'a\nb\nc', 0, 4).doc).toBe('- a\n- b\nc')
     expect(apply(setHeading(2), 'a\nb\nc', 0, 2).doc).toBe('## a\nb\nc')
     expect(apply(toggleBulletList, 'a\nb', 2).doc).toBe('a\n- b')
   })
-
   test('numbers an ordered list across lines', () => {
     expect(run(toggleOrderedList, '[one\ntwo\nthree]')).toBe('1. one\n2. two\n3. three')
   })
-
   test('converts a bullet list to an ordered one', () => {
     expect(run(toggleOrderedList, '[- one\n- two]')).toBe('1. one\n2. two')
   })
-
   test('converts an ordered list to a bullet one', () => {
     expect(run(toggleBulletList, '[1. one\n2. two]')).toBe('- one\n- two')
   })
-
   test('keeps the task box and the nesting when a list changes kind', () => {
     const doc = '- [ ] a\n  - b\n- c'
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. [ ] a\n   1. b\n2. c')
     const back = '1. [x] a\n   1. b'
     expect(apply(toggleBulletList, back, 0, back.length).doc).toBe('- [x] a\n  - b')
   })
-
   test('keeps a child under its parent when the markers change width', () => {
     const doc = '9. a\n10. b\n    - c\n        - d'
     const bullets = '- a\n  - b\n    - c'
@@ -282,18 +237,15 @@ describe('line prefixes', () => {
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n- b\n  - c\n      - d')
     expect(apply(toggleBulletList, 'a\n  b', 0, 5).doc).toBe('- a\n  - b')
   })
-
   test('keeps tab-indented children nested when the markers change width', () => {
     const tabs = '- a\n\t- b'
     expect(apply(toggleOrderedList, tabs, 0, tabs.length).doc).toBe('1. a\n\t 1. b')
     const back = '1. a\n\t- b'
     expect(apply(toggleBulletList, back, 0, back.length).doc).toBe('- a\n\t- b')
   })
-
   test('carries children that are not selected along with their parent', () => {
     expect(at(toggleOrderedList, '- a\n  - b\n    c\nd', 0)).toBe('1. a\n   - b\n     c\nd')
   })
-
   test('leaves a child whose own parent did not change where it is', () => {
     const doc = '1. a\n2. w\n   - x'
     const state = EditorState.create({
@@ -305,28 +257,23 @@ describe('line prefixes', () => {
     toggleBulletList({ state, dispatch: (made: Transaction) => (next = made.state) })
     expect(next.doc.toString()).toBe('- a\n2. w\n   - x')
   })
-
   test('numbers each quote apart from the list around it', () => {
     const doc = '> - a\n- b'
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('> 1. a\n1. b')
   })
-
   test('carries a blank line of a quote inside an item along with the item', () => {
     const doc = '- a\n  > x\n  >\n  > y'
     expect(at(toggleOrderedList, doc, 0)).toBe('1. a\n   > x\n   >\n   > y')
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. a\n   > x\n   >\n   > y')
   })
-
   test('takes an item off without taking its children or its later paragraphs out of the list', () => {
     expect(at(toggleBulletList, '- a\n    - b', 0)).toBe('a\n  - b')
     expect(at(toggleOrderedList, '10. a\n    - b', 0)).toBe('a\n- b')
     expect(at(toggleBulletList, '- a\n\n    b', 0)).toBe('a\n\n  b')
   })
-
   test('numbers the items after a first item that is taken off from one', () => {
     expect(at(toggleOrderedList, '1. a\n2. b\n3. c', 0)).toBe('a\n1. b\n2. c')
   })
-
   test('starts the numbers again after an item that was not picked', () => {
     const doc = '- a\n- b\n- c'
     const state = EditorState.create({
@@ -338,35 +285,29 @@ describe('line prefixes', () => {
     toggleOrderedList({ state, dispatch: (made: Transaction) => (next = made.state) })
     expect(next.doc.toString()).toBe('1. a\n- b\n1. c')
   })
-
   test('moves the children of a task taken off by its marker, not its box', () => {
     expect(at(toggleBulletList, '- [ ] project\n  - [ ] step\n    - [ ] substep\n- [ ] other', 18)).toBe(
       '- [ ] project\n  step\n  - [ ] substep\n- [ ] other',
     )
     expect(at(toggleBulletList, '- [ ] a\n\n      code', 0)).toBe('a\n\n    code')
   })
-
   test('numbers the items again after a middle item whose children move out with it', () => {
     expect(at(toggleOrderedList, '1. a\n2. b\n\n   more\n3. c', 5)).toBe('1. a\nb\n\nmore\n1. c')
     expect(at(toggleOrderedList, '1. a\n2. b\n3. c', 5)).toBe('1. a\nb\n3. c')
   })
-
   test('keeps the other kind of numbers apart when it numbers again', () => {
     expect(at(toggleOrderedList, '1) a\n2) b\n1. x\n2. y', 0)).toBe('a\n1) b\n1. x\n2. y')
   })
-
   test('takes off a whole loose nested list without making code of its deeper items', () => {
     const doc = '- a\n\n    - b'
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n\n  b')
   })
-
   test('leaves the code, tables and wrapped lines inside items alone', () => {
     const fenced = '- a\n  ```\n  x\n  ```\n- b'
     expect(apply(toggleBulletList, fenced, 0, fenced.length).doc).toBe('a\n```\nx\n```\nb')
     const wrapped = '- a long\n  wraps\n- b'
     expect(apply(toggleOrderedList, wrapped, 0, wrapped.length).doc).toBe('1. a long\n   wraps\n2. b')
   })
-
   test('leaves blank lines in the selection blank', () => {
     const loose = '- a\n\n- b'
     expect(apply(toggleBulletList, loose, 0, loose.length).doc).toBe('a\n\nb')
@@ -374,7 +315,6 @@ describe('line prefixes', () => {
     expect(apply(toggleBulletList, 'a\n\nb', 0, 4).doc).toBe('- a\n\n- b')
     expect(run(toggleBulletList, '|')).toBe('- ')
   })
-
   test('carries a quote inside a list item along with its item', () => {
     expect(at(toggleOrderedList, '- a\n  > note', 0)).toBe('1. a\n   > note')
     const doc = '- a\n  > - x\n- b'
@@ -382,7 +322,6 @@ describe('line prefixes', () => {
     const deeper = '- a\n  > - x\n  >   - y\n- b'
     expect(apply(toggleOrderedList, deeper, 0, deeper.length).doc).toBe('1. a\n   > 1. x\n   >    1. y\n2. b')
   })
-
   test('puts the list inside a quote, and takes it off again', () => {
     expect(run(toggleBulletList, '> |one')).toBe('> - one')
     expect(run(toggleOrderedList, '> |one')).toBe('> 1. one')
@@ -390,20 +329,17 @@ describe('line prefixes', () => {
     expect(run(toggleBulletList, '> - |one')).toBe('> one')
     expect(run(toggleOrderedList, '> > 1. |one')).toBe('> > one')
   })
-
   test('takes the numbers off a nested ordered list, its lines going back with their parent', () => {
     const doc = '1. a\n   1. b\n2. c'
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('a\nb\nc')
     expect(at(toggleOrderedList, '1. [ ] a', 7)).toBe('a')
   })
 })
-
 describe('blocks', () => {
   test('inserts a code fence with the caret inside', () => {
     expect(run(insertCodeFence, '|')).toBe('```\n\n```')
     expect(runSelection(insertCodeFence, '|')).toEqual([3, 3])
   })
-
   test('fences a selection of three hundred thousand lines, one fence longer than any inside', () => {
     const lines = Array.from({ length: 300_000 }, (_, at) => (at === 7 ? '````' : 'x'))
     const doc = lines.join('\n')
@@ -411,26 +347,21 @@ describe('blocks', () => {
     expect(fenced).toContain('`````\nx\nx')
     expect(fenced.trimEnd().endsWith('x\n`````')).toBe(true)
   })
-
   test('inserts a math block', () => {
     expect(run(insertMathBlock, '|')).toBe('$$\n\n$$')
   })
-
   test('inserts a table with a header and divider', () => {
     expect(run(insertTable(1, 2), '|')).toBe('| Column 1 | Column 2 |\n| --- | --- |\n|     |     |')
   })
-
   test('starts a block on its own line', () => {
     expect(run(insertCodeFence, 'text|')).toBe('text\n```\n\n```')
   })
-
   test('ends a block on its own line where words follow', () => {
     expect(run(insertCodeFence, 'one |two\nthree')).toBe('one \n```\n\n```\ntwo\nthree')
     expect(run(insertMathBlock, 'one |two')).toBe('one \n$$\n\n$$\ntwo')
     expect(run(insertTable(1, 1), 'one |two')).toBe('one \n\n| Column 1 |\n| --- |\n|     |\n\ntwo')
     expect(run(insertCodeFence, '|two')).toBe('```\n\n```\ntwo')
   })
-
   test('sets a rule apart from the words above it', () => {
     expect(run(insertHorizontalRule, '[words]')).toBe('words\n\n---\n')
     expect(run(insertHorizontalRule, 'words|')).toBe('words\n\n---\n')
@@ -438,7 +369,6 @@ describe('blocks', () => {
     expect(run(insertHorizontalRule, 'words\n\n|')).toBe('words\n\n---\n')
     expect(run(insertHorizontalRule, '|')).toBe('---\n')
   })
-
   test('goes below a line of structure rather than splitting it', () => {
     expect(run(insertCodeFence, '- [item]\n- two')).toBe('- item\n```\n\n```\n- two')
     expect(run(insertCodeFence, '> [quoted]')).toBe('> quoted\n```\n\n```')
@@ -447,106 +377,85 @@ describe('blocks', () => {
     expect(run(insertCodeFence, '- it|em')).toBe('- item\n```\n\n```')
     expect(run(insertCallout, '- [item]')).toBe('- item\n> [!NOTE]\n> ')
   })
-
   test('still wraps such lines selected whole', () => {
     expect(run(insertCodeFence, '[- one\n- two]')).toBe('```\n- one\n- two\n```')
   })
-
   test('closes a callout with a blank line where words follow', () => {
     expect(run(insertCallout, '[hello] world')).toBe('> [!NOTE]\n> hello\n\n world')
     expect(run(insertCallout, 'one |two')).toBe('one \n> [!NOTE]\n> \n\ntwo')
     expect(run(insertCallout, '[hello]\n\nnext')).toBe('> [!NOTE]\n> hello\n\nnext')
     expect(runSelection(insertCallout, 'one |two')).toEqual([17, 17])
   })
-
   test('sets a table apart from the words round it', () => {
     expect(run(insertTable(1, 1), 'he [llo] world')).toBe('he llo\n\n| Column 1 |\n| --- |\n|     |\n\n world')
     expect(run(insertTable(1, 1), '[words]\nnext')).toBe('words\n\n| Column 1 |\n| --- |\n|     |\n\nnext')
     expect(run(insertTable(1, 1), 'above\n|')).toBe('above\n\n| Column 1 |\n| --- |\n|     |')
   })
-
   test('does not put a table inside a table', () => {
     const inside = '| a | b |\n| --- | --- |'
     expect(apply(insertTable(1, 1), inside, 2, 3).doc).toBe(inside)
   })
-
   test('puts the caret of an AI block on its empty line', () => {
     expect(run(insertAiBlock, '|')).toBe('```ai\n\n```\n')
     expect(runSelection(insertAiBlock, '|')).toEqual([6, 6])
   })
-
   test('adds no second line break to a block that ends in one', () => {
     expect(run(insertToc, 'one |two')).toBe('one \n[toc]\ntwo')
   })
-
   test('keeps the caret inside the block', () => {
     expect(runSelection(insertCodeFence, 'one |two')).toEqual([8, 8])
   })
-
   test('wraps the lines selected in a fence, a math block or a callout', () => {
     expect(run(insertCodeFence, '[one\ntwo]\nthree')).toBe('```\none\ntwo\n```\nthree')
     expect(run(insertMathBlock, '[one\ntwo]\nthree')).toBe('$$\none\ntwo\n$$\nthree')
     expect(run(insertCallout, '[one\ntwo]\nthree')).toBe('> [!NOTE]\n> one\n> two\n\nthree')
   })
-
   test('wraps a word on its own lines, with what was round it on theirs', () => {
     expect(run(insertCodeFence, 'a [word] b')).toBe('a \n```\nword\n```\n b')
   })
-
   test('leaves the line break that ends a selection of whole lines outside the block', () => {
     expect(run(insertCodeFence, '[one\n]two')).toBe('```\none\n```\ntwo')
   })
-
   test('puts the caret where the language goes on a fence, and after the words otherwise', () => {
     expect(runSelection(insertCodeFence, '[one]')).toEqual([3, 3])
     expect(runSelection(insertMathBlock, '[one]')).toEqual([6, 6])
   })
-
   test('fences a selection that holds a fence with a longer one', () => {
     expect(run(insertCodeFence, '[```\nx\n```]')).toBe('````\n```\nx\n```\n````')
   })
-
   test('keeps the words of a selection a block has no room for', () => {
     expect(run(insertTable(1, 1), '[one\ntwo]\nthree')).toBe('one\ntwo\n\n| Column 1 |\n| --- |\n|     |\n\nthree')
     expect(run(insertToc, 'a [word] b')).toBe('a word\n[toc]\n b')
   })
 })
-
 describe('links', () => {
   test('wraps the selection and parks the caret in the target', () => {
     expect(run(insertLink, '[label]')).toBe('[label]()')
   })
-
   test('leaves the caret between the parentheses', () => {
     const [from] = runSelection(insertLink, 'x|')
     expect(from).toBe('x[]('.length)
   })
 })
-
 describe('clear formatting', () => {
   test('removes inline markers from the selection', () => {
     expect(run(clearFormatting, '[**a** *b* ~~c~~ `e`]')).toBe('a b c e')
   })
-
   test('leaves text outside the selection alone', () => {
     expect(run(clearFormatting, '**keep** [**drop**]')).toBe('**keep** drop')
   })
-
   test('keeps the underscores inside a word', () => {
     expect(run(clearFormatting, '[see my_file_name.txt and __b__ _i_]')).toBe('see my_file_name.txt and b i')
   })
 })
-
 describe('select word', () => {
   test('grows the selection to the word under the caret', () => {
     expect(runSelection(selectWord, 'one tw|o three')).toEqual([4, 7])
   })
-
   test('collapses on punctuation', () => {
     expect(runSelection(selectWord, 'one |- two')).toEqual([4, 4])
   })
 })
-
 describe.each([
   ['as the app reads it', ordenMarkdownExtensions],
   ['as plain markdown reads it', []],
@@ -561,7 +470,6 @@ describe.each([
         extensions: [markdown({ base: markdownLanguage, extensions })],
       }),
     )
-
     let next = state
     const took = closeFence({
       state,
@@ -569,99 +477,78 @@ describe.each([
     })
     return { took, doc: next.doc.toString() }
   }
-
   test('closes the fence and puts the caret inside it', () => {
     expect(press('```|')).toEqual({ took: true, doc: '```\n\n```' })
     expect(runSelection(closeFence, '```|')).toEqual([4, 4])
   })
-
   test('keeps the language', () => {
     expect(press('```ts|').doc).toBe('```ts\n\n```')
   })
-
   test('keeps what follows outside the block', () => {
     expect(press('```|\nmore text').doc).toBe('```\n\n```\nmore text')
   })
-
   test('closes a fence inside a list item or a quote inside it', () => {
     expect(press('- step\n  ```bash|\nmore text').doc).toBe('- step\n  ```bash\n  \n  ```\nmore text')
     expect(press('- ```js|').doc).toBe('- ```js\n  \n  ```')
     expect(press('> ```js|').doc).toBe('> ```js\n> \n> ```')
   })
-
   test('closes tildes with tildes, and as many of them', () => {
     expect(press('~~~~|').doc).toBe('~~~~\n\n~~~~')
   })
-
   test('leaves a fence that is already closed alone', () => {
     expect(press('```|\ncode\n```').took).toBe(false)
   })
-
   test('leaves a closing fence alone', () => {
     expect(press('```\ncode\n```|').took).toBe(false)
   })
-
   test('leaves a closing fence alone after a block in a nested list item', () => {
     expect(press('- a\n  - ```js\n    code\n    ```\n\n```\nx\n```|').took).toBe(false)
   })
-
   test('leaves a closing fence alone after a block a quote ended', () => {
     expect(press('> ```\n> code\n\n```\nx\n```|').took).toBe(false)
   })
-
   test('does nothing away from the end of the line', () => {
     expect(press('``|`').took).toBe(false)
   })
-
   test('does nothing on an ordinary line', () => {
     expect(press('just words|').took).toBe(false)
   })
 })
-
 describe('a task list', () => {
   test('makes plain lines into tasks', () => {
     expect(run(toggleTaskList, '[one\ntwo]')).toBe('- [ ] one\n- [ ] two')
   })
-
   test('trades a bullet for a box and keeps the indentation', () => {
     expect(run(toggleTaskList, '  - |one')).toBe('  - [ ] one')
   })
-
   test('trades a number for a box', () => {
     expect(run(toggleTaskList, '1. |one')).toBe('- [ ] one')
   })
-
   test('takes the tasks off again when every line is one', () => {
     const doc = '- [ ] one\n- [x] two'
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('one\ntwo')
   })
-
   test('puts the box inside a quote, and takes it off again', () => {
     expect(run(toggleTaskList, '> |c')).toBe('> - [ ] c')
     expect(at(toggleTaskList, '> - [ ] c', 8)).toBe('> c')
     expect(run(toggleTaskList, '> > - |c')).toBe('> > - [ ] c')
   })
-
   test('makes tasks of every line when only some of them are', () => {
     const doc = '- [x] one\ntwo'
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('- [ ] one\n- [ ] two')
   })
 })
-
 describe('ticking the task under the caret', () => {
   test('ticks an empty box', () => {
     expect(apply(toggleTask, '- [ ] wash up', 10).doc).toBe('- [x] wash up')
   })
-
   test('clears a ticked one', () => {
     expect(apply(toggleTask, '- [x] wash up', 10).doc).toBe('- [ ] wash up')
   })
-
   test('ticks every task in the selection', () => {
     const doc = '- [ ] one\n- [ ] two'
     expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [x] two')
   })
-
   test('makes a task of words, a bullet, a number or an empty line', () => {
     expect(run(toggleTask, 'just words|')).toBe('- [ ] just words')
     expect(run(toggleTask, '  - a bullet|')).toBe('  - [ ] a bullet')
@@ -669,17 +556,14 @@ describe('ticking the task under the caret', () => {
     expect(run(toggleTask, '|')).toBe('- [ ] ')
     expect(runSelection(toggleTask, '|')).toEqual([6, 6])
   })
-
   test('ticks the task it has just made on the next press', () => {
     const first = apply(toggleTask, 'milk', 4)
     expect(apply(toggleTask, first.doc, first.selection[0]).doc).toBe('- [x] milk')
   })
-
   test('makes tasks and ticks them line by line over a selection', () => {
     const doc = '- [ ] one\ntwo'
     expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [ ] two')
   })
-
   test('gives way in code, a heading, a quote and a table', () => {
     expect(took(toggleTask, '```\n- [ ] still code|\n```')).toBe(false)
     expect(took(toggleTask, '```py\nprint()|\n```')).toBe(false)
@@ -689,18 +573,15 @@ describe('ticking the task under the caret', () => {
     expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
   })
 })
-
 describe('ticking the task the caret is on, and nothing else', () => {
   test('ticks an empty box and clears a ticked one, wherever on the line the caret is', () => {
     expect(apply(tickTaskAtCaret, '- [ ] wash up', 0).doc).toBe('- [x] wash up')
     expect(apply(tickTaskAtCaret, '- [x] wash up', 13).doc).toBe('- [ ] wash up')
     expect(apply(tickTaskAtCaret, '  - [ ] nested', 9).doc).toBe('  - [x] nested')
   })
-
   test('only the line the caret is on', () => {
     expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 12).doc).toBe('- [ ] one\n- [x] two')
   })
-
   test('leaves a line that is not a task alone, and says so', () => {
     for (const doc of ['just words', '- a bullet', '1. a number', '']) {
       const done = apply(tickTaskAtCaret, doc, doc.length)
@@ -708,114 +589,91 @@ describe('ticking the task the caret is on, and nothing else', () => {
       expect(done.doc).toBe(doc)
     }
   })
-
   test('gives way in code, where a box is not a box', () => {
     expect(took(tickTaskAtCaret, '```\n- [ ] still code|\n```')).toBe(false)
   })
-
   test('leaves a selection over more than one line alone', () => {
     const doc = '- [ ] one\n- [ ] two'
     expect(apply(tickTaskAtCaret, doc, 0, doc.length).took).toBe(false)
   })
 })
-
 describe('the blocks a menu row inserts', () => {
   test('a callout is the alert the renderer draws, ready to be written in', () => {
     expect(run(insertCallout, '|')).toBe('> [!NOTE]\n> ')
     expect(runSelection(insertCallout, '|')).toEqual([12, 12])
   })
-
   test('a table of contents is a line of its own', () => {
     expect(run(insertToc, 'words\n|')).toBe('words\n[toc]\n')
   })
-
   test('a comment wraps what is selected, and unwraps it again', () => {
     expect(run(insertComment, 'a [word] b')).toBe('a <!-- word --> b')
     expect(run(insertComment, 'a [<!-- word -->] b')).toBe('a word b')
   })
-
   test('a comment with nothing selected leaves the caret inside it', () => {
     expect(run(insertComment, 'a |b')).toBe('a <!--  -->b')
     expect(runSelection(insertComment, 'a |b')).toEqual([7, 7])
   })
 })
-
 describe('a footnote', () => {
   test('marks the caret and puts its definition at the end of the note', () => {
     expect(run(insertFootnote, 'a claim|\n')).toBe('a claim[^1]\n\n[^1]: ')
   })
-
   test('leaves the caret in the definition, ready to write it', () => {
     expect(runSelection(insertFootnote, 'a claim|\n')).toEqual([19, 19])
   })
-
   test('takes the next number the note is not already using', () => {
     expect(apply(insertFootnote, 'one[^1] two\n\n[^1]: first\n', 11).doc).toBe(
       'one[^1] two[^2]\n\n[^1]: first\n\n[^2]: ',
     )
   })
-
   test('in an empty note is a mark and the definition under it', () => {
     expect(apply(insertFootnote, '', 0).doc).toBe('[^1]\n\n[^1]: ')
   })
-
   test('goes under the last of the words rather than under the blank lines', () => {
     expect(apply(insertFootnote, 'a claim\n\n\n', 7).doc).toBe('a claim[^1]\n\n[^1]: ')
   })
-
   test('never replaces what is selected: a footnote is added to it', () => {
     expect(apply(insertFootnote, 'a claim here\n', 2, 7).doc).toBe('a claim[^1] here\n\n[^1]: ')
   })
 })
-
 describe('a callout is asked to fold', () => {
   const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
-
   test('says nothing about folding until it is asked', () => {
     expect(calloutSign(stateOf(CALLOUT, 4))).toBe('')
     expect(run(insertCallout, '|')).toBe('> [!NOTE]\n> ')
   })
-
   test('and nothing at all where the caret is not in one', () => {
     expect(calloutSign(stateOf('Plain words.\n', 3))).toBeNull()
     expect(calloutSign(stateOf('> A plain quote\n', 5))).toBeNull()
     expect(took(setCalloutSign('-'), 'Plain |words.')).toBe(false)
   })
-
   test('takes the sign after the brackets, where Obsidian writes it', () => {
     expect(at(setCalloutSign('+'), CALLOUT, 4)).toBe('> [!note]+ Mind the gap\n> and the step.\n')
     expect(at(setCalloutSign('-'), CALLOUT, 4)).toBe('> [!note]- Mind the gap\n> and the step.\n')
   })
-
   test('from a caret anywhere in the callout, not only on its first line', () => {
     expect(at(setCalloutSign('-'), CALLOUT, CALLOUT.indexOf('step'))).toBe('> [!note]- Mind the gap\n> and the step.\n')
   })
-
   test('asked for the sign it already has, takes it off again', () => {
     const folded = '> [!note]- Mind the gap\n'
     expect(at(setCalloutSign('-'), folded, 4)).toBe('> [!note] Mind the gap\n')
     expect(calloutSign(stateOf(folded, 4))).toBe('-')
   })
-
   test('and asked for the other one, trades it', () => {
     expect(at(setCalloutSign('+'), '> [!note]- Mind the gap\n', 4)).toBe('> [!note]+ Mind the gap\n')
     expect(calloutSign(stateOf('> [!note]+ Mind the gap\n', 4))).toBe('+')
   })
-
   test('leaves a callout with no title of its own a callout with no title', () => {
     expect(at(setCalloutSign('-'), '> [!tip]\n> Below it.\n', 4)).toBe('> [!tip]-\n> Below it.\n')
   })
 })
-
 describe('italic over a word that is bold', () => {
   const italic = toggleWrap('*')
   const bold = toggleWrap('**')
-
   test('adds to the marks rather than taking a star of them', () => {
     expect(run(italic, '**[word]**')).toBe('***word***')
     expect(run(italic, '[**word**]')).toBe('***word***')
   })
-
   test('comes back off', () => {
     expect(run(italic, '***[word]***')).toBe('**word**')
     expect(run(italic, '[***word***]')).toBe('**word**')
@@ -824,24 +682,19 @@ describe('italic over a word that is bold', () => {
     expect(run(bold, '*[word]*')).toBe('***word***')
   })
 })
-
 describe('marks across blocks', () => {
   const bold = marksAcross('**')
-
   test('go on each paragraph, since a run ends with its block', () => {
     expect(run(bold, '[one\ntwo\n\nthree]')).toBe('**one**\n**two**\n\n**three**')
   })
-
   test('go inside each item', () => {
     expect(run(bold, '[- a\n- b]\n')).toBe('- **a**\n- **b**\n')
   })
-
   test('come off again, and a selection starts where it starts', () => {
     expect(run(bold, '[**a**\n\n**b**]')).toBe('a\n\nb')
     expect(run(bold, 'x [a\n\nb] y')).toBe('x **a**\n\n**b** y')
   })
 })
-
 describe('a heading over a list item', () => {
   test('trades the marker rather than standing in front of it', () => {
     expect(run(setHeading(2), '- ite|m')).toBe('## item')
@@ -849,48 +702,40 @@ describe('a heading over a list item', () => {
     expect(at(setHeading(2), '- [ ] item', 8)).toBe('## item')
   })
 })
-
 describe('Enter in code inside a quote or a list item', () => {
   function enter(marked: string): string {
     const caret = marked.indexOf('|')
     return at(continueInCode, marked.replace('|', ''), caret)
   }
-
   test('keeps the quote going', () => {
     expect(enter('> a\n> ```\n> x|\n> ```')).toBe('> a\n> ```\n> x\n> \n> ```')
     expect(enter('> ```js\n>   x|\n> ```')).toBe('> ```js\n>   x\n>   \n> ```')
     expect(enter('> [!note]\n> ```js|\n> ```')).toBe('> [!note]\n> ```js\n> \n> ```')
   })
-
   test('keeps the list item going from its fence line', () => {
     expect(enter('- ```js|\n  x\n  ```')).toBe('- ```js\n  \n  x\n  ```')
   })
-
   test('leaves code nothing holds to the usual Enter', () => {
     expect(took(continueInCode, '```\nx|\n```')).toBe(false)
     expect(took(continueInCode, '> plain|')).toBe(false)
   })
 })
-
 describe('Enter at the end of a numbered task', () => {
   test('numbers the next one and gives it a box too', () => {
     expect(at(continueLists, '1. [ ] t', 8)).toBe('1. [ ] t\n2. [ ] ')
     expect(at(continueLists, '1. [x] done', 11)).toBe('1. [x] done\n2. [ ] ')
   })
-
   test('and the bullets and plain numbers go on as they did', () => {
     expect(at(continueLists, '- [ ] t', 7)).toBe('- [ ] t\n- [ ] ')
     expect(at(continueLists, '1. a', 4)).toBe('1. a\n2. ')
     expect(at(continueLists, '1. [ ] ', 7)).not.toContain('2.')
   })
 })
-
 describe('a heading in a quote', () => {
   test('goes inside the quote marker', () => {
     expect(at(setHeading(1), '> Title', 4)).toBe('> # Title')
     expect(at(setHeading(2), '> > Title', 6)).toBe('> > ## Title')
   })
-
   test('comes off again, and changes level there', () => {
     expect(at(setHeading(1), '> # Title', 5)).toBe('> Title')
     expect(at(setHeading(3), '> # Title', 5)).toBe('> ### Title')
@@ -898,18 +743,15 @@ describe('a heading in a quote', () => {
     expect(at(shiftHeading(1), '> Title', 4)).toBe('> # Title')
   })
 })
-
 describe('clear formatting over code', () => {
   test('leaves a fence as it is', () => {
     const doc = '```\n**b** `c`\n```'
     expect(apply(clearFormatting, `a **b**\n\n${doc}`, 0, doc.length + 9).doc).toBe(`a b\n\n${doc}`)
   })
-
   test("takes a code span's marks and none of what it holds", () => {
     expect(run(clearFormatting, '[`**b**` **c**]')).toBe('**b** c')
   })
 })
-
 describe('clear formatting over what only looks like a mark', () => {
   const cleared = (doc: string) => {
     const state = parsed(
@@ -923,34 +765,28 @@ describe('clear formatting over what only looks like a mark', () => {
     clearFormatting({ state, dispatch: (one: Transaction) => (next = one.state) })
     return next.doc.toString()
   }
-
   test('keeps star bullets, escaped stars and the stars of a formula', () => {
     expect(cleared('* one\n* **two**')).toBe('* one\n* two')
     expect(cleared('a \\*literal\\* *b*')).toBe('a \\*literal\\* b')
     expect(cleared('so $a*b*c$ and ==d==')).toBe('so $a*b*c$ and d')
   })
 })
-
 describe('Tab on a list item', () => {
   test('under a number goes as far as the words above it', () => {
     expect(at(indentItems, '1. x\n2. y\n3. z', 6)).toBe('1. x\n   1. y\n3. z')
     expect(at(indentItems, '10. x\n11. y', 7)).toBe('10. x\n    1. y')
     expect(at(indentItems, '1. x\n- y', 6)).toBe('1. x\n   - y')
   })
-
   test('under a bullet is what it always was', () => {
     expect(at(indentItems, '- x\n- y', 5)).toBe('- x\n  - y')
   })
-
   test('continues a list nested already', () => {
     expect(at(indentItems, '1. x\n   1. y\n2. z', 15)).toBe('1. x\n   1. y\n   2. z')
   })
-
   test('back out goes where it came from, and counts on', () => {
     expect(at(outdentItems, '1. x\n   1. y', 8)).toBe('1. x\n2. y')
     expect(at(outdentItems, '- x\n    - y', 9)).toBe('- x\n- y')
   })
-
   test('inside quotes keeps the quotes, and a line quoted 28 deep costs no time', () => {
     expect(at(indentItems, '> > - x\n> > - y', 13)).toBe('> > - x\n> >   - y')
     const deep = `${'> '.repeat(28)}x`
@@ -958,51 +794,41 @@ describe('Tab on a list item', () => {
     expect(at(indentItems, `${deep}\n${deep}`, deep.length + 3)).toBe(`${deep}\n  ${deep}`)
     expect(Date.now() - started).toBeLessThan(5000)
   })
-
   test('leaves words and code to the plain indent', () => {
     expect(at(indentItems, 'words', 1)).toBe('  words')
     expect(at(outdentItems, '  words', 3)).toBe('words')
     expect(at(indentItems, '```\n1. x\n2. y\n```', 11)).toBe('```\n1. x\n  2. y\n```')
   })
 })
-
 describe('moving a line past a table', () => {
   const TABLE = '| x |\n| - |\n| 1 |'
-
   test('going down steps over it whole', () => {
     expect(at(moveLineOver(1), `a\n\n${TABLE}\n\nb`, 0)).toBe(`${TABLE}\n\na\n\nb`)
     expect(at(moveLineOver(1), `a\n${TABLE}`, 0)).toBe(`${TABLE}\n\na`)
   })
-
   test('going up steps over it whole', () => {
     expect(at(moveLineOver(-1), `b\n\n${TABLE}\n\na`, 20 + 3)).toBe(`b\n\na\n\n${TABLE}`)
   })
-
   test('takes the caret with it', () => {
     const moved = apply(moveLineOver(1), `ab\n\n${TABLE}`, 1)
     expect(moved.selection).toEqual([TABLE.length + 3, TABLE.length + 3])
   })
-
   test('leaves any other line to the library', () => {
     expect(at(moveLineOver(1), 'a\nb', 0)).toBe('b\na')
     expect(at(moveLineOver(-1), 'a\nb', 2)).toBe('b\na')
   })
 })
-
 describe('a block inserted in the middle of a line', () => {
   test('a table keeps the words on either side and is a table', () => {
     expect(run(insertTable(1, 1), 'abc |def')).toBe('abc \n\n| Column 1 |\n| --- |\n|     |\n\ndef')
   })
-
   test('keeps what was selected', () => {
     expect(run(insertTable(1, 1), '[words]')).toBe('words\n\n| Column 1 |\n| --- |\n|     |')
   })
-
   test('a rule writes its own line break', () => {
     expect(run(insertHorizontalRule, 'a|b')).toBe('a\n\n---\nb')
   })
 })
-
 describe('marks over a selection that holds what is not words', () => {
   const across = (doc: string, mark = '**') => {
     const state = parsed(
@@ -1016,7 +842,6 @@ describe('marks over a selection that holds what is not words', () => {
     marksAcross(mark)({ state, dispatch: (one: Transaction) => (next = one.state) })
     return next.doc.toString()
   }
-
   test.each([
     ['front matter', '---\ntitle: x\n---\n\npara', '---\ntitle: x\n---\n\n**para**'],
     ['a table', 'a\n\n| x |\n| --- |\n| 1 |\n\nb', '**a**\n\n| x |\n| --- |\n| 1 |\n\n**b**'],
@@ -1029,24 +854,20 @@ describe('marks over a selection that holds what is not words', () => {
   ])('leaves %s as it is', (_what, doc, wanted) => {
     expect(across(doc)).toBe(wanted)
   })
-
   test('front matter with nothing after it, and soft lines stay one run', () => {
     expect(across('---\ntitle: x\n---')).toBe('---\ntitle: x\n---')
     expect(across('one\ntwo')).toBe('**one\ntwo**')
     expect(across('**one\ntwo**')).toBe('one\ntwo')
   })
-
   test('italic over bold paragraphs adds to them, and comes off', () => {
     expect(across('**a**\n\n**b**', '*')).toBe('***a***\n\n***b***')
     expect(across('***a***\n\n***b***', '*')).toBe('**a**\n\n**b**')
     expect(across('*a*\n\n*b*', '*')).toBe('a\n\nb')
   })
-
   test('toggling one line leaves its name out of the marks', () => {
     expect(run(toggleWrap('**'), '[a ^abc123]')).toBe('**a** ^abc123')
   })
 })
-
 describe('a table with something after it', () => {
   test('keeps a blank line, or the next line is a row', () => {
     expect(run(insertTable(1, 1), 'abc|\nnext')).toBe('abc\n\n| Column 1 |\n| --- |\n|     |\n\nnext')
@@ -1054,83 +875,67 @@ describe('a table with something after it', () => {
     expect(run(insertTable(1, 1), 'above\n|')).toBe('above\n\n| Column 1 |\n| --- |\n|     |')
   })
 })
-
 describe('Tab with what hangs under an item', () => {
   test('children go with their parent', () => {
     expect(at(indentItems, '1. a\n2. b\n   - c', 6)).toBe('1. a\n   1. b\n      - c')
     expect(at(indentItems, '- a\n- b\n  - c\n\n    more\n- d', 5)).toBe('- a\n  - b\n    - c\n\n      more\n- d')
     expect(at(outdentItems, '- a\n  - b\n    - c\n- d', 6)).toBe('- a\n- b\n  - c\n- d')
   })
-
   test('a selection counts on', () => {
     expect(apply(indentItems, '1. a\n2. b\n3. c', 6, 14).doc).toBe('1. a\n   1. b\n   2. c')
   })
-
   test('a first item keeps its number', () => {
     expect(at(indentItems, '5. a', 1)).toBe('  5. a')
   })
-
   test('in a quote stays in the quote', () => {
     expect(at(indentItems, '> 1. a\n> 2. b', 10)).toBe('> 1. a\n>    1. b')
     expect(at(outdentItems, '> 1. a\n>    1. b', 14)).toBe('> 1. a\n> 2. b')
   })
 })
-
 describe('moving a line past a table, with a line beside it', () => {
   const TABLE = '| x |\n| - |\n| 1 |'
-
   test('going up, the line under it is not left to be a row', () => {
     expect(at(moveLineOver(-1), `${TABLE}\n\na\nb`, TABLE.length + 2)).toBe(`a\n\n${TABLE}\n\nb`)
   })
-
   test('going down, the line over it is not left on its head', () => {
     expect(at(moveLineOver(1), `a\nb\n\n${TABLE}`, 2)).toBe(`a\n\n${TABLE}\n\nb`)
   })
 })
-
 describe('lines a list command leaves to their block', () => {
   const all = (command: StateCommand, doc: string, extensions = ordenMarkdownExtensions) =>
     apply(command, doc, 0, doc.length, extensions).doc
-
   test('the task list carries wrapped lines and code with their item', () => {
     expect(all(toggleTaskList, '- [ ] a\n  more\n- [ ] b')).toBe('a\nmore\nb')
     expect(all(toggleTaskList, '- a\n  ```\n  x\n  ```\n- b')).toBe('- [ ] a\n  ```\n  x\n  ```\n- [ ] b')
   })
-
   test('the task list leaves blank lines blank', () => {
     expect(all(toggleTaskList, 'a\n\nb')).toBe('- [ ] a\n\n- [ ] b')
     expect(all(toggleTaskList, '> a\n>\n> b')).toBe('> - [ ] a\n>\n> - [ ] b')
   })
-
   test('a box is not put on code inside an item', () => {
     expect(apply(toggleTask, '- a\n  ```\n  x\n  ```', 9).doc).toBe('- a\n  ```\n  x\n  ```')
     expect(apply(toggleTask, '- a\n\n      code', 10).doc).toBe('- a\n\n      code')
   })
-
   test('a box goes on the items of a selection, not their wrapped or blank lines', () => {
     expect(all(toggleTask, '- [ ] a\n  more')).toBe('- [x] a\n  more')
     expect(all(toggleTask, 'a\n\nb')).toBe('- [ ] a\n\n- [ ] b')
   })
-
   test('a quote inside a list item keeps to the item', () => {
     expect(at(toggleQuote, '- a\n  > q', 8)).toBe('- a\n  q')
     expect(at(toggleQuote, '- a\n\n  b', 7)).toBe('- a\n\n  > b')
     expect(at(toggleQuote, '- a\n\n      code', 10)).toBe('- a\n\n  >     code')
     expect(at(toggleQuote, '  > a', 4)).toBe('  a')
   })
-
   test('quoting a whole list keeps every line in its item', () => {
     expect(all(toggleQuote, '- a\n\n  b')).toBe('> - a\n> \n>   b')
     expect(all(toggleQuote, '- a\n  ```\n  x\n  ```\n- b')).toBe('> - a\n>   ```\n>   x\n>   ```\n> - b')
   })
-
   test('quoting a nested item keeps it under its parent', () => {
     expect(at(toggleQuote, '- a\n  - b', 9)).toBe('- a\n  > - b')
     expect(at(toggleQuote, '1. a\n   1. b', 12)).toBe('1. a\n   > 1. b')
     const nested = '- a\n  - b\n    c'
     expect(apply(toggleQuote, nested, 6, nested.length).doc).toBe('- a\n  > - b\n  >   c')
   })
-
   test('the caret on an empty line ends up after the marker put there', () => {
     for (const command of [toggleBulletList, toggleOrderedList, toggleTaskList, toggleQuote]) {
       const made = apply(command, 'a\n\nb', 2)
@@ -1140,27 +945,22 @@ describe('lines a list command leaves to their block', () => {
     expect(heading.selection).toEqual([5, 5])
     expect(apply(toggleBulletList, 'milk', 0).selection).toEqual([2, 2])
   })
-
   test('quoting the paragraphs of an item across a blank line keeps them in the item', () => {
     const doc = '- a\n\n  b\n\n  c\n- d'
     expect(apply(toggleQuote, doc, doc.indexOf('b'), doc.indexOf('c') + 1).doc).toBe('- a\n\n  > b\n  > \n  > c\n- d')
   })
-
   test('quoting a list nests a quote that is inside an item', () => {
     expect(all(toggleQuote, '- a\n  > b\n- c')).toBe('> - a\n>   > b\n> - c')
     expect(all(toggleQuote, 'a\n> b')).toBe('> a\n> b')
   })
-
   test('a lazy line under a nested item goes with the list', () => {
     expect(all(toggleBulletList, '- a\n  - b\n  c')).toBe('a\nb\nc')
     expect(all(toggleOrderedList, '1. a\n   1. b\n   c')).toBe('a\nb\nc')
   })
-
   test('a blank line in code and a picture on its own line', () => {
     expect(at(toggleBulletList, '```\n\n```', 4)).toBe('```\n\n```')
     expect(all(toggleBulletList, '<img src="p.png">')).toBe('- <img src="p.png">')
   })
-
   test('a list leaves code, tables and front matter outside items as they are', () => {
     expect(all(toggleBulletList, 'a\n```\n1. x\n```\nb')).toBe('- a\n```\n1. x\n```\n- b')
     expect(all(toggleBulletList, '- a\n```\n- x\n```\n- b')).toBe('a\n```\n- x\n```\nb')

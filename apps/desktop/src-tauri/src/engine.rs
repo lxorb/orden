@@ -18,7 +18,6 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             allowed_origins: Vec::new(),
         },
     );
-
     let mut asked = switches(&from_run("ORDEN_CEF_ARGS").unwrap_or_default());
     let firefox = cef_root()
         .and_then(|root| Some(root.parent()?.join("extensions")))
@@ -61,11 +60,9 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     }
     engine
 }
-
 fn from_run(name: &str) -> Option<String> {
     orden_web_engine::from_run(cfg!(debug_assertions), name)
 }
-
 fn cef_root() -> Option<PathBuf> {
     let config: serde_json::Value =
         serde_json::from_str(include_str!("../tauri.conf.json")).ok()?;
@@ -79,7 +76,6 @@ fn cef_root() -> Option<PathBuf> {
             .join(orden_web_engine::ROOT),
     )
 }
-
 pub(crate) fn take_ui_window(
     context: &mut tauri::Context,
 ) -> Option<tauri::utils::config::WindowConfig> {
@@ -89,7 +85,6 @@ pub(crate) fn take_ui_window(
     }
     Some(windows.remove(0))
 }
-
 pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
     manager: &'a M,
     config: &tauri::utils::config::WindowConfig,
@@ -108,7 +103,6 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
         .initialization_script(orden_carry::old_home::script())
         .initialization_script(orden_carry::old_engine::script()))
 }
-
 pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, orden_base::Engine, M>,
 ) -> tauri::WebviewWindowBuilder<'_, orden_base::Engine, M> {
@@ -127,7 +121,6 @@ pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(
         None => building,
     }
 }
-
 pub(crate) fn own_profile<M: tauri::Manager<orden_base::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, orden_base::Engine, M>,
 ) -> tauri::WebviewWindowBuilder<'_, orden_base::Engine, M> {
@@ -138,9 +131,7 @@ pub(crate) fn own_profile<M: tauri::Manager<orden_base::Engine>>(
         None => building,
     }
 }
-
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
-
 pub(crate) fn zooms(
     page: orden_web::engine::Page,
     zooms: orden_web::engine::Zooms,
@@ -155,7 +146,6 @@ pub(crate) fn zooms(
         });
     })
 }
-
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,
@@ -176,7 +166,6 @@ pub(crate) fn page_id(
     let raw = handle as usize as u64;
     (raw != 0).then_some(orden_web_engine::NativeWindow(raw))
 }
-
 pub(crate) mod certificate;
 pub(crate) mod devtools;
 pub(crate) mod mute;
@@ -186,7 +175,6 @@ pub(crate) mod windowless;
 
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn a_new_window_is_handed_only_to_a_page_still_open() {
         let sources = [
@@ -209,7 +197,6 @@ mod tests {
             "a new window handed to a page that may have closed: {unchecked:?}"
         );
     }
-
     #[test]
     fn every_profile_the_engine_opens_stays_open_for_the_app_s_life() {
         let runtime =
@@ -236,7 +223,6 @@ mod tests {
             "a profile that closes with its last page: {open:?}"
         );
     }
-
     #[test]
     fn nothing_pumps_inside_with_webview() {
         let mut inside = Vec::new();
@@ -265,7 +251,6 @@ mod tests {
         }
         assert!(inside.is_empty(), "a pump inside with_webview: {inside:?}");
     }
-
     #[test]
     fn every_page_made_for_the_app_s_own_use_is_hidden_as_it_is_made() {
         let shown = ["web_tabs.rs", "popup.rs"];
@@ -295,7 +280,6 @@ mod tests {
             "a page of the app's own left in sight: {seen:?}"
         );
     }
-
     #[test]
     fn every_window_of_an_app_page_is_in_the_interface_s_profile() {
         let mut past = Vec::new();
@@ -315,7 +299,6 @@ mod tests {
             "an app page outside the interface's profile: {past:?}"
         );
     }
-
     #[test]
     fn the_engine_is_the_manifest_s() {
         let read =
@@ -325,7 +308,6 @@ mod tests {
         let built = read("Cargo.toml");
         assert!(built == linux, "the desktop builds from linux/Cargo.toml");
     }
-
     #[test]
     fn a_feature_list_a_run_asks_for_joins_the_engine_s_own() {
         let engine =
@@ -342,7 +324,6 @@ mod tests {
         );
         assert!(said.contains(r#"enabled_features: ["Probe"]"#), "{said}");
     }
-
     #[test]
     fn the_drives_build_for_debug_and_the_release_does_not() {
         let workflow = |name: &str| {

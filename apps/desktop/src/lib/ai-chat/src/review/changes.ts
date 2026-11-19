@@ -6,7 +6,6 @@ interface Spot {
   removed: string
   inserted: string
 }
-
 export interface Edit {
   id: string
   agent: string
@@ -15,13 +14,11 @@ export interface Edit {
   spots: readonly Spot[]
   thread?: string
 }
-
 export interface Change extends Edit {
   turn: string | null
   added: number
   removed: number
 }
-
 export interface NoteChanges {
   path: string
   agent: string
@@ -29,48 +26,38 @@ export interface NoteChanges {
   added: number
   removed: number
 }
-
 const AGENT = 'orden-'
 const FORMER_AGENT = 'nib-'
-
 export function agentOf(provider: string): string {
   return `${AGENT}${rightsKey(provider)}`
 }
-
 export function agentsOf(provider: string): string[] {
   const key = rightsKey(provider)
   return [`${AGENT}${key}`, `${FORMER_AGENT}${key}`]
 }
-
 export function providerOf(agent: string): string | null {
   const prefix = [AGENT, FORMER_AGENT].find((one) => agent.startsWith(one))
   return prefix ? rightsHolder(agent.slice(prefix.length)) : null
 }
-
 export function linesOf(words: string): number {
   if (!words) return 0
   const lines = words.split('\n').length
   return words.endsWith('\n') ? lines - 1 : lines
 }
-
 export function providersOf(thread: Pick<Thread, 'provider' | 'turns'>): string[] {
   const all = new Set([thread.provider])
   for (const turn of thread.turns) if (turn.role === 'model' && turn.provider) all.add(turn.provider)
   return [...all]
 }
-
 export function checkpoints(turns: readonly Turn[]): Turn[] {
   return turns.filter((turn) => turn.role === 'you' && !turn.steered)
 }
-
 export function answered(turns: readonly Turn[], at: number): string | null {
   let found: string | null = null
   for (const turn of checkpoints(turns)) if (turn.at <= at) found = turn.id
   return found
 }
-
 export type Reviewed = Pick<Thread, 'id' | 'provider' | 'turns'> & { helpers?: readonly string[] }
-
 export function changesOf(
   thread: Reviewed,
   edits: readonly Edit[],
@@ -94,7 +81,6 @@ export function changesOf(
   }
   return changes.sort((one, other) => one.at - other.at)
 }
-
 export function byNote(changes: readonly Change[]): NoteChanges[] {
   const notes = new Map<string, NoteChanges>()
   for (const change of changes) {
@@ -113,7 +99,6 @@ export function byNote(changes: readonly Change[]): NoteChanges[] {
   }
   return [...notes.values()]
 }
-
 export function changesSince(changes: readonly Change[], turns: readonly Turn[], turn: string): Change[] {
   const marks = checkpoints(turns).map((one) => one.id)
   const from = marks.indexOf(turn)

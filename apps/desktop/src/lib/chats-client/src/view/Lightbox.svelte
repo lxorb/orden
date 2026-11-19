@@ -10,31 +10,25 @@
 
   const { chat, files, start, onclose }: { chat: string; files: FileRef[]; start: number; onclose: () => void } =
     $props()
-
   // svelte-ignore state_referenced_locally
   let index = $state(start)
   let zoomed = $state(false)
   let swipeFrom: number | null = null
-
   const file = $derived(files[index])
-
   function go(by: number) {
     const next = index + by
     if (next < 0 || next >= files.length) return
     index = next
     zoomed = false
   }
-
   $effect(() => overlays.show(onclose))
   $effect(() => closeOnBack(true, onclose))
-
   function swiped(event: PointerEvent) {
     if (swipeFrom === null) return
     const moved = event.clientX - swipeFrom
     swipeFrom = null
     if (Math.abs(moved) > 60) go(moved < 0 ? 1 : -1)
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.key === 'ArrowRight') go(1)
     else if (event.key === 'ArrowLeft') go(-1)
@@ -111,13 +105,11 @@
     display: grid;
     place-items: center;
   }
-
   .scrim {
     position: absolute;
     inset: 0;
     background: rgb(0 0 0 / 82%);
   }
-
   .stage {
     position: relative;
     max-width: 92vw;
@@ -126,24 +118,20 @@
     place-items: center;
     touch-action: pan-y;
   }
-
   .stage.zoomed {
     max-width: 100vw;
     max-height: 100vh;
     overflow: auto;
   }
-
   .picture {
     padding: 0;
     border: none;
     background: none;
     cursor: zoom-in;
   }
-
   .zoomed .picture {
     cursor: zoom-out;
   }
-
   img,
   video {
     display: block;
@@ -153,12 +141,10 @@
     background-size: cover;
     box-shadow: var(--shadow-lg);
   }
-
   .zoomed img {
     max-width: none;
     max-height: none;
   }
-
   .bar {
     position: absolute;
     top: calc(var(--space-3) + var(--inset-top));
@@ -171,14 +157,12 @@
     background: var(--surface);
     box-shadow: var(--shadow-md);
   }
-
   .count {
     margin-inline: var(--space-2);
     color: var(--muted-strong);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
-
   .side {
     position: absolute;
     top: 50%;
@@ -189,11 +173,9 @@
     background: var(--surface);
     box-shadow: var(--shadow-md);
   }
-
   .side.left {
     left: var(--space-4);
   }
-
   .side.right {
     right: var(--space-4);
   }

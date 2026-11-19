@@ -21,7 +21,6 @@ import {
 import { parsed } from '../../test/parsed'
 
 const PARK = '\n\nx'
-
 function note(path: string, headings: string[] = [], blocks: string[] = [], aliases: string[] = []): NoteRef {
   return {
     path,
@@ -31,7 +30,6 @@ function note(path: string, headings: string[] = [], blocks: string[] = [], alia
     aliases,
   }
 }
-
 function index(
   notes: NoteRef[],
   path: string | null = null,
@@ -46,14 +44,12 @@ function index(
   }
   return built
 }
-
 const SPACE = index(
   [note('Plan.md', ['Today', 'Later']), note('ideas/Plan.md'), note('ideas/Spark.md')],
   'Plan.md',
   {},
   ['paper.pdf', 'reading/Deep Learning.pdf', 'shot.png'],
 )
-
 function state(doc: string, cursor: number, notes = SPACE) {
   return parsed(
     EditorState.create({
@@ -63,7 +59,6 @@ function state(doc: string, cursor: number, notes = SPACE) {
     }),
   )
 }
-
 function nodes(doc: string, name: string): string[] {
   const out: string[] = []
   const tree = syntaxTree(state(doc, 0))
@@ -74,7 +69,6 @@ function nodes(doc: string, name: string): string[] {
   })
   return out
 }
-
 describe('the parser sees a wikilink', () => {
   test.each([
     ['a [[Note]] b', ['[[Note]]'], 'Wikilink'],
@@ -99,25 +93,20 @@ describe('the parser sees a wikilink', () => {
     ['![[pic.png]]', [], 'Image'],
   ])('%j', (input, wanted, extra) => expect(nodes(input, extra)).toEqual(wanted))
 })
-
 function linkMarks(doc: string, cursor?: number, notes = SPACE) {
   const full = cursor === undefined ? doc + PARK : doc
   const out: { text: string; note: string | null; missing: boolean }[] = []
-
   buildDecorations(state(full, cursor ?? full.length, notes)).decorations.between(0, full.length, (from, to, value) => {
     const classes = String(value.spec.class ?? '')
     if (!classes.includes('orden-link')) return
-
     out.push({
       text: full.slice(from, to),
       note: value.spec.attributes?.['data-note'] ?? null,
       missing: classes.includes('orden-link-missing'),
     })
   })
-
   return out
 }
-
 function concealed(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const out: string[] = []
@@ -126,10 +115,8 @@ function concealed(doc: string, cursor?: number): string[] {
   })
   return out
 }
-
 describe('a link into a note the space has archived', () => {
   const archived = index([{ ...note('Plan.md'), archived: true }, note('Spark.md')], null)
-
   function looks(doc: string): Record<string, string> {
     const full = doc + PARK
     const out: Record<string, string> = {}
@@ -139,7 +126,6 @@ describe('a link into a note the space has archived', () => {
     })
     return out
   }
-
   test('still resolves, and is drawn marked rather than missing', () => {
     expect(looks('[[Plan]] and [[Spark]] and [[Gone]]')).toEqual({
       Plan: 'orden-link orden-link-archived',
@@ -148,18 +134,15 @@ describe('a link into a note the space has archived', () => {
     })
   })
 })
-
 describe('a wikilink in the live preview', () => {
   test('shows the target and hides the brackets', () => {
     expect(linkMarks('see [[Plan]] now')).toEqual([{ text: 'Plan', note: 'Plan', missing: false }])
     expect(concealed('see [[Plan]] now')).toEqual(['[[', ']]'])
   })
-
   test('shows the alias and hides the target with it', () => {
     expect(linkMarks('see [[Plan|the plan]] now')).toEqual([{ text: 'the plan', note: 'Plan', missing: false }])
     expect(concealed('see [[Plan|the plan]] now')).toEqual(['[[Plan|', ']]'])
   })
-
   test.each([
     ['[[Plan#Today]]', [{ text: 'Plan#Today', note: 'Plan#Today', missing: false }]],
     ['[[Plan#^abc]]', [{ text: 'Plan#^abc', note: 'Plan#^abc', missing: false }]],
@@ -168,12 +151,10 @@ describe('a wikilink in the live preview', () => {
     ['see [the plan](ideas/Plan.md) now', [{ text: 'the plan', note: 'ideas/Plan.md', missing: false }]],
     ['see [docs](https://x.dev) now', [{ text: 'docs', note: null, missing: false }]],
   ])('%j', (input, wanted) => expect(linkMarks(input)).toEqual(wanted))
-
   test('the caret inside shows the whole link as source', () => {
     const doc = 'see [[Plan|the plan]] now'
     expect(concealed(doc, 10)).toEqual([])
   })
-
   test('unicode and spaces in a name survive', () => {
     const notes = index([note('Mémo für Späteres.md'), note('日本語のノート.md')])
     expect(linkMarks('[[Mémo für Späteres]]', undefined, notes)[0]).toMatchObject({
@@ -183,7 +164,6 @@ describe('a wikilink in the live preview', () => {
     expect(linkMarks('[[日本語のノート]]', undefined, notes)[0]).toMatchObject({ missing: false })
   })
 })
-
 describe('the name a block carries', () => {
   test.each([
     ['A paragraph. ^abc123', [' ^abc123']],
@@ -193,35 +173,28 @@ describe('the name a block carries', () => {
     ['```\nxor eax ^abc\n```', ['```', '```']],
     ['see [[Plan#^abc]]', ['[[', ']]']],
   ])('%j', (input, wanted) => expect(concealed(input)).toEqual(wanted))
-
   test.each([
     ['A paragraph. ^abc123\n\nmore', [], 3],
     ['A paragraph. ^abc123\n\nmore', [' ^abc123'], 24],
   ])('%j', (input, wanted, extra) => expect(concealed(input, extra)).toEqual(wanted))
 })
-
 describe('which note a name means', () => {
   test('a whole path wins over the end of one', () => {
     expect(resolveNote(SPACE, 'ideas/Plan')?.path).toBe('ideas/Plan.md')
     expect(resolveNote(SPACE, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
   })
-
   test('a bare name finds a note wherever it lives', () => {
     expect(resolveNote(index([note('deep/down/Spark.md')]), 'Spark')?.path).toBe('deep/down/Spark.md')
   })
-
   test('case does not matter', () => {
     expect(resolveNote(SPACE, 'sPaRk')?.path).toBe('ideas/Spark.md')
   })
-
   test('two notes of one name: the one beside the note that links to it', () => {
     const here = index([note('Plan.md'), note('ideas/Plan.md')], 'ideas/Notes.md')
     expect(resolveNote(here, 'Plan')?.path).toBe('ideas/Plan.md')
-
     const top = index([note('deep/Plan.md'), note('Plan.md')], 'Elsewhere.md')
     expect(resolveNote(top, 'Plan')?.path).toBe('Plan.md')
   })
-
   test('a path from the top of the space, written with a leading slash, means that path', () => {
     const here = index([note('Road.md'), note('B/Road.md'), note('X/B/Road.md')], 'B/x.md')
     expect(resolveNote(here, 'Road')?.path).toBe('B/Road.md')
@@ -229,48 +202,40 @@ describe('which note a name means', () => {
     expect(resolveNote(here, '/Road.md')?.path).toBe('Road.md')
     expect(resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path).toBe('B/Road.md')
     expect(resolveNote(index([note('X/Road.md')]), '/Road')).toBeNull()
-
     const files = { ...index([]), path: 'B/x.md', files: ['B/paper.pdf', 'paper.pdf'] }
     expect(resolveFile(files, '/paper.pdf', 'wikilink')).toBe('paper.pdf')
     expect(resolveFile(files, '/B/paper.pdf', 'wikilink')).toBe('B/paper.pdf')
     expect(resolveFile({ ...files, files: ['B/paper.pdf'] }, '/paper.pdf', 'wikilink')).toBeNull()
   })
-
   test.each([
     [SPACE, 'Nowhere'],
     [SPACE, '   '],
   ])('%j', (input, extra) => expect(resolveNote(input, extra)).toBeNull())
-
   test('a website answers to its name, with the extension or without', () => {
     const space = index([note('Svelte docs.url'), note('Plan.md')])
     expect(resolveNote(space, 'Svelte docs')?.path).toBe('Svelte docs.url')
     expect(resolveNote(space, 'Svelte docs.url')?.path).toBe('Svelte docs.url')
     expect(resolveNote(space, 'svelte DOCS')?.path).toBe('Svelte docs.url')
   })
-
   test('and a note of the same name wins, because a note is the older meaning', () => {
     const space = index([note('Plan.url'), note('Plan.md')])
     expect(resolveNote(space, 'Plan')?.path).toBe('Plan.md')
   })
-
   test('a name matches however its letters are composed', () => {
     const decomposed = 'U\u0308bersicht'
     const space = index([note(`ideas/${decomposed}.md`)], null, {}, [`${decomposed}.pdf`])
     expect(resolveNote(space, 'Übersicht')?.path).toBe(`ideas/${decomposed}.md`)
     expect(resolveFile(space, 'Übersicht.pdf', 'wikilink')).toBe(`${decomposed}.pdf`)
-
     const other = index([note('Übersicht.md')], null, {}, ['Übersicht.pdf'])
     expect(resolveNote(other, decomposed)?.path).toBe('Übersicht.md')
     expect(resolveFile(other, `${decomposed}.pdf`, 'wikilink')).toBe('Übersicht.pdf')
   })
-
   test('a relative markdown target folds against the note it was written in', () => {
     const here = index([note('ideas/Spark.md'), note('Plan.md')], 'ideas/Deep/Note.md')
     expect(resolveRelative(here, '../Spark.md')?.path).toBe('ideas/Spark.md')
     expect(resolveRelative(here, '../../Plan.md')?.path).toBe('Plan.md')
     expect(resolveRelative(here, './Nothing.md')).toBeNull()
   })
-
   test('the path it names wins over a namesake beside it, and a slash starts at the top', () => {
     const here = index([note('Road.md'), note('B/Road.md')], 'B/x.md', {}, ['pic.png', 'B/pic.png'])
     expect(resolveRelative(here, 'Road.md')?.path).toBe('B/Road.md')
@@ -280,7 +245,6 @@ describe('which note a name means', () => {
     expect(resolveFile(here, '/pic.png', 'markdown')).toBe('pic.png')
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
   })
-
   test('a markdown target written from the top or by name alone still finds its note', () => {
     const here = index([note('ideas/Plan.md'), note('Plan B.md')], 'journal/Monday.md', {}, ['files/pic.png'])
     expect(resolveRelative(here, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
@@ -290,30 +254,25 @@ describe('which note a name means', () => {
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('files/pic.png')
     expect(resolveFile(here, './pic.png', 'markdown')).toBeNull()
   })
-
   test('a markdown target by name alone reaches the note at the top before a deeper one ending in the same folders', () => {
     const here = index([note('Plan.md'), note('Archive/Projects/Plan.md')], 'Projects/n.md')
     expect(resolveRelative(here, 'Plan.md')?.path).toBe('Plan.md')
     expect(resolveRelative(here, './Plan.md')).toBeNull()
     expect(resolveRelative(here, '../Archive/Projects/Plan.md')?.path).toBe('Archive/Projects/Plan.md')
   })
-
   test('a path written from the top of the space, as Obsidian writes one, still names it', () => {
     const here = index([note('Projects/Plan.md'), note('Notes/Plan.md')], 'Notes/Day/x.md')
     expect(resolveRelative(here, 'Projects/Plan.md')?.path).toBe('Projects/Plan.md')
     expect(resolveRelative(here, '../Plan.md')?.path).toBe('Notes/Plan.md')
-
     const beside = index([note('Projects/Plan.md'), note('Notes/Projects/Plan.md')], 'Notes/x.md')
     expect(resolveRelative(beside, 'Projects/Plan.md')?.path).toBe('Notes/Projects/Plan.md')
   })
-
   test('a name alone, as the shortest link is written, names the note of that name', () => {
     const here = index([note('Projects/Plan.md'), note('Inbox/Vault/Trips/Kit.md')], 'Notes/x.md')
     expect(resolveRelative(here, 'Plan.md')?.path).toBe('Projects/Plan.md')
     expect(resolveRelative(here, 'Trips/Kit.md')?.path).toBe('Inbox/Vault/Trips/Kit.md')
     expect(resolveRelative(here, 'Nothing.md')).toBeNull()
   })
-
   test.each([
     [
       index([], 'Trips/Paris.md', {}, ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']),
@@ -328,7 +287,6 @@ describe('which note a name means', () => {
       'wikilink' as const,
     ],
   ])('%j', (input, wanted, extra, last) => expect(resolveFile(input, extra, last)).toBe(wanted))
-
   test('a file a markdown link names from the top of the space or by name alone', () => {
     const here = index([], 'Notes/Day/x.md', {}, ['attachments/report.pdf', 'Notes/report.pdf'])
     expect(resolveFile(here, 'attachments/report.pdf', 'markdown')).toBe('attachments/report.pdf')
@@ -338,7 +296,6 @@ describe('which note a name means', () => {
     expect(resolveFile(here, '/report.pdf', 'markdown')).toBeNull()
     expect(resolveFile(here, '../attachments/report.pdf', 'markdown')).toBeNull()
   })
-
   test('a link written as relative names only what is there, never a namesake elsewhere', () => {
     const here = index([note('Archive/Plan.md'), note('Projects/Plan.md')], 'Notes/Day/x.md')
     expect(resolveRelative(here, './Plan.md')).toBeNull()
@@ -346,54 +303,45 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, '../Projects/Plan.md')).toBeNull()
     expect(resolveRelative(here, '../../Projects/Plan.md')?.path).toBe('Projects/Plan.md')
   })
-
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()
     expect(resolveRelative(here, '/notes/a.md')).toBeNull()
     expect(resolveRelative(here, '/C/about.md')?.path).toBe('C/about.md')
   })
-
   test('two slashes are no path from the top', () => {
     const here = index([note('Road.md')], 'B/x.md', {}, ['paper.pdf'])
     expect(resolveNote(here, '//Road')).toBeNull()
     expect(resolveFile(here, '//paper.pdf', 'wikilink')).toBeNull()
   })
 })
-
 describe('a name a note answers to', () => {
   test('finds the note that declared it', () => {
     const notes = [note('Plan.md', [], [], ['Roadmap', 'The plan'])]
     expect(resolveNote(index(notes), 'Roadmap')?.path).toBe('Plan.md')
     expect(resolveNote(index(notes), 'The plan')?.path).toBe('Plan.md')
   })
-
   test('is read whatever case it is written in', () => {
     const notes = [note('Plan.md', [], [], ['Roadmap'])]
     expect(resolveNote(index(notes), 'roadmap')?.path).toBe('Plan.md')
   })
-
   test('gives way to a file of that name', () => {
     const notes = [note('Plan.md', [], [], ['Roadmap']), note('Roadmap.md')]
     expect(resolveNote(index(notes), 'Roadmap')?.path).toBe('Roadmap.md')
   })
-
   test('picks the nearest where two notes answer to it', () => {
     const notes = [note('far/Plan.md', [], [], ['Roadmap']), note('here/Other.md', [], [], ['Roadmap'])]
     expect(resolveNote(index(notes, 'here/Note.md'), 'Roadmap')?.path).toBe('here/Other.md')
   })
-
   test('is a link that resolves, so it is not drawn as a name nothing answers to', () => {
     const notes = [note('Plan.md', [], [], ['Roadmap'])]
     const link = { target: 'Roadmap', heading: null, block: null, alias: null, embed: false }
     expect(resolves(index(notes), link, 'wikilink')).toBe(true)
   })
-
   test('is nothing when no note claims it', () => {
     expect(resolveNote(index([note('Plan.md')]), 'Roadmap')).toBeNull()
   })
 })
-
 describe('where a link goes', () => {
   const wiki = (target: string, heading: string | null = null, block: string | null = null) => ({
     target,
@@ -402,7 +350,6 @@ describe('where a link goes', () => {
     alias: null,
     embed: false,
   })
-
   test.each([
     [
       SPACE,
@@ -444,16 +391,13 @@ describe('where a link goes', () => {
       'wikilink' as const,
     ],
   ])('%j', (input, wanted, extra, last) => expect(jumpFor(input, extra, last)).toEqual(wanted))
-
   test('to nowhere for a name nothing answers to, which is the cue to make it', () => {
     expect(jumpFor(SPACE, wiki('Nowhere'), 'wikilink').path).toBeNull()
     expect(resolves(SPACE, wiki('Nowhere'), 'wikilink')).toBe(false)
   })
-
   test('to this note for a link with no target', () => {
     expect(jumpFor(SPACE, wiki('', 'Today'), 'wikilink').path).toBe('Plan.md')
   })
-
   test('a markdown link to a PDF folds against the note it was written in', () => {
     const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['reading/paper.pdf'])
     expect(jumpFor(here, wiki('../reading/paper.pdf', 'page=2'), 'markdown')).toMatchObject({
@@ -462,7 +406,6 @@ describe('where a link goes', () => {
       kind: 'markdown',
     })
   })
-
   test('to a file the space holds that opens in no tab, rather than to a note to make', () => {
     expect(jumpFor(SPACE, wiki('shot.png'), 'wikilink')).toEqual({
       path: 'shot.png',
@@ -475,29 +418,24 @@ describe('where a link goes', () => {
     const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['files/spec.docx'])
     expect(jumpFor(here, wiki('../files/spec.docx'), 'markdown').path).toBe('files/spec.docx')
   })
-
   test('a note named with a dot is still the note before any file', () => {
     const here = index([note('v1.2.md')], null, {}, ['v1.2'])
     expect(jumpFor(here, wiki('v1.2'), 'wikilink').path).toBe('v1.2.md')
   })
-
   test('a PDF the space does not hold is not a note to make', () => {
     const jump = jumpFor(SPACE, wiki('missing.pdf', 'page=1'), 'wikilink')
     expect(jump.path).toBeNull()
     expect(jump.page).toBe(1)
     expect(resolves(SPACE, wiki('missing.pdf'), 'wikilink')).toBe(false)
   })
-
   test.each([
     [SPACE, true, wiki('paper.pdf'), 'wikilink' as const],
     [SPACE, true, wiki('PAPER.PDF'), 'wikilink' as const],
     [SPACE, false, wiki('shot.png'), 'wikilink' as const],
   ])('%j', (input, wanted, extra, last) => expect(resolves(input, extra, last)).toEqual(wanted))
-
   test('what a click on one would do, read off the document', () => {
     const doc = 'see [[ideas/Spark#Later]] and [[Nowhere]] and plain words'
     const where = state(doc, 0)
-
     expect(jumpAt(where, doc.indexOf('Spark'))).toEqual({
       path: 'ideas/Spark.md',
       target: 'ideas/Spark',
@@ -517,17 +455,14 @@ describe('where a link goes', () => {
     expect(jumpAt(where, doc.indexOf('plain'))).toBeNull()
   })
 })
-
 describe('the link under a position', () => {
   test('is found from inside it and from either edge', () => {
     const doc = 'see [[Plan#Today]] now'
     for (const at of [4, 8, 18]) expect(linkAt(state(doc, 0), at)).toMatchObject({ target: 'Plan', heading: 'Today' })
   })
-
   test('is nothing where there is no link', () => {
     expect(linkAt(state('plain words', 0), 3)).toBeNull()
   })
-
   test('reads a markdown link as well', () => {
     expect(linkAt(state('[a](ideas/Plan.md)', 0), 2)).toMatchObject({
       kind: 'markdown',
@@ -535,7 +470,6 @@ describe('the link under a position', () => {
       alias: 'a',
     })
   })
-
   test('a markdown link to a heading written percent-encoded names the heading it means', () => {
     expect(linkAt(state('[S](C%23.md#a%20b)', 0), 2)).toMatchObject({
       target: 'C#.md',
@@ -549,7 +483,6 @@ describe('the link under a position', () => {
     })
   })
 })
-
 function blocks(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const out: string[] = []
@@ -558,7 +491,6 @@ function blocks(doc: string, cursor?: number): string[] {
   })
   return out
 }
-
 describe('an embed', () => {
   test.each([
     ['one\n\n![[Plan]]\n\ntwo', ['![[Plan]]']],
@@ -567,39 +499,32 @@ describe('an embed', () => {
     ['one\n\n![[Board.canvas]]\n\ntwo', ['![[Board.canvas]]']],
     ['see ![[paper.pdf]] here', []],
   ])('%j', (input, wanted) => expect(blocks(input)).toEqual(wanted))
-
   test('with words beside it stays a link', () => {
     expect(blocks('see ![[Plan]] here')).toEqual([])
     expect(linkMarks('see ![[Plan]] here')).toEqual([{ text: 'Plan', note: 'Plan', missing: false }])
   })
-
   test('on a line inside a paragraph stays a link', () => {
     expect(blocks('one\n![[Plan]]\ntwo')).toEqual([])
   })
-
   test('beside another embed on its line stays a link, not one note named across both', () => {
     expect(blocks('![[Note A]] ![[Note B]]')).toEqual([])
     expect(blocks('![[photo.png]] and ![[Note]]')).toEqual([])
     const doc = '![[Note A|first]] then ![[Note B]]'
     expect(embedOfBlock(state(doc, 0), 0, doc.length)).toBeNull()
   })
-
   test('is source again while the caret is in it', () => {
     expect(blocks('one\n\n![[Plan]]\n\ntwo', 8)).toEqual([])
   })
-
   test('a picture is a picture wherever it is written', () => {
     expect(blocks('one\n\n![[pic.png]]\n\ntwo')).toEqual([])
     expect(concealed('one\n\n![[pic.png]]\n\ntwo')).toEqual(['![[pic.png]]'])
   })
-
   test('the block reading and the inline reading agree', () => {
     const doc = 'one\n\n![[Plan]]\n\ntwo'
     const found = embedOfBlock(state(doc, 0), 5, 14)
     expect(found).toMatchObject({ target: 'Plan', embed: true })
     expect(embedOfBlock(state('x ![[Plan]]', 0), 2, 11)).toBeNull()
   })
-
   test('a recording and a film are drawn where they stand, like a picture', () => {
     for (const name of ['clip.mp3', 'demo.mp4', 'demo.webm']) {
       const doc = `one\n\n![[${name}]]\n\ntwo`
@@ -607,7 +532,6 @@ describe('an embed', () => {
       expect(concealed(doc), name).toEqual([`![[${name}]]`])
     }
   })
-
   test('and every kind is source again while the caret is in it', () => {
     for (const doc of [
       'one\n\n![[clip.mp3]]\n\ntwo',

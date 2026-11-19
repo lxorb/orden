@@ -4,7 +4,6 @@ import { scrypt } from './scrypt'
 
 const bytes = (text: string) => new TextEncoder().encode(text)
 const hex = (out: Uint8Array) => Buffer.from(out).toString('hex')
-
 describe('scrypt', () => {
   test('answers RFC 7914 section 12', async () => {
     expect(hex(await scrypt(bytes(''), bytes(''), { n: 16, r: 1, p: 1 }, 64))).toBe(
@@ -14,7 +13,6 @@ describe('scrypt', () => {
       'fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640',
     )
   })
-
   test('agrees with Node at the cost the app uses', async () => {
     const salt = bytes('a salt of sixteen')
     const ours = await scrypt(bytes('correct horse'), salt, { n: 32768, r: 8, p: 1 }, 32)

@@ -1,12 +1,10 @@
 import type { FileRef, Logged, Message, Meta, Placed, Post, Who, Wording } from './types'
 
 type LoggedPost = Post & Placed
-
 interface Register<T> {
   seq: number
   value: T
 }
-
 interface Version {
   seq: number
   at: number
@@ -14,7 +12,6 @@ interface Version {
   body: string
   files?: FileRef[]
 }
-
 interface Marks {
   post?: LoggedPost
   edits: Map<number, Version>
@@ -24,7 +21,6 @@ interface Marks {
   votes: Map<Who, Register<number[]> & { at: number }>
   children: Set<string>
 }
-
 export interface ChatState {
   readonly messages: Map<string, Message>
   meta: Meta
@@ -32,7 +28,6 @@ export interface ChatState {
   readonly marks: Map<string, Marks>
   readonly metaSeqs: Record<keyof Meta, number>
 }
-
 export const chatState = (): ChatState => ({
   messages: new Map(),
   meta: { topic: '', posting: 'writers', slowmode: 0 },
@@ -40,7 +35,6 @@ export const chatState = (): ChatState => ({
   marks: new Map(),
   metaSeqs: { topic: 0, posting: 0, slowmode: 0 },
 })
-
 export function apply(state: ChatState, event: Logged): Message[] {
   state.seq = Math.max(state.seq, event.seq)
   switch (event.kind) {
@@ -96,7 +90,6 @@ export function apply(state: ChatState, event: Logged): Message[] {
       return []
   }
 }
-
 function posted(state: ChatState, event: LoggedPost): Message[] {
   const marks = marksOf(state, event.message)
   const before = marks.post
@@ -105,16 +98,13 @@ function posted(state: ChatState, event: LoggedPost): Message[] {
   if (event.parent !== undefined) marksOf(state, event.parent).children.add(event.message)
   return rebuilt(state, [event.message, event.parent, before?.parent])
 }
-
 function metaSet<K extends keyof Meta>(state: ChatState, seq: number, key: K, value: Meta[K] | undefined) {
   if (value === undefined || state.metaSeqs[key] >= seq) return
   state.metaSeqs[key] = seq
   state.meta[key] = value
 }
-
 const newer = (register: Register<unknown> | undefined, seq: number): boolean =>
   register === undefined || register.seq < seq
-
 function marksOf(state: ChatState, id: string): Marks {
   let marks = state.marks.get(id)
   if (!marks) {
@@ -129,7 +119,6 @@ function marksOf(state: ChatState, id: string): Marks {
   }
   return marks
 }
-
 function rebuilt(state: ChatState, ids: readonly (string | undefined)[]): Message[] {
   const out: Message[] = []
   for (const id of new Set(ids)) {
@@ -141,12 +130,10 @@ function rebuilt(state: ChatState, ids: readonly (string | undefined)[]): Messag
   }
   return out
 }
-
 function built(state: ChatState, id: string): Message | null {
   const marks = state.marks.get(id)
   const post = marks?.post
   if (!marks || !post) return null
-
   const message: Message = {
     id,
     seq: post.seq,
@@ -165,7 +152,6 @@ function built(state: ChatState, id: string): Message | null {
   if (post.parent !== undefined) message.parent = post.parent
   repliesOf(state, id, message)
   if (marks.deleted) return message
-
   const versions = wordings(post, marks)
   const current = versions.at(-1) ?? post
   message.body = current.body
@@ -181,31 +167,26 @@ function built(state: ChatState, id: string): Message | null {
   if (post.poll) message.poll = { ...post.poll, votes: votesOf(post, marks) }
   return message
 }
-
 const wordings = (post: LoggedPost, marks: Marks): Version[] =>
   [...marks.edits.values()]
     .filter((edit) => edit.author === post.author && edit.seq > post.seq)
     .sort((a, b) => a.seq - b.seq)
-
 function filesOf(versions: readonly Version[], post: LoggedPost): FileRef[] {
   let files = post.files ?? []
   for (const version of versions) if (version.files) files = version.files
   return files
 }
-
 function historyOf(post: LoggedPost, versions: readonly Version[]): Wording[] {
   if (versions.length === 0) return []
   const earlier = [{ body: post.body, at: post.at }, ...versions.slice(0, -1)]
   return earlier.map((one) => ({ body: one.body, at: one.at }))
 }
-
 function reactionsOf(marks: Marks): Record<string, Who[]> {
   const reactions = new Map<string, Who[]>()
   const on = [...marks.reactions.values()].filter((one) => one.value).sort((a, b) => a.seq - b.seq)
   for (const one of on) reactions.set(one.emoji, [...(reactions.get(one.emoji) ?? []), one.who])
   return Object.fromEntries(reactions)
 }
-
 function votesOf(post: LoggedPost, marks: Marks): Record<Who, number[]> {
   const poll = post.poll
   const votes: Record<Who, number[]> = {}
@@ -221,7 +202,6 @@ function votesOf(post: LoggedPost, marks: Marks): Record<Who, number[]> {
   }
   return votes
 }
-
 function repliesOf(state: ChatState, id: string, message: Message) {
   const marks = state.marks.get(id)
   if (!marks) return

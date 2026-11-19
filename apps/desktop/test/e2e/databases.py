@@ -1,23 +1,18 @@
 import json
-
 from playwright.sync_api import Page
-
 from harness import Drive
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 THESIS = "---\nstatus: Doing\n---\n# Thesis\n"
 GARDEN = "---\nstatus: To do\n---\n# Garden\n"
 INTRO = '---\nproject: "[[Thesis]]"\nhours: 3\n---\n# Intro\n'
 DATA = '---\nproject: "[[Thesis]]"\nhours: 5\n---\n# Data\n'
 BEDS = '---\nproject: "[[Garden]]"\nhours: 2\n---\n# Beds\n'
-
 BASE = """filters: 'file.inFolder("Projects")'
 formulas:
   Tasks: 'file.backlinks.filter(list(value.asFile().properties.project).contains(file))'
@@ -47,19 +42,15 @@ views:
     name: New
     order: [file.name, note.status]
 """
-
 WRITE = """async ([files]) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
   await ws.loadTree()
 }"""
-
 ROW = "(path) => window.tasks.rows.of().find((one) => one.path === path)"
-
 def note(page: Page, path: str) -> dict[str, object]:
     return page.evaluate(f"({ROW})({json.dumps(path)})?.note ?? null")  # type: ignore[no-any-return]
-
 def seed(page: Page) -> None:
     wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
@@ -77,7 +68,6 @@ def seed(page: Page) -> None:
         "() => window.tasks.rows.of().some((one) => one.path === 'Tasks/Beds.md')",
         "the seeded rows",
     )
-
 def open_view(page: Page, view: str) -> None:
     page.evaluate(
         """async (view) => {
@@ -94,7 +84,6 @@ def open_view(page: Page, view: str) -> None:
         f"the {view} view of Projects.base",
     )
     quiet(page)
-
 def cell(page: Page, row: str, column: int) -> str:
     return page.evaluate(  # type: ignore[no-any-return]
         """([row, column]) => {
@@ -103,7 +92,6 @@ def cell(page: Page, row: str, column: int) -> str:
         }""",
         [row, column],
     )
-
 def the_rollup(page: Page) -> None:
     open_view(page, "All")
     if not DRIVE.waited(
@@ -119,9 +107,7 @@ def the_rollup(page: Page) -> None:
     if not page.evaluate("!!document.querySelector('.view-tab .table.wraps .head.stuck')"):
         wrong("the table is not two lines tall with its first column frozen")
     shot(page, "01-rollup")
-
 HEAD_WIDTH = "() => Math.round(document.querySelector('.view-tab .heads .head:nth-child(2)')?.getBoundingClientRect().width ?? -1)"
-
 def the_cancelled_resize(page: Page) -> None:
     open_view(page, "All")
     before = page.evaluate(HEAD_WIDTH)
@@ -147,7 +133,6 @@ def the_cancelled_resize(page: Page) -> None:
         wrong(f"[cancel] the drag did not stretch the column: {before} -> {stretched}")
     if cancelled != before or after != before:
         wrong(f"[cancel] a cancelled resize was kept: {before} -> {cancelled} -> {after}")
-
 def the_button(page: Page) -> None:
     page.locator(".view-tab .line:has-text('Thesis') .press").click()
     if not DRIVE.waited(
@@ -166,7 +151,6 @@ def the_button(page: Page) -> None:
     if not page.evaluate("!!document.querySelector('.view-tab .line.toned')"):
         wrong("the row that is Done is not in its conditional colour")
     shot(page, "02-button")
-
     page.locator(".view-tab .line:has-text('Garden') .cell").first.click()
     page.keyboard.press("Control+z")
     if DRIVE.waited(
@@ -178,14 +162,11 @@ def the_button(page: Page) -> None:
         if "finished" in after:
             wrong("the automation's write stayed after the undo: it was not one undo with the press")
         say(f"[undo] {json.dumps(after, ensure_ascii=False)}")
-
 def menu_row(page: Page, label: str) -> None:
     page.locator(f".menu [role=menuitem]:has-text({json.dumps(label)})").first.click()
-
 def more_row(page: Page, label: str) -> None:
     page.locator(".view-tab .head [aria-label=Settings]").first.click()
     page.locator(f".view-tab .settings .orden-row:has-text({json.dumps(label)})").first.click()
-
 def the_builders(page: Page) -> None:
     open_view(page, "All")
     page.locator(".view-tab .heads .head:has-text('status')").first.click(button="right")
@@ -193,14 +174,12 @@ def the_builders(page: Page) -> None:
     wait_for(page, "document.querySelectorAll('.view-tab .pop .tone').length === 3", "the status options")
     shot(page, "05-options")
     page.keyboard.press("Escape")
-
     for label, name in [("Automations", "06-automations"), ("Colour", "07-colour")]:
         more_row(page, label)
         wait_for(page, "document.querySelector('.view-tab .pop')", f"the {label} layer")
         shot(page, name)
         page.keyboard.press("Escape")
         wait_for(page, "!document.querySelector('.view-tab .pop')", f"the {label} layer shut")
-
     page.locator(".view-tab .heads .head:has-text('Tasks_count')").first.click(button="right")
     menu_row(page, "Add a column")
     wait_for(page, "document.querySelector('[role=menu].menu')?.getAttribute('aria-label') === 'Add a column'", "the columns to add")
@@ -209,7 +188,6 @@ def the_builders(page: Page) -> None:
     wait_for(page, "document.querySelector('.view-tab .pop .rows')", "the rollup picker")
     shot(page, "08-rollup-picker")
     page.keyboard.press("Escape")
-
     more_row(page, "Lock view")
     wait_for(page, "document.querySelector('.view-tab .lock')", "the padlock of a locked view")
     page.locator(".view-tab .heads .head:has-text('status') .name").first.click()
@@ -219,7 +197,6 @@ def the_builders(page: Page) -> None:
     shot(page, "09-locked")
     page.locator(".view-tab .lock").click()
     wait_for(page, "!document.querySelector('.view-tab .lock')", "the view unlocked")
-
 def the_form(page: Page) -> None:
     open_view(page, "New")
     wait_for(page, "document.querySelector('.view-tab form.form')", "the form")
@@ -237,7 +214,6 @@ def the_form(page: Page) -> None:
         return
     DRIVE.waited(page, "document.querySelector('.view-tab form.form .title')?.value === ''", "the form to empty itself after sending")
     shot(page, "11-form-sent")
-
 def drive(browser) -> None:  # type: ignore[no-untyped-def]
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     page.add_init_script("localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-bases']))")
@@ -249,5 +225,4 @@ def drive(browser) -> None:  # type: ignore[no-untyped-def]
     the_builders(page)
     the_form(page)
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))

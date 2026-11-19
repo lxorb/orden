@@ -6,14 +6,12 @@ pub struct Family {
     #[cfg(windows)]
     job: Option<std::os::windows::io::OwnedHandle>,
 }
-
 pub fn spawn(command: &mut Command) -> io::Result<(Child, Family)> {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt as _;
 
         const NO_WINDOW: u32 = 0x0800_0000;
-
         keep_the_pipes();
         command.creation_flags(NO_WINDOW);
     }
@@ -22,7 +20,6 @@ pub fn spawn(command: &mut Command) -> io::Result<(Child, Family)> {
         use std::os::unix::process::CommandExt as _;
         command.process_group(0);
     }
-
     let child = command.spawn()?;
     let family = Family {
         pid: child.id(),
@@ -31,7 +28,6 @@ pub fn spawn(command: &mut Command) -> io::Result<(Child, Family)> {
     };
     Ok((child, family))
 }
-
 impl Family {
     pub fn end(&self) {
         #[cfg(windows)]
@@ -56,7 +52,6 @@ impl Family {
         }
     }
 }
-
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[allow(unsafe_code)]
 fn end_group(pid: u32) {
@@ -67,7 +62,6 @@ fn end_group(pid: u32) {
         let _ = unsafe { libc::killpg(group, libc::SIGKILL) };
     }
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
 fn quiet(command: &mut Command) -> &mut Command {
     use std::process::Stdio;
@@ -82,7 +76,6 @@ fn quiet(command: &mut Command) -> &mut Command {
         .stdout(Stdio::null())
         .stderr(Stdio::null())
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
@@ -98,7 +91,6 @@ fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
     let size = u32::try_from(std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>()).ok()?;
     let mut limits = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
     limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-
     unsafe {
         let job = CreateJobObjectW(None, PCWSTR::null()).ok()?;
         let owned = OwnedHandle::from_raw_handle(job.0);
@@ -113,7 +105,6 @@ fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
         Some(owned)
     }
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn end_job(job: &std::os::windows::io::OwnedHandle) {
@@ -123,7 +114,6 @@ fn end_job(job: &std::os::windows::io::OwnedHandle) {
 
     let _ = unsafe { TerminateJobObject(HANDLE(job.as_raw_handle()), 1) };
 }
-
 #[allow(unsafe_code)]
 #[cfg(windows)]
 pub fn keep_the_pipes() {

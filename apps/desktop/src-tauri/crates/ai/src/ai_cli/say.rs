@@ -5,15 +5,12 @@ use super::args::{model_ok, Effort};
 use super::run::Ended;
 
 const LONGEST_TEXT: usize = 4 << 20;
-
 const LONGEST_IMAGE: usize = 20 << 20;
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Image {
     pub mime: String,
     pub data: String,
 }
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "do", rename_all = "camelCase")]
 pub enum GoalSay {
@@ -26,7 +23,6 @@ pub enum GoalSay {
     Clear,
     Get,
 }
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Say {
@@ -57,7 +53,6 @@ pub enum Say {
         goal: GoalSay,
     },
 }
-
 impl Say {
     pub fn checked(self) -> Result<Self, String> {
         match &self {
@@ -80,14 +75,12 @@ impl Say {
         Ok(self)
     }
 }
-
 fn fits(text: &str) -> Result<(), String> {
     if text.len() > LONGEST_TEXT {
         return Err("the message is too long".to_owned());
     }
     Ok(())
 }
-
 fn picture(image: &Image) -> Result<(), String> {
     let kind = matches!(
         image.mime.as_str(),
@@ -104,11 +97,9 @@ fn picture(image: &Image) -> Result<(), String> {
         Err("not a picture".to_owned())
     }
 }
-
 pub fn one_line(text: &str) -> String {
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
-
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Message {
@@ -123,7 +114,6 @@ pub enum Message {
     },
     End(Ended),
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -134,7 +124,6 @@ mod tests {
             .map_err(|error| error.to_string())
             .and_then(Say::checked)
     }
-
     #[test]
     fn a_turn_is_words_and_pictures() {
         let turn = said(json!({
@@ -145,7 +134,6 @@ mod tests {
         .expect("a turn");
         assert!(matches!(turn, Say::Turn { ref images, .. } if images.len() == 1));
     }
-
     #[test]
     fn nothing_but_the_named_things_can_be_said() {
         for odd in [
@@ -165,13 +153,11 @@ mod tests {
         )
         .is_ok());
     }
-
     #[test]
     fn a_long_message_is_refused() {
         let long = "a".repeat(LONGEST_TEXT + 1);
         assert!(said(json!({ "kind": "turn", "text": long })).is_err());
     }
-
     #[test]
     fn a_command_s_argument_stays_on_its_line() {
         assert_eq!(one_line("keep the\n/clear  dates"), "keep the /clear dates");

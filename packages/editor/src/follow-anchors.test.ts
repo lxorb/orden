@@ -5,11 +5,9 @@ import { afterEach, describe, expect, test } from 'vitest'
 import { followAnchors, linkOpener } from './links'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function cardWithLink(plain: boolean, href = 'https://x.test') {
   const links: string[] = []
   const view = new EditorView({
@@ -26,7 +24,6 @@ function cardWithLink(plain: boolean, href = 'https://x.test') {
   followAnchors(card, () => view, plain)
   return { anchor, links }
 }
-
 function press(target: Element): MouseEvent {
   const keys = { bubbles: true, cancelable: true, button: 0 }
   target.dispatchEvent(new MouseEvent('mousedown', keys))
@@ -34,7 +31,6 @@ function press(target: Element): MouseEvent {
   target.dispatchEvent(click)
   return click
 }
-
 describe('links in a hover card', () => {
   test('open through the link opener on a plain click', () => {
     const { anchor, links } = cardWithLink(true)
@@ -42,14 +38,12 @@ describe('links in a hover card', () => {
     expect(links).toEqual(['https://x.test'])
     expect(click.defaultPrevented).toBe(true)
   })
-
   test('are never followed by the browser, even when they do not open', () => {
     const { anchor, links } = cardWithLink(true, 'Plan.md')
     const click = press(anchor)
     expect(links).toEqual([])
     expect(click.defaultPrevented).toBe(true)
   })
-
   test('in an embed open only when asked, as in the note', () => {
     const { anchor, links } = cardWithLink(false)
     press(anchor)

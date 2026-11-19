@@ -5,7 +5,6 @@ import { elapse } from './settle'
 const asked: string[] = []
 const busy = new Map<string, boolean>()
 let others: string[] = []
-
 vi.mock('../../src/lib/platform/src/api', async (actual) => ({
   ...(await actual<typeof import('../../src/lib/platform/src/api')>()),
   isDesktop: true,
@@ -17,17 +16,14 @@ vi.mock('../../src/lib/platform/src/api', async (actual) => ({
     return Promise.resolve(undefined)
   },
 }))
-
 vi.mock('@tauri-apps/api/window', () => ({ getCurrentWindow: () => ({ label: 'main' }) }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
     finished: Promise.resolve(),
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 const { quitAsked, mayStop } = await import('../../src/lib/quit-ports')
 const { quitAsk } = await import('../../src/lib/quitting/src/api')
 const { setPty } = await import('../../src/lib/terminal/src/running')
@@ -36,7 +32,6 @@ const { anythingRuns } = await import('../../src/lib/parting/src/api')
 type Tab = import('../../src/lib/workspace/src/api').Tab
 const aiChat = await import('../../src/lib/ai-chat/src/api')
 await Promise.all([aiChat.chatSends(), import('../../src/lib/ai-providers/src/store.svelte'), aiChat.chatStore()])
-
 function terminal(id: string, shown: string, program: string | null): Tab {
   setPty(id, `pty-${id}`)
   busy.set(`pty-${id}`, program !== null)
@@ -49,14 +44,11 @@ function terminal(id: string, shown: string, program: string | null): Tab {
     running: { name: null, program, host: null, colour: null },
   } as unknown as Tab
 }
-
 const sheet = () => document.querySelector('[role="alertdialog"]')
 const names = () => [...document.querySelectorAll('.rows .name')].map((one) => one.textContent)
 const button = (words: string) =>
   [...document.querySelectorAll<HTMLButtonElement>('.row button')].find((one) => one.textContent.trim() === words)
-
 let was: Tab[]
-
 beforeEach(() => {
   was = workspace.tabs
   asked.length = 0
@@ -64,21 +56,18 @@ beforeEach(() => {
   quitAsk.warnWhen('running')
   workspace.tabs = [terminal('a', 'claude · orden', 'claude'), terminal('b', 'PowerShell · orden', null)]
 })
-
 afterEach(() => {
   if (quitAsk.open) quitAsk.answer('stay')
   flushSync()
   for (const tab of workspace.tabs) setPty(tab.id, null)
   workspace.tabs = was
 })
-
 async function quitting(): Promise<{ answered: Promise<void> }> {
   const answered = quitAsked()
   await vi.waitFor(() => expect(quitAsk.open).toBe(true))
   flushSync()
   return { answered }
 }
-
 async function closing(): Promise<{ answered: Promise<boolean> }> {
   others = ['orden-2']
   const answered = mayStop('window')
@@ -86,41 +75,33 @@ async function closing(): Promise<{ answered: Promise<boolean> }> {
   flushSync()
   return { answered }
 }
-
 test('a shell is running, so a close has something to ask about', () => {
   expect(anythingRuns()).toBe(true)
 })
-
 test('a terminal keeps running through a quit, so a quit asks nothing about it', async () => {
   await quitAsked()
   expect(quitAsk.open).toBe(false)
   expect(asked.at(-1)).toBe('quit_confirmed')
   expect(asked).not.toContain('quit_show')
 })
-
 test('the last window closing and a restart leave terminals running and ask nothing', async () => {
   expect(await mayStop('window')).toBe(true)
   expect(await mayStop('restart')).toBe(true)
   expect(quitAsk.open).toBe(false)
 })
-
 test('only the busy terminal is named, and Close anyway goes on', async () => {
   const { answered } = await closing()
-
   expect(sheet()?.querySelector('.title')?.textContent).toBe('Close window?')
   expect(names()).toEqual(['claude · orden'])
-
   button('Close anyway')?.click()
   expect(await answered).toBe(true)
   expect(quitAsk.warning).toBe('running')
 })
-
 test('Cancel keeps everything running', async () => {
   const { answered } = await closing()
   button('Cancel')?.click()
   expect(await answered).toBe(false)
 })
-
 test('nothing but shells at their prompt: no question at all', async () => {
   busy.set('pty-a', false)
   await quitAsked()
@@ -128,7 +109,6 @@ test('nothing but shells at their prompt: no question at all', async () => {
   expect(asked.at(-1)).toBe('quit_confirmed')
   expect(asked).not.toContain('quit_show')
 })
-
 test("Don't ask again is Settings' Never, and the next close asks nothing", async () => {
   const { answered } = await closing()
   const never = document.querySelector<HTMLInputElement>('.tick input')
@@ -137,12 +117,10 @@ test("Don't ask again is Settings' Never, and the next close asks nothing", asyn
   button('Close anyway')?.click()
   await answered
   expect(quitAsk.warning).toBe('never')
-
   asked.length = 0
   expect(await mayStop('window')).toBe(true)
   expect(asked).toEqual([])
 })
-
 test('Always lists the idle shells as well', async () => {
   quitAsk.warnWhen('always')
   const { answered } = await closing()
@@ -150,17 +128,14 @@ test('Always lists the idle shells as well', async () => {
   quitAsk.answer('stay')
   await answered
 })
-
 test('a row pressed calls the close off and goes to its tab', async () => {
   const shown = vi.spyOn(workspace, 'activeTabId', 'set').mockImplementation(() => undefined)
   const { answered } = await closing()
-
   document.querySelector<HTMLButtonElement>('.rows button')?.click()
   expect(await answered).toBe(false)
   expect(shown).toHaveBeenCalledWith('a')
   shown.mockRestore()
 })
-
 test("a window's own close names its own, and says close while another window stays", async () => {
   const { answered } = await closing()
   expect(sheet()?.querySelector('.title')?.textContent).toBe('Close window?')
@@ -168,7 +143,6 @@ test("a window's own close names its own, and says close while another window st
   button('Close anyway')?.click()
   expect(await answered).toBe(true)
 })
-
 async function answering(): Promise<() => Promise<void>> {
   const { watching } = await aiChat.chatSends()
   let finish: () => void = () => undefined
@@ -189,7 +163,6 @@ async function answering(): Promise<() => Promise<void>> {
     await sending
   }
 }
-
 test('an AI turn in flight is a row, named by its thread', async () => {
   const done = await answering()
   const { answered } = await quitting()
@@ -198,7 +171,6 @@ test('an AI turn in flight is a row, named by its thread', async () => {
   await answered
   await done()
 })
-
 test('the last window closing is the app quitting', async () => {
   const done = await answering()
   const closing = mayStop('window')
@@ -210,7 +182,6 @@ test('the last window closing is the app quitting', async () => {
   expect(await closing).toBe(false)
   await done()
 })
-
 test("an update's restart asks the same way", async () => {
   const done = await answering()
   const restarting = mayStop('restart')
@@ -221,7 +192,6 @@ test("an update's restart asks the same way", async () => {
   expect(await restarting).toBe(true)
   await done()
 })
-
 test('a short press of Cmd+Q says to hold it, and the words go again', async () => {
   vi.useFakeTimers()
   const { holdToQuit } = await import('../../src/lib/quit-ports')

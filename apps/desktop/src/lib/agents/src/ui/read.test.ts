@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { readEvent } from './read'
 import { callsOf, readCall, sessionMarkdown, today } from './session'
 import { wordFor } from './words'
@@ -25,7 +24,6 @@ describe('the crate news, read', () => {
       id: 'a1',
     })
   })
-
   test('drops what it does not know rather than half applying it', () => {
     expect(readEvent(null)).toBeNull()
     expect(readEvent({ kind: 'acting', agent: 'a' })).toBeNull()
@@ -35,7 +33,6 @@ describe('the crate news, read', () => {
     expect(readEvent({ kind: 'something new' })).toBeNull()
   })
 })
-
 describe('the session', () => {
   const lines = [
     {
@@ -61,15 +58,12 @@ describe('the session', () => {
     },
     'not a line',
   ]
-
   test('is one agent calls, newest first, without the bookkeeping', () => {
     const calls = callsOf(lines, 'a')
-
     expect(calls.map((one) => one.verb)).toEqual(['browser_click', 'edit_note', 'browser_open'])
     expect(calls[2]?.url).toBe('https://shop.example/x')
     expect(calls[0]?.status).toBe('error')
   })
-
   test('only keeps an address that is a web page', () => {
     expect(
       readCall({
@@ -81,10 +75,8 @@ describe('the session', () => {
       })?.url,
     ).toBeNull()
   })
-
   test('is written into a note as a list with a link to each page and note', () => {
     const text = sessionMarkdown('Claude Code', callsOf(lines, 'a'))
-
     expect(text.startsWith('## Claude Code, ')).toBe(true)
     expect(text).toContain('[shop.example](https://shop.example/x)')
     expect(text).toContain('[[Ideas/Plan]]')
@@ -96,11 +88,9 @@ describe('the session', () => {
     ).toHaveLength(3)
     expect(text).toContain(' ✗')
   })
-
   test('is filed under the day in UTC, which is what the crate names its files by', () => {
     expect(today(Date.UTC(2026, 8, 30, 23, 30))).toBe('2026-09-30')
   })
-
   test('has a word for every verb somebody would want to read about', () => {
     expect(wordFor('browser_click')).toBe('Pressing')
     expect(wordFor('edit_note')).toBe('Writing')

@@ -15,25 +15,20 @@ import { heardElsewhere, isNumber, isRecord, isString, keepJson, stored } from '
 const KEY = 'orden:chat-priorities'
 const MOST_LESSONS = 50
 const OWN_ROW = 'orden\norden\n'
-
 export type Asker = (messages: { role: 'system' | 'user'; content: string }[]) => Promise<string>
-
 export interface Heard extends Said {
   at: number
 }
-
 interface Kept {
   on: boolean
   drafting: boolean
   assigned: Record<string, Assigned>
   lessons: Lesson[]
 }
-
 function chatOfKey(key: string): string | null {
   if (key.startsWith(OWN_ROW)) return key.slice(OWN_ROW.length)
   return key.includes('\n') ? null : key
 }
-
 function keptOf(value: unknown): Kept {
   const kept: Kept = { on: false, drafting: false, assigned: {}, lessons: [] }
   if (!isRecord(value)) return kept
@@ -60,7 +55,6 @@ function keptOf(value: unknown): Kept {
   }
   return kept
 }
-
 export class Priorities {
   on = $state(false)
   assigned = $state.raw<Readonly<Record<string, Assigned>>>({})
@@ -68,11 +62,9 @@ export class Priorities {
   drafting = $state(false)
   suggestions = $state.raw<Readonly<Record<string, Suggestion & { at: number }>>>({})
   private ask: () => Asker | null = () => null
-
   constructor() {
     this.restore()
   }
-
   restore(): void {
     const kept = keptOf(stored(KEY))
     this.on = kept.on
@@ -81,11 +73,9 @@ export class Priorities {
     this.lessons = kept.lessons
     if (!this.drafting) this.suggestions = {}
   }
-
   useAsker(ask: () => Asker | null): void {
     this.ask = ask
   }
-
   private keep(): void {
     keepJson(KEY, {
       on: this.on,
@@ -94,18 +84,15 @@ export class Priorities {
       lessons: [...this.lessons],
     } satisfies Kept)
   }
-
   setOn(on: boolean): void {
     this.on = on
     this.keep()
   }
-
   setDrafting(on: boolean): void {
     this.drafting = on
     if (!on) this.suggestions = {}
     this.keep()
   }
-
   async suggest(
     chat: string,
     title: string,
@@ -122,7 +109,6 @@ export class Priorities {
     this.suggestions = { ...this.suggestions, [chat]: { ...found, at: last.at } }
     return found
   }
-
   settle(chat: string, part: 'reply' | 'todo' | 'all'): void {
     const held = this.suggestions[chat]
     if (!held) return
@@ -134,22 +120,18 @@ export class Priorities {
     const rest = Object.fromEntries(Object.entries(this.suggestions).filter(([one]) => one !== chat))
     this.suggestions = part === 'all' || (!next.reply && !next.todo) ? rest : { ...rest, [chat]: next }
   }
-
   levelOf(chat: string): Level | null {
     return this.assigned[chat]?.level ?? null
   }
-
   private assign(chat: string, one: Assigned): void {
     this.assigned = { ...this.assigned, [chat]: one }
     this.keep()
   }
-
   reassign(chat: string, level: Level, about: { title: string; from: string; words: string }): void {
     this.assign(chat, { level, by: 'reader', at: this.assigned[chat]?.at ?? Date.now() })
     this.lessons = [...this.lessons, { ...about, level }].slice(-MOST_LESSONS)
     this.keep()
   }
-
   async heard(chat: string, title: string, newest: readonly Heard[]): Promise<Level | null> {
     const last = newest.at(-1)
     const asker = this.ask()
@@ -162,7 +144,5 @@ export class Priorities {
     return level
   }
 }
-
 export const priorities = new Priorities()
-
 heardElsewhere([KEY], () => priorities.restore())

@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 MEASURE = """
 () => {
   const body = document.querySelector('[role="region"][aria-label="Settings"] .body')
@@ -25,7 +23,6 @@ MEASURE = """
   }
 }
 """
-
 ROW_IN_VIEW = """
 (label) => {
   const list = document.querySelector('.shortcut-list')
@@ -38,7 +35,6 @@ ROW_IN_VIEW = """
   return { inside: at.top >= box.top - 1 && at.bottom <= box.bottom + 1, landed: row.classList.contains('landed') }
 }
 """
-
 def bounded(page: Page, name: str) -> dict:
     seen = wait_for(page, MEASURE, "the shortcut list")
     say(f"{name}: {seen}")
@@ -53,7 +49,6 @@ def bounded(page: Page, name: str) -> dict:
     if any("belongs" in one for one in seen["inline"]):
         wrong(f"{name}: an explanation is printed under a name: {seen['inline']}")
     return seen
-
 def drive(browser: Browser) -> None:
     for name, size in (("wide", {"width": 1280, "height": 800}), ("narrow", {"width": 420, "height": 760})):
         page = DRIVE.page(browser, viewport=size)
@@ -65,7 +60,6 @@ def drive(browser: Browser) -> None:
             page.wait_for_timeout(300)
         bounded(page, name)
         DRIVE.shot(page, f"{name}-list")
-
         page.locator(".shortcut-list").evaluate("(list) => { list.scrollTop = 900 }")
         page.wait_for_timeout(200)
         sticky = page.evaluate(
@@ -80,7 +74,6 @@ def drive(browser: Browser) -> None:
         say(f"{name}: a group header holds at the top of the list: {sticky}")
         if not sticky:
             wrong(f"{name}: no group header stays at the top while the list scrolls")
-
         page.evaluate("() => window.ordenApp.settings.show('editor')")
         page.wait_for_timeout(300)
         page.evaluate("() => window.ordenApp.settings.show('shortcuts')")
@@ -90,7 +83,6 @@ def drive(browser: Browser) -> None:
         say(f"{name}: back on Shortcuts the list is at {top}")
         if abs(top - 900) > 2:
             wrong(f"{name}: the list lost its place ({top})")
-
         if name == "wide":
             hint = page.evaluate(
                 """() => [...document.querySelectorAll('.shortcut-list .orden-setting')]
@@ -100,7 +92,6 @@ def drive(browser: Browser) -> None:
             say(f"Copy's ?: {hint!r}")
             if not hint or "clipboard" not in hint:
                 wrong(f"Copy has no ? with its explanation: {hint!r}")
-
             page.get_by_placeholder("Search shortcuts").fill("redo")
             page.wait_for_timeout(300)
             seen = page.evaluate(MEASURE)
@@ -108,7 +99,6 @@ def drive(browser: Browser) -> None:
             if seen["rows"] < 1 or seen["rows"] > 6:
                 wrong(f"search left {seen['rows']} rows")
             page.get_by_placeholder("Search shortcuts").fill("")
-
             page.get_by_placeholder("Search settings").fill("Quit")
             page.wait_for_timeout(300)
             page.locator("[role=region][aria-label=Settings] .body .orden-setting.link", has_text="Quit").first.click()
@@ -116,7 +106,6 @@ def drive(browser: Browser) -> None:
             say(f"deep link to Quit: {landed}")
             if not landed["inside"]:
                 wrong("the deep link left Quit outside the list's view")
-
             row = page.locator(".shortcut-list .orden-setting.shortcut", has_text="New note").first
             key = row.locator("button.key")
             key.scroll_into_view_if_needed()
@@ -132,7 +121,5 @@ def drive(browser: Browser) -> None:
             if "F9" not in shown:
                 wrong(f"rebinding did not take: {shown!r}")
             row.locator(".revert").click()
-
         page.close()
-
 raise SystemExit(DRIVE.run(drive, "the shortcut list scrolls in its own box"))

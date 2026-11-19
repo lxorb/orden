@@ -1,13 +1,10 @@
 from typing import Any
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 from shell import PHONE_AGENT
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 STATE = """
 () => ({
   depth: window.ordenApp.overlays.depth,
@@ -15,14 +12,12 @@ STATE = """
   store: window.ordenApp.themeStore.open,
 })
 """
-
 BROWSE = """
 () => {
   window.ordenApp.settings.show('appearance')
   window.ordenApp.themeStore.show()
 }
 """
-
 MENU = """
 () => {
   const row = [...document.querySelectorAll('.orden-row:has(.orden-row-label)')].find((one) => one.checkVisibility())
@@ -34,9 +29,7 @@ MENU = """
   return true
 }
 """
-
 MENUS = "() => [...document.querySelectorAll('[role=\"menu\"]')].filter((one) => one.checkVisibility()).length"
-
 def shortcut_over_a_menu(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 800})
     page = context.new_page()
@@ -59,11 +52,9 @@ def shortcut_over_a_menu(browser: Browser) -> None:
     if left["depth"] or page.evaluate(MENUS):
         wrong(f"one Escape after it should leave no layer up: {left}")
     context.close()
-
 def state(page: Any) -> dict[str, Any]:
     page.wait_for_timeout(500)
     return page.evaluate(STATE)
-
 def drive(browser: Browser, phone: bool) -> None:
     kind = "phone" if phone else "desktop"
     context = browser.new_context(
@@ -76,11 +67,9 @@ def drive(browser: Browser, phone: bool) -> None:
     page.on("pageerror", lambda error: wrong(f"[{kind}] page error: {error}"))
     DRIVE.open(page)
     wait_for(page, "window.ordenApp.themeStore", "the theme store")
-
     page.evaluate(BROWSE)
     wait_for(page, "window.ordenApp.overlays.depth === 1 && window.ordenApp.settings.open", "the theme store over the Settings tab")
     say(f"[{kind}] the store over the Settings tab: {state(page)}")
-
     if phone:
         page.go_back()
     else:
@@ -89,7 +78,6 @@ def drive(browser: Browser, phone: bool) -> None:
     say(f"[{kind}] one step back: {first}")
     if first["store"] or not first["settings"] or first["depth"] != 0:
         wrong(f"[{kind}] one step back should close the store and leave the Settings tab: {first}")
-
     if phone:
         page.go_back()
     else:
@@ -101,13 +89,10 @@ def drive(browser: Browser, phone: bool) -> None:
     if not rest["settings"]:
         wrong(f"[{kind}] a step back closed the Settings tab, which is a tab and not a layer: {rest}")
     context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, phone=False)
         drive(browser, phone=True)
         shortcut_over_a_menu(browser)
-
     return DRIVE.verdict("a layer over the Settings tab is the first to close, and the tab stays")
-
 raise SystemExit(main())

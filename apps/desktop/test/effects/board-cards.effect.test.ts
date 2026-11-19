@@ -4,14 +4,12 @@ import { scanNote } from '@orden/scan/note'
 import { idle } from './settle'
 
 const ROOT = '/space'
-
 const FILES: Record<string, string> = {
   'Plan.md': '# Plan\n',
   'Trip.canvas':
     '{"nodes":[{"id":"a","type":"text","text":"inner words","x":0,"y":0,"width":10,"height":10}],"edges":[]}',
   'Books.base': 'views:\n  - type: table\n    name: All\n',
 }
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args?: { path?: string }) =>
@@ -26,22 +24,17 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
           : undefined,
     ),
 }))
-
 const { links } = await import('../../src/lib/link-index/src/api')
 const { startup } = await import('../../src/lib/launch/src/api')
 void startup.shown()
 await links.build(ROOT)
-
 const CanvasNode = (await import('../../src/lib/canvas/src/CanvasNode.svelte')).default
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
   document.body.replaceChildren()
 })
-
 async function cardFor(file: string): Promise<string> {
   const target = document.createElement('div')
   document.body.append(target)
@@ -64,13 +57,11 @@ async function cardFor(file: string): Promise<string> {
   }
   return target.textContent
 }
-
 test('a board dropped onto a board is not drawn as its raw JSON', async () => {
   const words = await cardFor('Trip.canvas')
   expect(words).not.toContain('"nodes"')
   expect(words).not.toContain('"edges"')
 })
-
 test('a base dropped onto a board is not drawn as its raw YAML', async () => {
   const words = await cardFor('Books.base')
   expect(words).not.toContain('views:')

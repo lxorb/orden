@@ -11,11 +11,9 @@ import type { Change } from './store'
 import type { World } from './world'
 
 const ROOT = '/device/space'
-
 interface Writing {
   write(changes: readonly Change[]): number[]
 }
-
 async function heard(size: number, note: boolean): Promise<number> {
   const disk = new MemoryDisk()
   disk.folders.add(ROOT)
@@ -63,7 +61,6 @@ async function heard(size: number, note: boolean): Promise<number> {
   expect(new Set([...space.paths().values()]).size).toBe(size + 1)
   return spent
 }
-
 describe('a folder of many dropped into a space', () => {
   test.each([
     ['notes', true],
@@ -83,7 +80,6 @@ describe('a folder of many dropped into a space', () => {
     120_000,
   )
 })
-
 describe('a pass sending thousands of new notes', () => {
   test('writes each op down a few times, not once a round for every op still waiting', async () => {
     const clock = new Clock()

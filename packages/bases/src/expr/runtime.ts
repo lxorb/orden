@@ -6,50 +6,38 @@ import type { Context, DateValue, DurationValue, LinkValue, RenderedValue, Row, 
 export class FileRef {
   constructor(readonly row: Row) {}
 }
-
 export class NoteRef {
   constructor(readonly row: Row) {}
 }
-
 export class ThisRef {
   constructor(readonly row: Row) {}
 }
-
 export class TaskRef {
   constructor(readonly row: Row) {}
 }
-
 export class Rendered {
   constructor(readonly value: RenderedValue) {}
 }
-
 export type Val = Value | FileRef | NoteRef | ThisRef | TaskRef | Rendered | RegExp
-
 export interface Scope {
   row: Row | null
   context: Context
   locals: Record<string, Val> | null
   formula: (name: string, row: Row) => Val
 }
-
 export const isDate = (value: Val): value is DateValue =>
   isRecordLike(value) && value.kind === 'date' && typeof value.iso === 'string'
-
 export const isDuration = (value: Val): value is DurationValue =>
   isRecordLike(value) && value.kind === 'duration' && typeof value.ms === 'number'
-
 export const isLink = (value: Val): value is LinkValue =>
   isRecordLike(value) && value.kind === 'link' && typeof value.target === 'string'
-
 function isRecordLike(value: Val): value is ValueRecord {
   if (value === null || typeof value !== 'object') return false
   const prototype: unknown = Object.getPrototypeOf(value)
   return prototype === Object.prototype || prototype === null
 }
-
 export const isObject = (value: Val): value is ValueRecord =>
   isRecordLike(value) && !isDate(value) && !isDuration(value) && !isLink(value)
-
 export function fileOf(value: Val, scope: Scope): Row | null {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row
   if (isLink(value) || typeof value === 'string') {
@@ -61,13 +49,10 @@ export function fileOf(value: Val, scope: Scope): Row | null {
   }
   return null
 }
-
 const reachedFrom = (target: string, from: Row, context: Context): string | null =>
   context.resolve?.(target, from) ?? null
-
 const linkPath = (link: LinkValue, from: Row, context: Context): string | null =>
   link.exact ? link.target : reachedFrom(link.target, from, context)
-
 export const plainTarget = (target: string): string =>
   target
     .replace(/^!?\[\[|\]\]$/g, '')
@@ -75,7 +60,6 @@ export const plainTarget = (target: string): string =>
     .replace(/\.md$/i, '')
     .trim()
     .toLowerCase()
-
 export function pointsAt(target: string, path: string, from: Row | null, context: Context): boolean {
   if (from && context.resolve) {
     const resolved = context.resolve(target, from)
@@ -86,22 +70,18 @@ export function pointsAt(target: string, path: string, from: Row | null, context
   if (wanted === have) return true
   return !wanted.includes('/') && have.slice(have.lastIndexOf('/') + 1) === wanted
 }
-
 export function truthy(value: Val): boolean {
   if (value === null || value === false || value === 0 || value === '') return false
   if (typeof value === 'number') return !Number.isNaN(value)
   if (Array.isArray(value)) return value.length > 0
   return true
 }
-
 const pathOf = (value: Val): string | null =>
   value instanceof FileRef || value instanceof ThisRef ? value.row.path : null
-
 export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (a === b) return true
   if (a === null || b === null) return false
   if (typeof a === 'string' && typeof b === 'string') spend(stepsOfText(a.length))
-
   const pathA = pathOf(a)
   const pathB = pathOf(b)
   if (pathA !== null && pathB !== null) return pathA === pathB
@@ -110,7 +90,6 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
     return pointsAt(typeof b === 'string' ? b : b.target, pathA, scope.row, scope.context)
   }
   if (pathB !== null) return equal(b, a, scope)
-
   if (isLink(a) || isLink(b)) {
     const textA = isLink(a) ? a.target : typeof a === 'string' ? a : null
     const textB = isLink(b) ? b.target : typeof b === 'string' ? b : null
@@ -123,7 +102,6 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
     }
     return plainTarget(textA) === plainTarget(textB)
   }
-
   const dateA = asDate(a)
   const dateB = asDate(b)
   if (dateA && dateB && (isDate(a) || isDate(b))) {
@@ -143,13 +121,11 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (a instanceof RegExp && b instanceof RegExp) return a.source === b.source && a.flags === b.flags
   return false
 }
-
 export function asDate(value: Val): DateValue | null {
   if (isDate(value)) return value
   if (typeof value === 'string') return readDate(value)
   return null
 }
-
 export function compare(a: Val, b: Val, zone?: string): number | null {
   if (a === null || b === null) return null
   if (typeof a === 'number' && typeof b === 'number') return a - b
@@ -174,15 +150,12 @@ export function compare(a: Val, b: Val, zone?: string): number | null {
   if (isLink(a) && isLink(b)) return compare(text(a), text(b))
   return null
 }
-
 function durationMs(value: Val): number | null {
   if (typeof value === 'number') return value
   if (isDuration(value)) return value.ms + value.months * 30 * 86_400_000
   return null
 }
-
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
-
 function sortRank(value: Val): number {
   if (typeof value === 'boolean') return 0
   if (typeof value === 'number') return 1
@@ -191,7 +164,6 @@ function sortRank(value: Val): number {
   if (typeof value === 'string' || isLink(value)) return 4
   return 5
 }
-
 export function sortCompare(a: Val, b: Val, zone?: string): number {
   if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1
   const rankA = sortRank(a)
@@ -204,9 +176,7 @@ export function sortCompare(a: Val, b: Val, zone?: string): number {
   }
   return compare(a, b, zone) ?? 0
 }
-
 const DEEPEST_VALUE = 64
-
 export function weigh(value: Val, depth = 0): void {
   if (typeof value === 'string') spend(stepsOfText(value.length))
   if (value === null || typeof value !== 'object') return
@@ -220,7 +190,6 @@ export function weigh(value: Val, depth = 0): void {
     for (const one of inside) weigh(one, depth + 1)
   }
 }
-
 export function textsOf(list: readonly Val[]): string[] {
   spend(list.length)
   return list.map((one) => {
@@ -229,7 +198,6 @@ export function textsOf(list: readonly Val[]): string[] {
     return words
   })
 }
-
 export function text(value: Val): string {
   if (value === null) return ''
   if (typeof value === 'string') return value
@@ -250,7 +218,6 @@ export function text(value: Val): string {
   weigh(value)
   return JSON.stringify(value)
 }
-
 function durationText(value: DurationValue): string {
   const parts: string[] = []
   if (value.months) parts.push(value.months % 12 === 0 ? `${value.months / 12}y` : `${value.months}M`)
@@ -268,7 +235,6 @@ function durationText(value: DurationValue): string {
   }
   return parts.length ? parts.join(' ') : '0s'
 }
-
 const UNITS: Record<string, { ms: number; months: number }> = {
   y: { ms: 0, months: 12 },
   year: { ms: 0, months: 12 },
@@ -293,7 +259,6 @@ const UNITS: Record<string, { ms: number; months: number }> = {
   seconds: { ms: 1000, months: 0 },
   ms: { ms: 1, months: 0 },
 }
-
 export function readDuration(written: string): DurationValue | null {
   const source = written.trim()
   if (source === '') return null
@@ -317,13 +282,11 @@ export function readDuration(written: string): DurationValue | null {
   }
   return { kind: 'duration', ms: sign * ms, months: sign * months }
 }
-
 function asDuration(value: Val): DurationValue | null {
   if (isDuration(value)) return value
   if (typeof value === 'string') return readDuration(value)
   return null
 }
-
 function shifted(date: DateValue, by: DurationValue, sign: 1 | -1): DateValue {
   const moved: DateValue = {
     ...date,
@@ -340,7 +303,6 @@ function shifted(date: DateValue, by: DurationValue, sign: 1 | -1): DateValue {
   const result = dateAt(wallMs(moved) + sign * by.ms)
   return date.zone ? { ...result, zone: date.zone } : result
 }
-
 export function add(a: Val, b: Val): Val {
   if (typeof a === 'number' && typeof b === 'number') return a + b
   if (isDate(a)) {
@@ -361,7 +323,6 @@ export function add(a: Val, b: Val): Val {
   if (a === null || b === null) return null
   throw new BasesError(`Cannot add ${kindName(b)} to ${kindName(a)}`)
 }
-
 export function subtract(a: Val, b: Val, zone?: string): Val {
   if (typeof a === 'number' && typeof b === 'number') return a - b
   if (isDate(a)) {
@@ -377,7 +338,6 @@ export function subtract(a: Val, b: Val, zone?: string): Val {
   if (a === null || b === null) return null
   throw new BasesError(`Cannot subtract ${kindName(b)} from ${kindName(a)}`)
 }
-
 export function arithmetic(op: '*' | '/' | '%', a: Val, b: Val): Val {
   if (a === null || b === null) return null
   if (typeof a === 'number' && typeof b === 'number') {
@@ -392,7 +352,6 @@ export function arithmetic(op: '*' | '/' | '%', a: Val, b: Val): Val {
   }
   throw new BasesError(`Cannot use ${op} on ${kindName(a)} and ${kindName(b)}`)
 }
-
 export function kindName(value: Val): string {
   if (value === null) return 'null'
   if (typeof value === 'string') return 'string'
@@ -408,7 +367,6 @@ export function kindName(value: Val): string {
   if (isLink(value)) return 'link'
   return 'object'
 }
-
 export function settled(value: Val): Value {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) {
@@ -422,6 +380,5 @@ export function settled(value: Val): Value {
   if (value instanceof Rendered) return value.value
   return value
 }
-
 export const fieldOf = (object: ValueRecord | RenderedValue, name: string): Val =>
   Object.hasOwn(object, name) ? ((object as ValueRecord)[name] ?? null) : null

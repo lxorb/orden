@@ -15,10 +15,8 @@
     onchange,
   }: { ui: PassUi; value: string; label: string; onchange?: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   let shown = $state(false)
   const id = `pass-password-${Math.random().toString(36).slice(2, 8)}`
-
   function generate() {
     ui.sheet = {
       kind: 'generator',
@@ -74,18 +72,15 @@
     gap: var(--space-1);
     padding: var(--space-2) var(--space-3);
   }
-
   .line {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .mark {
     flex: none;
     color: var(--muted);
   }
-
   .text {
     flex: 1;
     min-width: 0;
@@ -93,12 +88,10 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .label {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .value {
     width: 100%;
     min-height: 22px;
@@ -111,7 +104,6 @@
     font-size: var(--text-row);
     letter-spacing: 0.02em;
   }
-
   .orden-glyph {
     flex: none;
     color: var(--muted-strong);

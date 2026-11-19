@@ -2,9 +2,7 @@ import { door } from '@orden/markdown/door'
 import { invoke, isDesktop } from '../../platform/src/api'
 
 const PRESSED = 'orden://notice'
-
 const KEPT = 64
-
 export interface Notice {
   title: string
   body: string
@@ -14,25 +12,21 @@ export interface Notice {
   opened?: () => void
   reply?: { placeholder: string; send: string; replied: (text: string) => void }
 }
-
 const answering = new Map<string, Notice>()
 const showing = new Map<string, string>()
 const up = new Map<string, Notification>()
 const listening = door(() =>
   import('../../windows/src/api').then(({ hearHere }) => hearHere<unknown>(PRESSED, (event) => pressed(event.payload))),
 )
-
 export function notify(title: string, body: string, tag?: string, opened?: () => void): void {
   show({ title, body, ...(tag ? { tag } : {}), ...(opened ? { opened } : {}) })
 }
-
 export function show(one: Notice): void {
   if (isDesktop) {
     shownByTheCrate(one)
     return
   }
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-
   const options: NotificationOptions = {
     body: one.from ? `${one.body}\n${one.from}` : one.body,
     ...(one.tag ? { tag: one.tag } : {}),
@@ -52,12 +46,10 @@ export function show(one: Notice): void {
   }
   if (one.tag) up.set(one.tag, shown)
 }
-
 export function askToShow(): void {
   if (isDesktop || typeof Notification === 'undefined') return
   if (Notification.permission === 'default') void Notification.requestPermission()
 }
-
 export function unshow(tag: string): void {
   up.get(tag)?.close()
   up.delete(tag)
@@ -68,18 +60,14 @@ export function unshow(tag: string): void {
   answering.delete(id)
   if (isDesktop) void invoke('notice_clear', { tag: plainTag(tag) }).catch(() => undefined)
 }
-
 const byWorker = new Map<string, Notice>()
 let hearingTheWorker = false
-
 function worker(): ServiceWorkerContainer | null {
   return typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? navigator.serviceWorker : null
 }
-
 function shownByTheWorker(one: Notice, options: NotificationOptions): void {
   const workers = worker()
   if (!workers) return
-
   const tag = one.tag ?? fresh()
   byWorker.delete(tag)
   byWorker.set(tag, one)
@@ -87,7 +75,6 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
     if (byWorker.size <= KEPT) break
     byWorker.delete(old)
   }
-
   if (!hearingTheWorker) {
     hearingTheWorker = true
     workers.addEventListener('message', (event: MessageEvent) => {
@@ -99,12 +86,10 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
     })
     workers.startMessages()
   }
-
   void workers.ready
     .then((held) => held.showNotification(one.title, { ...options, tag, data: { ordenNotice: tag } }))
     .catch(() => undefined)
 }
-
 function closeByTheWorker(tag: string): void {
   void worker()
     ?.getRegistration()
@@ -112,9 +97,7 @@ function closeByTheWorker(tag: string): void {
     .then((shown) => shown?.forEach((one) => one.close()))
     .catch(() => undefined)
 }
-
 const LONGEST_TAG = 64
-
 function plainTag(tag: string): string {
   if (tag.length <= LONGEST_TAG && /^[A-Za-z0-9_-]+$/.test(tag)) return tag
   let value = 0xcbf29ce484222325n
@@ -124,10 +107,8 @@ function plainTag(tag: string): string {
   }
   return `tag-${value.toString(16).padStart(16, '0')}`
 }
-
 function shownByTheCrate(one: Notice): void {
   void listening().catch(() => undefined)
-
   const id = fresh()
   if (one.tag) {
     const before = showing.get(one.tag)
@@ -139,7 +120,6 @@ function shownByTheCrate(one: Notice): void {
     if (answering.size <= KEPT) break
     answering.delete(old)
   }
-
   void invoke('notice_show', {
     notice: {
       id,
@@ -152,7 +132,6 @@ function shownByTheCrate(one: Notice): void {
     },
   }).catch(() => undefined)
 }
-
 function pressed(said: unknown): void {
   if (typeof said !== 'object' || said === null) return
   const { id, act, text } = said as Record<string, unknown>
@@ -161,7 +140,6 @@ function pressed(said: unknown): void {
   if (act === 'reply' && typeof text === 'string' && text.trim()) one.reply?.replied(text)
   else if (act === 'open') one.opened?.()
 }
-
 function fresh(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8))
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')

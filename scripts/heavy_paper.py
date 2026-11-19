@@ -1,9 +1,7 @@
 from __future__ import annotations
-
 import zlib
 
 REFERENCE = 45.8
-
 BENCH_BODY = """
   const started = performance.now()
   const words = /(\\w+)@(\\w+)\\.(\\w+)/g
@@ -16,12 +14,8 @@ BENCH_BODY = """
   }
   return kept > 0 ? performance.now() - started : -1
 """
-
-
 def stream_object(head: str, data: bytes) -> bytes:
     return f"<<{head}/Length {len(data)}>>stream\n".encode("latin-1") + data + b"\nendstream"
-
-
 def picture(width: int, height: int) -> bytes:
     rows = bytearray()
     for y in range(height):
@@ -32,8 +26,6 @@ def picture(width: int, height: int) -> bytes:
             row[x * 3 : x * 3 + 24] = bytes((tone, max(80, tone - 40), min(255, tone + 30))) * 8
         rows += row[: width * 3]
     return zlib.compress(bytes(rows), 6)
-
-
 def heavy_paper() -> bytes:
     w, h = 595, 842
     wide, tall = 2480, 3508

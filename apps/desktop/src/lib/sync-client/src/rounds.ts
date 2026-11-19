@@ -4,13 +4,11 @@ import { Refused } from './transport'
 function statusOf(error: unknown): number | null {
   return error instanceof Refused ? error.status : remote().statusOf(error)
 }
-
 function outOfReach(error: unknown): boolean {
   const said = error instanceof Refused ? error.told : remote().saidByServer(error)
   const status = statusOf(error)
   return said && (status === 403 || status === 404)
 }
-
 export async function eachDue(
   due: Set<string>,
   alive: () => boolean,
@@ -30,12 +28,10 @@ export async function eachDue(
   }
   if (failed) throw failed.error
 }
-
 interface Sending {
   pass(id: string): Promise<{ finished: boolean } | null>
   waiting(id: string): boolean
 }
-
 export async function sentAll(
   engine: Sending,
   spaces: ReadonlySet<string>,
@@ -59,7 +55,6 @@ export async function sentAll(
   }
   return true
 }
-
 export async function reachable<T>(
   spaces: ReadonlySet<string>,
   listing: (id: string) => Promise<T>,

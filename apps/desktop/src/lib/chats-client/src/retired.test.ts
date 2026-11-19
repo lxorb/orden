@@ -8,7 +8,6 @@ const LINKED = [
   { provider: 'gmail', account: 'Emil@Example.org', config: { address: 'Emil@Example.org' } },
   { provider: 'whatsapp', account: '41790000001', config: {} },
 ]
-
 function world() {
   const forgot: string[] = []
   const dropped: string[] = []
@@ -29,9 +28,7 @@ function world() {
   }
   return { said, forgot, dropped, asked: () => asked }
 }
-
 beforeEach(() => localStorage.clear())
-
 describe('a secret name of a chat service gone', () => {
   test('is one the vault took, and differs per account', () => {
     const one = secretName('mail', 'emil@example.org', 'password')
@@ -41,7 +38,6 @@ describe('a secret name of a chat service gone', () => {
     expect(one).not.toBe(two)
     expect(one.startsWith('chat-mail_')).toBe(true)
   })
-
   test("covers every linked account's fields, as written and lowered, and every sealed key", () => {
     localStorage.setItem('orden:chat-accounts', JSON.stringify(LINKED))
     const names = retiredSecrets(['tg-session'])
@@ -52,22 +48,18 @@ describe('a secret name of a chat service gone', () => {
     expect(new Set(names).size).toBe(names.length)
   })
 })
-
 describe('an update on a device with linked chat accounts', () => {
   test('forgets their secrets and stores and the list, and never comes back for more', async () => {
     localStorage.setItem('orden:chat-accounts', JSON.stringify(LINKED))
     const { said, forgot, dropped, asked } = world()
     await forgetRetiredChats(said)
-
     expect(forgot).toContain(secretName('whatsapp', '41790000001', 'token'))
     expect(forgot).toContain(secretName('sealed', 'wa-auth-41790000001', 'key'))
     expect(dropped).toEqual(['orden-chat-sealed', 'orden-signal'])
     expect(localStorage.getItem('orden:chat-accounts')).toBeNull()
-
     await forgetRetiredChats(said)
     expect(asked()).toBe(1)
   })
-
   test('with nothing linked asks the vault for nothing', async () => {
     const { said, forgot } = world()
     said.sealedNames = () => Promise.resolve([])
@@ -75,12 +67,10 @@ describe('an update on a device with linked chat accounts', () => {
     expect(forgot).toEqual([])
   })
 })
-
 describe('a tab of a chat service gone', () => {
   const remote = { kind: 'channel', path: null, name: 'Ada', doc: 'connected-chat\nmail\na\nt1' }
   const own = { kind: 'channel', path: '/s/Team.chat', name: 'Team', doc: '' }
   const adding = { kind: 'connect', path: null, name: 'Add a chat account', doc: '' }
-
   test('is not restored, while an Orden chat is', () => {
     expect(readDraft(remote)).toBeNull()
     expect(readDraft(adding)).toBeNull()
@@ -88,7 +78,6 @@ describe('a tab of a chat service gone', () => {
     expect(isRetiredChat(remote.doc)).toBe(true)
     expect(isRetiredChat('01JD0000000000000000000000')).toBe(false)
   })
-
   test('is found anywhere in a saved layout, so the reader is told', () => {
     const pane = (tabs: unknown[]) => ({ kind: 'pane', pane: { id: 'p', tabs, active: 0 } })
     const split = (tabs: unknown[]) => ({

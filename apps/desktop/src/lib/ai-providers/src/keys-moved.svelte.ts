@@ -4,10 +4,8 @@ import { ai } from './store.svelte'
 
 const KEY = 'orden:keys-moved'
 const KEYED = new Set(['anthropic', 'openai', 'gemini', 'chatgpt'])
-
 class KeysMoved {
   showing = $state(false)
-
   async check(): Promise<boolean> {
     if (!isDesktop || platform() !== 'macos' || stored(KEY) === true) return false
     const keyed = ai.providers.filter((one) => KEYED.has(one.kind))
@@ -24,10 +22,8 @@ class KeysMoved {
     this.showing = missing
     return missing
   }
-
   dismiss(): void {
     this.showing = false
   }
 }
-
 export const keysMoved = new KeysMoved()

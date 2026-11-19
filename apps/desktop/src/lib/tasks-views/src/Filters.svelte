@@ -30,7 +30,6 @@
     gap: var(--space-2);
     align-items: center;
   }
-
   .only {
     display: inline-flex;
     gap: var(--space-1);

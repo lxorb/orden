@@ -5,56 +5,41 @@ import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const ENTRY = join(import.meta.dirname, '../src/main.ts')
-
 const WORKSPACE = ['@orden/editor', '@orden/glasses', '@orden/markdown', '@orden/rooms', '@orden/themes']
-
 function workspaceFile(specifier: string): string | null {
   const name = WORKSPACE.find((one) => specifier === one || specifier.startsWith(`${one}/`))
   if (!name) return null
-
   const folder = join(ROOT, 'packages', name.slice(name.indexOf('/') + 1))
   const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')) as {
     exports?: Record<string, string>
   }
   const sub = specifier === name ? '.' : `.${specifier.slice(name.length)}`
   const target = manifest.exports?.[sub]
-
   return target === undefined ? null : resolve(folder, target)
 }
-
 function relativeFile(from: string, specifier: string): string | null {
   const base = resolve(dirname(from), specifier)
   const tries = [base, `${base}.ts`, `${base}.svelte`, `${base}.js`, join(base, 'index.ts')]
-
   return tries.find((one) => existsSync(one) && statSync(one).isFile()) ?? null
 }
-
 const STATIC =
   /(?:^|[\n;}])[^\S\n]*(?:import|export)\b[^'"]*?\bfrom\s*['"]([^'"]+)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"]([^'"]+)['"]/g
-
 const COMMENTS = /\/\*[\s\S]*?\*\/|(^|[^:'"`\\])\/\/[^\n]*/g
-
 function asked(file: string): string[] {
   const source = readFileSync(file, 'utf8').replace(COMMENTS, (_whole, head?: string) => head ?? '')
   const found: string[] = []
-
   for (const match of source.matchAll(STATIC)) {
     const specifier = match[1] ?? match[2]
     if (specifier === undefined) continue
     if (/\b(?:import|export)\s+type\b/.test(match[0])) continue
-
     found.push(specifier)
   }
-
   return found
 }
-
 const TEXT = /\?(?:raw|inline)$/
-
 function assetFile(from: string, specifier: string): string | null {
   const bare = specifier.replace(/\?.*$/, '')
   const tries: string[] = []
-
   if (bare.startsWith('.')) tries.push(resolve(dirname(from), bare))
   else {
     let folder = dirname(from)
@@ -65,10 +50,8 @@ function assetFile(from: string, specifier: string): string | null {
       folder = up
     }
   }
-
   return tries.find((one) => existsSync(one) && statSync(one).isFile()) ?? null
 }
-
 function eagerGraph(entry: string): {
   files: string[]
   packages: Set<string>
@@ -80,33 +63,26 @@ function eagerGraph(entry: string): {
   const packages = new Set<string>()
   const assets: string[] = []
   const queue = [entry]
-
   while (queue.length) {
     const file = queue.shift()
     if (file === undefined || files.includes(file)) continue
     files.push(file)
-
     for (const specifier of asked(file)) {
       if (TEXT.test(specifier)) {
         const text = assetFile(file, specifier)
         if (text && !assets.includes(text)) assets.push(text)
         continue
       }
-
       if (specifier.endsWith('.css')) continue
-
       const found = specifier.startsWith('.') ? relativeFile(file, specifier) : workspaceFile(specifier)
       if (found) queue.push(found)
       else if (!specifier.startsWith('.')) packages.add(specifier)
     }
   }
-
   const bytes = files.reduce((sum, one) => sum + statSync(one).size, 0)
   const assetBytes = assets.reduce((sum, one) => sum + statSync(one).size, 0)
-
   return { files, packages, bytes, assets, assetBytes }
 }
-
 function everySource(folder: string): string[] {
   const out: string[] = []
   for (const entry of readdirSync(folder, { withFileTypes: true })) {
@@ -114,41 +90,31 @@ function everySource(folder: string): string[] {
     if (entry.isDirectory()) out.push(...everySource(full))
     else if (/\.(?:ts|svelte)$/.test(entry.name)) out.push(full)
   }
-
   return out
 }
-
 const graph = eagerGraph(ENTRY)
 const names = new Set(graph.files.map((one) => one.replace(/\\/g, '/')))
-
 function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
-
 const BUDGET = 2_200_000
 const MOST_FILES = 514
-
 const MOST_TEXT = 6_500
-
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
     expect(graph.bytes).toBeLessThan(BUDGET)
   })
-
   test('and under it in modules, which is what the parsing costs', () => {
     expect(graph.files.length).toBeLessThan(MOST_FILES)
   })
-
   test('and quotes almost no file into a chunk as text', () => {
     expect(graph.assetBytes, graph.assets.join(', ')).toBeLessThan(MOST_TEXT)
   })
-
   test('which for the one sheet it does quote is the contrast palette', () => {
     expect(graph.assets.map((one) => one.replace(/\\/g, '/').replace(/.*\/packages\//, ''))).toEqual([
       'themes/src/contrast.css',
     ])
   })
-
   test.each([
     ['lucide', 'the icon library'],
     ['katex', 'the formula engine'],
@@ -184,7 +150,6 @@ describe('what the app evaluates before it draws anything', () => {
   ])('does not reach %s (%s)', (asked) => {
     expect([...graph.packages]).not.toContain(asked)
   })
-
   test.each([
     ['/lib/canvas/src/Canvas.svelte', 'the canvas'],
     ['/lib/plane/src/ink.ts', "the canvas's ink"],
@@ -310,7 +275,6 @@ describe('what the app evaluates before it draws anything', () => {
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
-
   test.each([
     ['/src/App.svelte', 'the app'],
     ['/lib/pane-tree/src/Pane.svelte', 'a pane'],
@@ -336,102 +300,79 @@ describe('what the app evaluates before it draws anything', () => {
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })
-
   test('and nothing of the agents', () => {
     expect([...names].filter((one) => /\/lib\/(agents|agent-docs)\//.test(one))).toEqual([])
     expect(holds('/lib/workspace/src/agent-marks.svelte.ts')).toBe(true)
   })
-
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {
     for (const wanted of ['@codemirror/state', '@codemirror/view', '@codemirror/lang-markdown', 'svelte']) {
       expect([...graph.packages], wanted).toContain(wanted)
     }
   })
-
   const OVERRIDE = '@codemirror/lang-markdown>@codemirror/lang-html'
   const DOOR = join(ROOT, 'packages/lang-html/src/index.ts')
-
   test('and the HTML grammar comes through nib’s own door, as the manifest says', () => {
     const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
       pnpm?: { overrides?: Record<string, string> }
     }
-
     expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@orden/lang-html@*')
     expect(existsSync(DOOR)).toBe(true)
   })
-
   const POPUP = '@codemirror/lang-markdown>@codemirror/autocomplete'
   const POPUP_DOOR = join(ROOT, 'packages/autocomplete/src/index.ts')
-
   test('and the completion library the same way, said in the same manifest', () => {
     const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
       pnpm?: { overrides?: Record<string, string> }
     }
-
     expect(manifest.pnpm?.overrides?.[POPUP]).toBe('workspace:@orden/autocomplete@*')
     expect(existsSync(POPUP_DOOR)).toBe(true)
     expect(asked(POPUP_DOOR)).not.toContain('@codemirror/autocomplete')
   })
-
   test('and the door asks for the grammar rather than importing it', () => {
     expect(asked(DOOR)).not.toContain('@codemirror/lang-html')
     expect(readFileSync(DOOR, 'utf8')).toContain("import('@codemirror/lang-html')")
   })
-
   const CRATE = join(ROOT, 'apps/desktop/src/lib/crate/src/native.ts')
-
   test('and the crate comes through nib’s own door', () => {
     expect(existsSync(CRATE)).toBe(true)
     expect(readFileSync(CRATE, 'utf8')).toContain("from '@tauri-apps/api/core'")
   })
-
   test('which nothing asks for dynamically, since nothing could move it', () => {
     const named = everySource(join(ROOT, 'apps/desktop/src')).filter((one) =>
       /import\(\s*['"]@tauri-apps\/api\/core['"]/.test(
         readFileSync(one, 'utf8').replace(COMMENTS, (_whole, head?: string) => head ?? ''),
       ),
     )
-
     expect(named).toEqual([])
   })
 })
-
 describe('what reading a note fetches', () => {
   const READING = join(import.meta.dirname, '../src/lib/reading/src/render.ts')
   const EXPORTER = join(import.meta.dirname, '../src/lib/export/src/render.ts')
   const RENDERER = join(import.meta.dirname, '../../../packages/markdown/src/index.ts')
-
   function waitedFor(surface: string): string {
     const source = readFileSync(surface, 'utf8')
     const found = /prepareNote[^}]*\}\s*=\s*await import\('([^']+)'\)/.exec(source)
     expect(found, 'the surface no longer awaits prepareNote').not.toBeNull()
-
     const file = relativeFile(surface, found?.[1] ?? '')
     expect(file, `nothing at ${found?.[1]}`).not.toBeNull()
-
     return file ?? ''
   }
-
   const already = new Set(graph.files)
   for (const one of eagerGraph(RENDERER).files) already.add(one)
-
   function newBytes(files: readonly string[]): number {
     return files.filter((one) => !already.has(one)).reduce((sum, one) => sum + statSync(one).size, 0)
   }
-
   const exporter = newBytes(eagerGraph(EXPORTER).files)
-
   for (const [what, surface] of [['the reading view', READING]] as const) {
     test(`${what} does not fetch the exporter to render a note`, () => {
       const ahead = eagerGraph(waitedFor(surface))
       const reached = ahead.files.map((one) => one.replace(/\\/g, '/'))
-
       expect(reached.filter((one) => one.endsWith('/themes/src/raw.ts'))).toEqual([])
       expect(
         ahead.assets.filter((one) => !graph.assets.includes(one)),
         'stylesheets quoted into the surface',
       ).toEqual([])
-
       for (const heavy of [
         '/export/src/render.ts',
         '/files-out/src/save.ts',
@@ -446,16 +387,13 @@ describe('what reading a note fetches', () => {
           heavy,
         ).toEqual([])
       }
-
       expect(newBytes(ahead.files)).toBeLessThan(exporter / 2)
     })
   }
 })
-
 describe('the quick add window', () => {
   const window = eagerGraph(join(import.meta.dirname, '../src/lib/quick-add/src/Window.svelte'))
   const reached = window.files.map((one) => one.replace(/\\/g, '/'))
-
   test('draws before it fetches dictation, the AI providers or the workspace', () => {
     for (const heavy of ['/dictation/src/api.ts', '/ai-providers/src/api.ts', '/workspace/src/api.ts']) {
       expect(
@@ -465,7 +403,6 @@ describe('the quick add window', () => {
     }
   })
 })
-
 describe('the windows that start sync without the workspace', () => {
   test.each(['quick-add.ts', 'pass-web.ts'])('%s loads no workspace at startup', (entry) => {
     const reached = eagerGraph(join(import.meta.dirname, '../src', entry)).files.map((one) => one.replace(/\\/g, '/'))

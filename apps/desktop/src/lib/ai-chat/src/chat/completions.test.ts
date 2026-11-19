@@ -12,7 +12,6 @@ const MODEL: ModelInfo = {
   images: false,
   fast: false,
 }
-
 function ask(change: Partial<Ask> = {}): Ask {
   return {
     provider: {
@@ -34,7 +33,6 @@ function ask(change: Partial<Ask> = {}): Ask {
     ...change,
   }
 }
-
 describe('a recorded stream of calls', () => {
   test('is one tool part a call, each whole by the end', () => {
     const reader = completions.reader(MODEL.window)
@@ -60,7 +58,6 @@ describe('a recorded stream of calls', () => {
       },
     ])
   })
-
   test('thinking comes from whichever field the server writes it in', () => {
     const reader = completions.reader(null)
     reader.heard({ choices: [{ delta: { reasoning_content: 'Hm' } }] })
@@ -70,7 +67,6 @@ describe('a recorded stream of calls', () => {
     expect(reader.parts[0]).toMatchObject({ text: 'Hm, yes.' })
     expect(reader.answer().ending).toBe('end')
   })
-
   test('OpenRouter’s cost is counted where it reports one', () => {
     const reader = completions.reader(null)
     const said = reader.heard({
@@ -80,7 +76,6 @@ describe('a recorded stream of calls', () => {
     expect(said.usage).toMatchObject({ input: 10, output: 2, cost: 0.0004 })
   })
 })
-
 describe('the request', () => {
   test('is the loopback address the policy allows, with usage and tools', () => {
     const { url, body } = completions.request(ask())
@@ -105,13 +100,11 @@ describe('the request', () => {
     })
     expect(body).not.toHaveProperty('reasoning_effort')
   })
-
   test('effort is reasoning_effort where one was picked', () => {
     expect(completions.request(ask({ effort: 'high' })).body).toMatchObject({
       reasoning_effort: 'high',
     })
   })
-
   test('a tool’s answer goes back as words, its pictures said', () => {
     expect(
       chatMessagesOf('', [
@@ -129,7 +122,6 @@ describe('the request', () => {
     ).toEqual([{ role: 'tool', tool_call_id: 'c', content: 'seen\n[1 picture(s)]' }])
   })
 })
-
 test('a call a server sends without an id gets one no other round of the turn has', () => {
   const made = () => {
     const reader = completions.reader(null)

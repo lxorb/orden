@@ -10,11 +10,9 @@
   import { dur, slide } from '../../platform/src/api'
 
   const { nodes, depth = 0 }: { nodes: TagNode[]; depth?: number } = $props()
-
   function menuFor(node: TagNode): MenuEntry[] {
     const label = workspace.undoLabel
     const writes = canWriteAt(workspace.activeSpace?.root ?? '')
-
     return [
       ...(writes
         ? [
@@ -91,12 +89,10 @@
     margin: 0;
     padding: 0;
   }
-
   .line {
     display: flex;
     align-items: center;
   }
-
   .twist {
     position: relative;
     flex: none;
@@ -110,32 +106,27 @@
     color: var(--muted);
     cursor: default;
   }
-
   .twist::before {
     content: '';
     position: absolute;
     inset-block: 0;
     inset-inline: calc(-1 * var(--space-1));
   }
-
   :global([data-touch]) .twist::before {
     inset-inline-end: min(calc(-1 * var(--space-1)), calc(var(--icon-md) + 2 * var(--space-1) - var(--touch-target)));
   }
-
   .chevron {
     display: block;
     width: var(--icon-md);
     height: var(--icon-md);
     flex: none;
   }
-
   .row {
     --lead: 2px;
     flex: 1;
     min-width: 0;
     padding-inline-start: calc(var(--level, 0) * var(--row-indent) + var(--lead));
   }
-
   .row.nested {
     --lead: calc(var(--icon-md) + var(--space-1));
   }

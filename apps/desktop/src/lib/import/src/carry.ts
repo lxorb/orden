@@ -11,18 +11,15 @@ export interface Carried {
   quietMarks?: boolean
   keys?: 'obsidian' | 'notion'
 }
-
 export const NOTION: Carried = {
   quietMarks: true,
   hardBreaks: true,
   keys: 'notion',
 }
-
 export async function carriedBy(format: FormatId, sources: readonly Source[]): Promise<Carried | null> {
   if (format === 'obsidian') {
     const { obsidianCarries } = await import('./obsidian')
     return obsidianCarries(sources)
   }
-
   return format === 'notion' ? NOTION : null
 }

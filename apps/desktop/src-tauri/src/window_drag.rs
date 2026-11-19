@@ -1,7 +1,6 @@
 use orden_web_engine::Edge;
 
 pub const SCRIPT: &str = include_str!("window_drag.js");
-
 #[tauri::command]
 pub async fn window_move_resize(
     webview: tauri::Webview,
@@ -46,7 +45,6 @@ pub async fn window_move_resize(
     })
     .await
 }
-
 #[tauri::command(async)]
 pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
     {
@@ -64,13 +62,11 @@ pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
             .map_err(|error| error.to_string())
     }
 }
-
 #[derive(Clone, Copy, Debug, serde::Deserialize)]
 pub struct Pressed {
     x: i32,
     y: i32,
 }
-
 fn by_the_runtime(
     window: &tauri::Window<orden_base::Engine>,
     edge: Edge,
@@ -96,7 +92,6 @@ fn by_the_runtime(
         .map_err(|error| error.to_string())?;
     Ok(format!("a resize at {edge:?} the runtime began"))
 }
-
 #[cfg(test)]
 mod tests {
     use super::SCRIPT;

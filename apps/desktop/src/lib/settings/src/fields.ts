@@ -12,19 +12,15 @@ export interface PictureSide {
   remove(): void
   place(x: number, y: number, kept: boolean): void
 }
-
 interface Common extends SettingCommon {
   icon?: IconNode
 }
-
 export interface Segment {
   value: string
   label: string
   disabled?: boolean
 }
-
 export type { PairField, SwatchOption }
-
 export type Field = Common &
   (
     | SettingControl
@@ -58,20 +54,16 @@ export type Field = Common &
         press(): void
       }
   )
-
 export interface Caption {
   text: string
   url?: string
 }
-
 export interface Group {
   title: string
   caption?: Caption
   fields: Field[]
 }
-
 type PaneId = 'general' | 'editor' | 'kinds' | 'spelling' | 'markdown' | 'appearance' | 'experimental' | 'export'
-
 export interface Pane {
   id: PaneId
   label: string

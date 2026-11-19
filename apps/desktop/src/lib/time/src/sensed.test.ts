@@ -6,7 +6,6 @@ describe('what the system says of the person at the computer', () => {
     const said = sensedOf({ idleMs: null, front: true, app: 'XTerm' })
     expect(said && withIdle(said, 400_000).idleMs).toBe(400_000)
   })
-
   test('where it can, its count stands', () => {
     const said = sensedOf({ idleMs: 1_000, front: false })
     expect(said && withIdle(said, 400_000).idleMs).toBe(1_000)

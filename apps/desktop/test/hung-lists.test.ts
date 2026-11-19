@@ -5,12 +5,10 @@ import { expect, test } from 'vitest'
 import { svelte, walk } from './files'
 
 const LIB = fileURLToPath(new URL('../src/lib/', import.meta.url))
-
 function layerOfList(source: string): string {
   const style = /<style>([\s\S]*)<\/style>/.exec(source)?.[1] ?? ''
   return /\n {2}\.list \{[^}]*z-index: ([^;]*);/.exec(style)?.[1] ?? 'none'
 }
-
 test('a list hung outside its card is drawn above Settings and sheets, which it may open from', () => {
   const hung = walk(LIB, svelte)
     .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))

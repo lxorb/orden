@@ -10,15 +10,12 @@ const GROUPS: readonly RegExp[] = [
   /[\p{Script=Thai}\p{Script=Lao}\p{Script=Myanmar}\p{Script=Khmer}]/u,
   /[\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u,
 ]
-
 const COLLATOR = new Intl.Collator('en', { sensitivity: 'base' })
-
 function groupOf(name: string): number {
   const letter = /\p{L}/u.exec(name)?.[0] ?? ''
   const found = GROUPS.findIndex((group) => group.test(letter))
   return found === -1 ? GROUPS.length : found
 }
-
 export function inLanguageOrder<T extends { id: string; name: string }>(rows: readonly T[]): T[] {
   const pinned = rows.filter((row) => row.id === 'system')
   const sorted = rows

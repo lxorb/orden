@@ -30,27 +30,21 @@
   import VaultSheet from './VaultSheet.svelte'
 
   const { tab, focused = false, corner }: { tab: Tab | null; focused?: boolean; corner?: Snippet<[PassUi]> } = $props()
-
   const ui = new PassUi(untrack(() => tab))
-
   let width = $state(1200)
   let recovery = $state<string | null>(null)
-
   const columns = $derived(width >= 900 ? 3 : width >= 600 ? 2 : 1)
   const page = $derived(ui.view.page)
   const flagged = $derived(page === 'monitor' && ui.flag !== null)
   const wide = $derived((page === 'monitor' && !flagged) || page === 'settings' || page === 'links')
   const item = $derived(ui.shownItem)
-
   onMount(() => {
     void pass.start()
     return reloading.holds(() => ui.editing !== null && ui.dirty)
   })
-
   $effect(() => {
     if (pass.state === 'locked') recovery = null
   })
-
   $effect(() => {
     if (pass.state !== 'open') return
     const intent = asked.intent
@@ -61,14 +55,12 @@
       else ui.sheet = { kind: 'generator', use: null }
     })
   })
-
   $effect(() => {
     if (pass.state !== 'open' || !pass.conflict) return
     untrack(() => {
       ui.sheet ??= { kind: 'adopt' }
     })
   })
-
   $effect(() => {
     if (pass.state !== 'open') {
       untrack(() => {
@@ -79,7 +71,6 @@
       })
     }
   })
-
   function onkey(event: KeyboardEvent) {
     if (event.defaultPrevented || pass.state !== 'open' || recovery !== null) return
     if (shortcuts.pressed('pass.search', event)) {
@@ -92,10 +83,8 @@
       void ui.newItem(blank('login'))
     }
   }
-
   const step = $derived(wide && ui.column === 'item' ? 'list' : ui.column)
   const home = $derived(page === 'items' && ui.view.scope.kind === 'all')
-
   let kept = $state(0)
   $effect(() =>
     closeOnBack(kept >= 0 && columns === 1 && (step !== 'list' || !home), () => {
@@ -110,7 +99,6 @@
       else void ui.choose({ kind: 'all' })
     }),
   )
-
   const shows = $derived.by(() => {
     if (columns === 3) return { side: true, list: !wide, item: true }
     if (columns === 2) return { side: true, list: step !== 'item' && !wide, item: step === 'item' || wide }
@@ -220,45 +208,37 @@
     overflow: hidden;
     background: var(--bg);
   }
-
   .pass :global([data-scrolls] > *) {
     flex-shrink: 0;
   }
-
   :global(main:has(.fab)) .pass :global([data-scrolls]),
   :global(main:has(.fab)) .pass :global(.side .foot) {
     padding-bottom: calc(var(--space-4) + var(--touch-bottom) + var(--touch-row));
   }
-
   .columns {
     display: flex;
     height: 100%;
     min-height: 0;
   }
-
   .column {
     min-width: 0;
     height: 100%;
     overflow: hidden;
   }
-
   .side {
     flex: none;
     width: 236px;
     background: var(--surface);
     border-inline-end: 1px solid var(--line);
   }
-
   .list {
     flex: none;
     width: clamp(280px, 32%, 380px);
     border-inline-end: 1px solid var(--line);
   }
-
   .item {
     flex: 1;
   }
-
   [data-columns='2'] .list,
   [data-columns='1'] .list,
   [data-columns='1'] .side {
@@ -266,72 +246,60 @@
     width: auto;
     border-inline-end: none;
   }
-
   [data-columns='2'] .side {
     width: 208px;
     border-inline-end: 1px solid var(--line);
     flex: none;
   }
-
   .blank {
     height: 100%;
     display: grid;
     place-items: center;
     color: var(--surface-3);
   }
-
   .blank :global(.glyph) {
     width: 64px;
     height: 64px;
     stroke-width: 1.25;
   }
-
   .wide-column {
     display: flex;
     flex-direction: column;
     height: 100%;
   }
-
   .wide-column > .orden-glyph {
     flex: none;
     margin: var(--space-2) var(--space-2) 0;
   }
-
   .wide-body {
     flex: 1;
     min-height: 0;
   }
-
   :global(.pass-card),
   :global(.pass-stack) {
     border-radius: var(--radius-md);
     background: var(--surface-2);
     overflow: hidden;
   }
-
   :global(.pass-stack) {
     display: flex;
     flex-direction: column;
   }
-
   :global(.pass-wrong) {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--danger);
   }
-
   :global(.pass-quiet) {
     margin: 0;
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   :global(.pass-buttons) {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-2);
   }
-
   :global(.pass-title) {
     margin: 0;
     font-size: var(--text-head);

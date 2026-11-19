@@ -3,7 +3,6 @@
   import type { Tab } from '../../documents/src/api'
 
   const { tab, left, top, width }: { tab: Tab; left: number; top: number; width: number } = $props()
-
   function portal(node: HTMLElement) {
     document.body.appendChild(node)
     return { destroy: () => node.remove() }
@@ -46,11 +45,9 @@
     pointer-events: none;
     will-change: transform;
   }
-
   .chip.onbar {
     background: var(--surface);
   }
-
   .label {
     flex: 1 1 0;
     min-width: 0;
@@ -59,11 +56,9 @@
     --fade: min(24px, 33%);
     mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
   }
-
   .label:dir(rtl) {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

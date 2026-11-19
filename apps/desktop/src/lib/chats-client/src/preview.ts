@@ -3,7 +3,6 @@ import { unbase64 } from '@orden/pass/bytes'
 import { isRecord, isString, invoke, isDesktop } from '../../platform/src/api'
 
 const WIDEST = 480
-
 async function smaller(bytes: Uint8Array, type: string): Promise<Uint8Array> {
   if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas !== 'function') return bytes
   try {
@@ -21,7 +20,6 @@ async function smaller(bytes: Uint8Array, type: string): Promise<Uint8Array> {
     return bytes
   }
 }
-
 function bytesOf(base64: string): Uint8Array | null {
   try {
     return unbase64(base64)
@@ -29,7 +27,6 @@ function bytesOf(base64: string): Uint8Array | null {
     return null
   }
 }
-
 export async function previewOf(
   url: string,
   upload: (bytes: Uint8Array) => Promise<string | null>,
@@ -37,7 +34,6 @@ export async function previewOf(
   if (!isDesktop || !/^https?:\/\//i.test(url)) return null
   const page = await invoke<unknown>('link_preview', { url }).catch(() => null)
   if (!isRecord(page) || !isString(page.url) || !isString(page.title) || !page.title) return null
-
   const preview: Preview = { url: page.url, title: page.title }
   if (isString(page.site) && page.site) preview.site = page.site
   if (isString(page.text) && page.text) preview.text = page.text

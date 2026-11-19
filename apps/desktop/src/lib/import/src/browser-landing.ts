@@ -19,7 +19,6 @@ interface Read {
   engine: BrowserEngine | null
   lost: string[]
 }
-
 const CONTAINERS = 'Containers stay in Firefox'
 const SAVED = (browser: string) => `Saved tab groups and the reading list stay in ${browser}`
 const WORKSPACES = (browser: string) => `${browser}’s workspaces come in as one space`
@@ -32,7 +31,6 @@ const KEPT: Partial<Record<BrowserId, (browser: string) => string>> = {
   opera: WORKSPACES,
   'opera-gx': WORKSPACES,
 }
-
 export async function landBrowser(profile: BrowserProfile, several: boolean): Promise<Space> {
   const browser = BROWSER_NAMES[profile.browser]
   const name = several ? `${browser} (${profile.name})` : browser
@@ -40,7 +38,6 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
   const nothing = `Nothing could be read out of ${browser}.`
   const read = await readProfile(profile, name)
   if (!read) throw new Error(nothing)
-
   const sidebar = await withMarks(read.sidebar, profile.browser, profile.path)
   const { spaces, lost } = sidebarImport(sidebar, new Date(), firefox ? CONTAINERS : null)
   const kept = KEPT[profile.browser]
@@ -55,23 +52,19 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
   await bringHistory(profile.browser, profile.path)
   return first
 }
-
 async function readProfile(profile: BrowserProfile, name: string): Promise<Read | null> {
   if (profile.browser === 'safari') return readSafari(name)
   if (profile.browser === 'firefox') return readFirefox(profile, name)
   if (profile.browser === 'arc') return (await readArc(profile)) ?? readChromium(profile, name)
   return readChromium(profile, name)
 }
-
 const SEARCH = 'search.json.mozlz4'
-
 async function readFirefox(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: unknown = null
   for (const file of profile.files.filter((one) => one.includes('sessionstore'))) {
     session = mozJson(await browserFile(profile, file))
     if (session) break
   }
-
   let bookmarks: unknown = null
   if (profile.files.includes('places.sqlite')) {
     bookmarks = await invoke<string>('read_firefox_places', { profile: profile.path })
@@ -80,17 +73,13 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   }
   const backup = profile.files.find((one) => one.startsWith('bookmarkbackups/'))
   if (!bookmarks && backup) bookmarks = mozJson(await browserFile(profile, backup))
-
   if (!session && !bookmarks) return null
   const engine = profile.files.includes(SEARCH) ? mozillaEngine(mozJson(await browserFile(profile, SEARCH))) : null
   return { sidebar: firefoxSidebar(session, bookmarks, name), engine, lost: [] }
 }
-
 const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
-
 const isSession = (file: string): boolean =>
   file.startsWith('Sessions') || file === 'Current Session' || file === 'Last Session'
-
 async function readChromium(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: SnssSession | null = null
   let locked = false
@@ -103,13 +92,11 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
       break
     }
   }
-
   const [bookmarks, account] = await Promise.all(
     BOOKMARK_FILES.map(async (file) =>
       profile.files.includes(file) ? jsonOf(await browserFile(profile, file)) : null,
     ),
   )
-
   if (!session && !bookmarks && !account) return null
   const lost =
     !session && locked
@@ -121,23 +108,19 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
     lost,
   }
 }
-
 async function readArc(profile: BrowserProfile): Promise<Read | null> {
   const said = await invoke<string>('read_arc_sidebar', { profile: profile.path })
     .then((text) => JSON.parse(text) as unknown)
     .catch(() => null)
   const arc = arcSidebar(said, profile.path.split(/[\\/]/).pop() ?? 'Default')
   if (!arc) return null
-
   const lost = arc.stayed ? ['Easels and notes stay in Arc'] : []
   return { sidebar: arc.sidebar, engine: await preferencesEngine(profile), lost }
 }
-
 async function preferencesEngine(profile: BrowserProfile): Promise<BrowserEngine | null> {
   if (!profile.files.includes('Preferences')) return null
   return chromiumEngine(jsonOf(await browserFile(profile, 'Preferences')))
 }
-
 function jsonOf(bytes: Uint8Array | null): unknown {
   if (!bytes) return null
   try {
@@ -146,9 +129,7 @@ function jsonOf(bytes: Uint8Array | null): unknown {
     return null
   }
 }
-
 const NO_ACCESS = 'no access'
-
 async function readSafari(name: string): Promise<Read | null> {
   let said: string
   try {
@@ -182,7 +163,6 @@ async function readSafari(name: string): Promise<Read | null> {
     lost: [],
   }
 }
-
 function mozJson(bytes: Uint8Array | null): unknown {
   if (!bytes) return null
   try {

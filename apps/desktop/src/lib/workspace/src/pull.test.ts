@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const refreshing = vi.hoisted(() => ({ calls: 0, answer: (): Promise<void> => Promise.resolve() }))
 vi.mock('./refresh', () => ({
   refreshHere: () => {
@@ -15,32 +14,26 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: screen,
 }))
-
 import { CLAIM } from './drawer.svelte'
 import { armed, claimsPull, pull, pulled, REACH } from './pull.svelte'
-
 beforeEach(() => {
   localStorage.clear()
   pull.at = 0
 })
-
 describe('whether a movement is this gesture', () => {
   test('down, and further down than sideways', () => {
     expect(claimsPull(0, CLAIM)).toBe(true)
     expect(claimsPull(4, 40)).toBe(true)
   })
-
   test('not a scroll that went nowhere', () => {
     expect(claimsPull(0, CLAIM - 1)).toBe(false)
     expect(claimsPull(0, 0)).toBe(false)
   })
-
   test('and never the drawer, which is the sideways one', () => {
     expect(claimsPull(60, 20)).toBe(false)
     expect(claimsPull(-60, 20)).toBe(false)
   })
 })
-
 describe('how far the surface follows', () => {
   test('less than the finger, and by less and less', () => {
     const near = pulled(20)
@@ -50,18 +43,15 @@ describe('how far the surface follows', () => {
     expect(far).toBeGreaterThan(near)
     expect(pulled(1000)).toBe(pulled(4000))
   })
-
   test('nothing at all upwards', () => {
     expect(pulled(0)).toBe(0)
     expect(pulled(-40)).toBe(0)
   })
-
   test('and the reach is where letting go means something', () => {
     expect(armed(REACH - 1)).toBe(false)
     expect(armed(REACH)).toBe(true)
   })
 })
-
 describe('what it runs', () => {
   test('always a reload, with no choice of another left from an older build (#2022)', async () => {
     localStorage.setItem('orden:pull', 'app.palette')
@@ -73,7 +63,6 @@ describe('what it runs', () => {
     expect(refreshing.calls).toBe(1)
   })
 })
-
 describe('a pull let go of (#1065)', () => {
   test('reloads where the reader is, the mark turning until it is done', async () => {
     let finish: () => void = () => undefined
@@ -90,7 +79,6 @@ describe('a pull let go of (#1065)', () => {
     expect(pull.refreshing).toBe(false)
     expect(pull.failed).toBe(false)
   })
-
   test('says so quietly where the reload did not finish', async () => {
     refreshing.answer = () => Promise.reject(new Error('offline'))
     await pull.press()
@@ -98,7 +86,6 @@ describe('a pull let go of (#1065)', () => {
     expect(pull.failed).toBe(true)
   })
 })
-
 describe('a pull never over the reader’s words (#1065)', () => {
   function pulledDown(): void {
     const surface = new EventTarget() as unknown as HTMLElement
@@ -116,13 +103,11 @@ describe('a pull never over the reader’s words (#1065)', () => {
     stop()
   }
   let lastAt = 0
-
   test('follows the finger where the keyboard is down', () => {
     screen.typing = false
     pulledDown()
     expect(lastAt).toBeGreaterThan(0)
   })
-
   test('and never while the keyboard is up', () => {
     screen.typing = true
     pulledDown()

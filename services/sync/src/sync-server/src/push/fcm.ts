@@ -6,7 +6,6 @@ interface ServiceAccount {
   private_key: string
   project_id: string
 }
-
 function account(json: string): ServiceAccount | null {
   try {
     const read = JSON.parse(json) as Partial<ServiceAccount>
@@ -15,12 +14,9 @@ function account(json: string): ServiceAccount | null {
     return null
   }
 }
-
 let held: { token: string; until: number; for: string } | null = null
-
 async function accessToken(service: ServiceAccount, now: number, send: typeof fetch): Promise<string | null> {
   if (held?.for === service.client_email && held.until > now + 60_000) return held.token
-
   const iat = Math.floor(now / 1000)
   const assertion = await signedToken(
     { alg: 'RS256', typ: 'JWT' },
@@ -51,7 +47,6 @@ async function accessToken(service: ServiceAccount, now: number, send: typeof fe
   }
   return said.access_token
 }
-
 export async function sendFcm(
   token: string,
   message: Record<string, string>,
@@ -63,7 +58,6 @@ export async function sendFcm(
   if (!service) return 'off'
   const access = await accessToken(service, options.now, send)
   if (!access) return 'busy'
-
   const answer = await send(
     `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(service.project_id)}/messages:send`,
     {
@@ -80,7 +74,6 @@ export async function sendFcm(
   const said = await answer.text()
   return answer.status === 400 && /registration token|UNREGISTERED/i.test(said) ? 'gone' : 'failed'
 }
-
 export function forgetAccess() {
   held = null
 }

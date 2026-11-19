@@ -4,21 +4,18 @@ import type { PlaneMarks } from '@orden/scan/canvas'
 
 const NAME = 'orden'
 const VERSION = 2
-
 export interface FileRow {
   path: string
   content: string
   modified: number
   created: number
 }
-
 export interface AssetRow {
   path: string
   type: string
   data: string
   modified: number
 }
-
 export interface SnapshotRow {
   id?: number
   notePath: string
@@ -27,7 +24,6 @@ export interface SnapshotRow {
   size: number
   source?: string
 }
-
 interface StatRow {
   path: string
   modified: number
@@ -35,40 +31,32 @@ interface StatRow {
   size?: number
   plane?: PlaneMarks
 }
-
 let open: Promise<IDBDatabase> | null = null
 let named: Promise<string> | null = null
-
 function database(): Promise<IDBDatabase> {
   if (open) return open
-
   named ??= databaseName(FORMER_NAME, NAME)
   const opening: Promise<IDBDatabase> = named.then((name) => opened(opening, name))
   open = opening
   return opening
 }
-
 function opened(opening: Promise<IDBDatabase>, name: string): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(name, VERSION)
-
     request.onupgradeneeded = () => {
       const db = request.result
       if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'path' })
       if (!db.objectStoreNames.contains('assets')) db.createObjectStore('assets', { keyPath: 'path' })
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
-
       if (!db.objectStoreNames.contains('snapshots')) {
         const store = db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true })
         store.createIndex('notePath', 'notePath')
       }
-
       if (!db.objectStoreNames.contains('stats')) {
         db.createObjectStore('stats', { keyPath: 'path' })
         fillStats(request.transaction)
       }
     }
-
     request.onsuccess = () => {
       const db = request.result
       db.onversionchange = () => {
@@ -84,11 +72,9 @@ function opened(opening: Promise<IDBDatabase>, name: string): Promise<IDBDatabas
     }
   })
 }
-
 function lost(was: Promise<IDBDatabase>) {
   if (open === was) open = null
 }
-
 async function begun(stores: string | readonly string[], mode: IDBTransactionMode): Promise<IDBTransaction> {
   const opening = database()
   const db = await opening
@@ -101,37 +87,30 @@ async function begun(stores: string | readonly string[], mode: IDBTransactionMod
     return again.transaction(typeof stores === 'string' ? stores : [...stores], mode)
   }
 }
-
 function fillStats(change: IDBTransaction | null) {
   if (!change) return
-
   const stats = change.objectStore('stats')
-
   for (const name of ['files', 'assets'] as const) {
     const cursor = change.objectStore(name).openCursor()
     cursor.onsuccess = () => {
       const at = cursor.result
       if (!at) return
-
       const row = at.value as FileRow | AssetRow
       stats.put(statOf(row))
       at.continue()
     }
   }
 }
-
 function statOf(row: FileRow | AssetRow): StatRow {
   const created = 'created' in row ? row.created : row.modified
   const size = 'content' in row ? row.content.length : row.data.length
   return { path: row.path, modified: row.modified, created, size }
 }
-
 function run<T>(store: string, mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDBRequest): Promise<T> {
   return begun(store, mode).then(
     (transaction) =>
       new Promise<T>((resolve, reject) => {
         const request = action(transaction.objectStore(store))
-
         if (mode === 'readonly') request.onsuccess = () => resolve(request.result as T)
         else transaction.oncomplete = () => resolve(request.result as T)
         transaction.onabort = () => reject(transaction.error ?? request.error ?? new Error(`${store} was rolled back`))
@@ -139,17 +118,14 @@ function run<T>(store: string, mode: IDBTransactionMode, action: (store: IDBObje
       }),
   )
 }
-
 function batch(stores: readonly string[], queue: (transaction: IDBTransaction) => void): Promise<void> {
   const named = stores.join(' and ')
-
   return begun(stores, 'readwrite').then(
     (transaction) =>
       new Promise<void>((resolve, reject) => {
         transaction.oncomplete = () => resolve()
         transaction.onabort = () => reject(transaction.error ?? new Error(`${named} was rolled back`))
         transaction.onerror = () => reject(transaction.error ?? new Error(`${named} failed`))
-
         try {
           queue(transaction)
         } catch (error) {
@@ -159,48 +135,38 @@ function batch(stores: readonly string[], queue: (transaction: IDBTransaction) =
       }),
   )
 }
-
 function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
   return begun(store, 'readonly').then(
     (transaction) =>
       new Promise<void>((resolve, reject) => {
         const request = transaction.objectStore(store).openCursor()
-
         request.onsuccess = () => {
           const cursor = request.result
           if (!cursor) return
-
           visit(cursor.value as FileRow)
           cursor.continue()
         }
-
         transaction.oncomplete = () => resolve()
         transaction.onabort = () => reject(transaction.error ?? new Error(`${store} was rolled back`))
         transaction.onerror = () => reject(transaction.error ?? new Error(`${store} failed`))
       }),
   )
 }
-
 export interface RowChange {
   written: string[]
   gone: string[]
 }
-
 const CHANNEL = 'orden:rows'
 let channel: BroadcastChannel | null = null
-
 function bus(): BroadcastChannel | null {
   if (typeof BroadcastChannel !== 'function') return null
   return (channel ??= new BroadcastChannel(CHANNEL))
 }
-
 function announce(written: string[], gone: string[]): void {
   bus()?.postMessage({ written, gone } satisfies RowChange)
 }
-
 function isRowChange(value: unknown): value is RowChange {
   if (typeof value !== 'object' || value === null) return false
-
   const shape = value as { written?: unknown; gone?: unknown }
   return (
     Array.isArray(shape.written) &&
@@ -209,18 +175,14 @@ function isRowChange(value: unknown): value is RowChange {
     shape.gone.every((path) => typeof path === 'string')
   )
 }
-
 export function watchRows(heard: (change: RowChange) => void): void {
   const listening = bus()
   if (!listening) return
-
   listening.onmessage = (event: MessageEvent<unknown>) => {
     if (isRowChange(event.data)) heard(event.data)
   }
 }
-
 const SLICE = 500
-
 export async function inSlices<T>(
   read: (after: string | null, most: number) => Promise<T[]>,
   keyOf: (row: T) => string,
@@ -228,27 +190,21 @@ export async function inSlices<T>(
 ): Promise<T[]> {
   const out: T[] = []
   let after: string | null = null
-
   for (;;) {
     const slice = await read(after, most)
     out.push(...slice)
-
     const last = slice.at(-1)
     if (slice.length < most || last === undefined) return out
-
     after = keyOf(last)
     await breathe()
   }
 }
-
 function slice<T>(store: string, after: string | null, most: number): Promise<T[]> {
   const range = after === null ? undefined : IDBKeyRange.lowerBound(after, true)
   return run<T[]>(store, 'readonly', (one) => one.getAll(range, most))
 }
-
 const WITH_STATS = ['files', 'stats'] as const
 const ASSETS_WITH_STATS = ['assets', 'stats'] as const
-
 const ownFiles = {
   get: (path: string) => run<FileRow | undefined>('files', 'readonly', (s) => s.get(path)),
   paths: () => run<string[]>('files', 'readonly', (s) => s.getAllKeys()),
@@ -283,12 +239,10 @@ const ownFiles = {
     return batch(WITH_STATS, (change) => {
       const store = change.objectStore('files')
       const listing = change.objectStore('stats')
-
       for (const row of rows) {
         store.put(row)
         listing.put(statOf(row))
       }
-
       for (const path of left) {
         store.delete(path)
         listing.delete(path)
@@ -296,7 +250,6 @@ const ownFiles = {
     }).then(() => announce(written, left))
   },
 }
-
 const ownAssets = {
   get: (path: string) => run<AssetRow | undefined>('assets', 'readonly', (s) => s.get(path)),
   paths: () => run<string[]>('assets', 'readonly', (s) => s.getAllKeys()),
@@ -311,7 +264,6 @@ const ownAssets = {
       change.objectStore('stats').delete(path)
     }),
 }
-
 const ownStats = {
   holds: async (path: string) => {
     const at = await run<IDBValidKey | undefined>('stats', 'readonly', (s) => s.getKey(path))
@@ -327,14 +279,12 @@ const ownStats = {
   learn: (found: readonly { path: string; modified: number; size: number; plane?: PlaneMarks }[]) =>
     batch(['stats'], (change) => {
       const listing = change.objectStore('stats')
-
       for (const one of found) {
         const asked = listing.get(one.path)
         asked.onsuccess = () => {
           const row = asked.result as StatRow | undefined
           if (row?.modified !== one.modified) return
           if (row.size !== undefined && (row.plane || !one.plane)) return
-
           listing.put({
             ...row,
             size: row.size ?? one.size,
@@ -344,7 +294,6 @@ const ownStats = {
       }
     }),
 }
-
 export interface Trashed {
   id: string
   kind: string
@@ -354,7 +303,6 @@ export interface Trashed {
   apart?: boolean
   arrived?: boolean
 }
-
 export interface TreeRows {
   move(from: string, to: string): Promise<void>
   remove(path: string): Promise<void>
@@ -366,34 +314,27 @@ export interface TreeRows {
     purge(id: string): Promise<void>
   }
 }
-
 export interface Rows {
   files: typeof ownFiles
   assets: typeof ownAssets
   stats: typeof ownStats
   tree?: TreeRows
 }
-
 const OWN: Rows = { files: ownFiles, assets: ownAssets, stats: ownStats }
 const OWN_HERE: Rows | null = native() ? null : OWN
-
 function native(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 }
-
 const mounts = new Map<string, Rows>()
-
 export function mountRows(root: string, rows: Rows): () => void {
   mounts.set(root, rows)
   return () => {
     if (mounts.get(root) === rows) mounts.delete(root)
   }
 }
-
 function under(root: string, path: string): boolean {
   return path === root || path.startsWith(root.endsWith('/') ? root : `${root}/`)
 }
-
 function mountAt(path: string): { root: string; rows: Rows } | null {
   let found: { root: string; rows: Rows } | null = null
   for (const [root, rows] of mounts) {
@@ -401,37 +342,30 @@ function mountAt(path: string): { root: string; rows: Rows } | null {
   }
   return found
 }
-
 function rowsAt(path: string): Rows {
   const found = mountAt(path)?.rows ?? OWN_HERE
   if (!found) throw new Error(`${path} is in no space kept here`)
   return found
 }
-
 export function treeAt(from: string, to: string = from): TreeRows | null {
   const one = mountAt(from)
   if (!one?.rows.tree || mountAt(to)?.root !== one.root) return null
   return one.rows.tree
 }
-
 export function trees(): TreeRows[] {
   return [...mounts.values()].flatMap((rows) => (rows.tree ? [rows.tree] : []))
 }
-
 export function keepsOwnRows(): boolean {
   return OWN_HERE !== null
 }
-
 function everyRows(): Rows[] {
   return [...(OWN_HERE ? [OWN_HERE] : []), ...mounts.values()]
 }
-
 async function together<T>(read: (rows: Rows) => Promise<T[]>, keyOf: (row: T) => string): Promise<T[]> {
   const lists = await Promise.all(everyRows().map(read))
   if (lists.length === 1) return lists[0] ?? []
   return lists.flat().sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0))
 }
-
 function byRows<T>(items: readonly T[], pathOf: (item: T) => string): Map<Rows, T[]> {
   const out = new Map<Rows, T[]>()
   for (const item of items) {
@@ -442,9 +376,7 @@ function byRows<T>(items: readonly T[], pathOf: (item: T) => string): Map<Rows, 
   }
   return out
 }
-
 const own = (path: string) => path
-
 export const files: Rows['files'] = {
   get: (path) => rowsAt(path).files.get(path),
   paths: () => together((rows) => rows.files.paths(), own),
@@ -467,14 +399,12 @@ export const files: Rows['files'] = {
     }
   },
 }
-
 export const assets: Rows['assets'] = {
   get: (path) => rowsAt(path).assets.get(path),
   paths: () => together((rows) => rows.assets.paths(), own),
   put: (row) => rowsAt(row.path).assets.put(row),
   remove: (path) => rowsAt(path).assets.remove(path),
 }
-
 export const stats: Rows['stats'] = {
   holds: async (path) => {
     if (await rowsAt(path).stats.holds(path)) return true
@@ -492,14 +422,12 @@ export const stats: Rows['stats'] = {
     for (const [rows, some] of byRows(found, (one) => one.path)) await rows.stats.learn(some)
   },
 }
-
 export const meta = {
   get: (key: string) => run<string | undefined>('meta', 'readonly', (s) => s.get(key)),
   put: (key: string, value: string) => run<IDBValidKey>('meta', 'readwrite', (s) => s.put(value, key)),
   remove: (key: string) => run<undefined>('meta', 'readwrite', (s) => s.delete(key)),
   keys: () => run<IDBValidKey[]>('meta', 'readonly', (s) => s.getAllKeys()),
 }
-
 export const snapshots = {
   put: (row: SnapshotRow) => run<IDBValidKey>('snapshots', 'readwrite', (s) => s.put(row)),
   get: (id: number) => run<SnapshotRow | undefined>('snapshots', 'readonly', (s) => s.get(id)),
@@ -513,5 +441,4 @@ export const snapshots = {
     run<SnapshotRow[]>('snapshots', 'readonly', (s) => s.index('notePath').getAll(notePath)),
   all: () => run<SnapshotRow[]>('snapshots', 'readonly', (s) => s.getAll()),
 }
-
 export const KEEP = '.keep'

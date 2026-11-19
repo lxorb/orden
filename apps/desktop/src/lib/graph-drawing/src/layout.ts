@@ -16,7 +16,6 @@ const DEEPEST = 24
 const IN_A_LEAF = 4
 const SPIRAL = Math.PI * (3 - Math.sqrt(5))
 const SPIRAL_STEP = 12
-
 function random(seed: number): () => number {
   let state = seed | 0
   return () => {
@@ -26,7 +25,6 @@ function random(seed: number): () => number {
     return ((z ^ (z >>> 14)) >>> 0) / 4294967296
   }
 }
-
 export interface LayoutOptions {
   seed?: number
   spread?: number
@@ -35,35 +33,29 @@ export interface LayoutOptions {
   push?: number
   from?: ReadonlyMap<string, { x: number; y: number }> | undefined
 }
-
 export class Layout {
   readonly x: Float64Array
   readonly y: Float64Array
-
   private readonly vx: Float64Array
   private readonly vy: Float64Array
   private readonly held: Uint8Array
   private readonly heldX: Float64Array
   private readonly heldY: Float64Array
-
   private readonly from: Int32Array
   private readonly to: Int32Array
   private readonly pull: Float64Array
   private readonly bias: Float64Array
-
   private readonly count: number
   private warmth = 1
   private readonly repulsion: number
   private readonly gravity: number
   private readonly distance: number
-
   constructor(graph: NoteGraph, options: LayoutOptions = {}) {
     const count = graph.nodes.length
     this.count = count
     this.repulsion = -Math.abs(options.push ?? -REPULSION) * (options.spread ?? 1)
     this.gravity = options.gather === false ? 0 : GRAVITY
     this.distance = options.distance ?? DISTANCE
-
     this.x = new Float64Array(count)
     this.y = new Float64Array(count)
     this.vx = new Float64Array(count)
@@ -71,7 +63,6 @@ export class Layout {
     this.held = new Uint8Array(count)
     this.heldX = new Float64Array(count)
     this.heldY = new Float64Array(count)
-
     const next = random(options.seed ?? 1)
     for (let one = 0; one < count; one++) {
       const radius = SPIRAL_STEP * Math.sqrt(0.5 + one)
@@ -79,34 +70,27 @@ export class Layout {
       this.x[one] = radius * Math.cos(angle)
       this.y[one] = radius * Math.sin(angle)
     }
-
     if (options.from?.size) this.carry(graph, options.from, next)
-
     const edges = graph.edges.length
     this.from = new Int32Array(edges)
     this.to = new Int32Array(edges)
     this.pull = new Float64Array(edges)
     this.bias = new Float64Array(edges)
-
     for (let edge = 0; edge < edges; edge++) {
       const one = graph.edges[edge]
       if (!one) continue
-
       const here = Math.max(1, graph.nodes[one.a]?.degree ?? 1)
       const there = Math.max(1, graph.nodes[one.b]?.degree ?? 1)
-
       this.from[edge] = one.a
       this.to[edge] = one.b
       this.pull[edge] = 1 / Math.min(here, there)
       this.bias[edge] = here / (here + there)
     }
-
     this.stack = new Int32Array(4 * DEEPEST + 8)
     this.order = new Int32Array(count)
     this.scratch = new Int32Array(count)
     this.growCells(Math.max(8, 4 * Math.ceil(count / IN_A_LEAF) + 8))
   }
-
   private carry(graph: NoteGraph, from: ReadonlyMap<string, { x: number; y: number }>, next: () => number) {
     const known = new Uint8Array(this.count)
     for (const [one, node] of graph.nodes.entries()) {
@@ -117,7 +101,6 @@ export class Layout {
       known[one] = 1
     }
     if (!known.includes(1)) return
-
     for (const edge of graph.edges) {
       for (const [one, other] of [
         [edge.a, edge.b],
@@ -132,11 +115,9 @@ export class Layout {
     }
     this.warmth = CARRIED_WARMTH
   }
-
   get settled(): boolean {
     return this.warmth < COLD || this.count === 0
   }
-
   tick(times = 1) {
     for (let step = 0; step < times && !this.settled; step++) {
       this.warmth -= this.warmth * COOLING
@@ -146,17 +127,13 @@ export class Layout {
       this.move()
     }
   }
-
   settle(budget: number): boolean {
     const until = performance.now() + budget
     while (!this.settled && performance.now() < until) this.tick(SETTLING_TICKS)
-
     return this.settled
   }
-
   hold(node: number, x: number, y: number) {
     if (node < 0 || node >= this.count) return
-
     this.held[node] = 1
     this.heldX[node] = x
     this.heldY[node] = y
@@ -164,22 +141,17 @@ export class Layout {
     this.y[node] = y
     if (this.warmth < DRAG_WARMTH) this.warmth = DRAG_WARMTH
   }
-
   private spring(warmth: number) {
     const { x, y, vx, vy, from, to, pull, bias, distance } = this
-
     for (let edge = 0; edge < from.length; edge++) {
       const a = from[edge] ?? 0
       const b = to[edge] ?? 0
-
       let dx = (x[b] ?? 0) + (vx[b] ?? 0) - ((x[a] ?? 0) + (vx[a] ?? 0))
       let dy = (y[b] ?? 0) + (vy[b] ?? 0) - ((y[a] ?? 0) + (vy[a] ?? 0))
       const length = Math.sqrt(dx * dx + dy * dy) || NEAREST_SQUARED
-
       const force = ((length - distance) / length) * warmth * (pull[edge] ?? 1)
       dx *= force
       dy *= force
-
       const share = bias[edge] ?? 0.5
       vx[b] = (vx[b] ?? 0) - dx * share
       vy[b] = (vy[b] ?? 0) - dy * share
@@ -187,21 +159,16 @@ export class Layout {
       vy[a] = (vy[a] ?? 0) + dy * (1 - share)
     }
   }
-
   private gather(warmth: number) {
     const { x, y, vx, vy, count } = this
-
     if (this.gravity === 0) return
-
     for (let one = 0; one < count; one++) {
       vx[one] = (vx[one] ?? 0) - (x[one] ?? 0) * this.gravity * warmth
       vy[one] = (vy[one] ?? 0) - (y[one] ?? 0) * this.gravity * warmth
     }
   }
-
   private move() {
     const { x, y, vx, vy, held, heldX, heldY, count } = this
-
     for (let one = 0; one < count; one++) {
       if (held[one]) {
         x[one] = heldX[one] ?? 0
@@ -210,18 +177,15 @@ export class Layout {
         vy[one] = 0
         continue
       }
-
       vx[one] = (vx[one] ?? 0) * KEPT_SPEED
       vy[one] = (vy[one] ?? 0) * KEPT_SPEED
       x[one] = (x[one] ?? 0) + (vx[one] ?? 0)
       y[one] = (y[one] ?? 0) + (vy[one] ?? 0)
     }
   }
-
   private readonly order: Int32Array
   private readonly scratch: Int32Array
   private readonly stack: Int32Array
-
   private first = new Int32Array(0)
   private inside = new Int32Array(0)
   private child = new Int32Array(0)
@@ -230,10 +194,8 @@ export class Layout {
   private middleY = new Float64Array(0)
   private width = new Float64Array(0)
   private squares = 0
-
   private growCells(wanted: number) {
     if (this.first.length >= wanted) return
-
     const size = Math.max(wanted, this.first.length * 2)
     const wider = (held: Int32Array) => {
       const grown = new Int32Array(size)
@@ -245,7 +207,6 @@ export class Layout {
       grown.set(held)
       return grown
     }
-
     this.first = wider(this.first)
     this.inside = wider(this.inside)
     this.child = wider(this.child)
@@ -254,13 +215,10 @@ export class Layout {
     this.middleY = widerFloat(this.middleY)
     this.width = widerFloat(this.width)
   }
-
   private push(warmth: number) {
     const { x, y, vx, vy, count, order, stack, child, first, inside, mass } = this
     if (count < 2) return
-
     this.divide()
-
     for (let one = 0; one < count; one++) {
       const px = x[one] ?? 0
       const py = y[one] ?? 0
@@ -268,18 +226,15 @@ export class Layout {
       let fy = 0
       let top = 0
       stack[top++] = 0
-
       while (top > 0) {
         const square = stack[--top] ?? 0
         const weight = mass[square] ?? 0
         if (weight === 0) continue
-
         const dx = (this.middleX[square] ?? 0) - px
         const dy = (this.middleY[square] ?? 0) - py
         let far = dx * dx + dy * dy
         const side = this.width[square] ?? 0
         const base = child[square] ?? -1
-
         if (base >= 0 && side * side >= THETA_SQUARED * far) {
           stack[top++] = base
           stack[top++] = base + 1
@@ -287,46 +242,37 @@ export class Layout {
           stack[top++] = base + 3
           continue
         }
-
         if (base < 0) {
           const start = first[square] ?? 0
           const held = inside[square] ?? 0
-
           for (let step = 0; step < held; step++) {
             const other = order[start + step] ?? 0
             if (other === one) continue
-
             const ox = (x[other] ?? 0) - px
             const oy = (y[other] ?? 0) - py
             let apart = ox * ox + oy * oy
             if (apart < NEAREST_SQUARED) apart = NEAREST_SQUARED
-
             const force = (this.repulsion * warmth) / apart
             fx += ox * force
             fy += oy * force
           }
           continue
         }
-
         if (far < NEAREST_SQUARED) far = NEAREST_SQUARED
         const force = (this.repulsion * weight * warmth) / far
         fx += dx * force
         fy += dy * force
       }
-
       vx[one] = (vx[one] ?? 0) + fx
       vy[one] = (vy[one] ?? 0) + fy
     }
   }
-
   private divide() {
     const { x, y, count, order } = this
-
     let least = Infinity
     let most = -Infinity
     let lowest = Infinity
     let highest = -Infinity
-
     for (let one = 0; one < count; one++) {
       order[one] = one
       const px = x[one] ?? 0
@@ -336,30 +282,24 @@ export class Layout {
       if (py < lowest) lowest = py
       if (py > highest) highest = py
     }
-
     const side = Math.max(most - least, highest - lowest, 1) * 1.01
     this.squares = 1
     this.build(0, 0, count, least, lowest, side, 0)
   }
-
   private build(square: number, low: number, high: number, x0: number, y0: number, side: number, depth: number) {
     const { order, scratch, x, y } = this
-
     this.first[square] = low
     this.inside[square] = high - low
     this.width[square] = side
     this.mass[square] = high - low
-
     if (high - low === 0) {
       this.child[square] = -1
       this.middleX[square] = x0
       this.middleY[square] = y0
       return
     }
-
     if (high - low <= IN_A_LEAF || depth >= DEEPEST) {
       this.child[square] = -1
-
       let sumX = 0
       let sumY = 0
       for (let step = low; step < high; step++) {
@@ -367,16 +307,13 @@ export class Layout {
         sumX += x[one] ?? 0
         sumY += y[one] ?? 0
       }
-
       this.middleX[square] = sumX / (high - low)
       this.middleY[square] = sumY / (high - low)
       return
     }
-
     const half = side / 2
     const midX = x0 + half
     const midY = y0 + half
-
     let inTopLeft = 0
     let inTopRight = 0
     let inBottomLeft = 0
@@ -387,17 +324,14 @@ export class Layout {
       else if (which === 1) inTopRight++
       else if (which === 2) inBottomLeft++
     }
-
     const startTopLeft = low
     const startTopRight = startTopLeft + inTopLeft
     const startBottomLeft = startTopRight + inTopRight
     const startBottomRight = startBottomLeft + inBottomLeft
-
     let atTopLeft = startTopLeft
     let atTopRight = startTopRight
     let atBottomLeft = startBottomLeft
     let atBottomRight = startBottomRight
-
     for (let step = low; step < high; step++) {
       const one = order[step] ?? 0
       const which = quadrant(x[one] ?? 0, y[one] ?? 0, midX, midY)
@@ -407,12 +341,10 @@ export class Layout {
       else scratch[atBottomRight++] = one
     }
     for (let step = low; step < high; step++) order[step] = scratch[step] ?? 0
-
     this.growCells(this.squares + 4)
     const base = this.squares
     this.squares += 4
     this.child[square] = base
-
     const starts = [startTopLeft, startTopRight, startBottomLeft, startBottomRight]
     const ends = [startTopRight, startBottomLeft, startBottomRight, high]
     for (let which = 0; which < 4; which++) {
@@ -426,7 +358,6 @@ export class Layout {
         depth + 1,
       )
     }
-
     let sumX = 0
     let sumY = 0
     for (let which = 0; which < 4; which++) {
@@ -434,12 +365,10 @@ export class Layout {
       sumX += (this.middleX[base + which] ?? 0) * weight
       sumY += (this.middleY[base + which] ?? 0) * weight
     }
-
     const weight = this.mass[square] ?? 1
     this.middleX[square] = sumX / weight
     this.middleY[square] = sumY / weight
   }
 }
-
 const quadrant = (px: number, py: number, midX: number, midY: number): number =>
   (px >= midX ? 1 : 0) + (py >= midY ? 2 : 0)

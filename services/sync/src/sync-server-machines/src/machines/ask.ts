@@ -14,7 +14,6 @@ export type MachineAsk =
   | 'resize'
   | 'host'
   | 'sessions'
-
 export async function askMachine(
   env: Env,
   id: string,
@@ -23,10 +22,8 @@ export async function askMachine(
 ): Promise<Response | null> {
   const namespace = env.MACHINES
   if (!namespace) return null
-
   const place =
     typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_ORDEND ? namespace.jurisdiction('eu') : namespace
-
   for (let asked = 0; asked < 2; asked++) {
     try {
       const machine = place.get(place.idFromName(id))
@@ -41,10 +38,8 @@ export async function askMachine(
   }
   return null
 }
-
 export async function eraseMachines(env: Env, ids: readonly string[]): Promise<string[]> {
   if (!env.MACHINES) return [...ids]
-
   const emptied: string[] = []
   for (const round of chunks(ids, 20)) {
     const heard = await Promise.all(round.map((id) => askMachine(env, id, 'erase')))

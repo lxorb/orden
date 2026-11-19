@@ -12,7 +12,6 @@ export type Item =
       twist: 'open' | 'shut' | null
     }
   | { kind: 'add'; id: string; group: Group | null }
-
 export interface ListOptions {
   grouped: boolean
   bareNone?: boolean
@@ -22,9 +21,7 @@ export interface ListOptions {
   adding: boolean
   parentOf?: (row: Row) => string | null
 }
-
 export const foldKey = (row: Row): string => `${row.space}\n${rowId(row)}`
-
 function tree(
   rows: readonly Row[],
   shut: ReadonlySet<string>,
@@ -48,7 +45,6 @@ function tree(
     if (siblings) siblings.push(row)
     else children.set(parentKey, [row])
   }
-
   const reached = new Set<string>()
   const reach = (row: Row) => {
     const key = keyOf(row)
@@ -62,7 +58,6 @@ function tree(
     roots.push(row)
     reach(row)
   }
-
   const out: { row: Row; depth: number; parent: boolean }[] = []
   const placed = new Set<string>()
   const walk = (row: Row, depth: number) => {
@@ -76,7 +71,6 @@ function tree(
   for (const root of roots) if (!placed.has(keyOf(root))) walk(root, 0)
   return out
 }
-
 export function distinctKeys(): (row: Row, group: string) => string {
   const given = new Set<string>()
   return (row, group) => {
@@ -86,9 +80,7 @@ export function distinctKeys(): (row: Row, group: string) => string {
     return key
   }
 }
-
 export const everyRow = (groups: readonly Group[]): Row[] => [...new Set(groups.flatMap((group) => group.rows))]
-
 export function listItems(groups: readonly Group[], options: ListOptions): Item[] {
   const out: Item[] = []
   const keyOfRow = distinctKeys()
@@ -115,7 +107,6 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
   }
   return out
 }
-
 export function laneKeys(groups: readonly Group[], order: readonly Group['key'][] = []): Group['key'][] {
   const seen = new Map<string, Group['key']>()
   for (const group of groups) for (const one of group.sub ?? []) seen.set(groupName(one.key), one.key)
@@ -123,7 +114,6 @@ export function laneKeys(groups: readonly Group[], order: readonly Group['key'][
   const placed = new Set(ordered.map(groupName))
   return [...ordered, ...[...seen].filter(([name]) => !placed.has(name)).map(([, key]) => key)]
 }
-
 export function withEveryDay(groups: readonly Group[], from: string, through: string): Group[] {
   const days = new Map<string, Group>()
   const out: Group[] = []
@@ -140,7 +130,6 @@ export function withEveryDay(groups: readonly Group[], from: string, through: st
   }
   return out
 }
-
 export const withinDays = (groups: readonly Group[], from: string, through: string): Group[] =>
   groups.filter((group) => {
     const day = dayIn(group.key)

@@ -27,7 +27,6 @@ describe('the providers’ counts', () => {
       ),
     ).toEqual({ input: 1_000, cached: 900, output: 5, reasoning: 0, window: 200_000 })
   })
-
   test('what Claude spent compacting is its iterations, not its top level', () => {
     expect(
       compactionSpent({
@@ -39,7 +38,6 @@ describe('the providers’ counts', () => {
       }),
     ).toEqual({ input: 180_000, output: 3_500 })
   })
-
   test('OpenAI’s shapes, cached and reasoning tokens included', () => {
     expect(
       responsesUsage(
@@ -61,7 +59,6 @@ describe('the providers’ counts', () => {
     })
   })
 })
-
 describe('the ring', () => {
   test('is filled by what was sent and what came back, against a window somebody said', () => {
     const usage = { input: 400_000, cached: 0, output: 12_000, reasoning: 0, window: 1_000_000 }
@@ -71,7 +68,6 @@ describe('the ring', () => {
     expect(warns(usage)).toBe(false)
     expect(warns(usage, 400_000)).toBe(true)
   })
-
   test('compacts at Claude Code’s 967K of 1M, a fifth below a small window, as set, or never', () => {
     expect(compactsAt(1_000_000)).toBe(967_000)
     expect(compactsAt(8_000)).toBe(6_400)
@@ -79,7 +75,6 @@ describe('the ring', () => {
     expect(compactsAt(200_000, 100_000)).toBe(100_000)
     expect(compactsAt(200_000, 'off')).toBeNull()
   })
-
   test('the next send compacts first when it would pass the tick, and not on a fresh thread', () => {
     const near = { input: 960_000, cached: 0, output: 5_000, reasoning: 0, window: 1_000_000 }
     expect(shouldCompact(near, 3_000)).toBe(true)
@@ -88,18 +83,15 @@ describe('the ring', () => {
     expect(shouldCompact({ ...near, input: 0, output: 0 }, 2_000_000)).toBe(false)
   })
 })
-
 describe('the estimate', () => {
   test('is about four characters a token, one a character where words have no spaces', () => {
     expect(estimateText('a'.repeat(400))).toBe(100)
     expect(estimateText('日本語の文章')).toBe(6)
   })
-
   test('takes a letter outside the first plane as one wide letter', () => {
     expect(estimateText('😀😀')).toBe(3)
     expect(estimateText('ab😀日')).toBe(3)
   })
-
   test('counts the chips and a picture', () => {
     const plain = estimate({ text: 'a'.repeat(40), attachments: [] })
     const with_ = estimate({

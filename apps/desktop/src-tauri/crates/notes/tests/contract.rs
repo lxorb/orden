@@ -10,7 +10,6 @@ fn a_note_reads_back_its_words_without_the_byte_order_mark() {
     assert_eq!(words, "# A\n");
     assert_eq!(meta.len(), 7);
 }
-
 #[test]
 fn only_a_file_has_a_stamp() {
     let dir = tempfile::tempdir().expect("a folder");
@@ -20,7 +19,6 @@ fn only_a_file_has_a_stamp() {
     assert!(notes::stamp_of(dir.path()).is_none());
     assert!(notes::stamp_of(&dir.path().join("gone.md")).is_none());
 }
-
 #[test]
 fn words_that_are_not_text_are_refused() {
     let dir = tempfile::tempdir().expect("a folder");

@@ -5,7 +5,6 @@
   import { keptAway } from '../../away/src/api'
 
   const { path }: { path: string } = $props()
-
   const said = $derived(
     isNative
       ? 'In iCloud'
@@ -13,7 +12,6 @@
         ? 'Not on this device. It opens once you are online again.'
         : 'Not on this device',
   )
-
   $effect(() => icloud.listen())
 </script>
 
@@ -40,7 +38,6 @@
     margin-inline-start: var(--space-1);
     color: var(--muted);
   }
-
   .cloud svg {
     display: block;
     width: var(--icon-sm);
@@ -51,22 +48,18 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .offline {
     opacity: 0.5;
   }
-
   .coming {
     color: var(--accent);
     animation: waiting calc(var(--dur-slower) * 2) ease-in-out infinite alternate;
   }
-
   @keyframes waiting {
     to {
       opacity: 0.35;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .coming {
       animation: none;

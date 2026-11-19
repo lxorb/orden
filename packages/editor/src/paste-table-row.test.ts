@@ -15,7 +15,6 @@ function stateOf(doc: string, selection: EditorSelection | SelectionRange): Edit
     }),
   )
 }
-
 function tablesIn(state: EditorState): number[] {
   const rows: number[] = []
   syntaxTree(state).iterate({
@@ -27,16 +26,13 @@ function tablesIn(state: EditorState): number[] {
   })
   return rows
 }
-
 const table = '| Name | Age |\n| ---- | --- |\n| Ann  | 30  |\n| Bob  | 41  |'
-
 describe('edit31 a table row copied in Orden and pasted inside the same table', () => {
   test('pasted at the start of a row, the table stays one table with the new row in it', () => {
     const state = stateOf(table, EditorSelection.cursor(table.indexOf('| Ann')))
     const after = parsed(state.update(placed(state, '| Bob  | 41  |\n')).state)
     expect(tablesIn(after)).toEqual([3])
   })
-
   test('pasted over a triple-clicked row, the table stays one table', () => {
     const from = table.indexOf('| Ann')
     const to = table.indexOf('| Bob')

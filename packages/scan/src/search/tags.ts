@@ -7,88 +7,64 @@ export interface TagUse {
   from: number
   to: number
 }
-
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
-
 const HASH = /#/g
-
 const KEY = /^tags?:(.*)$/i
-
 const ITEM = /^\s*-\s*(.*?)\s*$/
-
 const VALUE = /[^\s,[\]'"]+/g
-
 export function tagUses(body: string): TagUse[] {
   const out: TagUse[] = []
   const front = frontMatterBlock(body)
-
   if (front) readFront(body, front, out)
   readInline(body, front, out)
-
   return out
 }
-
 export const tagsIn = (body: string): string[] => tagUses(body).map((use) => `#${use.tag}`)
-
 export const tagPath = (tag: string): string =>
   tag
     .toLowerCase()
     .split('/')
     .filter((segment) => segment !== '')
     .join('/')
-
 export function tagUnder(tag: string, wanted: string): boolean {
   const path = tagPath(tag)
   return path === wanted || path.startsWith(`${wanted}/`)
 }
-
 export function tagSpans(body: string, path: string): { from: number; to: number }[] {
   const wanted = tagPath(path)
   if (!wanted) return []
-
   return tagUses(body)
     .filter((use) => tagUnder(use.tag, wanted))
     .map((use) => ({ from: use.from, to: use.from + nodeLength(use.tag, wanted) }))
 }
-
 function nodeLength(tag: string, wanted: string): number {
   let left = wanted.split('/').length
   let at = 0
-
   for (const segment of tag.split('/')) {
     at += segment.length
     if (segment !== '') left--
     if (left === 0) return at
     at += 1
   }
-
   return tag.length
 }
-
 export function tagCuts(body: string, path: string): { from: number; to: number }[] {
   const wanted = tagPath(path)
   if (!wanted) return []
-
   const out: { from: number; to: number }[] = []
   const frontEnds = frontMatterBlock(body)?.close ?? 0
-
   for (const use of tagUses(body)) {
     if (!tagUnder(use.tag, wanted)) continue
-
     out.push(widened(body, use.from < frontEnds ? unquoted(body, use) : use))
   }
-
   return out
 }
-
 function unquoted(body: string, use: TagUse): TagUse {
   const hash = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
   const quote = body.charAt(hash - 1)
   if ((quote !== '"' && quote !== "'") || body.charAt(use.to) !== quote) return use
-
   return { tag: use.tag, from: hash - 1, to: use.to + 1 }
 }
-
 function widened(body: string, use: TagUse): { from: number; to: number } {
   const hash = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
   const marks = pairOf(body, hash, use.to)
@@ -97,11 +73,9 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
   const line = body.lastIndexOf('\n', from - 1) + 1
   const end = body.indexOf('\n', to)
   const after = end === -1 ? body.length : end
-
   if (/^\s*-\s*$/.test(body.slice(line, from)) && body.slice(to, after).trim() === '') {
     return { from: line, to: end === -1 ? body.length : end + 1 }
   }
-
   const gap = spaces(body, to, after)
   if (body.charAt(to + gap) === ',') {
     if (body.charAt(to + gap + 1) === '#') return { from, to: to + gap }
@@ -110,13 +84,10 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
     if (matter && past && body.charAt(to + gap + 1 + past) === '#') return { from, to: to + gap + 1 }
     return { from, to: to + gap + 1 + past }
   }
-
   const before = /(,?[ \t]+|,)$/.exec(body.slice(line, from))
   if (before) return { from: from - before[0].length, to }
-
   return { from, to: to + spaces(body, to, after) }
 }
-
 function pairOf(body: string, from: number, to: number): number {
   let count = 0
   while (
@@ -128,22 +99,18 @@ function pairOf(body: string, from: number, to: number): number {
   }
   return count
 }
-
 function spaces(body: string, at: number, stop: number): number {
   let over = 0
   while (at + over < stop && /[ \t]/.test(body.charAt(at + over))) over++
   return over
 }
-
 function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
   let at = front.body.from
-
   while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
     const line = body.slice(at, stop).replace(/\r$/, '')
     const found = KEY.exec(line)
-
     if (found) {
       const [, rest = ''] = found
       const value = at + line.length - rest.length
@@ -157,15 +124,12 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
       at = readItems(body, stop + 1, front, out)
       continue
     }
-
     if (end === -1) break
     at = end + 1
   }
 }
-
 function readItems(body: string, from: number, front: FrontMatterBlock, out: TagUse[]): number {
   let at = from
-
   while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
@@ -177,66 +141,52 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
     }
     const item = ITEM.exec(line)
     if (!item) return at
-
     const [, value = ''] = item
     readValues(at + line.indexOf(value), blankedComments(value), out)
     if (end === -1) return front.close
     at = end + 1
   }
-
   return at
 }
-
 const blankedComments = (text: string): string =>
   text.replace(/(^|\s)(#\s.*)$/gm, (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`)
-
 function readValues(from: number, text: string, out: TagUse[]) {
   for (const found of text.matchAll(VALUE)) {
     const [whole] = found
-
     const hashed = whole.startsWith('#')
     const name = hashed ? whole.slice(1) : whole
     if (!NAME.test(name)) continue
-
     const at = from + found.index + (hashed ? 1 : 0)
     out.push({ tag: name, from: at, to: at + name.length })
   }
 }
-
 function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[]) {
   for (const [from, to] of blocksOf(body, front ? front.to : 0)) {
     const block = body.slice(from, to)
     if (!block.includes('#')) continue
-
     const code = codeSpans(block)
     for (const found of block.matchAll(HASH)) {
       const at = found.index
       if (inCode(code, at)) continue
       const name = tagAt(block, at)
       if (name === null) continue
-
       const start = from + at + 1
       out.push({ tag: name, from: start, to: start + name.length })
     }
   }
 }
-
 const OPENS_BLOCK = /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|>|#{1,6}(?:[ \t]|$))/
-
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
-
 function blocksOf(body: string, at: number): [number, number][] {
   const out: [number, number][] = []
   const code = new CodeBlocks()
   let start = -1
-
   while (at <= body.length) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 ? body.length : end
     const line = body.slice(at, stop)
     const words = code.line(line) === WORDS
     const blank = line.trim() === ''
-
     if (start !== -1 && (!words || blank || OPENS_BLOCK.test(line))) {
       out.push([start, at - 1])
       start = -1
@@ -248,7 +198,6 @@ function blocksOf(body: string, at: number): [number, number][] {
         start = -1
       }
     }
-
     if (end === -1) break
     at = end + 1
   }

@@ -17,13 +17,10 @@ const linux = process.platform === 'linux'
 const COLS = 100
 const ROWS = 30
 const here = join(import.meta.dirname, '..')
-
 const HOLDER = join(here, 'dist', 'hold.cjs')
-
 let home: string
 let holds: string
 const ended: { end: () => void }[] = []
-
 beforeAll(() => {
   home = mkdtempSync(join(tmpdir(), 'ordend-home-'))
   holds = mkdtempSync(join(tmpdir(), 'ordend-holds-'))
@@ -38,7 +35,6 @@ afterAll(() => {
   rmSync(home, { recursive: true, force: true })
   rmSync(holds, { recursive: true, force: true })
 })
-
 function machine(pidsMax = 4096): Machine & { frames: OrdendFrame[] } {
   const frames: OrdendFrame[] = []
   return {
@@ -59,7 +55,6 @@ function machine(pidsMax = 4096): Machine & { frames: OrdendFrame[] } {
     send: (frame) => frames.push(frame),
   }
 }
-
 function described(pids: number[]): string {
   return pids
     .slice(0, 20)
@@ -75,18 +70,15 @@ function described(pids: number[]): string {
     .join(', ')
     .concat(pids.length > 20 ? `, and ${String(pids.length - 20)} more` : '')
 }
-
 function session(on: Machine, id = 's_test', saved?: Saved): Session {
   const one = new Session(id, COLS, ROWS, on, saved)
   ended.push(one)
   return one
 }
-
 async function running(one: Session): Promise<number> {
   await until(() => one.pid !== undefined)
   return one.pid ?? 0
 }
-
 function watcher(frames: OrdendFrame[], from = 0) {
   const term = terminal(COLS, ROWS)
   let read = from
@@ -108,7 +100,6 @@ function watcher(frames: OrdendFrame[], from = 0) {
     },
   }
 }
-
 async function settled(frames: OrdendFrame[], quiet = 600): Promise<void> {
   let seen = -1
   let since = Date.now()
@@ -120,12 +111,10 @@ async function settled(frames: OrdendFrame[], quiet = 600): Promise<void> {
     return Date.now() - since > quiet
   }, 60_000)
 }
-
 async function typed(one: Session, frames: OrdendFrame[], keys: string): Promise<void> {
   one.input(bytes(keys))
   await settled(frames)
 }
-
 describe.runIf(linux)('a session', () => {
   test('echoes what is typed', async () => {
     const on = machine()
@@ -137,7 +126,6 @@ describe.runIf(linux)('a session', () => {
       return text(seen.term).includes('nib-42')
     })
   })
-
   test('a late joiner past the kept megabyte draws what a watcher saw, vim and colours', async () => {
     const on = machine()
     const one = session(on)
@@ -157,7 +145,6 @@ describe.runIf(linux)('a session', () => {
     await typed(one, on.frames, 'ihello from vim\x1b')
     await typed(one, on.frames, ':set number\r')
     await seen.caught()
-
     const asked = on.frames.length
     await one.want(0)
     const answer = on.frames[asked]
@@ -166,7 +153,6 @@ describe.runIf(linux)('a session', () => {
     const joiner = terminal(answer.cols, answer.rows)
     await written(joiner, answer.data)
     let next = answer.seq
-
     await typed(one, on.frames, 'ojoined\x1b')
     await seen.caught()
     for (const frame of on.frames.slice(asked + 1)) {
@@ -180,7 +166,6 @@ describe.runIf(linux)('a session', () => {
     expect(cells(joiner)).toEqual(cells(seen.term))
     await typed(one, on.frames, ':q!\r')
   })
-
   test('a reconnect inside the kept megabyte is sent the bytes it missed, outside it the screen', async () => {
     const on = machine()
     const one = session(on)
@@ -190,7 +175,6 @@ describe.runIf(linux)('a session', () => {
     const drew = seen.next
     const behind = terminal(COLS, ROWS)
     await written(behind, collected(on.frames, 0, drew))
-
     await typed(one, on.frames, 'printf "\\e[32msecond\\e[0m\\n"\r')
     await seen.caught()
     const asked = on.frames.length
@@ -200,14 +184,12 @@ describe.runIf(linux)('a session', () => {
     if (answer?.t !== 'out') return
     await written(behind, answer.data)
     expect(cells(behind)).toEqual(cells(seen.term))
-
     await typed(one, on.frames, 'head -c 1300000 /dev/zero | tr "\\0" x; echo\r')
     await seen.caught()
     const again = on.frames.length
     await one.want(drew)
     expect(on.frames[again]?.t).toBe('screen')
   })
-
   test('says the program in front, and the shell again after it', async () => {
     const on = machine()
     const one = session(on)
@@ -219,7 +201,6 @@ describe.runIf(linux)('a session', () => {
       return last?.t === 'program' && last.name === null
     })
   })
-
   test('a fork bomb is held at the process limit, and ending the session ends all of it', async () => {
     const mine = spawnSync('ps', ['-L', '-u', String(process.getuid?.()), '-o', 'lwp=']).stdout.toString()
     const limit = mine.split('\n').filter(Boolean).length + 150
@@ -229,12 +210,10 @@ describe.runIf(linux)('a session', () => {
     one.input(bytes('b() { b | b & }; b\r'))
     await until(() => said(on.frames).split('Resource temporarily unavailable').length > 30, 50_000)
     expect(sessionProcesses(shell).length).toBeLessThanOrEqual(limit)
-
     const asked = on.frames.length
     await one.want(0)
     expect(on.frames[asked]?.t).toMatch(/^(out|screen)$/)
     expect(spawnSync('true').status).toBe(0)
-
     one.end()
     const ending = new Set(sessionProcesses(shell))
     await until(() => {
@@ -245,7 +224,6 @@ describe.runIf(linux)('a session', () => {
     }).catch((error: unknown) => {
       throw new Error(`${String(error)}; left: ${described(sessionProcesses(shell))}`)
     })
-
     const next = machine(limit)
     const after = session(next, 's_after')
     const seen = watcher(next.frames)
@@ -256,11 +234,9 @@ describe.runIf(linux)('a session', () => {
     })
   })
 })
-
 function said(frames: OrdendFrame[]): string {
   return Buffer.from(collected(frames, 0, Infinity)).toString('utf8')
 }
-
 function collected(frames: OrdendFrame[], from: number, to: number): Uint8Array {
   const parts: Uint8Array[] = []
   for (const frame of frames) {
@@ -271,13 +247,10 @@ function collected(frames: OrdendFrame[], from: number, to: number): Uint8Array 
   }
   return Buffer.concat(parts)
 }
-
 function ticks(seen: string): number[] {
   return [...seen.matchAll(/tick-(\d+)/g)].map((match) => Number(match[1]))
 }
-
 const TICKING = 'n=0; while :; do n=$((n+1)); echo tick-$n; sleep 0.2; done\r'
-
 async function follow(
   term: ReturnType<typeof terminal>,
   frames: readonly OrdendFrame[],
@@ -293,7 +266,6 @@ async function follow(
   }
   return next
 }
-
 async function screenOf(one: Session, frames: OrdendFrame[]) {
   const asked = frames.length
   await one.want(0)
@@ -303,7 +275,6 @@ async function screenOf(one: Session, frames: OrdendFrame[]) {
   await written(drawn, answer.data)
   return { answer, drawn }
 }
-
 describe.runIf(linux)('through a restart of ordend', () => {
   test('a program goes on, and a device is sent exactly what it missed', async () => {
     const before = machine()
@@ -319,7 +290,6 @@ describe.runIf(linux)('through a restart of ordend', () => {
     await seen.caught()
     expect(seen.next).toBeGreaterThanOrEqual(saved.seq)
     await new Promise((resolve) => setTimeout(resolve, 1500))
-
     const after = machine()
     const again = session(after, 's_on', saved)
     let next = seen.next
@@ -329,13 +299,11 @@ describe.runIf(linux)('through a restart of ordend', () => {
     })
     const all = ticks(text(seen.term))
     expect(all).toEqual(all.map((_, at) => (all[0] ?? 0) + at))
-
     const { answer, drawn } = await screenOf(again, after.frames)
     expect(answer.restored).toBeUndefined()
     expect(ticks(text(drawn)).length).toBeGreaterThan(10)
     expect(after.frames.some((frame) => frame.t === 'ended')).toBe(false)
   })
-
   test('a full-screen program comes back whole, on its second screen, and takes keys', async () => {
     const before = machine()
     const first = new Session('s_vim', COLS, ROWS, before)
@@ -345,20 +313,17 @@ describe.runIf(linux)('through a restart of ordend', () => {
     await settled(before.frames)
     const saved = await first.save(Date.now())
     first.detach()
-
     const after = machine()
     const again = session(after, 's_vim', saved)
     const back = await screenOf(again, after.frames)
     expect(back.drawn.buffer.active.type).toBe('alternate')
     expect(text(back.drawn)).toContain('hello from vim')
-
     again.input(bytes('ojoined\x1b'))
     await settled(after.frames)
     const typed = await screenOf(again, after.frames)
     expect(text(typed.drawn)).toContain('joined')
     again.input(bytes(':q!\r'))
   })
-
   test('a shell that ended while ordend was away is said ended when it comes back', async () => {
     const before = machine()
     const first = new Session('s_gone', COLS, ROWS, before)
@@ -366,13 +331,11 @@ describe.runIf(linux)('through a restart of ordend', () => {
     await running(first)
     first.detach()
     await new Promise((resolve) => setTimeout(resolve, 2500))
-
     const after = machine()
     session(after, 's_gone')
     await until(() => after.frames.some((frame) => frame.t === 'ended'))
     expect(after.frames.find((frame) => frame.t === 'ended')).toMatchObject({ code: 3 })
   })
-
   test('where the holder is gone too, the saved screen comes back above a fresh shell', async () => {
     const before = machine()
     const first = new Session('s_rebooted', COLS, ROWS, before)
@@ -380,7 +343,6 @@ describe.runIf(linux)('through a restart of ordend', () => {
     await until(() => Buffer.concat(outOf(before.frames)).includes('saved-10'))
     const saved = await first.save(Date.now())
     first.end()
-
     const after = machine()
     const again = session(after, 's_rebooted', saved)
     const { answer, drawn } = await screenOf(again, after.frames)
@@ -390,11 +352,9 @@ describe.runIf(linux)('through a restart of ordend', () => {
     await until(() => Buffer.concat(outOf(after.frames)).includes('/tmp\r\n'))
   })
 })
-
 function outOf(frames: readonly OrdendFrame[]): Uint8Array[] {
   return frames.flatMap((frame) => (frame.t === 'out' ? [frame.data] : []))
 }
-
 describe.runIf(linux)('the machine', () => {
   test('lists every session, and every holder still running that nobody opened since', async () => {
     const state = mkdtempSync(join(tmpdir(), 'ordend-state-'))
@@ -405,7 +365,6 @@ describe.runIf(linux)('the machine', () => {
     await until(async () => (await first.list()).some((one) => one.session === 's_listed' && one.program === 'sleep'))
     expect((await first.list()).find((one) => one.session === 's_listed')?.at).toBeGreaterThan(0)
     first.stop()
-
     const second = new Ordend(options)
     ended.push({ end: () => second.stop(true) })
     expect(await second.list()).toContainEqual({
@@ -419,7 +378,6 @@ describe.runIf(linux)('the machine', () => {
     await until(async () => !(await second.list()).some((one) => one.session === 's_listed'))
     rmSync(state, { recursive: true, force: true })
   })
-
   test('counts the output and the CPU of the last stretch', async () => {
     const state = mkdtempSync(join(tmpdir(), 'ordend-state-'))
     const frames: OrdendFrame[] = []
@@ -446,12 +404,10 @@ describe.runIf(linux)('the machine', () => {
     rmSync(state, { recursive: true, force: true })
   })
 })
-
 describe.runIf(linux)('ordend, the program', () => {
   const SECRET = 'boot-secret'
   let state: string
   let child: ChildProcess | null = null
-
   beforeAll(() => {
     state = mkdtempSync(join(tmpdir(), 'ordend-boot-'))
   })
@@ -459,7 +415,6 @@ describe.runIf(linux)('ordend, the program', () => {
     child?.kill('SIGKILL')
     rmSync(state, { recursive: true, force: true })
   })
-
   async function booted(url: string, port: number): Promise<ChildProcess> {
     const started = spawn(process.execPath, [join(here, 'dist', 'ordend.cjs')], {
       env: {
@@ -476,13 +431,11 @@ describe.runIf(linux)('ordend, the program', () => {
     await healthy(url)
     return started
   }
-
   async function stopped(signal: NodeJS.Signals): Promise<number | null> {
     const exited = new Promise<number | null>((resolve) => child?.once('exit', resolve))
     child?.kill(signal)
     return await exited
   }
-
   async function rejoined(url: string, session: string) {
     const link = await linked(url, SECRET)
     link.send({ t: 'open', session, cols: COLS, rows: ROWS })
@@ -494,7 +447,6 @@ describe.runIf(linux)('ordend, the program', () => {
     await written(drawn, screen.data)
     return { link, screen, drawn }
   }
-
   test('a program goes on through SIGTERM, SIGKILL and a restart of ordend, its screen with it', async () => {
     const port = await freePort()
     const url = `ws://127.0.0.1:${String(port)}`
@@ -511,7 +463,6 @@ describe.runIf(linux)('ordend, the program', () => {
     await until(() => link.text('s_kept').includes('kept-42'))
     expect(link.text('s_kept')).toContain('secret=none')
     expect(link.text('s_kept')).toContain('hold=none')
-
     expect(await stopped('SIGTERM')).toBe(0)
     expect(readdirSync(join(state, 'sessions'))).toEqual(['s_kept.json'])
     const saved: unknown = JSON.parse(readFileSync(join(state, 'sessions', 's_kept.json'), 'utf8'))
@@ -525,14 +476,12 @@ describe.runIf(linux)('ordend, the program', () => {
     back.link.send({ t: 'in', session: 's_kept', data: bytes('pwd\r') })
     await until(() => back.link.text('s_kept').includes('/tmp\r\n'))
     back.link.close()
-
     expect(await stopped('SIGKILL')).toBeNull()
     child = await booted(url, port)
     const killed = await rejoined(url, 's_kept')
     expect(killed.screen.restored).toBeUndefined()
     killed.link.send({ t: 'in', session: 's_kept', data: bytes('echo still-$((1+1))\r') })
     await until(() => killed.link.text('s_kept').includes('still-2'))
-
     const exited = new Promise<number | null>((resolve) => child?.once('exit', resolve))
     killed.link.send({ t: 'restart' })
     expect(await exited).toBe(75)
@@ -543,7 +492,6 @@ describe.runIf(linux)('ordend, the program', () => {
     expect(text(restarted.drawn)).toContain('still-2')
     restarted.link.close()
   })
-
   test('where the program went with its machine, the screen comes back above a fresh shell', async () => {
     const port = await freePort()
     const url = `ws://127.0.0.1:${String(port)}`
@@ -558,20 +506,17 @@ describe.runIf(linux)('ordend, the program', () => {
     link.close()
     process.kill(holder, 'SIGKILL')
     await until(() => !existsSync(`/proc/${String(holder)}`))
-
     child = await booted(url, port)
     const back = await rejoined(url, 's_kept')
     expect(back.screen.restored?.at).toBeGreaterThan(0)
     expect(text(back.drawn)).toContain('kept-42')
     back.link.send({ t: 'in', session: 's_kept', data: bytes('pwd\r') })
     await until(() => back.link.text('s_kept').includes('/tmp\r\n'))
-
     back.link.send({ t: 'close', session: 's_kept' })
     await until(() => !existsSync(join(state, 'holds', 's_kept.sock')))
     expect(readdirSync(join(state, 'sessions'))).toEqual([])
     back.link.close()
   })
-
   test('ending a session no open asked for since ordend started ends its program too', async () => {
     const port = await freePort()
     const url = `ws://127.0.0.1:${String(port)}`
@@ -585,7 +530,6 @@ describe.runIf(linux)('ordend, the program', () => {
     expect(await stopped('SIGKILL')).toBeNull()
     link.close()
     expect(sessionProcesses(shell).length).toBeGreaterThan(0)
-
     child = await booted(url, port)
     const again = await linked(url, SECRET)
     again.send({ t: 'close', session: 's_quiet' })
@@ -594,7 +538,6 @@ describe.runIf(linux)('ordend, the program', () => {
     again.close()
   })
 })
-
 function freePort(): Promise<number> {
   return new Promise((resolve) => {
     const server = createServer()

@@ -2,20 +2,16 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 const told = vi.hoisted(() => ({ lists: [] as string[][] }))
-
 vi.mock('../../spelling/src/api', async (original) => ({
   ...(await original<typeof import('../../spelling/src/api')>()),
   choosable: true,
   tellEngine: (languages: string[]) => void told.lists.push([...languages]),
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { modes } = await import('../../modes/src/api')
 const { spellingPane } = await import('./spelling-pane')
 const { inForceNow } = await import('../../spelling/src/api')
 const { resetPane } = await import('./preferences')
-
 const row = (name: string) => {
   const found = spellingPane(undefined)
     .groups.flatMap((group) => group.fields)
@@ -23,19 +19,16 @@ const row = (name: string) => {
   if (found?.kind !== 'switch') throw new Error(`no ${name}`)
   return found
 }
-
 beforeEach(() => {
   modes.spellLanguages = []
   told.lists = []
 })
-
 describe('the dictionaries on Orden’s own Chromium', () => {
   test('are a switch apiece, the reader’s own language on to begin with', () => {
     expect(row('Deutsch').get()).toBe(false)
     expect(row('Français').get()).toBe(false)
     expect(inForceNow(modes.spellLanguages)).toHaveLength(1)
   })
-
   test('are on several at once, and the engine is told every one that is', () => {
     const first = inForceNow(modes.spellLanguages)[0] ?? ''
     row('Deutsch').set(true)
@@ -45,7 +38,6 @@ describe('the dictionaries on Orden’s own Chromium', () => {
     )
     expect(told.lists.at(-1)?.sort()).toEqual(inForceNow(modes.spellLanguages).slice().sort())
   })
-
   test('keep the last one on, since a checker with no language is the switch above', () => {
     row('Deutsch').set(true)
     for (const one of inForceNow(modes.spellLanguages).filter((id) => id !== 'de-DE')) {
@@ -59,7 +51,6 @@ describe('the dictionaries on Orden’s own Chromium', () => {
     row('Deutsch').set(false)
     expect(inForceNow(modes.spellLanguages)).toEqual(['de-DE'])
   })
-
   test('are written down, under their own name', () => {
     row('Svenska').set(true)
     const held = JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
@@ -67,7 +58,6 @@ describe('the dictionaries on Orden’s own Chromium', () => {
     expect(held.spellLanguages).toContain('sv-SE')
     expect('spellLanguage' in held).toBe(false)
   })
-
   test('go back to the reader’s own language alone on a reset, whatever was on before', () => {
     const first = inForceNow(modes.spellLanguages)[0] ?? ''
     const before = first === 'de-DE' ? 'Français' : 'Deutsch'

@@ -10,7 +10,6 @@
     column,
     onopen,
   }: { chat: string; files: FileRef[]; column: number; onopen: (index: number) => void } = $props()
-
   const url = (file: FileRef) => fileUrl(chat, file.preview ?? file.hash)
   const single = $derived(files.length === 1 ? files[0] : undefined)
   const size = $derived(single ? fitted(single, column) : null)
@@ -67,13 +66,11 @@
     overflow: hidden;
     background: var(--surface-2);
   }
-
   .picture {
     padding: 0;
     border: none;
     cursor: zoom-in;
   }
-
   img {
     display: block;
     width: 100%;
@@ -81,26 +78,22 @@
     object-fit: cover;
     transition: transform var(--dur-slow) var(--ease-out);
   }
-
   @media (hover: hover) {
     .picture:hover img {
       transform: scale(1.02);
     }
   }
-
   .grid {
     display: grid;
     grid-template-columns: repeat(var(--across), 1fr);
     gap: 2px;
   }
-
   .cell {
     position: relative;
     aspect-ratio: 1;
     overflow: hidden;
     background: var(--surface-3);
   }
-
   .more,
   .play {
     position: absolute;
@@ -111,11 +104,9 @@
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
   }
-
   .more {
     background: color-mix(in srgb, var(--accent) 72%, transparent);
   }
-
   .play {
     inset: auto;
     top: 50%;

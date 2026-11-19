@@ -10,11 +10,8 @@ import { measuredGrowth } from '../../../../scripts/growth'
 import { ordenMarkdownExtensions } from './extensions'
 
 const js = LRLanguage.define({ parser: javascript })
-
 let extensions: LanguageSupport
-
 const BIG = 20_000
-
 function countBigParses(): { count: () => number } {
   const original = Object.getOwnPropertyDescriptor(MarkdownParser.prototype, 'parseInline')
     ?.value as MarkdownParser['parseInline']
@@ -32,7 +29,6 @@ function countBigParses(): { count: () => number } {
   })
   return { count: () => calls }
 }
-
 beforeAll(async () => {
   const grammar = await htmlGrammar()
   extensions = markdown({
@@ -42,11 +38,9 @@ beforeAll(async () => {
     htmlTagLanguage: grammar.html({ matchClosingTags: false }),
   })
 })
-
 afterEach(() => {
   vi.restoreAllMocks()
 })
-
 function shape(tree: Tree): string {
   const out: string[] = []
   tree.iterate({
@@ -55,25 +49,21 @@ function shape(tree: Tree): string {
   })
   return out.join('\n')
 }
-
 function innerAt(state: EditorState, tree: Tree, needle: string): string {
   const at = state.doc.toString().lastIndexOf(needle) + 1
   return tree.resolveInner(at, 1).name
 }
-
 const paragraph = (lines: number, tags: boolean): string =>
   Array.from(
     { length: lines },
     (_, i) => `word ${i} and *more* \`x\` text${tags && i % 50 === 7 ? ` <b>t${i}</b>` : ''} here`,
   ).join('\n')
-
 const cases = {
   'in the middle, with tags': (body: string) =>
     '```js\nlet first = 1\n```\n\n' + body + '\n\n```js\nlet second = 2\n```\n\nend\n',
   'at the end': (body: string) => '```js\nlet first = 1\n```\n\n' + body + '\n',
   'at the end, with tags': (body: string) => '```js\nlet first = 1\n```\n\n' + body + '\n',
 }
-
 describe('a long paragraph typed into', () => {
   for (const [name, wrap] of Object.entries(cases)) {
     test(`is read once per key when it is ${name}`, () => {
@@ -81,7 +71,6 @@ describe('a long paragraph typed into', () => {
       let state = EditorState.create({ doc, extensions })
       expect(ensureSyntaxTree(state, state.doc.length, 1e9)).not.toBeNull()
       const parses = countBigParses()
-
       const at = doc.indexOf('word 700 ') + 4
       for (let key = 0; key < 4; key++) {
         state = state.update({ changes: { from: at + key, insert: 'q' } }).state
@@ -89,7 +78,6 @@ describe('a long paragraph typed into', () => {
         expect(tree).not.toBeNull()
         expect(parses.count()).toBe(key + 1)
       }
-
       const tree = ensureSyntaxTree(state, state.doc.length, 1e9)!
       const fresh = (markdownLanguage.parser as MarkdownParser)
         .configure(ordenMarkdownExtensions)
@@ -104,7 +92,6 @@ describe('a long paragraph typed into', () => {
     })
   }
 })
-
 describe('a long paragraph parsed again after an edit', () => {
   function reparse(lines: number): number {
     const parser = extensions.language.parser
@@ -119,12 +106,10 @@ describe('a long paragraph parsed again after an edit', () => {
     parser.parse(next, fragments)
     return performance.now() - start
   }
-
   test('takes time in proportion to its length', () => {
     expect(measuredGrowth(reparse, 1500, 8)).toBeLessThan(14)
   }, 60_000)
 })
-
 describe('a parse whose inner parses were stopped', () => {
   test('is read on from the outer tree it kept whole, and ends as a fresh parse does', () => {
     const parser = extensions.language.parser
@@ -138,7 +123,6 @@ describe('a parse whose inner parses were stopped', () => {
     let kept: Tree | null
     do kept = parse.advance()
     while (!kept)
-
     const tree = parser.parse(doc, TreeFragment.addTree(kept, [], false))
     const fresh = parser.parse(doc)
     for (let at = 0; at < doc.length; at += 7)

@@ -21,9 +21,7 @@ function host(found = true) {
   }
   return { answer, ticked, drawn: () => drawn }
 }
-
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0))
-
 describe('today on the glasses', () => {
   test('a box in front of each task, drawn once it is read', async () => {
     const { answer, drawn } = host()
@@ -33,7 +31,6 @@ describe('today on the glasses', () => {
     expect(today.rows().map((one) => one.label)).toEqual(['□ Call Mum', '□ Send the slides', '□ milk $3'])
     expect(drawn()).toBe(1)
   })
-
   test('a tap fills the box at once and ticks the todo; a second tap unticks it', async () => {
     const { answer, ticked } = host()
     const today = new Today(answer)
@@ -50,7 +47,6 @@ describe('today on the glasses', () => {
     ])
     expect(today.rows()[1]?.label).toBe('□ Send the slides')
   })
-
   test('a todo that is gone is put back', async () => {
     const { answer } = host(false)
     const today = new Today(answer)
@@ -60,7 +56,6 @@ describe('today on the glasses', () => {
     await settled()
     expect(today.rows()[0]?.label).toBe('□ Call Mum')
   })
-
   test('a todo that could not be ticked is put back too', async () => {
     const { answer, drawn } = host()
     const today = new Today({ ...answer, tick: () => Promise.reject(new Error('offline')) })
@@ -71,12 +66,10 @@ describe('today on the glasses', () => {
     expect(today.rows()[0]?.label).toBe('□ Call Mum')
     expect(drawn()).toBe(2)
   })
-
   test('what was said after the word, its capitals kept', () => {
     expect(spokenTask('Task, call Mum tomorrow at four.')).toBe('call Mum tomorrow at four')
     expect(spokenTask('Aufgabe: Milch kaufen')).toBe('Milch kaufen')
   })
-
   test('opened twice quickly, it shows what the later reading found, whichever answers last', async () => {
     const answers: ((tasks: { at: string; text: string }[]) => void)[] = []
     const today = new Today({

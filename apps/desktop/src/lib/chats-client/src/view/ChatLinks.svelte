@@ -8,14 +8,10 @@
   import { store } from './source.svelte'
 
   const { path }: { path: string } = $props()
-
   let hits = $state.raw<Hit[]>([])
   let heard = $state(0)
-
   $effect(() => store().heard(() => heard++))
-
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     const root = workspace.rootHolding(path)
     const names = [withoutExtension(fileName(path))]
@@ -31,7 +27,6 @@
       current = false
     }
   })
-
   function open(hit: Hit) {
     const at = store().entry(hit.chat)?.path
     if (at) openChat(at, {}, hit.message.id)

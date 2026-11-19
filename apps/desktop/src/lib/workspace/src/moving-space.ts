@@ -15,7 +15,6 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
   const tabs = ids.flatMap((id) => ws.tabs.find((one) => one.id === id) ?? [])
   const offered = spacesFor(tabs.map(movingOf), ws, canWriteAt, mayCarry)
   if (!offered.some((one) => one.id === space)) return false
-
   const moved: Tab[] = []
   const refused: string[] = []
   const files = new Map<string, boolean | 'said'>()
@@ -43,7 +42,6 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
   }
   return tabs.every((tab) => moved.includes(tab))
 }
-
 export async function reopening(draft: Draft): Promise<Draft | null> {
   const ws = workspace
   const owner = ownerOf(draft.path, draft.space ?? null, ws.spaces)
@@ -61,12 +59,10 @@ export async function reopening(draft: Draft): Promise<Draft | null> {
   await ws.showSpace(owner)
   return draft
 }
-
 export function followsTo(path: string): void {
   const held = workspace.shownSpaces.some((one) => one.id === ownerOf(path, null, workspace.spaces))
   if (!held) throw new Error(`the space of ${path} is not here`)
 }
-
 export async function tabsFollow(path: string): Promise<void> {
   const ws = workspace
   const space = ownerOf(path, null, ws.spaces)
@@ -77,11 +73,9 @@ export async function tabsFollow(path: string): Promise<void> {
     space,
   )
 }
-
 async function fileMoved(path: string, root: string, done: Map<string, boolean | 'said'>) {
   const before = done.get(path)
   if (before !== undefined) return before
-
   if (isAgentsName(nameOf(path))) {
     void import('./notices.svelte').then((one) => one.reservedName.tell(root))
     done.set(path, 'said')
@@ -97,7 +91,6 @@ async function fileMoved(path: string, root: string, done: Map<string, boolean |
   done.set(path, ok)
   return ok
 }
-
 async function homed(tab: Tab, space: string) {
   const from = tab.note.home
   tab.note.home = space

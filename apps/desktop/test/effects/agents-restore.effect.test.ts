@@ -2,9 +2,7 @@ import { expect, test, vi } from 'vitest'
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -15,11 +13,9 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const AGENTS = '/spaces/Work/AGENTS.md'
 const STAND_IN = '/spaces/Work/Stand-in.md'
 const PLAN = '/spaces/Work/Plan.md'
-
 async function leftOpen(typed: string | null) {
   const { Disk } = await import('../disk')
   disk.current = new Disk()
@@ -28,7 +24,6 @@ async function leftOpen(typed: string | null) {
   disk.current.files.set(PLAN, '# Plan\n')
   localStorage.clear()
   vi.resetModules()
-
   const { workspace } = await import('../../src/lib/workspace/src/api')
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
   workspace.activeSpaceId = 'work'
@@ -42,7 +37,6 @@ async function leftOpen(typed: string | null) {
     tab.note.dirty = true
   }
   workspace.persist()
-
   for (let at = 0; at < localStorage.length; at++) {
     const key = localStorage.key(at) ?? ''
     const held = localStorage.getItem(key) ?? ''
@@ -52,25 +46,20 @@ async function leftOpen(typed: string | null) {
   vi.resetModules()
   return (await import('../../src/lib/workspace/src/api')).workspace
 }
-
 test('a clean tab on it is not put back, and the file stays', async () => {
   const workspace = await leftOpen(null)
   await workspace.restore()
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Plan.md'))
-
   expect(workspace.tabs.map((tab) => tab.path)).toEqual([PLAN])
   expect(disk.current?.files.get(AGENTS)).toBe('# Rules\n')
 })
-
 test('a tab with words unsaved is put back with them, and they are written', async () => {
   const workspace = await leftOpen('# Rules\n\n- unsaved\n')
   await workspace.restore()
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.path)).toContain(AGENTS))
-
   const tab = workspace.tabs.find((one) => one.path === AGENTS)
   expect(tab?.note.text).toBe('# Rules\n\n- unsaved\n')
   expect(tab?.note.dirty).toBe(true)
-
   workspace.flush()
   await workspace.writesSettled()
   expect(disk.current?.files.get(AGENTS)).toBe('# Rules\n\n- unsaved\n')

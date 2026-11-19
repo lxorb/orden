@@ -29,7 +29,6 @@
   import { openSite } from '../../pass-sync/src/api'
 
   const { ui, item, stepped = false }: { ui: PassUi; item: Item; stepped?: boolean } = $props()
-
   const content = $derived(item.content)
   const vault = $derived(pass.vaults.find((one) => one.id === item.vault) ?? null)
   const sealed = $derived(vault !== null && hidesPasswords(vault))
@@ -40,13 +39,10 @@
   const flags = $derived(flagsOf(item, monitored))
   const reusedWith = $derived(monitored.reused.get(item.id)?.length ?? 0)
   const note = $derived(content.note.trim() === '' ? '' : noteHtml(content.note))
-
   let showingQr = $state(false)
-
   const wifiCode = $derived(
     showingQr && !sealed && content.kind === 'wifi' ? wifiUri(content.ssid, content.password, content.security) : null,
   )
-
   const flagWord = (flag: Flag): string =>
     ({
       compromised: 'This password was found in a data breach',
@@ -58,7 +54,6 @@
       inactive2fa: 'This site offers two-factor authentication',
       excluded: 'Left out of Monitor',
     })[flag]
-
   function linkPressed(event: MouseEvent) {
     const link = event.target instanceof Element ? event.target.closest('a[href]') : null
     if (!link) return
@@ -66,15 +61,12 @@
     const href = link.getAttribute('href') ?? ''
     if (/^https?:/i.test(href)) openSite(href)
   }
-
   const when = (stamp: number | null) =>
     stamp === null ? 'Never' : localDate(stamp, { dateStyle: 'medium', timeStyle: 'short' })
-
   async function moveToTrash() {
     await pass.trash([item.id])
     said.say('Moved to trash')
   }
-
   async function removeForGood() {
     const sure = await prompt.confirm({
       until: pass.opened,
@@ -88,12 +80,10 @@
     ui.show({ item: null })
     ui.column = 'list'
   }
-
   async function duplicated() {
     const made = await pass.duplicate(item.id)
     await ui.openItem(made.id)
   }
-
   function shareEntries(): Promise<MenuEntry[]> {
     return Promise.resolve([
       {
@@ -102,13 +92,11 @@
       },
     ])
   }
-
   function shareShown(from: Element) {
     const box = from.getBoundingClientRect()
     const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.bottom })
     void shareEntries().then((rows) => menu.show(at, rows, { until: pass.opened, title: 'Share' }))
   }
-
   function chooseIcon() {
     const now = item.content
     if (now.kind !== 'custom') return
@@ -119,7 +107,6 @@
       void pass.update(id, { ...latest, mark: mark ?? undefined })
     })
   }
-
   function entries(from: Element): MenuEntry[] {
     if (trashed) {
       return [
@@ -299,7 +286,6 @@
     min-width: 0;
     height: 100%;
   }
-
   .head {
     flex: none;
     display: flex;
@@ -308,14 +294,12 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-4) var(--space-3);
   }
-
   .acts {
     display: flex;
     align-items: center;
     gap: var(--space-3);
     margin-inline-start: auto;
   }
-
   .named {
     flex: 1 1 4rem;
     min-width: 0;
@@ -323,7 +307,6 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .title {
     display: flex;
     align-items: center;
@@ -335,17 +318,14 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .title .words {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .pinned {
     color: var(--muted);
   }
-
   .vault {
     display: inline-flex;
     align-items: center;
@@ -354,7 +334,6 @@
     color: var(--muted-strong);
     --row-height-sm: 18px;
   }
-
   .body {
     flex: 1;
     min-height: 0;
@@ -364,12 +343,10 @@
     gap: var(--space-3);
     padding: 0 var(--space-4) var(--space-5);
   }
-
   .pass-card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }
-
   .flag {
     display: flex;
     align-items: center;
@@ -381,19 +358,15 @@
     color: var(--text-strong);
     font-size: var(--text-sm);
   }
-
   .flag[data-flag='compromised'] {
     background: color-mix(in srgb, var(--danger) 14%, transparent);
   }
-
   .flag :global(.glyph) {
     color: var(--callout-warning);
   }
-
   .flag[data-flag='compromised'] :global(.glyph) {
     color: var(--danger);
   }
-
   .line {
     width: 100%;
     display: flex;
@@ -408,19 +381,15 @@
     font-size: var(--text-row);
     text-align: start;
   }
-
   .line + .line {
     border-top: 1px solid var(--line);
   }
-
   .line.is-pressable:hover {
     background: var(--surface-hover);
   }
-
   .site {
     color: var(--accent);
   }
-
   .address {
     flex: 1;
     min-width: 0;
@@ -428,14 +397,12 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .qr {
     display: grid;
     place-items: center;
     padding: var(--space-3);
     --qr-size: 180px;
   }
-
   .note {
     padding: var(--space-1) var(--space-3) var(--space-3);
     font-size: var(--text-row);
@@ -444,15 +411,12 @@
     -webkit-user-select: text;
     user-select: text;
   }
-
   .note :global(:first-child) {
     margin-top: 0;
   }
-
   .note :global(:last-child) {
     margin-bottom: 0;
   }
-
   .times {
     display: flex;
     flex-direction: column;
@@ -462,27 +426,22 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .times div {
     display: flex;
     gap: var(--space-2);
   }
-
   .times dt {
     min-width: 6rem;
   }
-
   .times dd {
     margin: 0;
     color: var(--muted-strong);
   }
-
   .orden-section > .group {
     font: inherit;
     letter-spacing: inherit;
     text-transform: inherit;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

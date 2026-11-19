@@ -9,15 +9,12 @@ export interface TabMenuItem {
   readonly more?: () => Promise<TabMenuEntry[]>
   readonly run: () => void
 }
-
 export type TabMenuEntry = TabMenuItem | null
-
 export interface TabUsage {
   readonly cpu: number
   readonly memory: number
   readonly gpu?: number
 }
-
 export interface TabStream {
   readonly width: number | null
   readonly height: number | null
@@ -26,25 +23,21 @@ export interface TabStream {
   readonly rtt: number | null
   readonly encoder: string | null
 }
-
 export interface TabFacts {
   readonly host: string | null
   readonly usage: TabUsage | null
   readonly stream: TabStream | null
 }
-
 export interface OpenHow {
   readonly activate?: boolean
   readonly preview?: boolean
   readonly beside?: boolean
 }
-
 interface TabIcon {
   readonly worn: (tab: string) => string | null
   readonly tint: (tab: string) => string | null
   readonly wear: (tab: string, icon: string | null, colour: string | null) => void
 }
-
 export interface TabKindParts {
   readonly open?: (path: string, how: OpenHow) => Promise<void>
   readonly make?: (folder?: string, name?: string) => Promise<void>
@@ -54,12 +47,9 @@ export interface TabKindParts {
   readonly rename?: (tab: string, name: string) => Promise<void>
   readonly icon?: TabIcon
 }
-
 export const NO_TAB_KIND: TabKindParts = {}
-
 const loads = new Map<TabKind, () => Promise<TabKindParts>>()
 const loaded = new Map<TabKind, TabKindParts>()
-
 export function registerTabKind(kind: TabKind, load: () => Promise<TabKindParts>): () => void {
   loads.set(kind, load)
   loaded.delete(kind)
@@ -69,9 +59,7 @@ export function registerTabKind(kind: TabKind, load: () => Promise<TabKindParts>
     loaded.delete(kind)
   }
 }
-
 export const tabKindParts = (kind: TabKind): TabKindParts => loaded.get(kind) ?? NO_TAB_KIND
-
 export async function tabKindLoaded(kind: TabKind): Promise<TabKindParts> {
   const load = loads.get(kind)
   if (!load) return NO_TAB_KIND

@@ -5,9 +5,7 @@ import re
 import sys
 import time
 import uuid
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -16,41 +14,30 @@ say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 SERVICE = harness.SERVICE
-
 BLOG_ROOT = "localhost"
 BLOG = f"http://field.{BLOG_ROOT}:{harness.worker_port()}"
-
 OWNER = "owner@example.com"
 SPACE = "Field notes"
 NOTE = "Everything.md"
 OTHER = "Another note.md"
 OTHER_TEXT = "# Another note\n\nThe other note itself.\n\n## Why it works\n\nBecause.\n"
-
 FIXTURE = SERVICE / "test" / "everything.md"
-
 PATIENCE = 60
-
 request = harness.request
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"BLOG_ROOT": BLOG_ROOT})
-
     def account(self, email: str) -> str:
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
-
         self.sql(
             f"insert into users (id, email, name, created_at)"
             f" values ('{user}', '{email}', 'Ada Lovelace', {now});"
             + harness.session_row(digest, user, now)
         )
-
         return token
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -58,13 +45,10 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
         if answer:
             return answer
         page.wait_for_timeout(100)
-
     raise SystemExit(f"gave up waiting for {what}")
-
 def note_console(label: str, message) -> None:
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {message.text[:200]}")
-
 TREE = """
 () => {
   const write = document.querySelector('#write')
@@ -83,7 +67,6 @@ TREE = """
   return out
 }
 """
-
 ALLOWED = [
     "the page's own furniture: the way back, the byline, the offer to present, the footer",
     "the front matter, which became that furniture rather than a table on the page",
@@ -91,45 +74,33 @@ ALLOWED = [
     " from the app, so nothing has drawn its picture and the fence stays code",
     "a tag, which is a link to the search in the app and words on a page",
 ]
-
 OWN_SCRIPT = "/s/"
-
 THEME_LINE = "orden:site-theme"
-
 CHROME = re.compile(r"^(?:p\.back|p\.by|footer)$")
-
 PROPERTIES = "div.properties"
-
 def depth_of(line: str) -> int:
     return (len(line) - len(line.lstrip())) // 2
-
 def trimmed(tree: list[str]) -> list[str]:
     out: list[str] = []
     dropping: int | None = None
-
     for line in tree:
         depth = depth_of(line)
         if dropping is not None:
             if depth > dropping:
                 continue
             dropping = None
-
         bare = line.strip()
         if CHROME.match(bare) or bare == PROPERTIES:
             dropping = depth
             continue
-
         if bare in ("a.tag", "span.tag"):
             out.append("  " * depth + "TAG")
             continue
-
         if bare.startswith("figure.diagram"):
             out.append("  " * depth + "DIAGRAM")
             dropping = depth
             continue
-
         out.append(line)
-
     collapsed: list[str] = []
     for at, line in enumerate(out):
         after = out[at + 1] if at + 1 < len(out) else ""
@@ -139,18 +110,14 @@ def trimmed(tree: list[str]) -> list[str]:
         if line.strip() == "code.language-mermaid":
             continue
         collapsed.append(line)
-
     return collapsed
-
 TALLEST = 14_000
-
 def tall(page: Page) -> None:
     height = page.evaluate(
         "() => Math.ceil(document.querySelector('#write').getBoundingClientRect().height) + 120"
     )
     page.set_viewport_size({"width": 1180, "height": min(int(height), TALLEST)})
     page.wait_for_timeout(600)
-
 def fresh(
     browser: Browser,
     label: str,
@@ -161,7 +128,6 @@ def fresh(
     context = browser.new_context(viewport={"width": 1180, "height": 900})
     if token:
         context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
-
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
@@ -169,27 +135,21 @@ def fresh(
         page.on("request", lambda request: asked.append(request.url))
     page.goto(at, wait_until="domcontentloaded")
     return page
-
 def main() -> int:
     if not FIXTURE.exists():
         raise SystemExit(f"the fixture is missing: {FIXTURE}")
-
     fixture = FIXTURE.read_text("utf-8")
     failures: list[str] = []
-
     def wrong(words: str) -> None:
         failures.append(words)
         say(f"WRONG: {words}")
-
     worker = Worker()
     worker.start()
-
     with DRIVE.session() as browser:
         token = worker.account(OWNER)
         space = request("/v1/spaces", token=token, body={"name": SPACE})["space"]
         for path, content in ((NOTE, fixture), (OTHER, OTHER_TEXT)):
             request(f"/v1/spaces/{space['id']}/notes", token=token, body={"path": path, "content": content})
-
         request(
             f"/v1/spaces/{space['id']}/blog",
             token=token,
@@ -197,11 +157,9 @@ def main() -> int:
             method="PUT",
         )
         say(f"the space is published at {BLOG}")
-
         app = fresh(browser, "app", ORIGIN, token=token)
         wait_for(app, "() => !!window.ordenApp", "the app to start")
         app.evaluate("() => window.ordenApp.theme.setScheme('light')")
-
         folder = wait_for(
             app,
             "() => {"
@@ -218,7 +176,6 @@ def main() -> int:
             "}",
             folder,
         )
-
         listed = (
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
@@ -227,7 +184,6 @@ def main() -> int:
             "}"
         )
         wait_for(app, listed, "both notes to arrive in the app")
-
         app.evaluate(
             "(name) => {"
             "  const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
@@ -242,14 +198,11 @@ def main() -> int:
             f"  .some((one) => one.name === {json.dumps(OTHER.replace('.md', ''))})",
             "the space to be read through",
         )
-
         app.evaluate(f"() => window.ordenApp.workspace.open('/{folder}/{NOTE}')")
         wait_for(app, "() => !!document.querySelector('.cm-content')", "the editor")
-
         app.evaluate("() => window.ordenApp.workspace.toggleReading()")
         wait_for(app, "() => !!document.querySelector('#write .callout')", "the reading view")
         app.wait_for_timeout(1500)
-
         reading = app.evaluate(TREE)
         if not reading:
             raise SystemExit("the reading view rendered nothing")
@@ -257,16 +210,13 @@ def main() -> int:
         tall(app)
         app.locator("#write").screenshot(path=str(SHOTS / "reading.png"))
         say(f"the reading view is drawn: {len(reading)} elements")
-
         app.close()
         worker.stop()
         worker.start(upstream=f"field.{BLOG_ROOT}")
-
         asked: list[str] = []
         page = fresh(browser, "page", f"{ORIGIN}/everything", asked=asked)
         page.wait_for_selector("#write .callout", timeout=15_000)
         page.wait_for_timeout(500)
-
         page.evaluate("async () => { await document.fonts.ready }")
         elsewhere = sorted({url for url in asked if not url.startswith((ORIGIN, f"blob:{ORIGIN}/"))})
         say(f"the page asked for {len(asked)} addresses:")
@@ -274,7 +224,6 @@ def main() -> int:
             say(f"  {url[len(ORIGIN) :] if url.startswith(ORIGIN) else url}")
         if elsewhere:
             wrong(f"the published page fetched from elsewhere: {', '.join(elsewhere)}")
-
         faces = page.evaluate(
             "() => [...document.fonts]"
             "  .filter((one) => one.family.startsWith('KaTeX_') && one.status === 'loaded')"
@@ -292,14 +241,12 @@ def main() -> int:
             wrong("the published page drew no block equation")
         else:
             say(f"the equation is {drawn}px wide, set in {', '.join(faces)}")
-
         published = page.evaluate(TREE)
         if not published:
             raise SystemExit("the published page rendered nothing")
         page.screenshot(path=str(SHOTS / "published-page.png"), full_page=True)
         page.locator("#write").screenshot(path=str(SHOTS / "published.png"))
         say(f"the published page is drawn: {len(published)} elements")
-
         light = page.evaluate("() => getComputedStyle(document.body).backgroundColor")
         night = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="dark")
         after = night.new_page()
@@ -307,14 +254,11 @@ def main() -> int:
         after.wait_for_selector("#write .callout", timeout=15_000)
         tall(after)
         after.locator("#write").screenshot(path=str(SHOTS / "published-dark.png"))
-
         if after.evaluate("() => getComputedStyle(document.body).backgroundColor") == light:
             wrong("the published page is the same colour in the dark as in the light")
         night.close()
-
         one = trimmed(reading)
         other = trimmed(published)
-
         if one != other:
             diff = [
                 line
@@ -327,10 +271,8 @@ def main() -> int:
                 say(line)
         else:
             say(f"the same {len(one)} elements, in the same order, with the same classes")
-
         for note in ALLOWED:
             say(f"allowed: {note}")
-
         carried = page.evaluate(
             """() => [...document.querySelectorAll('script')].map((one) => ({
                  src: one.getAttribute('src') ?? '',
@@ -354,17 +296,14 @@ def main() -> int:
             "() => [...document.styleSheets].some((one) => (one.href ?? '').includes('/s/'))"
         ):
             wrong("the published page is not wearing the app's stylesheet")
-
     if failures:
         print("\nFAILED", flush=True)
         for one in failures:
             print(f"  - {one}", flush=True)
         return 1
-
     print(
         f"\na published note is the note: {SHOTS / 'reading.png'} beside {SHOTS / 'published.png'}",
         flush=True,
     )
     return 0
-
 sys.exit(main())

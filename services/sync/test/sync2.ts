@@ -19,20 +19,16 @@ export async function invited(
   )
   const found = /\/join\/([a-f0-9]+)/.exec(sent)
   if (!found?.[1]) throw new Error(`no invitation was sent:\n${sent}`)
-
   const token = await signIn(env, email)
   await call(env, `/v1/join/${found[1]}`, { method: 'POST', token })
   return token
 }
-
 export type Live = ReturnType<typeof running> & {
   settle(): Promise<void>
 }
-
 export function live(env: TestEnv): Live {
   const rooms = running(env)
   env.ROOMS = rooms.ROOMS
-
   const settle = async () => {
     for (let round = 0; round < 20; round++) {
       let fired = false
@@ -47,15 +43,12 @@ export function live(env: TestEnv): Live {
     }
     throw new Error('the rooms never stopped settling')
   }
-
   return { ...rooms, settle }
 }
-
 export interface FramedAnswer<T> {
   status: number
   value: T
 }
-
 export async function framed<T = Record<string, unknown>>(
   env: TestEnv,
   path: string,
@@ -68,7 +61,6 @@ export async function framed<T = Record<string, unknown>>(
     accept: 'application/octet-stream',
   }
   if (body !== undefined) headers['content-type'] = 'application/octet-stream'
-
   const response = await app.fetch(
     new Request(`https://nibeditor.com${path}`, {
       method,
@@ -77,7 +69,6 @@ export async function framed<T = Record<string, unknown>>(
     }),
     env,
   )
-
   const bytes = new Uint8Array(await response.arrayBuffer())
   const type = response.headers.get('content-type') ?? ''
   const value: unknown = type.startsWith('application/octet-stream')

@@ -2,9 +2,7 @@ import { expect, test, vi } from 'vitest'
 
 type Heard = (event: { payload: { job: string; found: unknown[] } }) => void
 const ears = vi.hoisted(() => ({ heard: null as Heard | null }))
-
 vi.mock('../../platform/src/tauri', () => ({ isDesktop: true }))
-
 vi.mock('@tauri-apps/api/event', () => ({
   listen: async (_event: string, heard: Heard) => {
     await new Promise((resolve) => setTimeout(resolve, 20))
@@ -12,7 +10,6 @@ vi.mock('@tauri-apps/api/event', () => ({
     return () => undefined
   },
 }))
-
 vi.mock('./commands', () => ({
   FOUND: 'explorer://found',
   cancelJob: () => Promise.resolve(),
@@ -37,9 +34,7 @@ vi.mock('./commands', () => ({
     return Promise.resolve({ found: 1, cut: false, cancelled: false })
   },
 }))
-
 const { Search } = await import('./search.svelte')
-
 test('the first search after starting shows what it found at once', async () => {
   const search = new Search('/home/me', 'bank')
   await search.run(false)

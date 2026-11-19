@@ -18,13 +18,10 @@ const todo = (id: string, space: string | null): Todo => ({
   order: 0,
   created: 0,
 })
-
 const undo: (() => void)[] = []
-
 afterEach(() => {
   for (const one of undo.splice(0)) one()
 })
-
 function synced(remote: Record<string, string>) {
   const home = { id: 'local-home', name: 'Home', root: '/s/Home' }
   const work = { id: 'local-work', name: 'Work', root: '/s/Work' }
@@ -38,7 +35,6 @@ function synced(remote: Record<string, string>) {
     } as unknown as PortMap['sync.store']),
   )
 }
-
 describe('the space a todo is kept in', () => {
   test('is the account id of a synced space, the one every device and the server share', () => {
     synced({ '/s/Home': 'acct-home' })
@@ -46,7 +42,6 @@ describe('the space a todo is kept in', () => {
     expect(shown.space?.id).toBe('acct-home')
     expect(shown.spaces.map((one) => one.id)).toEqual(['acct-home', 'local-work'])
   })
-
   test('only this space shows todos written with the account id and the older local id', () => {
     synced({ '/s/Home': 'acct-home' })
     const list = [

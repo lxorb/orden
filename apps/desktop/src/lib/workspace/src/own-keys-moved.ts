@@ -12,9 +12,7 @@ export interface Notes {
   noteText(path: string): Promise<string | null>
   replaceInNotes(changes: readonly Change[], keeping?: Keeping): Promise<number>
 }
-
 const moving = new Map<string, Promise<void>>()
-
 export function moveOwnKeysSoon(root: string, workspace: Notes, signedIn: boolean): Promise<void> {
   const running = moving.get(root)
   if (running) return running
@@ -25,18 +23,15 @@ export function moveOwnKeysSoon(root: string, workspace: Notes, signedIn: boolea
   moving.set(root, moved)
   return moved
 }
-
 function mayMove(root: string, workspace: Notes, signedIn: boolean): boolean {
   if (workspace.itemMeta.movedFromText(root)) return false
   return !signedIn || workspace.itemMeta.describes(root)
 }
-
 async function moveOwnKeys(root: string, workspace: Notes, signedIn: boolean): Promise<void> {
   await links.scanned()
   if (!samePath(links.rootOf(), root) || !mayMove(root, workspace, signedIn)) return
   const held = links.held()
   if (!held.length) return
-
   const patches: Record<string, MetaPatch> = {}
   const changes: Change[] = []
   const { ownKeysTaken } = await ownKeys()
@@ -52,7 +47,6 @@ async function moveOwnKeys(root: string, workspace: Notes, signedIn: boolean): P
     const edit = oneEdit(before, taken.text)
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
-
   if (!mayMove(root, workspace, signedIn)) return
   workspace.itemMeta.setMany(root, patches)
   if (changes.length) await workspace.replaceInNotes(changes, { throughLocks: true })

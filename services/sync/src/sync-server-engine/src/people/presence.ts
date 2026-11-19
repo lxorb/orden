@@ -5,13 +5,11 @@ export interface Held {
   active: boolean
   guest: boolean
 }
-
 export function presenceOf(sockets: readonly Held[]): Presence {
   const theirs = sockets.filter((one) => !one.guest)
   if (!theirs.length) return 'offline'
   return theirs.some((one) => one.active) ? 'active' : 'away'
 }
-
 export async function keepPresence(env: Env, user: string, state: Presence): Promise<void> {
   await env.DB.prepare(
     `insert into presence (user_id, state, at) values (?1, ?2, ?3)

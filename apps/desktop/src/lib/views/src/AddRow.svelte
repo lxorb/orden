@@ -14,14 +14,11 @@
     asked?: number
     onclose?: () => void
   } = $props()
-
   const property = $derived(kit.live.view?.groupBy?.property)
-
   function start() {
     kit.add(group && property ? { property, key: group.key } : undefined)
     onclose?.()
   }
-
   $effect(() => {
     if (asked > 0) untrack(start)
   })

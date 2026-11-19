@@ -1,13 +1,10 @@
 import os
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 N = int(os.environ.get("TURNS", "400"))
-
 SETUP = """
 async () => {
   const ai = window.ordenApp.ai
@@ -18,7 +15,6 @@ async () => {
   return made.id
 }
 """
-
 SEED = """async ([n, provider]) => {
   const chat = await window.ordenApp.aiChats()
   const { writeThread } = await import('/src/lib/ai-chat/src/chat/threads.ts')
@@ -36,7 +32,6 @@ SEED = """async ([n, provider]) => {
     turns, usage: { input: 0, output: 0 }, created: now - n * 1000, updated: now })
   return space
 }"""
-
 OPEN = """async () => {
   const chat = await window.ordenApp.aiChats()
   await chat.refresh?.()
@@ -48,7 +43,6 @@ OPEN = """async () => {
   return { open: t1 - t0, settled: performance.now() - t0, said: document.querySelectorAll('.talk .said').length,
     nodes: document.querySelectorAll('.talk *').length }
 }"""
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -97,5 +91,4 @@ def drive(browser: Browser) -> None:
         wrong("a question in sight jumped when earlier turns were drawn above it")
     DRIVE.shot(page, "long")
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "a long chat opens on its last turns and draws the earlier ones as it is scrolled up"))

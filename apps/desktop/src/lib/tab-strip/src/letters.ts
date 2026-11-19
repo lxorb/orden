@@ -1,15 +1,12 @@
 import { parseCombination, type Platform } from '../../ui-kit/src/api'
 
 export const PANE_LETTERS: readonly string[] = ['H', 'J', 'K', 'L']
-
 const ALPHABET = Array.from({ length: 26 }, (_, at) => String.fromCharCode(65 + at))
-
 export function underAlt(key: string | null, platform: Platform): string | null {
   const combination = key === null ? null : parseCombination(key, platform)
   if (!combination?.alt || combination.ctrl || combination.meta || combination.shift) return null
   return combination.key.length === 1 ? combination.key.toUpperCase() : null
 }
-
 export function takenUnderAlt(keys: readonly (string | null)[], platform: Platform): Set<string> {
   const taken = new Set(PANE_LETTERS)
   for (const key of keys) {
@@ -18,7 +15,6 @@ export function takenUnderAlt(keys: readonly (string | null)[], platform: Platfo
   }
   return taken
 }
-
 export function letterOf(stroke: {
   key: string
   code: string
@@ -34,7 +30,6 @@ export function letterOf(stroke: {
   if (/^[a-z]$/i.test(stroke.key)) return stroke.key.toUpperCase()
   return /^Key[A-Z]$/.test(stroke.code) ? stroke.code.slice(3) : null
 }
-
 export function lettersFor(
   essentials: readonly { path: string; name: string }[],
   kept: Readonly<Record<string, string>>,
@@ -42,7 +37,6 @@ export function lettersFor(
 ): Record<string, string> {
   const given: Record<string, string> = {}
   const used = new Set(taken)
-
   for (const one of essentials) {
     const before = kept[one.path]
     if (before && /^[A-Z]$/.test(before) && !used.has(before)) {

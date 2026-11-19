@@ -10,9 +10,7 @@ export interface Sending {
   unsent(id: string): Promise<void>
   post(report: CrashReport): Promise<unknown>
 }
-
 type Sent = 'done' | 'later' | 'off'
-
 export async function sendWaiting(how: Sending): Promise<Sent> {
   const waiting = await how.waiting()
   if (!how.on()) {
@@ -35,7 +33,6 @@ export async function sendWaiting(how: Sending): Promise<Sent> {
   }
   return 'done'
 }
-
 export function nativeSending(on: () => boolean, channel: () => string): Sending {
   return {
     on,

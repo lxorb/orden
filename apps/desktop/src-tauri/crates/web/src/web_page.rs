@@ -2,7 +2,6 @@ use serde::Serialize;
 use tauri::AppHandle;
 
 const SAID: &str = "orden://web-page";
-
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(tag = "said", rename_all = "lowercase")]
 pub enum Said {
@@ -10,7 +9,6 @@ pub enum Said {
     Step { step: Step },
     Crashed,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Step {
@@ -18,14 +16,12 @@ pub enum Step {
     Out,
     Reset,
 }
-
 #[derive(Clone, Serialize)]
 struct Heard {
     tab: String,
     #[serde(flatten)]
     said: Said,
 }
-
 pub fn ended(view: &tauri::Webview) {
     use tauri::{Emitter, Manager};
 
@@ -39,7 +35,6 @@ pub fn ended(view: &tauri::Webview) {
     };
     let _ = view.app_handle().emit_to(window.as_str(), SAID, heard);
 }
-
 pub fn stepped(app: &AppHandle, tab: &str, step: Step) {
     use tauri::Emitter;
 
@@ -52,7 +47,6 @@ pub fn stepped(app: &AppHandle, tab: &str, step: Step) {
     };
     let _ = app.emit_to(view.window().label(), SAID, heard);
 }
-
 pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
     use tauri::Emitter;
 
@@ -67,23 +61,19 @@ pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
         let _ = app.emit_to(window, SAID, heard);
     }
 }
-
 #[tauri::command]
 pub fn web_mute(app: AppHandle, tab: String, muted: bool) -> Result<(), String> {
     mute(&crate::web_tabs::found(&app, &tab)?, muted)
 }
-
 #[tauri::command]
 pub fn web_unfill(app: AppHandle, tab: String) -> Result<(), String> {
     crate::web_tabs::found(&app, &tab)?
         .eval("if (document.fullscreenElement) document.exitFullscreen()")
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
-
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     (crate::engine::engine()?.mute)(view, muted)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{Heard, Said, Step};

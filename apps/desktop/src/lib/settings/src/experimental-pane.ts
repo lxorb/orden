@@ -35,7 +35,6 @@ async function turnExperimental(on: boolean): Promise<void> {
   })
   if (sure) setWord(EXPERIMENTAL_WORD, true)
 }
-
 interface Feature {
   key: string
   word: string
@@ -44,7 +43,6 @@ interface Feature {
   words: string[]
   more?: () => Field[]
 }
-
 function featureGroup(one: Feature): Group {
   return {
     title: one.label,
@@ -64,7 +62,6 @@ function featureGroup(one: Feature): Group {
     ],
   }
 }
-
 function clipboardFields(): Field[] {
   if (!appsOn()) return []
   return [
@@ -79,17 +76,14 @@ function clipboardFields(): Field[] {
     },
   ]
 }
-
 function chatFields(): Field[] {
   if (!chatsOn()) return []
   return isMobile ? [] : settingFieldsIn('experimental', 'Chats')
 }
-
 function glassesFields(): Field[] {
   if (!glassesOn()) return []
   return [...glassesGroups().flatMap((group) => group.fields), ...wordFields()]
 }
-
 function features(): Feature[] {
   const glasses: Feature = {
     key: 'glasses',
@@ -107,7 +101,6 @@ function features(): Feature[] {
     words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
   }
   if (__EVEN_PLUGIN__) return [glasses, bases]
-
   return [
     {
       key: 'chats',
@@ -154,7 +147,6 @@ function features(): Feature[] {
     glasses,
   ]
 }
-
 export function experimentalPane(): Pane {
   return {
     id: 'experimental',

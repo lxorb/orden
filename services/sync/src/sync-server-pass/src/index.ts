@@ -12,7 +12,6 @@ import { rotations } from './rotate'
 import { vaults } from './vaults'
 
 export const pass = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 pass.route('/', changes)
 pass.route('/', keyrings)
 pass.route('/', vaults)
@@ -23,6 +22,5 @@ pass.route('/', invites)
 pass.route('/', rotations)
 pass.route('/', links)
 pass.route('/', files)
-
 export { openLink } from './open-link'
 export { sweepPassLinks } from './links'

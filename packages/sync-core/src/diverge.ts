@@ -15,18 +15,13 @@ import {
 } from './merge3'
 
 export const CONTESTED = 80
-
 export const REWRITTEN = 16
-
 export type Verdict = 'clean' | 'minor' | 'diverged'
-
 export type Broken = 'front-matter' | 'fence'
-
 export interface Times {
   local: number
   remote: number
 }
-
 export interface Overlap {
   base: Span
   local: Span
@@ -35,7 +30,6 @@ export interface Overlap {
   newer: Whose
   asks: 'size' | 'block' | null
 }
-
 export interface Divergence {
   verdict: Verdict
   overlaps: readonly Overlap[]
@@ -43,12 +37,10 @@ export interface Divergence {
   broken: Broken | null
   settled: 'newer' | 'both'
 }
-
 export interface Excerpt {
   text: string
   marks: [number, number][]
 }
-
 function startIn(at: number, sideEdits: readonly Edit[]): number {
   let shift = 0
   for (const edit of sideEdits) {
@@ -58,7 +50,6 @@ function startIn(at: number, sideEdits: readonly Edit[]): number {
   }
   return at + shift
 }
-
 function endIn(at: number, sideEdits: readonly Edit[]): number {
   let shift = 0
   for (const edit of sideEdits) {
@@ -68,16 +59,13 @@ function endIn(at: number, sideEdits: readonly Edit[]): number {
   }
   return at + shift
 }
-
 function spanIn(base: Span, sideEdits: readonly Edit[]): Span {
   return { from: startIn(base.from, sideEdits), to: endIn(base.to, sideEdits) }
 }
-
 function intersects(edit: Edit, span: Span): boolean {
   if (edit.from === edit.to) return span.from <= edit.from && edit.from <= span.to
   return edit.from < span.to && edit.to > span.from
 }
-
 function writtenIn(block: Block, sideEdits: readonly Edit[]): number {
   let sum = 0
   for (const edit of sideEdits) {
@@ -87,18 +75,15 @@ function writtenIn(block: Block, sideEdits: readonly Edit[]): number {
   }
   return sum
 }
-
 function deletedBy(words: Block, sideEdits: readonly Edit[]): Edit | null {
   return sideEdits.find((edit) => edit.from <= words.from && edit.to >= words.to && !edit.insert.trim()) ?? null
 }
-
 function rewrittenBlocks(base: string, analysis: Analysis): Span[] {
   const out: Span[] = []
   const shared = (edit: Edit) =>
     analysis.identical.some((one) => one.from === edit.from && one.to === edit.to && one.insert === edit.insert)
   const mine = analysis.local.filter((edit) => !shared(edit))
   const theirs = analysis.remote.filter((edit) => !shared(edit))
-
   for (const block of blocksOf(base)) {
     for (const [gone, kept] of [
       [analysis.local, theirs],
@@ -106,10 +91,8 @@ function rewrittenBlocks(base: string, analysis: Analysis): Span[] {
     ] as const) {
       const deletion = deletedBy(contentOf(base, block), gone)
       if (!deletion) continue
-
       const writing = kept.filter((edit) => intersects(edit, block))
       if (writtenIn(block, writing) <= REWRITTEN) continue
-
       const all = [deletion, ...writing]
       out.push({
         from: all.map((edit) => edit.from).reduce((low, one) => Math.min(low, one), block.from),
@@ -117,10 +100,8 @@ function rewrittenBlocks(base: string, analysis: Analysis): Span[] {
       })
     }
   }
-
   return out
 }
-
 function sizeOver(span: Span, analysis: Analysis): number {
   const inside = (edit: Edit) => intersects(edit, span)
   const written = [...analysis.local, ...analysis.remote]
@@ -128,11 +109,9 @@ function sizeOver(span: Span, analysis: Analysis): number {
     .reduce((sum, edit) => sum + edit.insert.length, 0)
   return written + (span.to - span.from)
 }
-
 function frontMatterParses(text: string): boolean {
   return readProperties(text) !== null
 }
-
 function fenceOpen(text: string): boolean {
   let open: string | null = null
   for (const line of text.split('\n')) {
@@ -145,7 +124,6 @@ function fenceOpen(text: string): boolean {
   }
   return open !== null
 }
-
 function brokenBy(local: string, remote: string, merges: readonly string[]): Broken | null {
   if (frontMatterParses(local) && frontMatterParses(remote)) {
     if (merges.some((merge) => !frontMatterParses(merge))) return 'front-matter'
@@ -155,11 +133,9 @@ function brokenBy(local: string, remote: string, merges: readonly string[]): Bro
   }
   return null
 }
-
 function distance(one: string, other: string): number {
   return edits(one, other, 'operations').reduce((sum, edit) => sum + (edit.to - edit.from) + edit.insert.length, 0)
 }
-
 function resolved(base: string, analysis: Analysis, settle: (meeting: Meeting) => Settle, merged: string): string {
   const order = new Map<number, Whose>()
   const write = () => written(base, analysis, { settle, first: (at) => order.get(at) ?? 'local' })
@@ -179,9 +155,7 @@ function resolved(base: string, analysis: Analysis, settle: (meeting: Meeting) =
   }
   return best
 }
-
 const RUN = 4
-
 function runsOf(text: string): Map<string, number> {
   const bare = text.replace(/[^\p{L}\p{N}]+/gu, '')
   const counts = new Map<string, number>()
@@ -191,7 +165,6 @@ function runsOf(text: string): Map<string, number> {
   }
   return counts
 }
-
 function runsByLine(text: string): Map<string, number> {
   const counts = new Map<string, number>()
   for (const line of text.split('\n')) {
@@ -199,7 +172,6 @@ function runsByLine(text: string): Map<string, number> {
   }
   return counts
 }
-
 function repeats(references: readonly string[], merge: string): boolean {
   const known = references.map(runsByLine)
   for (const [run, count] of runsByLine(merge)) {
@@ -208,7 +180,6 @@ function repeats(references: readonly string[], merge: string): boolean {
   }
   return false
 }
-
 function excess(references: readonly string[], merge: string): number {
   const known = references.map(runsByLine)
   let over = 0
@@ -221,7 +192,6 @@ function excess(references: readonly string[], merge: string): number {
   }
   return over
 }
-
 function rewritten(base: string, side: string, words: (edit: Edit) => string): string {
   let out = ''
   let at = 0
@@ -231,7 +201,6 @@ function rewritten(base: string, side: string, words: (edit: Edit) => string): s
   }
   return out + base.slice(at)
 }
-
 function withoutWord(text: string, word: string): string {
   const parts = text.split(/(\s+)/)
   const at = parts.indexOf(word)
@@ -239,13 +208,11 @@ function withoutWord(text: string, word: string): string {
   const space = parts[at + 1] !== undefined ? at + 1 : at - 1
   return parts.filter((_, index) => index !== at && index !== space).join('')
 }
-
 function wordsOf(text: string): Map<string, number> {
   const counts = new Map<string, number>()
   for (const word of text.split(/\s+/)) if (word) counts.set(word, (counts.get(word) ?? 0) + 1)
   return counts
 }
-
 function putTwice(
   base: string,
   local: string,
@@ -263,7 +230,6 @@ function putTwice(
     const inTheirs = others.get(word) ?? 0
     return inBase > 0 && inMine <= inBase && inTheirs <= inBase && count > Math.max(inMine, inTheirs)
   })
-
   const theirInserts = edits(base, theirs, 'semantic')
   const fixed = rewritten(base, mine, (edit) => {
     let words = edit.insert
@@ -280,7 +246,6 @@ function putTwice(
   if (fixed === mine) return null
   return older === 'local' ? { local: fixed, remote } : { local, remote: fixed }
 }
-
 function overlapOf(first: string, then: string): string | null {
   for (let length = Math.min(first.length, then.length); length > 0; length--) {
     const piece = then.slice(0, length)
@@ -291,11 +256,9 @@ function overlapOf(first: string, then: string): string | null {
   }
   return null
 }
-
 export function diverge(base: string, local: string, remote: string, times: Times, merged?: string): Divergence {
   const first = divergeOnce(base, local, remote, times, merged)
   if (first.resolution === null || !repeats([local, remote], first.resolution)) return first
-
   const older: Whose = times.local > times.remote ? 'remote' : 'local'
   const fixed = putTwice(base, local, remote, older, first.resolution)
   if (!fixed) return first
@@ -308,13 +271,11 @@ export function diverge(base: string, local: string, remote: string, times: Time
   }
   return { ...first, resolution: again.resolution, settled: again.settled }
 }
-
 function linesIn(text: string): Map<string, number> {
   const counts = new Map<string, number>()
   for (const line of text.split('\n')) counts.set(line, (counts.get(line) ?? 0) + 1)
   return counts
 }
-
 function losesWords(base: string, sides: readonly string[], before: string, after: string): boolean {
   const old = wordsOf(base)
   const held = wordsOf(before)
@@ -325,7 +286,6 @@ function losesWords(base: string, sides: readonly string[], before: string, afte
     ),
   )
 }
-
 function linesWritten(base: string, side: string): Map<string, number> {
   const wrote = new Uint8Array(side.length)
   let shift = 0
@@ -349,7 +309,6 @@ function linesWritten(base: string, side: string): Map<string, number> {
   }
   return counts
 }
-
 function cutsLines(base: string, sides: readonly string[], before: string, after: string): boolean {
   const old = linesIn(base)
   const held = linesIn(before)
@@ -361,11 +320,9 @@ function cutsLines(base: string, sides: readonly string[], before: string, after
     }),
   )
 }
-
 function divergeOnce(base: string, local: string, remote: string, times: Times, merged?: string): Divergence {
   const newer: Whose = times.local > times.remote ? 'local' : 'remote'
   const analysis = analyse(base, local, remote)
-
   const overlaps: Overlap[] = analysis.meetings.map((meeting: Meeting) => {
     const full = fuller(base, meeting)
     return {
@@ -377,7 +334,6 @@ function divergeOnce(base: string, local: string, remote: string, times: Times, 
       asks: full === null && meeting.size > CONTESTED ? 'size' : null,
     }
   })
-
   for (const span of rewrittenBlocks(base, analysis)) {
     const meeting = overlaps.find((overlap) => overlap.base.from < span.to && span.from < overlap.base.to)
     if (meeting) {
@@ -394,7 +350,6 @@ function divergeOnce(base: string, local: string, remote: string, times: Times, 
     })
   }
   overlaps.sort((a, b) => a.base.from - b.base.from)
-
   const write = (settle: (meeting: Meeting) => Settle) =>
     merged === undefined
       ? [written(base, analysis, { settle }), written(base, analysis, { settle, first: () => 'remote' })]
@@ -422,10 +377,8 @@ function divergeOnce(base: string, local: string, remote: string, times: Times, 
   }
   const resolution = checked[0] ?? ''
   const broken = brokenBy(local, remote, checked)
-
   const asks = torn || broken !== null || overlaps.some((overlap) => overlap.asks !== null)
   const verdict: Verdict = asks ? 'diverged' : overlaps.length ? 'minor' : 'clean'
-
   return {
     verdict,
     overlaps,
@@ -434,7 +387,6 @@ function divergeOnce(base: string, local: string, remote: string, times: Times, 
     settled,
   }
 }
-
 function fuller(base: string, meeting: Meeting): Whose | null {
   const blank = (list: readonly Edit[]) =>
     list.every((edit) => !edit.insert && !/[\p{L}\p{N}]/u.test(base.slice(edit.from, edit.to)))
@@ -452,31 +404,24 @@ function fuller(base: string, meeting: Meeting): Whose | null {
   if (here.includes(there)) return 'local'
   return null
 }
-
 const MOST_EXCERPT = 480
-
 const CONTEXT = 80
-
 function passage(text: string, span: Span): Span {
   const lineFrom = span.from === 0 ? 0 : text.lastIndexOf('\n', span.from - 1) + 1
   const newline = text.indexOf('\n', span.to)
   const lineTo = newline === -1 ? text.length : newline
   if (lineTo - lineFrom <= MOST_EXCERPT) return { from: lineFrom, to: lineTo }
-
   let from = Math.max(lineFrom, span.from - CONTEXT)
   let to = Math.min(lineTo, Math.max(span.to, span.from) + CONTEXT, from + MOST_EXCERPT)
   const space = text.indexOf(' ', from)
   if (from > lineFrom && space !== -1 && space < span.from) from = space + 1
   const back = text.lastIndexOf(' ', to)
   if (to < lineTo && back > span.to) to = back
-
   return { from: Math.min(from, span.from), to: Math.max(to, Math.min(span.to, lineTo)) }
 }
-
 function mark(marks: [number, number][], from: number, to: number) {
   if (to > from) marks.push([from, to])
 }
-
 export function excerpt(
   base: string,
   local: string,
@@ -484,7 +429,6 @@ export function excerpt(
   overlaps: readonly Overlap[],
 ): { local: Excerpt; remote: Excerpt } {
   let first: Overlap | undefined = overlaps.find((one) => one.asks !== null) ?? overlaps[0]
-
   if (!first) {
     const mine = edits(base, local, 'semantic')
     const theirs = edits(base, remote, 'semantic')
@@ -499,12 +443,10 @@ export function excerpt(
       asks: null,
     }
   }
-
   const here = passage(local, first.local)
   const there = passage(remote, first.remote)
   const mineText = local.slice(here.from, here.to)
   const theirText = remote.slice(there.from, there.to)
-
   const localMarks: [number, number][] = []
   const remoteMarks: [number, number][] = []
   let shift = 0
@@ -513,7 +455,6 @@ export function excerpt(
     mark(remoteMarks, edit.from + shift, edit.from + shift + edit.insert.length)
     shift += edit.insert.length - (edit.to - edit.from)
   }
-
   return {
     local: { text: mineText, marks: localMarks },
     remote: { text: theirText, marks: remoteMarks },

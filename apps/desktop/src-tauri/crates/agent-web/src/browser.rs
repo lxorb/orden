@@ -20,12 +20,10 @@ use orden_agents::Caller;
 
 const WAIT: Duration = Duration::from_secs(30);
 const LONGEST_WAIT: Duration = Duration::from_secs(120);
-
 pub enum Place {
     Own(Tab),
     Reader(String),
 }
-
 impl Place {
     fn store(&self) -> Store {
         match self {
@@ -33,7 +31,6 @@ impl Place {
             Place::Reader(_) => Store::Reader,
         }
     }
-
     fn id(&self) -> &str {
         match self {
             Place::Own(tab) => &tab.id,
@@ -41,7 +38,6 @@ impl Place {
         }
     }
 }
-
 pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     if !caller.holds(Scope::Browser) && !caller.holds(Scope::BrowserReader) {
         return Answer::error(Code::NotGranted, "this agent was not granted the browser");
@@ -71,7 +67,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
         verb => on_a_tab(app, caller, verb, since),
     }
 }
-
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
         Caller::Reader => crate::reader::every_tab(app),
@@ -83,7 +78,6 @@ fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let agent = tabs::of(caller.id()).iter().map(Tab::listed).collect();
     Answer::ok(TabList { reader, agent })
 }
-
 fn open_tab(app: &AppHandle, caller: &Caller, open: &orden_agents::verbs::Open) -> Answer {
     if !caller.holds(Scope::Browser) {
         return Answer::error(
@@ -150,7 +144,6 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &orden_agents::verbs::Open) 
         Err(refused) => refused,
     }
 }
-
 fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> {
     let asked = orden_agents::verbs::window::StoreAsk {
         space: space.map(str::to_string),
@@ -172,7 +165,6 @@ fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> 
             .map(str::to_string)
     })
 }
-
 fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), Answer> {
     let shown = tabs::shown_as(tab);
     let tab = shown.as_deref().unwrap_or(tab);
@@ -204,7 +196,6 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
     };
     Ok((Place::Reader(tab.to_string()), view))
 }
-
 fn gate<'a>(
     app: &AppHandle,
     caller: &Caller,
@@ -241,7 +232,6 @@ fn gate<'a>(
     }
     Ok(page)
 }
-
 fn page_on(
     view: &View,
     label: String,
@@ -262,7 +252,6 @@ fn page_on(
         worlds_renewed: std::sync::atomic::AtomicBool::new(false),
     }
 }
-
 pub fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
     let held = tabs::held(tab).ok_or("there is no such agent tab")?;
     let view = engines::view(app, &held.label())
@@ -283,7 +272,6 @@ pub fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
             _ => "the page could not be photographed".into(),
         })
 }
-
 fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     let name = verb.name();
     let Some(tab) = tab_of(&verb) else {
@@ -303,7 +291,6 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
         |place, page| act(app, caller, place, page, verb),
     )
 }
-
 pub fn on_tab(
     app: &AppHandle,
     caller: &Caller,
@@ -335,7 +322,6 @@ pub fn on_tab(
         crate::quiet::dialog_of(&page.label),
     ))
 }
-
 fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog> {
     held.map(|mut one| {
         if engines::from_allowed(limits, std::slice::from_ref(&one.url)).is_err() {
@@ -350,7 +336,6 @@ fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog>
         one
     })
 }
-
 fn tab_of(verb: &Verb) -> Option<String> {
     Some(
         match verb {
@@ -381,14 +366,12 @@ fn tab_of(verb: &Verb) -> Option<String> {
         .clone(),
     )
 }
-
 fn acted(page: &Page<'_>) -> Answer {
     Answer::ok(Acted {
         url: page.url(),
         opened: page.opened(),
     })
 }
-
 fn judged(
     app: &AppHandle,
     caller: &Caller,
@@ -400,7 +383,6 @@ fn judged(
 ) -> Result<(), Answer> {
     judged_times(app, caller, page, place, facts, act, key, 1)
 }
-
 #[allow(clippy::too_many_arguments)]
 fn judged_times(
     app: &AppHandle,
@@ -441,7 +423,6 @@ fn judged_times(
         &key,
     ))
 }
-
 fn said_times(summary: String, times: u8) -> String {
     if times > 1 {
         format!("{summary} ({times} times)")
@@ -449,14 +430,12 @@ fn said_times(summary: String, times: u8) -> String {
         summary
     }
 }
-
 fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> String {
     steady(&format!(
         "{} {:?} {} {summary}",
         facts.name, question.category, facts.dialog
     ))
 }
-
 fn is_clock(word: &str) -> bool {
     let word = word.trim_matches(['(', ')', ',', '.', ';']).to_lowercase();
     let word = word
@@ -472,7 +451,6 @@ fn is_clock(word: &str) -> bool {
             .iter()
             .all(|one| one.len() == 2 && one.as_bytes()[0] < b'6')
 }
-
 fn steady(words: &str) -> String {
     const TICKING: &[&str] = &[
         "s", "sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "sek",
@@ -533,7 +511,6 @@ fn steady(words: &str) -> String {
     }
     kept.join(" ")
 }
-
 struct OnePress<'a, 'p> {
     app: &'a AppHandle,
     caller: &'a Caller,
@@ -544,7 +521,6 @@ struct OnePress<'a, 'p> {
     times: u8,
     answered: std::cell::RefCell<Vec<String>>,
 }
-
 impl<'a, 'p> OnePress<'a, 'p> {
     fn new(
         app: &'a AppHandle,
@@ -564,11 +540,9 @@ impl<'a, 'p> OnePress<'a, 'p> {
             answered: std::cell::RefCell::new(Vec::new()),
         }
     }
-
     fn landed(&self, on: &Element) -> Result<(), Answer> {
         self.judge(&self.page.facts_of_press(on)?)
     }
-
     fn judge(&self, facts: &Facts) -> Result<(), Answer> {
         let judged = |times| {
             judged_times(
@@ -603,7 +577,6 @@ impl<'a, 'p> OnePress<'a, 'p> {
         Ok(())
     }
 }
-
 fn ask(
     app: &AppHandle,
     grant: &Grant,
@@ -624,7 +597,6 @@ fn ask(
         },
     )
 }
-
 fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) {
     approvals::granted(
         app,
@@ -636,7 +608,6 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
         orden_agents::verbs::ApprovalAnswer::Allowed,
     );
 }
-
 #[allow(clippy::too_many_lines)]
 fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: Verb) -> Answer {
     let tab = place.id().to_string();
@@ -1216,14 +1187,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
     };
     run().unwrap_or_else(|refused| refused)
 }
-
 fn press(page: &Page<'_>, place: &Place, key: &keys::Key) -> Result<(), Answer> {
     match place {
         Place::Own(_) => page.press(key),
         Place::Reader(_) => page.press_in_page(key),
     }
 }
-
 fn modifiers(held: &[orden_agents::verbs::Modifier]) -> u8 {
     use orden_agents::verbs::Modifier;
     held.iter().fold(0, |bits, one| {
@@ -1235,7 +1204,6 @@ fn modifiers(held: &[orden_agents::verbs::Modifier]) -> u8 {
         }
     })
 }
-
 fn handing_granted(caller: &Caller, inside: bool) -> Result<(), Answer> {
     let (scope, why) = if inside {
         (
@@ -1254,7 +1222,6 @@ fn handing_granted(caller: &Caller, inside: bool) -> Result<(), Answer> {
         Err(Answer::error(Code::NotGranted, why))
     }
 }
-
 fn files_of(
     app: &AppHandle,
     caller: &Caller,
@@ -1320,7 +1287,6 @@ fn files_of(
         })
         .collect()
 }
-
 fn kept_from_agents(app: &AppHandle, root: Option<&Path>, path: &Path) -> Result<(), Answer> {
     if root.is_some_and(|root| hidden_within(root, path)) || !may_hand(app, path) {
         return Err(Answer::error(
@@ -1330,7 +1296,6 @@ fn kept_from_agents(app: &AppHandle, root: Option<&Path>, path: &Path) -> Result
     }
     Ok(())
 }
-
 fn plainly(path: &Path) -> String {
     let spelled = path.to_string_lossy();
     if let Some(share) = spelled.strip_prefix(r"\\?\UNC\") {
@@ -1338,7 +1303,6 @@ fn plainly(path: &Path) -> String {
     }
     spelled.strip_prefix(r"\\?\").unwrap_or(&spelled).to_owned()
 }
-
 fn may_hand(app: &AppHandle, path: &Path) -> bool {
     let asked = orden_agents::verbs::window::HandAsk {
         path: plainly(path),
@@ -1351,11 +1315,9 @@ fn may_hand(app: &AppHandle, path: &Path) -> bool {
     )
     .is_ok_and(|value| value.as_bool() == Some(true))
 }
-
 fn handed_from_own(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Result<(), Answer> {
     orden_agents::files::behind_but_spaces(spaces, own, path).map_or(Ok(()), Err)
 }
-
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
     if matches!(spaces, Spaces::All(_)) {
         return false;
@@ -1368,7 +1330,6 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
     let holds_more = parts.next().is_some();
     !(holds_more && space.is_some_and(|one| spaces.reach(one)))
 }
-
 #[cfg(test)]
 mod tests {
     #[cfg(unix)]
@@ -1420,7 +1381,6 @@ mod tests {
         );
         assert_eq!(plainly(Path::new("/home/me/Diary.md")), "/home/me/Diary.md");
     }
-
     fn key_of(name: &str, dialog: &str) -> String {
         let facts = Facts {
             tag: "button".into(),
@@ -1433,7 +1393,6 @@ mod tests {
             .expect("it asks");
         question_key(&question, &question.summary, &facts)
     }
-
     #[test]
     fn an_allowance_outlives_a_clock_and_not_the_words() {
         for (one, other) in [
@@ -1483,7 +1442,6 @@ mod tests {
             key_of("Delete", "Are you sure? ALL PROJECTS"),
         );
     }
-
     #[test]
     fn a_file_is_in_reach_by_the_space_it_is_in() {
         let root = Path::new("/data/Spaces");
@@ -1514,7 +1472,6 @@ mod tests {
             &Spaces::All(Every::All)
         ));
     }
-
     #[test]
     fn a_hidden_step_inside_the_spaces_is_kept_from_an_upload() {
         let root = Path::new("/data/Spaces");
@@ -1527,7 +1484,6 @@ mod tests {
         assert!(hidden_within(root, Path::new("/elsewhere/a.md")));
         assert!(!hidden_within(root, Path::new("/data/Spaces/A/deep/a.md")));
     }
-
     #[test]
     fn an_upload_hands_notes_only_with_notes_read_and_outside_files_only_with_files() {
         let mut grant = Grant::own("a".into(), "A");
@@ -1545,14 +1501,12 @@ mod tests {
         assert!(handing_granted(&Caller::Agent(Box::new(grant)), false).is_ok());
         assert!(handing_granted(&Caller::Reader, false).is_ok());
     }
-
     #[test]
     fn modifiers_are_the_protocols_bits() {
         assert_eq!(modifiers(&[]), 0);
         assert_eq!(modifiers(&[Modifier::Control, Modifier::Shift]), 10);
         assert_eq!(modifiers(&[Modifier::Alt, Modifier::Meta]), 5);
     }
-
     #[test]
     fn a_denied_site_s_dialog_says_nothing_to_the_agent_and_is_not_its_to_answer() {
         let mut grant = Grant::own("a".into(), "A");

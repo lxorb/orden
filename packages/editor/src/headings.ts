@@ -10,26 +10,18 @@ export const HEADING_LEVEL: Readonly<Record<string, number>> = {
   ATXHeading5: 5,
   ATXHeading6: 6,
 }
-
 export const headingLevel = (name: string): number | null => HEADING_LEVEL[name] ?? null
-
 export { headingText } from '@orden/markdown/links'
-
 export const numberHeadings = Facet.define<boolean, boolean>({
   combine: (values) => values[0] ?? false,
 })
-
 const UNNUMBERED: ReadonlyMap<number, string> = new Map()
-
 const numbered = new WeakMap<Text, { tree: Tree; numbers: ReadonlyMap<number, string> }>()
-
 export function headingNumbersOf(state: EditorState): ReadonlyMap<number, string> {
   if (!state.facet(numberHeadings)) return UNNUMBERED
-
   const tree = syntaxTree(state)
   const known = numbered.get(state.doc)
   if (known?.tree === tree) return known.numbers
-
   const found: { from: number; level: number }[] = []
   tree.iterate({
     enter: (node) => {
@@ -39,7 +31,6 @@ export function headingNumbersOf(state: EditorState): ReadonlyMap<number, string
       return false
     },
   })
-
   const top = found.reduce((least, heading) => Math.min(least, heading.level), 6)
   const numbers = new Map<number, string>()
   const counts = [0, 0, 0, 0, 0, 0]
@@ -48,7 +39,6 @@ export function headingNumbersOf(state: EditorState): ReadonlyMap<number, string
     counts.fill(0, level)
     numbers.set(from, counts.slice(top - 1, level).join('.'))
   }
-
   numbered.set(state.doc, { tree, numbers })
   return numbers
 }

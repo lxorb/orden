@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 use orden_web::page_scale::{switches, CHROMIUM_SCALES_ITSELF, SWITCH};
 
 #[test]

@@ -21,36 +21,30 @@ const group = (key: string, rows: Row[], sub?: Group[]): Group => ({
   summaries: {},
   ...(sub ? { sub } : {}),
 })
-
 describe('orderAfter and indexWithout', () => {
   it('lands a card carried down its own column where it was let go', () => {
     const ids = ['A', 'B', 'C']
     expect(orderAfter(ids, 'A', indexWithout(2, 0))).toEqual(['B', 'A', 'C'])
     expect(orderAfter(ids, 'A', indexWithout(3, 0))).toEqual(['B', 'C', 'A'])
   })
-
   it('leaves a card carried up, or in from elsewhere, where it was let go', () => {
     expect(orderAfter(['A', 'B', 'C'], 'C', indexWithout(1, 2))).toEqual(['A', 'C', 'B'])
     expect(orderAfter(['A', 'B'], 'X', indexWithout(1, -1))).toEqual(['A', 'X', 'B'])
   })
 })
-
 describe('mergedOrder', () => {
   it('keeps the other lanes where they were', () => {
     expect(mergedOrder(['A', 'B', 'C', 'D'], ['C', 'A'])).toEqual(['C', 'B', 'A', 'D'])
   })
-
   it('takes in a card new to the column beside its lane neighbour', () => {
     expect(mergedOrder(['A', 'B', 'C'], ['A', 'X', 'C'])).toEqual(['A', 'X', 'B', 'C'])
     expect(mergedOrder(['A', 'B'], ['X', 'B'])).toEqual(['A', 'X', 'B'])
     expect(mergedOrder(['A'], ['X'])).toEqual(['A', 'X'])
   })
-
   it('takes a card from another lane of the column into this one', () => {
     expect(mergedOrder(['A', 'B', 'C'], ['B', 'A', 'C'])).toEqual(['B', 'A', 'C'])
   })
 })
-
 describe('withPending', () => {
   const [a, b, c, d] = [row('A'), row('B'), row('C'), row('D')]
   const moving = (extra: Partial<Pending>): Pending => ({
@@ -62,13 +56,11 @@ describe('withPending', () => {
     index: 0,
     ...extra,
   })
-
   it('moves a card between columns', () => {
     const out = withPending([group('todo', [a, b]), group('done', [c])], [moving({ index: 1 })])
     expect(names(out[0]?.rows ?? [])).toEqual(['B'])
     expect(names(out[1]?.rows ?? [])).toEqual(['C', 'A'])
   })
-
   it('moves a card into its lane of the other column, and the column with it', () => {
     const groups = [
       group('todo', [a, b], [group('one', [a]), group('two', [b])]),
@@ -80,14 +72,12 @@ describe('withPending', () => {
     expect(names(out[1]?.rows ?? [])).toEqual(['C', 'A', 'D'])
     expect(out[1]?.sub?.map((lane) => names(lane.rows))).toEqual([['C'], ['A', 'D']])
   })
-
   it('moves a card to another lane of its own column', () => {
     const groups = [group('todo', [a, b], [group('one', [a]), group('two', [b])])]
     const out = withPending(groups, [moving({ to: 'todo', key: 'todo', fromLane: 'one', lane: 'two', index: 1 })])
     expect(names(out[0]?.rows ?? [])).toEqual(['B', 'A'])
     expect(out[0]?.sub?.map((lane) => names(lane.rows))).toEqual([[], ['B', 'A']])
   })
-
   it('opens a lane a column had no card in', () => {
     const groups = [group('todo', [a], [group('one', [a])]), group('done', [c], [group('one', [c])])]
     const out = withPending(groups, [moving({ fromLane: 'one', lane: 'two', index: 0 })])
@@ -98,7 +88,6 @@ describe('withPending', () => {
     expect(names(out[1]?.rows ?? [])).toEqual(['C', 'A'])
   })
 })
-
 describe('withOrder', () => {
   it('draws a column and its lanes in an order not read back yet', () => {
     const [a, b, c] = [row('A'), row('B'), row('C')]
@@ -108,7 +97,6 @@ describe('withOrder', () => {
     expect(out[0]?.sub?.map((lane) => names(lane.rows))).toEqual([['C', 'A'], ['B']])
   })
 })
-
 describe('nextCard and nextLaned', () => {
   it('walks a column and across to the same height', () => {
     expect(nextCard([3, 1], { column: 0, index: 2 }, 'ArrowRight')).toEqual({
@@ -121,7 +109,6 @@ describe('nextCard and nextLaned', () => {
     })
     expect(nextCard([3], { column: 0, index: 2 }, 'ArrowDown')).toBeNull()
   })
-
   it('goes on to the next lane with cards in the column', () => {
     const counts = [
       [2, 1],

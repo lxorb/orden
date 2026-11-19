@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
 const FOUND: &str = "orden://web-found";
-
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Look {
@@ -10,7 +9,6 @@ pub enum Look {
     Next,
     Previous,
 }
-
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 struct Found {
     #[serde(default)]
@@ -18,7 +16,6 @@ struct Found {
     count: i32,
     at: i32,
 }
-
 const LOOKED: &str = r"(function (term, back, fresh) {
   try {
     var state = window.__ordenFound || (window.__ordenFound = { at: -1 })
@@ -42,10 +39,8 @@ const LOOKED: &str = r"(function (term, back, fresh) {
     return { count: 0, at: -1 }
   }
 })(__TERM__, __BACK__, __FRESH__)";
-
 const LEFT: &str =
     "(function () { var one = window.getSelection(); if (one) one.removeAllRanges() })()";
-
 fn looked(term: &str, look: Look) -> String {
     let term = serde_json::to_string(term).unwrap_or_else(|_| "''".to_string());
     LOOKED
@@ -63,11 +58,9 @@ fn looked(term: &str, look: Look) -> String {
         )
         .replace("__TERM__", &term)
 }
-
 #[tauri::command]
 pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result<(), String> {
     let view = crate::web_tabs::found(&app, &tab)?;
-
     {
         let script = looked(&term, look);
         std::thread::spawn(move || {
@@ -81,17 +74,14 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
         Ok(())
     }
 }
-
 #[tauri::command]
 pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
     let view = crate::web_tabs::found(&app, &tab)?;
-
     {
         std::thread::spawn(move || crate::web_worlds::value(&view, LEFT));
         Ok(())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{looked, Found, Look};
@@ -101,20 +91,17 @@ mod tests {
         let script = looked("__BACK__ and __FRESH__", Look::Next);
         assert!(script.contains("(\"__BACK__ and __FRESH__\", false, false)"));
     }
-
     #[test]
     fn a_word_is_handed_to_the_page_as_a_string_and_nothing_else() {
         let script = looked("it's \"quoted\"", Look::Fresh);
         assert!(script.ends_with(r#"("it's \"quoted\"", false, true)"#));
         assert!(!script.contains("__TERM__"));
     }
-
     #[test]
     fn the_previous_one_is_found_backwards() {
         assert!(looked("a", Look::Previous).ends_with(r#"("a", true, false)"#));
         assert!(looked("a", Look::Next).ends_with(r#"("a", false, false)"#));
     }
-
     #[test]
     fn the_page_s_answer_is_read_for_its_tally() {
         let found: Found = serde_json::from_str(r#"{"count":3,"at":1}"#).expect("an answer");

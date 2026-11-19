@@ -12,7 +12,6 @@ import { call, signIn, type TestEnv, testEnv } from './harness'
 import { doorway, fire, join, machine, type MachineSocket, ordend, type Running, say } from './machine-fakes'
 
 const DEVICE = 'device-laptop'
-
 vi.mock('../src/sync-server-machines/src/machines/refuse', async (real) => ({
   ...(await real<typeof import('../src/sync-server-machines/src/machines/refuse')>()),
   refusedSocket: (error: string, protocol: string) =>
@@ -21,39 +20,30 @@ vi.mock('../src/sync-server-machines/src/machines/refuse', async (real) => ({
       headers: { 'x-refused': error, 'sec-websocket-protocol': protocol },
     }),
 }))
-
 const refusal = (answer: { headers: Headers }) => answer.headers.get('x-refused')
-
 const OWNER = 'owner@example.com'
 const WRITER = 'writer@example.com'
 const READER = 'reader@example.com'
-
 const HETZNER = {
   HETZNER_TOKEN: 'hetzner-token',
   MACHINE_TUNNEL_TOKEN: 'tunnel-token',
   CF_ACCOUNT_ID: 'account',
   CF_ZONE_ID: 'zone',
 }
-
 let env: TestEnv
 let door: ReturnType<typeof doorway>
-
 const idOf = (email: string) => (env.db.prepare('select id from users where email = ?').get(email) as { id: string }).id
-
 async function session(email: string): Promise<string> {
   const token = await signIn(env, email)
   vi.setSystemTime(Date.now() + 31_000)
   return token
 }
-
 function serviceOn() {
   env.db.prepare("update online_service set value = 'on' where key = 'online'").run()
 }
-
 function allow(email: string) {
   env.db.prepare('update users set online = 1 where email = ?').run(email)
 }
-
 async function world(): Promise<{
   owner: string
   writer: string
@@ -65,7 +55,6 @@ async function world(): Promise<{
   const reader = await session(READER)
   const ownerId = idOf(OWNER)
   const run = (sql: string, ...values: (string | number)[]) => env.db.prepare(sql).run(...values)
-
   run(
     `insert into spaces (id, user_id, name, created_at, updated_at, blog_enabled)
      values ('space-1', ?, 'Team', 1, 1, 0)`,
@@ -82,7 +71,6 @@ async function world(): Promise<{
     WRITER,
     READER,
   )
-
   const guests = { write: 'guest-token-write', read: 'guest-token-read' }
   for (const [role, token] of Object.entries(guests)) {
     run(`insert into guests (id, name, created_at) values (?, 'Guest', 1)`, `guest-${role}`)
@@ -100,7 +88,6 @@ async function world(): Promise<{
   }
   return { owner, writer, reader, guests }
 }
-
 const knock = (term: string, token: string) =>
   call(env, `/v2/online/${term}/socket`, {
     headers: {
@@ -108,7 +95,6 @@ const knock = (term: string, token: string) =>
       'sec-websocket-protocol': [subprotocol(token), `nib.device.${DEVICE}`].join(', '),
     },
   })
-
 beforeEach(() => {
   vi.useFakeTimers({
     toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
@@ -117,22 +103,18 @@ beforeEach(() => {
   door = doorway()
   env = testEnv({ MACHINES: door.MACHINES, ...HETZNER })
 })
-
 afterEach(() => {
   vi.useRealTimers()
   env.close()
 })
-
 describe('while the service is off', () => {
   test('every route and the socket answer 404, as routes that do not exist', async () => {
     const { owner } = await world()
     allow(OWNER)
-
     expect((await call(env, '/v2/online/machine', { token: owner })).status).toBe(404)
     expect((await call(env, '/v2/online/terms', { token: owner, body: { term: 'term-1' } })).status).toBe(404)
     expect((await knock('term-1', owner)).status).toBe(404)
   })
-
   test('and without the Machine binding the switch alone does not turn it on', async () => {
     env = testEnv()
     const { owner } = await world()
@@ -140,7 +122,6 @@ describe('while the service is off', () => {
     expect((await call(env, '/v2/online/machine', { token: owner })).status).toBe(404)
   })
 })
-
 describe('the allow-list and the switches', () => {
   test('Emil is on the list from the migration, by his account id', () => {
     env.db
@@ -155,7 +136,6 @@ describe('the allow-list and the switches', () => {
     }
     expect(service.value).toBe('off')
   })
-
   test('an account not on the list can make no session and start nothing', async () => {
     const { owner } = await world()
     serviceOn()
@@ -164,7 +144,6 @@ describe('the allow-list and the switches', () => {
     })
     expect((await call(env, '/v2/online/machine/start', { token: owner, body: {} })).status).toBe(403)
   })
-
   test('a guest reaches no route, and a reader cannot make a session in the space', async () => {
     const { reader, guests } = await world()
     serviceOn()
@@ -174,7 +153,6 @@ describe('the allow-list and the switches', () => {
       error: 'role',
     })
   })
-
   test('the budget breaker refuses a start past the ceiling', async () => {
     const { owner } = await world()
     serviceOn()
@@ -186,11 +164,9 @@ describe('the allow-list and the switches', () => {
     expect(answer.status).toBe(409)
     expect(answer.json).toEqual({ error: 'budget' })
   })
-
   test('the admin switches are Emil’s alone', async () => {
     const { owner } = await world()
     expect((await call(env, '/v2/online/admin/service', { token: owner, body: { online: true } })).status).toBe(404)
-
     env.db.prepare("update online_service set value = ? where key = 'admin'").run(idOf(OWNER))
     const on = await call(env, '/v2/online/admin/service', {
       token: owner,
@@ -199,7 +175,6 @@ describe('the allow-list and the switches', () => {
     expect(on.json).toEqual({ online: true, ceiling: 12 })
   })
 })
-
 describe('the door', () => {
   async function made() {
     const people = await world()
@@ -212,7 +187,6 @@ describe('the door', () => {
     expect(term.status).toBe(200)
     return { ...people, term: term.json }
   }
-
   test('names the device a socket comes from, its own and nobody else’s', async () => {
     const { owner, writer } = await made()
     const add = (id: string, email: string, name: string) =>
@@ -227,23 +201,19 @@ describe('the door', () => {
     await knock('term-1', owner)
     const name = door.asked[0]?.headers.get('x-orden-device-name') ?? ''
     expect(decodeURIComponent(name)).toBe('Emil’s MacBook')
-
     door.asked.length = 0
     await knock('term-1', writer)
     expect(door.asked[0]?.headers.get('x-orden-device-name')).toBe('')
   })
-
   test('a session is made once per file, on the maker’s own machine', async () => {
     const { owner, term } = await made()
     expect(term.v).toBe(1)
     const again = await call(env, '/v2/online/terms', { token: owner, body: { term: 'term-1' } })
     expect(again.json).toEqual(term)
   })
-
   test('lets in all five holders as what they are, and nobody may type but the owner', async () => {
     const { owner, writer, reader, guests, term } = await made()
     const seen: Record<string, { role: string; owns: string; guest: string; typing: string }> = {}
-
     for (const [name, token] of Object.entries({
       owner,
       writer,
@@ -263,7 +233,6 @@ describe('the door', () => {
         typing: asked?.headers.get('x-orden-typing') ?? '',
       }
     }
-
     expect(seen).toEqual({
       owner: { role: 'owner', owns: 'yes', guest: 'no', typing: 'owner' },
       writer: { role: 'write', owns: 'no', guest: 'no', typing: 'owner' },
@@ -271,7 +240,6 @@ describe('the door', () => {
       guestWrite: { role: 'write', owns: 'no', guest: 'yes', typing: 'owner' },
       guestRead: { role: 'read', owns: 'no', guest: 'yes', typing: 'owner' },
     })
-
     const types = (typing: 'owner' | 'writers') =>
       Object.fromEntries(
         Object.entries(seen).map(([name, one]) => [
@@ -294,7 +262,6 @@ describe('the door', () => {
       guestRead: false,
     })
   })
-
   test('only the owner’s socket may wake the machine', async () => {
     const { owner, writer } = await made()
     await knock('term-1', owner)
@@ -302,7 +269,6 @@ describe('the door', () => {
     await knock('term-1', writer)
     expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('no')
   })
-
   test('with no file id (a device on sync v1), a session of the owner’s alone', async () => {
     const { owner, writer } = await made()
     const alone = await call<{ v: number; machine: string; session: string }>(env, '/v2/online/terms', {
@@ -311,24 +277,20 @@ describe('the door', () => {
     })
     expect(alone.status).toBe(200)
     expect(alone.json.v).toBe(1)
-
     door.asked.length = 0
     expect((await knock(alone.json.session, owner)).status).toBe(200)
     expect(door.asked[0]?.headers.get('x-orden-owns')).toBe('yes')
     expect(door.asked[0]?.headers.get('x-orden-session')).toBe(alone.json.session)
     expect(refusal(await knock(alone.json.session, writer))).toBe('gone')
-
     const stranger = await session('stranger@example.com')
     expect((await call(env, '/v2/online/terms', { token: stranger, body: {} })).json).toEqual({
       error: 'list',
     })
   })
-
   test('a copied .term reaches nothing: access is the file’s id, never its text', async () => {
     const { owner } = await made()
     expect(refusal(await knock('copy-1', owner))).toBe('gone')
   })
-
   test('a trashed file closes to everybody but the machine’s owner', async () => {
     const { owner, writer } = await made()
     env.db.prepare("update notes set deleted = 1 where id = 'term-1'").run()
@@ -337,7 +299,6 @@ describe('the door', () => {
     expect(owned.status).toBe(200)
     expect(refusal(owned)).toBeNull()
   })
-
   test('a socket with no session is told to sign in, one with no role that it is gone', async () => {
     await made()
     expect((await knock('term-1', 'nobody')).status).toBe(401)
@@ -346,7 +307,6 @@ describe('the door', () => {
     expect(refusal(refused)).toBe('gone')
     expect(refused.headers.get('sec-websocket-protocol')).toBe(`nib.device.${DEVICE}`)
   })
-
   test('a session ended, or never made, is gone, on a socket the app can read', async () => {
     const { owner } = await made()
     env.db.prepare("update term_sessions set ended_at = 1 where term = 'term-1'").run()
@@ -355,7 +315,6 @@ describe('the door', () => {
     expect(refusal(await knock('never-1', owner))).toBe('gone')
     expect(door.asked).toEqual([])
   })
-
   test('typing switched to writers is the owner’s to switch, and the machine is told', async () => {
     const { owner, writer, term } = await made()
     expect(
@@ -376,51 +335,42 @@ describe('the door', () => {
     expect(door.asked[0]?.headers.get('x-orden-machine')).toBe('typing')
     expect(door.asked[0]?.id).toBe(term.machine)
   })
-
   const signedOut = () =>
     door.asked
       .filter((one) => one.headers.get('x-orden-machine') === 'signedout')
       .map((one) => ({ id: one.id, logins: one.headers.get('x-orden-logins')?.split(',') ?? [] }))
-
   test('lets a socket in with the sign-in it arrived with, for the machine to end it by', async () => {
     const { owner } = await made()
     door.asked.length = 0
     await knock('term-1', owner)
     expect(door.asked[0]?.headers.get('x-orden-login')).toBe(await sha256(owner))
   })
-
   test('ending every other session tells the machine, the owner’s own sockets included', async () => {
     const { owner: laptop, term } = await made()
     const phone = await session(OWNER)
     await knock('term-1', laptop)
     door.asked.length = 0
-
     expect((await call(env, '/v1/sessions', { method: 'DELETE', token: phone })).status).toBe(200)
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(laptop)] }])
   })
-
   test('and so does ending one session, signing out, and ending a device', async () => {
     const { owner, writer, term } = await made()
     const phone = await session(OWNER)
     const listed = await call<{ sessions: { id: string; current: boolean }[] }>(env, '/v1/sessions', { token: phone })
     const laptop = listed.json.sessions.find((one) => !one.current)?.id ?? ''
-
     door.asked.length = 0
     await call(env, `/v1/sessions/${laptop}`, { method: 'DELETE', token: phone })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(owner)] }])
-
     door.asked.length = 0
     await call(env, '/v1/auth/signout', { method: 'POST', token: writer })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(writer)] }])
   })
-
   test('a guest signing out tells the machine of the terminal it may be watching', async () => {
     const { guests, term } = await made()
     door.asked.length = 0
     await call(env, '/v1/auth/signout', { method: 'POST', token: guests.write })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(guests.write)] }])
   })
-
   test('taking a writer out of the space tells the machine in the same request', async () => {
     const { owner, term } = await made()
     door.asked.length = 0
@@ -434,7 +384,6 @@ describe('the door', () => {
     expect(revoked?.headers.get('x-orden-who')).toBe(idOf(WRITER))
     expect(revoked?.headers.get('x-orden-terms')).toBe('term-1')
   })
-
   test('Settings’ list is every session with what the machine says of it, and those no row names', async () => {
     const { owner, term } = await made()
     door.answers.set('sessions', {
@@ -458,28 +407,24 @@ describe('the door', () => {
       }),
       expect.objectContaining({ term: null, session: 's_orphan', program: 'sleep', alive: true }),
     ])
-
     door.answers.set('sessions', { sessions: null })
     const blind = await call<{ terms: Record<string, unknown>[] }>(env, '/v2/online/terms', {
       token: owner,
     })
     expect(blind.json.terms).toEqual([expect.objectContaining({ term: 'term-1', alive: null })])
   })
-
   test('a session no row names is ended by its own id, on its owner’s machine alone', async () => {
     const { owner, writer, term } = await made()
     door.asked.length = 0
     expect((await call(env, '/v2/online/terms/s_orphan', { method: 'DELETE', token: writer })).status).toBe(404)
     expect((await call(env, '/v2/online/terms/not-a-session', { method: 'DELETE', token: owner })).status).toBe(404)
     expect(door.asked).toEqual([])
-
     const ended = await call(env, '/v2/online/terms/s_orphan', { method: 'DELETE', token: owner })
     expect(ended.status).toBe(200)
     expect(door.asked.at(-1)?.id).toBe(term.machine)
     expect(door.asked.at(-1)?.headers.get('x-orden-machine')).toBe('end')
     expect(door.asked.at(-1)?.headers.get('x-orden-session')).toBe('s_orphan')
   })
-
   test('a file moved to another space keeps its session, and a copy beside it gets its own', async () => {
     const { owner, term } = await made()
     const ask = (id: string) =>
@@ -487,9 +432,7 @@ describe('the door', () => {
         token: owner,
         body: { term: id, session: term.session },
       })
-
     expect((await ask('copy-1')).json.session).not.toBe(term.session)
-
     env.db
       .prepare(
         `insert into notes (id, space_id, path, seq, updated_at, size, hash)
@@ -502,7 +445,6 @@ describe('the door', () => {
       term: 'moved-1',
     })
   })
-
   test('a ninth session is refused with the list of the eight', async () => {
     const { owner } = await made()
     for (let at = 2; at <= 9; at++) {
@@ -529,7 +471,6 @@ describe('the door', () => {
     expect(ninth.json.sessions).toHaveLength(8)
   })
 })
-
 describe('a session made on sync v1, asked for by its file under v2', () => {
   interface Term {
     v: number
@@ -543,7 +484,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
         term: string
       }
     ).term
-
   async function v1() {
     const people = await world()
     serviceOn()
@@ -552,7 +492,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(made.status).toBe(200)
     return { ...people, v1: made.json }
   }
-
   test('is the same session, now the file’s, and the count stays', async () => {
     const { owner, writer, v1: old } = await v1()
     const asked = await call<Term>(env, '/v2/online/terms', {
@@ -561,7 +500,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     })
     expect(asked.json).toEqual(old)
     expect(live()).toEqual([{ term: 'term-1', session: old.session }])
-
     expect((await call(env, '/v2/online/terms', { token: owner, body: { term: 'term-1' } })).json).toEqual(old)
     expect(
       (
@@ -572,14 +510,12 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
       ).json,
     ).toEqual(old)
     expect(live()).toHaveLength(1)
-
     door.asked.length = 0
     expect((await knock('term-1', writer)).status).toBe(200)
     expect(door.asked[0]?.headers.get('x-orden-session')).toBe(old.session)
     expect(door.asked[0]?.headers.get('x-orden-role')).toBe('write')
     expect(refusal(await knock(old.session, writer))).toBe('gone')
   })
-
   test('a socket still named by the session goes on: a device not yet on v2, or back on v1', async () => {
     const { owner, v1: old } = await v1()
     await call(env, '/v2/online/terms', {
@@ -591,11 +527,9 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(refusal(knocked)).toBeNull()
     expect(door.asked[0]?.headers.get('x-orden-session')).toBe(old.session)
     expect(door.asked[0]?.headers.get('x-orden-owns')).toBe('yes')
-
     const again = await reachAgain(env, old.machine, [{ who: idOf(OWNER), term: old.session, guest: false }])
     expect(again.map((one) => one.session)).toEqual([old.session])
   })
-
   test('is adopted once: another file naming it gets a session of its own', async () => {
     const { owner, v1: old } = await v1()
     await call(env, '/v2/online/terms', {
@@ -610,7 +544,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(copy.json.session).not.toBe(old.session)
     expect(keyOf(old.session)).toBe('term-1')
   })
-
   test('is never somebody else’s to adopt, nor taken over by opening the file first', async () => {
     const { owner, writer, v1: old } = await v1()
     allow(WRITER)
@@ -622,7 +555,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(theirs.json).toEqual({ error: 'gone' })
     expect(keyOf(old.session)).toBe(old.session)
     expect(live()).toHaveLength(1)
-
     const mine = await call<Term>(env, '/v2/online/terms', {
       token: owner,
       body: { term: 'term-1', session: old.session },
@@ -630,7 +562,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(mine.json).toEqual(old)
     expect(keyOf(old.session)).toBe('term-1')
   })
-
   test('nor a moved file’s, whose words name the owner’s session', async () => {
     const { owner, writer } = await world()
     serviceOn()
@@ -647,7 +578,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
       )
       .run()
     env.db.prepare(`update notes set deleted = 1 where id = 'term-1'`).run()
-
     const theirs = await call<Term>(env, '/v2/online/terms', {
       token: writer,
       body: { term: 'moved-1', session: made.json.session },
@@ -659,7 +589,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     })
     expect(mine.json).toEqual(made.json)
   })
-
   test('a copy of somebody’s file, theirs still there, is a session of the copier’s own', async () => {
     const { owner, writer } = await world()
     serviceOn()
@@ -677,7 +606,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(copy.json.session).not.toBe(made.json.session)
     expect(keyOf(made.json.session)).toBe('term-1')
   })
-
   test('one ended, or never made, is a new session as before', async () => {
     const { owner, v1: old } = await v1()
     env.db.prepare('update term_sessions set ended_at = 1 where session = ?').run(old.session)
@@ -694,7 +622,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(unknown.status).toBe(200)
     expect(live()).toHaveLength(2)
   })
-
   test('never over a session the file already has', async () => {
     const { owner, v1: old } = await v1()
     const had = await call<Term>(env, '/v2/online/terms', {
@@ -709,7 +636,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(keyOf(old.session)).toBe(old.session)
   })
 })
-
 describe('emptying the trash of a .term file', () => {
   interface Term {
     v: number
@@ -726,7 +652,6 @@ describe('emptying the trash of a .term file', () => {
     door.asked
       .filter((one) => one.headers.get('x-orden-machine') === 'end')
       .map((one) => ({ machine: one.id, session: one.headers.get('x-orden-session') }))
-
   async function two() {
     const people = await world()
     serviceOn()
@@ -745,22 +670,18 @@ describe('emptying the trash of a .term file', () => {
     door.asked.length = 0
     return { ...people, mine: mine.json, theirs: theirs.json }
   }
-
   test('one note at a time: its session ends, on the machine, and frees its place', async () => {
     const { owner, mine, theirs } = await two()
     expect(endedAt('term-1')).toBeNull()
-
     const purged = await call(env, '/v1/trash/notes/term-1', { token: owner, method: 'DELETE' })
     expect(purged.status).toBe(200)
     expect(endedAt('term-1')).not.toBeNull()
     expect(endedAt('copy-1')).toBeNull()
     expect(ends()).toEqual([{ machine: mine.machine, session: mine.session }])
-
     await call(env, '/v1/trash', { token: owner, method: 'DELETE' })
     expect(endedAt('copy-1')).not.toBeNull()
     expect(ends().at(-1)).toEqual({ machine: theirs.machine, session: theirs.session })
   })
-
   test('a whole space: every session of its files, whoever’s machine it is on', async () => {
     const { owner, mine, theirs } = await two()
     env.db.prepare("update spaces set deleted = 1, deleted_at = ? where id = 'space-1'").run(Date.now())
@@ -773,7 +694,6 @@ describe('emptying the trash of a .term file', () => {
       ]),
     )
   })
-
   test('the nightly job, once the file has waited its 14 days', async () => {
     const { mine } = await two()
     await purgeExpired(env, Date.now())
@@ -782,14 +702,12 @@ describe('emptying the trash of a .term file', () => {
     expect(endedAt('term-1')).not.toBeNull()
     expect(ends()).toContainEqual({ machine: mine.machine, session: mine.session })
   })
-
   test('the account that owned the space: a writer’s session in it ends too', async () => {
     const { theirs } = await two()
     await eraseAccount(env, { id: idOf(OWNER), email: OWNER, name: null, created_at: 1 })
     expect(endedAt('copy-1')).not.toBeNull()
     expect(ends()).toContainEqual({ machine: theirs.machine, session: theirs.session })
   })
-
   test('only deleting it leaves the session running, as before', async () => {
     const { owner } = await two()
     expect((await call(env, '/v1/trash', { token: owner })).status).toBe(200)
@@ -797,7 +715,6 @@ describe('emptying the trash of a .term file', () => {
     expect(ends()).toEqual([])
   })
 })
-
 describe('a note made under a session’s own id', () => {
   async function stranded() {
     const people = await world()
@@ -834,12 +751,10 @@ describe('a note made under a session’s own id', () => {
     })
     return { ...people, stranger, theirs, id: made.json.session }
   }
-
   test('lets nobody but the session’s own account through the door', async () => {
     const { stranger, id } = await stranded()
     expect(refusal(await knock(id, stranger))).toBe('gone')
   })
-
   test('keeps nobody from adopting the session by the file that names it', async () => {
     const { owner, id } = await stranded()
     const adopted = await call<{ session: string }>(env, '/v2/online/terms', {
@@ -851,7 +766,6 @@ describe('a note made under a session’s own id', () => {
       many: 1,
     })
   })
-
   test('ends nobody’s session when it is emptied out of the trash', async () => {
     const { stranger, theirs, id } = await stranded()
     await call(env, `/v2/spaces/${theirs}/ops`, {
@@ -864,11 +778,9 @@ describe('a note made under a session’s own id', () => {
     })
   })
 })
-
 describe('a machine', () => {
   const ID = 'm_test'
   let user: string
-
   beforeEach(async () => {
     await world()
     serviceOn()
@@ -882,18 +794,14 @@ describe('a machine', () => {
       )
       .run(ID, user)
   })
-
   const machineRow = () => env.db.prepare('select * from machines where id = ?').get(ID) as Record<string, unknown>
-
   test('wakes for its owner’s socket, links ordend and opens the session', async () => {
     const running = await machine(env, ID, user)
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-
     expect(await running.machine.state()).toBe('awake')
     expect(running.host.calls).toEqual(['start machine', 'link'])
     expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
     expect(machineRow().state).toBe('awake')
-
     await say(running, socket, { t: 'hello', cols: 120, rows: 40 })
     expect(running.host.link_?.take()).toEqual([
       { t: 'open', session: 'session-1', cols: 80, rows: 24 },
@@ -902,43 +810,35 @@ describe('a machine', () => {
       { t: 'want', session: 'session-1', since: 0 },
     ])
   })
-
   test('a start the host refuses tells the socket, which may ask again', async () => {
     const running = await machine(env, ID, user)
     running.host.failStart = true
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-
     expect(await running.machine.state()).toBe('asleep')
     expect(socket.of('machine').slice(-2)).toEqual([
       { t: 'machine', state: 'starting' },
       { t: 'machine', state: 'asleep', reason: 'restart' },
     ])
-
     const again = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     expect(await running.machine.state()).toBe('awake')
     expect(again.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
   })
-
   test('does not wake for a watcher, nor for an owner the gate refuses', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: 'someone' })
     expect(await running.machine.state()).toBe('asleep')
-
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'budget')
     expect(await running.machine.state()).toBe('asleep')
     expect(owner.of('refused')).toEqual([{ t: 'refused', error: 'budget' }])
   })
-
   test('fans output out, each socket from where it is, and a late joiner gets a screen', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     const bytes = (text: string) => new TextEncoder().encode(text)
-
     await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hello') })
     await ordend(running, { t: 'out', session: 'session-1', seq: 5, data: bytes(' world') })
     expect(owner.bytes).toHaveLength(2)
-
     const reader = await join(running, { who: 'reader' })
     await say(running, reader, { t: 'hello', cols: 80, rows: 24 })
     await ordend(running, {
@@ -955,14 +855,12 @@ describe('a machine', () => {
     expect(owner.bytes).toHaveLength(3)
     expect(owner.of('screen')).toEqual([{ t: 'screen', seq: 0, cols: 80, rows: 24, data: '' }])
   })
-
   test('a watcher arriving on an ended session does not start it again', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     await ordend(running, { t: 'ended', session: 'session-1', code: 0 })
     running.host.link_?.take()
-
     const reader = await join(running, { who: 'reader', role: 'read' })
     await say(running, reader, { t: 'hello', cols: 80, rows: 24 })
     const guest = await join(running, { who: 'guest', role: 'read', guest: true })
@@ -971,13 +869,11 @@ describe('a machine', () => {
     expect(guest.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([])
     expect(reader.of('ended')).toEqual([{ t: 'ended', code: 0 }])
-
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([
       { t: 'open', session: 'session-1', cols: 80, rows: 24 },
     ])
   })
-
   test('a watcher’s open says it only watches, and its owner’s still goes after it', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -985,7 +881,6 @@ describe('a machine', () => {
     await ordend(running, { t: 'ended', session: 'session-1', code: 0 })
     running.host.link_?.take()
     running.state.drop(owner as never)
-
     const again = { ...running, machine: new Machine(running.state as never, env, running.host) }
     const opens = () => (running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')
     const reader = await join(again, { who: 'reader', role: 'read' })
@@ -993,12 +888,10 @@ describe('a machine', () => {
     await vi.waitFor(() => {
       expect(opens()).toEqual([{ t: 'open', session: 'session-1', cols: 80, rows: 24, watching: true }])
     })
-
     const back = await join(again, { who: user, owns: true, role: 'owner' })
     await say(again, back, { t: 'hello', cols: 80, rows: 24 })
     expect(opens()).toEqual([{ t: 'open', session: 'session-1', cols: 80, rows: 24 }])
   })
-
   test('watchers cannot take every socket on a terminal from its owner', async () => {
     const running = await machine(env, ID, user)
     const fill = async (who: string, role: 'read' | 'write', typing: 'owner' | 'writers') => {
@@ -1014,11 +907,9 @@ describe('a machine', () => {
     expect(await fill('reader-again', 'read', 'owner')).toBe(0)
     expect(readers).toBeLessThan(MOST_SOCKETS)
     expect(running.state.getWebSockets('session-1')).toHaveLength(readers)
-
     const writers = await fill('writer', 'write', 'writers')
     expect(writers).toBeGreaterThan(0)
     expect(readers + writers).toBeLessThan(MOST_SOCKETS)
-
     let owners = 0
     for (; owners <= MOST_SOCKETS; owners += 1) {
       const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1027,7 +918,6 @@ describe('a machine', () => {
     expect(owners).toBeGreaterThan(0)
     expect(readers + writers + owners).toBe(MOST_SOCKETS)
   })
-
   test('a key and its echo pass through with no storage, no query and no wait', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1035,14 +925,12 @@ describe('a machine', () => {
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     await say(running, watcher, { t: 'hello', cols: 80, rows: 24 })
     running.host.link_?.take()
-
     const storage = running.state.storage
     const touched = (['get', 'put', 'delete', 'list', 'setAlarm', 'deleteAll'] as const).map((name) =>
       vi.spyOn(storage, name),
     )
     const queried = vi.spyOn(env.DB, 'prepare')
     const socket = owner as unknown as WebSocket
-
     void running.machine.webSocketMessage(socket, JSON.stringify({ t: 'in', data: 'a' }))
     void running.machine.webSocketMessage(socket, new TextEncoder().encode('b').buffer as ArrayBuffer)
     const keys = (running.host.link_?.take() ?? []).filter((frame) => frame.t === 'in')
@@ -1050,7 +938,6 @@ describe('a machine', () => {
       { t: 'in', session: 'session-1', data: new TextEncoder().encode('a') },
       { t: 'in', session: 'session-1', data: new TextEncoder().encode('b') },
     ])
-
     void running.machine.fromOrdend({
       t: 'out',
       session: 'session-1',
@@ -1059,29 +946,24 @@ describe('a machine', () => {
     })
     expect(owner.bytes).toHaveLength(1)
     expect(watcher.bytes).toHaveLength(1)
-
     for (const spy of [...touched, queried]) expect(spy).not.toHaveBeenCalled()
     expect(owner.of('typed')).toEqual([])
     expect(watcher.of('typed')).toHaveLength(2)
   })
-
   test('refuses a reader’s keys and sends nothing of them down', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const reader = await join(running, { who: 'reader', role: 'read' })
     running.host.link_?.take()
-
     await say(running, reader, { t: 'in', data: 'rm -rf ~\r' })
     expect(reader.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect(running.host.link_?.take()).toEqual([])
   })
-
   test('a writer types once typing is writers, and the pty takes the typist’s size', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const writer = await join(running, { who: 'writer', role: 'write', cols: 60, rows: 20 })
     expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: false })
-
     await running.machine.fetch(
       new Request('https://machine.invalid/typing', {
         headers: {
@@ -1092,7 +974,6 @@ describe('a machine', () => {
       }),
     )
     expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: true })
-
     running.host.link_?.take()
     await say(running, writer, { t: 'in', data: 'ls\r' })
     const sent = running.host.link_?.take() ?? []
@@ -1105,12 +986,10 @@ describe('a machine', () => {
     expect(sent.find((one) => one.t === 'in')).toMatchObject({ t: 'in', session: 'session-1' })
     expect(writer.of('size').at(-1)).toEqual({ t: 'size', cols: 60, rows: 20, by: 'writer' })
   })
-
   test('a sign-in that ended closes its sockets at once, the owner’s too', async () => {
     const running = await machine(env, ID, user)
     const laptop = await join(running, { who: user, owns: true, role: 'owner', login: 'l-laptop' }, 'yes')
     const phone = await join(running, { who: user, owns: true, role: 'owner', login: 'l-phone' }, 'yes')
-
     await running.machine.fetch(
       new Request('https://machine.invalid/signedout', {
         headers: { 'x-orden-machine': 'signedout', 'x-orden-logins': 'l-laptop' },
@@ -1119,7 +998,6 @@ describe('a machine', () => {
     expect(laptop.closedWith?.code).toBe(4401)
     expect(phone.closedWith).toBeNull()
   })
-
   test('and the minute closes a socket whose sign-in has ended, even when nobody said', async () => {
     const laptopToken = await session(OWNER)
     const phoneToken = await session(OWNER)
@@ -1131,7 +1009,6 @@ describe('a machine', () => {
     )
     const phone = await join(running, { who: user, owns: true, role: 'owner', login: await sha256(phoneToken) }, 'yes')
     env.db.prepare('delete from sessions where token_hash = ?').run(await sha256(laptopToken))
-
     await ordend(running, {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0, net: 0, homeBytes: 1000 },
@@ -1141,7 +1018,6 @@ describe('a machine', () => {
     expect(laptop.closedWith?.code).toBe(4401)
     expect(phone.closedWith).toBeNull()
   })
-
   const revoke = (running: Running, who: string, role: string) =>
     running.machine.fetch(
       new Request('https://machine.invalid/revoke', {
@@ -1153,7 +1029,6 @@ describe('a machine', () => {
         },
       }),
     )
-
   test('revocation closes a socket at once, and a reader’s typing is taken away', async () => {
     const running = await machine(env, ID, user)
     const writer = await join(running, { who: idOf(WRITER), role: 'write', typing: 'writers' })
@@ -1163,17 +1038,14 @@ describe('a machine', () => {
       role: 'write',
       typing: 'writers',
     })
-
     env.db.prepare('delete from space_members where email = ?').run(WRITER)
     await revoke(running, idOf(WRITER), 'none')
     expect(writer.closedWith?.code).toBe(4403)
-
     env.db.prepare("update guest_members set role = 'read' where guest_id = 'guest-write'").run()
     await revoke(running, 'guest-write', 'read')
     expect(guest.closedWith).toBeNull()
     expect(guest.of('role').at(-1)).toEqual({ t: 'role', type: false })
   })
-
   test('revocation leaves a socket the person still reaches the terminal by', async () => {
     const running = await machine(env, ID, user)
     env.db.prepare("update term_sessions set typing = 'writers'").run()
@@ -1184,7 +1056,6 @@ describe('a machine', () => {
          values ('space-1', ?, 'term-1', 'read', 1, 1)`,
       )
       .run(WRITER)
-
     await revoke(running, idOf(WRITER), 'read')
     expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: true })
     env.db.prepare("delete from space_members where email = ? and item = 'term-1'").run(WRITER)
@@ -1192,13 +1063,11 @@ describe('a machine', () => {
     expect(writer.closedWith).toBeNull()
     expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: true })
   })
-
   test('the minute closes what the rows no longer let in, even when nobody said', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const reader = await join(running, { who: idOf(READER), role: 'read' })
     env.db.prepare('delete from space_members where email = ?').run(READER)
-
     await ordend(running, {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0, net: 0, homeBytes: 1000 },
@@ -1208,7 +1077,6 @@ describe('a machine', () => {
     expect(reader.closedWith?.code).toBe(4403)
     expect(owner.closedWith).toBeNull()
   })
-
   test('sleeps 15 idle minutes after the last sign of use, saving as it goes', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1216,7 +1084,6 @@ describe('a machine', () => {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0.5, net: 0, homeBytes: 4096 },
     })
-
     for (let minute = 1; minute <= 15; minute++) {
       vi.setSystemTime(Date.now() + 60_000)
       await fire(running)
@@ -1224,7 +1091,6 @@ describe('a machine', () => {
     }
     vi.setSystemTime(Date.now() + 60_000)
     await fire(running)
-
     expect(await running.machine.state()).toBe('asleep')
     expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'asleep', reason: 'idle' })
     expect(running.host.calls).toEqual(['start machine', 'link', 'snapshot', 'backup /home/nib', 'stop'])
@@ -1232,14 +1098,12 @@ describe('a machine', () => {
     expect(row.snapshot).toBe('snap-1')
     expect(row.backup_key).toBe('backup-1.tar.zst')
     expect(row.home_bytes).toBe(4096)
-
     const usage = env.db.prepare('select * from machine_usage where user_id = ?').get(user) as {
       awake_s: number
       cpu_s: number
     }
     expect(usage.awake_s).toBe(16 * 60)
     expect(usage.cpu_s).toBeGreaterThan(0)
-
     const kinds = (
       env.db.prepare('select kind from machine_events where machine = ? order by id').all(ID) as {
         kind: string
@@ -1247,16 +1111,13 @@ describe('a machine', () => {
     ).map((one) => one.kind)
     expect(kinds).toEqual(expect.arrayContaining(['open', 'wake', 'backup', 'snapshot', 'sleep']))
   })
-
   test('wakes from its snapshot when it is good, and from the backup when it is not', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await running.machine.sleep('stopped')
     running.host.calls.length = 0
-
     await running.machine.wake()
     expect(running.host.calls).toEqual(['restore snapshot snap-1', 'start machine', 'link'])
-
     await running.machine.sleep('stopped')
     running.host.calls.length = 0
     env.db.prepare('update machines set snapshot_at = ? where id = ?').run(Date.now() - 31 * 24 * 3600_000, ID)
@@ -1264,25 +1125,20 @@ describe('a machine', () => {
     expect(running.host.calls[0]).toBe('start machine')
     expect(running.host.calls[1]).toMatch(/^restore backup .*backup-1/)
   })
-
   const events = () =>
     env.db.prepare('select kind, detail from machine_events where machine = ? order by id').all(ID) as {
       kind: string
       detail: string | null
     }[]
-
   test('a link that goes quiet is made again, its sockets told it dropped and came back', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
-
     await vi.advanceTimersByTimeAsync(QUIET_FOR * 2)
     expect(running.host.calls).toEqual(['start machine', 'link'])
-
     const frozen = running.host.link_
     if (frozen) frozen.silent = true
     await vi.advanceTimersByTimeAsync(25_000)
-
     expect(frozen?.closed).toBe(true)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
     expect(owner.of('link')).toEqual([
@@ -1300,14 +1156,12 @@ describe('a machine', () => {
     )
     expect(events().map((one) => one.kind)).toContain('relink')
   })
-
   test('a link that cannot be made again restarts the machine from a snapshot taken first', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
     running.host.failLinks = 1
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
-
     expect(running.host.calls).toEqual([
       'start machine',
       'link',
@@ -1330,7 +1184,6 @@ describe('a machine', () => {
       ]),
     )
   })
-
   test('a failure whose audit cannot be written is logged, and the restart goes on', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1352,7 +1205,6 @@ describe('a machine', () => {
     }
     expect(events()).not.toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'failed' })]))
   })
-
   test('a terminal opened while the link is gone makes it again at once', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1365,7 +1217,6 @@ describe('a machine', () => {
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
     expect(owner.of('machine')).toEqual([{ t: 'machine', state: 'awake' }])
   })
-
   test('a wake finds the instance a cut-short sleep left running and links to it as it is', async () => {
     const running = await machine(env, ID, user)
     running.host.up = true
@@ -1374,7 +1225,6 @@ describe('a machine', () => {
     expect(running.host.calls).toEqual(['link'])
     expect(events()).toEqual(expect.arrayContaining([{ kind: 'wake', detail: 'running' }]))
   })
-
   test('a restore that never answers holds neither the wake nor the machine', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1382,13 +1232,11 @@ describe('a machine', () => {
     env.db.prepare('update machines set snapshot = null where id = ?').run(ID)
     running.host.calls.length = 0
     running.host.hangRestore = true
-
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     expect(await running.machine.state()).toBe('awake')
     expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
     expect(running.host.link_?.take().filter((one) => one.t === 'open')).toEqual([])
-
     await vi.advanceTimersByTimeAsync(120_000)
     expect(owner.of('note')).toEqual([{ t: 'note', note: 'restore' }])
     expect(running.host.link_?.take()).toEqual(
@@ -1398,7 +1246,6 @@ describe('a machine', () => {
       expect.arrayContaining([{ kind: 'failed', detail: 'restore: Error restore took longer than 120000 ms' }]),
     )
   })
-
   test('a backup that fails says why, without a word of the home', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1407,7 +1254,6 @@ describe('a machine', () => {
       { name: 'SandboxProtocolError', code: 'SANDBOX_PROTOCOL_ERROR' },
     )
     await running.machine.sleep('stopped')
-
     expect(events().filter((one) => one.kind === 'failed')).toEqual([
       {
         kind: 'failed',
@@ -1417,7 +1263,6 @@ describe('a machine', () => {
     expect(running.host.calls.indexOf('snapshot')).toBeLessThan(running.host.calls.indexOf('backup /home/nib'))
     expect(machineRow().snapshot).toBe('snap-1')
   })
-
   test('the service switched off stops every machine at its next minute', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1426,7 +1271,6 @@ describe('a machine', () => {
     await fire(running)
     expect(await running.machine.state()).toBe('asleep')
   })
-
   test('the account taken off the list stops its machine at its next minute', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1435,7 +1279,6 @@ describe('a machine', () => {
     await fire(running)
     expect(await running.machine.state()).toBe('asleep')
   })
-
   test('a hold stops it and keeps it stopped', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1443,23 +1286,19 @@ describe('a machine', () => {
     vi.setSystemTime(Date.now() + 60_000)
     await fire(running)
     expect(await running.machine.state()).toBe('asleep')
-
     await running.machine.wake()
     expect(await running.machine.state()).toBe('asleep')
   })
-
   test('the budget breaker gives an awake machine ten minutes and a line, then sleeps it', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     env.db
       .prepare("insert into machine_usage (user_id, month, awake_s, mem_gib_s) values ('someone', '2026-10', 1, 1e9)")
       .run()
-
     vi.setSystemTime(Date.now() + 60_000)
     await fire(running)
     expect(await running.machine.state()).toBe('awake')
     expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake', reason: 'budget' })
-
     for (let minute = 0; minute < 10; minute++) {
       vi.setSystemTime(Date.now() + 60_000)
       await fire(running)
@@ -1467,12 +1306,10 @@ describe('a machine', () => {
     expect(await running.machine.state()).toBe('asleep')
     expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'asleep', reason: 'budget' })
   })
-
   test('Resume types the agent’s own continue command, for the owner alone', async () => {
     expect(resumeOf('claude')).toBe('claude --continue\r')
     expect(resumeOf('codex')).toBe('codex resume --last\r')
     expect(resumeOf('bash')).toBeNull()
-
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
@@ -1486,15 +1323,12 @@ describe('a machine', () => {
       restored: { at: 1, program: 'claude' },
     })
     running.host.link_?.take()
-
     await say(running, writer, { t: 'resume' })
     expect(writer.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
-
     await say(running, owner, { t: 'resume' })
     const typed = running.host.link_?.take().find((one) => one.t === 'in')
     expect(typed && 'data' in typed && new TextDecoder().decode(typed.data)).toBe('claude --continue\r')
   })
-
   test('an address a program asks a browser for reaches one socket of the owner’s, the one that typed', async () => {
     const running = await machine(env, ID, user)
     const laptop = await join(running, { who: user, device: 'laptop', owns: true, role: 'owner' }, 'yes')
@@ -1502,7 +1336,6 @@ describe('a machine', () => {
     const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
     const reader = await join(running, { who: 'reader', role: 'read' })
     const url = 'https://github.com/login/device'
-
     await say(running, phone, { t: 'in', data: 'x' })
     await say(running, writer, { t: 'in', data: 'y' })
     await ordend(running, { t: 'browse', session: 'session-1', url })
@@ -1510,16 +1343,13 @@ describe('a machine', () => {
     expect(laptop.of('browse')).toEqual([])
     expect(writer.of('browse')).toEqual([])
     expect(reader.of('browse')).toEqual([])
-
     await say(running, laptop, { t: 'in', data: 'z' })
     await ordend(running, { t: 'browse', session: 'session-1', url })
     expect(laptop.of('browse')).toHaveLength(1)
-
     await ordend(running, { t: 'browse', session: 'session-2', url })
     expect(laptop.of('browse')).toHaveLength(1)
     expect(phone.of('browse')).toHaveLength(1)
   })
-
   test('opens past ten a minute are dropped, and the next minute opens again', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1535,40 +1365,32 @@ describe('a machine', () => {
     await ordend(running, { t: 'browse', session: 'session-1', url: 'https://a.b/next' })
     expect(owner.of('browse')).toHaveLength(11)
   })
-
   test('a sign-in callback is made on the machine for the owner alone, and its answer is theirs', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
     const url = 'http://localhost:54545/callback?code=c&state=s'
     running.host.link_?.take()
-
     await say(running, writer, { t: 'callback', url })
     expect(writer.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect(running.host.link_?.take()).toEqual([])
-
     await say(running, owner, { t: 'callback', url: 'http://10.0.0.1:80/admin' })
     expect(running.host.link_?.take()).toEqual([])
-
     await say(running, owner, { t: 'callback', url })
     expect(running.host.link_?.take()).toEqual([{ t: 'callback', session: 'session-1', url }])
-
     await ordend(running, { t: 'called', session: 'session-1', url, status: 302 })
     expect(owner.of('called')).toEqual([{ t: 'called', url, status: 302 }])
     expect(writer.of('called')).toEqual([])
   })
-
   test('a pasted picture goes down as bytes from who may type, and where it landed back to them', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const reader = await join(running, { who: 'reader', role: 'read' })
     const id = '0123456789abcdef0123'
     running.host.link_?.take()
-
     await say(running, reader, { t: 'image', id, kind: 'png', part: 'AQI=', last: true })
     expect(reader.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect(running.host.link_?.take()).toEqual([])
-
     await say(running, owner, { t: 'image', id, kind: 'png', part: 'AQI=', last: true })
     expect(running.host.link_?.take()).toEqual([
       {
@@ -1580,13 +1402,11 @@ describe('a machine', () => {
         last: true,
       },
     ])
-
     const path = '/home/nib/.cache/orden/images/0123456789abcdef0123.png'
     await ordend(running, { t: 'image', session: 'session-1', id, path })
     expect(owner.of('image')).toEqual([{ t: 'image', id, path }])
     expect(reader.of('image')).toEqual([])
   })
-
   test('the audit never holds what anybody typed or saw', async () => {
     const secret = 'sk-ant-THIS-IS-A-SECRET-0123456789'
     const running = await machine(env, ID, user)
@@ -1604,7 +1424,6 @@ describe('a machine', () => {
       data: new TextEncoder().encode(secret),
     })
     await running.machine.sleep('stopped')
-
     const tables = (
       env.db.prepare("select name from sqlite_master where type = 'table'").all() as {
         name: string
@@ -1619,7 +1438,6 @@ describe('a machine', () => {
       expect(JSON.stringify(value).includes('THIS-IS-A-SECRET')).toBe(false)
     }
   })
-
   test('a route reaches the machine in the EU jurisdiction where there is one', async () => {
     const asked: string[] = []
     const eu = {
@@ -1638,12 +1456,10 @@ describe('a machine', () => {
     placed.close()
   })
 })
-
 describe('a machine on a server of its own', () => {
   const ID = 'm_server'
   let user: string
   let owner: string
-
   beforeEach(async () => {
     ;({ owner } = await world())
     serviceOn()
@@ -1662,13 +1478,11 @@ describe('a machine on a server of its own', () => {
       )
       .run(ID, user)
   })
-
   async function server() {
     const running = await machine(env, ID, user)
     running.host.alwaysOn = true
     return running
   }
-
   const events = () =>
     (
       env.db.prepare('select kind, detail from machine_events where machine = ? order by id').all(ID) as {
@@ -1676,12 +1490,10 @@ describe('a machine on a server of its own', () => {
         detail: string | null
       }[]
     ).map((one) => (one.detail ? `${one.kind} ${one.detail}` : one.kind))
-
   test('never sleeps, and keeps no snapshot, backup or meter of its own', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     expect(await running.machine.state()).toBe('awake')
-
     socket.close()
     for (let minute = 1; minute <= 60; minute++) {
       vi.setSystemTime(Date.now() + 60_000)
@@ -1691,7 +1503,6 @@ describe('a machine on a server of its own', () => {
     expect(running.host.calls).toEqual(['start machine', 'link'])
     expect(env.db.prepare('select * from machine_usage where user_id = ?').all(user)).toEqual([])
   })
-
   test('a kill switch unlinks it and leaves the server as it is', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1702,7 +1513,6 @@ describe('a machine on a server of its own', () => {
     expect(running.host.calls).toEqual(['start machine', 'link'])
     expect(running.host.link_?.closed).toBe(true)
   })
-
   test('a server still setting itself up is waited for on the alarm, then awake', async () => {
     env.db.prepare('update machines set server_id = null where id = ?').run(ID)
     const running = await server()
@@ -1710,7 +1520,6 @@ describe('a machine on a server of its own', () => {
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     expect(await running.machine.state()).toBe('starting')
     expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'starting' })
-
     for (let tries = 0; tries < 3; tries++) {
       vi.setSystemTime(Date.now() + 10_000)
       await fire(running)
@@ -1721,7 +1530,6 @@ describe('a machine on a server of its own', () => {
     expect(events()).toContain('wake fresh')
     expect(events().filter((one) => one.startsWith('failed'))).toEqual([])
   })
-
   test('a server that never comes up says so after twenty minutes', async () => {
     env.db.prepare('update machines set server_id = null where id = ?').run(ID)
     const running = await server()
@@ -1739,7 +1547,6 @@ describe('a machine on a server of its own', () => {
     })
     expect(running.host.calls).not.toContain('reboot')
   })
-
   test('one made before that does not answer its wake is power-cycled', async () => {
     const running = await server()
     running.host.failLinks = 1000
@@ -1755,18 +1562,15 @@ describe('a machine on a server of its own', () => {
     await fire(running)
     expect(await running.machine.state()).toBe('awake')
   })
-
   test('the health path: a ordend that keeps going quiet is restarted through its link', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
-
     const first = running.host.link_
     if (first) first.silent = true
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
     expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(false)
-
     const second = running.host.link_
     if (second) second.silent = true
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
@@ -1775,12 +1579,10 @@ describe('a machine on a server of its own', () => {
     expect(events()).toEqual(expect.arrayContaining(['relink', 'restart silent']))
     expect(await running.machine.state()).toBe('awake')
   })
-
   test('a ordend that ended is linked again within seconds of being back', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
-
     running.host.failLinks = 1
     running.host.link_?.close()
     await vi.waitFor(async () => {
@@ -1788,14 +1590,12 @@ describe('a machine on a server of its own', () => {
     })
     expect(running.state.alarm).not.toBeNull()
     expect((running.state.alarm ?? 0) - Date.now()).toBeLessThanOrEqual(1_000)
-
     vi.setSystemTime(Date.now() + 1_000)
     await fire(running)
     expect(await running.machine.state()).toBe('awake')
     expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
     expect(running.host.calls).toEqual(['start machine', 'link', 'link', 'link'])
   })
-
   test('looks for one that stays away less often as time goes on, and every ten seconds at most', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1804,7 +1604,6 @@ describe('a machine on a server of its own', () => {
     await vi.waitFor(async () => {
       expect(await running.machine.state()).toBe('starting')
     })
-
     const gaps: number[] = []
     for (let look = 0; look < 12; look++) {
       const due = running.state.alarm ?? 0
@@ -1818,12 +1617,10 @@ describe('a machine on a server of its own', () => {
     }
     expect(gaps.at(-1)).toBe(10_000)
   })
-
   test('a link that closes twice in a minute is made again both times, and ordend keeps its shells', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
-
     for (let closes = 1; closes <= 2; closes++) {
       running.host.link_?.close()
       await vi.waitFor(() => {
@@ -1835,7 +1632,6 @@ describe('a machine on a server of its own', () => {
     expect(events()).not.toContain('restart silent')
     expect(await running.machine.state()).toBe('awake')
   })
-
   test('a ordend that will not link is waited for, then the server power-cycled', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1845,14 +1641,12 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('starting')
     expect(running.host.calls).not.toContain('snapshot')
     expect(running.host.calls).not.toContain('stop')
-
     for (let tries = 0; tries < 18; tries++) {
       vi.setSystemTime(Date.now() + 10_000)
       await fire(running)
     }
     expect(running.host.calls).toContain('reboot')
     expect(events()).toContain('reboot')
-
     running.host.failLinks = 0
     vi.setSystemTime(Date.now() + 10_000)
     await fire(running)
@@ -1860,7 +1654,6 @@ describe('a machine on a server of its own', () => {
     const states = socket.of('machine').map((one) => one.state)
     expect(states.slice(states.indexOf('awake') + 1)).not.toContain('asleep')
   })
-
   test('its owner’s Stop is Restart: ordend starts again, the server stays', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1868,7 +1661,6 @@ describe('a machine on a server of its own', () => {
     const answer = await call(env, '/v2/online/machine/stop', { token: owner, body: {} })
     expect(answer.status).toBe(200)
     expect(door.asked.at(-1)?.headers.get('x-orden-machine')).toBe('restart')
-
     await running.machine.fetch(
       new Request('https://machine.invalid/restart', {
         headers: { 'x-orden-machine': 'restart', 'x-orden-who': user },
@@ -1877,7 +1669,6 @@ describe('a machine on a server of its own', () => {
     expect(running.host.link_?.sent.at(-1)).toEqual({ t: 'restart' })
     expect(await running.machine.state()).toBe('awake')
   })
-
   test('an End said while ordend cannot be reached is said once it is, so no program runs on', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1885,7 +1676,6 @@ describe('a machine on a server of its own', () => {
     running.host.failLinks = 1000
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(await running.machine.state()).toBe('starting')
-
     await running.machine.fetch(
       new Request('https://machine.invalid/end', {
         headers: { 'x-orden-machine': 'end', 'x-orden-session': 'session-1' },
@@ -1896,7 +1686,6 @@ describe('a machine on a server of its own', () => {
     await fire(running)
     expect(await running.machine.state()).toBe('awake')
     expect(running.host.link_?.sent).toContainEqual({ t: 'close', session: 'session-1' })
-
     const said = running.host.link_
     said?.close()
     await vi.waitFor(() => {
@@ -1904,7 +1693,6 @@ describe('a machine on a server of its own', () => {
     })
     expect(running.host.link_?.sent).not.toContainEqual({ t: 'close', session: 'session-1' })
   })
-
   test('Settings’ list is what ordend says it has, asked down the link; nothing without one', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1921,12 +1709,10 @@ describe('a machine on a server of its own', () => {
     const sessions = [{ session: 'session-1', program: 'vim', title: null, alive: true, at: 3 }]
     await ordend(running, { t: 'sessions', sessions })
     expect(await (await asked).json()).toEqual({ sessions })
-
     const unanswered = ask()
     await vi.advanceTimersByTimeAsync(3_000)
     expect(await (await unanswered).json()).toEqual({ sessions: null })
   })
-
   test('the admin’s Reboot power-cycles it and waits for it', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1939,21 +1725,18 @@ describe('a machine on a server of its own', () => {
     await fire(running)
     expect(await running.machine.state()).toBe('awake')
   })
-
   const resize = (running: Running, type: string) =>
     running.machine.fetch(
       new Request('https://machine.invalid/resize', {
         headers: { 'x-orden-machine': 'resize', 'x-orden-type': type, 'x-orden-who': user },
       }),
     )
-
   async function settled(running: Running) {
     for (let tries = 0; tries < 12 && (await running.machine.state()) === 'starting'; tries++) {
       vi.setSystemTime(Date.now() + 10_000)
       await fire(running)
     }
   }
-
   test('a resize lets go of the link, steps the server through it, and waits for it', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1962,7 +1745,6 @@ describe('a machine on a server of its own', () => {
     expect(link?.closed).toBe(true)
     expect(await running.machine.state()).toBe('starting')
     expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'starting' })
-
     await running.machine.wake()
     await resize(running, 'ccx33')
     await settled(running)
@@ -1975,7 +1757,6 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
     expect(events()).toContain('resize cx53')
   })
-
   test('a resize Hetzner refuses goes back to the type it had and starts it', async () => {
     env.db.prepare("update machines set size = 'cx43' where id = ?").run(ID)
     const running = await server()
@@ -1991,7 +1772,6 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
     expect(events()).toContainEqual(expect.stringMatching(/^failed resize: Error invalid_input/))
   })
-
   test('a server that never comes back resized is given up on, asleep', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -2004,7 +1784,6 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('asleep')
     expect(running.host.calls).toContain('resize cx53 hard')
   })
-
   test('a disk nearly full is said under every screen, and to whoever joins', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -2021,27 +1800,22 @@ describe('a machine on a server of its own', () => {
     await ordend(running, { t: 'activity', activity: activity(150e9) })
     await ordend(running, { t: 'activity', activity: activity(151e9) })
     expect(socket.of('note')).toEqual([{ t: 'note', note: 'disk' }])
-
     const late = await join(running, { who: user, owns: true, role: 'owner' })
     expect(late.of('note')).toEqual([{ t: 'note', note: 'disk' }])
-
     vi.setSystemTime(Date.now() + 60_000)
     await fire(running)
     const row = env.db.prepare('select disk_used, disk_total from machines where id = ?').get(ID)
     expect(row).toEqual({ disk_used: 151e9, disk_total: 160e9 })
   })
-
   test('the cost gate: a server is made only while its price fits under the ceiling', async () => {
     env.db
       .prepare("insert into machine_usage (user_id, month, awake_s, mem_gib_s) values ('someone', '2026-10', 1, 1e9)")
       .run()
     await knock('term-1', owner)
     expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('yes')
-
     env.db.prepare('update machines set server_id = null where id = ?').run(ID)
     await knock('term-1', owner)
     expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('budget')
-
     env.db.prepare('delete from machine_usage').run()
     const { budgetLeft, mayCost } = await import('../src/sync-server-machines/src/machines/budget')
     expect(await budgetLeft(env, 30, Date.now())).toBeCloseTo(30)
@@ -2050,7 +1824,6 @@ describe('a machine on a server of its own', () => {
     env.db.prepare('update machines set server_id = 77 where id = ?').run(ID)
     expect(await budgetLeft(env, 30, Date.now())).toBeCloseTo(30 - 14.5 * 1.25)
   })
-
   test('a start the host refuses for the budget tells the socket and sleeps', async () => {
     const { HostRefused } = await import('../src/sync-server-machines/src/machines/hetzner-host')
     const running = await server()
@@ -2059,7 +1832,6 @@ describe('a machine on a server of its own', () => {
     expect(socket.of('refused')).toEqual([{ t: 'refused', error: 'budget' }])
     expect(await running.machine.state()).toBe('asleep')
   })
-
   test('without its secrets a Hetzner machine is refused as off, and the admin is told why', async () => {
     const bare = testEnv({ MACHINES: door.MACHINES })
     const { whyNotWake } = await import('../src/sync-server-machines/src/machines/gate')
@@ -2073,7 +1845,6 @@ describe('a machine on a server of its own', () => {
     expect(await whyNotWake(bare, 'u1', Date.now())).toBeNull()
     bare.close()
   })
-
   test('a machine made from now on is a Hetzner one', async () => {
     env.db.prepare('delete from term_sessions').run()
     env.db.prepare('delete from machines').run()
@@ -2081,7 +1852,6 @@ describe('a machine on a server of its own', () => {
     const row = env.db.prepare('select host from machines where user_id = ?').get(user)
     expect(row).toEqual({ host: 'hetzner' })
   })
-
   test('erasing it takes the server and everything made for it', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -2094,7 +1864,6 @@ describe('a machine on a server of its own', () => {
     expect(running.host.calls.at(-1)).toBe('remove')
     expect(running.host.calls).not.toContain('stop')
   })
-
   test('a server that cannot be deleted yet answers so, and is asked again', async () => {
     const running = await server()
     running.host.remove = () => Promise.reject(new Error('rate_limit_exceeded'))
@@ -2105,25 +1874,20 @@ describe('a machine on a server of its own', () => {
     )
     expect(answer.status).toBe(503)
   })
-
   test('the admin’s routes: Reboot, the host, the emergency key, the server removed', async () => {
     env.db.prepare("update online_service set value = ? where key = 'admin'").run(user)
     const admin = (path: string, body: object = {}) => call(env, `/v2/online/admin${path}`, { token: owner, body })
     const asked = () => door.asked.at(-1)?.headers
-
     expect((await call(env, '/v2/online/admin', { token: owner })).json).toMatchObject({
       hetzner: { missing: [] },
     })
-
     expect((await admin(`/machines/${ID}/reboot`)).status).toBe(200)
     expect(asked()?.get('x-orden-machine')).toBe('reboot')
-
     expect((await admin(`/machines/${ID}/host`, { host: 'cloudflare' })).json).toEqual({
       host: 'cloudflare',
     })
     expect(asked()?.get('x-orden-host')).toBe('cloudflare')
     expect((await admin(`/machines/${ID}/host`, { host: 'aws' })).status).toBe(400)
-
     const { Cloud } = await import('./hetzner-cloud')
     const cloud = new Cloud()
     cloud.firewalls.push({ id: 5, name: 'nib-server', labels: { 'orden-machine': ID }, rules: [] })
@@ -2141,7 +1905,6 @@ describe('a machine on a server of its own', () => {
     } finally {
       vi.unstubAllGlobals()
     }
-
     expect((await admin(`/machines/${ID}/remove`)).json).toEqual({ removed: true })
     expect(asked()?.get('x-orden-machine')).toBe('erase')
     expect(env.db.prepare('select server_id, price_month, state from machines where id = ?').get(ID)).toEqual({
@@ -2150,7 +1913,6 @@ describe('a machine on a server of its own', () => {
       state: 'asleep',
     })
   })
-
   test('moving a container here saves its home once more, whatever its age', async () => {
     env.db
       .prepare("update machines set host = 'cloudflare', server_id = null, backup_at = ? where id = ?")
@@ -2169,14 +1931,12 @@ describe('a machine on a server of its own', () => {
     expect(running.state.kept.get('host')).toBe('hetzner')
   })
 })
-
 describe('the hub’s machine frame', () => {
   test('reaches every device of the owner, and no guest', async () => {
     const { hub, connect } = await import('./hub-fakes')
     const { hub: made } = hub(env)
     const laptop = connect(made, { device: 'device-laptop', who: 'owner-id' })
     const guest = connect(made, { device: 'device-guest', who: 'owner-id', guest: true })
-
     await made.fetch(
       new Request('https://hub.invalid/machine', {
         headers: { 'x-orden-hub': 'machine', 'x-orden-state': 'starting' },
@@ -2184,13 +1944,11 @@ describe('the hub’s machine frame', () => {
     )
     expect(laptop.take()).toEqual([{ t: 'machine', state: 'starting' }])
     expect(guest.take()).toEqual([])
-
     await made.fetch(new Request('https://hub.invalid/terms', { headers: { 'x-orden-hub': 'terms' } }))
     expect(laptop.take()).toEqual([{ t: 'terms' }])
     expect(guest.take()).toEqual([])
   })
 })
-
 describe('the dev host', () => {
   test('drives a ordend on this computer and refuses any other address', async () => {
     const { DevHost } = await import('../src/sync-server-machines/src/machines/host')
@@ -2203,11 +1961,9 @@ describe('the dev host', () => {
     remote.close()
   })
 })
-
 describe('one device at a time (issue 1055)', () => {
   const ID = 'm_test'
   let user: string
-
   beforeEach(async () => {
     await world()
     serviceOn()
@@ -2221,13 +1977,10 @@ describe('one device at a time (issue 1055)', () => {
       )
       .run(ID, user)
   })
-
   const bytes = (text: string) => new TextEncoder().encode(text)
   const hold = (running: Running) =>
     (running.state.kept.get('hold:session-1') ?? null) as { device: string; name: string } | null
-
   type Running = Awaited<ReturnType<typeof machine>>
-
   async function on(running: Running, device: string, since?: number): Promise<MachineSocket> {
     const socket = await join(
       running,
@@ -2243,46 +1996,39 @@ describe('one device at a time (issue 1055)', () => {
     })
     return socket
   }
-
   async function closed(running: Running, socket: MachineSocket) {
     socket.close(1006, 'gone')
     await running.machine.webSocketClose(socket as unknown as WebSocket)
     running.state.drop(socket as never)
   }
-
   test('the first device holds it; the second is told by whom and since when, and gets nothing', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
     const at = Date.now()
     vi.setSystemTime(at + 5_000)
     const phone = await on(running, 'phone')
-
     expect(laptop.of('held')).toEqual([])
     expect(phone.of('held')).toEqual([{ t: 'held', by: 'laptop’s screen', since: at, taken: false }])
     running.host.link_?.take()
     await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
     expect(laptop.bytes).toHaveLength(1)
     expect(phone.bytes).toHaveLength(0)
-
     await say(running, phone, { t: 'in', data: 'rm -rf ~\r' })
     await running.machine.webSocketMessage(phone as unknown as WebSocket, new ArrayBuffer(3))
     await say(running, phone, { t: 'size', cols: 40, rows: 10 })
     await say(running, phone, { t: 'start' })
     expect(running.host.link_?.take()).toEqual([])
   })
-
   test('Take over hands it to the new device at once; the old one is told and can take it back', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
     await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build…') })
     const phone = await on(running, 'phone')
     running.host.link_?.take()
-
     await say(running, phone, { t: 'take' })
     expect(phone.of('hold')).toEqual([{ t: 'hold' }])
     expect(laptop.of('held')).toEqual([{ t: 'held', by: 'phone’s screen', since: Date.now(), taken: true }])
     expect(hold(running)?.device).toBe('phone')
-
     await say(running, phone, { t: 'hello', cols: 40, rows: 20, hold: true })
     const told = running.host.link_?.take() ?? []
     expect(told).toContainEqual({ t: 'want', session: 'session-1', since: 0 })
@@ -2291,7 +2037,6 @@ describe('one device at a time (issue 1055)', () => {
     await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build… done') })
     expect(phone.bytes).toHaveLength(1)
     expect(laptop.bytes).toHaveLength(1)
-
     await say(running, laptop, { t: 'in', data: 'x' })
     expect(running.host.link_?.take()).toEqual([])
     await say(running, laptop, { t: 'take' })
@@ -2304,7 +2049,6 @@ describe('one device at a time (issue 1055)', () => {
       since: 6,
     })
   })
-
   test('scrollback: the new holder is sent the whole screen, and the one held off is not', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
@@ -2322,22 +2066,18 @@ describe('one device at a time (issue 1055)', () => {
     expect(phone.of('screen')).toEqual([{ t: 'screen', seq: 5000, cols: 80, rows: 24, data: 'line 1\r\n…line 5000' }])
     expect(laptop.of('screen')).toEqual([])
   })
-
   test('two devices taking over at once end with exactly one holder', async () => {
     const running = await machine(env, ID, user)
     await on(running, 'laptop')
     const phone = await on(running, 'phone')
     const tablet = await on(running, 'tablet')
-
     await Promise.all([say(running, phone, { t: 'take' }), say(running, tablet, { t: 'take' })])
-
     const holding = [phone, tablet].filter((one) => one.of('held').at(-1)?.taken !== true)
     expect(holding).toHaveLength(1)
     expect(hold(running)?.device).toBe(holding[0] === phone ? 'phone' : 'tablet')
     const other = holding[0] === phone ? tablet : phone
     expect(other.of('held').at(-1)).toMatchObject({ taken: true })
   })
-
   test('two devices opening a free session at once: one holds it, the other is held off', async () => {
     const running = await machine(env, ID, user)
     const [laptop, phone] = await Promise.all([on(running, 'laptop'), on(running, 'phone')])
@@ -2345,45 +2085,37 @@ describe('one device at a time (issue 1055)', () => {
     expect(held).toHaveLength(1)
     expect(hold(running)?.device).toBe(held[0] === laptop ? 'phone' : 'laptop')
   })
-
   test('a drop keeps it for the grace, and a device back within it holds it still', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
     const phone = await on(running, 'phone')
-
     await closed(running, laptop)
     await vi.advanceTimersByTimeAsync(HOLD_GRACE - 5_000)
     expect(phone.of('hold')).toEqual([])
-
     const back = await on(running, 'laptop', 2)
     expect(back.of('held')).toEqual([])
     await vi.advanceTimersByTimeAsync(10_000)
     expect(phone.of('hold')).toEqual([])
     expect(hold(running)?.device).toBe('laptop')
   })
-
   test('a device that does not come back lets go after the grace, and the one waiting has it', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
     const phone = await on(running, 'phone')
-
     await closed(running, laptop)
     phone.beatAt = new Date(Date.now() + HOLD_GRACE)
     await vi.advanceTimersByTimeAsync(HOLD_GRACE + 100)
     expect(phone.of('hold')).toEqual([{ t: 'hold' }])
     expect(hold(running)?.device).toBe('phone')
   })
-
   test('a device that crashed with its socket half open is let go of, and never holds it for ever', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
-
     vi.setSystemTime(Date.now() + 10 * 60_000)
     laptop.beatAt = new Date()
     const phone = await on(running, 'phone')
     expect(phone.of('held')).toHaveLength(1)
     expect(laptop.closedWith).toBeNull()
-
     vi.setSystemTime(Date.now() + HOLD_QUIET + 1_000)
     phone.beatAt = new Date()
     await say(running, phone, { t: 'hello', cols: 80, rows: 24, hold: true })
@@ -2392,7 +2124,6 @@ describe('one device at a time (issue 1055)', () => {
     await vi.advanceTimersByTimeAsync(HOLD_GRACE + 100)
     expect(phone.of('hold')).toEqual([{ t: 'hold' }])
   })
-
   test('closing the tab lets go at once', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
@@ -2401,7 +2132,6 @@ describe('one device at a time (issue 1055)', () => {
     expect(phone.of('hold')).toEqual([{ t: 'hold' }])
     expect(hold(running)?.device).toBe('phone')
   })
-
   test('who may only watch, and an Orden from before the lock, are never held off', async () => {
     const running = await machine(env, ID, user)
     await on(running, 'laptop')
@@ -2410,7 +2140,6 @@ describe('one device at a time (issue 1055)', () => {
     const older = await join(running, { who: user, owns: true, role: 'owner', device: 'old' })
     await say(running, older, { t: 'hello', cols: 80, rows: 24 })
     await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
-
     expect(reader.of('held')).toEqual([])
     expect(older.of('held')).toEqual([])
     expect(reader.bytes).toHaveLength(1)
@@ -2419,7 +2148,6 @@ describe('one device at a time (issue 1055)', () => {
     expect(reader.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect(hold(running)?.device).toBe('laptop')
   })
-
   test('ending the session lets go of its lock', async () => {
     const running = await machine(env, ID, user)
     await on(running, 'laptop')

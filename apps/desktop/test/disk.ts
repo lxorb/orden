@@ -6,35 +6,28 @@ export interface Entry {
   created: number
   children: Entry[]
 }
-
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
-
 export class Disk {
   readonly files = new Map<string, string>()
   readonly folders = new Set<string>()
   readonly unreadable = new Set<string>()
   readonly sent: string[] = []
   private readonly trash = new Map<string, { path: string; text: string }>()
-
   constructor(public folds = false) {}
-
   spelled(path: string): string | null {
     if (this.files.has(path) || this.folders.has(path)) return path
     if (!this.folds) return null
-
     const wanted = path.toLowerCase()
     for (const one of [...this.files.keys(), ...this.folders]) {
       if (one.toLowerCase() === wanted) return one
     }
     return null
   }
-
   private under(one: string, root: string): boolean {
     const a = this.folds ? one.toLowerCase() : one
     const b = this.folds ? root.toLowerCase() : root
     return a === b || a.startsWith(`${b}/`)
   }
-
   reset() {
     this.files.clear()
     this.folders.clear()
@@ -42,18 +35,15 @@ export class Disk {
     this.trash.clear()
     this.sent.length = 0
   }
-
   invoke = (command: string, args: Record<string, unknown> = {}): Promise<unknown> => {
     const path = text(args.path)
     this.sent.push(`${command} ${path || text(args.from) || text(args.root)}`)
-
     try {
       return Promise.resolve(this.answer(command, args, path))
     } catch (error) {
       return Promise.reject(error instanceof Error ? error : new Error(String(error)))
     }
   }
-
   private answer(command: string, args: Record<string, unknown>, path: string): unknown {
     switch (command) {
       case 'read_note': {
@@ -78,7 +68,6 @@ export class Disk {
         if (from === null) throw new Error('nothing to rename')
         const taken = this.spelled(to)
         if (taken !== null && taken !== from) throw new Error('something already lives there')
-
         for (const [one, words] of [...this.files]) {
           if (!this.under(one, from)) continue
           this.files.delete(one)
@@ -126,7 +115,6 @@ export class Disk {
         return undefined
     }
   }
-
   listing(root: string, hidden = true): Entry {
     const entry = (at: string, folder: boolean): Entry => ({
       name: at.slice(at.lastIndexOf('/') + 1),
@@ -141,13 +129,11 @@ export class Disk {
     const folderFor = (path: string): Entry => {
       const found = at.get(path)
       if (found) return found
-
       const made = entry(path, true)
       at.set(path, made)
       folderFor(path.slice(0, path.lastIndexOf('/'))).children.push(made)
       return made
     }
-
     const shown = (path: string) =>
       hidden ||
       !path
@@ -160,7 +146,6 @@ export class Disk {
       if (!shown(path)) continue
       folderFor(path.slice(0, path.lastIndexOf('/'))).children.push(entry(path, false))
     }
-
     const order = (one: Entry): Entry => ({
       ...one,
       children: [...one.children].sort((a, b) => (a.is_dir === b.is_dir ? 0 : a.is_dir ? -1 : 1)).map(order),
@@ -168,7 +153,6 @@ export class Disk {
     return order(tree)
   }
 }
-
 export function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {

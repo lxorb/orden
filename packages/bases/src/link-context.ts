@@ -2,12 +2,10 @@ import { foldName } from '@orden/markdown/links'
 import type { Context, Row, Value } from './types'
 
 export type LinkContext = Required<Pick<Context, 'resolve' | 'row' | 'backlinks'>>
-
 interface Held {
   row: Row
   folded: string
 }
-
 interface Lookups {
   byPath: Map<string, Row>
   folded: Map<string, Row>
@@ -16,20 +14,14 @@ interface Lookups {
   shallowest: Map<string, Row | null>
   linking: Map<string, string[]>
 }
-
 const OWN = /\.(md|markdown|mdown|mkd)$/i
-
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i
-
 const comparable = (path: string): string => foldName(path.replace(/\\/g, '/').replace(OWN, ''))
-
 const lastOf = (folded: string): string => folded.slice(folded.lastIndexOf('/') + 1)
-
 function folderOf(path: string): string {
   const at = path.lastIndexOf('/')
   return at === -1 ? '' : path.slice(0, at)
 }
-
 function within(folder: string, target: string): string {
   const parts = folder.split('/').filter(Boolean)
   for (const part of target.split('/')) {
@@ -39,26 +31,21 @@ function within(folder: string, target: string): string {
   }
   return parts.join('/')
 }
-
 const keyOf = (space: string, path: string) => `${space}\n${path}`
-
 function before(one: Held, other: Held): boolean {
   const depth = (held: Held) => held.row.path.split('/').length
   return depth(one) - depth(other) < 0 || (depth(one) === depth(other) && one.row.path < other.row.path)
 }
-
 function aliasesOf(row: Row): string[] {
   const value: Value | undefined = row.note.aliases
   const listed = Array.isArray(value) ? value : [value]
   return listed.filter((one): one is string => typeof one === 'string' && one.trim() !== '')
 }
-
 function gathered<T>(map: Map<string, T[]>, key: string, one: T) {
   const held = map.get(key)
   if (held) held.push(one)
   else map.set(key, [one])
 }
-
 function nearestOf(found: readonly Held[], here: string): Row | undefined {
   let best: Held | undefined
   for (const held of found) {
@@ -67,11 +54,9 @@ function nearestOf(found: readonly Held[], here: string): Row | undefined {
   }
   return best?.row
 }
-
 function reached(look: Lookups, target: string, from: Row): Row | undefined {
   const written = (target.split('#')[0] ?? target).trim().replace(/\\/g, '/')
   if (!written) return undefined
-
   const exact = (path: string) => look.folded.get(keyOf(from.space, comparable(path)))
   const here = folderOf(from.path)
   if (/^\.\.?\//.test(written)) return exact(within(here, written))
@@ -80,13 +65,11 @@ function reached(look: Lookups, target: string, from: Row): Row | undefined {
     const beside = exact(within(here, written))
     if (beside) return beside
   }
-
   const wanted = comparable(written)
   const name = lastOf(wanted)
   const matches = (folded: string) => folded === wanted || folded.endsWith(`/${wanted}`)
   const beside = exact(here ? `${here}/${name}` : name)
   if (beside && matches(comparable(beside.path))) return beside
-
   const cached = keyOf(from.space, wanted)
   let best = look.shallowest.get(cached)
   if (best === undefined) {
@@ -98,10 +81,8 @@ function reached(look: Lookups, target: string, from: Row): Row | undefined {
     look.shallowest.set(cached, best)
   }
   if (best) return best
-
   return nearestOf(look.byAlias.get(cached) ?? [], here)
 }
-
 function lookups(rows: readonly Row[]): Lookups {
   const look: Lookups = {
     byPath: new Map(),
@@ -111,7 +92,6 @@ function lookups(rows: readonly Row[]): Lookups {
     shallowest: new Map(),
     linking: new Map(),
   }
-
   for (const row of rows) {
     if (row.kind !== 'note') continue
     const folded = comparable(row.path)
@@ -134,11 +114,9 @@ function lookups(rows: readonly Row[]): Lookups {
   }
   return look
 }
-
 export function linkContext(rows: readonly Row[]): LinkContext {
   let made: Lookups | null = null
   const look = () => (made ??= lookups(rows))
-
   return {
     resolve: (target, from) => (SCHEME.test(target) ? null : (reached(look(), target, from)?.path ?? null)),
     row: (path, space) => look().byPath.get(keyOf(space, path)),

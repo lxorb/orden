@@ -6,7 +6,6 @@ const held = vi.hoisted(() => ({
   signedIn: false,
   root: '/space',
 }))
-
 vi.mock('../../link-index/src/api', () => ({
   links: {
     scanned: () => Promise.resolve(),
@@ -23,12 +22,9 @@ vi.mock('../../link-index/src/api', () => ({
       }),
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { moveOwnKeysSoon } = await import('./own-keys-moved')
-
 const workspace = {
   itemMeta: new ItemMetaStore(() => held.root),
   noteText: (path: string) => Promise.resolve(held.texts.get(path) ?? null),
@@ -37,19 +33,15 @@ const workspace = {
     return Promise.resolve(changes.length)
   },
 }
-
 const PLAN = '/space/Plan.md'
-
 async function moved(root = held.root) {
   await moveOwnKeysSoon(root, workspace, held.signedIn)
 }
-
 beforeEach(() => {
   held.texts.clear()
   held.signedIn = false
   held.root = '/space'
 })
-
 describe("a space's notes from before Orden kept its own metadata", () => {
   test('have their icon, colour and cover moved out of the text, once', async () => {
     held.texts.set(PLAN, '---\ntitle: Plan\nicon: rocket\nicon-color: red\ncover: sea.png\n---\n\n# Plan\n')
@@ -67,7 +59,6 @@ describe("a space's notes from before Orden kept its own metadata", () => {
     await moved()
     expect(held.texts.get('/space/Imported.md')).toBe('---\nicon: leaf\n---\n\n# From Obsidian\n')
   })
-
   test('keep what the metadata already says over what the text still said', async () => {
     held.root = '/kept'
     workspace.itemMeta.set('/kept/Plan.md', { icon: 'star' }, '/kept')
@@ -79,7 +70,6 @@ describe("a space's notes from before Orden kept its own metadata", () => {
     })
     expect(held.texts.get('/kept/Plan.md')).toBe('# Plan\n')
   })
-
   test('stay in the text where the account cannot keep the metadata for the other devices', async () => {
     held.root = '/synced'
     held.signedIn = true

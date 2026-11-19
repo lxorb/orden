@@ -9,17 +9,14 @@ const relock = () =>
     () => after,
     () => locked++,
   )
-
 beforeEach(() => {
   vi.useFakeTimers()
   after = 10
   locked = 0
 })
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 describe('locking after time away', () => {
   test('locks once the chosen minutes have passed away', () => {
     after = 1
@@ -30,7 +27,6 @@ describe('locking after time away', () => {
     vi.advanceTimersByTime(1)
     expect(locked).toBe(1)
   })
-
   test('coming back in time keeps it open', () => {
     after = 5
     const one = relock()
@@ -40,7 +36,6 @@ describe('locking after time away', () => {
     vi.advanceTimersByTime(10 * 60_000)
     expect(locked).toBe(0)
   })
-
   test('leaving twice counts from the last time', () => {
     after = 2
     const one = relock()
@@ -52,7 +47,6 @@ describe('locking after time away', () => {
     vi.advanceTimersByTime(60_000)
     expect(locked).toBe(1)
   })
-
   test('0 never locks while Orden runs', () => {
     after = 0
     const one = relock()
@@ -60,7 +54,6 @@ describe('locking after time away', () => {
     vi.advanceTimersByTime(24 * 60 * 60_000)
     expect(locked).toBe(0)
   })
-
   test('reads the chosen minutes when leaving, not when made', () => {
     const one = relock()
     after = 1
@@ -69,7 +62,6 @@ describe('locking after time away', () => {
     expect(locked).toBe(1)
   })
 })
-
 describe('a relock time changed while away', () => {
   test('counts by the new time', () => {
     after = 0
@@ -80,7 +72,6 @@ describe('a relock time changed while away', () => {
     vi.advanceTimersByTime(60_000)
     expect(locked).toBe(1)
   })
-
   test('does nothing while the window is in use', () => {
     const one = relock()
     one.away()

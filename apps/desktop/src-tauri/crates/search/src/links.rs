@@ -14,17 +14,11 @@ use orden_base::paths::{
 use orden_notes::notes::{words_of, words_stamped};
 
 const LINE: usize = 200;
-
 const LONGEST_LINK: usize = 1000;
-
 const MOST_LINKS: usize = 5000;
-
 const MOST_TASKS: usize = 5000;
-
 const LONGEST_TASK: usize = 2000;
-
 const LONGEST_DESCRIPTION: usize = 300;
-
 #[derive(Serialize)]
 pub struct Task {
     line: usize,
@@ -37,18 +31,15 @@ pub struct Task {
     #[serde(skip_serializing_if = "is_zero")]
     comments: usize,
 }
-
 #[allow(clippy::trivially_copy_pass_by_ref)]
 fn is_zero(count: &usize) -> bool {
     *count == 0
 }
-
 struct Open {
     indent: usize,
     task: Option<usize>,
     told: bool,
 }
-
 fn is_list_item(line: &str) -> bool {
     let rest = line.trim_start_matches([' ', '\t']);
     let after = if let Some(after) = rest.strip_prefix(['-', '*', '+']) {
@@ -65,7 +56,6 @@ fn is_list_item(line: &str) -> bool {
     };
     after.is_empty() || after.starts_with([' ', '\t'])
 }
-
 fn under(open: &mut Vec<Open>, tasks: &mut [Task], line: &str, task: Option<usize>, is_task: bool) {
     let words = line.trim();
     if words.is_empty() {
@@ -76,7 +66,6 @@ fn under(open: &mut Vec<Open>, tasks: &mut [Task], line: &str, task: Option<usiz
         open.pop();
     }
     let owner = open.last_mut();
-
     if is_task || is_list_item(line) {
         if let Some(owner) = owner {
             if let Some(at) = owner.task {
@@ -103,14 +92,12 @@ fn under(open: &mut Vec<Open>, tasks: &mut [Task], line: &str, task: Option<usiz
         }
     }
 }
-
 #[derive(Serialize, Clone, Copy)]
 pub struct Stamp {
     size: u64,
     mtime: u64,
     ctime: u64,
 }
-
 #[derive(Serialize)]
 pub struct Link {
     kind: &'static str,
@@ -122,7 +109,6 @@ pub struct Link {
     line: usize,
     text: String,
 }
-
 #[derive(Serialize)]
 pub struct Note {
     path: String,
@@ -146,29 +132,24 @@ pub struct Note {
     tasks: Vec<Task>,
     stamp: Option<Stamp>,
 }
-
 #[derive(Serialize)]
 pub struct SpaceLinks {
     notes: Vec<Note>,
     files: Vec<String>,
 }
-
 #[tauri::command(async)]
 pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     let dir = walked_in_spaces(&app, &root)?;
     let (notes, others) = files_in(&dir);
-
     let mut out = Vec::with_capacity(notes.len());
     for path in notes {
         let Ok((body, meta)) = words_stamped(&path) else {
             continue;
         };
-
         let mut note = note_at(relative_to(&dir, &path), &body);
         note.stamp = Some(stamp_of(&meta));
         out.push(note);
     }
-
     for path in others
         .iter()
         .filter(|path| is_canvas(path) || is_pages(path))
@@ -176,28 +157,22 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         let Ok(body) = words_of(path) else {
             continue;
         };
-
         out.push(canvas_note(relative_to(&dir, path), &body));
     }
-
     for path in others.iter().filter(|path| is_shortcut(path)) {
         let body = words_of(path).unwrap_or_default();
         out.push(shortcut_note(relative_to(&dir, path), &body));
     }
-
     out.sort_by(|one, other| one.path.cmp(&other.path));
-
     Ok(SpaceLinks {
         notes: out,
         files: others.iter().map(|path| relative_to(&dir, path)).collect(),
     })
 }
-
 fn note_at(relative: String, body: &str) -> Note {
     let file = relative.rsplit('/').next().unwrap_or(&relative);
     let stem = file.rsplit_once('.').map_or(file, |(stem, _)| stem);
     let name = stem.to_string();
-
     let block = front_matter::block(body);
     let words_from = block
         .as_ref()
@@ -208,12 +183,10 @@ fn note_at(relative: String, body: &str) -> Note {
             .as_ref()
             .and_then(|one| front_matter::value(body, one, key))
     };
-
     let under = block
         .as_ref()
         .map_or(body, |one| body.get(one.end..).unwrap_or(""));
     let bare = says_nothing(under, &name);
-
     Note {
         path: relative,
         name,
@@ -241,7 +214,6 @@ fn note_at(relative: String, body: &str) -> Note {
         stamp: None,
     }
 }
-
 #[derive(Default, Deserialize)]
 struct CanvasFile {
     #[serde(default)]
@@ -249,18 +221,15 @@ struct CanvasFile {
     orden: Option<CanvasOwn>,
     nib: Option<CanvasOwn>,
 }
-
 #[derive(Default, Deserialize)]
 struct CanvasOwn {
     icon: Option<String>,
     #[serde(default, rename = "iconColor")]
     icon_color: Option<String>,
 }
-
 fn card_field<'a>(card: &'a serde_json::Value, key: &str) -> Option<&'a str> {
     card.get(key).and_then(serde_json::Value::as_str)
 }
-
 fn card_link(card: &serde_json::Value) -> Option<Link> {
     card_field(card, "id").filter(|id| !id.is_empty())?;
     if card_field(card, "type") != Some("file") {
@@ -268,7 +237,6 @@ fn card_link(card: &serde_json::Value) -> Option<Link> {
     }
     let file = card_field(card, "file").filter(|file| !file.is_empty())?;
     let subpath = card_field(card, "subpath").unwrap_or_default();
-
     Some(Link {
         kind: "wikilink",
         target: if file.starts_with('/') {
@@ -287,21 +255,16 @@ fn card_link(card: &serde_json::Value) -> Option<Link> {
         text: file.to_string(),
     })
 }
-
 fn said(value: Option<String>) -> Option<String> {
     value
         .map(|one| one.trim().to_string())
         .filter(|one| !one.is_empty())
 }
-
 fn canvas_note(relative: String, body: &str) -> Note {
     let read: CanvasFile = serde_json::from_str(body).unwrap_or_default();
     let own = read.orden.or(read.nib).unwrap_or_default();
-
     let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
-
     let links: Vec<Link> = read.nodes.iter().filter_map(card_link).collect();
-
     Note {
         name,
         path: relative,
@@ -323,10 +286,8 @@ fn canvas_note(relative: String, body: &str) -> Note {
         stamp: None,
     }
 }
-
 fn shortcut_note(relative: String, content: &str) -> Note {
     let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
-
     Note {
         name,
         path: relative,
@@ -349,11 +310,9 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         stamp: None,
     }
 }
-
 fn favicon_of(content: &str) -> Option<String> {
     key_of(content, "orden-icon").or_else(|| key_of(content, "nib-icon"))
 }
-
 fn address_of(content: &str) -> Option<String> {
     let said = if content.contains("<key>URL</key>") {
         webloc_address(content)
@@ -362,7 +321,6 @@ fn address_of(content: &str) -> Option<String> {
     };
     said.filter(|one| is_web_address(one))
 }
-
 fn shortcut_url(content: &str) -> Option<String> {
     let mut section = String::new();
     content.lines().find_map(|line| {
@@ -379,7 +337,6 @@ fn shortcut_url(content: &str) -> Option<String> {
         (key.trim().eq_ignore_ascii_case("url") && !value.is_empty()).then(|| value.to_string())
     })
 }
-
 fn is_web_address(url: &str) -> bool {
     let inner = url
         .get(..12)
@@ -398,7 +355,6 @@ fn is_web_address(url: &str) -> bool {
     let host = host.split(':').next().unwrap_or(host).trim_end_matches('.');
     !host.is_empty() && !orden_web_engine::app_host(host)
 }
-
 fn webloc_address(content: &str) -> Option<String> {
     let (_, after) = content.split_once("<key>URL</key>")?;
     let (_, after) = after.split_once("<string>")?;
@@ -412,39 +368,32 @@ fn webloc_address(content: &str) -> Option<String> {
         .replace("&amp;", "&");
     (!said.is_empty()).then_some(said)
 }
-
 fn key_of(content: &str, wanted: &str) -> Option<String> {
     content.lines().find_map(|line| {
         let (key, value) = line.split_once('=')?;
         if !key.trim().eq_ignore_ascii_case(wanted) {
             return None;
         }
-
         let value = value.trim();
         (!value.is_empty()).then(|| value.to_string())
     })
 }
-
 fn note_tags(body: &str) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
-
     for tag in tags_in(body) {
         let folded = tag.trim_start_matches('#').to_lowercase();
         if !folded.is_empty() && !out.contains(&folded) {
             out.push(folded);
         }
     }
-
     out
 }
-
 fn prose_lines<'a>(
     body: &'a str,
     words_from: usize,
     mut each: impl FnMut(usize, &'a str, Option<&str>),
 ) {
     let mut code = CodeBlocks::default();
-
     for (index, line) in body.lines().enumerate() {
         if index < words_from || code.line(line) == CodeLine::Words {
             each(index, line, None);
@@ -453,14 +402,12 @@ fn prose_lines<'a>(
         }
     }
 }
-
 struct Prose {
     headings: Vec<String>,
     blocks: Vec<String>,
     links: Vec<Link>,
     tasks: Vec<Task>,
 }
-
 fn prose(body: &str, words_from: usize) -> Prose {
     let mut headings = Vec::new();
     let mut blocks = Vec::new();
@@ -471,7 +418,6 @@ fn prose(body: &str, words_from: usize) -> Prose {
     let mut paragraph = Paragraph::default();
     let held = held_lines(body, words_from);
     let mut group: Vec<(usize, &str)> = Vec::new();
-
     prose_lines(body, words_from, |index, line, fence_name| {
         let joins = fence_name.is_none()
             && index >= words_from
@@ -484,12 +430,10 @@ fn prose(body: &str, words_from: usize) -> Prose {
         if joins {
             group.push((index, line));
         }
-
         if let Some(id) = fence_name {
             blocks.push(id.to_string());
             return;
         }
-
         let heading = if index >= words_from {
             paragraph.heading(index, line)
         } else {
@@ -526,11 +470,9 @@ fn prose(body: &str, words_from: usize) -> Prose {
         if let Some(id) = block_id_of(line).filter(|_| index >= words_from) {
             blocks.push(id);
         }
-
         if index >= words_from || !line.as_bytes().contains(&b'[') || links.len() >= MOST_LINKS {
             return;
         }
-
         let read = front_matter::read_in_quotes(line);
         let context: String = line.trim().chars().take(LINE).collect();
         for (_, mut link) in links_on(&without_code(&read), MOST_LINKS - links.len()) {
@@ -540,7 +482,6 @@ fn prose(body: &str, words_from: usize) -> Prose {
         }
     });
     links_in(&group, &mut links);
-
     Prose {
         headings,
         blocks,
@@ -548,13 +489,11 @@ fn prose(body: &str, words_from: usize) -> Prose {
         tasks,
     }
 }
-
 fn clipped(text: &str, most: usize) -> &str {
     text.char_indices()
         .nth(most)
         .map_or(text, |(at, _)| &text[..at])
 }
-
 fn stamp_of(meta: &Metadata) -> Stamp {
     let millis = |time: std::io::Result<SystemTime>| {
         time.ok()
@@ -562,14 +501,12 @@ fn stamp_of(meta: &Metadata) -> Stamp {
             .map(|one| u64::try_from(one.as_millis()).unwrap_or(u64::MAX))
     };
     let mtime = millis(meta.modified()).unwrap_or_default();
-
     Stamp {
         size: meta.len(),
         mtime,
         ctime: millis(meta.created()).unwrap_or(mtime),
     }
 }
-
 fn loose(words: &str) -> String {
     let spaced: String = words
         .chars()
@@ -586,7 +523,6 @@ fn loose(words: &str) -> String {
         .trim_matches(|one: char| one == '.' || one.is_whitespace())
         .to_string()
 }
-
 fn says_nothing(body: &str, name: &str) -> bool {
     let mut lines = body.lines().filter(|line| !line.trim().is_empty());
     let Some(first) = lines.next() else {
@@ -595,37 +531,30 @@ fn says_nothing(body: &str, name: &str) -> bool {
     if lines.next().is_some() {
         return false;
     }
-
     let name = loose(name);
     heading_of(first).is_some_and(|(_, words)| !name.is_empty() && loose(&words) == name)
 }
-
 fn heading_of(line: &str) -> Option<(usize, String)> {
     let trimmed = line.trim_start();
     if line.len() - trimmed.len() > 3 {
         return None;
     }
-
     let hashes = trimmed.chars().take_while(|one| *one == '#').count();
     if hashes == 0 || hashes > 6 {
         return None;
     }
-
     let rest = &trimmed[hashes..];
     if !rest.starts_with(' ') && !rest.starts_with('\t') {
         return None;
     }
-
     Some((hashes, without_closing_hashes(rest).trim().to_string()))
 }
-
 #[derive(Default)]
 struct Paragraph {
     words: String,
     last: Option<usize>,
     blocked: bool,
 }
-
 impl Paragraph {
     fn heading(&mut self, index: usize, line: &str) -> Option<(usize, String)> {
         let follows = self.last.is_some_and(|last| last + 1 == index);
@@ -634,7 +563,6 @@ impl Paragraph {
             self.blocked = false;
         }
         self.last = Some(index);
-
         let found = heading_of(line).or_else(|| {
             underline_level(line)
                 .filter(|_| !self.words.is_empty())
@@ -656,7 +584,6 @@ impl Paragraph {
         found
     }
 }
-
 fn opens_base(line: &str) -> bool {
     let rest = line.trim_start_matches([' ', '\t', '>']);
     let Some(mark) = rest.chars().next().filter(|one| matches!(one, '`' | '~')) else {
@@ -671,7 +598,6 @@ fn opens_base(line: &str) -> bool {
         .strip_prefix("base")
         .is_some_and(|tail| tail.is_empty() || tail.starts_with(char::is_whitespace))
 }
-
 fn underline_level(line: &str) -> Option<usize> {
     let trimmed = line.trim_start_matches(' ');
     if line.len() - trimmed.len() > 3 {
@@ -684,7 +610,6 @@ fn underline_level(line: &str) -> Option<usize> {
     }
     Some(if mark == '=' { 1 } else { 2 })
 }
-
 fn not_prose(line: &str) -> bool {
     if line.starts_with("    ") || line.starts_with('\t') {
         return true;
@@ -692,7 +617,6 @@ fn not_prose(line: &str) -> bool {
     let rest = line.trim_start_matches([' ', '\t']);
     rest.starts_with(['>', '|']) || is_list_item(line) || is_break(line)
 }
-
 fn is_break(line: &str) -> bool {
     let trimmed = line.trim_start_matches(' ');
     if line.len() - trimmed.len() > 3 {
@@ -706,7 +630,6 @@ fn is_break(line: &str) -> bool {
         && matches!(marks[0], '-' | '*' | '_')
         && marks.iter().all(|one| *one == marks[0])
 }
-
 fn without_closing_hashes(rest: &str) -> &str {
     let text = rest.trim_end_matches([' ', '\t']);
     let run = text.trim_end_matches('#');
@@ -716,11 +639,9 @@ fn without_closing_hashes(rest: &str) -> &str {
         text
     }
 }
-
 fn block_id_of(line: &str) -> Option<String> {
     let trimmed = line.trim_end_matches([' ', '\t']);
     let caret = trimmed.rfind('^')?;
-
     let opens = caret == 0
         || trimmed[..caret]
             .chars()
@@ -729,7 +650,6 @@ fn block_id_of(line: &str) -> Option<String> {
     if !opens {
         return None;
     }
-
     let id = &trimmed[caret + 1..];
     if id.is_empty()
         || !id
@@ -738,27 +658,22 @@ fn block_id_of(line: &str) -> Option<String> {
     {
         return None;
     }
-
     Some(id.to_string())
 }
-
 fn without_code(line: &str) -> Cow<'_, str> {
     if !line.contains('`') {
         return Cow::Borrowed(line);
     }
-
     let letters: Vec<char> = line.chars().collect();
     let mut out = String::with_capacity(line.len());
     let mut at = 0;
     let mut plain_from = 0;
-
     while at < letters.len() {
         if letters[at] != '`' {
             out.push(letters[at]);
             at += 1;
             continue;
         }
-
         let slashes = letters[plain_from..at]
             .iter()
             .rev()
@@ -769,13 +684,11 @@ fn without_code(line: &str) -> Cow<'_, str> {
             at += 1;
             continue;
         }
-
         let mut open_end = at;
         while open_end < letters.len() && letters[open_end] == '`' {
             open_end += 1;
         }
         let marks = open_end - at;
-
         let mut close = None;
         let mut scan = open_end;
         while scan < letters.len() {
@@ -793,7 +706,6 @@ fn without_code(line: &str) -> Cow<'_, str> {
             }
             scan += 1;
         }
-
         match close {
             None => {
                 for one in &letters[at..open_end] {
@@ -810,20 +722,16 @@ fn without_code(line: &str) -> Cow<'_, str> {
             }
         }
     }
-
     Cow::Owned(out)
 }
-
 fn links_on(line: &str, most: usize) -> Vec<(usize, Link)> {
     links_in_letters(&line.chars().collect::<Vec<char>>(), most)
 }
-
 fn links_in_letters(letters: &[char], most: usize) -> Vec<(usize, Link)> {
     let ends = label_ends(letters);
     let mut found = Vec::new();
     let mut after: Option<(usize, usize)> = None;
     let mut at = 0;
-
     while at < letters.len() && found.len() < most {
         if let Some((_, end)) = after.filter(|(label, _)| at > *label) {
             after = None;
@@ -834,9 +742,7 @@ fn links_in_letters(letters: &[char], most: usize) -> Vec<(usize, Link)> {
             at += 1;
             continue;
         }
-
         let embed = is_image_open(letters, at);
-
         if letters.get(at + 1) == Some(&'[') {
             if let Some(end) = closing_brackets(letters, at + 2) {
                 let inner: String = letters[at + 2..end].iter().collect();
@@ -849,24 +755,19 @@ fn links_in_letters(letters: &[char], most: usize) -> Vec<(usize, Link)> {
             at += 1;
             continue;
         }
-
         if let Some((end, close, label, target)) = markdown_link(letters, at, &ends) {
             if let Some(link) = note_link(&label, &target, embed) {
                 found.push((at - usize::from(embed), link));
             }
             after = after.or(Some((close, end)));
         }
-
         at += 1;
     }
-
     found
 }
-
 fn is_image_open(letters: &[char], at: usize) -> bool {
     at > 0 && letters[at - 1] == '!' && (at < 2 || letters[at - 2] != '\\')
 }
-
 fn links_in(group: &[(usize, &str)], links: &mut Vec<Link>) {
     let Some(&(first, _)) = group.first() else {
         return;
@@ -874,7 +775,6 @@ fn links_in(group: &[(usize, &str)], links: &mut Vec<Link>) {
     if links.len() >= MOST_LINKS || !group.iter().any(|(_, line)| line.contains('[')) {
         return;
     }
-
     let joined = group
         .iter()
         .map(|(_, line)| *line)
@@ -889,7 +789,6 @@ fn links_in(group: &[(usize, &str)], links: &mut Vec<Link>) {
         starts.push(at);
         at += line.chars().count() + 1;
     }
-
     let mut found: Vec<(usize, usize, Link)> = Vec::new();
     for (row, start) in starts.iter().enumerate() {
         let end = starts.get(row + 1).map_or(letters.len(), |next| next - 1);
@@ -905,7 +804,6 @@ fn links_in(group: &[(usize, &str)], links: &mut Vec<Link>) {
         found.push((letter, row, link));
     }
     found.sort_by_key(|(start, _, _)| *start);
-
     for (_, row, mut link) in found.into_iter().take(MOST_LINKS - links.len()) {
         link.line = first + row;
         link.text = group
@@ -915,14 +813,12 @@ fn links_in(group: &[(usize, &str)], links: &mut Vec<Link>) {
         links.push(link);
     }
 }
-
 fn definition(line: &str) -> Option<(usize, Link)> {
     let rest = line.trim_start_matches(' ');
     let open = line.len() - rest.len();
     if open > 3 || !rest.starts_with('[') || rest.starts_with("[^") {
         return None;
     }
-
     let letters: Vec<char> = rest.chars().collect();
     let mut at = 1;
     while at < letters.len() && letters[at] != ']' {
@@ -936,7 +832,6 @@ fn definition(line: &str) -> Option<(usize, Link)> {
         return None;
     }
     let label: String = letters[1..at].iter().collect();
-
     let mut scan = at + 2;
     while matches!(letters.get(scan), Some(' ' | '\t')) {
         scan += 1;
@@ -961,14 +856,12 @@ fn definition(line: &str) -> Option<(usize, Link)> {
         }
         (letters[scan..end].iter().collect::<String>(), end)
     };
-
     let tail: String = letters[end..].iter().collect();
     if !titled(tail.trim_end_matches([' ', '\t'])) {
         return None;
     }
     note_link(&label, &written, false).map(|link| (open, link))
 }
-
 fn titled(tail: &str) -> bool {
     if tail.is_empty() {
         return true;
@@ -990,7 +883,6 @@ fn titled(tail: &str) -> bool {
             _ => false,
         }
 }
-
 fn blanked(letters: &mut [char], from: usize, to: usize) {
     for one in &mut letters[from..to] {
         if *one != '\n' {
@@ -998,7 +890,6 @@ fn blanked(letters: &mut [char], from: usize, to: usize) {
         }
     }
 }
-
 fn without_comments(text: &str) -> String {
     let mut out = text.to_string();
     let mut from = 0;
@@ -1015,7 +906,6 @@ fn without_comments(text: &str) -> String {
     }
     out
 }
-
 fn without_maths(text: &str) -> String {
     if !text.contains('$') {
         return text.to_string();
@@ -1037,7 +927,6 @@ fn without_maths(text: &str) -> String {
     }
     letters.into_iter().collect()
 }
-
 fn maths_end(letters: &[char], at: usize) -> Option<usize> {
     let slashes = letters[..at]
         .iter()
@@ -1083,7 +972,6 @@ fn maths_end(letters: &[char], at: usize) -> Option<usize> {
     }
     None
 }
-
 fn held_lines(body: &str, words_from: usize) -> std::collections::HashSet<usize> {
     let mut rows: Vec<(usize, &str)> = Vec::new();
     prose_lines(body, words_from, |index, line, fence_name| {
@@ -1091,7 +979,6 @@ fn held_lines(body: &str, words_from: usize) -> std::collections::HashSet<usize>
             rows.push((index, line));
         }
     });
-
     let mut held = std::collections::HashSet::new();
     let mut missing: Vec<String> = Vec::new();
     let mut at = 0;
@@ -1116,7 +1003,6 @@ fn held_lines(body: &str, words_from: usize) -> std::collections::HashSet<usize>
     }
     held
 }
-
 fn opener(line: &str) -> Option<(String, String)> {
     let rest = line.trim_start();
     if rest.trim_end() == "$$" {
@@ -1137,7 +1023,6 @@ fn opener(line: &str) -> Option<(String, String)> {
             bounded.then(|| (tag.to_string(), rest[1 + tag.len()..].to_string()))
         })
 }
-
 fn closes(key: &str, line: &str) -> bool {
     match key {
         "$$" => {
@@ -1157,7 +1042,6 @@ fn closes(key: &str, line: &str) -> bool {
         tag => line.to_ascii_lowercase().contains(&format!("</{tag}>")),
     }
 }
-
 fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
     let mut at = from;
     while at < letters.len() {
@@ -1172,18 +1056,14 @@ fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
     }
     None
 }
-
 const DEEPEST_PARENS: usize = 32;
-
 fn is_blank(one: char) -> bool {
     one == '\u{FEFF}' || (one != '\u{85}' && one.is_whitespace())
 }
-
 fn label_ends(letters: &[char]) -> Vec<Option<usize>> {
     let mut ends = vec![None; letters.len()];
     let mut open: Vec<usize> = Vec::new();
     let mut at = 0;
-
     while at < letters.len() {
         match letters[at] {
             '\\' => at += 1,
@@ -1208,14 +1088,11 @@ fn label_ends(letters: &[char]) -> Vec<Option<usize>> {
         }
         at += 1;
     }
-
     ends
 }
-
 fn bare_target_end(letters: &[char], from: usize, stop: usize) -> Option<usize> {
     let mut depth = 0;
     let mut at = from;
-
     while at < stop {
         match letters[at] {
             one if is_blank(one) => break,
@@ -1239,10 +1116,8 @@ fn bare_target_end(letters: &[char], from: usize, stop: usize) -> Option<usize> 
         }
         at += 1;
     }
-
     (at < stop && depth == 0).then_some(at)
 }
-
 fn markdown_link(
     letters: &[char],
     at: usize,
@@ -1256,12 +1131,10 @@ fn markdown_link(
         }
         scan
     };
-
     let close = ends[at].filter(|close| *close < stop)?;
     if letters.get(close + 1) != Some(&'(') {
         return None;
     }
-
     let from = skip_blanks(close + 2);
     let (written, mut scan) = if letters.get(from) == Some(&'<') {
         let opened = from + 1;
@@ -1280,7 +1153,6 @@ fn markdown_link(
         }
         (&letters[from..end], end)
     };
-
     scan = skip_blanks(scan);
     if let Some(quote) = letters
         .get(scan)
@@ -1299,21 +1171,17 @@ fn markdown_link(
     if scan >= stop || letters[scan] != ')' {
         return None;
     }
-
     let label: String = letters[at + 1..close].iter().collect();
     Some((scan + 1, close, label, written.iter().collect()))
 }
-
 fn split_target(named: &str) -> (String, Option<String>, Option<String>) {
     let (target, fragment) = match named.split_once('#') {
         Some((target, rest)) => (target.trim().to_string(), rest.trim()),
         None => (named.trim().to_string(), ""),
     };
-
     let (heading, block) = anchors(fragment);
     (target, heading, block)
 }
-
 fn anchors(fragment: &str) -> (Option<String>, Option<String>) {
     let block = fragment.strip_prefix('^').map(str::to_string);
     let heading = if block.is_none() && !fragment.is_empty() {
@@ -1321,10 +1189,8 @@ fn anchors(fragment: &str) -> (Option<String>, Option<String>) {
     } else {
         None
     };
-
     (heading, block)
 }
-
 fn wikilink(inner: &str, embed: bool) -> Option<Link> {
     let (named, alias) = match inner.split_once('|') {
         Some((named, alias)) => (
@@ -1333,12 +1199,10 @@ fn wikilink(inner: &str, embed: bool) -> Option<Link> {
         ),
         None => (inner, None),
     };
-
     let (target, heading, block) = split_target(named);
     if target.is_empty() && heading.is_none() && block.as_deref().is_none_or(str::is_empty) {
         return None;
     }
-
     Some(Link {
         kind: "wikilink",
         target,
@@ -1350,19 +1214,16 @@ fn wikilink(inner: &str, embed: bool) -> Option<Link> {
         text: String::new(),
     })
 }
-
 fn note_link(label: &str, written: &str, embed: bool) -> Option<Link> {
     if !is_note_target(written) {
         return None;
     }
-
     let (target, fragment) = written.split_once('#').unwrap_or((written, ""));
     let (target, fragment) = (decode(target), decode_fragment(fragment));
     let (heading, block) = anchors(&fragment);
     if target.is_empty() && heading.is_none() && block.is_none() {
         return None;
     }
-
     Some(Link {
         kind: "markdown",
         target,
@@ -1374,28 +1235,23 @@ fn note_link(label: &str, written: &str, embed: bool) -> Option<Link> {
         text: String::new(),
     })
 }
-
 fn is_note_target(target: &str) -> bool {
     if target.starts_with("//") {
         return false;
     }
-
     let Some(colon) = target.find(':') else {
         return true;
     };
-
     let scheme = &target[..colon];
     !scheme.starts_with(|one: char| one.is_ascii_alphabetic())
         || !scheme
             .chars()
             .all(|one| one.is_ascii_alphanumeric() || matches!(one, '+' | '.' | '-'))
 }
-
 fn decode(target: &str) -> String {
     let bytes = target.as_bytes();
     let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
     let mut at = 0;
-
     while at < bytes.len() {
         if let Some(byte) = escape_at(bytes, at) {
             out.push(byte);
@@ -1408,15 +1264,12 @@ fn decode(target: &str) -> String {
         out.push(bytes[at]);
         at += 1;
     }
-
     String::from_utf8(out).unwrap_or_else(|_| target.to_string())
 }
-
 fn decode_fragment(fragment: &str) -> String {
     let bytes = fragment.as_bytes();
     let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
     let mut at = 0;
-
     while at < bytes.len() {
         if let Some(byte) = escape_at(bytes, at) {
             out.push(byte);
@@ -1426,20 +1279,16 @@ fn decode_fragment(fragment: &str) -> String {
             at += 1;
         }
     }
-
     String::from_utf8_lossy(&out).into_owned()
 }
-
 fn escape_at(bytes: &[u8], at: usize) -> Option<u8> {
     if bytes.get(at) != Some(&b'%') {
         return None;
     }
-
     let high = hex(*bytes.get(at.checked_add(1)?)?)?;
     let low = hex(*bytes.get(at.checked_add(2)?)?)?;
     Some((high << 4) | low)
 }
-
 fn hex(byte: u8) -> Option<u8> {
     match byte {
         b'0'..=b'9' => Some(byte - b'0'),
@@ -1448,7 +1297,6 @@ fn hex(byte: u8) -> Option<u8> {
         _ => None,
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -1460,18 +1308,15 @@ mod tests {
     fn links_in(body: &str) -> Vec<Link> {
         prose(body, 0).links
     }
-
     fn headings_in(body: &str) -> Vec<String> {
         prose(body, 0).headings
     }
-
     #[test]
     fn reads_a_note_into_what_the_index_holds() {
         let read = note_at(
             "Work/Meeting Notes.md".to_string(),
             "---\nicon: rocket\nicon-color: blue\naliases: [Standup]\n---\n\n# Later\n\nSee [[Plan]] #work ^abc123\n",
         );
-
         assert_eq!(read.path, "Work/Meeting Notes.md");
         assert_eq!(read.name, "Meeting Notes");
         assert_eq!(read.headings, ["Later"]);
@@ -1484,35 +1329,28 @@ mod tests {
         assert_eq!(read.links.len(), 1);
         assert_eq!(read.links[0].target, "Plan");
     }
-
     #[test]
     fn a_note_that_is_a_website_says_where_it_points() {
         let read = note_at(
             "Reading/Svelte.md".to_string(),
             "---\nurl: https://svelte.dev/docs\ntitle: Svelte docs\n---\n\n# Svelte docs\n",
         );
-
         assert_eq!(read.url.as_deref(), Some("https://svelte.dev/docs"));
     }
-
     #[test]
     fn a_note_says_which_picture_is_across_the_top_of_it() {
         let read = note_at(
             "Trips/Iceland.md".to_string(),
             "---\ncover: assets/wide.jpg\ncover-position: 20\n---\n\n# Iceland\n",
         );
-
         assert_eq!(read.cover.as_deref(), Some("assets/wide.jpg"));
         assert!(read.icon.is_none());
         let read = note_at("Trips/Plan.md".to_string(), "# Plan\n\nWords.\n");
-
         assert!(read.cover.is_none());
     }
-
     #[test]
     fn a_note_that_says_nothing_yet_is_bare() {
         let bare = |path: &str, body: &str| note_at(path.to_string(), body).bare;
-
         assert!(bare("Plan.md", ""));
         assert!(bare("Plan.md", "  \n\n\t\n"));
         assert!(bare("Plan.md", "# Plan\n\n"));
@@ -1520,21 +1358,18 @@ mod tests {
         assert!(bare("Q1 costs.md", "# Q1: costs\n"));
         assert!(bare("Plan.md", "---\nicon: rocket\ntitle: Plan\n---\n\n"));
         assert!(bare("Plan.md", "---\ntitle: Plan\n---\n# Plan\n"));
-
         assert!(!bare("Plan.md", "# Plan\n\nWords.\n"));
         assert!(!bare("Plan.md", "# Another\n"));
         assert!(!bare("Plan.md", "Plan\n"));
         assert!(!bare("Plan.md", "# Plan\n- [ ] task\n"));
         assert!(!bare("Plan.md", "#Plan\n"));
     }
-
     #[test]
     fn a_website_carries_its_favicon_for_the_file_list() {
         let read = shortcut_note(
             "Reading/Svelte docs.url".to_string(),
             "[InternetShortcut]\nURL=https://svelte.dev/docs\nOrden-Icon=https://svelte.dev/favicon.png\n",
         );
-
         assert_eq!(read.name, "Svelte docs.url");
         assert_eq!(
             read.favicon.as_deref(),
@@ -1544,19 +1379,16 @@ mod tests {
         assert!(read.url.is_none());
         assert!(read.icon.is_none());
     }
-
     #[test]
     fn a_website_wears_the_icon_chosen_for_it() {
         let read = shortcut_note(
             "Svelte docs.url".to_string(),
             "[InternetShortcut]\r\nURL=https://svelte.dev/\r\nOrden-Icon=data:image/png;base64,AA\r\nOrden-Chosen-Icon=rocket\r\nOrden-Chosen-Color=violet\r\n",
         );
-
         assert_eq!(read.icon.as_deref(), Some("rocket"));
         assert_eq!(read.icon_color.as_deref(), Some("violet"));
         assert_eq!(read.favicon.as_deref(), Some("data:image/png;base64,AA"));
     }
-
     #[test]
     fn a_website_says_where_it_points_and_nothing_else_does() {
         let webloc = shortcut_note(
@@ -1568,12 +1400,10 @@ mod tests {
             Some("https://a.example/?x=1&y=2")
         );
         assert!(webloc.favicon.is_none());
-
         let empty = shortcut_note("B.url".to_string(), "[InternetShortcut]\n");
         assert!(empty.address.is_none());
         assert!(note_at("Plan.md".to_string(), "# Plan\n").address.is_none());
     }
-
     #[test]
     fn a_shortcut_with_no_mark_has_no_favicon() {
         let bare = shortcut_note(
@@ -1581,7 +1411,6 @@ mod tests {
             "[InternetShortcut]\nURL=https://a.example/\n",
         );
         assert!(bare.favicon.is_none());
-
         assert_eq!(
             favicon_of("orden-icon=https://a.example/i.png").as_deref(),
             Some("https://a.example/i.png")
@@ -1589,25 +1418,21 @@ mod tests {
         assert!(favicon_of("Nib-Icon=   ").is_none());
         assert!(favicon_of("URL=https://a.example/").is_none());
     }
-
     #[test]
     fn a_notes_name_is_its_own_and_loses_only_its_extension() {
         let dotted = note_at("Work/v1.2 plan.md".to_string(), "");
         assert_eq!(dotted.name, "v1.2 plan");
         assert_eq!(note_at("Idea.md".to_string(), "").name, "Idea");
     }
-
     fn targets(body: &str) -> Vec<String> {
         links_in(body).into_iter().map(|one| one.target).collect()
     }
-
     #[test]
     fn a_percent_before_a_wide_character_is_text() {
         assert_eq!(decode("%€"), "%€");
         assert_eq!(decode("a%€b"), "a%€b");
         assert_eq!(decode("%😀 and more"), "%😀 and more");
         assert_eq!(targets("see [x](%€) now"), vec!["%€"]);
-
         assert_eq!(decode("My%20Note.md"), "My Note.md");
         assert_eq!(decode("100%"), "100%");
         assert_eq!(decode("%zz"), "%zz");
@@ -1616,7 +1441,6 @@ mod tests {
         assert_eq!(decode("%+1"), "%+1");
         assert_eq!(decode("%-1"), "%-1");
     }
-
     #[test]
     fn finds_a_wikilink_in_every_spelling() {
         assert_eq!(targets("see [[Other Note]] now"), vec!["Other Note"]);
@@ -1625,7 +1449,6 @@ mod tests {
         assert_eq!(targets("[[folder/Note.md]]"), vec!["folder/Note.md"]);
         assert_eq!(targets("[[ Note ]]"), vec!["Note"]);
     }
-
     #[test]
     fn reads_what_a_wikilink_says() {
         let links = links_in("![[Note#Heading|shown]]");
@@ -1633,12 +1456,10 @@ mod tests {
         assert_eq!(links[0].heading.as_deref(), Some("Heading"));
         assert_eq!(links[0].alias.as_deref(), Some("shown"));
         assert!(links[0].embed);
-
         let block = links_in("[[Note#^abc123]]");
         assert_eq!(block[0].block.as_deref(), Some("abc123"));
         assert_eq!(block[0].heading, None);
     }
-
     #[test]
     fn an_empty_link_an_anchor_an_escape_or_code_is_no_link() {
         assert!(targets("[[]]").is_empty());
@@ -1659,21 +1480,17 @@ mod tests {
         assert_eq!(targets("` [[Note]]"), vec!["Note"]);
         assert!(links_in("[[#^]]").is_empty());
     }
-
     #[test]
     fn a_fence_closes_only_on_its_own_mark() {
         let tilde = "```\n~~~\n```\n\nSee [[Plan]]\n- [ ] call Bob\n";
         assert_eq!(targets(tilde), vec!["Plan"]);
         assert_eq!(prose(tilde, 0).tasks.len(), 1);
-
         assert_eq!(targets("````md\n```\n````\n[[Plan]]"), vec!["Plan"]);
         assert_eq!(targets("```a`b\n[[Plan]]"), vec!["Plan"]);
-
         let shown = "~~~md\n```js\n- [ ] example\n[[Example]]\n```\n~~~\n[[Real]]\n";
         assert_eq!(targets(shown), vec!["Real"]);
         assert!(prose(shown, 0).tasks.is_empty());
     }
-
     #[test]
     fn a_fence_in_the_front_matter_opens_no_code() {
         let read = note_at(
@@ -1685,7 +1502,6 @@ mod tests {
         assert_eq!(read.tasks.len(), 1);
         assert_eq!(read.tasks[0].text, "t [[L]]");
     }
-
     #[test]
     fn a_link_in_a_quoted_front_matter_value_is_read_the_way_the_value_means_it() {
         let read = note_at(
@@ -1714,22 +1530,18 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn code_in_quotes_items_and_indents_holds_nothing() {
         let quoted = "> ```\n> [[Example]]\n> - [ ] example\n> ```\n\n[[Real]]\n";
         assert_eq!(targets(quoted), vec!["Real"]);
         assert!(prose(quoted, 0).tasks.is_empty());
-
         let indented =
             "Words.\n\n    [[Example]]\n    - [ ] example\n    # Not a heading\n\n[[Real]]\n";
         assert_eq!(targets(indented), vec!["Real"]);
         assert!(prose(indented, 0).tasks.is_empty());
-
         let item = "- a\n  ```\n  [[Example]]\n  # Not a heading\n  ```\n- [[Real]]\n";
         assert_eq!(targets(item), vec!["Real"]);
         assert!(headings_in(item).is_empty());
-
         let tasks = prose(
             "- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n",
             0,
@@ -1738,7 +1550,6 @@ mod tests {
         let texts: Vec<&str> = tasks.iter().map(|task| task.text.as_str()).collect();
         assert_eq!(texts, ["one", "two", "three", "four", "five"]);
     }
-
     #[test]
     fn blanking_code_keeps_the_line_the_same_length() {
         let line = "a `b c` d";
@@ -1748,7 +1559,6 @@ mod tests {
             std::borrow::Cow::Borrowed(_)
         ));
     }
-
     #[test]
     fn an_internal_markdown_link_counts_and_a_web_one_does_not() {
         assert_eq!(
@@ -1758,20 +1568,17 @@ mod tests {
         assert!(targets("[x](https://x.dev) [y](mailto:a@b.dev)").is_empty());
         assert!(targets("[y](//x.dev/a)").is_empty());
     }
-
     #[test]
     fn an_escaped_hash_is_part_of_the_name() {
         let links = links_in("[S](C%23.md#a%20b)");
         assert_eq!(links[0].target, "C#.md");
         assert_eq!(links[0].heading.as_deref(), Some("a b"));
-
         assert_eq!(targets("[S](Why%3F.md)"), vec!["Why?.md"]);
         assert_eq!(targets("[S](a%2520b.md)"), vec!["a%20b.md"]);
         assert_eq!(decode("a%20b%"), "a b%");
         assert_eq!(decode("%FF.md"), "%FF.md");
         assert_eq!(links_in("[S](a.md#^b1)")[0].block.as_deref(), Some("b1"));
     }
-
     #[test]
     fn the_walk_agrees_with_links_ts() {
         assert_eq!(targets("[x]([[a]])"), vec!["[[a]]"]);
@@ -1782,12 +1589,10 @@ mod tests {
         assert!(targets("[x](a\u{FEFF}b.md)").is_empty());
         assert_eq!(targets("[x](a\u{85}b.md)"), vec!["a\u{85}b.md"]);
     }
-
     #[test]
     fn a_line_of_brackets_is_read_once() {
         let ends = super::label_ends(&"a[".repeat(50_000).chars().collect::<Vec<char>>());
         assert!(ends.iter().all(Option::is_none));
-
         let of = |line: &str| super::label_ends(&line.chars().collect::<Vec<char>>());
         assert_eq!(of("[a[b]c]")[0], Some(6));
         assert_eq!(of("[a[b]c]")[2], Some(4));
@@ -1797,7 +1602,6 @@ mod tests {
         assert_eq!(of("[[a]")[1], Some(3));
         assert_eq!(of("[a\\]b]")[0], Some(5));
     }
-
     #[test]
     fn a_markdown_link_holds_balanced_parentheses_and_brackets() {
         assert_eq!(targets("[x](a%20(1).md)"), vec!["a (1).md"]);
@@ -1808,32 +1612,25 @@ mod tests {
             vec!["a(1).md", "b.md"]
         );
         assert_eq!(targets("[x](a\\(1.md)"), vec!["a(1.md"]);
-
         assert!(targets("[x](a(1.md)").is_empty());
         assert_eq!(targets("[x](a)1).md)"), vec!["a"]);
-
         assert_eq!(links_in("[a[b]c](d.md)")[0].alias.as_deref(), Some("a[b]c"));
         assert_eq!(links_in("[a\\]b](d.md)")[0].alias.as_deref(), Some("a\\]b"));
         assert_eq!(links_in("[a[b](d.md)")[0].alias.as_deref(), Some("b"));
-
         assert_eq!(targets("[a[b](c.md)d](e.md)"), vec!["c.md"]);
         let image = links_in("[![i](p.png)](e.md)");
         assert_eq!(image.len(), 2);
         assert_eq!((image[0].target.as_str(), image[0].embed), ("e.md", false));
         assert_eq!((image[1].target.as_str(), image[1].embed), ("p.png", true));
-
         let wiki = links_in("[[a]](b.md)");
         assert_eq!(wiki.len(), 1);
         assert_eq!(wiki[0].kind, "wikilink");
         assert_eq!(targets("[x [[a]] y](b.md)"), vec!["a"]);
-
         assert!(targets("[x](a b.md)").is_empty());
         assert!(targets("[x](<a<b>)").is_empty());
         assert!(!links_in("\\![x](a.md)")[0].embed);
-
         assert!(links_in(&format!("[a]({}", "(".repeat(100_000))).is_empty());
     }
-
     #[test]
     fn a_markdown_target_is_read_as_written() {
         let links = links_in("[x](My%20Note.md#a-heading)");
@@ -1845,36 +1642,29 @@ mod tests {
         assert!(links_in(&"[a](".repeat(5_000)).is_empty());
         assert!(links_in(&"[[a".repeat(5_000)).is_empty());
     }
-
     #[test]
     fn a_link_longer_than_any_link_is_not_one() {
         let target = "x".repeat(super::LONGEST_LINK);
         assert!(links_in(&format!("[a]({target}.md)")).is_empty());
-
         let label = "y".repeat(super::LONGEST_LINK);
         assert!(links_in(&format!("[{label}](Note.md)")).is_empty());
-
         let path = "x".repeat(200);
         assert_eq!(links_in(&format!("[a]({path}.md)")).len(), 1);
     }
-
     #[test]
     fn a_note_says_where_it_points_only_so_many_times() {
         let many = "[[A]] ".repeat(20_000);
         let found = links_in(&many);
-
         assert_eq!(found.len(), super::MOST_LINKS);
         assert!(found[0].text.len() <= super::LINE);
         let body = format!("{}\n## Later\n", "[[A]] ".repeat(6000));
         let read = prose(&body, 0);
-
         assert_eq!(read.links.len(), super::MOST_LINKS);
         assert_eq!(read.headings, vec!["Later"]);
         let links = links_in("first\nsecond [[Note]] third");
         assert_eq!(links[0].line, 1);
         assert_eq!(links[0].text, "second [[Note]] third");
     }
-
     #[test]
     fn finds_the_headings_and_nothing_else() {
         assert_eq!(headings_in("# One\ntext\n## Two ##"), vec!["One", "Two"]);
@@ -1884,7 +1674,6 @@ mod tests {
         );
         assert_eq!(headings_in("```\n# In code\n```"), Vec::<String>::new());
     }
-
     #[test]
     fn a_hash_that_ends_a_heading_word_stays_in_the_heading() {
         assert_eq!(heading_of("# C#"), Some((1, "C#".to_string())));
@@ -1895,7 +1684,6 @@ mod tests {
         assert_eq!(heading_of("## Closed ##"), Some((2, "Closed".to_string())));
         assert_eq!(heading_of("# #"), Some((1, String::new())));
     }
-
     #[test]
     fn a_comment_in_the_front_matter_is_no_heading() {
         let read = note_at(
@@ -1906,7 +1694,6 @@ mod tests {
         assert_eq!(heading_of("   # Three"), Some((1, "Three".to_string())));
         assert_eq!(heading_of("    # Four"), None);
     }
-
     #[test]
     fn a_shortcut_to_an_address_that_is_not_a_web_page_points_nowhere() {
         for url in [
@@ -1934,12 +1721,10 @@ mod tests {
             Some("view-source:https://a.example/")
         );
     }
-
     #[test]
     fn counts_definitions_pictures_in_a_label_and_labels_over_two_lines_but_not_html_or_maths() {
         let links = prose("Intro [one](One.md) and a picture link [![chart](chart.png)](Two.md).\n\nA label that [runs over\na line](Three.md) ends here.\n\n[four]: Four.md \"The fourth\"\n[^note]: Not.md\n[web]: https://example.com\n\n<!-- [hidden](Hidden1.md) -->\n\n<pre>\n[hidden](Hidden2.md)\n</pre>\n\n$$\n[hidden](Hidden3.md)\n$$\n\nInline $[hidden](Hidden4.md)$ maths and a comment <!-- [hidden](Hidden5.md) --> here, and [[Five]].\n\nCosts $5 and [six](Six.md) $10.\n", 0).links;
         let targets: Vec<&str> = links.iter().map(|one| one.target.as_str()).collect();
-
         assert_eq!(
             targets,
             [
@@ -1955,22 +1740,18 @@ mod tests {
         assert_eq!(links[3].line, 2);
         assert_eq!(links[4].alias.as_deref(), Some("four"));
     }
-
     #[test]
     fn a_note_that_holds_a_base_says_so() {
         let holds = |body: &str| note_at("Dash.md".to_string(), body).bases;
-
         assert!(holds("# Dash\n\n```base\nviews: []\n```\n"));
         assert!(holds("> ~~~~ base\n> views: []\n> ~~~~\n"));
         assert!(!holds("# Dash\n\n```baseball\n```\n"));
         assert!(!holds("# Dash\n\nbase\n"));
     }
-
     #[test]
     fn a_heading_underlined_with_equals_or_dashes_is_a_heading_too() {
         let body = "---\ntitle: x\n---\n\nIntro\n=====\n\n- [ ] first\n\nPlan for\nthe week\n--------\n\n- [ ] second\n\n## Done ##\n\n- [ ] third\n\ntext\n\n---\n\n- item\n---\n\n> quoted\nlazy\n===\n\n```\nCode\n===\n```\n";
         let read = prose(body, 3);
-
         assert_eq!(read.headings, ["Intro", "Plan for the week", "Done"]);
         let sections: Vec<Vec<String>> = read.tasks.iter().map(|one| one.section.clone()).collect();
         assert_eq!(
@@ -1982,7 +1763,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_block_name_ends_a_line_and_starts_a_word() {
         assert_eq!(
@@ -1994,19 +1774,16 @@ mod tests {
         assert_eq!(block_id_of("^abc in the middle"), None);
         assert_eq!(block_id_of("x^2^ is a superscript"), None);
     }
-
     #[test]
     fn reads_the_icon_a_canvas_wears() {
         let read = canvas_note(
             "boards/Board.canvas".to_string(),
             r#"{"nodes":[],"edges":[],"orden":{"version":1,"icon":"rocket"}}"#,
         );
-
         assert_eq!(read.icon.as_deref(), Some("rocket"));
         assert_eq!(read.name, "Board.canvas");
         assert_eq!(read.path, "boards/Board.canvas");
     }
-
     #[test]
     fn a_canvas_written_under_the_old_name_still_wears_its_icon() {
         let old = canvas_note(
@@ -2014,14 +1791,12 @@ mod tests {
             r#"{"nodes":[],"nib":{"version":1,"icon":"rocket"}}"#,
         );
         assert_eq!(old.icon.as_deref(), Some("rocket"));
-
         let both = canvas_note(
             "Board.canvas".to_string(),
             r#"{"nodes":[],"orden":{"icon":"star"},"nib":{"icon":"rocket"}}"#,
         );
         assert_eq!(both.icon.as_deref(), Some("star"));
     }
-
     #[test]
     fn a_website_written_under_the_old_name_still_wears_its_icon() {
         let old = "[InternetShortcut]\nURL=https://a.example/\nNib-Icon=https://a.example/i.png\nNib-Chosen-Icon=rocket\nNib-Chosen-Color=violet\n";
@@ -2030,23 +1805,19 @@ mod tests {
         assert_eq!(read.icon.as_deref(), Some("rocket"));
         assert_eq!(read.icon_color.as_deref(), Some("violet"));
     }
-
     #[test]
     fn a_canvas_that_says_nothing_wears_nothing() {
         let plain = canvas_note("Board.canvas".to_string(), r#"{"nodes":[],"edges":[]}"#);
         assert_eq!(plain.icon, None);
-
         let blank = canvas_note(
             "Board.canvas".to_string(),
             r#"{"nodes":[],"orden":{"icon":"   "}}"#,
         );
         assert_eq!(blank.icon, None);
-
         let broken = canvas_note("Board.canvas".to_string(), "not json");
         assert_eq!(broken.icon, None);
         assert!(broken.links.is_empty());
     }
-
     #[test]
     fn a_card_that_names_a_file_is_a_link_out_of_the_canvas() {
         let read = canvas_note(
@@ -2060,7 +1831,6 @@ mod tests {
                 r##"],"edges":[]}"##
             ),
         );
-
         let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
         assert_eq!(targets, vec!["/Plan.md", "/Plan.md", "/Plan.md"]);
         assert_eq!(read.links[0].heading, None);
@@ -2068,7 +1838,6 @@ mod tests {
         assert_eq!(read.links[2].block.as_deref(), Some("abc123"));
         assert!(read.headings.is_empty());
     }
-
     #[test]
     fn a_card_without_its_own_name_or_a_file_links_nowhere_and_spoils_no_other_card() {
         let read = canvas_note(
@@ -2083,12 +1852,10 @@ mod tests {
                 r##"],"edges":[]}"##
             ),
         );
-
         let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
         assert_eq!(targets, vec!["/Plan.md", "/Goal.md"]);
         assert_eq!(read.links[0].heading, None);
     }
-
     #[test]
     fn the_index_keeps_each_tag_once_folded_and_without_the_hash() {
         assert_eq!(
@@ -2097,24 +1864,20 @@ mod tests {
         );
         assert!(note_tags("nothing here").is_empty());
     }
-
     #[test]
     fn a_canvas_carries_no_tags() {
         let read = canvas_note(
             "Board.canvas".to_string(),
             r##"{"nodes":[{"id":"a","type":"text","text":"#work"}],"edges":[]}"##,
         );
-
         assert!(read.tags.is_empty());
     }
-
     #[test]
     fn a_note_carries_its_task_lines_and_the_sections_above_them() {
         let read = note_at(
             "Errands.md".to_string(),
             "# Home\n- [ ] Water the plants 📅 2026-10-04\n## Kitchen\n  - [/] Descale\n# Bank\n1. [x] Call ✅ 2026-10-01\n",
         );
-
         let tasks: Vec<_> = read
             .tasks
             .iter()
@@ -2143,46 +1906,37 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn front_matter_holds_no_headings_or_block_names() {
         let read = note_at(
             "Bug.md".to_string(),
             "---\nstatus: open\n# a comment\nnote: Later ^idea\n---\n# Real\nLater ^idea\n",
         );
-
         assert_eq!(read.headings, vec!["Real".to_string()]);
         assert_eq!(read.blocks, vec!["idea".to_string()]);
     }
-
     #[test]
     fn front_matter_is_raw_and_code_holds_no_tasks() {
         let read = note_at(
             "Bug.md".to_string(),
             "---\nstatus: open\n# a comment\n---\n```\n- [ ] not a task\n```\n- [ ] a task\n",
         );
-
         assert_eq!(read.front.as_deref(), Some("status: open\n# a comment"));
         assert_eq!(read.tasks.len(), 1);
         assert_eq!(read.tasks[0].line, 7);
         assert!(read.tasks[0].section.is_empty());
-
         let plain = note_at("Plain.md".to_string(), "- [ ] one\r\n");
         assert!(plain.front.is_none());
         assert_eq!(plain.tasks[0].text, "one");
-
         let crlf = note_at("Win.md".to_string(), "---\r\na: 1\r\n---\r\n");
         assert_eq!(crlf.front.as_deref(), Some("a: 1"));
     }
-
     #[test]
     fn a_task_line_is_kept_to_a_length() {
         let long = format!("- [ ] {}", "é".repeat(LONGEST_TASK + 10));
         let read = note_at("Long.md".to_string(), &long);
-
         assert_eq!(read.tasks[0].text.chars().count(), LONGEST_TASK);
     }
-
     #[test]
     fn a_task_carries_its_description_and_its_comments() {
         let note = [
@@ -2205,7 +1959,6 @@ mod tests {
         ]
         .join("\n");
         let read = note_at("Errands.md".to_string(), &note);
-
         let tasks: Vec<_> = read
             .tasks
             .iter()
@@ -2222,21 +1975,18 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_description_is_kept_to_a_length_and_code_is_none() {
         let long = format!("- [ ] a\n  {}\n", "é".repeat(LONGEST_DESCRIPTION + 5));
         let read = note_at("Long.md".to_string(), &long);
         let kept = read.tasks[0].description.as_deref().unwrap_or_default();
         assert_eq!(kept.chars().count(), LONGEST_DESCRIPTION);
-
         let code = note_at(
             "Code.md".to_string(),
             "- [ ] a\n  ```\n  not words\n  ```\n  words\r\n",
         );
         assert_eq!(code.tasks[0].description.as_deref(), Some("words"));
     }
-
     #[test]
     #[ignore = "a measurement, run by hand"]
     fn what_the_rows_add_to_a_scan() {
@@ -2247,7 +1997,6 @@ mod tests {
                 )
             })
             .collect();
-
         let time = |words_from: usize| {
             let started = std::time::Instant::now();
             let found: usize = notes
@@ -2256,13 +2005,11 @@ mod tests {
                 .sum();
             (started.elapsed(), found)
         };
-
         let (without, none) = time(usize::MAX);
         let (with, tasks) = time(0);
         assert_eq!((none, tasks), (0, 10_000));
         println!("prose over 5,000 notes: {without:?} without tasks, {with:?} with 10,000");
     }
-
     #[test]
     fn a_stamp_says_the_size_and_the_times() {
         let path = std::env::temp_dir().join(format!("orden-stamp-{}.md", std::process::id()));
@@ -2270,7 +2017,6 @@ mod tests {
         let (words, meta) = words_stamped(&path).expect("read");
         let stamp = stamp_of(&meta);
         std::fs::remove_file(&path).expect("removed");
-
         assert_eq!(words, "- [ ] a");
         assert_eq!(stamp.size, 7);
         assert!(stamp.mtime > 0 && stamp.ctime > 0);

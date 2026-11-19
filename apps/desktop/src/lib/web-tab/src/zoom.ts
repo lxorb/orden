@@ -9,7 +9,6 @@ export function zoomTo(tabId: string, page: Page, factor: number): void {
   keepZoom(siteOf(page.url), factor, asideFor(tabId, page))
   void pages.zoom(tabId, factor)
 }
-
 export function zoomStep(tabId: string, page: Page, step: ZoomStep): void {
   zoomTo(tabId, page, step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))
 }

@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = "# Tabs\n\n## A heading\n\nWords.[^1]\n\n[^1]: a footnote\n"
-
 MEASURE = """
 () => {
   const aside = document.querySelector('aside.right')
@@ -40,7 +36,6 @@ MEASURE = """
   }
 }
 """
-
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1400, "height": 760}, color_scheme=scheme)
     page = context.new_page()
@@ -57,7 +52,6 @@ def fresh(browser: Browser, scheme: str) -> Page:
     )
     DRIVE.open_note(page, "Tabs")
     return page
-
 def width(page: Page, pixels: int) -> None:
     edge = page.locator("aside.right [role=separator].edge")
     edge.focus()
@@ -69,12 +63,10 @@ def width(page: Page, pixels: int) -> None:
             edge.press("ArrowLeft")
     edge.blur()
     page.wait_for_timeout(400)
-
 def judge(at: str, row: dict) -> None:
     tabs, pill, tools = row["tabs"], row["pill"], row["tools"]
     say(f"[{at}] row {row['row']['width']:.0f}, pill {pill['width']:.0f}, "
         f"tabs {[one['label'] for one in tabs]}, tools {[one['label'] for one in row['toolButtons']]}")
-
     if any(not one["inPill"] for one in tabs):
         wrong(f"[{at}] a tab outside the pill")
     for one in tabs:
@@ -90,16 +82,13 @@ def judge(at: str, row: dict) -> None:
     for one in row["toolButtons"]:
         if one["box"]["right"] > row["row"]["right"] + 0.5:
             wrong(f"[{at}] {one['label']} past the row's end")
-
     widest = max(one["box"]["width"] for one in tabs)
     if widest > tabs[0]["mark"] + 16 + 1:
         wrong(f"[{at}] the tabs are stretched to {widest:.0f} pixels each")
     if not any(one["on"] for one in tabs):
         wrong(f"[{at}] the panel showing has no tab drawn")
-
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('ask')")
     page.wait_for_timeout(500)
     for pixels in (180, 300, 520):
@@ -110,7 +99,6 @@ def drive(browser: Browser, scheme: str) -> None:
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     shot(page, f"{scheme}-window")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -151,22 +139,17 @@ def drive(browser: Browser, scheme: str) -> None:
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(200)
         shot(page, f"{scheme}-{pixels}-moved", clip=strip_clip(page))
-
     page.context.close()
-
 def strip_clip(page: Page) -> dict:
     box = page.evaluate(
         "() => { const r = document.querySelector('aside.right').getBoundingClientRect();"
         " return { x: r.left, y: r.top, width: r.width, height: 120 } }"
     )
     return box
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
-
     return DRIVE.verdict("every panel tab is in one pill, sized to its tabs, at every width")
-
 raise SystemExit(main())

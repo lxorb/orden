@@ -29,7 +29,6 @@ describe('parseCsv', () => {
     ])
     expect(items[1]?.content).toMatchObject({ kind: 'note', note: 'just a note' })
   })
-
   it('refuses a file with no password column', () => {
     expect(csvLooksLike(['a', 'b'])).toBe(false)
     expect(() => parseCsv('a,b\n1,2\n')).toThrow()

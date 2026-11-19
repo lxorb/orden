@@ -24,7 +24,6 @@
     height: number
     ongo?: (at: { x: number; y: number }) => void
   } = $props()
-
   const DOT = 4
   const GAP = 9
   const LABEL = 11
@@ -36,51 +35,41 @@
   let eased = $state.raw<Record<number, { x: number; y: number }>>({})
   let frame = 0
   let last = 0
-
   $effect(() => {
     for (const one of hands) follows(one.at)
-
     if (stillness() || !hands.length) {
       eased = Object.fromEntries(hands.map((one) => [one.id, one.at]))
       return
     }
-
     const tick = (now: number) => {
       const dt = last ? Math.min(64, now - last) : 16
       last = now
-
       const next: Record<number, { x: number; y: number }> = {}
       let moving = false
-
       for (const one of hands) {
         const was = eased[one.id]
         if (!was || arrived(was, one.at, unit)) {
           next[one.id] = one.at
           continue
         }
-
         next[one.id] = {
           x: approach(was.x, one.at.x, dt, CATCHING_UP),
           y: approach(was.y, one.at.y, dt, CATCHING_UP),
         }
         moving = true
       }
-
       eased = next
       if (moving) frame = requestAnimationFrame(tick)
       else frame = 0
     }
-
     last = 0
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(tick)
-
     return () => {
       cancelAnimationFrame(frame)
       frame = 0
     }
   })
-
   const drawn = $derived(
     hands.map((one) => {
       const at = eased[one.id] ?? one.at
@@ -91,7 +80,6 @@
       }
     }),
   )
-
   const ALONG = { start: 1, middle: 0, end: -1, hanging: 1, auto: -1 } as const
 </script>
 
@@ -151,16 +139,13 @@
     pointer-events: none;
     z-index: var(--z-grip);
   }
-
   .held {
     pointer-events: auto;
     cursor: pointer;
   }
-
   .target {
     pointer-events: all;
   }
-
   text {
     font-family: var(--font-ui);
     font-weight: var(--weight-strong);

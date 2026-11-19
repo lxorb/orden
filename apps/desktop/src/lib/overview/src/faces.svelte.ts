@@ -9,16 +9,13 @@ import { upgradeWindows } from './places.svelte'
 import { lastingKeys } from './tab-keys'
 
 const TAKE_LATER = 700
-
 class Faces {
   private byId = $state.raw<Record<string, Face>>({})
   private written = new Map<string, string>()
   private reading: Promise<void> | null = null
-
   of(id: string): Face | null {
     return this.byId[id] ?? null
   }
-
   read(): Promise<void> {
     this.reading ??= readFaces().then((kept) => {
       const names = lastingKeys(workspace.tabs)
@@ -37,7 +34,6 @@ class Faces {
     })
     return this.reading
   }
-
   take(paneId: string, tab: Tab) {
     const how = TAB_KINDS[tab.kind].preview
     if (tab.inPrivate || how === 'reading' || how === 'photograph') return
@@ -49,12 +45,10 @@ class Faces {
       if (snapshot.html.length <= LARGEST) this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
     }, TAKE_LATER)
   }
-
   drew(tab: Tab, snapshot: { html: string; w: number; h: number }) {
     if (tab.inPrivate || snapshot.html.length > LARGEST || !workspace.tabs.includes(tab)) return
     this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
   }
-
   photographed(tab: Tab, shot: string) {
     if (tab.inPrivate || this.byId[tab.id]?.shot === shot || shot.length > LARGEST) return
     const box = shownBox(tab.paneId)
@@ -62,7 +56,6 @@ class Faces {
     const h = box && box.height > 0 ? box.height : 800
     this.keep(tab, { html: null, shot, w, h, at: Date.now() })
   }
-
   private keep(tab: Tab, face: Face) {
     this.byId = { ...this.byId, [tab.id]: face }
     const names = lastingKeys(workspace.tabs)
@@ -75,7 +68,6 @@ class Faces {
       void forgetFaces([before])
     }
   }
-
   closed(names: ReadonlyMap<string, string>, open: readonly Tab[]) {
     const now = lastingKeys(open)
     const still = new Set(now.values())
@@ -87,12 +79,9 @@ class Faces {
     void forgetFaces([...new Set(gone.map(([, name]) => name))].filter((name) => !still.has(name)))
   }
 }
-
 export const faces = new Faces()
-
 void upgradeFaces()
 upgradeWindows()
-
 $effect.root(() => {
   let fronts = new Map<string, string>()
   $effect.pre(() => {
@@ -106,7 +95,6 @@ $effect.root(() => {
       fronts = now
     })
   })
-
   $effect(() => {
     for (const tab of workspace.tabs) {
       if (tab.kind !== 'web') continue
@@ -114,7 +102,6 @@ $effect.root(() => {
       if (shot) untrack(() => faces.photographed(tab, shot))
     }
   })
-
   let names = new Map<string, string>()
   $effect(() => {
     const open = [...workspace.tabs]

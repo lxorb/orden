@@ -3,9 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
 const asked: { name: string; args: unknown; agent: unknown }[] = []
-
 const ask: AgentVerb = (name, args, caller) => {
   asked.push({ name, args, agent: caller.agent })
   return Promise.resolve(
@@ -19,9 +17,7 @@ registerAgentVerbs(() =>
     Object.fromEntries(['add_task', 'list_tasks', 'update_task', 'query_base'].map((verb) => [verb, ask])),
   ),
 )
-
 const { dispatch, verbForAction } = await import('./verbs')
-
 describe('the to-dos from a terminal and a link', () => {
   test('the command line asks the agent verbs as the reader, with every argument', async () => {
     asked.length = 0
@@ -39,7 +35,6 @@ describe('the to-dos from a terminal and a link', () => {
       { name: 'query_base', args: { view: 'Shelf', path: 'Books.base' }, agent: null },
     ])
   })
-
   test('the words after a verb are all its last argument, not only the first', async () => {
     asked.length = 0
     await dispatch('tasks', {}, ['add', 'Call', 'the', 'dentist'])
@@ -49,7 +44,6 @@ describe('the to-dos from a terminal and a link', () => {
       { name: 'query_base', args: { path: 'Reading list.base' }, agent: null },
     ])
   })
-
   test('says it has no filter, view, note or heading rather than leaving one out', async () => {
     asked.length = 0
     const refused = [
@@ -66,14 +60,12 @@ describe('the to-dos from a terminal and a link', () => {
     ])
     expect(asked).toEqual([])
   })
-
   test('says why in a sentence where the verb refused', async () => {
     expect(await dispatch('tasks', {}, ['done', 'gone'])).toEqual({
       ok: false,
       error: 'that task is not there',
     })
   })
-
   test('orden://add-task adds to an inbox and nowhere else', async () => {
     asked.length = 0
     expect(verbForAction('add-task')).toBe('tasks.add')

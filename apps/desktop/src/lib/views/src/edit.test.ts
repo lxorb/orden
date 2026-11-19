@@ -18,7 +18,6 @@ views:
         - 'status.contains("Low") && tags.contains("Low")'
         - 'note["status"] != "Low"'
 `)
-
 test('an option renamed in the filters only comparisons of the renamed property change, not another with the same words', () => {
   const renamed = renamedGroup(base, 'note.status', 'Low', 'Backlog')
   expect(renamed.filters).toBe('note.priority == "Low" || note.status == "Backlog"')

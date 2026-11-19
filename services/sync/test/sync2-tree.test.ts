@@ -7,7 +7,6 @@ let env: TestEnv
 let token: string
 let other: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   live(env)
@@ -15,9 +14,7 @@ beforeEach(async () => {
   other = await signIn(env, 'tree@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Tree' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 interface Row {
   id: string
   path: string
@@ -33,7 +30,6 @@ interface Row {
   hash: string
   doc_seq: number | null
 }
-
 interface FolderRow {
   id: string
   parent_id: string | null
@@ -41,15 +37,12 @@ interface FolderRow {
   deleted: number
   seq: number
 }
-
 function row(id: string): Row {
   return env.db.prepare('select * from notes where id = ?').get(id) as Row
 }
-
 function folders(): FolderRow[] {
   return env.db.prepare('select * from folders where space_id = ? order by name').all(space) as unknown as FolderRow[]
 }
-
 async function made(path: string, content = `# ${path}\n`): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, {
     token,
@@ -58,7 +51,6 @@ async function made(path: string, content = `# ${path}\n`): Promise<string> {
   if (answer.status !== 201) throw new Error(`${path}: ${answer.text}`)
   return answer.json.note.id
 }
-
 async function prepare(as = token): Promise<number> {
   const answer = await call<{ cursor: number }>(env, `/v2/spaces/${space}/prepare`, {
     token: as,
@@ -67,13 +59,11 @@ async function prepare(as = token): Promise<number> {
   expect(answer.status).toBe(200)
   return answer.json.cursor
 }
-
 let counter = 0
 function op<T extends Record<string, unknown>>(t: string, fields: T, seen = 0) {
   counter += 1
   return { op: `op-${String(counter)}`, t, seen, ...fields }
 }
-
 async function ops(list: readonly object[], as = token): Promise<OpsResponse> {
   const answer = await call<OpsResponse>(env, `/v2/spaces/${space}/ops`, {
     token: as,
@@ -82,14 +72,12 @@ async function ops(list: readonly object[], as = token): Promise<OpsResponse> {
   expect(answer.status, answer.text).toBe(200)
   return answer.json
 }
-
 async function one(item: object, as = token): Promise<OpResult> {
   const { results } = await ops([item], as)
   const result = results[0]
   if (!result) throw new Error('no answer')
   return result
 }
-
 async function feed(since = 0, as = token): Promise<FeedPage> {
   const answer = await call<FeedPage>(env, `/v2/spaces/${space}/feed?since=${String(since)}`, {
     token: as,
@@ -97,46 +85,37 @@ async function feed(since = 0, as = token): Promise<FeedPage> {
   expect(answer.status).toBe(200)
   return answer.json
 }
-
 describe('preparing a space', () => {
   test('places every note by its path, with one row per folder', async () => {
     const a = await made('a.md')
     const b = await made('Work/b.md')
     const c = await made('Work/Deep/c.canvas', '{"nodes":[],"edges":[]}')
     const versions = [a, b, c].map((id) => row(id).version)
-
     await prepare()
-
     const [deep, work] = folders()
     expect(work?.name).toBe('Work')
     expect(work?.parent_id).toBeNull()
     expect(deep?.name).toBe('Deep')
     expect(deep?.parent_id).toBe(work?.id)
-
     expect(row(a)).toMatchObject({ folder_id: null, name: 'a.md', name_key: 'a.md', kind: 'note' })
     expect(row(b)).toMatchObject({ folder_id: work?.id, name: 'b.md', path: 'Work/b.md' })
     expect(row(c)).toMatchObject({ folder_id: deep?.id, name: 'c.canvas', kind: 'canvas' })
     expect([a, b, c].map((id) => row(id).version)).toEqual(versions)
   })
-
   test('puts every document on the first epoch, seeded from the words it has', async () => {
     const a = await made('a.md', 'hello\n')
     await prepare()
-
     expect(row(a).epoch).toBe(1)
     expect(row(a).epoch_base).toBe(row(a).hash)
   })
-
   test('does nothing the second time', async () => {
     await made('Work/b.md')
     const first = await prepare()
     const seqs = env.db.prepare('select id, seq from notes order by id').all()
-
     expect(await prepare()).toBe(first)
     expect(folders()).toHaveLength(1)
     expect(env.db.prepare('select id, seq from notes order by id').all()).toEqual(seqs)
   })
-
   test('places many notes in many folders in time that grows with them, not their square', async () => {
     const seed = await made('F0/S0/seed.md')
     const columns = (env.db.prepare('pragma table_info(notes)').all() as unknown as { name: string }[]).map(
@@ -154,52 +133,42 @@ describe('preparing a space', () => {
        insert into notes (${columns.join(', ')})
        select ${picked.join(', ')} from seq, notes where notes.id = '${seed}'`,
     )
-
     const started = performance.now()
     await prepare()
     expect(performance.now() - started).toBeLessThan(15_000)
     expect(folders()).toHaveLength(2 + 40 + 40 * 7)
     expect(row('m00123')).toMatchObject({ name: 'n00123.md', path: 'F03/S4/n00123.md' })
   })
-
   test('joins folders a Linux device spelled two ways, and numbers the later of two notes', async () => {
     const a = await made('Work/a.md')
     const b = await made('work/b.md')
     const upper = await made('Work/A.md')
     const since = (await call(env, `/v1/spaces/${space}/changes?since=0`, { token })).json.cursor
-
     await prepare()
-
     expect(folders().map((one) => one.name)).toEqual(['Work'])
     expect(row(a).path).toBe('Work/a.md')
     expect(row(b).path).toBe('Work/b.md')
     expect(row(upper).path).toBe('Work/A 2.md')
-
     const moved = await call(env, `/v1/spaces/${space}/changes?since=${String(since)}`, { token })
     expect(moved.json.notes.map((one) => one.path).sort()).toEqual(['Work/A 2.md', 'Work/b.md'])
   })
-
   test('gives a note in Recently deleted the folder it was in, deleted, so a restore brings both', async () => {
     const gone = await made('Old/x.md')
     await call(env, `/v1/notes/${gone}`, { method: 'DELETE', token })
-
     await prepare()
     const [old] = folders()
     expect(old).toMatchObject({ name: 'Old', deleted: 1 })
     expect(row(gone).folder_id).toBe(old?.id)
-
     expect(await one(op('restore', { id: gone }))).toMatchObject({ ok: true, name: 'x.md' })
     expect(folders()[0]?.deleted).toBe(0)
     expect(row(gone)).toMatchObject({ deleted: 0, path: 'Old/x.md' })
   })
-
   test('is asked for by the first read of the tree when nobody asked', async () => {
     const a = await made('a.md')
     const page = await feed()
     expect(page.items.map((item) => item.id)).toContain(a)
     expect(row(a).epoch).toBe(1)
   })
-
   test('lets the feed pass a note an old device wrote while it was prepared only once the note has a name', async () => {
     const a = await made('a.md')
     await prepare()
@@ -217,7 +186,6 @@ describe('preparing a space', () => {
     env.justBefore(/update spaces set prepared_at/, () => {
       unnamed('late', 'Late/b.md')
     })
-
     const heard: string[] = []
     let since = 0
     for (let page = 0; page < 5; page += 1) {
@@ -226,11 +194,9 @@ describe('preparing a space', () => {
       since = read.cursor
       if (!read.more) break
     }
-
     expect(heard).toEqual(expect.arrayContaining([a, 'early', 'late']))
     expect(row('late')).toMatchObject({ name: 'b.md', path: 'Late/b.md' })
   })
-
   test('passes a note an old device deleted before the space was prepared, which never gets a name, so a new device hears every note after it', async () => {
     const first = await made('first.md')
     const { next } = env.db.prepare('select next from space_cursor where space_id = ?').get(space) as { next: number }
@@ -244,7 +210,6 @@ describe('preparing a space', () => {
     const a = await made('a.md')
     const b = await made('Work/b.md')
     await prepare()
-
     const heard: string[] = []
     let since = 0
     for (let page = 0; page < 5; page += 1) {
@@ -253,17 +218,14 @@ describe('preparing a space', () => {
       since = read.cursor
       if (!read.more) break
     }
-
     expect(heard).toEqual(expect.arrayContaining([first, a, b]))
     expect(row('gone-long-ago').name).toBeNull()
   })
 })
-
 describe('tree operations', () => {
   beforeEach(async () => {
     await prepare()
   })
-
   test('make, rename, move and delete by id, with every path current', async () => {
     const results = await ops([
       op('mkdir', { id: 'f1', parent: null, name: 'Plans' }),
@@ -276,14 +238,11 @@ describe('tree operations', () => {
       { op: expect.any(String), ok: true, id: 'f1', parent: null, name: 'Roadmap' },
     ])
     expect(row('n1')).toMatchObject({ path: 'Roadmap/Q3.md', epoch: 1, kind: 'note' })
-
     await one(op('move', { id: 'n1', parent: null, name: 'Q4.md' }))
     expect(row('n1').path).toBe('Q4.md')
-
     expect(await one(op('delete', { id: 'n1' }, results.cursor + 10))).toMatchObject({ ok: true })
     expect(row('n1').deleted).toBe(1)
   })
-
   test('number a name that is taken as Windows and a Mac compare names', async () => {
     const results = await ops([
       op('create', { id: 'p1', kind: 'note', parent: null, name: 'Plan.md' }),
@@ -298,7 +257,6 @@ describe('tree operations', () => {
       'Café 2.md',
     ])
   })
-
   test("answer a create of the day's note that is already there with the note", async () => {
     const day = { kind: 'note', parent: null, name: '2026-09-30.md', mergeable: { text: '' } }
     await one(op('create', { id: 'd1', ...day }))
@@ -307,7 +265,6 @@ describe('tree operations', () => {
       n: 0,
     })
   })
-
   test('refuse a move that would put a folder inside itself', async () => {
     await ops([op('mkdir', { id: 'a', parent: null, name: 'A' }), op('mkdir', { id: 'b', parent: null, name: 'B' })])
     expect(await one(op('move', { id: 'a', parent: 'b' }))).toMatchObject({ ok: true })
@@ -315,14 +272,12 @@ describe('tree operations', () => {
       refused: 'cycle',
     })
   })
-
   test('let the later of two renames stand', async () => {
     await one(op('create', { id: 'n', kind: 'note', parent: null, name: 'One.md' }))
     await one(op('rename', { id: 'n', name: 'Two.md' }))
     await one(op('rename', { id: 'n', name: 'Three.md' }), other)
     expect(row('n').path).toBe('Three.md')
   })
-
   test('bring a deleted folder back, with the folders above it, for a move into it', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'outer', parent: null, name: 'Outer' }),
@@ -331,39 +286,32 @@ describe('tree operations', () => {
     ])
     await one(op('delete', { id: 'outer' }, cursor))
     expect(folders().every((one) => one.deleted === 1)).toBe(true)
-
     expect(await one(op('move', { id: 'n', parent: 'inner' }), other)).toMatchObject({ ok: true })
     expect(folders().every((one) => one.deleted === 0)).toBe(true)
     expect(row('n').path).toBe('Outer/Inner/n.md')
   })
-
   test('bring back something deleted after its device last looked, for a rename of it', async () => {
     const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' })])
     await one(op('delete', { id: 'n' }, cursor))
-
     expect(await one(op('rename', { id: 'n', name: 'm.md' }, cursor), other)).toMatchObject({
       ok: true,
       name: 'm.md',
     })
     expect(row('n')).toMatchObject({ deleted: 0, path: 'm.md' })
   })
-
   test('refuse the delete of a note another device wrote in since the deleting one looked', async () => {
     const id = await made('Plan.md', 'first\n')
     const before = (await feed()).cursor
-
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token: other,
       body: { content: 'first\nsecond\n', baseVersion: row(id).version },
     })
     expect(put.status, put.text).toBe(200)
-
     expect(await one(op('delete', { id }, before))).toMatchObject({ refused: 'edited' })
     expect(row(id).deleted).toBe(0)
     expect(await one(op('delete', { id }, (await feed()).cursor))).toMatchObject({ ok: true })
   })
-
   test("never stand a device's own writing against its own delete", async () => {
     const id = await made('Plan.md', 'first\n')
     const before = (await feed()).cursor
@@ -372,40 +320,33 @@ describe('tree operations', () => {
       token,
       body: { content: 'first\nmine\n', baseVersion: row(id).version },
     })
-
     expect(await one(op('delete', { id }, before))).toMatchObject({ ok: true })
   })
-
   test('take a folder away with what its device saw, leaving what another device changed since', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
       op('create', { id: 'seen', kind: 'note', parent: 'f', name: 'seen.md' }),
     ])
     await one(op('create', { id: 'new', kind: 'note', parent: 'f', name: 'new.md' }), other)
-
     expect(await one(op('delete', { id: 'f' }, cursor))).toMatchObject({ refused: 'edited' })
     expect(row('seen').deleted).toBe(1)
     expect(row('new').deleted).toBe(0)
     expect(folders()[0]?.deleted).toBe(0)
   })
-
   test('leave a note in a deleted folder that another device moved in, though this one wrote in it', async () => {
     const id = await made('Plan.md', 'first\n')
     const { cursor } = await ops([op('mkdir', { id: 'f', parent: null, name: 'Folder' })])
     await one(op('move', { id, parent: 'f' }, cursor), other)
-
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
       body: { content: 'first\nmine\n', baseVersion: row(id).version },
     })
     expect(put.status, put.text).toBe(200)
-
     expect(await one(op('delete', { id: 'f' }, cursor))).toMatchObject({ refused: 'edited' })
     expect(row(id).deleted).toBe(0)
     expect(folders()[0]?.deleted).toBe(0)
   })
-
   test('leave what is in a folder another device moved into the deleted one unseen', async () => {
     const { cursor: seen } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Old' }),
@@ -413,19 +354,16 @@ describe('tree operations', () => {
       op('create', { id: 'n', kind: 'note', parent: 'w', name: 'n.md' }),
     ])
     await one(op('move', { id: 'w', parent: 'f' }, seen), other)
-
     expect(await one(op('delete', { id: 'f' }, seen))).toMatchObject({ refused: 'edited' })
     expect(row('n').deleted).toBe(0)
     expect(folders().map((one) => one.deleted)).toEqual([0, 0])
   })
-
   test('leave a note in a deleted folder that its own words brought back unseen', async () => {
     const id = await made('Plan.md', 'first\n')
     const { cursor } = await ops([op('mkdir', { id: 'f', parent: null, name: 'Folder' })])
     await one(op('move', { id, parent: 'f' }, cursor))
     await one(op('delete', { id }, (await feed()).cursor), other)
     const gone = (await feed()).cursor
-
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -433,13 +371,11 @@ describe('tree operations', () => {
     })
     expect(put.status, put.text).toBe(200)
     expect(row(id).deleted).toBe(0)
-
     expect(await one(op('delete', { id: 'f' }, gone))).toMatchObject({ refused: 'edited' })
     expect(row(id).deleted).toBe(0)
     expect(folders()[0]?.deleted).toBe(0)
     expect(await one(op('delete', { id: 'f' }, (await feed()).cursor))).toMatchObject({ ok: true })
   })
-
   test("refuse a delete that had not seen another device's restore, though its own came since", async () => {
     const { cursor } = await ops([
       op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' }),
@@ -448,7 +384,6 @@ describe('tree operations', () => {
     await ops([op('delete', { id: 'n' }, cursor), op('delete', { id: 'f' }, cursor)], other)
     const gone = (await feed()).cursor
     await ops([op('restore', { id: 'n' }, gone), op('restore', { id: 'f' }, gone)], other)
-
     const results = (
       await ops([
         op('delete', { id: 'n' }, cursor),
@@ -462,7 +397,6 @@ describe('tree operations', () => {
     expect([results[2], results[5]]).toMatchObject([{ refused: 'edited' }, { refused: 'edited' }])
     expect(row('n').deleted).toBe(0)
     expect(folders()[0]?.deleted).toBe(0)
-
     expect(await one(op('delete', { id: 'n' }, (await feed()).cursor))).toMatchObject({
       ok: true,
     })
@@ -471,7 +405,6 @@ describe('tree operations', () => {
     }
     expect(kept.changes_by).toBeNull()
   })
-
   test("refuse a delete that had not seen another device's words, though its own came since", async () => {
     const id = await made('Plan.md', 'first\n')
     const before = (await feed()).cursor
@@ -486,11 +419,9 @@ describe('tree operations', () => {
       })
       expect(put.status, put.text).toBe(200)
     }
-
     expect(await one(op('delete', { id }, before))).toMatchObject({ refused: 'edited' })
     expect(row(id).deleted).toBe(0)
   })
-
   test('keep a position on the entry, through a rename, in the feed', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Folder', pos: 'V' }),
@@ -500,7 +431,6 @@ describe('tree operations', () => {
     expect(await one(op('place', { id: 'b', pos: 'K' }, cursor))).toMatchObject({ ok: true })
     await one(op('place', { id: 'a', pos: 'k' }, cursor), other)
     await one(op('rename', { id: 'a', name: 'Renamed.md' }, cursor))
-
     const page = await feed()
     expect(page.order).toBe(true)
     expect(page.index).toBe(true)
@@ -512,7 +442,6 @@ describe('tree operations', () => {
     })
     expect(refused.status).toBe(400)
   })
-
   test("keep an item's metadata on the entry, key by key, through a rename and a move", async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
@@ -525,15 +454,12 @@ describe('tree operations', () => {
     await one(op('rename', { id: 'a', name: 'Renamed.md' }, cursor))
     await one(op('move', { id: 'a', parent: 'f' }, cursor))
     await one(op('meta', { id: 'f', meta: { icon: 'star' } }, cursor))
-
     const page = await feed()
     expect(page.meta).toBe(true)
     const meta = Object.fromEntries(page.items.map((item) => [item.id, item.meta]))
     expect(meta).toEqual({ f: { icon: 'star' }, a: { icon: 'rocket', cover: 'pics/sea.png' } })
-
     await one(op('meta', { id: 'a', meta: { icon: null, cover: null } }, cursor))
     expect((await feed()).items.find((item) => item.id === 'a')?.meta).toBeUndefined()
-
     for (const meta of [{ Icon: 'x' }, { icon: '' }, {}, { icon: 7 }]) {
       const refused = await call(env, `/v2/spaces/${space}/ops`, {
         token,
@@ -542,7 +468,6 @@ describe('tree operations', () => {
       expect(refused.status).toBe(400)
     }
   })
-
   test("count a picture an item's metadata shows as a picture the note uses", async () => {
     const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' })])
     const hash = 'a'.repeat(64)
@@ -555,13 +480,11 @@ describe('tree operations', () => {
       ).map((one) => one.hash)
     expect(pictures()).toEqual([hash])
   })
-
   test("keep an item's metadata from a delete that had not seen it", async () => {
     const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' })])
     await one(op('meta', { id: 'n', meta: { icon: 'rocket' } }, cursor), other)
     expect(await one(op('delete', { id: 'n' }, cursor))).toMatchObject({ refused: 'edited' })
   })
-
   test('keep a position only in the folder it was given in, unless a move says another', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
@@ -572,7 +495,6 @@ describe('tree operations', () => {
     await one(op('move', { id: 'n', parent: null, pos: 'h' }, cursor))
     expect((await feed()).items.find((item) => item.id === 'n')?.pos).toBe('h')
   })
-
   test('keep the path of five hundred notes current when their folder is renamed', async () => {
     const creates = Array.from({ length: 500 }, (_, at) =>
       op('create', {
@@ -588,9 +510,7 @@ describe('tree operations', () => {
     ])
     for (let at = 0; at < creates.length; at += 200) await ops(creates.slice(at, at + 200))
     const since = (await call(env, `/v1/spaces/${space}/changes?since=0`, { token })).json.cursor
-
     await one(op('rename', { id: 'big', name: 'Huge' }))
-
     const paths = env.db.prepare("select path, seq from notes where space_id = ? and id like 'n%'").all(space) as {
       path: string
       seq: number
@@ -599,11 +519,9 @@ describe('tree operations', () => {
     expect(paths.every((one) => /^Huge\/(Sub\/)?\d+\.md$/.test(one.path))).toBe(true)
     expect(new Set(paths.map((one) => one.seq)).size).toBe(500)
     expect(env.widest().count).toBeLessThanOrEqual(100)
-
     const moved = await call(env, `/v1/spaces/${space}/changes?since=${String(since)}`, { token })
     expect(moved.json.notes).toHaveLength(500)
   })
-
   test('answer an op sent again after its answer was lost with the first answer', async () => {
     const batch = [
       op('create', { id: 'x', kind: 'note', parent: null, name: 'x.md' }),
@@ -611,20 +529,17 @@ describe('tree operations', () => {
     ]
     const first = await ops(batch)
     await one(op('rename', { id: 'x', name: 'z.md' }), other)
-
     const again = await ops(batch)
     expect(again.results).toEqual(first.results)
     expect(row('x').path).toBe('z.md')
     expect(env.db.prepare("select count(*) as n from notes where id = 'x'").get()).toEqual({ n: 1 })
   })
-
   test('refuse every op of somebody who may only read the space', async () => {
     const reader = await invited(env, token, space, 'reader@example.com', 'read')
     expect(await one(op('create', { id: 'r', kind: 'note', parent: null, name: 'r.md' }), reader)).toMatchObject({
       refused: 'role',
     })
   })
-
   test('answer somebody given one file of the space with nothing at all', async () => {
     const id = await made('Given.md')
     const given = await invited(env, token, space, 'given@example.com', 'write', id)
@@ -635,15 +550,12 @@ describe('tree operations', () => {
     expect(answer.status).toBe(404)
     expect(row(id).deleted).toBe(0)
   })
-
   test('make a file only for bytes the account keeps', async () => {
     const bytes = new Uint8Array([137, 80, 78, 71, 1, 2, 3])
     const digest = await crypto.subtle.digest('SHA-256', bytes)
     const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
     const file = { kind: 'file', parent: null, name: 'picture.png', hash }
-
     expect(await one(op('create', { id: 'pic', ...file }))).toMatchObject({ refused: 'gone' })
-
     await call(env, `/v1/blobs/${hash}`, {
       method: 'PUT',
       token,
@@ -652,28 +564,23 @@ describe('tree operations', () => {
     })
     expect(await one(op('create', { id: 'pic', ...file }))).toMatchObject({ ok: true })
     expect(row('pic')).toMatchObject({ kind: 'file', hash, epoch: 0 })
-
     const v1 = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
     expect(v1.json.notes.map((one) => one.id)).not.toContain('pic')
     expect((await call(env, '/v1/notes/pic', { token })).status).toBe(404)
   })
-
   test('keep an online terminal out of what a v1 app reads', async () => {
     const result = await one(op('create', { id: 't', kind: 'term', parent: null, name: 'Build.term' }))
     expect(result).toMatchObject({ ok: true })
-
     const v1 = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
     expect(v1.json.notes.map((note) => note.id)).not.toContain('t')
     expect((await call(env, '/v1/notes/t', { method: 'DELETE', token })).status).toBe(404)
     expect(row('t').deleted).toBe(0)
   })
 })
-
 describe('the feed', () => {
   beforeEach(async () => {
     await prepare()
   })
-
   test('carries the tree and the words in one order', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'F' }),
@@ -687,13 +594,11 @@ describe('the feed', () => {
     expect(page.cursor).toBe(cursor)
     expect(page.more).toBe(false)
     expect(page.items[1]).toMatchObject({ epoch: 1, docSeq: 0, deleted: false })
-
     await call(env, '/v1/notes/n', { method: 'PUT', token, body: { content: 'words\n' } })
     const next = await feed(cursor)
     expect(next.items.map((item) => item.id)).toEqual(['n'])
     expect(next.items[0]?.docSeq).toBe(next.items[0]?.seq)
   })
-
   test('names the device that asks the way its changes are named', async () => {
     await ops([op('mkdir', { id: 'f', parent: null, name: 'F' })])
     await ops([op('mkdir', { id: 'g', parent: null, name: 'G' })], other)
@@ -704,7 +609,6 @@ describe('the feed', () => {
     expect(theirs.device).toBe(by(theirs, 'g'))
     expect(mine.device).not.toBe(theirs.device)
   })
-
   test('pages at a thousand', async () => {
     for (let at = 0; at < 1100; at += 200) {
       await ops(
@@ -726,41 +630,35 @@ describe('the feed', () => {
     expect(second.more).toBe(false)
   })
 })
-
 describe('an id that spells a path', () => {
   const send = (op: Record<string, unknown>) =>
     call(env, `/v2/spaces/${space}/ops`, {
       token,
       body: { ops: [{ op: `o-${String(op.id)}`, seen: 0, ...op }] },
     })
-
   test('makes nothing, and what is made under an id devices spell still is', async () => {
     const evil = { t: 'create', kind: 'note', parent: null, name: 'a.md' }
     expect((await send({ ...evil, id: '../../Private/AGENTS.md' })).status).toBe(400)
     expect((await send({ t: 'mkdir', id: 'a\\b', parent: null, name: 'A' })).status).toBe(400)
     expect((await send({ ...evil, id: '0f3a9c11aa22bb33cc44dd55ee66ff00' })).status).toBe(200)
   })
-
   test('held from before as a folder, nothing goes into it', async () => {
     const note = '0f3a9c11aa22bb33cc44dd55ee66ff00'
     await send({ t: 'create', kind: 'note', parent: null, name: 'a.md', id: note })
     await send({ t: 'mkdir', id: 'bad', parent: null, name: 'A' })
     env.db.prepare("update folders set id = '../../x' where id = 'bad'").run()
-
     const moved = await send({ t: 'move', id: note, parent: '../../x', op: 'moved' })
     expect(moved.status).toBe(200)
     expect((moved.json as unknown as OpsResponse).results[0]).toMatchObject({ refused: 'gone' })
     const { value } = await framed<FeedPage>(env, `/v2/spaces/${space}/feed`, token)
     expect(value.items.find((item) => item.id === note)?.parent).toBeNull()
   })
-
   test('held from before, and deleted, the feed says so to whoever took it in', async () => {
     await send({ t: 'create', kind: 'note', parent: null, name: 'b.md', id: 'bad' })
     env.db.prepare("update notes set id = '../../x', deleted = 1, deleted_at = 1 where id = 'bad'").run()
     const { value } = await framed<FeedPage>(env, `/v2/spaces/${space}/feed`, token)
     expect(value.items.map((item) => [item.id, item.deleted])).toEqual([['../../x', true]])
   })
-
   test('held from before, the feed does not hand it to a device', async () => {
     const id = '0f3a9c11aa22bb33cc44dd55ee66ff00'
     await send({ t: 'create', kind: 'note', parent: null, name: 'a.md', id })

@@ -5,7 +5,6 @@ export interface FillChoice {
   title: string
   subtitle: string
 }
-
 export type PassBubble =
   | {
       kind: 'choose'

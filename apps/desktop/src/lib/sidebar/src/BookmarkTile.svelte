@@ -29,7 +29,6 @@
     onopen: (ask: TabAsk) => void
     onmenu: (event: MouseEvent) => void
   } & HTMLButtonAttributes = $props()
-
   const face = $derived(faceOf(mark, readIcon(chosenIcon(path)) !== null))
 </script>
 

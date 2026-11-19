@@ -2,9 +2,7 @@ export interface Callable {
   label: string
   me: boolean
 }
-
 const SKIP = new Set(['CODE', 'PRE', 'A', 'KBD'])
-
 export function markMentions(root: HTMLElement, callable: readonly Callable[]): void {
   if (!root.textContent.includes('@')) return
   const labels = [...callable, { label: 'here', me: true }, { label: 'everyone', me: true }]
@@ -22,7 +20,6 @@ export function markMentions(root: HTMLElement, callable: readonly Callable[]): 
   })
   const texts: Text[] = []
   for (let node = walker.nextNode(); node; node = walker.nextNode()) texts.push(node as Text)
-
   for (const text of texts) {
     let rest: Text = text
     for (;;) {
@@ -39,7 +36,6 @@ export function markMentions(root: HTMLElement, callable: readonly Callable[]): 
     }
   }
 }
-
 function firstCall(value: string, labels: readonly Callable[]): { at: number; length: number; me: boolean } | null {
   for (let at = value.indexOf('@'); at !== -1; at = value.indexOf('@', at + 1)) {
     if (at > 0 && /[\p{L}\p{N}_]/u.test(value.charAt(at - 1))) continue

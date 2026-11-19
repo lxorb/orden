@@ -11,11 +11,8 @@ use crate::ai_accounts::ours;
 use orden_base::paths::{made, write_privately};
 
 const MOST_BYTES: usize = 64 * 1024 * 1024;
-
 static LISTS: Mutex<()> = Mutex::new(());
-
 const LIST: &str = "index";
-
 fn named(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 64
@@ -28,7 +25,6 @@ fn named(id: &str) -> Result<&str, String> {
         Err(format!("{id} is not an id"))
     }
 }
-
 fn thread_named(id: &str) -> Result<&str, String> {
     let id = named(id)?;
     if id.eq_ignore_ascii_case(LIST) {
@@ -36,32 +32,26 @@ fn thread_named(id: &str) -> Result<&str, String> {
     }
     Ok(id)
 }
-
 fn root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(crate::ai_accounts::root(app)?.join("threads"))
 }
-
 fn space_dir(root: &Path, space: &str) -> Result<PathBuf, String> {
     Ok(root.join(named(space)?))
 }
-
 fn read_list(dir: &Path) -> BTreeMap<String, Value> {
     fs::read_to_string(dir.join(format!("{LIST}.json")))
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok())
         .unwrap_or_default()
 }
-
 fn write_list(dir: &Path, list: &BTreeMap<String, Value>) -> Result<(), String> {
     let text = serde_json::to_string(list).map_err(|error| error.to_string())?;
     write_privately(&dir.join(format!("{LIST}.json")), text.as_bytes())
 }
-
 pub fn list(root: &Path, space: &str) -> Result<Vec<Value>, String> {
     let dir = space_dir(root, space)?;
     Ok(read_list(&dir).into_values().collect())
 }
-
 pub fn read(root: &Path, space: &str, id: &str) -> Result<Option<String>, String> {
     let path = space_dir(root, space)?.join(format!("{}.json", thread_named(id)?));
     match fs::read_to_string(&path) {
@@ -70,7 +60,6 @@ pub fn read(root: &Path, space: &str, id: &str) -> Result<Option<String>, String
         Err(error) => Err(format!("could not read that thread: {error}")),
     }
 }
-
 pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Result<(), String> {
     if body.len() > MOST_BYTES {
         return Err("that thread is too long to keep".into());
@@ -84,7 +73,6 @@ pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Res
     list.insert(id.to_owned(), head);
     write_list(&dir, &list)
 }
-
 pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
     let path = dir.join(format!("{}.json", thread_named(id)?));
@@ -100,7 +88,6 @@ pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
     }
     Ok(())
 }
-
 pub fn forget(root: &Path, space: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
     let _held = LISTS.held();
@@ -110,7 +97,6 @@ pub fn forget(root: &Path, space: &str) -> Result<(), String> {
         Err(error) => Err(format!("could not delete those threads: {error}")),
     }
 }
-
 #[tauri::command(async)]
 pub fn ai_threads_list(
     webview: tauri::Webview,
@@ -120,7 +106,6 @@ pub fn ai_threads_list(
     ours(&webview)?;
     list(&root(&app)?, &space)
 }
-
 #[tauri::command(async)]
 pub fn ai_thread_read(
     webview: tauri::Webview,
@@ -131,7 +116,6 @@ pub fn ai_thread_read(
     ours(&webview)?;
     read(&root(&app)?, &space, &id)
 }
-
 #[tauri::command(async)]
 pub fn ai_thread_write(
     webview: tauri::Webview,
@@ -144,7 +128,6 @@ pub fn ai_thread_write(
     ours(&webview)?;
     write(&root(&app)?, &space, &id, head, &body)
 }
-
 #[tauri::command(async)]
 pub fn ai_thread_delete(
     webview: tauri::Webview,
@@ -155,7 +138,6 @@ pub fn ai_thread_delete(
     ours(&webview)?;
     delete(&root(&app)?, &space, &id)
 }
-
 #[tauri::command(async)]
 pub fn ai_threads_forget(
     webview: tauri::Webview,
@@ -165,7 +147,6 @@ pub fn ai_threads_forget(
     ours(&webview)?;
     forget(&root(&app)?, &space)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -177,7 +158,6 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         dir
     }
-
     #[test]
     fn a_thread_never_takes_the_place_of_the_list() {
         let root = folder("list-named");
@@ -188,7 +168,6 @@ mod tests {
         assert_eq!(list(&root, "space-1").expect("listed").len(), 1);
         let _ = fs::remove_dir_all(&root);
     }
-
     #[test]
     fn a_thread_written_reads_back_with_its_line_in_the_list() {
         let root = folder("round");
@@ -221,7 +200,6 @@ mod tests {
         assert!(list(&root, "space-2").expect("listed").is_empty());
         let _ = fs::remove_dir_all(&root);
     }
-
     #[test]
     fn writing_again_replaces_the_line_rather_than_adding_one() {
         let root = folder("again");
@@ -233,7 +211,6 @@ mod tests {
         assert_eq!(read(&root, "s", "t").expect("read").as_deref(), Some("2"));
         let _ = fs::remove_dir_all(&root);
     }
-
     #[test]
     fn a_thread_deleted_is_gone_from_the_folder_and_the_list() {
         let root = folder("delete");
@@ -244,7 +221,6 @@ mod tests {
         delete(&root, "s", "t").expect("deleting nothing is fine");
         let _ = fs::remove_dir_all(&root);
     }
-
     #[test]
     fn a_space_forgotten_takes_every_thread_and_no_other_space() {
         let root = folder("forget");
@@ -255,7 +231,6 @@ mod tests {
         assert_eq!(read(&root, "b", "t").expect("read").as_deref(), Some("y"));
         let _ = fs::remove_dir_all(&root);
     }
-
     #[test]
     fn an_id_that_could_name_another_file_is_refused() {
         let root = folder("names");
@@ -272,7 +247,6 @@ mod tests {
         }
         assert!(!root.exists());
     }
-
     #[test]
     fn a_thread_too_long_to_keep_is_refused() {
         let root = folder("long");

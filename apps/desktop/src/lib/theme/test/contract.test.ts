@@ -17,7 +17,6 @@ import {
 } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
-
 describe('the module stands on its own', () => {
   test('nothing under src reaches the lazy half or the shell by path', () => {
     const reaching = readdirSync(SRC)
@@ -25,7 +24,6 @@ describe('the module stands on its own', () => {
       .filter((name) => /theme-looks|workspace|web-tab/.test(readFileSync(join(SRC, name), 'utf8')))
     expect(reaching).toEqual([])
   })
-
   test('loads with no port bound: the four built-in themes are listed and the store answers', () => {
     expect(builtIns().map((one) => one.id)).toEqual(['default', 'contrast', 'glass', 'wallpaper'])
     expect(isBuiltIn('glass')).toBe(true)
@@ -34,13 +32,11 @@ describe('the module stands on its own', () => {
     expect(chrome.on).toBe(false)
     expect(chrome.barOf('tab-1')).toBeUndefined()
   })
-
   test('a door into the lazy half rejects instead of throwing while no port is bound', async () => {
     const wallpaper = builtIns().find((one) => one.id === 'wallpaper')
     expect(wallpaper?.load).toBeDefined()
     await expect(wallpaper?.load?.()).rejects.toThrow(/theme\.looks/)
   })
-
   test('the bound port is what the built-in themes load through', async () => {
     const dial: ThemeSetting = {
       id: 'wash',
@@ -72,21 +68,18 @@ describe('the module stands on its own', () => {
     }
   })
 })
-
 describe('a theme sheet', () => {
   test('puts the chosen font first in every stack it declares', () => {
     expect(chosenFirst('--font-ui: Inter;')).toBe('--font-ui: var(--font-ui-chosen,) Inter;')
     expect(chosenFirst('code { font-family: Menlo }')).toBe('code { font-family: var(--font-mono-chosen,) Menlo }')
     expect(chosenFirst('--font-ui: var(--font-system);')).toBe('--font-ui: var(--font-system);')
   })
-
   test('carries the old prefix into the new one in selectors and tokens', () => {
     expect(carriedCss('.nib-pane { --nib-x: 1 } #nib-app [class="nib-row"]')).toBe(
       '.orden-pane { --orden-x: 1 } #orden-app [class="orden-row"]',
     )
     expect(carriedCss('.nibble { color: red }')).toBe('.nibble { color: red }')
   })
-
   test('a stamp survives a round trip and a forged one is refused', () => {
     const stamp = { id: 'rose', name: 'Rose', author: 'Orden', version: '1.2.3' }
     const css = stamped(stamp, ':root { --bg: #fff }')
@@ -96,7 +89,6 @@ describe('a theme sheet', () => {
     expect(stamped({ ...stamp, name: 'Ro*/se' }, '').includes('*/se')).toBe(false)
   })
 })
-
 describe('a theme setting', () => {
   const size: ThemeSetting = {
     id: 'size',
@@ -119,7 +111,6 @@ describe('a theme setting', () => {
     initial: 'warm',
     paint: () => ({ '--tone': 'warm' }),
   }
-
   test('a held value is kept inside its range or options, anything else is the initial', () => {
     expect(valueOf(size, 12)).toBe(12)
     expect(valueOf(size, 99)).toBe(20)
@@ -127,7 +118,6 @@ describe('a theme setting', () => {
     expect(valueOf(tone, 'warm')).toBe('warm')
     expect(valueOf(tone, 'cold')).toBe('warm')
   })
-
   test('a sheet that writes the token itself paints over the setting', () => {
     expect(paintsOver(':root { --size: 12px }', size)).toBe(true)
     expect(paintsOver(':root { --size: inherit }', size)).toBe(false)

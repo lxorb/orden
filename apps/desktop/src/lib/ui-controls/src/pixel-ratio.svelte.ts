@@ -1,16 +1,13 @@
 function read(): number {
   return typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1
 }
-
 class PixelRatio {
   #now = $state(read())
   #watching = false
-
   get now(): number {
     this.#watch()
     return this.#now
   }
-
   #watch() {
     if (this.#watching || typeof matchMedia !== 'function') return
     this.#watching = true
@@ -28,5 +25,4 @@ class PixelRatio {
     listen()
   }
 }
-
 export const pixelRatio = new PixelRatio()

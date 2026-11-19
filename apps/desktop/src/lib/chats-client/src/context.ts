@@ -6,14 +6,11 @@ import { chats } from './store.svelte'
 
 const MOST_MESSAGES = 200
 const MOST_CHARS = 40_000
-
 export interface ChatPart {
   label: string
   text: string
 }
-
 export type Part = 'unread' | 'unread-or-newest'
-
 export async function chatPart(chat: string, part: Part): Promise<ChatPart | null> {
   const entry = chats.entry(chat)
   if (!entry || !protection.agentsMay(entry.path ?? entry.root)) return null
@@ -26,13 +23,11 @@ export async function chatPart(chat: string, part: Part): Promise<ChatPart | nul
     messages = newest
   }
   if (!messages.length) return null
-
   const names = new Map<Who, string>()
   for (const member of await chats.members(chat).catch(() => [])) {
     names.set(member.who, member.name ?? 'Deleted account')
   }
   const reading = { me: chats.me, nameOf: (who: Who) => names.get(who) ?? who }
-
   let text = messagesText(name, messages, reading)
   while (text.length > MOST_CHARS && messages.length > 1) {
     messages = messages.slice(Math.ceil(messages.length / 4))

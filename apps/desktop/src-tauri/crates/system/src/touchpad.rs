@@ -1,22 +1,17 @@
 #![cfg_attr(not(windows), allow(dead_code))]
-
 use serde::Serialize;
 
 const FINGERS: &str = "orden://touchpad";
-
 const PAN: &str = "orden://touchpad-pan";
-
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 struct Fingers {
     fingers: u32,
 }
-
 #[derive(Clone, Copy, Debug, Serialize, PartialEq)]
 pub struct Pan {
     dx: f64,
     dy: f64,
 }
-
 const DIGITIZER: u16 = 0x0D;
 const TOUCH_PAD: u16 = 0x05;
 const FINGER: u16 = 0x22;
@@ -26,20 +21,17 @@ const CONTACT_ID: u16 = 0x51;
 const DESKTOP: u16 = 0x01;
 const ACROSS: u16 = 0x30;
 const DOWN: u16 = 0x31;
-
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Contact {
     pub id: u32,
     pub x: f64,
     pub y: f64,
 }
-
 #[derive(Debug, Default)]
 pub struct Frames {
     left: u32,
     down: Vec<Contact>,
 }
-
 impl Frames {
     pub fn report(&mut self, count: u32, seen: &[(bool, Contact)]) -> Option<Vec<Contact>> {
         if count > 0 {
@@ -58,12 +50,10 @@ impl Frames {
         (self.left == 0).then(|| self.down.clone())
     }
 }
-
 #[derive(Debug, Default)]
 pub struct Pair {
     last: Option<[Contact; 2]>,
 }
-
 impl Pair {
     pub fn frame(&mut self, down: &[Contact]) -> Option<Pan> {
         let [one, other] = down else {
@@ -84,15 +74,12 @@ impl Pair {
         (dx != 0.0 || dy != 0.0).then_some(Pan { dx, dy })
     }
 }
-
 static PANS_WANTED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
-
 #[tauri::command]
 pub fn touchpad_pan(on: bool) {
     let step = if on { 1 } else { -1 };
     PANS_WANTED.fetch_add(step, std::sync::atomic::Ordering::Relaxed);
 }
-
 #[must_use]
 fn per_unit(logical: (i32, i32), physical: (i32, i32)) -> f64 {
     let wide = f64::from(logical.1) - f64::from(logical.0);
@@ -103,25 +90,20 @@ fn per_unit(logical: (i32, i32), physical: (i32, i32)) -> f64 {
         1.0
     }
 }
-
 fn pans_wanted() -> bool {
     PANS_WANTED.load(std::sync::atomic::Ordering::Relaxed) > 0
 }
-
 #[must_use]
 pub fn telling(told: u32, fingers: u32, ours: bool) -> Option<u32> {
     let now = if ours { fingers } else { 0 };
     (now != told).then_some(now)
 }
-
 #[cfg(windows)]
 pub fn start(app: &tauri::AppHandle) {
     raw::start(app);
 }
-
 #[cfg(windows)]
 static ON_THE_PAD: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 mod raw {
@@ -156,7 +138,6 @@ mod raw {
     };
 
     static APP: OnceLock<AppHandle> = OnceLock::new();
-
     struct Pad {
         shape: Vec<u64>,
         fingers: Vec<u16>,
@@ -165,17 +146,14 @@ mod raw {
         across: f64,
         down: f64,
     }
-
     #[derive(Default)]
     struct Kept {
         pads: HashMap<isize, Option<Pad>>,
         told: u32,
     }
-
     thread_local! {
         static KEPT: RefCell<Kept> = RefCell::new(Kept::default());
     }
-
     pub fn start(app: &AppHandle) {
         if APP.set(app.clone()).is_err() {
             return;
@@ -184,7 +162,6 @@ mod raw {
             .name("touchpad".into())
             .spawn(listen);
     }
-
     fn listen() {
         unsafe {
             let Ok(module) = GetModuleHandleW(None) else {
@@ -231,7 +208,6 @@ mod raw {
             }
         }
     }
-
     unsafe extern "system" fn heard(
         window: HWND,
         message: u32,
@@ -243,7 +219,6 @@ mod raw {
         }
         unsafe { DefWindowProcW(window, message, wparam, lparam) }
     }
-
     fn read(input: HRAWINPUT) {
         let header = u32::try_from(size_of::<RAWINPUTHEADER>()).unwrap_or(0);
         let mut size = 0u32;
@@ -289,7 +264,6 @@ mod raw {
             std::slice::from_raw_parts(buffer.as_ptr().cast::<u8>().add(start), each * count)
         };
         let device = raw.header.hDevice;
-
         let said = KEPT.with_borrow_mut(|kept| {
             let pad = kept
                 .pads
@@ -327,7 +301,6 @@ mod raw {
             let _ = app.emit(PAN, pan);
         }
     }
-
     fn shape_of(device: HANDLE) -> Option<Pad> {
         let mut size = 0u32;
         unsafe { GetRawInputDeviceInfoW(device, RIDI_PREPARSEDDATA, None, &raw mut size) };
@@ -377,7 +350,6 @@ mod raw {
             down,
         })
     }
-
     fn physical(parsed: PHIDP_PREPARSED_DATA, link: u16, usage: u16) -> f64 {
         let mut caps = vec![HIDP_VALUE_CAPS::default(); 1];
         let mut length = 1u16;
@@ -400,7 +372,6 @@ mod raw {
             (caps[0].PhysicalMin, caps[0].PhysicalMax),
         )
     }
-
     fn report_of(pad: &Pad, report: &[u8]) -> (u32, Vec<(bool, Contact)>) {
         let parsed = PHIDP_PREPARSED_DATA(pad.shape.as_ptr() as isize);
         let mut count = 0u32;
@@ -463,7 +434,6 @@ mod raw {
             .collect();
         (count, seen)
     }
-
     fn in_front() -> bool {
         unsafe {
             let front = GetForegroundWindow();
@@ -473,7 +443,6 @@ mod raw {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{per_unit, telling, Contact, Fingers, Frames, Pair, Pan};
@@ -481,18 +450,15 @@ mod tests {
     fn at(id: u32, x: f64, y: f64) -> Contact {
         Contact { id, x, y }
     }
-
     fn tips(down: &[bool]) -> Vec<(bool, Contact)> {
         down.iter()
             .enumerate()
             .map(|(at_, &tip)| (tip, at(u32::try_from(at_).unwrap_or(0), 0.0, 0.0)))
             .collect()
     }
-
     fn count(said: Option<Vec<Contact>>) -> Option<usize> {
         said.map(|down| down.len())
     }
-
     #[test]
     fn a_frame_in_one_report_is_its_fingers_touching() {
         let mut frames = Frames::default();
@@ -505,7 +471,6 @@ mod tests {
             Some(0)
         );
     }
-
     #[test]
     fn a_frame_over_several_reports_is_whole_only_at_its_last() {
         let mut frames = Frames::default();
@@ -514,13 +479,11 @@ mod tests {
         assert_eq!(count(frames.report(0, &tips(&[false]))), Some(2));
         assert_eq!(count(frames.report(0, &tips(&[true]))), None);
     }
-
     #[test]
     fn a_report_beyond_its_frame_s_count_is_not_read() {
         let mut frames = Frames::default();
         assert_eq!(count(frames.report(1, &tips(&[true, true, true]))), Some(1));
     }
-
     #[test]
     fn a_frame_keeps_where_each_finger_touching_is() {
         let mut frames = Frames::default();
@@ -534,7 +497,6 @@ mod tests {
             Some(vec![at(7, 1.0, 2.0), at(9, 3.0, 4.0)])
         );
     }
-
     #[test]
     fn two_fingers_moving_together_pan_by_their_middle_in_any_direction() {
         let mut pair = Pair::default();
@@ -548,7 +510,6 @@ mod tests {
             Some(Pan { dx: -3.0, dy: 5.0 })
         );
     }
-
     #[test]
     fn one_finger_three_fingers_or_new_fingers_pan_nothing() {
         let mut pair = Pair::default();
@@ -563,7 +524,6 @@ mod tests {
         assert_eq!(pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0)]), None);
         assert_eq!(pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0)]), None);
     }
-
     #[test]
     fn a_pad_s_units_are_made_alike_across_and_down() {
         assert!((per_unit((0, 4000), (0, 1000)) - 0.25).abs() < 1e-9);
@@ -571,7 +531,6 @@ mod tests {
         assert!((per_unit((0, 0), (0, 0)) - 1.0).abs() < 1e-9);
         assert!((per_unit((0, 100), (0, 0)) - 1.0).abs() < 1e-9);
     }
-
     #[test]
     fn the_window_hears_changes_and_only_a_lift_while_orden_is_behind() {
         assert_eq!(telling(0, 2, true), Some(2));
@@ -580,7 +539,6 @@ mod tests {
         assert_eq!(telling(0, 2, false), None);
         assert_eq!(telling(2, 2, false), Some(0));
     }
-
     #[test]
     fn the_window_is_told_in_its_own_words() {
         assert_eq!(

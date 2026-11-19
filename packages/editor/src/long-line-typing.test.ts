@@ -6,7 +6,6 @@ import { keptViews } from '../test/views'
 
 const open = keptViews()
 const UNIT = 'a [b](c) '
-
 function viewOf(count: number): EditorView {
   const doc = UNIT.repeat(count)
   const hidden: Ranged<Decoration>[] = [Decoration.mark({ class: 'whole' }).range(0, doc.length)]
@@ -21,15 +20,12 @@ function viewOf(count: number): EditorView {
   open.push(view)
   return view
 }
-
 interface Walking {
   posBefore: (...args: unknown[]) => number
 }
-
 interface Tiled {
   cmTile?: Walking
 }
-
 function walksWhileTyping(view: EditorView): number {
   const line = view.contentDOM.querySelector<HTMLElement & Tiled>('.cm-line')
   let walking: Walking | null = line?.cmTile ?? null
@@ -57,7 +53,6 @@ function walksWhileTyping(view: EditorView): number {
   expect(view.state.doc.toString()).toBe(`${doc.slice(0, at)}q${doc.slice(at)}`)
   return walks
 }
-
 describe('a long line of hidden marks', () => {
   test('reads what was typed in it without walking the line once for every mark', () => {
     const view = viewOf(1_000)

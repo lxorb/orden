@@ -1,24 +1,19 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for, shot = DRIVE.say, DRIVE.wrong, DRIVE.wait_for, DRIVE.shot
-
 SEED = """async (names) => {
   const ws = window.ordenApp.workspace
   for (const name of names) await ws.noteFrom(`# ${name}\\n\\nwords\\n`, ws.activeSpace.root)
   await ws.loadTree()
 }"""
-
 PATHS = "() => window.ordenApp.workspace.notes.map((one) => one.path.split('/').slice(-2).join('/')).sort()"
 ROWS = """() => [...document.querySelectorAll('aside:not(.right) .row')]
   .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
   .map((one) => one.querySelector('.orden-row-label').textContent.trim())"""
-
 def row(page: Page, name: str):
     return page.locator("aside:not(.right) .row", has_text=name).first
-
 def drag(page: Page, name: str, onto: str, where: float) -> None:
     start = row(page, name).bounding_box()
     end = row(page, onto).bounding_box()
@@ -32,18 +27,15 @@ def drag(page: Page, name: str, onto: str, where: float) -> None:
     page.mouse.move(x, y + 0.5)
     shot(page, f"over-{onto}")
     page.mouse.up()
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     page.evaluate(SEED, ["Lark", "Plover", "Wren"])
     wait_for(page, "document.querySelectorAll('aside:not(.right) .row').length >= 3", "the rows")
-
     page.locator("aside button[aria-label='Order of the files']").click()
     page.locator("[role=menu] [role=menuitem]", has_text="Manual").first.click()
     wait_for(page, "window.ordenApp.workspace.sortMode === 'manual'", "Manual")
-
     before = page.evaluate(ROWS)
     say(f"before: {before}")
     moving, under = before[-1], before[0]
@@ -53,7 +45,6 @@ def drive(browser: Browser) -> None:
     say(f"reordered: {now}")
     if now[0] != moving:
         wrong(f"{moving} let go above {under} did not stand there: {now}")
-
     held = page.evaluate(PATHS)
     drag(page, now[0], now[1], 0.5)
     wait_for(page, f"window.ordenApp.workspace.notes.some((one) => one.path.includes('/{now[1]}/{now[0]}'))", "the note nested")
@@ -62,7 +53,6 @@ def drive(browser: Browser) -> None:
     shot(page, "nested")
     if len(nested) != len(held) or sum(one.endswith(f"/{now[0]}.md") for one in nested) != 1:
         wrong(f"{now[0]} let go onto {now[1]} was copied, not moved: {nested}")
-
     parent, child = now[1], now[0]
     page.evaluate(f"() => {{ const ws = window.ordenApp.workspace; const dir = ws.notes.find((one) => one.path.endsWith('/{parent}/{parent}.md')).path.replace(/\\/[^/]*$/, ''); if (ws.isExpanded(dir)) ws.toggleFolder(dir) }}")
     wait_for(page, f"!({ROWS})().includes('{child}')", "the subnotes folded away")
@@ -78,5 +68,4 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(500)
     if child not in page.evaluate(ROWS):
         wrong(f"a second click on {parent} hid its subnotes")
-
 raise SystemExit(DRIVE.run(drive))

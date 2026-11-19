@@ -1,23 +1,17 @@
 export const MOST_LINE = 10_000
-
 export type Os = 'windows' | 'unix'
-
 export function osOf(platform: string): Os {
   return platform === 'windows' ? 'windows' : 'unix'
 }
-
 export function programOf(command: string, os: Os): string {
   const word = /^\s*(\S+)/.exec(command)?.[1] ?? ''
   if (!/^[\w.+-]+$/.test(word)) return ''
-
   return os === 'windows' ? word.toLowerCase().replace(/\.(exe|com|bat|cmd)$/, '') : word
 }
-
 const PACKAGES = { long: ['--script-shell', '--node-options'] }
 const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
 const SCRIPTS = `test build dev start stop restart lint check format typecheck preview
   serve`.split(/\s+/)
-
 const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:-]+$/
 const TOOLS = ['tsc', 'vitest', 'jest', 'eslint', 'prettier']
 const OPTIONS_FREE = [
@@ -72,15 +66,12 @@ const REACH: Record<
     valued: ['--cwd'],
   },
 }
-
 const RUNS_WHAT_IT_FETCHES = new Set(['npx', 'pnpx', 'bunx'])
-
 interface Free {
   flags?: string
   valued?: string
   long?: readonly string[]
 }
-
 const LOOKS = `--oneline --graph --decorate --no-decorate --stat --shortstat --numstat --name-only
   --name-status --patch --no-patch --color --no-color --format --pretty --abbrev-commit --date
   --author --grep --since --until --after --before --all --follow --reverse --max-count
@@ -177,53 +168,42 @@ const GIT: Record<string, Free> = {
   worktree: { flags: 'fq', valued: 'bB', long: ['--force', '--detach', '--quiet'] },
   help: {},
 }
-
 function nameOf(word: string): string {
   return word.split('=')[0] ?? word
 }
-
 function gitOptionFree(word: string, free: Free): boolean {
   if (word.startsWith('--')) return (free.long ?? []).includes(nameOf(word))
   if (/^-\d+$/.test(word)) return free.valued?.includes('n') === true
-
   for (const letter of word.slice(1)) {
     if (free.valued?.includes(letter)) return true
     if (!free.flags?.includes(letter)) return false
   }
   return word.length > 1
 }
-
 const OUTSIDE = /(^|[=@])([\\/~]|[A-Za-z]:)|(file|link|portal):/i
-
 function reachesOut(word: string): boolean {
   return OUTSIDE.test(word) || word.split(/[\\/=@:]/).includes('..')
 }
-
 const anyReachesOut = (words: readonly string[]) => words.some((word) => !word.startsWith('-') && reachesOut(word))
-
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
   const leading = at === -1 ? plain : plain.slice(0, at)
   if (!leading.every((word) => GIT_BEFORE.includes(word))) return false
-
   const command = plain[at]
   if (command === undefined) return true
   const free = Object.hasOwn(GIT, command) ? GIT[command] : undefined
   if (!free) return false
   if (anyReachesOut(plain.slice(at + 1))) return false
-
   for (const word of plain.slice(at + 1)) {
     if (word === '--') return true
     if (word.startsWith('-') && !gitOptionFree(word, free)) return false
   }
   return true
 }
-
 function wordsOf(line: string): string[] | null {
   const words: string[] = []
   let word: string | null = null
   let quote: '"' | "'" | null = null
-
   for (let at = 0; at < line.length; at++) {
     const one = line.charAt(at)
     if (quote === "'") {
@@ -245,12 +225,10 @@ function wordsOf(line: string): string[] | null {
       word = (word ?? '') + one
     }
   }
-
   if (quote !== null) return null
   if (word !== null) words.push(word)
   return words
 }
-
 function bareNameStays(program: string, plain: readonly string[], at: number): boolean {
   const command = plain[at] ?? ''
   if (program === 'bun') {
@@ -264,24 +242,18 @@ function bareNameStays(program: string, plain: readonly string[], at: number): b
   if (SCRIPT_BY_SHAPE.test(command) || TOOLS.includes(command)) return true
   return SCRIPTS.includes(command) && (command === 'test' || !positional(plain, at + 1))
 }
-
 function positional(plain: readonly string[], from: number): boolean {
   const end = plain.indexOf('--', from)
   return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
 }
-
 function optionReachesOut(word: string): boolean {
   return word.startsWith('-') && (/[\\/~:]/.test(word) || word.includes('..'))
 }
-
 function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
-
   if (program === 'git') return gitStays(plain)
-
   const reach = REACH[program]
   if (!reach) return !anyReachesOut(plain) && !plain.some(optionReachesOut)
-
   let at = 0
   for (; at < plain.length; at++) {
     const word = plain[at] ?? ''
@@ -299,7 +271,6 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
     }
     return false
   }
-
   if (program === 'yarn' && plain[at] === 'workspace') {
     at += 2
     if (at >= plain.length) return false
@@ -308,14 +279,11 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (command !== undefined) {
     if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
   }
-
   if (anyReachesOut(plain.slice(at + 1))) return false
-
   const end = plain.indexOf('--', at)
   for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
     if (word.startsWith('-') && !OPTIONS_FREE.includes(nameOf(word))) return false
   }
-
   return !plain.some((word) => {
     if (word.startsWith('--')) {
       const name = nameOf(word)
@@ -324,32 +292,25 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
     return reach.short?.test(word) === true
   })
 }
-
 export function onTheList(command: string, programs: readonly string[], os: Os): boolean {
   const program = programOf(command, os)
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
-
   if (!readAlikeEverywhere(command, os)) return false
-
   const words = wordsOf(command.trim())
   if (words === null || !argumentsStay(program.toLowerCase(), words.slice(1))) return false
   return os !== 'windows' || argumentsStay(program.toLowerCase(), asCommandPromptReads(command))
 }
-
 function asCommandPromptReads(command: string): string[] {
   const words = command.trim().match(/"[^"]*"|[^ ]+/g) ?? []
   return words.slice(1).map((one) => one.replace(/"/g, ''))
 }
-
 export function runsOnTheList(program: string, args: readonly string[], programs: readonly string[], os: Os): boolean {
   const name = programOf(program, os)
   if (name === '' || !programs.some((one) => programOf(one, os) === name)) return false
   if (args.some((one) => /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one))) return false
   return argumentsStay(name.toLowerCase(), args)
 }
-
 const READ_ALIKE = /^[\p{L}\p{M}0-9 _\-./:=+@%~,^'"]*$/u
-
 function readAlikeEverywhere(command: string, os: Os): boolean {
   if (!READ_ALIKE.test(command) || /,['"]*-/.test(command)) return false
   if (os !== 'windows') return true
@@ -357,14 +318,11 @@ function readAlikeEverywhere(command: string, os: Os): boolean {
   if (/""|''/.test(command) || (command.includes("'") && command.includes('"'))) return false
   return !/'[^']*\s-[^']*'/.test(command)
 }
-
 export function startsOnlyOne(command: string): boolean {
   return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|(?! )\p{Zs}/u.test(command)
 }
-
 export function plainOf(printed: string): string {
   let out = ''
-
   for (let at = 0; at < printed.length; at++) {
     const code = printed.charCodeAt(at)
     if (code === 27) {
@@ -385,33 +343,25 @@ export function plainOf(printed: string): string {
       } else at++
       continue
     }
-
     if (code === 10 || code === 9 || code >= 32) out += printed[at] ?? ''
   }
-
   return out
 }
-
 export class Tail {
   #text = ''
   #dropped = false
-
   constructor(private readonly most: number) {}
-
   push(more: string) {
     this.#text += more
     if (this.#text.length <= this.most * 2) return
-
     const from = this.#text.length - this.most
     const line = this.#text.indexOf('\n', from)
     this.#text = this.#text.slice(line === -1 ? from : line + 1)
     this.#dropped = true
   }
-
   get text(): string {
     return this.#text
   }
-
   get dropped(): boolean {
     return this.#dropped
   }

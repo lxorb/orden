@@ -2,9 +2,7 @@ import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { stripFrontMatter } from '@orden/markdown/front-matter'
 
 const LINES = 2
-
 const LONGEST = 160
-
 function plain(line: string): string {
   return line
     .replace(/^\s{0,3}(?:#{1,6}\s+|>\s?|[-*+]\s+(?:\[[ xX]\]\s+)?|\d{1,9}[.)]\s+)/, '')
@@ -13,7 +11,6 @@ function plain(line: string): string {
     .replace(/(\*\*|__|~~|==|\*|_|`)(.+?)\1/g, '$2')
     .trim()
 }
-
 export function cardLines(text: string, name: string): string[] {
   const lines: string[] = []
   const code = new CodeBlocks()
@@ -26,7 +23,6 @@ export function cardLines(text: string, name: string): string[] {
   }
   return lines
 }
-
 export function cardTarget(body: string): string | null {
   const words = body.replace(/```[\s\S]*?(?:```|$)/g, '').replace(/`[^`\n]*`/g, '')
   for (const found of words.matchAll(/(!?)\[\[([^\]|#^]+)[^\]]*\]\]/g)) {

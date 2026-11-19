@@ -56,7 +56,6 @@ function world() {
   const all = offers(panes, places, (section) => (section === 'account' ? 'Account' : ''))
   return { held, all }
 }
-
 describe('the settings an agent is told about', () => {
   test('name where each one is, what it holds, and what it may become, and no more', () => {
     const { all } = world()
@@ -71,7 +70,6 @@ describe('the settings an agent is told about', () => {
     expect(told).not.toContain('me@example.com')
   })
 })
-
 describe("an agent's answer", () => {
   test('shows the settings it names and offers each change it asks for, making none of them', () => {
     const { held, all } = world()
@@ -89,7 +87,6 @@ describe("an agent's answer", () => {
     for (const change of answer.changes) expect(apply(change)).toBe(true)
     expect(held).toMatchObject({ theme: 'dark', spell: false })
   })
-
   test('drops a change to a value not offered, a field that only says where it is, a locked one, or one already so', () => {
     const { held, all } = world()
     const answer = answerOf(
@@ -112,7 +109,6 @@ describe("an agent's answer", () => {
     expect(answer.changes.map((one) => [one.offer.label, one.to])).toEqual([['Text size', 20]])
     expect(held).toMatchObject({ name: 'Mine', locked: false, theme: 'light' })
   })
-
   test('that is not JSON is refused', () => {
     const { all } = world()
     expect(() => answerOf('I cannot help with that', all)).toThrow()

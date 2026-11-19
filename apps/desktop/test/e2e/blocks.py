@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """# A note of blocks
 
 The first paragraph, which has seven words here.
@@ -20,7 +17,6 @@ The second paragraph, shorter.
 
 The last paragraph of the note.
 """
-
 SEED = """
 async ([note]) => {
   const ws = window.ordenApp.workspace
@@ -29,7 +25,6 @@ async ([note]) => {
   return ws.notes.map((one) => one.path)
 }
 """
-
 MARKS = """
 () => [...document.querySelectorAll('.orden-block-handle')].map((mark) => {
   const line = mark.closest('.cm-line')
@@ -44,14 +39,12 @@ MARKS = """
   }
 })
 """
-
 ROWS = """
 () => [...document.querySelectorAll('.rows .orden-row')].map((row) => ({
   label: row.querySelector('.orden-row-label')?.textContent ?? '',
   off: row.disabled,
 }))
 """
-
 LIST = """# A note of blocks
 
 cleanes konto fuer ethcc emails
@@ -65,7 +58,6 @@ quaestur:
 
 
 """
-
 def fresh(
     browser: Browser, label: str, finger: bool = False, width: int = 1180, note: str = NOTE
 ) -> Page:
@@ -94,7 +86,6 @@ def fresh(
     )
     DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [note])}")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -105,40 +96,31 @@ def fresh(
     wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
     return page
-
 def source(page: Page) -> str:
     return page.evaluate("() => window.orden.state.doc.toString()")
-
 def line_of(page: Page, words: str):
     return page.locator(".cm-line", has_text=words).first
-
 def press_mark(page: Page, words: str) -> None:
     line_of(page, words).hover()
     page.wait_for_timeout(250)
     line_of(page, words).locator(".orden-block-handle").click()
     page.wait_for_timeout(400)
-
 def choose(page: Page, label: str) -> None:
     page.locator(".rows .orden-row", has_text=label).first.click()
     page.wait_for_timeout(500)
-
 def drive_marks(browser: Browser) -> None:
     page = fresh(browser, "desktop")
-
     resting = page.evaluate("() => getComputedStyle(document.querySelector('.orden-block-handle')).opacity")
     say(f"[desktop] a mark nobody is pointing at: opacity {resting}")
     if resting != "0":
         wrong(f"the mark is not calm: opacity {resting}")
-
     line_of(page, "The first paragraph").hover()
     page.wait_for_timeout(300)
     marks = page.evaluate(MARKS)
     say(f"[desktop] the marks: {json.dumps(marks[:4], ensure_ascii=False)}")
     shot(page, "01-mark-beside-a-block")
-
     if len(marks) < 6:
         wrong(f"a note of seven blocks drew {len(marks)} marks")
-
     gaps = sorted({one["gap"] for one in marks})
     if len(gaps) != 1:
         wrong(f"the marks do not stand in one column: {gaps}")
@@ -147,13 +129,10 @@ def drive_marks(browser: Browser) -> None:
     for one in marks:
         if not 0 <= one["into"] <= 40:
             wrong(f"a mark is not on its block's first row: {one['into']}px into it")
-
     hovered = [one for one in marks if one["text"].startswith("The first paragraph")]
     if not hovered or hovered[0]["shown"] != "1":
         wrong("the mark did not come out under the pointer")
-
     page.context.close()
-
 REACH = """
 () => {
   const pane = document.querySelector('.cm-scroller').getBoundingClientRect()
@@ -168,7 +147,6 @@ REACH = """
   })
 }
 """
-
 def drive_narrow(browser: Browser) -> None:
     for width in (480, 640):
         page = fresh(browser, f"narrow {width}", width=width)
@@ -187,15 +165,12 @@ def drive_narrow(browser: Browser) -> None:
         if not page.evaluate(ROWS):
             wrong(f"[narrow {width}] pressing the mark opened no menu")
         page.context.close()
-
 def drive_menu(browser: Browser) -> None:
     page = fresh(browser, "menu")
-
     press_mark(page, "The first paragraph")
     rows = page.evaluate(ROWS)
     say(f"[menu] the rows: {json.dumps([one['label'] for one in rows], ensure_ascii=False)}")
     shot(page, "10-the-block-menu")
-
     labels = [one["label"] for one in rows]
     if not any(label.startswith("Paragraph, ") for label in labels):
         wrong(f"the menu does not say what the block is: {labels[:3]}")
@@ -206,32 +181,27 @@ def drive_menu(browser: Browser) -> None:
     for wanted in ("Duplicate", "Copy link", "Delete"):
         if wanted not in labels:
             wrong(f"the menu offers no {wanted!r}")
-
     choose(page, "Duplicate")
     text = source(page)
     shot(page, "11-duplicated")
     if text.count("The first paragraph, which has seven words here.") != 2:
         wrong("the block was not duplicated")
-
     press_mark(page, "The first paragraph")
     choose(page, "Delete")
     if source(page).count("The first paragraph") != 1:
         wrong("the block was not deleted")
     shot(page, "12-deleted")
-
     press_mark(page, "The second paragraph")
     choose(page, "Copy link")
     text = source(page)
     link = page.evaluate("() => navigator.clipboard.readText()")
     say(f"[menu] the link: {link!r}")
     shot(page, "13-copy-link")
-
     if not link.startswith("[[A note of blocks#^"):
         wrong(f"the link does not point into this note: {link!r}")
     name = link.split("#^")[-1].rstrip("]")
     if f"shorter. ^{name}" not in text:
         wrong(f"the block was not given the name the link points at: {name!r}")
-
     before = source(page)
     press_mark(page, "A note of blocks")
     choose(page, "Copy link")
@@ -241,12 +211,9 @@ def drive_menu(browser: Browser) -> None:
         wrong(f"a heading is not linked by its own words: {heading!r}")
     if source(page) != before:
         wrong("linking to a heading wrote something into the note")
-
     page.context.close()
-
 def drive_selection(browser: Browser) -> None:
     page = fresh(browser, "selection")
-
     page.evaluate(
         """() => {
           const text = window.orden.state.doc.toString()
@@ -261,33 +228,26 @@ def drive_selection(browser: Browser) -> None:
     labels = [one["label"] for one in page.evaluate(ROWS)]
     say(f"[selection] the rows: {json.dumps(labels[:4], ensure_ascii=False)}")
     shot(page, "20-two-blocks")
-
     if "2 blocks, 12 words" not in labels:
         wrong(f"the menu does not count the blocks a selection covers: {labels[:3]}")
-
     choose(page, "Delete")
     text = source(page)
     shot(page, "21-both-deleted")
     if "The first paragraph" in text or "The second paragraph" in text:
         wrong("deleting what a selection covers left one of the blocks behind")
-
     page.context.close()
-
 def drive_drag(browser: Browser) -> None:
     page = fresh(browser, "drag")
-
     line_of(page, "A quote to move").hover()
     page.wait_for_timeout(300)
     mark = line_of(page, "A quote to move").locator(".orden-block-handle").bounding_box()
     target = line_of(page, "The first paragraph").bounding_box()
     if not mark or not target:
         raise SystemExit("nothing to drag")
-
     page.mouse.move(mark["x"] + mark["width"] / 2, mark["y"] + mark["height"] / 2)
     page.mouse.down()
     page.mouse.move(target["x"] + 40, target["y"] + 2, steps=12)
     page.wait_for_timeout(200)
-
     drawn = page.evaluate(
         """() => ({
           lifted: document.querySelectorAll('.cm-line.orden-block-lifted').length,
@@ -300,21 +260,17 @@ def drive_drag(browser: Browser) -> None:
         wrong("the block being carried does not say so")
     if drawn["over"] != 1:
         wrong(f"the place it would land is not drawn: {drawn['over']} lines")
-
     page.mouse.up()
     page.wait_for_timeout(500)
     text = source(page)
     shot(page, "31-dropped")
-
     if text.index("> A quote") > text.index("The first paragraph"):
         wrong("the quote did not move above the paragraph it was dropped on")
     if "> A quote to move around.\n\nThe first paragraph" not in text:
         wrong(f"the blank line between the blocks did not survive the move:\n{text[:200]}")
     if page.evaluate("() => document.querySelectorAll('.cm-line.orden-block-lifted').length"):
         wrong("the block is still being carried after the button came up")
-
     page.context.close()
-
 DROP_LINE = """
 () => {
   const line = document.querySelector('.cm-line.orden-block-over, .cm-line.orden-block-under')
@@ -324,7 +280,6 @@ DROP_LINE = """
   return { text: line.textContent.trim(), under, y: Math.round(under ? box.bottom : box.top) }
 }
 """
-
 def carry_to(page: Page, words: str, x: float, y: float, label: str):
     line_of(page, words).hover()
     page.wait_for_timeout(300)
@@ -340,7 +295,6 @@ def carry_to(page: Page, words: str, x: float, y: float, label: str):
     page.mouse.up()
     page.wait_for_timeout(500)
     return drawn
-
 def drive_drop_line(browser: Browser) -> None:
     cases = [
         ("end", "payrexx import", "abacus zahlungsmethode", 0.75, "abacus zahlungsmethode", True),
@@ -385,10 +339,8 @@ def drive_drop_line(browser: Browser) -> None:
         if label == "middle" and row(words) != row("clean up the repo") + 1:
             wrong(f"[drop {label}] the block did not land under the middle one: {rows}")
         page.context.close()
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
-
     marks = page.evaluate(
         "() => [...document.querySelectorAll('.orden-block-handle')]"
         ".map((mark) => getComputedStyle(mark).display)"
@@ -397,9 +349,7 @@ def drive_finger(browser: Browser) -> None:
     shot(page, "40-phone")
     if any(one != "none" for one in marks):
         wrong("a screen with no pointer draws a mark nobody can hover")
-
     page.context.close()
-
 KINDS = """# A note to reach
 
 A paragraph to reach.
@@ -414,7 +364,6 @@ A paragraph to reach.
 
 שורה בעברית לנסות
 """
-
 ON_THE_WAY = """
 ([words, x, y]) => {
   const line = [...document.querySelectorAll('.cm-line')].find((one) => one.textContent.includes(words))
@@ -427,7 +376,6 @@ ON_THE_WAY = """
   }
 }
 """
-
 def drive_gap(browser: Browser) -> None:
     lines = ["A note to reach", "A paragraph to reach", "a bullet to reach", "a task to reach",
              "a quote to reach", "a number to reach", "שורה בעברית"]
@@ -488,12 +436,10 @@ def drive_gap(browser: Browser) -> None:
         if not source(page).startswith("שורה בעברית"):
             wrong(f"[gap {width}] the line reached through the gap could not be carried: {source(page)[:40]!r}")
         page.context.close()
-
 LAST_LINE = """() => {
   const line = [...document.querySelectorAll('.cm-line')].at(-1)
   return { text: line.textContent, heading: /orden-h\\d/.test(line.className), bullet: !!line.querySelector('.orden-bullet') }
 }"""
-
 def drive_lone_mark(browser: Browser) -> None:
     page = fresh(browser, "lone mark")
     page.evaluate("() => { if (!window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
@@ -525,7 +471,6 @@ def drive_lone_mark(browser: Browser) -> None:
         page.wait_for_timeout(200)
     page.evaluate("() => { if (window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the mark ---")
@@ -546,7 +491,5 @@ def main() -> int:
         drive_drop_line(browser)
         say("--- a finger ---")
         drive_finger(browser)
-
     return DRIVE.verdict("a block can be taken hold of, moved, copied and pointed at")
-
 raise SystemExit(main())

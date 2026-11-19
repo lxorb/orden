@@ -7,7 +7,6 @@ use orden_base::letters::seen;
 pub fn host_of(url: &str) -> Option<String> {
     host_key(&url.parse().ok()?)
 }
-
 pub fn host_key(url: &tauri::Url) -> Option<String> {
     url.host_str().map(|host| {
         host.trim_start_matches('[')
@@ -16,11 +15,9 @@ pub fn host_key(url: &tauri::Url) -> Option<String> {
             .to_lowercase()
     })
 }
-
 pub fn from_a_site(url: &str) -> bool {
     tauri::Url::parse(url).is_ok_and(|url| orden_web_engine::from_a_site(&url))
 }
-
 pub fn on_the_web(url: &str) -> bool {
     if url.is_empty() {
         return true;
@@ -35,19 +32,16 @@ pub fn on_the_web(url: &str) -> bool {
         _ => false,
     }
 }
-
 const SHARED_HOSTS: &str = concat!(
     "github.io|gitlab.io|pages.dev|workers.dev|vercel.app|netlify.app|web.app|firebaseapp.com",
     "|herokuapp.com|onrender.com|fly.dev|azurewebsites.net|cloudfront.net|s3.amazonaws.com",
     "|blogspot.com|wordpress.com|notion.site|glitch.me|surge.sh|ngrok.io|ngrok.app",
     "|ngrok-free.app|repl.co",
 );
-
 const SECOND_LEVEL: [&str; 15] = [
     "co", "com", "org", "net", "ac", "gov", "edu", "or", "ne", "go", "gob", "nic", "mil", "ltd",
     "plc",
 ];
-
 pub fn site_of(host: &str) -> String {
     let host = host.trim_end_matches('.').to_lowercase();
     if host.parse::<std::net::IpAddr>().is_ok() || !host.contains('.') {
@@ -66,7 +60,6 @@ pub fn site_of(host: &str) -> String {
     };
     labels[labels.len().saturating_sub(keep)..].join(".")
 }
-
 pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
     grant
         .sites
@@ -75,13 +68,11 @@ pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
         .max_by_key(|(site, _)| site.len())
         .map(|(_, rule)| *rule)
 }
-
 fn covers(site: &str, host: &str) -> bool {
     let site = named(site.trim().trim_start_matches("*."));
     let host = host.trim_end_matches('.');
     !site.is_empty() && (host == site || host.ends_with(&format!(".{site}")))
 }
-
 fn named(site: &str) -> String {
     let site = site.trim_end_matches('.');
     format!("http://{site}/")
@@ -90,14 +81,12 @@ fn named(site: &str) -> String {
         .and_then(|url| host_key(&url))
         .unwrap_or_else(|| site.trim_end_matches('.').to_lowercase())
 }
-
 pub fn made_by(url: &str) -> String {
     match tauri::Url::parse(url) {
         Ok(parsed) if parsed.scheme() == "blob" => parsed.path().to_owned(),
         _ => url.to_owned(),
     }
 }
-
 pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String> {
     if url.starts_with("chrome-error:") {
         return Ok(());
@@ -109,7 +98,6 @@ pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String
         allowed_on(grant, &host, store, ": open it with store \"agent\"")
     })
 }
-
 fn allowed_on(grant: &Grant, host: &str, store: Store, hint: &str) -> Result<(), String> {
     match rule_for(grant, host) {
         Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(host))),
@@ -120,7 +108,6 @@ fn allowed_on(grant: &Grant, host: &str, store: Store, hint: &str) -> Result<(),
         _ => Ok(()),
     }
 }
-
 pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), String> {
     let Some(host) = at.iter().find_map(|one| {
         let web = made_by(one);
@@ -133,18 +120,15 @@ pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), S
     };
     allowed_on(grant, &host, store, "")
 }
-
 pub fn site_allowed_for(agent: &str, url: &str, store: Store) -> Result<(), String> {
     match crate::grants::cached(agent) {
         Some(grant) => site_allowed(&grant, url, store),
         None => Ok(()),
     }
 }
-
 pub fn script_allowed(grant: &Grant, host: &str) -> bool {
     grant.asks_nothing() || grant.scripts.iter().any(|site| covers(site, host))
 }
-
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 #[allow(clippy::struct_excessive_bools)]
@@ -168,7 +152,6 @@ pub struct Facts {
     pub default_button: String,
     pub opaque: bool,
 }
-
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct Field {
@@ -180,26 +163,21 @@ pub struct Field {
     pub masked: bool,
     pub mentions: bool,
 }
-
 impl Field {
     fn completes(&self, wanted: impl Fn(&str) -> bool) -> bool {
         self.autocomplete.split_whitespace().any(wanted)
     }
 }
-
 impl Facts {
     pub fn password(&self) -> bool {
         self.kind == "password" || credential(&self.field)
     }
-
     pub fn sign_in(&self) -> bool {
         self.in_form && self.fields.iter().any(credential)
     }
-
     fn card_form(&self) -> bool {
         self.in_form && self.fields.iter().any(card_field)
     }
-
     pub fn sensitive(&self) -> bool {
         self.password()
             || secret(&self.field)
@@ -210,11 +188,9 @@ impl Facts {
                 ..Field::default()
             })
     }
-
     pub fn pressable(&self) -> bool {
         !self.editable && !matches!(self.tag.as_str(), "" | "body" | "html")
     }
-
     pub fn picker(&self) -> bool {
         self.tag == "select"
             || (self.tag == "input"
@@ -224,7 +200,6 @@ impl Facts {
                 ))
     }
 }
-
 fn card_field(field: &Field) -> bool {
     if field.completes(|one| {
         matches!(
@@ -238,7 +213,6 @@ fn card_field(field: &Field) -> bool {
     CARD.split('|').any(|one| said.contains(&seen(one)))
         || (says(&plain_said(&seen(&field.said)), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
 }
-
 fn plain_said(said: &str) -> String {
     let mut plain = String::with_capacity(said.len() + 4);
     let mut lower = false;
@@ -251,7 +225,6 @@ fn plain_said(said: &str) -> String {
     }
     plain
 }
-
 fn one_time(field: &Field) -> bool {
     if field.completes(|one| one == "postal-code") {
         return false;
@@ -273,26 +246,21 @@ fn one_time(field: &Field) -> bool {
                     || (word.eq_ignore_ascii_case("pin") && !body(field) && !says(&said, NOT_A_PIN))
             })
 }
-
 const NOT_A_PIN: &str = "pin to|pin notes|pin note|pin this|pin it|pin on|pin board";
-
 fn credential(field: &Field) -> bool {
     field.kind == "password"
         || field.masked
         || field.completes(|one| matches!(one, "current-password" | "new-password"))
 }
-
 pub fn secret(field: &Field) -> bool {
     credential(field)
         || field.completes(|one| one.starts_with("cc-") || one == "one-time-code")
         || card_field(field)
         || one_time(field)
 }
-
 fn body(field: &Field) -> bool {
     matches!(field.kind.as_str(), "textarea" | "editable")
 }
-
 fn addressed(field: &Field) -> bool {
     matches!(field.kind.as_str(), "email" | "tel")
         || field.completes(|one| one == "email" || one == "tel" || one.starts_with("tel-"))
@@ -300,17 +268,14 @@ fn addressed(field: &Field) -> bool {
         || says(&field.said, RECIPIENTS)
         || (body(field) && field.mentions)
 }
-
 fn message_box(field: &Field) -> bool {
     body(field) && says(&field.said, MESSAGES)
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Sends {
     ByWords,
     ByShape,
 }
-
 fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
     if facts.sign_in() {
         return None;
@@ -343,15 +308,12 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
         }
     }
 }
-
 fn says_sending(name: &str) -> bool {
     (says(name, SENDING) || alone(name, SENDING_ALONE)) && !says(name, NOT_SENDING)
 }
-
 pub fn credential_act(facts: &Facts, act: Act) -> bool {
     signs_in(facts, act) || (act == Act::Write && (facts.password() || facts.sign_in()))
 }
-
 pub fn signs_in(facts: &Facts, act: Act) -> bool {
     match act {
         Act::Write => false,
@@ -365,7 +327,6 @@ pub fn signs_in(facts: &Facts, act: Act) -> bool {
         }
     }
 }
-
 fn alone(name: &str, words: &str) -> bool {
     let name = seen(name)
         .split_whitespace()
@@ -376,19 +337,16 @@ fn alone(name: &str, words: &str) -> bool {
         .to_lowercase();
     !name.is_empty() && words.split('|').any(|word| seen(word) == name)
 }
-
 pub struct Question {
     pub category: Category,
     pub summary: String,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Act {
     Press,
     Enter,
     Write,
 }
-
 pub fn judge(
     grant: &Grant,
     facts: &Facts,
@@ -407,13 +365,11 @@ pub fn judge(
         (grant.asks(category) && !grant.always(&site, category))
             .then_some(Question { category, summary })
     };
-
     if credential_act(facts, act) {
         if let Some(question) = ask(Category::SigningIn, on(&label, "Sign in", &site)) {
             return Some(question);
         }
     }
-
     let is_a_press = (facts.submit && !facts.default_button.is_empty()) || !facts.dialog.is_empty();
     if act == Act::Enter && is_a_press && !body(&facts.field) {
         let pressed = Facts {
@@ -427,7 +383,6 @@ pub fn judge(
             return Some(question);
         }
     }
-
     if act != Act::Write {
         let paying = facts.card_form()
             || says(&facts.name, PAYING)
@@ -453,7 +408,6 @@ pub fn judge(
             return Some(question);
         }
     }
-
     if act == Act::Press && !facts.link && !facts.editable {
         for (words, inflected, category, fallback) in [
             (PAYING, DIALOG_PAYING, Category::Paying, "Pay"),
@@ -472,13 +426,11 @@ pub fn judge(
             }
         }
     }
-
     if act == Act::Press && (facts.opaque || (facts.cut && facts.submit)) {
         if let Some(question) = ask(Category::Unread, on("", "A press", &site)) {
             return Some(question);
         }
     }
-
     (grant.mode == Mode::Confirm)
         .then(|| {
             let what = if label.is_empty() {
@@ -490,7 +442,6 @@ pub fn judge(
         })
         .flatten()
 }
-
 pub fn key_act(mut facts: Facts, key: &crate::keys::Key) -> Option<(Facts, Act)> {
     if key.presses() && facts.pressable() {
         let its_own_submit = matches!(facts.kind.as_str(), "submit" | "image" | "button" | "reset");
@@ -507,7 +458,6 @@ pub fn key_act(mut facts: Facts, key: &crate::keys::Key) -> Option<(Facts, Act)>
     let enter = key.sends() || (key.submits() && !body(&facts.field));
     Some((facts, if enter { Act::Enter } else { Act::Press }))
 }
-
 pub fn of_a_drag<'a>(
     grant: &Grant,
     from: &'a Facts,
@@ -525,7 +475,6 @@ pub fn of_a_drag<'a>(
         _ => from,
     }
 }
-
 pub fn answering(
     grant: &Grant,
     kind: DialogKind,
@@ -563,12 +512,10 @@ pub fn answering(
     }
     None
 }
-
 fn on(label: &str, fallback: &str, site: &str) -> String {
     let what = if label.is_empty() { fallback } else { label };
     format!("{what} on {site}")
 }
-
 fn short(name: &str) -> String {
     let flat = name.split_whitespace().collect::<Vec<_>>().join(" ");
     match flat.char_indices().nth(60) {
@@ -576,7 +523,6 @@ fn short(name: &str) -> String {
         None => flat,
     }
 }
-
 pub fn says(name: &str, words: &str) -> bool {
     let name = seen(name).to_lowercase();
     words.split('|').any(|word| {
@@ -593,7 +539,6 @@ pub fn says(name: &str, words: &str) -> bool {
         })
     })
 }
-
 fn spaced(word: &str) -> bool {
     !word.chars().any(|one| {
         matches!(u32::from(one),
@@ -607,15 +552,12 @@ fn spaced(word: &str) -> bool {
         )
     })
 }
-
 fn payment_host(host: &str) -> bool {
     PAYMENT_HOSTS.split('|').any(|one| covers(one, host))
 }
-
 fn social(host: &str) -> bool {
     SOCIAL.split('|').any(|one| covers(one, host))
 }
-
 const ONE_TIME: &str = concat!(
     "otp|otpcode|totp|one time code|one time password|one time passcode|one time pin",
     "|onetime code|onetime password|onetimecode|onetimepassword|verification code",
@@ -627,14 +569,10 @@ const ONE_TIME: &str = concat!(
     "|zugangscode|anmeldecode|authentifizierungscode|geheimzahl|code de v\u{e9}rification",
     "|c\u{f3}digo de verificaci\u{f3}n|codice di verifica",
 );
-
 const ONE_TIME_ALONE: &str = "code|otp|pin|one time|authenticator";
-
 const CARD_WORDS: &str = "card no|cardno|card num|credit card|mm/yy|mm / yy|mm/jj|mm/aa";
-
 const NO_PAYMENT_CARD: &str =
     "library|loyalty|member|membership|student|health|insurance|id card|gift";
-
 const DISMISSING: &str = concat!(
     "cancel|close|close dialog|close modal|close window|close popup|dismiss|no|stay|stay here",
     "|continue shopping|not now|back|go back|never mind|got it|accept cookies",
@@ -646,9 +584,7 @@ const DISMISSING: &str = concat!(
     "|\u{53d6}\u{6d88}|\u{5173}\u{95ed}|\u{43e}\u{442}\u{43c}\u{435}\u{43d}\u{430}",
     "|\u{437}\u{430}\u{43a}\u{440}\u{44b}\u{442}\u{44c}",
 );
-
 const KEEPING: &str = "keep|behalten|garder";
-
 fn dismisses(name: &str) -> bool {
     let name = &seen(name);
     if alone(name, DISMISSING) {
@@ -666,7 +602,6 @@ fn dismisses(name: &str) -> bool {
         && !talks_of(rest, PAYING, DIALOG_PAYING)
         && !talks_of(rest, DELETING, DIALOG_DELETING)
 }
-
 const DIALOG_DELETING: &str = concat!(
     "deletion|terminated|terminates|terminating|wipes|wiped|wiping|destroyed|destroys",
     "|destroying|discard|discards|discarded|discarding|eliminada|eliminados|eliminadas",
@@ -676,11 +611,8 @@ const DIALOG_DELETING: &str = concat!(
 );
 const DIALOG_PAYING: &str =
     "debited|debits|charged|charge|billed|paid|paying|payment|purchased|bezahlt|zahlung";
-
 const IN_ANOTHER_SENSE: &str = "free of charge|no charge|without charge|in charge|pay attention";
-
 const ONLY_AS_A_NAME: &[&str] = &["saya"];
-
 fn talks_of(said: &str, words: &str, inflected: &str) -> bool {
     let mut said = seen(said).to_lowercase();
     for phrase in IN_ANOTHER_SENSE.split('|') {
@@ -692,7 +624,6 @@ fn talks_of(said: &str, words: &str, inflected: &str) -> bool {
         .filter(|word| !ONLY_AS_A_NAME.contains(word))
         .any(|word| says(&said, word))
 }
-
 fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
     dialog.char_indices().filter_map(|(at, one)| {
         let end = at + one.len_utf8();
@@ -701,7 +632,6 @@ fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
         .then_some(end)
     })
 }
-
 fn mention<'d>(dialog: &'d str, words: &str, inflected: &str) -> Option<&'d str> {
     if !talks_of(dialog, words, inflected) {
         return None;
@@ -716,7 +646,6 @@ fn mention<'d>(dialog: &'d str, words: &str, inflected: &str) -> Option<&'d str>
     }
     Some(dialog[start..].trim())
 }
-
 fn starts_with_any(line: &str, words: &str) -> bool {
     let line = seen(line).trim().to_lowercase();
     words.split('|').any(|word| {
@@ -724,12 +653,10 @@ fn starts_with_any(line: &str, words: &str) -> bool {
             .is_some_and(|rest| !rest.chars().next().is_some_and(char::is_alphanumeric))
     })
 }
-
 pub fn leads(line: &str) -> bool {
     line.split_whitespace().count() <= 4
         && (starts_with_any(line, PAYING) || starts_with_any(line, DELETING))
 }
-
 const CARD: &str = concat!(
     "cardnumber|card-number|card_number|card number|ccnum|cc-num|cc_num|creditcard",
     "|credit-card|credit card|cvc|cvv|csc|securitycode|security code|security-code",
@@ -745,7 +672,6 @@ const CARD: &str = concat!(
     "|\u{5361}\u{53f7}|\u{5361}\u{865f}|\u{5b89}\u{5168}\u{7801}",
     "|\u{ce74}\u{b4dc} \u{bc88}\u{d638}|kart numaras\u{131}|s\u{1ed1} th\u{1ebb}|nomor kartu",
 );
-
 const PAYING: &str = concat!(
     "pay|pay now|buy|buy now|place order|place your order|checkout|check out|confirm purchase",
     "|complete purchase|complete order|submit order|confirm order|purchase|order now|bezahlen",
@@ -800,7 +726,6 @@ const PAYING: &str = concat!(
     "|\u{4e0b}\u{5355}|\u{8cfc}\u{8cb7}|\u{63d0}\u{4ea4}\u{8a02}\u{55ae}|\u{7d50}\u{5e33}",
     "|\u{4e0b}\u{55ae}|\u{4fbe}\u{9322}|\u{843d}\u{55ae}",
 );
-
 const SENDING: &str = concat!(
     "send|post|reply|publish|comment|tweet|retweet|repost|reply all|senden|absenden",
     "|abschicken|schicken|posten|ver\u{f6}ffentlichen|antworten|kommentieren|s\u{e4}nde",
@@ -867,19 +792,15 @@ const SENDING: &str = concat!(
     "|\u{56de}\u{590d}|\u{767c}\u{9001}|\u{50b3}\u{9001}|\u{767c}\u{4f48}|\u{767c}\u{5e03}",
     "|\u{767c}\u{8868}|\u{56de}\u{8986}|\u{9001}\u{51fa}",
 );
-
 const SENDING_ALONE: &str = concat!(
     "\u{e2a}\u{e48}\u{e07}|\u{111}\u{103}ng|\u{1015}\u{102d}\u{102f}\u{1037}|\u{ac8c}\u{c2dc}",
     "|\u{516c}\u{958b}|\u{9001}\u{308b}",
 );
-
 const NOT_SENDING: &str = "post code|post office";
-
 const SUBMITTING: &str = concat!(
     "submit|soumettre|submeter|einreichen|\u{fc}bermitteln|\u{63d0}\u{4ea4}|\u{63d0}\u{51fa}",
     "|\u{c81c}\u{cd9c}",
 );
-
 const RECIPIENTS: &str = concat!(
     "recipient|recipients|empf\u{e4}nger|destinataire|destinataires|destinatario",
     "|destinatarios|destinatari|destinat\u{e1}rio|destinat\u{e1}rios|odbiorca|odbiorcy",
@@ -906,14 +827,12 @@ const RECIPIENTS: &str = concat!(
     "|\u{5b9b}\u{5148}|\u{bc1b}\u{b294} \u{c0ac}\u{b78c}|\u{c218}\u{c2e0}\u{c790}",
     "|\u{6536}\u{4ef6}\u{4eba}|\u{6536}\u{4ef6}\u{8005}",
 );
-
 const ADDRESSED_ALONE: &str = concat!(
     "to|cc|bcc|send to|an|\u{e0}|a|para|do|\u{43a}\u{43e}\u{43c}\u{443}|kime|kepada|kwa",
     "|\u{625}\u{644}\u{649}|\u{628}\u{647}|\u{62a}\u{647}|\u{915}\u{94b}",
     "|\u{92a}\u{94d}\u{930}\u{924}\u{93f}|\u{9aa}\u{9cd}\u{9b0}\u{9a4}\u{9bf}",
     "|\u{e16}\u{e36}\u{e07}|\u{111}\u{1ebf}n",
 );
-
 const MESSAGES: &str = concat!(
     "message|reply|comment|chat|nachricht|antwort|kommentar|r\u{e9}ponse|commentaire|mensaje",
     "|respuesta|comentario|messaggio|risposta|commento|mensagem|resposta|coment\u{e1}rio",
@@ -954,7 +873,6 @@ const MESSAGES: &str = concat!(
     "|\u{b2f5}\u{c7a5}|\u{b313}\u{ae00}|\u{6d88}\u{606f}|\u{4fe1}\u{606f}|\u{56de}\u{590d}",
     "|\u{8bc4}\u{8bba}|\u{8a0a}\u{606f}|\u{56de}\u{8986}|\u{7559}\u{8a00}|\u{8a55}\u{8ad6}",
 );
-
 const SIGNING_IN: &str = concat!(
     "sign in|log in|login|log on|anmelden|einloggen|aamelde|iilogge|se connecter|connexion",
     "|iniciar sesi\u{f3}n|iniciar sess\u{e3}o|acceder|entrar|accedi|zaloguj",
@@ -976,7 +894,6 @@ const SIGNING_IN: &str = concat!(
     "|\u{30ed}\u{30b0}\u{30a4}\u{30f3}|\u{b85c}\u{adf8}\u{c778}|\u{767b}\u{5f55}",
     "|\u{767b}\u{5165}|\u{767b}\u{9304}",
 );
-
 const DELETING: &str = concat!(
     "delete|remove|erase|delete forever|delete permanently|l\u{f6}schen|entfernen",
     "|endg\u{fc}ltig l\u{f6}schen|l\u{f6}sche|entferne|supprimer|effacer|eliminar|borrar",
@@ -1000,7 +917,6 @@ const DELETING: &str = concat!(
     "|\u{524a}\u{9664}|\u{6d88}\u{53bb}|\u{c0ad}\u{c81c}|\u{c81c}\u{ac70}|\u{5220}\u{9664}",
     "|\u{79fb}\u{9664}|\u{6e05}\u{9664}|\u{522a}\u{9664}",
 );
-
 const PAYMENT_HOSTS: &str = concat!(
     "stripe.com|stripe.network|paypal.com|paypalobjects.com|braintreegateway.com",
     "|braintree-api.com|adyen.com|adyenpayments.com|checkout.com|klarna.com",
@@ -1011,7 +927,6 @@ const PAYMENT_HOSTS: &str = concat!(
     "|shop.app|pay.shopify.com|recurly.com|chargebee.com|gocardless.com|sezzle.com|zip.co",
     "|bitpay.com|commerce.coinbase.com|datatrans.com|saferpay.com|payrexx.com|wallee.com",
 );
-
 const SOCIAL: &str = concat!(
     "mail.google.com|gmail.com|outlook.com|outlook.live.com|outlook.office.com",
     "|outlook.office365.com|mail.yahoo.com|proton.me|protonmail.com|icloud.com|fastmail.com",
@@ -1023,7 +938,6 @@ const SOCIAL: &str = concat!(
     "|stackexchange.com|news.ycombinator.com|weibo.com|vk.com|line.me|wechat.com|snapchat.com",
     "|chat.google.com",
 );
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1033,7 +947,6 @@ mod tests {
     fn grant() -> Grant {
         Grant::own("a".into(), "A")
     }
-
     fn press(name: &str) -> Facts {
         Facts {
             tag: "button".into(),
@@ -1041,7 +954,6 @@ mod tests {
             ..Facts::default()
         }
     }
-
     fn called(said: &str) -> Field {
         Field {
             kind: "text".into(),
@@ -1049,18 +961,15 @@ mod tests {
             ..Field::default()
         }
     }
-
     fn in_dialog(name: &str, dialog: &str) -> Facts {
         Facts {
             dialog: dialog.into(),
             ..press(name)
         }
     }
-
     fn category(facts: &Facts, url: &str) -> Option<Category> {
         judge(&grant(), facts, Act::Press, url, &[]).map(|question| question.category)
     }
-
     #[test]
     fn a_dialog_that_talks_of_paying_or_deleting_asks_of_all_but_its_way_out() {
         let url = "https://app.example/";
@@ -1118,7 +1027,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn the_way_out_of_a_dialog_and_what_reads_as_paying_by_mistake() {
         let url = "https://app.example/";
@@ -1155,7 +1063,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn only_what_is_plainly_the_way_out_goes_free() {
         let url = "https://app.example/";
@@ -1210,7 +1117,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn enter_in_a_dialog_is_judged_like_its_confirm() {
         let url = "https://app.example/";
@@ -1240,7 +1146,6 @@ mod tests {
         assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
         assert_eq!(enter(&field(true, "", "Change your name?")), None);
     }
-
     #[test]
     fn shift_enter_in_a_field_submits_like_enter_and_in_a_box_writes_a_line() {
         let key = crate::keys::chord("Shift+Enter").expect("a key");
@@ -1260,7 +1165,6 @@ mod tests {
         let (_, act) = key_act(field("textarea"), &key).expect("as before");
         assert_eq!(act, Act::Press);
     }
-
     #[test]
     fn a_question_does_not_quote_a_secret_it_is_asked_on() {
         let url = "https://app.example/";
@@ -1282,7 +1186,6 @@ mod tests {
         assert!(!summary.is_empty());
         assert!(!summary.contains("4111"), "{summary}");
     }
-
     #[test]
     fn a_dialog_is_read_in_its_inflections() {
         let url = "https://app.example/";
@@ -1298,7 +1201,6 @@ mod tests {
             assert_eq!(category(&in_dialog(dialog), url), Some(asked), "{dialog}");
         }
     }
-
     #[test]
     fn a_dialog_is_quoted_whole_and_amounts_stay_whole() {
         let quoted = |dialog: &str| mention(dialog, PAYING, DIALOG_PAYING).map(str::to_string);
@@ -1313,7 +1215,6 @@ mod tests {
         );
         assert_eq!(quoted("Nothing about it."), None);
     }
-
     #[test]
     fn a_line_leads_by_how_it_opens() {
         for line in [
@@ -1339,7 +1240,6 @@ mod tests {
             assert!(!leads(line), "{line}");
         }
     }
-
     #[test]
     fn what_says_nothing_of_itself_asks() {
         let unread = Facts {
@@ -1348,7 +1248,6 @@ mod tests {
         };
         assert_eq!(category(&unread, "https://app.example/"), Some(Unread));
     }
-
     #[test]
     fn what_is_no_code_and_no_payment_card_stays_readable() {
         let called = |said: &str, kind: &str| Field {
@@ -1373,7 +1272,6 @@ mod tests {
         };
         assert!(!secret(&postal));
     }
-
     #[test]
     fn a_name_in_any_case_or_with_a_number_is_a_code() {
         for said in [
@@ -1395,7 +1293,6 @@ mod tests {
             assert!(secret(&called(said)), "{said}");
         }
     }
-
     #[test]
     fn a_code_under_a_name_with_marks_or_as_a_whole_label_is_secret() {
         for said in [
@@ -1419,7 +1316,6 @@ mod tests {
         };
         assert!(secret(&code));
     }
-
     #[test]
     fn a_code_a_pin_and_a_card_are_secret_by_what_they_are_called() {
         for said in [
@@ -1448,7 +1344,6 @@ mod tests {
             assert!(!secret(&called(said)), "{said}");
         }
     }
-
     #[test]
     fn a_site_is_its_registrable_domain() {
         assert_eq!(site_of("www.shop.example"), "shop.example");
@@ -1457,7 +1352,6 @@ mod tests {
         assert_eq!(site_of("127.0.0.1"), "127.0.0.1");
         assert_eq!(site_of("localhost"), "localhost");
     }
-
     #[test]
     fn a_name_on_a_shared_host_is_a_site_of_its_own() {
         assert_eq!(site_of("shop.github.io"), "shop.github.io");
@@ -1466,7 +1360,6 @@ mod tests {
         assert_eq!(site_of("github.io"), "github.io");
         assert_eq!(site_of("www.github.com"), "github.com");
     }
-
     #[test]
     fn a_rule_covers_its_site_and_every_host_under_it() {
         let mut grant = grant();
@@ -1484,7 +1377,6 @@ mod tests {
         assert_eq!(rule_for(&grant, "evil.example"), Some(SiteRule::Deny));
         assert_eq!(rule_for(&grant, "ok.evil.example"), Some(SiteRule::Allow));
         assert_eq!(rule_for(&grant, "notbank.example"), None);
-
         assert!(site_allowed(&grant, "https://a.evil.example/", Store::Agent).is_err());
         assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
         assert!(site_allowed(&grant, "blob:https://bank.example/5d2f", Store::Reader).is_err());
@@ -1492,7 +1384,6 @@ mod tests {
         assert!(site_allowed(&grant, "https://bank.example/", Store::Agent).is_ok());
         assert!(site_allowed(&grant, "https://ok.evil.example/", Store::Reader).is_ok());
     }
-
     #[test]
     fn a_rule_is_not_got_round_by_another_spelling_of_its_site() {
         let mut grant = grant();
@@ -1514,7 +1405,6 @@ mod tests {
             Some("evil.example".into())
         );
     }
-
     #[test]
     fn presses_are_recognised_in_every_language() {
         let cases: &[(&str, &str, Option<Category>)] = &[
@@ -1547,7 +1437,6 @@ mod tests {
             assert_eq!(category(&press(name), url), *expected, "{name} on {url}");
         }
     }
-
     #[test]
     fn a_press_in_a_form_with_a_card_field_is_paying() {
         let mut facts = press("Continue");
@@ -1568,7 +1457,6 @@ mod tests {
         }];
         assert_eq!(category(&facts, "https://shop.example/"), Some(Paying));
     }
-
     #[test]
     fn a_submit_on_a_page_that_talks_to_a_payment_processor_is_paying() {
         let mut facts = press("Continue");
@@ -1592,7 +1480,6 @@ mod tests {
         )
         .is_none());
     }
-
     fn field(kind: &str, label: &str) -> Field {
         Field {
             kind: kind.into(),
@@ -1601,7 +1488,6 @@ mod tests {
             ..Field::default()
         }
     }
-
     fn submitting(name: &str, fields: Vec<Field>) -> Facts {
         Facts {
             tag: "button".into(),
@@ -1612,7 +1498,6 @@ mod tests {
             ..Facts::default()
         }
     }
-
     fn on_the_page(name: &str, fields: Vec<Field>) -> Facts {
         Facts {
             tag: "div".into(),
@@ -1621,7 +1506,6 @@ mod tests {
             ..Facts::default()
         }
     }
-
     fn enter_in(own: Field, in_form: bool, fields: Vec<Field>) -> Facts {
         Facts {
             tag: if own.kind == "textarea" {
@@ -1638,7 +1522,6 @@ mod tests {
             ..Facts::default()
         }
     }
-
     fn compose() -> Vec<Field> {
         vec![
             field("email", "To"),
@@ -1646,15 +1529,12 @@ mod tests {
             field("textarea", "Message"),
         ]
     }
-
     fn asked(facts: &Facts, act: Act, url: &str) -> Option<(Category, String)> {
         judge(&grant(), facts, act, url, &[]).map(|one| (one.category, one.summary))
     }
-
     fn sent(facts: &Facts, act: Act, url: &str) -> bool {
         asked(facts, act, url).is_some_and(|(category, _)| category == Sending)
     }
-
     #[test]
     fn a_compose_form_on_any_site_asks_before_it_sends() {
         let send = submitting("Send", compose());
@@ -1726,7 +1606,6 @@ mod tests {
             "https://www.linkedin.com/feed/"
         ));
     }
-
     #[test]
     fn sending_is_read_in_every_language() {
         let composer = || vec![field("textarea", "")];
@@ -1762,7 +1641,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_search_a_sign_in_or_a_newsletter_is_no_send() {
         let url = "https://a.example/";
@@ -1823,7 +1701,6 @@ mod tests {
             url
         ));
     }
-
     #[test]
     fn a_sign_in_is_the_readers_whatever_the_page_calls_it() {
         let sign_in = vec![field("email", "Email"), field("password", "Password")];
@@ -1856,7 +1733,6 @@ mod tests {
             &on_the_page("\u{30ed}\u{30b0}\u{30a4}\u{30f3}", sign_in.clone()),
             Act::Press
         ));
-
         let mut show = submitting("Show password", sign_in.clone());
         show.submit = false;
         assert!(!signs_in(&show, Act::Press));
@@ -1872,7 +1748,6 @@ mod tests {
         assert!(!signs_in(&forgot, Act::Press));
         assert!(!signs_in(&submitting("Sign in", sign_in), Act::Write));
     }
-
     #[test]
     fn a_secret_is_a_credential_a_code_or_a_card() {
         let with = |kind: &str, autocomplete: &str, label: &str| Field {
@@ -1905,7 +1780,6 @@ mod tests {
             assert!(!secret(&one), "{one:?}");
         }
     }
-
     #[test]
     fn the_summary_is_the_press_and_the_site() {
         let asked = judge(
@@ -1918,7 +1792,6 @@ mod tests {
         .expect("asks");
         assert_eq!(asked.summary, "Place order on shop.example");
     }
-
     #[test]
     fn a_category_turned_off_or_always_allowed_does_not_ask() {
         let mut grant = grant();
@@ -1949,7 +1822,6 @@ mod tests {
         )
         .is_some());
     }
-
     #[test]
     fn signing_in_asks_as_the_mode_says_and_full_permissions_just_signs_in() {
         let sign_in = vec![field("email", "Email"), field("password", "Password")];
@@ -1958,25 +1830,21 @@ mod tests {
         let url = "https://bank.example/login";
         assert!(credential_act(&log_in, Act::Press));
         assert!(credential_act(&typed, Act::Write));
-
         let mut full = grant();
         full.mode = Mode::Autonomous;
         assert!(judge(&full, &log_in, Act::Press, url, &[]).is_none());
         assert!(judge(&full, &typed, Act::Write, url, &[]).is_none());
         assert!(judge(&full, &typed, Act::Enter, url, &[]).is_none());
-
         let mut asked = grant();
         let question = judge(&asked, &log_in, Act::Press, url, &[]);
         assert_eq!(question.map(|one| one.category), Some(SigningIn));
         asked.asks.insert(SigningIn, false);
         assert!(judge(&asked, &log_in, Act::Press, url, &[]).is_none());
-
         let mut approve = grant();
         approve.mode = Mode::Confirm;
         let question = judge(&approve, &typed, Act::Write, url, &[]);
         assert_eq!(question.map(|one| one.category), Some(SigningIn));
     }
-
     #[test]
     fn a_site_s_sign_in_box_and_certificate_ask_as_the_mode_says() {
         let url = "https://intranet.example/";
@@ -1985,7 +1853,6 @@ mod tests {
         for kind in [DialogKind::SignIn, DialogKind::Certificate] {
             assert!(answering(&full, kind, true, url, "").is_none(), "{kind:?}");
         }
-
         let mut approve = grant();
         approve.mode = Mode::Confirm;
         let unsupervised = grant();
@@ -1997,11 +1864,9 @@ mod tests {
                 assert!(answering(asking, kind, false, url, "").is_none());
             }
         }
-
         let mut off = grant();
         off.asks.insert(SigningIn, false);
         assert!(answering(&off, DialogKind::SignIn, true, url, "").is_none());
-
         for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
             assert!(
                 answering(&approve, kind, true, url, "Leave this page?").is_none(),
@@ -2009,7 +1874,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_confirm_that_says_it_pays_or_deletes_asks() {
         let url = "https://shop.example/";
@@ -2027,7 +1891,6 @@ mod tests {
             question.summary,
             "The page says \u{201c}Pay 500 EUR now?\u{201d} on shop.example"
         );
-
         let question = answering(
             &unsupervised,
             DialogKind::Confirm,
@@ -2037,14 +1900,12 @@ mod tests {
         )
         .expect("asked");
         assert_eq!(question.category, Deleting);
-
         assert!(answering(&unsupervised, DialogKind::Confirm, false, url, "Pay now?").is_none());
         assert!(answering(&unsupervised, DialogKind::Alert, true, url, "Pay now?").is_none());
         let mut full = grant();
         full.mode = Mode::Autonomous;
         assert!(answering(&full, DialogKind::Confirm, true, url, "Pay now?").is_none());
     }
-
     #[test]
     fn hidden_or_look_alike_letters_never_hide_a_dangerous_word() {
         let url = "https://shop.example/";
@@ -2077,7 +1938,6 @@ mod tests {
         .expect("asked");
         assert_eq!(question.category, Deleting);
         assert!(leads("Del\u{200b}ete all"));
-
         let dialog = "This will delete your account.";
         let out = |name: &str| Facts {
             dialog: dialog.into(),
@@ -2090,7 +1950,6 @@ mod tests {
         assert_eq!(category(&out("C\u{200b}ancel"), url), None);
         assert_eq!(category(&out("D\u{200b}elete"), url), Some(Deleting));
     }
-
     #[test]
     fn a_link_is_no_delete_and_a_button_still_is() {
         let url = "https://a.example/";
@@ -2099,7 +1958,6 @@ mod tests {
         assert_eq!(category(&link, url), None);
         assert_eq!(category(&press("Delete account"), url), Some(Deleting));
     }
-
     #[test]
     fn a_drag_is_one_question_about_its_graver_end() {
         let url = "https://a.example/";
@@ -2111,7 +1969,6 @@ mod tests {
         column.control = false;
         let mut pay = press("Pay now");
         pay.control = true;
-
         let of = |grant: &Grant, from: &Facts, to: &Facts| {
             of_a_drag(grant, from, to, url, &[]).name.clone()
         };
@@ -2120,7 +1977,6 @@ mod tests {
         assert_eq!(of(&confirm, &card, &pay), "Pay now");
         assert_eq!(of(&confirm, &pay, &card), "Pay now");
     }
-
     #[test]
     fn a_page_too_big_to_read_asks_before_a_submit() {
         let url = "https://a.example/";
@@ -2131,7 +1987,6 @@ mod tests {
         big.submit = false;
         assert_eq!(category(&big, url), None);
     }
-
     #[test]
     fn a_denied_site_in_a_frame_is_denied() {
         let mut owner = grant();
@@ -2140,7 +1995,6 @@ mod tests {
             .sites
             .insert("mine.example".into(), SiteRule::AgentStore);
         let at = |urls: &[&str]| urls.iter().map(ToString::to_string).collect::<Vec<_>>();
-
         assert!(frame_allowed(&owner, &at(&["https://a.example/"]), Store::Reader).is_ok());
         assert!(frame_allowed(&owner, &at(&["https://denied.example/x"]), Store::Agent).is_err());
         assert!(frame_allowed(
@@ -2174,7 +2028,6 @@ mod tests {
         assert!(frame_allowed(&owner, &at(&["https://mine.example/"]), Store::Reader).is_err());
         assert!(frame_allowed(&owner, &at(&["https://mine.example/"]), Store::Agent).is_ok());
     }
-
     #[test]
     fn confirm_mode_asks_for_every_write() {
         let mut grant = grant();
@@ -2196,7 +2049,6 @@ mod tests {
         );
         assert_eq!(typed.map(|one| one.category), Some(Writing));
     }
-
     #[test]
     fn autonomous_mode_asks_nothing_paying_included() {
         let mut grant = grant();
@@ -2224,7 +2076,6 @@ mod tests {
         assert!(judge(&grant, &submit, Act::Press, url, &hosts).is_none());
         assert!(judge(&grant, &press("Send"), Act::Enter, url, &[]).is_none());
     }
-
     #[test]
     fn a_sign_in_form_and_a_card_field_are_known() {
         let facts = Facts {
@@ -2257,7 +2108,6 @@ mod tests {
         }
         .picker());
     }
-
     #[test]
     fn an_agent_stays_on_the_web() {
         let grant = grant();
@@ -2295,12 +2145,10 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_failed_load_leaves_the_tab_to_its_agent() {
         assert!(site_allowed(&grant(), "chrome-error://chromewebdata/", Store::Agent).is_ok());
     }
-
     #[test]
     fn an_ip_v6_host_is_keyed_as_the_page_s_requests_key_it() {
         assert_eq!(host_of("http://[::1]:8/").as_deref(), Some("::1"));
@@ -2311,7 +2159,6 @@ mod tests {
         bracketed.sites.insert("[::1]".into(), SiteRule::Deny);
         assert!(site_allowed(&bracketed, "http://[::1]:8/", Store::Agent).is_err());
     }
-
     #[test]
     fn a_trailing_dot_is_the_same_host() {
         let mut grant = grant();
@@ -2336,13 +2183,11 @@ mod tests {
                 .unwrap_or("")
         ));
     }
-
     fn keyed(grant: &Grant, facts: Facts, keys: &str) -> Option<Category> {
         let key = crate::keys::chord(keys).expect("key");
         let (facts, act) = key_act(facts, &key)?;
         judge(grant, &facts, act, "https://shop.example/", &[]).map(|one| one.category)
     }
-
     #[test]
     fn a_key_on_a_button_is_a_press_of_it() {
         let grant = grant();
@@ -2363,7 +2208,6 @@ mod tests {
         assert_eq!(keyed(&grant, press("Pay now"), "Tab"), None);
         assert_eq!(keyed(&grant, press("Open menu"), "Space"), None);
     }
-
     #[test]
     fn a_key_on_a_sign_in_button_signs_in_as_the_mode_says() {
         let log_in = || Facts {
@@ -2379,7 +2223,6 @@ mod tests {
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, log_in(), "Space"), None);
     }
-
     #[test]
     fn enter_in_a_field_presses_its_forms_default_button() {
         let grant = grant();
@@ -2432,7 +2275,6 @@ mod tests {
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, field_of("Delete account"), "Enter"), None);
     }
-
     #[test]
     fn a_press_on_what_cannot_be_read_asks() {
         let grant = grant();
@@ -2447,7 +2289,6 @@ mod tests {
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, host(), "Space"), None);
     }
-
     #[test]
     fn the_apps_own_hosts_are_off_the_web_with_a_trailing_dot_too() {
         for address in [
@@ -2460,7 +2301,6 @@ mod tests {
             assert!(!on_the_web(address), "{address}");
         }
     }
-
     #[test]
     fn a_key_in_a_box_is_not_a_press() {
         let grant = grant();
@@ -2490,7 +2330,6 @@ mod tests {
         assert_eq!(keyed(&grant, tick.clone(), "Enter"), Some(SigningIn));
         assert_eq!(keyed(&grant, tick, "Space"), None);
     }
-
     #[test]
     fn scripts_are_per_site() {
         let mut grant = grant();
@@ -2498,7 +2337,6 @@ mod tests {
         assert!(script_allowed(&grant, "api.docs.example"));
         assert!(!script_allowed(&grant, "shop.example"));
     }
-
     #[test]
     fn payment_processors_and_social_sites_are_known() {
         assert!(payment_host("js.stripe.com"));

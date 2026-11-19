@@ -10,23 +10,17 @@ use super::{Tool, TELLING};
 use orden_base::program::Program;
 
 const SHIPPED: &str = "so.orden.Orden";
-
 const NAME: &str = "orden";
-
 const OLD_NAME: &str = "nib";
-
 const TEST_HOME: &str = "ORDEN_ENROLL_HOME";
-
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct Kept {
     #[serde(default)]
     off: bool,
 }
-
 fn kept_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(orden_base::paths::config_dir(app)?.join("enroll.json"))
 }
-
 fn is_on(app: &AppHandle) -> bool {
     kept_file(app)
         .ok()
@@ -34,13 +28,11 @@ fn is_on(app: &AppHandle) -> bool {
         .and_then(|text| serde_json::from_str::<Kept>(&text).ok())
         .is_none_or(|kept| !kept.off)
 }
-
 fn test_home() -> Option<PathBuf> {
     std::env::var_os(TEST_HOME)
         .filter(|one| !one.is_empty())
         .map(PathBuf::from)
 }
-
 fn offered(app: &AppHandle) -> bool {
     test_home().is_some()
         || (!cfg!(debug_assertions)
@@ -48,11 +40,9 @@ fn offered(app: &AppHandle) -> bool {
             && orden_placement::placement::away().is_none()
             && !orden_system::app_place::app_stuck())
 }
-
 fn get_args(name: &str) -> Vec<OsString> {
     ["mcp", "get", name].map(OsString::from).to_vec()
 }
-
 fn add_args(tool: Tool, orden: &Path) -> Vec<OsString> {
     let mut args: Vec<OsString> = match tool {
         Tool::ClaudeCode | Tool::Gemini => vec!["mcp", "add", "--scope", "user", NAME, "--"],
@@ -64,7 +54,6 @@ fn add_args(tool: Tool, orden: &Path) -> Vec<OsString> {
     args.extend([orden.as_os_str().to_owned(), OsString::from("mcp")]);
     args
 }
-
 fn remove_args(tool: Tool, name: &str) -> Vec<OsString> {
     match tool {
         Tool::ClaudeCode | Tool::Gemini => vec!["mcp", "remove", "--scope", "user", name],
@@ -74,7 +63,6 @@ fn remove_args(tool: Tool, name: &str) -> Vec<OsString> {
     .map(OsString::from)
     .collect()
 }
-
 fn homed(program: &Program, args: &[OsString], folder: &Path, home: Option<&Path>) -> Command {
     let mut command = super::command(program, args, folder, None);
     if let Some(home) = home {
@@ -86,12 +74,10 @@ fn homed(program: &Program, args: &[OsString], folder: &Path, home: Option<&Path
     }
     command
 }
-
 fn entry(program: &Program, name: &str, folder: &Path, home: Option<&Path>) -> Option<String> {
     let said = run_to_end(homed(program, &get_args(name), folder, home), TELLING).ok()?;
     (said.ended.code == Some(0)).then_some(said.out)
 }
-
 #[derive(Debug, PartialEq, Eq)]
 enum Held {
     None,
@@ -99,7 +85,6 @@ enum Held {
     Older,
     Theirs,
 }
-
 fn held(program: &Program, name: &str, folder: &Path, orden: &Path, home: Option<&Path>) -> Held {
     match entry(program, name, folder, home) {
         None => Held::None,
@@ -113,21 +98,18 @@ fn held(program: &Program, name: &str, folder: &Path, orden: &Path, home: Option
         Some(_) => Held::Theirs,
     }
 }
-
 fn remove(program: &Program, tool: Tool, name: &str, folder: &Path, home: Option<&Path>) {
     let _ = run_to_end(
         homed(program, &remove_args(tool, name), folder, home),
         TELLING,
     );
 }
-
 fn add(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     let _ = run_to_end(
         homed(program, &add_args(tool, orden), folder, home),
         TELLING,
     );
 }
-
 pub fn carry_over(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     if held(program, NAME, folder, orden, home) == Held::Older {
         remove(program, tool, NAME, folder, home);
@@ -146,7 +128,6 @@ pub fn carry_over(program: &Program, tool: Tool, folder: &Path, orden: &Path, ho
         remove(program, tool, OLD_NAME, folder, home);
     }
 }
-
 pub fn enroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     carry_over(program, tool, folder, orden, home);
     if entry(program, NAME, folder, home).is_some()
@@ -159,7 +140,6 @@ pub fn enroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: 
     }
     add(program, tool, folder, orden, home);
 }
-
 pub fn unenroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     for name in [NAME, OLD_NAME] {
         if matches!(
@@ -170,7 +150,6 @@ pub fn unenroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home
         }
     }
 }
-
 fn each(app: &AppHandle, act: fn(&Program, Tool, &Path, &Path, Option<&Path>)) {
     let Ok(folder) = super::workroom(app) else {
         return;
@@ -189,26 +168,22 @@ fn each(app: &AppHandle, act: fn(&Program, Tool, &Path, &Path, Option<&Path>)) {
             }
         });
 }
-
 pub fn keep_enrolled(app: &AppHandle) {
     if offered(app) {
         each(app, if is_on(app) { enroll } else { carry_over });
     }
 }
-
 #[derive(Serialize)]
 pub struct Standing {
     offered: bool,
     on: bool,
 }
-
 pub fn standing(app: &AppHandle) -> Standing {
     Standing {
         offered: offered(app),
         on: is_on(app),
     }
 }
-
 pub fn turned(app: &AppHandle, on: bool) -> Result<(), String> {
     let text = serde_json::to_string(&Kept { off: !on }).map_err(|error| error.to_string())?;
     let file = kept_file(app)?;
@@ -221,7 +196,6 @@ pub fn turned(app: &AppHandle, on: bool) -> Result<(), String> {
     }
     Ok(())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -250,7 +224,6 @@ mod tests {
         assert_eq!(line(remove_args(Tool::Codex, NAME)), "mcp remove orden");
         assert_eq!(line(get_args(OLD_NAME)), "mcp get nib");
     }
-
     #[test]
     fn the_switch_is_on_unless_turned_off() {
         let read = |text: &str| serde_json::from_str::<Kept>(text).map(|kept| !kept.off);

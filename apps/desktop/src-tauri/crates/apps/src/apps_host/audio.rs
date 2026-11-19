@@ -3,16 +3,13 @@ use std::process::{Child, ChildStdout, Command, Stdio};
 use std::time::Duration;
 
 const ASKING: Duration = Duration::from_secs(5);
-
 pub fn available() -> bool {
     super::installed::on_path("pactl") && super::installed::on_path("parec")
 }
-
 pub struct Sink {
     module: u32,
     name: String,
 }
-
 impl Sink {
     pub fn make(number: u32) -> Option<Sink> {
         if !available() {
@@ -35,12 +32,10 @@ impl Sink {
         let module = String::from_utf8_lossy(&made.stdout).trim().parse().ok()?;
         Some(Sink { module, name })
     }
-
     pub fn monitor(&self) -> String {
         format!("{}.monitor", self.name)
     }
 }
-
 impl Drop for Sink {
     fn drop(&mut self) {
         let _ = orden_base::printed::output(
@@ -49,7 +44,6 @@ impl Drop for Sink {
         );
     }
 }
-
 pub fn environment(sink: Option<&Sink>) -> Vec<(&'static str, String)> {
     match sink {
         Some(sink) => vec![("PULSE_SINK", sink.name.clone())],
@@ -62,7 +56,6 @@ pub fn environment(sink: Option<&Sink>) -> Vec<(&'static str, String)> {
         ],
     }
 }
-
 pub struct Sound {
     reader: Child,
     encoder: Child,
@@ -70,7 +63,6 @@ pub struct Sound {
     pages: Pages,
     read: u64,
 }
-
 impl Sound {
     pub fn start(monitor: &str) -> Option<Sound> {
         let mut reader = Command::new("parec")
@@ -118,7 +110,6 @@ impl Sound {
             read: 0,
         })
     }
-
     pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
         loop {
             let packet = self.pages.packet(&mut self.packets).ok()?;
@@ -131,7 +122,6 @@ impl Sound {
         }
     }
 }
-
 impl Drop for Sound {
     fn drop(&mut self) {
         for one in [&mut self.reader, &mut self.encoder] {
@@ -140,7 +130,6 @@ impl Drop for Sound {
         }
     }
 }
-
 pub fn encoder_args() -> Vec<String> {
     "-hide_banner -loglevel error -nostdin -f s16le -ar 48000 -ac 2 -i pipe:0 \
      -c:a libopus -application lowdelay -frame_duration 10 -b:a 128000 \
@@ -149,15 +138,12 @@ pub fn encoder_args() -> Vec<String> {
         .map(str::to_owned)
         .collect()
 }
-
 #[derive(Debug, Default)]
 pub struct Pages {
     partial: Vec<u8>,
     ready: std::collections::VecDeque<Vec<u8>>,
 }
-
 const LARGEST_PAGE: usize = 27 + 255 + 255 * 255;
-
 impl Pages {
     pub fn packet(&mut self, from: &mut impl Read) -> io::Result<Vec<u8>> {
         loop {
@@ -167,7 +153,6 @@ impl Pages {
             self.page(from)?;
         }
     }
-
     fn page(&mut self, from: &mut impl Read) -> io::Result<()> {
         let mut header = [0_u8; 27];
         from.read_exact(&mut header)?;
@@ -193,7 +178,6 @@ impl Pages {
         Ok(())
     }
 }
-
 pub fn opus_samples(packet: &[u8]) -> Option<u32> {
     let toc = *packet.first()?;
     let config = toc >> 3;
@@ -209,7 +193,6 @@ pub fn opus_samples(packet: &[u8]) -> Option<u32> {
     };
     Some(frame * frames)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -222,7 +205,6 @@ mod tests {
         out.extend_from_slice(body);
         out
     }
-
     #[test]
     fn reads_the_packets_off_oggs_pages_one_spanning_two() {
         let long: Vec<u8> = (0..300_u32)
@@ -238,7 +220,6 @@ mod tests {
         assert!(pages.packet(&mut from).is_err());
         assert!(Pages::default().packet(&mut &b"RIFF"[..]).is_err());
     }
-
     #[test]
     fn times_a_packet_by_the_samples_its_first_byte_says() {
         assert_eq!(opus_samples(&[30 << 3]), Some(480));
@@ -246,7 +227,6 @@ mod tests {
         assert_eq!(opus_samples(&[(3 << 3) | 3, 3]), Some(8640));
         assert_eq!(opus_samples(&[]), None);
     }
-
     #[test]
     fn gives_an_application_its_sink_or_no_sound_at_all() {
         let sink = Sink {

@@ -25,11 +25,8 @@ const PACKAGES = [
   /^protobufjs$/,
   /^long$/,
 ]
-
 const SERVICES = /whatsapp|signal|telegram|slack|discord|imap|smtp|gmail|microsoft|mail|sidecar/i
-
 const SKIP = /^(?:node_modules|target|dist|gen|locales|\.[^.]+)$/
-
 function files(dir: string, keep: (path: string) => boolean, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     if (SKIP.test(name)) continue
@@ -39,10 +36,8 @@ function files(dir: string, keep: (path: string) => boolean, out: string[] = [])
   }
   return out
 }
-
 const read = (path: string) => readFileSync(path, 'utf8')
 const known = (name: string) => PACKAGES.some((pattern) => pattern.test(name))
-
 const manifests = [
   join(ROOT, 'package.json'),
   ...['apps', 'packages', 'services'].flatMap((group) =>
@@ -51,7 +46,6 @@ const manifests = [
       .filter((path) => statSync(path, { throwIfNoEntry: false })?.isFile()),
   ),
 ]
-
 describe('chats from other services', () => {
   test('no package of the workspace depends on a client for one', () => {
     const held = manifests.flatMap((path) => {
@@ -63,13 +57,11 @@ describe('chats from other services', () => {
     })
     expect(held).toEqual([])
   })
-
   test('the lockfile installs none', () => {
     const lock = read(join(ROOT, 'pnpm-lock.yaml'))
     const installed = [...lock.matchAll(/^ {2}'?(@?[^@\s'][^@\s']*)@[^:\s]+'?:$/gm)].map(([, name = '']) => name)
     expect([...new Set(installed.filter(known))]).toEqual([])
   })
-
   test('no source imports one', () => {
     const source = [
       join(ROOT, 'apps/desktop/src'),
@@ -87,7 +79,6 @@ describe('chats from other services', () => {
     )
     expect(importing).toEqual([])
   })
-
   test('no file of the chats is named for one', () => {
     const named = [
       join(ROOT, 'packages/chats/src'),
@@ -97,20 +88,17 @@ describe('chats from other services', () => {
     ].flatMap((dir) => files(dir, (path) => SERVICES.test(relative(dir, path))).map((path) => relative(ROOT, path)))
     expect(named).toEqual([])
   })
-
   test('the chats package offers no entry for one', () => {
     const manifest = JSON.parse(read(join(ROOT, 'packages/chats/package.json'))) as {
       exports: Record<string, string>
     }
     expect(Object.keys(manifest.exports).filter((entry) => SERVICES.test(entry))).toEqual([])
   })
-
   test('the app registers no command that reaches one', () => {
     const lib = read(join(ROOT, 'apps/desktop/src-tauri/src/lib.rs'))
     for (const gone of ['mail_socket', 'wire_socket', 'chat_request', 'sidecar', 'oauth_loopback'])
       expect(lib, gone).not.toContain(gone)
   })
-
   test('no workflow or script drives one', () => {
     const driven = [
       ...files(join(ROOT, '.github/workflows'), () => true),

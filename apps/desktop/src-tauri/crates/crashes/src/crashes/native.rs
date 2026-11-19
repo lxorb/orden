@@ -6,17 +6,11 @@ use super::report::{self, Crumb, Report};
 use super::stacks::{self, Frame, Place, Thread, MOST_FRAMES};
 
 pub const STUB: &str = "native-crash.txt";
-
 const ROOM: usize = 12 * 1024;
-
 const MOST_CRUMBS: usize = 20;
-
 static WRITING: AtomicBool = AtomicBool::new(false);
-
 static ROOMY: AtomicPtr<u8> = AtomicPtr::new(std::ptr::null_mut());
-
 static VERSION: OnceLock<String> = OnceLock::new();
-
 pub fn install(dir: &Path, version: &str) {
     let _ = VERSION.set(version.chars().take(64).collect());
     if ROOMY.load(Ordering::Acquire).is_null() {
@@ -25,19 +19,16 @@ pub fn install(dir: &Path, version: &str) {
     }
     here::install(&dir.join(STUB));
 }
-
 struct Out<'a> {
     room: &'a mut [u8],
     len: usize,
 }
-
 impl Out<'_> {
     fn push(&mut self, said: &[u8]) {
         let fits = said.len().min(self.room.len() - self.len);
         self.room[self.len..self.len + fits].copy_from_slice(&said[..fits]);
         self.len += fits;
     }
-
     fn clean(&mut self, said: &[u8]) {
         for one in said {
             let kept = if one.is_ascii_graphic() || *one == b' ' || *one >= 0x80 {
@@ -48,7 +39,6 @@ impl Out<'_> {
             self.push(&[kept]);
         }
     }
-
     fn number(&mut self, mut value: u64) {
         let mut digits = [0u8; 20];
         let mut at = digits.len();
@@ -62,7 +52,6 @@ impl Out<'_> {
         }
         self.push(&digits[at..]);
     }
-
     fn hex(&mut self, mut value: u64) {
         let mut digits = [0u8; 16];
         let mut at = digits.len();
@@ -77,7 +66,6 @@ impl Out<'_> {
         self.push(b"0x");
         self.push(&digits[at..]);
     }
-
     fn line(&mut self, key: &[u8], value: &[u8]) {
         self.push(key);
         self.push(b" ");
@@ -85,7 +73,6 @@ impl Out<'_> {
         self.push(b"\n");
     }
 }
-
 fn written(
     what: &[u8],
     code: u64,
@@ -148,7 +135,6 @@ fn written(
     }
     Some(out.len)
 }
-
 fn room_bytes(len: usize) -> &'static [u8] {
     let room = ROOMY.load(Ordering::Acquire);
     #[allow(unsafe_code)]
@@ -156,11 +142,9 @@ fn room_bytes(len: usize) -> &'static [u8] {
         std::slice::from_raw_parts(room, len.min(ROOM))
     }
 }
-
 #[cfg(unix)]
 mod here {
     #![allow(unsafe_code)]
-
     use std::ffi::{c_int, c_void, CString};
     use std::path::Path;
     use std::sync::OnceLock;
@@ -175,13 +159,9 @@ mod here {
         libc::SIGABRT,
         libc::SIGTRAP,
     ];
-
     static PATH: OnceLock<CString> = OnceLock::new();
-
     static BEFORE: OnceLock<Vec<(c_int, libc::sigaction)>> = OnceLock::new();
-
     static OWN: OnceLock<usize> = OnceLock::new();
-
     pub fn install(stub: &Path) {
         use std::os::unix::ffi::OsStrExt as _;
         let Ok(path) = CString::new(stub.as_os_str().as_bytes()) else {
@@ -207,7 +187,6 @@ mod here {
                 .collect()
         });
     }
-
     fn name_of(signal: c_int) -> &'static [u8] {
         match signal {
             libc::SIGSEGV => b"SIGSEGV",
@@ -219,7 +198,6 @@ mod here {
             _ => b"signal",
         }
     }
-
     fn skipped(ips: &[usize]) -> usize {
         let own = OWN.get().copied().unwrap_or(0);
         let base = |ip: usize| {
@@ -241,7 +219,6 @@ mod here {
             start
         }
     }
-
     #[cfg(target_os = "linux")]
     fn thread_name(into: &mut [u8; 32]) -> usize {
         unsafe {
@@ -249,7 +226,6 @@ mod here {
         }
         into.iter().position(|one| *one == 0).unwrap_or(0)
     }
-
     #[cfg(target_os = "macos")]
     fn thread_name(into: &mut [u8; 32]) -> usize {
         unsafe {
@@ -257,17 +233,14 @@ mod here {
         }
         into.iter().position(|one| *one == 0).unwrap_or(0)
     }
-
     #[cfg(target_os = "linux")]
     fn on_main() -> bool {
         i64::from(unsafe { libc::gettid() }) == i64::from(std::process::id())
     }
-
     #[cfg(target_os = "macos")]
     fn on_main() -> bool {
         unsafe { libc::pthread_main_np() != 0 }
     }
-
     extern "C" fn caught(signal: c_int, info: *mut libc::siginfo_t, _context: *mut c_void) {
         let mut ips = [0usize; MOST_FRAMES];
         let len = crate::crashes::stacks::trace_into(&mut ips);
@@ -323,11 +296,9 @@ mod here {
         }
     }
 }
-
 #[cfg(windows)]
 mod here {
     #![allow(unsafe_code)]
-
     use std::os::windows::ffi::OsStrExt as _;
     use std::path::Path;
     use std::sync::OnceLock;
@@ -346,16 +317,13 @@ mod here {
     use crate::crashes::stacks::win;
 
     static PATH: OnceLock<Vec<u16>> = OnceLock::new();
-
     static BEFORE: OnceLock<LPTOP_LEVEL_EXCEPTION_FILTER> = OnceLock::new();
-
     pub fn install(stub: &Path) {
         let mut wide: Vec<u16> = stub.as_os_str().encode_wide().collect();
         wide.push(0);
         let _ = PATH.set(wide);
         let _ = BEFORE.get_or_init(|| unsafe { SetUnhandledExceptionFilter(Some(caught)) });
     }
-
     unsafe extern "system" fn caught(pointers: *const EXCEPTION_POINTERS) -> i32 {
         if !pointers.is_null() {
             let record = unsafe { (*pointers).ExceptionRecord };
@@ -407,13 +375,11 @@ mod here {
         }
     }
 }
-
 pub struct Stub {
     pub at: u64,
     pub version: String,
     pub report: Report,
 }
-
 pub fn exception_name(code: u64) -> Option<&'static str> {
     Some(match code {
         0xC000_0005 => "EXCEPTION_ACCESS_VIOLATION",
@@ -430,11 +396,9 @@ pub fn exception_name(code: u64) -> Option<&'static str> {
         _ => return None,
     })
 }
-
 fn parsed_hex(said: &str) -> Option<u64> {
     u64::from_str_radix(said.trim().strip_prefix("0x")?, 16).ok()
 }
-
 pub fn read_stub(text: &str) -> Option<Stub> {
     let mut lines = text.lines();
     if lines.next()? != "orden-crash 1" {
@@ -513,11 +477,9 @@ pub fn read_stub(text: &str) -> Option<Stub> {
         report,
     })
 }
-
 pub fn stub_path(dir: &Path) -> PathBuf {
     dir.join(STUB)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{exception_name, install, read_stub, STUB};
@@ -525,7 +487,6 @@ mod tests {
     use std::path::Path;
 
     const CHILD: &str = "ORDEN_CRASH_TEST_CHILD";
-
     #[inline(never)]
     #[allow(unsafe_code)]
     fn crash_here() {
@@ -533,7 +494,6 @@ mod tests {
             std::hint::black_box(std::ptr::null_mut::<u32>()).write_volatile(7);
         }
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn quietly() {
@@ -544,10 +504,8 @@ mod tests {
             SetErrorMode(SEM_NOGPFAULTERRORBOX | SEM_FAILCRITICALERRORS);
         }
     }
-
     #[cfg(not(windows))]
     fn quietly() {}
-
     #[test]
     fn a_forced_native_crash_leaves_a_report_the_next_launch_reads() {
         if let Some(dir) = std::env::var_os(CHILD) {
@@ -574,7 +532,6 @@ mod tests {
             .status()
             .expect("the child ran");
         assert!(!status.success());
-
         let text = std::fs::read_to_string(dir.path().join(STUB)).expect("the crash was written");
         let stub = read_stub(&text).expect("a stub");
         assert_eq!(stub.version, "9.9.9");
@@ -599,7 +556,6 @@ mod tests {
             "the crash was placed at {offset:#x}, not in crash_here at {expected:#x}: {text}"
         );
     }
-
     #[test]
     fn a_crash_written_in_its_handler_is_read_back_as_a_report() {
         let stub = read_stub(
@@ -620,7 +576,6 @@ mod tests {
         assert_eq!(stub.report.breadcrumbs[0].what, "web_open");
         assert!(read_stub("something else").is_none());
     }
-
     #[test]
     fn a_windows_exception_is_named() {
         assert_eq!(

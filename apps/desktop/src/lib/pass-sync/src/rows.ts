@@ -11,39 +11,32 @@ export interface HeldVault {
   key: Uint8Array<ArrayBuffer>
   row: VaultRow
 }
-
 interface HeldItem {
   key: Uint8Array<ArrayBuffer>
   row: ItemRow
 }
-
 export interface Held {
   opened: Opened
   vaults: Map<string, HeldVault>
   items: Map<string, HeldItem>
 }
-
 export interface Put {
   vault: string
   id: string
   envelope: Envelope
   fresh?: true
 }
-
 export interface Sealed {
   change: Change
   held: HeldItem[]
   made: Item[]
 }
-
 export function newId(): string {
   return globalThis.crypto.randomUUID()
 }
-
 export function emptyHeld(opened: Opened): Held {
   return { opened, vaults: new Map(), items: new Map() }
 }
-
 export function vaultOf(row: VaultRow, meta: VaultMeta): Vault {
   return {
     ...meta,
@@ -54,7 +47,6 @@ export function vaultOf(row: VaultRow, meta: VaultMeta): Vault {
     shared: row.members > 1,
   }
 }
-
 export function metaOf(vault: Vault): VaultMeta {
   return {
     v: 1,
@@ -67,11 +59,9 @@ export function metaOf(vault: Vault): VaultMeta {
     hidePasswordsFromViewers: vault.hidePasswordsFromViewers,
   }
 }
-
 export function itemOf(row: { vault: string; id: string; rev: number }, envelope: Envelope): Item {
   return { ...envelope, id: row.id, vault: row.vault, rev: row.rev }
 }
-
 export function envelopeOf(item: Item): Envelope {
   return {
     v: 1,
@@ -86,26 +76,21 @@ export function envelopeOf(item: Item): Envelope {
     used: item.used,
   }
 }
-
 function sameContent(a: Content, b: Content): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
-
 export function tombstoneOf(row: ItemRow, at: number): ItemRow {
   return { ...row, rev: row.rev + 1, key: '', body: '', at, pending: true, deleted: true }
 }
-
 export function withMade(items: readonly Item[], made: readonly Item[]): Item[] {
   const byId = new Map(made.map((item) => [item.id, item]))
   const known = new Set(items.map((item) => item.id))
   return [...items.map((item) => byId.get(item.id) ?? item), ...made.filter((item) => !known.has(item.id))]
 }
-
 export function without(items: readonly Item[], ids: Iterable<string>): Item[] {
   const gone = new Set(ids)
   return items.filter((item) => !gone.has(item.id))
 }
-
 export function folderFor(folders: Folder[], path: string | null): string | null {
   if (path === null) return null
   let parent: string | null = null
@@ -119,7 +104,6 @@ export function folderFor(folders: Folder[], path: string | null): string | null
   }
   return parent
 }
-
 export async function openAll(opened: Opened): Promise<{ held: Held; vaults: Vault[]; items: Item[] }> {
   const held = emptyHeld(opened)
   const [vaultRows, itemRows] = await Promise.all([readVaults(), readItems()])
@@ -150,7 +134,6 @@ export async function openAll(opened: Opened): Promise<{ held: Held; vaults: Vau
   )
   return { held, vaults, items }
 }
-
 export async function openVersions(box: HeldVault, vault: string, id: string): Promise<Item[]> {
   const rows = await readVersions(vault, id)
   const opened = await Promise.all(
@@ -165,7 +148,6 @@ export async function openVersions(box: HeldVault, vault: string, id: string): P
   )
   return opened.flat()
 }
-
 async function movedVersions(
   from: HeldVault,
   to: HeldVault,
@@ -188,13 +170,11 @@ async function movedVersions(
   )
   return moved.flat()
 }
-
 export function heldVault(held: Held, id: string): HeldVault {
   const box = held.vaults.get(id)
   if (!box) throw new Error('pass: no such vault')
   return box
 }
-
 export async function sealPuts(held: Held, puts: readonly Put[], current: readonly Item[]): Promise<Sealed> {
   const at = Date.now()
   const before = new Map(current.map((item) => [item.id, item]))

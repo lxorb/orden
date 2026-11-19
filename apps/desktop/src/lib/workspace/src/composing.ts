@@ -23,48 +23,37 @@ export interface Composes {
     copied(from: string, to: string, root: string | null, into: string | null): void
   }
 }
-
 function keptLike(ws: Composes, from: string, to: string): void {
   ws.protection.copied(from, to, ws.rootHolding(from), ws.rootHolding(to))
 }
-
 export function mergeable(root: string | null, path: string, writable: (path: string) => boolean): boolean {
   return root !== null && isMarkdownPath(path) && withinSpace(root, path) !== null && writable(path)
 }
-
 export function carvable(path: string, writable: (path: string) => boolean): boolean {
   return isMarkdownPath(path) && writable(path)
 }
-
 export async function mergeInto(ws: Composes, from: string, into: string): Promise<void> {
   if (samePath(from, into)) return
-
   const root = ws.activeSpace?.root ?? null
   const { canWriteAt } = await import('../../sharing/src/api')
   if (!mergeable(root, from, canWriteAt) || !mergeable(root, into, canWriteAt)) return
-
   ws.flush()
   const words = (path: string) => ws.documentAt(path)?.text ?? invoke<string>('read_note', { path }).catch(() => null)
   const [fromContent, intoContent] = await Promise.all([words(from), words(into)])
   if (fromContent === null || intoContent === null) return
-
   const joined = merged(intoContent, links.rebased(fromContent, from, into) ?? fromContent)
-
   await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
   await writeFile(into, joined)
   keptLike(ws, from, into)
   ws.reload(into, joined)
-
   const relinked: string[] = []
   const relinks: { path: string; before: string; after: string }[] = []
   await ws.retarget(from, into, { touched: relinked, wrote: relinks })
   const intoAfter = await invoke<string>('read_note', { path: into }).catch(() => joined)
-
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
   await invoke('delete_note', { path: from })
   const back = crypto.randomUUID()
   await ws.fileGone(from, 'file', back)
-
   ws.undone.record({
     kind: 'merge',
     from,
@@ -79,25 +68,20 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   await ws.loadTree()
   await ws.open(into)
 }
-
 export async function splitAtCaret(ws: Composes, at: number): Promise<void> {
   const tab = ws.active
   if (!tab?.path) return
   ws.flush()
-
   const doc = tab.doc
   await carve(ws, tab.path, doc, (named) => splitAt(doc, at, UNTITLED, named), 'split')
 }
-
 export async function extractSelection(ws: Composes, from: number, to: number): Promise<void> {
   const tab = ws.active
   if (!tab?.path) return
   ws.flush()
-
   const doc = tab.doc
   await carve(ws, tab.path, doc, (named) => extracted(doc, from, to, UNTITLED, named), 'extract')
 }
-
 async function carve(
   ws: Composes,
   path: string,
@@ -107,10 +91,8 @@ async function carve(
 ) {
   const { canWriteAt } = await import('../../sharing/src/api')
   if (!carvable(path, canWriteAt)) return
-
   const wanted = cut()
   if (!wanted) return
-
   const folder = folderOf(path)
   let file = await ws.freeNameOnDisk(folder, `${wanted.name}.md`)
   for (let other = 2; links.takesOver(joinPath(folder, file)) && other < 100; other++) {
@@ -118,14 +100,11 @@ async function carve(
   }
   const created = joinPath(folder, file)
   const carved = cut(file.replace(/\.md$/, '')) ?? wanted
-
   await writeFile(created, carved.taken)
   keptLike(ws, path, created)
-
   await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
   await writeFile(path, carved.kept)
   ws.reload(path, carved.kept)
-
   ws.undone.record({
     kind,
     from: path,

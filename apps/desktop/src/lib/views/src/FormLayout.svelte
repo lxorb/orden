@@ -10,7 +10,6 @@
   import { propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const base = $derived(live.base)
   const view = $derived(live.view)
@@ -22,7 +21,6 @@
   let sent = $state<{ path: string; name: string } | null>(null)
   let sending = $state(false)
   const kindOf = (field: string) => (base ? editorOf(base, field, live.rows) : 'text')
-
   function valueOf(field: string, said: string | boolean): Value | null {
     if (typeof said === 'boolean') return said
     const words = said.trim()
@@ -37,7 +35,6 @@
         .filter(Boolean)
     return words
   }
-
   async function send() {
     if (!base || sending || !kit.adds) return
     const properties: Record<string, Value> = {}
@@ -63,7 +60,6 @@
       sending = false
     }
   }
-
   function fieldMenu(event: MouseEvent, field: string) {
     if (!base) return
     event.preventDefault()
@@ -143,33 +139,27 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .title {
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
   }
-
   .field {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .name {
     color: var(--muted-strong);
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
   }
-
   .needed {
     margin-inline-start: 0.2em;
     color: var(--danger);
   }
-
   .missing {
     animation: shake var(--dur-base) var(--ease-out);
   }
-
   @keyframes shake {
     20%,
     60% {
@@ -180,21 +170,17 @@
       translate: 3px 0;
     }
   }
-
   .foot {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .spring {
     flex: 1;
   }
-
   .made {
     animation: arrive var(--dur-base) var(--ease-out);
   }
-
   @keyframes arrive {
     from {
       opacity: 0;

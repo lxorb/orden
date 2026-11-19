@@ -44,7 +44,6 @@ One step in the table is not the app's own: `window shown, as Windows reports it
 the window manager's answer, polled from here, because that step happens before there
 is a page to say so.
 """
-
 import argparse
 import json
 import os
@@ -62,23 +61,14 @@ import winreg
 ROOT = pathlib.Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
 sys.path.insert(0, str(ROOT / "scripts"))
-
 from probe_app import close_app, main_window, run_probe  # noqa: E402
-
 IDENTIFIER = "so.orden.Orden.launch"
-
 EXE = APP / "src-tauri" / "target" / "release" / "orden.exe"
-
 PATIENCE = 45
-
 PEEK = 0.002
-
 SHOWN = "window shown, as Windows reports it"
-
 LAST = "window: launch order finished"
-
 OPENED = "note-0000.md"
-
 PHASES = [
     (SHOWN, "window shown"),
     ("window: page requested", "webview up, page requested"),
@@ -89,18 +79,13 @@ PHASES = [
     ("window: active tab painted", "note painted"),
     (LAST, "launch order finished"),
 ]
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 def roaming(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 def local(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
-
 def wipe(identifier: str) -> None:
-
     if ".launch" not in identifier:
         raise SystemExit(f"{identifier} is not a launch probe's identifier; nothing is wiped")
     for folder in (roaming(identifier), local(identifier)):
@@ -109,15 +94,11 @@ def wipe(identifier: str) -> None:
             if not folder.exists():
                 break
             time.sleep(0.25)
-
 def trace_file(identifier: str) -> pathlib.Path:
     return local(identifier) / "logs" / "startup-trace.log"
-
 def load() -> str:
-
     try:
         import psutil
-
         cpu = psutil.cpu_percent(interval=1.0)
         free = psutil.virtual_memory().available / 2**30
         return f"load {cpu:.0f}%, {free:.1f} GB free"
@@ -134,9 +115,7 @@ def load() -> str:
             check=False,
         )
         return f"load {answer.stdout.strip() or '?'}%"
-
 def machine() -> str:
-
     name = platform.processor() or platform.machine()
     try:
         with winreg.OpenKey(
@@ -149,7 +128,6 @@ def machine() -> str:
     memory = ""
     try:
         import psutil
-
         memory = f", {psutil.virtual_memory().total / 2**30:.0f} GB"
     except ImportError:
         pass
@@ -171,16 +149,13 @@ def machine() -> str:
         except OSError:
             continue
     return f"{name}, {cores} threads{memory}, Windows {platform.version()}, WebView2 {webview}"
-
 def corpus(kind: str, into: pathlib.Path) -> None:
-
     space = into / ("Big" if kind == "big" else "Notes")
     space.mkdir(parents=True, exist_ok=True)
     if kind != "big":
         return
     for at in range(5000):
         (space / f"note-{at:04d}.md").write_text(note(at), encoding="utf-8")
-
 def note(at: int) -> str:
     tag = ["#wind", "#ink", "#paper", "#kestrel", "#plan"][at % 5]
     to = (at + 7) % 5000
@@ -215,9 +190,7 @@ def note(at: int) -> str:
         ]
         part += 1
     return "\n".join(lines)
-
 def endpoint(identifier: str, patience: float = 20) -> tuple[int, str] | None:
-
     path = roaming(identifier) / "automation.json"
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -229,7 +202,6 @@ def endpoint(identifier: str, patience: float = 20) -> tuple[int, str] | None:
             pass
         time.sleep(0.2)
     return None
-
 def asked(identifier: str, verb: str, args: dict) -> dict:
     found = endpoint(identifier)
     if not found:
@@ -242,7 +214,6 @@ def asked(identifier: str, verb: str, args: dict) -> dict:
     )
     with urllib.request.urlopen(request, timeout=30) as answer:
         return json.loads(answer.read().decode())
-
 def last_line(path: pathlib.Path) -> dict | None:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -250,7 +221,6 @@ def last_line(path: pathlib.Path) -> dict | None:
         return None
     lines = [one for one in text.splitlines() if one.startswith("{")]
     return json.loads(lines[-1]) if lines else None
-
 def launched(
     exe: pathlib.Path,
     identifier: str,
@@ -260,13 +230,11 @@ def launched(
     then=None,
     args: dict | None = None,
 ) -> dict | None:
-
     if cold:
         wipe(identifier)
     trace = trace_file(identifier)
     if trace.exists():
         trace.unlink()
-
     environment = {
         **os.environ,
         "ORDEN_TRACE_STARTUP": "1",
@@ -297,15 +265,12 @@ def launched(
             app.kill()
             app.wait(timeout=30)
         settled(identifier)
-
     if read is None:
         return None
     if shown is not None:
         read["steps"].append({"step": SHOWN, "at": shown})
     return read
-
 def settled(identifier: str, patience: float = 30) -> None:
-
     try:
         import psutil
     except ImportError:
@@ -326,7 +291,6 @@ def settled(identifier: str, patience: float = 30) -> None:
         if not alive:
             return
         time.sleep(0.2)
-
 def opened_note(identifier: str):
     def run(_app, read: dict) -> dict:
         answer = asked(identifier, "open", {"path": f"Big/{OPENED}"})
@@ -334,14 +298,10 @@ def opened_note(identifier: str):
             say(f"the note would not open: {answer.get('error')}")
         time.sleep(3)
         return read
-
     return run
-
 def throttled(identifier: str, rate: float):
-
     def run(_app, read: dict) -> dict:
         from playwright.sync_api import sync_playwright
-
         port_file = next(local(identifier).rglob("DevToolsActivePort"), None)
         if port_file is None:
             say("no DevTools port: the probe was not started with one")
@@ -382,11 +342,8 @@ def throttled(identifier: str, rate: float):
             browser.close()
         read["throttled"] = {"rate": rate, "marks": marks}
         return read
-
     return run
-
 def table(runs: list[dict], what: str) -> dict[str, float]:
-
     names: list[str] = []
     for run in runs:
         for step in run["steps"]:
@@ -400,7 +357,6 @@ def table(runs: list[dict], what: str) -> dict[str, float]:
         ]
         rows.append((statistics.median(at), name, statistics.median(cpu) if cpu else None, len(at)))
     rows.sort()
-
     print()
     print(f"{what}, median of {len(runs)}:")
     print(f"  {'step':52} {'at':>9} {'since':>9} {'cpu':>9}")
@@ -410,17 +366,14 @@ def table(runs: list[dict], what: str) -> dict[str, float]:
         print(f"  {name[:52]:52} {middle:9.1f} {middle - last:9.1f} {column}")
         last = middle
     return {name: middle for middle, name, _spent, _count in rows}
-
 def phases(medians: dict[str, float]) -> list[str]:
     return [
         f"{label} {medians[name]:.0f}" if name in medians else f"{label} -" for name, label in PHASES
     ]
-
 def main() -> int:
     if sys.platform != "win32":
         print("this drive launches a Windows build")
         return 0
-
     ask = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ask.add_argument("--exe", type=pathlib.Path, default=EXE)
     ask.add_argument("--identifier", default=IDENTIFIER)
@@ -430,10 +383,8 @@ def main() -> int:
     ask.add_argument("--throttle", type=float, default=0, help="also a warm launch slowed this many times")
     ask.add_argument("--json", type=pathlib.Path, help="every launch's line, written here")
     told = ask.parse_args()
-
     if not told.exe.exists():
         raise SystemExit(f"no probe build at {told.exe}; see this file's docstring")
-
     print(f"machine: {machine()}")
     kept: dict[str, list[dict]] = {}
     summary: list[str] = []
@@ -442,7 +393,6 @@ def main() -> int:
         for kind in corpora:
             spaces = pathlib.Path(scratch) / kind
             corpus(kind, spaces)
-
             if told.only != "warm":
                 before = load()
                 cold = []
@@ -456,7 +406,6 @@ def main() -> int:
                     kept[f"cold {kind}"] = cold
                     medians = table(cold, f"cold, {kind} ({before} before, {after} after)")
                     summary.append(f"cold {kind}: " + ", ".join(phases(medians)))
-
             if told.only != "cold":
                 launched(
                     told.exe,
@@ -477,7 +426,6 @@ def main() -> int:
                     kept[f"warm {kind}"] = warm
                     medians = table(warm, f"warm, {kind} ({before} before, {after} after)")
                     summary.append(f"warm {kind}: " + ", ".join(phases(medians)))
-
                 if told.throttle and warm:
                     slowed = []
                     port = {"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--remote-debugging-port=0"}
@@ -512,12 +460,10 @@ def main() -> int:
                             page = statistics.median(m[name] for m in slowed if name in m)
                             print(f"  {name[:52]:52} {page:9.1f}  total {native + page:9.1f}")
                         kept[f"throttled {kind}"] = [{"native": native, "marks": m} for m in slowed]
-
     print()
     for line in summary:
         print(line)
     if told.json:
         told.json.write_text(json.dumps(kept, indent=1), encoding="utf-8")
     return 0
-
 raise SystemExit(main())

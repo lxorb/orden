@@ -1,18 +1,14 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PATIENCE = 40
-
 ANDROID = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
-
 RIGHT_TABS = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -25,15 +21,12 @@ async () => {
   return null
 }
 """
-
 ROWS = "() => [...document.querySelectorAll('.palette [role=\"option\"]')].map((one) => one.innerText.split('\\n')[0].trim())"
-
 def context_for(browser: Browser, device: str):
     if device == "desktop":
         return browser.new_context(viewport={"width": 1280, "height": 820})
     size = {"width": 420, "height": 880} if device == "phone" else {"width": 1180, "height": 820}
     return browser.new_context(viewport=size, has_touch=True, is_mobile=True, user_agent=ANDROID)
-
 def palette_rows(page: Page, word: str) -> list[str]:
     page.keyboard.press("Control+Shift+KeyP")
     wait_for(page, "() => !!document.querySelector('.palette input')", "the palette")
@@ -43,7 +36,6 @@ def palette_rows(page: Page, word: str) -> list[str]:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     return rows
-
 def one(browser: Browser, device: str) -> None:
     context = context_for(browser, device)
     page = context.new_page()
@@ -55,7 +47,6 @@ def one(browser: Browser, device: str) -> None:
         say(f"[{device}] touch: {said}")
         if device != "desktop" and not said:
             wrong(f"[{device}] the page did not take itself for a touch screen")
-
         tabs = page.evaluate(RIGHT_TABS)
         say(f"[{device}] the right side's tabs: {tabs}")
         if tabs is None:
@@ -64,14 +55,12 @@ def one(browser: Browser, device: str) -> None:
             wrong("[desktop] the right side lost its Ask tab")
         elif device != "desktop" and "Ask" in tabs:
             wrong(f"[{device}] the right side offers the AI panel: {tabs}")
-
         rows = palette_rows(page, "ask")
         say(f"[{device}] the palette for ask: {rows}")
         if device == "desktop" and "Ask" not in rows:
             wrong("[desktop] the palette lost its row for the AI panel")
         elif device != "desktop" and "Ask" in rows:
             wrong(f"[{device}] the palette offers the AI panel: {rows}")
-
         if device != "desktop":
             page.keyboard.press("Control+Shift+KeyA")
             page.evaluate("() => { window.ordenApp.workspace.rightPanel = 'ask' }")
@@ -86,9 +75,7 @@ def one(browser: Browser, device: str) -> None:
         DRIVE.shot(page, f"{device}-right")
     finally:
         context.close()
-
 def drive(browser: Browser) -> None:
     for device in ("desktop", "phone", "tablet"):
         one(browser, device)
-
 raise SystemExit(DRIVE.run(drive, "a phone and a tablet have no AI panel, and a desktop keeps it"))

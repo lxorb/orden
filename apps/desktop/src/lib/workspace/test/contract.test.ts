@@ -11,23 +11,18 @@ vi.stubGlobal('localStorage', {
   length: 0,
   clear: () => held.clear(),
 })
-
 const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spacesFor, workspace } = await import('../src/api')
-
 const HERE = join(import.meta.dirname, '..')
 const LIB = join(HERE, '..')
-
 const own = JSON.parse(readFileSync(join(HERE, 'module.json'), 'utf8')) as {
   dependsOn: string[]
   pending?: string[]
 }
-
 function layerOf(name: string): string | null {
   const file = join(LIB, name, 'module.json')
   if (!existsSync(file)) return null
   return (JSON.parse(readFileSync(file, 'utf8')) as { layer: string }).layer
 }
-
 describe('the module stands on its own', () => {
   test('it leans on no content or feature module, which reach it through its services instead', () => {
     const above = own.dependsOn.filter((name) => {
@@ -37,7 +32,6 @@ describe('the module stands on its own', () => {
     expect(above).toEqual([])
   })
 })
-
 describe('the workspace', () => {
   test('a blank note opens as the active tab, beside the ones already open', () => {
     workspace.openBlank('Plan', '# Plan')
@@ -49,7 +43,6 @@ describe('the workspace', () => {
     expect(workspace.tabs.map((one) => one.id)).toEqual(expect.arrayContaining([first?.id, second?.id]))
   })
 })
-
 describe('its notices', () => {
   test('open through a door, and a failure told lingers until it is retried or dismissed', async () => {
     const { failed, gateNote } = await notices()
@@ -64,7 +57,6 @@ describe('its notices', () => {
     gateNote.dismiss()
     expect(gateNote.said).toBe(null)
   })
-
   test('the first visit is fresh only once seeded and until it is answered', async () => {
     const { firstVisit } = await firstVisiting()
     expect(firstVisit.fresh).toBe(false)
@@ -76,38 +68,32 @@ describe('its notices', () => {
     expect(firstVisit.fresh).toBe(false)
   })
 })
-
 describe('where tabs may move', () => {
   const spaces = [
     { id: 'home', name: 'Home', root: '/notes/Home' },
     { id: 'work', name: 'Work', root: '/notes/Work' },
   ]
   const tab = (path: string | null) => movingOf({ path, note: { home: null, shared: null } })
-
   test('a file in one space is offered every other space it may be written to', () => {
     const where = { spaces, activeSpaceId: 'home' }
     expect(spacesFor([tab('/notes/Home/a.md')], where, () => true).map((one) => one.id)).toEqual(['work'])
   })
-
   test('nowhere, when the file itself may not be written', () => {
     const where = { spaces, activeSpaceId: 'home' }
     const writable = (path: string) => !path.endsWith('a.md')
     expect(spacesFor([tab('/notes/Home/a.md')], where, writable)).toEqual([])
   })
-
   test('nowhere, with only one space', () => {
     expect(
       spacesFor([tab('/notes/Home/a.md')], { spaces: spaces.slice(0, 1), activeSpaceId: 'home' }, () => true),
     ).toEqual([])
   })
-
   test('a path belongs to the space whose folder holds it, a tab without one to its home', () => {
     expect(ownerOf('/notes/Work/b.md', null, spaces)).toBe('work')
     expect(ownerOf('/elsewhere/b.md', null, spaces)).toBeNull()
     expect(ownerOf(null, 'home', spaces)).toBe('home')
   })
 })
-
 describe('the hidden tabs choice', () => {
   test('hidden tabs run, pause or ask, and nothing else', () => {
     expect(['run', 'pause', 'ask', 'sleep', 1].map(isHiddenTabs)).toEqual([true, true, true, false, false])

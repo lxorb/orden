@@ -8,7 +8,6 @@ export function keptCoverOf(path: string | null | undefined): Cover | null {
   const src = meta?.[COVER_KEY]
   return src ? { src, position: coverPosition(meta[COVER_POSITION_KEY]) } : null
 }
-
 export function setCoverPosition(path: string, position: number): void {
   workspace.itemMeta.set(path, { [COVER_POSITION_KEY]: String(position) })
 }

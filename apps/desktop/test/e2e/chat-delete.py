@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 SEED = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -27,7 +25,6 @@ async () => {
   return made.map((one) => one.path)
 }
 """
-
 DELETE = r"""
 async (path) => {
   const ws = window.ordenApp.workspace
@@ -39,30 +36,24 @@ async (path) => {
   return true
 }
 """
-
 THERE = "(path) => window.ordenApp.workspace.notes.some((one) => one.path === path)"
-
 DIALOG = '[role="dialog"], [role="alertdialog"]'
-
 def asked(page: Page) -> str | None:
     try:
         page.wait_for_selector(DIALOG, timeout=3000)
     except Exception:
         return None
     return page.locator(DIALOG).last.inner_text()
-
 def gone(page: Page, path: str) -> bool:
     try:
         page.wait_for_function(f"(path) => !({THERE})(path)", arg=path, timeout=5000)
     except Exception:
         return False
     return True
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 760}, color_scheme="dark")
     DRIVE.open(page)
     plans, quiet = page.evaluate(SEED)
-
     if not page.evaluate(DELETE, plans):
         wrong("no Delete in the chat row's menu")
         return
@@ -81,7 +72,6 @@ def drive(browser: Browser) -> None:
         page.locator(DIALOG).last.get_by_role("button", name="Delete").click()
         if not gone(page, plans):
             wrong("Delete in the question left the chat")
-
     page.evaluate(DELETE, quiet)
     page.wait_for_timeout(300)
     if page.locator(DIALOG).count():
@@ -91,5 +81,4 @@ def drive(browser: Browser) -> None:
         wrong("a chat with no messages was not deleted")
     shot(page, "after")
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive))

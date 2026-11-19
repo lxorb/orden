@@ -7,7 +7,6 @@ import type { RemoteSpace } from '../../src/lib/accounts/src/routes'
 import { idle, settle } from './settle'
 
 await warmCalls()
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -19,41 +18,33 @@ Element.prototype.animate = () =>
     playState: 'finished',
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 interface Asked {
   route: string
   body: Record<string, unknown> | null
   token: string | null
 }
-
 type Answer = (body: Record<string, unknown> | null) => [number, unknown]
-
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 let asked: Asked[]
 let ended: number
-
 function serve(routes: Record<string, Answer>) {
   vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
     const route = `${init.method ?? 'GET'} ${new URL(url).pathname}`
     const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null
     const token = (init.headers as Record<string, string> | undefined)?.authorization ?? null
-
     asked.push({ route, body, token })
     const [status, json] = routes[route]?.(body) ?? [404, { error: 'no such route' }]
     return Promise.resolve(new Response(JSON.stringify(json), { status }))
   })
 }
-
 const SIGNED_OUT: Record<string, Answer> = {
   'POST /v1/auth/signout': () => [200, { ok: true }],
 }
-
 function open() {
   shown = mount(DeleteAccount, { target: host, props: { onend: () => (ended += 1) } })
   flushSync()
 }
-
 function type(label: string, value: string) {
   const field = host.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)
   if (!field) throw new Error(`no field ${label}`)
@@ -61,17 +52,14 @@ function type(label: string, value: string) {
   field.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
 }
-
 function submit() {
   host.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 }
-
 function press(words: string) {
   const button = [...host.querySelectorAll('button')].find((one) => one.textContent.trim() === words)
   if (!button) throw new Error(`no button ${words}`)
   button.click()
 }
-
 beforeEach(() => {
   asked = []
   ended = 0
@@ -80,7 +68,6 @@ beforeEach(() => {
   host = document.createElement('div')
   document.body.append(host)
 })
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
@@ -91,31 +78,25 @@ afterEach(() => {
   account.error = null
   vi.unstubAllGlobals()
 })
-
 test('pressing it mails a code; a wrong one is said, and nothing is deleted', async () => {
   serve({
     'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
     'POST /v1/account/delete/verify': () => [400, { error: 'that code is not right' }],
   })
-
   open()
   await settle()
-
   expect(asked).toEqual([{ route: 'POST /v1/account/delete/code', body: {}, token: 'Bearer session' }])
   expect(host.textContent).toContain('me@example.com')
   expect(host.textContent).not.toContain('Notes on this device stay')
   expect(host.querySelector('input[aria-label="App code to delete"]')).toBeNull()
-
   type('Code', '111111')
   submit()
   await settle()
-
   expect(host.textContent).toContain('that code is not right')
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
   expect(host.textContent).not.toContain('Delete now')
   expect(account.user?.id).toBe('me')
 })
-
 test('the codes, the second one, the last question, and then signed out and quiet', async () => {
   serve({
     'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: true }],
@@ -126,25 +107,20 @@ test('the codes, the second one, the last question, and then signed out and quie
     'DELETE /v1/account': (body) => (body?.ticket === 'earned' ? [200, { ok: true }] : [400, { error: 'start again' }]),
     ...SIGNED_OUT,
   })
-
   open()
   await settle()
-
   type('Code', '123456')
   type('App code to delete', '654321')
   submit()
   await settle()
-
   expect(asked[1]).toEqual({
     route: 'POST /v1/account/delete/verify',
     body: { code: '123456', second: '654321' },
     token: 'Bearer session',
   })
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
-
   press('Delete now')
   await settle()
-
   expect(asked.map((one) => one.route)).toEqual([
     'POST /v1/account/delete/code',
     'POST /v1/account/delete/verify',
@@ -156,12 +132,10 @@ test('the codes, the second one, the last question, and then signed out and quie
   expect(account.token).toBeNull()
   expect(account.syncable).toBe(false)
   expect(ended).toBe(1)
-
   const before = asked.length
   await idle(50)
   expect(asked.length).toBe(before)
 })
-
 test('the last question names the spaces other people lose, and only those', async () => {
   const space = (name: string, role: string, shared: boolean) =>
     ({ id: name, name, role, shared }) as unknown as RemoteSpace
@@ -170,22 +144,18 @@ test('the last question names the spaces other people lose, and only those', asy
     'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
     'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
   })
-
   open()
   await settle()
   expect(host.textContent).not.toContain('Also gone')
-
   type('Code', '123456')
   submit()
   await settle()
-
   expect(host.textContent).toContain('Also gone for everyone in')
   expect(host.textContent).toContain('Plans')
   expect(host.textContent).not.toContain('Diary')
   expect(host.textContent).not.toContain('Theirs')
   account.spaces = []
 })
-
 async function deleteNow() {
   open()
   await settle()
@@ -196,7 +166,6 @@ async function deleteNow() {
   await settle()
   await settle()
 }
-
 const SESSION_GONE: Record<string, Answer> = {
   'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
   'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
@@ -204,15 +173,12 @@ const SESSION_GONE: Record<string, Answer> = {
   'GET /v1/me': () => [401, { error: 'sign in first' }],
   ...SIGNED_OUT,
 }
-
 test('an answer lost on the way back from a delete that happened still signs out', async () => {
   serve({
     ...SESSION_GONE,
     'POST /v1/account/left': (body) => [200, { gone: body?.ticket === 'earned' }],
   })
-
   await deleteNow()
-
   expect(asked.find((one) => one.route === 'POST /v1/account/left')).toEqual({
     route: 'POST /v1/account/left',
     body: { ticket: 'earned' },
@@ -223,37 +189,28 @@ test('an answer lost on the way back from a delete that happened still signs out
   expect(account.error).toBeNull()
   expect(ended).toBe(1)
 })
-
 test('a session ended elsewhere is not taken for a deleted account', async () => {
   serve({ ...SESSION_GONE, 'POST /v1/account/left': () => [200, { gone: false }] })
-
   await deleteNow()
-
   expect(account.user).toBeNull()
   expect(account.open).toBe(true)
   expect(account.error).toBe('Signed out elsewhere; the account was not deleted. Sign in again to delete it.')
   expect(ended).toBe(1)
 })
-
 test('a server that cannot say whether it went is not taken for a deleted account either', async () => {
   serve(SESSION_GONE)
-
   await deleteNow()
-
   expect(account.user).toBeNull()
   expect(account.open).toBe(true)
   expect(account.error).toBe('Signed out; sign in again to see whether the account is still there.')
   expect(ended).toBe(1)
 })
-
 test('Cancel ends it with nothing deleted', async () => {
   serve({ 'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }] })
-
   open()
   await settle()
   press('Cancel')
   await settle()
-
   expect(ended).toBe(1)
   expect(asked.map((one) => one.route)).toEqual(['POST /v1/account/delete/code'])
   expect(account.user?.id).toBe('me')

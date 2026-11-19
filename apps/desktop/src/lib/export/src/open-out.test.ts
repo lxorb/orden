@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({ trusted: true }))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get active() {
@@ -19,9 +18,7 @@ vi.mock('../../workspace/src/api', () => ({
   },
 }))
 vi.mock('../../sharing/src/api', () => ({ trustsHtmlIn: () => world.trusted }))
-
 const { openOut } = await import('./context')
-
 test.each([true, false])('the open document goes out saying whether it is trusted: %s', (trusted) => {
   world.trusted = trusted
   expect(openOut()).toEqual({

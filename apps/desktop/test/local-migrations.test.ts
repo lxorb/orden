@@ -9,7 +9,6 @@ const FOLDER = fileURLToPath(new URL('../../../services/sync/migrations/', impor
 const MIGRATIONS = readdirSync(FOLDER)
   .filter((name) => name.endsWith('.sql'))
   .sort()
-
 test('wrangler applies every migration in order to an empty local D1', () => {
   const state = mkdtempSync(join(tmpdir(), 'orden-local-d1-'))
   try {

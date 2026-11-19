@@ -10,19 +10,16 @@ export interface Place {
   root: string
   path: string
 }
-
 export function chatName(path: string): string {
   const name = nameOf(path)
   return name.toLowerCase().endsWith(CHAT_EXTENSION) ? name.slice(0, -CHAT_EXTENSION.length) : name
 }
-
 export async function makePointer(folder: string, name: string): Promise<Place | null> {
   const space = spaceHolding(workspace.spaces, folder)
   const remote = space ? sync.remoteIdFor(space.root) : null
   if (!space || !remote) return null
   const pointer = await makeChat(remote)
   if (!pointer) return null
-
   const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}${CHAT_EXTENSION}`))
   const text = chatText(pointer)
   await writeFile(path, text)
@@ -30,13 +27,11 @@ export async function makePointer(folder: string, name: string): Promise<Place |
   sync.wrote(path, text)
   return { root: space.root, path }
 }
-
 export async function readPointer(path: string): Promise<string | null> {
   if (!path.toLowerCase().endsWith(CHAT_EXTENSION)) return null
   const text = await invoke<string>('read_note', { path }).catch(() => null)
   return text === null ? null : (chatOf(text)?.chat ?? null)
 }
-
 function pointerPaths(entry: Entry, out: string[]): string[] {
   for (const child of entry.children) {
     if (child.is_dir) pointerPaths(child, out)
@@ -44,7 +39,6 @@ function pointerPaths(entry: Entry, out: string[]): string[] {
   }
   return out
 }
-
 export async function findPointers(
   rank: (chat: string, place: Place) => number = () => 0,
   unread: (root: string) => void = () => undefined,

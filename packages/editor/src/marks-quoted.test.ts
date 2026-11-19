@@ -17,16 +17,13 @@ function across(doc: string, mark = '**') {
   marksAcross(mark)({ state, dispatch: (one: Transaction) => (next = one.state) })
   return next.doc.toString()
 }
-
 describe('bold over several blocks inside a quote', () => {
   test('two paragraphs of one quote get a run each', () => {
     expect(across('> a\n>\n> b')).toBe('> **a**\n>\n> **b**')
   })
-
   test('the items of a quoted list get a run each', () => {
     expect(across('> - a\n> - b')).toBe('> - **a**\n> - **b**')
   })
-
   test('two headings one under the other get a run each', () => {
     expect(across('# A\n## B')).toBe('# **A**\n## **B**')
   })

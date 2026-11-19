@@ -5,25 +5,20 @@ import { describe, expect, test } from 'vitest'
 import { keptViews } from '../test/views'
 
 const open = keptViews()
-
 class Gap extends WidgetType {
   constructor(readonly block: boolean) {
     super()
   }
-
   override eq(other: Gap) {
     return other.block === this.block
   }
-
   toDOM() {
     const dom = document.createElement(this.block ? 'div' : 'span')
     dom.className = 'gap'
     return dom
   }
 }
-
 const shown = StateEffect.define<DecorationSet>()
-
 const below = StateField.define<DecorationSet>({
   create: () => Decoration.none,
   update(value, tr) {
@@ -32,10 +27,8 @@ const below = StateField.define<DecorationSet>({
   },
   provide: (field) => EditorView.decorations.from(field),
 })
-
 const DOC = `# Big\n\n${'[a]('.repeat(40)}`
 const LINE = 7
-
 function viewWith(above: { from: number; to: number }[]): EditorView {
   const view = new EditorView({
     state: EditorState.create({
@@ -55,9 +48,7 @@ function viewWith(above: { from: number; to: number }[]): EditorView {
   open.push(view)
   return view
 }
-
 const lineText = (view: EditorView): string => view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
-
 describe('a replaced range that starts under one of higher precedence', () => {
   test.each([
     ['at the same place', [{ from: LINE, to: LINE + 1 }], LINE, LINE + 100],
@@ -83,7 +74,6 @@ describe('a replaced range that starts under one of higher precedence', () => {
     expect(view.contentDOM.querySelectorAll('.gap')).toHaveLength(0)
     expect(lineText(view)).toBe(DOC.slice(LINE).slice(above.reduce((n, r) => n + r.to - r.from, 0)))
   })
-
   test('is drawn again after the text in it changes', () => {
     const view = viewWith([{ from: LINE, to: LINE + 1 }])
     view.dispatch({

@@ -13,29 +13,22 @@ vi.mock('./socket', () => ({
     }
   },
 }))
-
 const { JoinedRoom } = await import('./joined')
-
 class Probe extends JoinedRoom {
   readonly drawn: string[] = []
-
   asks(): boolean {
     return this.holds()
   }
-
   leave() {
     this.left = true
   }
-
   protected together() {
     // Holds nothing to bring together.
   }
-
   protected showPresent() {
     this.drawn.push(this.scheme)
   }
 }
-
 function probe(onFile = () => true): Probe {
   return new Probe({
     noteId: 'n1',
@@ -49,32 +42,24 @@ function probe(onFile = () => true): Probe {
     holds: onFile,
   })
 }
-
 describe('a joined room', () => {
   test('draws the others again in a scheme that changed, and only then', () => {
     const room = probe()
-
     room.repaint('dark')
     room.repaint('light')
     room.repaint('light')
-
     expect(room.drawn).toEqual(['light'])
   })
-
   test('holds its file until it is left', () => {
     const room = probe()
     expect(room.asks()).toBe(true)
-
     room.leave()
     expect(room.asks()).toBe(false)
   })
-
   test('and not once what is open above has moved on to another', () => {
     let arrivals = 0
     const room = probe(() => arrivals === 0)
-
     arrivals += 1
-
     expect(room.asks()).toBe(false)
   })
 })

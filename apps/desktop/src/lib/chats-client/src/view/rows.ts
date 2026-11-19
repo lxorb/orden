@@ -6,7 +6,6 @@ export type Item<M extends Message = Message> =
   | { kind: 'day'; key: string; day: string; at: number }
   | { kind: 'new'; key: 'new' }
   | { kind: 'message'; key: string; message: M; head: boolean; pending: boolean; seen: Who[] }
-
 export interface Rowing<M extends Message = Message> {
   messages: readonly M[]
   outbox: readonly M[]
@@ -15,17 +14,14 @@ export interface Rowing<M extends Message = Message> {
   dayOf: (at: number) => string
   reads: ReadonlyMap<Who, number>
 }
-
 export function rowsOf<M extends Message>(rowing: Rowing<M>): Item<M>[] {
   const { me, readAtOpen, dayOf } = rowing
   const items: Item<M>[] = []
   const placed = rowing.messages.filter(keepsRow)
   const seen = seenAt(placed, rowing.reads, me)
-
   let lastDay: string | null = null
   let previous: M | null = null
   let lined = readAtOpen === null
-
   const add = (message: M, pending: boolean) => {
     const day = dayOf(message.at)
     let head = previous === null || startsGroup(previous, message)
@@ -49,12 +45,10 @@ export function rowsOf<M extends Message>(rowing: Rowing<M>): Item<M>[] {
     })
     previous = message
   }
-
   for (const message of placed) add(message, false)
   for (const message of rowing.outbox) add(message, true)
   return items
 }
-
 function startsGroup(previous: Message, next: Message): boolean {
   return (
     previous.author !== next.author ||
@@ -64,7 +58,6 @@ function startsGroup(previous: Message, next: Message): boolean {
     next.deleted
   )
 }
-
 function seenAt(messages: readonly Message[], reads: ReadonlyMap<Who, number>, me: Who | null): Map<string, Who[]> {
   const out = new Map<string, Who[]>()
   if (reads.size === 0 || messages.length === 0) return out
@@ -75,7 +68,6 @@ function seenAt(messages: readonly Message[], reads: ReadonlyMap<Who, number>, m
   }
   return out
 }
-
 function lastAtOrBefore(messages: readonly Message[], seq: number): number {
   let low = 0
   let high = messages.length - 1

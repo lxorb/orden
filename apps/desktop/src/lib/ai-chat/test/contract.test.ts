@@ -3,13 +3,11 @@ import { askPart, chatReplies, chatsUnread, lookAtLaunch, type Panel } from '../
 
 vi.mock('../../workspace/src/api', () => ({ workspace: { active: null } }))
 vi.mock('../../gates/src/api', () => ({ chatsOn: () => true }))
-
 describe('the unread mark', () => {
   test('stays off while there is no space to look in', async () => {
     await lookAtLaunch([])
     expect(chatsUnread.any).toBe(false)
   })
-
   test('is what the Ask panel’s sidebar part says, beside its new chat and threads tools', () => {
     expect(askPart.unread?.()).toBe(false)
     chatsUnread.any = true
@@ -22,7 +20,6 @@ describe('the unread mark', () => {
     expect(typeof askPart.toTab).toBe('function')
   })
 })
-
 describe('a reply drafted for a chat', () => {
   test('sends nothing while no module lends the chats', async () => {
     const { draftReply } = await chatReplies()

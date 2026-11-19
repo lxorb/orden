@@ -11,19 +11,13 @@ use crate::quiet::{self, Owner};
 use orden_agents::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
 
 pub const LABEL: &str = "agent-";
-
 pub const WIDTH: u32 = 1280;
 pub const HEIGHT: u32 = 800;
-
 pub const PARKED: &str =
     "that tab's page was parked to save memory: it opens again with the agent's next call";
-
 const ALL_TABS: usize = 8;
-
 const IDLE: Duration = Duration::from_secs(600);
-
 pub const BUILDING: Duration = Duration::from_secs(20);
-
 #[derive(Clone, Debug)]
 pub struct Tab {
     pub id: String,
@@ -37,12 +31,10 @@ pub struct Tab {
     pub used: Instant,
     pub size: (u32, u32),
 }
-
 impl Tab {
     pub fn label(&self) -> String {
         format!("{LABEL}{}", self.id)
     }
-
     pub fn listed(&self) -> AgentTab {
         AgentTab {
             id: self.id.clone(),
@@ -54,19 +46,13 @@ impl Tab {
         }
     }
 }
-
 static TABS: Mutex<Vec<Tab>> = Mutex::new(Vec::new());
-
 static GONE: Mutex<Vec<(String, Instant)>> = Mutex::new(Vec::new());
-
 static NEXT: AtomicU64 = AtomicU64::new(1);
-
 static TICKING: std::sync::Once = std::sync::Once::new();
-
 fn tabs() -> std::sync::MutexGuard<'static, Vec<Tab>> {
     TABS.held()
 }
-
 pub fn owner(label: &str) -> Option<Owner> {
     let id = label.strip_prefix(LABEL)?;
     tabs().iter().find(|one| one.id == id).map(|one| Owner {
@@ -75,7 +61,6 @@ pub fn owner(label: &str) -> Option<Owner> {
         label: label.to_string(),
     })
 }
-
 pub fn of(agent: &str) -> Vec<Tab> {
     tabs()
         .iter()
@@ -83,32 +68,27 @@ pub fn of(agent: &str) -> Vec<Tab> {
         .cloned()
         .collect()
 }
-
 pub fn held(id: &str) -> Option<Tab> {
     tabs().iter().find(|one| one.id == id).cloned()
 }
-
 pub fn find(agent: &str, id: &str) -> Option<Tab> {
     tabs()
         .iter()
         .find(|one| one.agent == agent && one.id == id)
         .cloned()
 }
-
 pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
     if !orden_agents::policy::on_the_web(url) {
         return Err("an agent's page stays on the web".to_string());
     }
     orden_agents::policy::site_allowed_for(&owner.agent, url, store_of(&owner.tab))
 }
-
 fn store_of(id: &str) -> Store {
     tabs()
         .iter()
         .find(|one| one.id == id)
         .map_or(Store::Reader, |one| one.store)
 }
-
 pub fn open(
     app: &AppHandle,
     agent: &str,
@@ -144,7 +124,6 @@ pub fn open(
     said(app, &tab);
     Ok(tab)
 }
-
 pub fn page(app: &AppHandle, agent: &str, id: &str) -> Result<(Tab, View), Answer> {
     let Some(mut tab) = find(agent, id) else {
         return Err(Answer::error(
@@ -168,17 +147,14 @@ pub fn page(app: &AppHandle, agent: &str, id: &str) -> Result<(Tab, View), Answe
         .map(|view| (tab, view))
         .ok_or_else(|| Answer::error(Code::Failed, "the tab's page could not be built again"))
 }
-
 fn touch(id: &str) {
     set(id, |one| one.used = Instant::now());
 }
-
 pub fn set(id: &str, change: impl FnOnce(&mut Tab)) {
     if let Some(one) = tabs().iter_mut().find(|one| one.id == id) {
         change(one);
     }
 }
-
 pub fn web_address(url: &str) -> Result<Url, Answer> {
     let address: Url = url.trim().parse().map_err(|error| {
         Answer::error(
@@ -196,7 +172,6 @@ pub fn web_address(url: &str) -> Result<Url, Answer> {
         ))
     }
 }
-
 fn make_room(app: &AppHandle, agent: &str, most: usize, keep: Option<&str>) {
     loop {
         let open: Vec<Tab> = tabs().iter().filter(|one| !one.parked).cloned().collect();
@@ -218,7 +193,6 @@ fn make_room(app: &AppHandle, agent: &str, most: usize, keep: Option<&str>) {
         park(app, &oldest.id);
     }
 }
-
 pub fn park(app: &AppHandle, id: &str) {
     let label = format!("{LABEL}{id}");
     set(id, |one| {
@@ -227,7 +201,6 @@ pub fn park(app: &AppHandle, id: &str) {
     });
     let_go(app, &label);
 }
-
 pub fn close(app: &AppHandle, id: &str) {
     let gone = {
         let mut all = tabs();
@@ -245,7 +218,6 @@ pub fn close(app: &AppHandle, id: &str) {
         );
     }
 }
-
 pub fn close_all(app: &AppHandle, agent: Option<&str>) {
     let ids: Vec<String> = tabs()
         .iter()
@@ -256,9 +228,7 @@ pub fn close_all(app: &AppHandle, agent: Option<&str>) {
         close(app, &id);
     }
 }
-
 const ANCHOR: &str = "web-session";
-
 pub fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool), String> {
     if store.is_none() {
         if let Some(anchor) = crate::engines::view(app, ANCHOR) {
@@ -282,11 +252,9 @@ pub fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool), String
         .map(|view| (view, true))
         .ok_or_else(|| "the page was never built".into())
 }
-
 pub fn let_go_of_bare(app: &AppHandle, view: &View) {
     let_go(app, &view.label());
 }
-
 fn let_go(app: &AppHandle, label: &str) {
     if let Some(view) = crate::engines::view(app, label) {
         view.close();
@@ -294,17 +262,14 @@ fn let_go(app: &AppHandle, label: &str) {
     crate::cdp::forget(label);
     quiet::forget(app, label);
 }
-
 pub fn bye(agent: &str) {
     let mut gone = GONE.held();
     gone.retain(|(one, _)| one != agent);
     gone.push((agent.to_string(), Instant::now()));
 }
-
 pub fn back(agent: &str) {
     GONE.held().retain(|(one, _)| one != agent);
 }
-
 pub fn said(app: &AppHandle, tab: &Tab) {
     let _ = app.emit(
         EVENT,
@@ -316,7 +281,6 @@ pub fn said(app: &AppHandle, tab: &Tab) {
         },
     );
 }
-
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let Some(reader) = crate::engines::reader_of(tab.store_name.as_deref()) else {
         return build_page(app, tab, address);
@@ -334,7 +298,6 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     }
     Ok(())
 }
-
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     (crate::engines::pages()?.build)(
         app,
@@ -348,7 +311,6 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
         address.map(Url::as_str),
     )
 }
-
 pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
     let (store, store_name, size) = {
         let all = tabs();
@@ -372,9 +334,7 @@ pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
     engines::opened(&opener.label, &id);
     Some(id)
 }
-
 static SHOWN: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
-
 pub fn shown_as(id: &str) -> Option<String> {
     SHOWN
         .held()
@@ -382,7 +342,6 @@ pub fn shown_as(id: &str) -> Option<String> {
         .find(|(agent_tab, _)| agent_tab == id)
         .map(|(_, reader)| reader.clone())
 }
-
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     if held(id).is_none() {
         return Err("there is no such agent tab".into());
@@ -391,7 +350,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     close(app, id);
     Err("an agent's page on Orden's own Chromium has no window: the tab loads its address".into())
 }
-
 fn start_ticking(app: &AppHandle) {
     TICKING.call_once(|| {
         let app = app.clone();
@@ -401,7 +359,6 @@ fn start_ticking(app: &AppHandle) {
         });
     });
 }
-
 fn tick(app: &AppHandle) {
     let idle: Vec<String> = tabs()
         .iter()
@@ -427,7 +384,6 @@ fn tick(app: &AppHandle) {
     crate::cdp::sleep_idle(app);
     orden_agents::approvals::expire(app);
 }
-
 #[cfg(test)]
 mod tests {
     use super::web_address;

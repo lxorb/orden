@@ -7,10 +7,8 @@ Object.assign(SVGElement.prototype, {
   createSVGMatrix: matrix,
   getScreenCTM: matrix,
 })
-
 const { flowSource } = await import('@orden/editor/flow')
 const { drawDiagram } = await import('./diagrams')
-
 describe('a flowchart a note drew', () => {
   test('points nowhere a link in a note may not point', async () => {
     const svg = await drawDiagram(
@@ -18,17 +16,14 @@ describe('a flowchart a note drew', () => {
       'flow',
       'light',
     )
-
     expect(svg).toContain('<svg')
     expect(svg).not.toContain('javascript:')
     expect(svg).toContain('https://example.com/ok')
   })
-
   test('calls nothing when one of its boxes is pressed', async () => {
     const flowchart = (await import('flowchart.js')).default
     const called = vi.fn()
     Object.assign(window, { pressed: called })
-
     const press = (code: string) => {
       const host = document.createElement('div')
       document.body.append(host)
@@ -41,12 +36,9 @@ describe('a flowchart a note drew', () => {
         host.remove()
       }
     }
-
     const code = 'st=>start: Start:$pressed\ne=>end: End\nst->e'
-
     press(code)
     expect(called).toHaveBeenCalled()
-
     called.mockClear()
     press(flowSource(code))
     expect(called).not.toHaveBeenCalled()

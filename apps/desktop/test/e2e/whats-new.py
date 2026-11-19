@@ -2,7 +2,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTES = """**46 bugs fixed** since v0.21.0.
 
 ### New
@@ -11,9 +10,7 @@ NOTES = """**46 bugs fixed** since v0.21.0.
 - A themes button takes the light and dark switch's place
 - Choose an icon for every kind of essential
 """
-
 SIZES = [("desktop", 1280, 800, "light"), ("desktop-dark", 1280, 800, "dark"), ("phone", 390, 844, "light")]
-
 def main() -> int:
     with DRIVE.session() as browser:
         for name, width, height, scheme in SIZES:
@@ -47,7 +44,5 @@ def main() -> int:
                 wrong(f"[{name}] the notes are still up after Done")
             say(f"[{name}] {title}: shown and closed")
             context.close()
-
     return DRIVE.verdict("the release notes show in their sheet and close on Done")
-
 raise SystemExit(main())

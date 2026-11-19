@@ -9,7 +9,6 @@
   import { pass } from '../../pass-sync/src/api'
 
   const NAMES: Record<AliasService, string> = { simplelogin: 'SimpleLogin', addy: 'addy.io' }
-
   let account = $state.raw<AliasAccount | null>(null)
   let read = $state(false)
   let provider = $state<AliasService>('simplelogin')
@@ -18,9 +17,7 @@
   let said = $state<string | null>(null)
   let wrong = $state<string | null>(null)
   let options = $state.raw<AliasOptions | null>(null)
-
   const providers = $derived((Object.keys(NAMES) as AliasService[]).map((one) => ({ value: one, label: NAMES[one] })))
-
   $effect(() => {
     let current = true
     void pass.aliasProvider().then((kept) => {
@@ -32,7 +29,6 @@
       current = false
     }
   })
-
   $effect(() => {
     const now = account
     options = null
@@ -50,7 +46,6 @@
       current = false
     }
   })
-
   async function test(): Promise<boolean> {
     testing = true
     said = null
@@ -66,7 +61,6 @@
       testing = false
     }
   }
-
   async function connect(event: SubmitEvent) {
     event.preventDefault()
     if (!(await test())) return
@@ -75,14 +69,12 @@
     account = next
     key = ''
   }
-
   async function disconnect() {
     await pass.setAliasProvider(null)
     account = null
     said = null
     wrong = null
   }
-
   async function chose(change: Partial<Pick<AliasAccount, 'mailbox' | 'suffix'>>) {
     if (!account) return
     const next = { ...account, ...change }
@@ -160,32 +152,26 @@
   .card {
     margin: 0;
   }
-
   .card > :global(* + *) {
     border-top: 1px solid var(--line);
   }
-
   .row {
     padding: var(--space-1) var(--space-3);
   }
-
   .mark {
     display: grid;
     place-items: center;
     color: var(--muted-strong);
   }
-
   .key {
     display: flex;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
   }
-
   .key input {
     flex: 1;
     min-width: 0;
   }
-
   .line {
     margin: 0;
     font-size: var(--text-sm);

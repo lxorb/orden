@@ -7,12 +7,10 @@ import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
 import { noteRowsOf, readOf } from '@orden/scan/rows'
 
 export { noteRowsOf }
-
 export interface SpaceName {
   root: string
   name: string
 }
-
 export interface RowsChange {
   root: string
   space: string
@@ -22,9 +20,7 @@ export interface RowsChange {
   from?: { space: string; path: string; rows: readonly Row[] }
   firstRead?: true
 }
-
 export type RowsListener = (change: RowsChange) => void
-
 export interface Host {
   scan(root: string): Promise<SpaceLinks | null>
   read(path: string): Promise<string | null>
@@ -35,11 +31,9 @@ export interface Host {
   list?(root: string, path: string): boolean
   meta?(root: string, path: string): Readonly<Record<string, string>> | null
 }
-
 const CHUNK = 250
 const encoder = new TextEncoder()
 const bytesOf = (text: string): number => encoder.encode(text).length
-
 interface Held {
   root: string
   name: string
@@ -50,49 +44,39 @@ interface Held {
   since: ((files: Map<string, Row[]>) => void)[]
   vault: boolean
 }
-
 export class RowsStore {
   private readonly spaces = new Map<string, Held>()
   private readonly listeners = new Set<RowsListener>()
   private readonly queue: Held[] = []
   private draining = false
-
   constructor(private readonly host: Host) {}
-
   of(space?: string): readonly Row[] {
     if (space === undefined) return [...this.spaces.values()].flatMap((held) => this.flat(held))
-
     const held = [...this.spaces.values()].find((one) => one.name === space || samePath(one.root, space))
     return held ? this.flat(held) : []
   }
-
   openOf(space: string | undefined, locked: (path: string) => boolean): readonly Row[] {
     return this.of(space).filter((row) => {
       const root = this.rootOf(row)
       return root === null || !locked(insideSpace(root, row.path))
     })
   }
-
   at(path: string): readonly Row[] {
     const held = this.holding(path)
     if (!held) return []
     const relative = within(held.root, path, held.root)
     return relative === null ? [] : (held.files.get(pathKey(relative, held.root)) ?? [])
   }
-
   rootOf(row: Row): string | null {
     return [...this.spaces.values()].find((one) => one.name === row.space)?.root ?? null
   }
-
   get ready(): boolean {
     return [...this.spaces.values()].every((one) => !one.reading) && !this.queue.length
   }
-
   watch(listener: RowsListener): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   settled(listener: () => void): () => void {
     let due = false
     let live = true
@@ -109,12 +93,10 @@ export class RowsStore {
       stop()
     }
   }
-
   spacesAre(spaces: readonly SpaceName[]) {
     for (const [key, held] of this.spaces) {
       if (!spaces.some((one) => samePath(one.root, held.root))) this.forget(key)
     }
-
     for (const space of spaces) {
       const held = this.spaces.get(pathKey(space.root))
       if (!held) {
@@ -124,13 +106,11 @@ export class RowsStore {
       if (held.name !== space.name) this.rename(held, space.name)
     }
   }
-
   saved(path: string, content: string) {
     const held = this.holding(path)
     if (!held) return
     const relative = within(held.root, path, held.root)
     if (relative === null || !isMarkdownPath(relative)) return
-
     const key = pathKey(relative, held.root)
     const now = this.host.now()
     this.edit(held, key, (before) => {
@@ -140,7 +120,6 @@ export class RowsStore {
       return this.rowsIn(held, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
     })
   }
-
   indexed(root: string, scans: readonly ScannedNote[]) {
     const held = this.spaces.get(pathKey(root))
     if (!held) return
@@ -149,29 +128,24 @@ export class RowsStore {
       this.edit(held, pathKey(scan.path, held.root), () => this.rowsIn(held, readOf(scan)))
     }
   }
-
   follow(op: FileOp): Promise<void> | undefined {
     if (op.op === 'removed') {
       if (op.kind === 'space') this.forget(pathKey(op.path))
       else this.gone(op.path)
       return undefined
     }
-
     if (op.op === 'moved') {
       if (op.kind === 'space') this.spaceMoved(op.from, op.to)
       else if (this.moved(op.from, op.to)) return undefined
       else return op.kind === 'folder' ? this.folderCame(op.to) : this.fileCame(op.to)
       return undefined
     }
-
     return op.kind === 'folder' ? this.folderCame(op.path) : this.fileCame(op.path)
   }
-
   private flat(held: Held): Row[] {
     held.flat ??= [...held.files.values()].flat()
     return held.flat
   }
-
   private rowsIn(held: Held, read: NoteRead): Row[] {
     if (samePath(read.path, AGENTS_NAME, held.root)) return []
     const meta = this.host.meta?.(held.root, read.path) ?? null
@@ -183,18 +157,15 @@ export class RowsStore {
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
     return rows
   }
-
   private holding(path: string): Held | null {
     for (const held of this.spaces.values()) {
       if (within(held.root, path, held.root) !== null) return held
     }
     return null
   }
-
   private tell(change: RowsChange) {
     for (const listener of this.listeners) listener(change)
   }
-
   private edit(held: Held, key: string, next: (before: Row[] | undefined) => Row[] | null, from?: RowsChange['from']) {
     const change = (files: Map<string, Row[]>) => {
       const rows = next(files.get(key))
@@ -202,7 +173,6 @@ export class RowsStore {
       else files.set(key, rows)
     }
     if (held.reading) held.since.push(change)
-
     const before = held.files.get(key) ?? []
     change(held.files)
     held.flat = null
@@ -218,7 +188,6 @@ export class RowsStore {
     }
     this.tell(from ? { ...told, from } : told)
   }
-
   private add(space: SpaceName) {
     const held: Held = {
       root: space.root,
@@ -234,7 +203,6 @@ export class RowsStore {
     this.queue.push(held)
     void this.drain()
   }
-
   private forget(key: string) {
     const held = this.spaces.get(key)
     if (!held) return
@@ -242,7 +210,6 @@ export class RowsStore {
     const removed = this.flat(held)
     this.tell({ root: held.root, space: held.name, path: null, removed, added: [] })
   }
-
   private rename(held: Held, name: string) {
     const removed = this.flat(held)
     held.name = name
@@ -254,7 +221,6 @@ export class RowsStore {
     held.flat = null
     this.tell({ root: held.root, space: name, path: null, removed, added: this.flat(held) })
   }
-
   private spaceMoved(from: string, to: string) {
     const held = this.spaces.get(pathKey(from))
     if (!held) return
@@ -262,13 +228,11 @@ export class RowsStore {
     held.root = to
     this.spaces.set(pathKey(to), held)
   }
-
   private gone(path: string) {
     const held = this.holding(path)
     if (!held) return
     const at = within(held.root, path, held.root)
     if (at === null) return
-
     if (held.reading) {
       held.since.push((files) => {
         for (const [key, rows] of files) {
@@ -279,7 +243,6 @@ export class RowsStore {
     }
     for (const key of this.keysUnder(held, at)) this.edit(held, key, () => null)
   }
-
   private moved(from: string, to: string): boolean {
     const was = this.holding(from)
     const now = this.holding(to)
@@ -287,18 +250,15 @@ export class RowsStore {
     const at = within(was.root, from, was.root)
     const there = now ? within(now.root, to, now.root) : null
     if (at === null) return true
-
     if (was.reading || now?.reading) {
       this.gone(from)
       return !now
     }
-
     for (const key of this.keysUnder(was, at)) {
       const rows = was.files.get(key) ?? []
       const path = rows[0]?.path
       this.edit(was, key, () => null)
       if (!now || there === null || path === undefined) continue
-
       const rest = within(at, path, was.root) ?? ''
       const moved = rest ? (there ? `${there}/${rest}` : rest) : there
       this.edit(
@@ -310,7 +270,6 @@ export class RowsStore {
     }
     return true
   }
-
   private keysUnder(held: Held, at: string): string[] {
     const keys: string[] = []
     for (const [key, rows] of held.files) {
@@ -319,7 +278,6 @@ export class RowsStore {
     }
     return keys
   }
-
   again(root: string) {
     const held = this.spaces.get(pathKey(root))
     if (!held || held.reading) return
@@ -327,32 +285,27 @@ export class RowsStore {
     this.queue.push(held)
     void this.drain()
   }
-
   described(path: string): void {
     void this.fileCame(path)
   }
-
   private async fileCame(path: string) {
     const held = this.holding(path)
     if (!held || !isMarkdownPath(path)) return
     const content = await this.host.read(path)
     if (content !== null) this.saved(path, content)
   }
-
   private async folderCame(path: string) {
     const held = this.holding(path)
     if (!held) return
     const at = within(held.root, path, held.root)
     const found = await this.host.scan(path)
     if (!found || at === null || this.spaces.get(pathKey(held.root)) !== held) return
-
     for (const note of found.notes) {
       const relative = at ? `${at}/${note.path}` : note.path
       if (!isMarkdownPath(relative)) continue
       this.edit(held, pathKey(relative, held.root), () => this.rowsIn(held, readOf({ ...note, path: relative })))
     }
   }
-
   private async drain() {
     if (this.draining) return
     this.draining = true
@@ -366,12 +319,10 @@ export class RowsStore {
       this.draining = false
     }
   }
-
   private async read(held: Held) {
     held.vault = await this.host.vault(held.root).catch(() => false)
     const notes = await this.notesOf(held)
     if (this.spaces.get(pathKey(held.root)) !== held) return
-
     const files = new Map<string, Row[]>()
     let counted = 0
     for (const note of notes) {
@@ -387,9 +338,7 @@ export class RowsStore {
       }
       if (++counted % CHUNK === 0) await this.host.breathe()
     }
-
     if (this.spaces.get(pathKey(held.root)) !== held) return
-
     for (const change of held.since) change(files)
     held.since = []
     const removed = this.flat(held)
@@ -399,7 +348,6 @@ export class RowsStore {
     held.known = true
     this.tell({ root: held.root, space: held.name, path: null, removed, added: this.flat(held) })
   }
-
   private async notesOf(held: Held): Promise<readonly ScannedNote[]> {
     const open = this.host.open()
     if (samePath(open.root, held.root)) {
@@ -410,7 +358,6 @@ export class RowsStore {
     return (await this.host.scan(held.root))?.notes ?? []
   }
 }
-
 function bornWhen(saved: readonly Row[], had: readonly Row[]): Row[] {
   const first = saved[0]
   const ctime = had[0]?.file.ctime

@@ -6,7 +6,6 @@ export interface Turn {
   deltaMode: number
   ctrlKey: boolean
 }
-
 export function wheelAlong(turn: Turn, page: number): number {
   if (turn.ctrlKey || Math.abs(turn.deltaX) >= Math.abs(turn.deltaY)) return 0
   return wheelPixels(turn, page).y

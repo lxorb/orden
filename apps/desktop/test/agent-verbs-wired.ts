@@ -2,7 +2,6 @@ import { registerAgentTabKind, registerAgentVerbs, registerTabKind } from '@orde
 
 const terminal = () => import('../src/lib/terminal/src/api')
 const terminalAgent = async () => (await terminal()).terminalAgent()
-
 registerAgentVerbs(async () => (await import('../src/lib/agent-host/src/api')).hostVerbs)
 registerAgentVerbs(async () => (await import('../src/lib/explorer/src/api')).explorerVerbs())
 registerAgentVerbs(async () => (await import('../src/lib/apps/src/api')).applicationVerbs())

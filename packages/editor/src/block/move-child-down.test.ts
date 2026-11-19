@@ -26,25 +26,21 @@ function viewOf(doc: string, caret: number) {
   } as unknown as EditorView
   return view
 }
-
 function moved(doc: string, words: string, command: typeof moveBlockDown): string {
   const view = viewOf(doc, doc.indexOf(words) + 2)
   command(view)
   return view.state.doc.toString()
 }
-
 describe('Move block down on a block inside a list item', () => {
   test('swaps it with that sibling inside the parent, as Move block up does', () => {
     const doc = '- one\n  - a\n  - b\n- two\n'
     expect(moved('- one\n  - b\n  - a\n- two\n', '- a', moveBlockUp)).toBe(doc)
     expect(moved(doc, '- a', moveBlockDown)).toBe('- one\n  - b\n  - a\n- two\n')
   })
-
   test('keeps a subtask under its task', () => {
     const doc = '- [ ] Pack\n  - [ ] socks\n  - [ ] shirts\n'
     expect(moved(doc, '- [ ] socks', moveBlockDown)).toBe('- [ ] Pack\n  - [ ] shirts\n  - [ ] socks\n')
   })
-
   test('keeps a paragraph inside its item when it moves past the item’s last block', () => {
     const doc = '- a\n\n  first words\n\n  second words\n\n- b\n'
     expect(moved('- a\n\n  second words\n\n  first words\n\n- b\n', 'first', moveBlockUp)).toBe(doc)

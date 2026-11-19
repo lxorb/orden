@@ -14,21 +14,18 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
   const address = (path: string) => (path ? `${base}/${path}` : base)
   const isKeep = (path: string) => basename(path) === KEEP
   const planes = new Map<string, PlaneMarks>()
-
   const fileRow = async (path: string, entry: InternalEntry): Promise<FileRow | undefined> => {
     if (!entry.key) return undefined
     const content = await folder.bytes.readText(entry.key)
     if (content === null) return undefined
     return { path, content, modified: entry.modified, created: entry.made }
   }
-
   const keepRow = (path: string, entry: InternalEntry): FileRow => ({
     path: `${path}/${KEEP}`,
     content: '',
     modified: entry.modified,
     created: entry.made,
   })
-
   const listing = async () => {
     const out: { path: string; entry: InternalEntry }[] = []
     for (const { path, entry } of await folder.list()) {
@@ -36,7 +33,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
     }
     return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   }
-
   const wordRows = async (wanted: (path: string) => boolean) => {
     const out: FileRow[] = []
     for (const { path, entry } of await listing()) {
@@ -49,14 +45,12 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
     }
     return out
   }
-
   const asset = async (path: string, entry: InternalEntry): Promise<AssetRow | undefined> => {
     if (!entry.key) return undefined
     const bytes = await folder.bytes.read(entry.key)
     if (!bytes) return undefined
     return { path, type: assetType(path), data: toBase64(bytes), modified: entry.modified }
   }
-
   const unkeep = async (path: string) => {
     const at = inSpace(parent(path))
     const entry = await folder.at(at)
@@ -64,7 +58,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
     const inside = (await folder.list()).some((one) => one.path.startsWith(`${at}/`))
     if (!inside) await folder.remove(at)
   }
-
   const write = async (path: string, content: string, plane?: PlaneMarks) => {
     if (isKeep(path)) {
       await folder.mkdir(inSpace(parent(path)))
@@ -74,7 +67,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
     if (plane) planes.set(normalise(path), plane)
     else planes.delete(normalise(path))
   }
-
   const files: Rows['files'] = {
     async get(path) {
       if (isKeep(path)) {
@@ -105,7 +97,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
       }
     },
   }
-
   const assets: Rows['assets'] = {
     async get(path) {
       if (words(path) || isKeep(path)) return undefined
@@ -120,7 +111,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
       if ((await folder.at(at))?.key) await folder.remove(at)
     },
   }
-
   const stats: Rows['stats'] = {
     holds: (path) => folder.holds(inSpace(path)),
     all: async () =>
@@ -139,7 +129,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
       return Promise.resolve()
     },
   }
-
   const listed = (one: Awaited<ReturnType<InternalFolder['trash']>>[number]): Trashed => ({
     id: one.id,
     kind: one.kind,
@@ -149,7 +138,6 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
     ...(one.apart ? { apart: true } : {}),
     ...(one.arrived ? { arrived: true } : {}),
   })
-
   return {
     files,
     assets,

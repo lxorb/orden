@@ -6,7 +6,6 @@ import type { Space } from '../../workspace/src/api'
 export async function nameHere(space: Space): Promise<void> {
   const id = sync.remoteIdFor(space.root)
   if (!id || !account.user) return
-
   const given = await prompt.ask({
     title: `Your name in ${space.name}`,
     value: account.user.nicks?.[id] ?? '',
@@ -14,7 +13,6 @@ export async function nameHere(space: Space): Promise<void> {
     confirmLabel: 'Save',
   })
   if (given === null) return
-
   try {
     await nameIn(id, given.trim())
   } catch (error) {

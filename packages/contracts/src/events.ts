@@ -1,7 +1,5 @@
 export const EVENT_PREFIX = 'orden://'
-
 export type EventName = `${typeof EVENT_PREFIX}${string}`
-
 export interface GlobalKeys {
   readonly reach: 'system' | 'portal' | 'none'
   readonly change: boolean
@@ -9,7 +7,6 @@ export interface GlobalKeys {
   readonly refused: readonly string[]
   readonly run: string
 }
-
 export interface EventMap {
   'orden://open-url': readonly string[]
   'orden://global-keys': GlobalKeys
@@ -35,17 +32,12 @@ export interface EventMap {
   'orden://ai-accounts': null
   'orden://icloud': null
 }
-
 export type KnownEvent = keyof EventMap
-
 export type EventPayload<Name extends KnownEvent> = EventMap[Name]
-
 export type Unlisten = () => void
-
 export interface EventBus {
   emit<Name extends KnownEvent>(name: Name, payload: EventPayload<Name>): void
   listen<Name extends KnownEvent>(name: Name, heard: (payload: EventPayload<Name>) => void): Promise<Unlisten>
 }
-
 export const isEventName = (value: unknown): value is EventName =>
   typeof value === 'string' && value.startsWith(EVENT_PREFIX) && value.length > EVENT_PREFIX.length

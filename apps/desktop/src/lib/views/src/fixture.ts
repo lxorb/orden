@@ -19,7 +19,6 @@ function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
     ...extra,
   }
 }
-
 export const noteRow = (
   path: string,
   note: string | Record<string, Value> = {},
@@ -32,7 +31,6 @@ export const noteRow = (
   file: fileAt(path, file),
   note: typeof note === 'string' ? noteValues(note) : note,
 })
-
 export function taskRow(
   path: string,
   line: string,

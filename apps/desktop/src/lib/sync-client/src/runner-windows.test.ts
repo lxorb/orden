@@ -21,7 +21,6 @@ vi.mock('../../platform/src/windows', async (original) => {
   const [mine, theirs] = [end(), end()]
   return { ...real, windows: new real.Windows(() => mine), other: new real.Windows(() => theirs) }
 })
-
 const opening = vi.hoisted(() => ({
   open: (_account: string): Promise<unknown> => Promise.reject(new Error('the store refused')),
   forgotten: [] as string[],
@@ -34,7 +33,6 @@ vi.mock('./store', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const leaving = vi.hoisted(() => ({ asked: 0 }))
 vi.mock('./left', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./left')>()),
@@ -43,9 +41,7 @@ vi.mock('./left', async (importOriginal) => ({
     return Promise.resolve(false)
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 function locksOf() {
   const holders = new Map<string, boolean>()
   const waiting = new Map<string, (() => void)[]>()
@@ -89,22 +85,18 @@ function locksOf() {
     free: release,
   }
 }
-
 const { other, windows } = (await import('../../platform/src/windows')) as unknown as {
   other: import('../../platform/src/windows').Windows
   windows: import('../../platform/src/windows').Windows
 }
 const { runner } = await import('./runner.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-
 const flush = async () => {
   for (let at = 0; at < 30; at += 1) await Promise.resolve()
 }
-
 const signedInAs = (id: string) => {
   account.user = { id } as never
 }
-
 let locks: ReturnType<typeof locksOf>
 const stops: (() => void)[] = []
 const heardByOther = (kind: string) => {
@@ -112,21 +104,18 @@ const heardByOther = (kind: string) => {
   stops.push(other.hear(kind, (said) => heard.push(said)))
   return heard
 }
-
 beforeEach(() => {
   locks = locksOf()
   vi.stubGlobal('navigator', { locks: locks.manager })
   opening.forgotten.length = 0
   opening.open = () => Promise.reject(new Error('the store refused'))
 })
-
 afterEach(async () => {
   for (const stop of stops.splice(0)) stop()
   await runner.stop()
   vi.unstubAllGlobals()
   vi.stubGlobal('localStorage', memoryStorage())
 })
-
 describe('a window with no engine and nobody who has one', () => {
   test('after an engine that would not start, a pass answers at once and nothing is owed', async () => {
     signedInAs('a')
@@ -135,12 +124,10 @@ describe('a window with no engine and nobody who has one', () => {
     void runner.passNow().then((said) => (answer = said))
     await flush()
     expect(answer).toBe(false)
-
     const owed = heardByOther('sync-owed')
     await runner.wrote('/s/a.md', 'words')
     expect(owed).toEqual([])
   })
-
   test('while its own engine is starting, too', async () => {
     signedInAs('a')
     let refuse: () => void = () => undefined
@@ -155,7 +142,6 @@ describe('a window with no engine and nobody who has one', () => {
     await starting
   })
 })
-
 describe('what a window owes', () => {
   test('is bounded, and one note is owed once', async () => {
     signedInAs('a')
@@ -163,13 +149,11 @@ describe('what a window owes', () => {
     void runner.start()
     await flush()
     const held = runner as unknown as { owed: { size: number } }
-
     for (let at = 0; at < 5; at += 1) await runner.wrote('/s/one.md', `words ${String(at)}`)
     expect(held.owed.size).toBe(1)
     for (let at = 0; at < 5_000; at += 1) await runner.wrote(`/s/${String(at)}.md`, 'x')
     expect(held.owed.size).toBeLessThanOrEqual(1_000)
   })
-
   test('goes with the account: nothing of A is said once B is here', async () => {
     signedInAs('a')
     locks.busy('orden-sync:a')
@@ -178,7 +162,6 @@ describe('what a window owes', () => {
     await flush()
     await runner.wrote('/s/secret.md', 'words of A')
     await runner.stop()
-
     signedInAs('b')
     void runner.start()
     await flush()
@@ -191,7 +174,6 @@ describe('what a window owes', () => {
     expect(owed).toEqual([])
   })
 })
-
 describe('the engine’s window', () => {
   const engine = () => ({
     core: { spaces: new Map(), store: { close: () => Promise.resolve() } },
@@ -201,7 +183,6 @@ describe('the engine’s window', () => {
     quit: () => Promise.resolve(),
     stop: () => undefined,
   })
-
   test('takes what its own account owes and nothing of another’s', async () => {
     signedInAs('b')
     const held = runner as unknown as {
@@ -214,15 +195,12 @@ describe('the engine’s window', () => {
     held.current = one
     await held.tookOver(one)
     const item = (text: string) => ({ id: '0', what: { kind: 'wrote', path: '/s/a.md', text } })
-
     other.say('sync-owed', { account: 'a', item: item('words of A') })
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(one.saved).not.toHaveBeenCalled()
-
     other.say('sync-owed', { account: 'b', item: item('words of B') })
     await vi.waitFor(() => expect(one.saved).toHaveBeenCalledTimes(1))
   })
-
   test('on a follower, focus and a visible window’s beat reach it', async () => {
     const listeners = new Map<string, () => void>()
     vi.stubGlobal('window', {
@@ -244,7 +222,6 @@ describe('the engine’s window', () => {
       other.say('sync-leader', { account: 'a' })
       await flush()
       const kicks = heardByOther('sync-kick')
-
       listeners.get('focus')?.()
       expect(kicks).toHaveLength(1)
       await vi.advanceTimersByTimeAsync(30_000)
@@ -254,7 +231,6 @@ describe('the engine’s window', () => {
     }
   })
 })
-
 describe('signing out in a window with no engine', () => {
   test('tells nothing to delete under the engine: the store goes once its window let go', async () => {
     signedInAs('a')
@@ -262,18 +238,15 @@ describe('signing out in a window with no engine', () => {
     locks.busy('orden-sync:a')
     void runner.start()
     await flush()
-
     const leaving = runner.signedOut('a')
     await flush()
     expect(opening.forgotten).toEqual([])
-
     locks.free('orden-sync:a')
     locks.free('orden-sync:local')
     await leaving
     expect(opening.forgotten).toEqual(['a'])
   })
 })
-
 describe('signing out, asked, in a window with no engine', () => {
   const leader = (unsent: boolean) => {
     stops.push(
@@ -283,7 +256,6 @@ describe('signing out, asked, in a window with no engine', () => {
       }),
     )
   }
-
   for (const unsent of [true, false]) {
     test(`asks the engine's window, and asks the reader only when changes are unsent (${String(unsent)})`, async () => {
       leaving.asked = 0
@@ -294,9 +266,7 @@ describe('signing out, asked, in a window with no engine', () => {
       other.say('sync-leader', { account: 'a' })
       await flush()
       leader(unsent)
-
       const left = await runner.sentBeforeLeaving()
-
       expect(leaving.asked).toBe(unsent ? 1 : 0)
       expect(left).toBe(!unsent)
     })

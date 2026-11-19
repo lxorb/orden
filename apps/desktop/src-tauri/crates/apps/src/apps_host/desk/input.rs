@@ -31,16 +31,13 @@ const MK_XBUTTON2: u32 = 0x0040;
 const WHEEL_DELTA: i32 = 120;
 const DOUBLE_NEAR: i32 = 4;
 const MOST_TEXT: usize = 1000;
-
 const VK_SHIFT: u8 = 0x10;
 const VK_CONTROL: u8 = 0x11;
 const VK_MENU: u8 = 0x12;
 const VK_LWIN: u8 = 0x5B;
-
 pub struct Input {
     tell: Sender<InputEvent>,
 }
-
 impl Input {
     pub fn open(display: &str) -> Result<Input, String> {
         let desk = super::desk(display).ok_or("no such desktop")?;
@@ -60,12 +57,10 @@ impl Input {
         });
         Ok(Input { tell })
     }
-
     pub fn play(&mut self, event: InputEvent) {
         let _ = self.tell.send(event);
     }
 }
-
 pub fn virtual_key(key: &str) -> Option<(u8, bool)> {
     let named = match key {
         "Enter" => (0x0D, false),
@@ -100,7 +95,6 @@ pub fn virtual_key(key: &str) -> Option<(u8, bool)> {
     };
     Some(named)
 }
-
 pub fn key_lparam(scan: u32, extended: bool, down: bool) -> isize {
     let mut bits: u32 = 1 | ((scan & 0xff) << 16);
     if extended {
@@ -111,7 +105,6 @@ pub fn key_lparam(scan: u32, extended: bool, down: bool) -> isize {
     }
     isize::try_from(i32::from_ne_bytes(bits.to_ne_bytes())).unwrap_or(0)
 }
-
 pub fn point_lparam(x: i32, y: i32) -> isize {
     let low = u32::from(u16::from_ne_bytes(
         i16::try_from(x).unwrap_or(0).to_ne_bytes(),
@@ -121,7 +114,6 @@ pub fn point_lparam(x: i32, y: i32) -> isize {
     ));
     isize::try_from(i32::from_ne_bytes((low | (high << 16)).to_ne_bytes())).unwrap_or(0)
 }
-
 pub fn wheel_wparam(delta: i32, buttons: u32) -> usize {
     let turn = u32::from(u16::from_ne_bytes(
         i16::try_from(delta.clamp(-32768, 32767))
@@ -130,7 +122,6 @@ pub fn wheel_wparam(delta: i32, buttons: u32) -> usize {
     ));
     usize::try_from((turn << 16) | (buttons & 0xffff)).unwrap_or(0)
 }
-
 fn button_messages(button: u8) -> Option<(u32, u32, u32, u32, u32)> {
     Some(match button {
         0 => (
@@ -171,7 +162,6 @@ fn button_messages(button: u8) -> Option<(u32, u32, u32, u32, u32)> {
         _ => return None,
     })
 }
-
 #[derive(Default)]
 struct Player {
     at: (i32, i32),
@@ -183,7 +173,6 @@ struct Player {
     keys: HashMap<String, (u8, bool, bool)>,
     attached: Option<u32>,
 }
-
 impl Player {
     #[allow(clippy::cast_possible_truncation)]
     fn play(&mut self, event: InputEvent) {
@@ -238,7 +227,6 @@ impl Player {
             InputEvent::Clipboard { .. } | InputEvent::Share { .. } | InputEvent::Ping { .. } => {}
         }
     }
-
     fn mouse_keys(&self) -> u32 {
         let mut bits = self.buttons;
         if self.held(VK_SHIFT) {
@@ -249,11 +237,9 @@ impl Player {
         }
         bits
     }
-
     fn held(&self, key: u8) -> bool {
         self.modifiers.values().any(|&(one, _)| one == key)
     }
-
     fn button(&mut self, button: u8, down: bool) {
         let Some((press, release, double, bit, x)) = button_messages(button) else {
             return;
@@ -297,7 +283,6 @@ impl Player {
         let wparam = (self.mouse_keys() as usize) | (usize::try_from(x).unwrap_or(0) << 16);
         post(window, message, wparam, point_lparam(cx, cy));
     }
-
     #[allow(clippy::needless_pass_by_value)]
     fn key(&mut self, key: &str, code: String, down: bool) {
         if matches!(key, "Shift" | "Control" | "Alt" | "Meta" | "OS") {
@@ -347,7 +332,6 @@ impl Player {
             self.keys.insert(code, (vk, extended, true));
         }
     }
-
     fn press(&mut self, vk: u8, extended: bool, down: bool) {
         let Some(window) = self.keyboard() else {
             return;
@@ -366,7 +350,6 @@ impl Player {
             key_lparam(scan_of(vk), extended, down),
         );
     }
-
     #[allow(unsafe_code)]
     fn keyboard(&mut self) -> Option<HWND> {
         let front = self
@@ -384,7 +367,6 @@ impl Player {
             .filter(|one| !one.is_invalid());
         Some(focused.unwrap_or(front))
     }
-
     #[allow(unsafe_code)]
     fn set_state(&mut self) {
         let Some(window) = self.keyboard() else {
@@ -414,7 +396,6 @@ impl Player {
             let _ = SetKeyboardState(&state);
         }
     }
-
     #[allow(unsafe_code)]
     fn let_go(&mut self) {
         let keys: Vec<(u8, bool, bool)> = self.keys.drain().map(|(_, one)| one).collect();
@@ -440,7 +421,6 @@ impl Player {
         }
     }
 }
-
 #[allow(unsafe_code)]
 fn key_of_character(character: char) -> Option<u8> {
     let mut units = [0_u16; 2];
@@ -452,23 +432,19 @@ fn key_of_character(character: char) -> Option<u8> {
     let [low, _] = said.to_le_bytes();
     (said != -1 && low != 0xff).then_some(low)
 }
-
 #[allow(unsafe_code)]
 fn scan_of(vk: u8) -> u32 {
     unsafe { MapVirtualKeyW(u32::from(vk), MAPVK_VK_TO_VSC) }
 }
-
 #[allow(unsafe_code)]
 fn double_click_time() -> Duration {
     Duration::from_millis(u64::from(unsafe { GetDoubleClickTime() }))
 }
-
 #[allow(unsafe_code)]
 fn wants_double_clicks(window: HWND) -> bool {
     let style = unsafe { GetClassLongW(window, GCL_STYLE) };
     style & CS_DBLCLKS.0 != 0
 }
-
 #[allow(unsafe_code)]
 fn root(window: HWND) -> HWND {
     let top = unsafe { GetAncestor(window, GA_ROOT) };
@@ -478,7 +454,6 @@ fn root(window: HWND) -> HWND {
         top
     }
 }
-
 #[allow(unsafe_code)]
 fn under(at: (i32, i32)) -> Option<HWND> {
     let top = shown().into_iter().find(|&window| {
@@ -503,19 +478,16 @@ fn under(at: (i32, i32)) -> Option<HWND> {
     }
     Some(window)
 }
-
 #[allow(unsafe_code)]
 fn client(window: HWND, at: (i32, i32)) -> (i32, i32) {
     let mut point = POINT { x: at.0, y: at.1 };
     let _ = unsafe { ScreenToClient(window, &raw mut point) };
     (point.x, point.y)
 }
-
 #[allow(unsafe_code)]
 fn post(window: HWND, message: u32, wparam: usize, lparam: isize) {
     let _ = unsafe { PostMessageW(window, message, WPARAM(wparam), LPARAM(lparam)) };
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -529,7 +501,6 @@ mod tests {
         assert_eq!(virtual_key("F25"), None);
         assert_eq!(virtual_key("Dead"), None);
     }
-
     #[test]
     fn packs_the_messages_words() {
         assert_eq!(point_lparam(10, 20), 0x0014_000a);

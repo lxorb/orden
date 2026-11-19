@@ -3,9 +3,7 @@ interface Resettable {
   get(): boolean | number | string
   set(value: boolean | number | string): void
 }
-
 type Field = Resettable | { readonly kind: 'value' }
-
 export function resetFields<F extends Field>(fields: Iterable<F>): void {
   const settable = [...fields].filter((field: Field): field is F & Resettable => 'set' in field)
   const turningOn = settable.filter((one) => one.initial === true)

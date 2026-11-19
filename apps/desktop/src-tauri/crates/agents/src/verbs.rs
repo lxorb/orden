@@ -2,21 +2,16 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 pub const EVENT: &str = "orden://agent";
-
 pub type TabId = String;
-
 pub type Ref = String;
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Nothing {}
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OnTab {
     pub tab: TabId,
 }
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Store {
@@ -25,7 +20,6 @@ pub enum Store {
     Agent,
     Space,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Open {
@@ -39,7 +33,6 @@ pub struct Open {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub height: Option<u32>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Navigate {
@@ -53,14 +46,12 @@ pub struct Navigate {
     #[serde(default)]
     pub reload: bool,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Moment {
     Load,
     NetworkIdle,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Until {
@@ -76,7 +67,6 @@ pub enum Until {
         url: String,
     },
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Wait {
@@ -86,7 +76,6 @@ pub struct Wait {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_ms: Option<u64>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
@@ -96,7 +85,6 @@ pub struct Snapshot {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_chars: Option<usize>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Find {
@@ -108,7 +96,6 @@ pub struct Find {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ReadAs {
@@ -117,7 +104,6 @@ pub enum ReadAs {
     Markdown,
     Article,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Read {
@@ -127,7 +113,6 @@ pub struct Read {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_chars: Option<usize>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CaptureAs {
@@ -135,7 +120,6 @@ pub enum CaptureAs {
     Screenshot,
     Pdf,
 }
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Button {
@@ -144,7 +128,6 @@ pub enum Button {
     Right,
     Middle,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Modifier {
     Alt,
@@ -152,7 +135,6 @@ pub enum Modifier {
     Meta,
     Shift,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Click {
@@ -170,7 +152,6 @@ pub struct Click {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub modifiers: Vec<Modifier>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Type {
@@ -183,14 +164,12 @@ pub struct Type {
     #[serde(default)]
     pub replace: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Press {
     pub tab: TabId,
     pub keys: String,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Scroll {
@@ -202,7 +181,6 @@ pub struct Scroll {
     #[serde(default)]
     pub dy: f64,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Select {
@@ -211,7 +189,6 @@ pub struct Select {
     pub element: Ref,
     pub values: Vec<String>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum FieldValue {
@@ -219,7 +196,6 @@ pub enum FieldValue {
     Words(String),
     Options(Vec<String>),
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
@@ -227,14 +203,12 @@ pub struct Field {
     pub element: Ref,
     pub value: FieldValue,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FillForm {
     pub tab: TabId,
     pub fields: Vec<Field>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Hover {
@@ -242,7 +216,6 @@ pub struct Hover {
     #[serde(rename = "ref")]
     pub element: Ref,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Drag {
@@ -250,7 +223,6 @@ pub struct Drag {
     pub from: Ref,
     pub to: Ref,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Upload {
@@ -259,7 +231,6 @@ pub struct Upload {
     pub element: Ref,
     pub files: Vec<String>,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Screenshot {
@@ -271,7 +242,6 @@ pub struct Screenshot {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scale: Option<f64>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Console {
@@ -281,7 +251,6 @@ pub struct Console {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub level: Option<String>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Network {
@@ -293,7 +262,6 @@ pub struct Network {
     #[serde(default)]
     pub bodies: bool,
 }
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum World {
@@ -301,7 +269,6 @@ pub enum World {
     Isolated,
     Page,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Evaluate {
@@ -310,7 +277,6 @@ pub struct Evaluate {
     #[serde(default)]
     pub world: World,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AnswerDialog {
@@ -323,14 +289,12 @@ pub struct AnswerDialog {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Downloads {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tab: Option<TabId>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StorageOp {
@@ -339,7 +303,6 @@ pub enum StorageOp {
     Clear,
     Local,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Cookie {
@@ -356,7 +319,6 @@ pub struct Cookie {
     #[serde(default)]
     pub secure: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Storage {
@@ -365,14 +327,12 @@ pub struct Storage {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cookie: Option<Cookie>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Takeover {
     pub tab: TabId,
     pub reason: String,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Files {
@@ -391,7 +351,6 @@ pub struct Files {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub since: Option<u64>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FilesOp {
@@ -407,7 +366,6 @@ pub enum FilesOp {
     Search,
     Changes,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FilesDone {
     pub path: String,
@@ -422,7 +380,6 @@ pub struct FilesDone {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub now: Option<u64>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileEntry {
     pub path: String,
@@ -430,7 +387,6 @@ pub struct FileEntry {
     pub size: u64,
     pub modified: u64,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FileKind {
@@ -438,7 +394,6 @@ pub enum FileKind {
     Folder,
     Link,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Process {
@@ -464,7 +419,6 @@ pub struct Process {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub close: bool,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProcessOp {
@@ -475,7 +429,6 @@ pub enum ProcessOp {
     Write,
     Kill,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProcessDone {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -499,14 +452,12 @@ pub struct ProcessDone {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub processes: Vec<ProcessEntry>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Ended {
     TimedOut,
     Killed,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProcessEntry {
     pub id: String,
@@ -517,7 +468,6 @@ pub struct ProcessEntry {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exit: Option<i32>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Http {
@@ -535,7 +485,6 @@ pub struct Http {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_ms: Option<u64>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HttpDone {
     pub status: u16,
@@ -551,7 +500,6 @@ pub struct HttpDone {
     pub saved: Option<String>,
     pub size: u64,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct System {
@@ -561,7 +509,6 @@ pub struct System {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SystemOp {
@@ -570,7 +517,6 @@ pub enum SystemOp {
     Env,
     Info,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct SystemDone {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -582,7 +528,6 @@ pub struct SystemDone {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub info: Option<SystemInfo>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct SystemInfo {
     pub os: String,
@@ -595,7 +540,6 @@ pub struct SystemInfo {
     pub webview: Option<String>,
     pub displays: Vec<Display>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Display {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -604,13 +548,11 @@ pub struct Display {
     pub height: u32,
     pub scale: f64,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ApprovalAsk {
     pub id: String,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pair {
@@ -618,16 +560,13 @@ pub struct Pair {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wait_ms: Option<u64>,
 }
-
 macro_rules! verbs {
     ($( $(#[$doc:meta])* $name:literal => $variant:ident($args:ty) -> $answer:ty, )*) => {
         #[derive(Clone, Debug, PartialEq)]
         pub enum Verb {
             $( $(#[$doc])* $variant($args), )*
         }
-
         pub const NAMES: &[&str] = &[$($name),*];
-
         impl Verb {
             pub fn read(name: &str, args: Value) -> Option<Result<Self, String>> {
                 let args = if args.is_null() { Value::Object(Default::default()) } else { args };
@@ -640,7 +579,6 @@ macro_rules! verbs {
                     _ => None,
                 }
             }
-
             pub fn name(&self) -> &'static str {
                 match self {
                     $( Verb::$variant(_) => $name, )*
@@ -649,7 +587,6 @@ macro_rules! verbs {
         }
     };
 }
-
 verbs! {
     "browser_tabs" => Tabs(Nothing) -> TabList,
     "browser_open" => Open(Open) -> Opened,
@@ -686,7 +623,6 @@ verbs! {
     "agent_pair" => Pair(Pair) -> Paired,
     "agent_bye" => Bye(Nothing) -> Nothing,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Code {
@@ -704,7 +640,6 @@ pub enum Code {
     NoDialog,
     Denied,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Dialog {
     pub kind: DialogKind,
@@ -714,7 +649,6 @@ pub struct Dialog {
     pub url: String,
     pub open_ms: u64,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DialogKind {
@@ -725,13 +659,11 @@ pub enum DialogKind {
     SignIn,
     Certificate,
 }
-
 impl DialogKind {
     pub fn signs_in(self) -> bool {
         matches!(self, DialogKind::SignIn | DialogKind::Certificate)
     }
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Answer {
@@ -753,7 +685,6 @@ pub enum Answer {
         dialog: Option<Box<Dialog>>,
     },
 }
-
 impl Answer {
     pub fn ok(result: impl Serialize) -> Self {
         Answer::Ok {
@@ -762,7 +693,6 @@ impl Answer {
             dialog: None,
         }
     }
-
     pub fn error(code: Code, message: impl Into<String>) -> Self {
         Answer::Error {
             code,
@@ -770,7 +700,6 @@ impl Answer {
             dialog: None,
         }
     }
-
     #[must_use]
     pub fn with_dialog(mut self, held: Option<Dialog>) -> Self {
         match &mut self {
@@ -781,7 +710,6 @@ impl Answer {
         }
         self
     }
-
     pub fn status(&self) -> &'static str {
         match self {
             Answer::Ok { .. } => "ok",
@@ -789,7 +717,6 @@ impl Answer {
             Answer::Error { .. } => "error",
         }
     }
-
     pub fn from_window(text: &str) -> Self {
         if let Ok(answer) = serde_json::from_str::<Answer>(text) {
             return answer;
@@ -810,7 +737,6 @@ impl Answer {
         }
     }
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReaderTab {
     pub id: TabId,
@@ -821,7 +747,6 @@ pub struct ReaderTab {
     pub front: bool,
     pub on_screen: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AgentTab {
     pub id: TabId,
@@ -831,32 +756,27 @@ pub struct AgentTab {
     pub store: Store,
     pub parked: bool,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TabList {
     pub reader: Vec<ReaderTab>,
     pub agent: Vec<AgentTab>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Opened {
     pub tab: TabId,
     pub store: Store,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Acted {
     pub url: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub opened: Vec<TabId>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Waited {
     pub ms: u64,
     pub url: String,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Snapped {
     pub url: String,
@@ -864,7 +784,6 @@ pub struct Snapped {
     pub text: String,
     pub truncated: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Match {
     #[serde(rename = "ref")]
@@ -872,12 +791,10 @@ pub struct Match {
     pub role: String,
     pub name: String,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Found {
     pub matches: Vec<Match>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PageText {
     pub url: String,
@@ -885,14 +802,12 @@ pub struct PageText {
     pub text: String,
     pub truncated: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Picture {
     pub png: String,
     pub width: u32,
     pub height: u32,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Captured {
     pub url: String,
@@ -904,7 +819,6 @@ pub struct Captured {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pdf: Option<String>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConsoleLine {
     pub seq: u64,
@@ -913,13 +827,11 @@ pub struct ConsoleLine {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConsoleLines {
     pub lines: Vec<ConsoleLine>,
     pub next: u64,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Request {
     pub seq: u64,
@@ -935,18 +847,15 @@ pub struct Request {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Requests {
     pub requests: Vec<Request>,
     pub next: u64,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Evaluated {
     pub value: Value,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DownloadState {
@@ -955,7 +864,6 @@ pub enum DownloadState {
     Failed,
     TooLarge,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Download {
     pub tab: TabId,
@@ -963,12 +871,10 @@ pub struct Download {
     pub path: String,
     pub state: DownloadState,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DownloadList {
     pub downloads: Vec<Download>,
 }
-
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Stored {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -976,12 +882,10 @@ pub struct Stored {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub local: Option<serde_json::Map<String, Value>>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Closed {
     pub tab: TabId,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Category {
@@ -1000,7 +904,6 @@ pub enum Category {
     Takeover,
     Pairing,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ApprovalAnswer {
@@ -1010,7 +913,6 @@ pub enum ApprovalAnswer {
     Expired,
     Done,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Approval {
     pub id: String,
@@ -1027,12 +929,10 @@ pub struct Approval {
     pub asked: u64,
     pub answer: ApprovalAnswer,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApprovalState {
     pub approval: Approval,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Status {
     pub grant: crate::grants::Grant,
@@ -1041,13 +941,11 @@ pub struct Status {
     pub tabs: Vec<AgentTab>,
     pub approvals: Vec<Approval>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Paired {
     pub agent: String,
     pub token: String,
 }
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Event {
@@ -1085,7 +983,6 @@ pub enum Event {
         agents: Vec<String>,
     },
 }
-
 pub mod window {
     use serde::{Deserialize, Serialize};
 
@@ -1145,24 +1042,16 @@ pub mod window {
         ("run_agent", Some(Scope::Agents)),
         ("agent_result", Some(Scope::Agents)),
     ];
-
     pub const READER_TABS: &str = "agent.reader_tabs";
-
     pub const LEND: &str = "agent.lend";
-
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct Lend {
         pub tab: String,
     }
-
     pub const STORE_FOR: &str = "agent.store_for";
-
     pub const MARKDOWN: &str = "agent.markdown";
-
     pub const MAY_HAND: &str = "agent.may_hand";
-
     pub const PROGRAM_FREE: &str = "agent.program_free";
-
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct ProgramAsk {
         pub program: String,
@@ -1170,33 +1059,28 @@ pub mod window {
         pub programs: Vec<String>,
         pub cwd: String,
     }
-
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct HandAsk {
         pub path: String,
     }
-
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct StoreAsk {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub space: Option<String>,
         pub url: String,
     }
-
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct StoreSaid {
         pub space: String,
         #[serde(default)]
         pub store: Option<String>,
     }
-
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct Convert {
         pub html: String,
         pub url: String,
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1238,7 +1122,6 @@ mod tests {
         );
         assert_eq!(read("not json").status(), "error");
     }
-
     #[test]
     fn every_name_is_its_own_verb() {
         let mut seen = std::collections::HashSet::new();
@@ -1247,13 +1130,11 @@ mod tests {
             assert!(Verb::read(name, json!({})).is_some(), "{name} is not read");
         }
     }
-
     #[test]
     fn a_name_that_is_not_a_browser_verb_is_the_windows() {
         assert!(Verb::read("files.read", json!({})).is_none());
         assert!(Verb::read("eval", json!({})).is_none());
     }
-
     #[test]
     fn a_verb_that_takes_nothing_may_be_sent_nothing() {
         assert_eq!(
@@ -1261,13 +1142,11 @@ mod tests {
             Some(Ok(Verb::Tabs(Nothing {})))
         );
     }
-
     #[test]
     fn arguments_it_does_not_take_are_refused() {
         let read = Verb::read("browser_click", json!({ "tab": "a1", "reff": "e2" }));
         assert!(matches!(read, Some(Err(_))));
     }
-
     #[test]
     fn a_click_reads_its_ref_and_its_defaults() {
         let read = Verb::read("browser_click", json!({ "tab": "a1", "ref": "f2e17" }));
@@ -1278,7 +1157,6 @@ mod tests {
         assert_eq!(click.button, Button::Left);
         assert!(click.modifiers.is_empty());
     }
-
     #[test]
     fn a_click_can_be_a_point_in_the_tab_instead() {
         let read = Verb::read("browser_click", json!({ "tab": "a1", "x": 120.5, "y": 48 }));
@@ -1288,7 +1166,6 @@ mod tests {
         assert_eq!(click.element, None);
         assert_eq!((click.x, click.y), (Some(120.5), Some(48.0)));
     }
-
     #[test]
     fn a_wait_is_a_word_or_one_of_three_shapes() {
         let read =
@@ -1320,7 +1197,6 @@ mod tests {
             }
         );
     }
-
     #[test]
     fn a_field_is_ticked_or_words_or_options() {
         let fields: Vec<Field> = serde_json::from_value(json!([
@@ -1336,7 +1212,6 @@ mod tests {
             FieldValue::Options(vec!["a".into(), "b".into()])
         );
     }
-
     #[test]
     fn a_question_answers_at_once_in_the_documents_shape() {
         let asked = Answer::NeedsApproval {
@@ -1348,7 +1223,6 @@ mod tests {
             json!({ "status": "needs_approval", "approval": "a17", "summary": "Place order on shop.example" })
         );
     }
-
     #[test]
     fn an_error_says_its_code_and_any_dialog() {
         let dialog = Dialog {
@@ -1370,7 +1244,6 @@ mod tests {
             })
         );
     }
-
     #[test]
     fn an_event_says_its_kind() {
         let event = Event::Paused {

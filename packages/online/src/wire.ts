@@ -10,7 +10,6 @@ export const MOST_BEHIND = 1024 * 1024
 export const KEPT_OUTPUT = 1024 * 1024
 export const SCROLLBACK = 5000
 export const MOST_CELLS = 1000
-
 export function inputChunks(data: string, most = MOST_INPUT): string[] {
   const chunks: string[] = []
   let from = 0
@@ -29,22 +28,14 @@ export function inputChunks(data: string, most = MOST_INPUT): string[] {
   if (from < data.length || chunks.length === 0) chunks.push(data.slice(from))
   return chunks
 }
-
 export type ImageKind = 'png' | 'jpeg' | 'gif' | 'webp'
-
 export const IMAGE_KINDS: readonly ImageKind[] = ['png', 'jpeg', 'gif', 'webp']
-
 export const MOST_IMAGE = 16 * 1024 * 1024
-
 export const IMAGE_PART = (MOST_INPUT / 4) * 3
-
 export const isImageId = (value: unknown): value is string =>
   typeof value === 'string' && /^[a-z0-9]{16,64}$/.test(value)
-
 export const socketPath = (term: string): string => `/v2/online/${encodeURIComponent(term)}/socket`
-
 export type Refusal = 'gone' | 'role' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'rate' | 'large'
-
 export const REFUSALS: readonly Refusal[] = [
   'gone',
   'role',
@@ -57,24 +48,18 @@ export const REFUSALS: readonly Refusal[] = [
   'rate',
   'large',
 ]
-
 export type DownReason = SleepReason | 'flag' | 'stopped' | 'restart'
-
 const DOWN_REASONS: readonly DownReason[] = ['idle', 'allowance', 'budget', 'off', 'flag', 'stopped', 'restart']
-
 const MACHINE_STATES: readonly MachineState[] = ['asleep', 'starting', 'awake', 'stopping']
-
 export interface Restored {
   at: number
   program: string | null
 }
-
 export interface Person {
   who: string
   device: string
   typing: boolean
 }
-
 export type ClientFrame =
   | { t: 'hello'; since?: number; cols: number; rows: number; hold?: true }
   | { t: 'take' }
@@ -85,7 +70,6 @@ export type ClientFrame =
   | { t: 'resume' }
   | { t: 'callback'; url: string }
   | { t: 'image'; id: string; kind: ImageKind; part: string; last: boolean }
-
 export type ServerFrame =
   | {
       t: 'screen'
@@ -110,29 +94,22 @@ export type ServerFrame =
   | { t: 'note'; note: Note }
   | { t: 'held'; by: string; since: number; taken: boolean }
   | { t: 'hold' }
-
 export const HOLD_GRACE = 30_000
 export const HOLD_QUIET = 45_000
-
 export type Note = 'restore' | 'disk'
-
 const NOTES: readonly Note[] = ['restore', 'disk']
-
 export const text = (value: ClientFrame | ServerFrame): string => JSON.stringify(value)
-
 export function outFrame(seq: number, data: Uint8Array): Uint8Array {
   const out = new Uint8Array(8 + data.length)
   new DataView(out.buffer).setFloat64(0, seq)
   out.set(data, 8)
   return out
 }
-
 export function outOf(bytes: Uint8Array): { seq: number; data: Uint8Array } | null {
   if (bytes.length < 8) return null
   const seq = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getFloat64(0)
   return isCount(seq) ? { seq, data: bytes.subarray(8) } : null
 }
-
 export type MachineFrame =
   | { t: 'open'; session: string; cols: number; rows: number; watching?: true }
   | { t: 'in'; session: string; data: Uint8Array }
@@ -145,7 +122,6 @@ export type MachineFrame =
   | { t: 'ping' }
   | { t: 'restart' }
   | { t: 'list' }
-
 export interface SessionNow {
   session: string
   program: string | null
@@ -153,9 +129,7 @@ export interface SessionNow {
   alive: boolean
   at: number | null
 }
-
 const MOST_LISTED = 64
-
 export type OrdendFrame =
   | { t: 'out'; session: string; seq: number; data: Uint8Array }
   | {
@@ -182,51 +156,33 @@ export type OrdendFrame =
   | { t: 'image'; session: string; id: string; path: string | null }
   | { t: 'pong' }
   | { t: 'sessions'; sessions: SessionNow[] }
-
 export const PING_EVERY = 5_000
 export const QUIET_FOR = 20_000
-
 export const SILENT_FOR = 40_000
-
 export const linkFrame = (value: MachineFrame | OrdendFrame): Uint8Array => frame(value)
-
 const LONGEST_ID = 200
 const LONGEST_TITLE = 1024
 const MOST_SCREEN = 32 * 1024 * 1024
-
 type Fields = Record<string, unknown>
-
 const isRecord = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const isId = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID
-
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-
 const isCells = (value: unknown): value is number => isCount(value) && value >= 1 && value <= MOST_CELLS
-
 const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
-
 const isShort = (value: unknown): value is string | null =>
   value === null || (typeof value === 'string' && value.length <= LONGEST_TITLE)
-
 const isCode = (value: unknown): value is number | null =>
   value === null || (typeof value === 'number' && Number.isSafeInteger(value))
-
 const isScreen = (value: unknown): value is string => typeof value === 'string' && value.length <= MOST_SCREEN
-
 const isStatus = (value: unknown): value is number => isCount(value) && value <= 999
-
 const isPathOrNone = (value: unknown): value is string | null =>
   value === null || (typeof value === 'string' && value.startsWith('/') && value.length <= LONGEST_TITLE)
-
 const isPart = (value: unknown): value is string =>
   typeof value === 'string' && value.length <= MOST_INPUT && /^[A-Za-z0-9+/]*={0,2}$/.test(value)
-
 const oneOf = <T>(list: readonly T[], value: unknown): value is T => list.some((one) => one === value)
-
 function parsed(raw: string): unknown {
   try {
     return JSON.parse(raw)
@@ -234,12 +190,10 @@ function parsed(raw: string): unknown {
     return undefined
   }
 }
-
 function restoredOf(value: unknown): Restored | null {
   if (!isRecord(value) || !isTime(value.at) || !isShort(value.program)) return null
   return { at: value.at, program: value.program }
 }
-
 function screenOf(
   value: Fields,
 ): { seq: number; cols: number; rows: number; data: string; restored?: Restored } | null {
@@ -249,26 +203,22 @@ function screenOf(
   const restored = restoredOf(value.restored)
   return restored ? { seq, cols, rows, data, restored } : null
 }
-
 function sessionNowOf(value: unknown): SessionNow | null {
   if (!isRecord(value)) return null
   const { session, program, title, alive, at } = value
   if (!isId(session) || !isShort(program) || !isShort(title) || typeof alive !== 'boolean') return null
   return at === null || isCount(at) ? { session, program, title, alive, at } : null
 }
-
 function programOf(value: Fields): { name: string | null; title: string | null; mark: string | null } | null {
   const { name, title, mark } = value
   if (!isShort(name) || !isShort(title) || !(mark === null || isId(mark))) return null
   return { name, title, mark }
 }
-
 function personOf(value: unknown): Person | null {
   if (!isRecord(value) || !isId(value.who) || !isId(value.device)) return null
   if (typeof value.typing !== 'boolean') return null
   return { who: value.who, device: value.device, typing: value.typing }
 }
-
 function activityOf(value: unknown): Activity | null {
   if (!isRecord(value)) return null
   const { at, output, cpu, net, homeBytes, disk } = value
@@ -278,7 +228,6 @@ function activityOf(value: unknown): Activity | null {
   if (!isRecord(disk) || !isCount(disk.used) || !isCount(disk.total)) return null
   return { at, output, cpu, net, homeBytes, disk: { used: disk.used, total: disk.total } }
 }
-
 export function clientFrameOf(raw: string): ClientFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -316,9 +265,7 @@ export function clientFrameOf(raw: string): ClientFrame | null {
       return null
   }
 }
-
 type SessionFrame = Extract<ServerFrame, { t: 'screen' | 'program' | 'ended' | 'browse' | 'called' | 'image' }>
-
 function sessionFrameOf(value: Fields): SessionFrame | null | undefined {
   switch (value.t) {
     case 'screen': {
@@ -343,7 +290,6 @@ function sessionFrameOf(value: Fields): SessionFrame | null | undefined {
       return undefined
   }
 }
-
 export function serverFrameOf(raw: string): ServerFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -392,12 +338,10 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return null
   }
 }
-
 export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
   if (value.t === 'sleep' || value.t === 'ping' || value.t === 'restart' || value.t === 'list') return { t: value.t }
-
   const { session } = value
   if (!isId(session)) return null
   switch (value.t) {
@@ -435,7 +379,6 @@ export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
       return null
   }
 }
-
 export function ordendFrameOf(bytes: Uint8Array): OrdendFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
@@ -456,7 +399,6 @@ export function ordendFrameOf(bytes: Uint8Array): OrdendFrame | null {
     default:
       break
   }
-
   const { session } = value
   if (!isId(session)) return null
   if (value.t === 'out') {

@@ -5,9 +5,7 @@
   import type { Listed } from './chat-parts'
 
   const { said }: { said: string } = $props()
-
   type Task = Listed['tasks'][number]
-
   function read(text: string): Listed | null {
     try {
       const value: unknown = JSON.parse(text)
@@ -31,13 +29,10 @@
       return null
     }
   }
-
   const listed = $derived(read(said))
   let ticked = $state<Record<string, boolean>>({})
-
   const placeOf = (one: Task) => `${one.space}\n${one.at}`
   const isDone = (one: Task) => ticked[placeOf(one)] ?? (one.status === 'x' || one.status === 'X')
-
   function tick(one: Task) {
     const done = !isDone(one)
     const place = placeOf(one)
@@ -49,7 +44,6 @@
         if (!landed && ticked[place] === done) ticked = { ...ticked, [place]: !done }
       })
   }
-
   const when = (one: Task) => [one.due, one.time].filter(Boolean).join(' ')
 </script>
 
@@ -92,7 +86,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .filter {
     align-self: flex-start;
     margin-bottom: var(--space-1);
@@ -102,7 +95,6 @@
     color: var(--muted-strong);
     font-family: var(--font-mono);
   }
-
   .task {
     display: flex;
     align-items: center;
@@ -110,11 +102,9 @@
     min-width: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .task.done {
     opacity: 0.5;
   }
-
   .box {
     flex: none;
     width: 14px;
@@ -128,28 +118,22 @@
       background var(--dur-instant) var(--ease-out),
       border-color var(--dur-instant) var(--ease-out);
   }
-
   .box.p1 {
     border-color: var(--canvas-1);
   }
-
   .box.p2 {
     border-color: var(--canvas-2);
   }
-
   .box.p3 {
     border-color: var(--canvas-5);
   }
-
   .task.done .box {
     border-color: var(--accent);
     background: var(--accent);
   }
-
   .box:active {
     transform: scale(0.9);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -164,11 +148,9 @@
     white-space: nowrap;
     cursor: pointer;
   }
-
   .task.done .words {
     text-decoration: line-through;
   }
-
   .when,
   .none {
     flex: none;

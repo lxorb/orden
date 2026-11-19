@@ -10,7 +10,6 @@ import { openChat } from './view/open'
 
 const world: NoticeWorld = {
   me: () => chats.me,
-
   chat(chat) {
     const entry = chats.entry(chat)
     if (!entry) return Promise.resolve(null)
@@ -23,16 +22,13 @@ const world: NoticeWorld = {
       readSeq: entry.readSeq,
     })
   },
-
   authorOf: async (chat, message) => (await chats.message(chat, message))?.author ?? null,
-
   async nameOf(chat, who) {
     const [kind, id] = who.split(':')
     const known = kind === 'user' && id ? people.called(id, chats.entry(chat)?.space) : undefined
     if (known) return known
     return (await chats.members(chat)).find((one) => one.who === who)?.name ?? ''
   },
-
   chosen: () => ({
     keywords: hush.keywords,
     hours: hush.hours,
@@ -40,31 +36,25 @@ const world: NoticeWorld = {
     previews: hush.previews,
     sound: hush.sound,
   }),
-
   active: () => deviceActivity().active,
   seen: inFront,
   now: () => Date.now(),
   show,
   unshow,
-
   open(chat, message) {
     const path = chats.entry(chat)?.path
     if (path) openChat(path, {}, message)
   },
-
   async reply(chat, body, parent) {
     await chats.post(chat, { body, ...(parent ? { parent } : {}) })
   },
-
   read: (chat, seq) => void chats.markRead(chat, seq),
 }
-
 const notices = new ChatNotices(world, () => ({
   hidden: 'New message',
   reply: 'Reply',
   send: 'Send',
 }))
-
 chats.heard((chat, messages) => {
   if (hub.leads) notices.arrived(chat, messages)
 })

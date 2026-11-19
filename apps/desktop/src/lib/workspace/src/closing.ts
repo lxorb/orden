@@ -11,7 +11,6 @@ interface Quitting {
   answerQuitting(window: string): Promise<void>
   holdToQuit(): Promise<void>
 }
-
 export async function guardClose(quitting: () => Promise<Quitting>): Promise<void> {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
@@ -20,10 +19,8 @@ export async function guardClose(quitting: () => Promise<Quitting>): Promise<voi
     } else if (isMobile) void workspace.loadTree()
   })
   addEventListener('pagehide', () => settle())
-
   const window = await currentWindow()
   await window.onCloseRequested((event) => void onClose(event, window))
-
   if (!__EVEN_PLUGIN__ && isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
@@ -37,20 +34,15 @@ export async function guardClose(quitting: () => Promise<Quitting>): Promise<voi
     void startup.turn('right').then(async () => (await quitting()).answerQuitting(own.label))
   }
 }
-
 interface Closing {
   preventDefault(): void
 }
-
 interface Closable {
   destroy(): Promise<void>
 }
-
 let going = false
-
 async function onClose(event: Closing, window: Closable) {
   save()
-
   const hide = agentMarks.holding ? agentMarks.hide : trayKeeper()
   if (hide) {
     event.preventDefault()
@@ -59,41 +51,32 @@ async function onClose(event: Closing, window: Closable) {
     await window.destroy()
     return
   }
-
   if (!isDesktop) return
-
   const runs = anythingRuns()
   if (!runs) settle()
   if (!runs && !workspace.writing && !stillWriting() && !ready() && !going) return
-
   event.preventDefault()
   if (going) return
   if (runs && !(await mayStop('window'))) return
   await go()
   await window.destroy()
 }
-
 async function onQuit(window: Closable) {
   if (going) return
-
   await go()
   await window.destroy()
 }
-
 export function settle() {
   settleUp()
   workspace.graphSettings.flush()
 }
-
 function save() {
   writeOwed()
   workspace.graphSettings.flush()
 }
-
 function owed() {
   return Promise.all([workspace.writesSettled(), written(), internal.flush?.()])
 }
-
 async function go(): Promise<void> {
   settle()
   going = true

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: false,
@@ -18,16 +17,12 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const ending = vi.hoisted(() => ({ answer: true, asked: [] as string[][] }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const WORK = { id: 'work', name: 'Work', root: '/spaces/Work' }
 const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }
-
 async function window(spaces: (typeof WORK)[], active: string | null, setsRead?: unknown) {
   await vi.dynamicImportSettled()
   vi.resetModules()
@@ -44,11 +39,8 @@ async function window(spaces: (typeof WORK)[], active: string | null, setsRead?:
   workspace.setsRead = setsRead
   return workspace
 }
-
 const fetched = async () => (await import('./sets.svelte')).sets
-
 const names = (tabs: readonly { kind: string; path: string | null }[]) => tabs.map((one) => one.path ?? one.kind).sort()
-
 beforeEach(() => {
   const one = disk.current!
   one.reset()
@@ -56,9 +48,7 @@ beforeEach(() => {
   one.files.set(`${WORK.root}/Plan.md`, '# Plan\n')
   one.files.set(`${FOOD.root}/Food.md`, '# Food\n')
 })
-
 afterEach(() => vi.dynamicImportSettled())
-
 describe('the space on screen deleted', () => {
   test('closes its tabs that are no file, and the next space’s stay', async () => {
     const workspace = await window([WORK, FOOD], 'work')
@@ -73,7 +63,6 @@ describe('the space on screen deleted', () => {
     expect(workspace.activeSpaceId).toBe('food')
     expect(names(workspace.tabs)).toEqual([`${FOOD.root}/Food.md`])
   })
-
   test('closes them too where it is the first thing to fetch the sets', async () => {
     const workspace = await window([WORK, FOOD], 'work')
     workspace.openWebsite()
@@ -82,7 +71,6 @@ describe('the space on screen deleted', () => {
     expect(workspace.activeSpaceId).toBe('food')
     expect(names(workspace.tabs)).toEqual([])
   })
-
   test('leaves nothing for the next launch', async () => {
     const workspace = await window([WORK, FOOD], 'work')
     await fetched()
@@ -91,7 +79,6 @@ describe('the space on screen deleted', () => {
     expect(Object.keys((workspace.setsWritten() as { aside: object }).aside)).toEqual([])
   })
 })
-
 describe('a space missing from the listing, which may be a drive not mounted', () => {
   test('keeps what was on screen at the switch away from it', async () => {
     const workspace = await window([WORK, FOOD], 'work')
@@ -102,7 +89,6 @@ describe('a space missing from the listing, which may be a drive not mounted', (
     expect(names(workspace.tabs)).toEqual(['web'])
     expect(Object.keys((workspace.setsWritten() as { aside: object }).aside)).toEqual(['work'])
   })
-
   test('keeps its set through a launch, words and running shells with it', async () => {
     const before = await window([WORK, FOOD], 'work')
     await fetched()
@@ -115,7 +101,6 @@ describe('a space missing from the listing, which may be a drive not mounted', (
     expect(Object.keys((after.setsWritten() as { aside: object }).aside)).toEqual(['work'])
   })
 })
-
 test('a space out of sight deleted closes its set, built or not', async () => {
   const before = await window([WORK, FOOD], 'work')
   await fetched()
@@ -130,7 +115,6 @@ test('a space out of sight deleted closes its set, built or not', async () => {
   expect(after.tabs).toEqual([])
   expect(Object.keys((after.setsWritten() as { aside: object } | undefined)?.aside ?? {})).toEqual([])
 })
-
 test('the last space deleted leaves its tabs the window’s, for the next space made', async () => {
   const workspace = await window([WORK], 'work')
   await fetched()
@@ -145,7 +129,6 @@ test('the last space deleted leaves its tabs the window’s, for the next space 
   expect(workspace.tabs.every((tab) => workspace.panes.at(tab.paneId))).toBe(true)
   expect(names(workspace.tabs)).toEqual(['web'])
 })
-
 test('the shared set of older builds is not given to the space being deleted', async () => {
   const before = await window([WORK], 'work')
   const sets = await fetched()
@@ -160,7 +143,6 @@ test('the shared set of older builds is not given to the space being deleted', a
   expect(names(after.tabs)).toEqual(['web'])
   expect(after.tabs.every((tab) => after.panes.at(tab.paneId))).toBe(true)
 })
-
 describe('a running shell in the space being deleted, which the sheet says nothing about', () => {
   async function asked(answer: boolean) {
     const workspace = await window([WORK, FOOD], 'work')
@@ -176,14 +158,12 @@ describe('a running shell in the space being deleted, which the sheet says nothi
     await deleteSpace(workspace.spaces[0] ?? WORK)
     return workspace
   }
-
   test('asks as closing its tab does, and no leaves the space and the shell', async () => {
     const workspace = await asked(false)
     expect(ending.asked).toEqual([['terminal']])
     expect(workspace.spaces.map((one) => one.id)).toEqual(['work', 'food'])
     expect(names(workspace.tabs)).toEqual(['terminal'])
   })
-
   test('and yes goes on with the delete', async () => {
     const workspace = await asked(true)
     expect(ending.asked).toEqual([['terminal']])
@@ -191,7 +171,6 @@ describe('a running shell in the space being deleted, which the sheet says nothi
     expect(workspace.tabs).toEqual([])
   })
 })
-
 test('a space that is still there keeps its set through a launch', async () => {
   const before = await window([WORK, FOOD], 'work')
   await fetched()
@@ -202,7 +181,6 @@ test('a space that is still there keeps its set through a launch', async () => {
   await (await fetched()).wake()
   expect(names(after.tabs)).toEqual(['web'])
 })
-
 describe('the set older builds shared, in a window with no space to give it to', () => {
   async function sharedSet(on: string) {
     const before = await window([WORK], 'work')
@@ -214,7 +192,6 @@ describe('the set older builds shared, in a window with no space to give it to',
     }
     return { on, aside: { global: aside.work } }
   }
-
   test('comes on screen at that launch, none of it lost', async () => {
     const written = await sharedSet('work')
     const after = await window([], null, written)
@@ -222,7 +199,6 @@ describe('the set older builds shared, in a window with no space to give it to',
     expect(names(after.tabs)).toEqual(['web'])
     expect(after.tabs.every((tab) => after.panes.at(tab.paneId))).toBe(true)
   })
-
   test('kept for the next launch, where the window itself shows the shared set', async () => {
     const written = await sharedSet('global')
     const after = await window([], null, written)

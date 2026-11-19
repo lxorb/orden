@@ -5,11 +5,8 @@ import { ROOT, walk } from './files'
 
 const APP = join(ROOT, 'apps/desktop')
 const CRATE = join(APP, 'src-tauri')
-
 const read = (path: string) => readFileSync(path, 'utf8')
-
 const CODE = /\.(ts|svelte|rs|css|json|html|py)$/
-
 const source = (dir: string) =>
   walk(
     dir,
@@ -20,10 +17,8 @@ const source = (dir: string) =>
       !/[\\/]src-tauri[\\/](linux|windows)[\\/]/.test(path),
     ['node_modules', 'target', 'gen'],
   )
-
 const OFFERS =
   /isDeck|deckOf|slideAt|insertSlideBreak|setDeck|orden-deck|orden-slide-break|slidesStage|slides\/present|presenter_open|orden-presenter|orden:presenter|'app\.present'|'slides-html'|'slides-pdf'|'slide-break'|'new-slide'|'next-slide'|'previous-slide'|revealjs|DECK_LAYOUT|slidesCss|SLIDES_CSS|@orden\/markdown\/(slides|deck|slide-breaks)|presenter\.html|lib\/slides\//
-
 const GONE = [
   'apps/desktop/presenter.html',
   'apps/desktop/src/presenter.ts',
@@ -35,12 +30,10 @@ const GONE = [
   'packages/markdown/src/slide-breaks.ts',
   'packages/themes/src/slides.css',
 ]
-
 describe('slides and presenting (#2096)', () => {
   test('none of their files is left', () => {
     expect(GONE.filter((path) => existsSync(join(ROOT, path)))).toEqual([])
   })
-
   test('no command, menu row, shortcut, export, setting or crate command reaches them', () => {
     const roots = [
       join(APP, 'src'),
@@ -61,7 +54,6 @@ describe('slides and presenting (#2096)', () => {
       .map((path) => path.slice(ROOT.length))
     expect(found).toEqual([])
   })
-
   test('the window asks for no monitor, since nothing opens on a second screen', () => {
     const granted = JSON.parse(read(join(CRATE, 'capabilities/default.json'))) as {
       permissions: string[]

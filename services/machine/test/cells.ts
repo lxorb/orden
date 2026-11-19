@@ -3,24 +3,19 @@ import headless from '@xterm/headless'
 const { Terminal } = headless
 type Term = InstanceType<typeof Terminal>
 type Buffer = Term['buffer']['active']
-
 export function terminal(cols: number, rows: number): Term {
   return new Terminal({ cols, rows, scrollback: 5000, allowProposedApi: true })
 }
-
 export function written(term: Term, data: string | Uint8Array = ''): Promise<void> {
   return new Promise((resolve) => {
     term.write(data, resolve)
   })
 }
-
 const P16 = 0x1000000
 const P256 = 0x2000000
-
 function colour(mode: number, value: number): [number, number] {
   return mode === P256 && value < 16 ? [P16, value] : [mode, value]
 }
-
 function lines(buffer: Buffer): string[] {
   const out: string[] = []
   const cell = buffer.getNullCell()
@@ -51,7 +46,6 @@ function lines(buffer: Buffer): string[] {
   }
   return out.slice(0, used)
 }
-
 export function cells(term: Term): unknown {
   const { active, normal, alternate } = term.buffer
   return {
@@ -64,7 +58,6 @@ export function cells(term: Term): unknown {
     modes: { ...term.modes },
   }
 }
-
 export function text(term: Term): string {
   const buffer = term.buffer.active
   const out: string[] = []

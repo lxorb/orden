@@ -6,7 +6,6 @@ import { invited, live } from './sync2'
 let env: TestEnv
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   live(env)
@@ -14,18 +13,14 @@ beforeEach(async () => {
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Files' } })).json.space.id
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 })
-
 afterEach(() => env.close())
-
 async function hashOf(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bytes)
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
-
 function bytes(length: number, seed = 1): Uint8Array {
   return Uint8Array.from({ length }, (_, at) => (at * 31 + seed) % 251)
 }
-
 async function upload(data: Uint8Array, type = 'audio/webm', as = token) {
   return call(env, `/v2/blobs/${await hashOf(data)}`, {
     method: 'PUT',
@@ -34,7 +29,6 @@ async function upload(data: Uint8Array, type = 'audio/webm', as = token) {
     headers: { 'content-type': type },
   })
 }
-
 let counter = 0
 async function place(name: string, hash: string, as = token, into = space): Promise<OpsResponse> {
   counter += 1
@@ -47,19 +41,15 @@ async function place(name: string, hash: string, as = token, into = space): Prom
   })
   return answer.json
 }
-
 describe('bytes up', () => {
   test('any kind of file, in one request, kept under its own hash and counted against the account', async () => {
     const data = bytes(4096)
     const before = (await call(env, '/v1/usage', { token })).json.used
-
     const answer = await upload(data)
     expect(answer.status).toBe(201)
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(before + 4096)
-
     expect((await upload(data)).json.stored).toBe(false)
   })
-
   test('refused under a hash that is not theirs', async () => {
     const answer = await call(env, `/v2/blobs/${'0'.repeat(64)}`, {
       method: 'PUT',
@@ -71,7 +61,6 @@ describe('bytes up', () => {
     expect(env.keys().some((key) => key.startsWith('blobs/'))).toBe(false)
   })
 })
-
 describe('bytes down', () => {
   test('to the space it is in, and to nobody by its hash alone', async () => {
     const data = bytes(512)
@@ -79,7 +68,6 @@ describe('bytes down', () => {
     await upload(data)
     const placed = await place('recording.webm', hash)
     const id = 'id' in (placed.results[0] ?? {}) ? (placed.results[0] as { id: string }).id : ''
-
     const reader = await invited(env, token, space, 'reader@example.com', 'read')
     for (const as of [token, reader]) {
       const got = await call(env, `/v2/files/${space}/${id}`, { token: as })
@@ -87,22 +75,18 @@ describe('bytes down', () => {
       expect(got.headers.get('content-type')).toBe('application/octet-stream')
       expect(new TextEncoder().encode(got.text).length).toBeGreaterThan(0)
     }
-
     const stranger = await signIn(env, 'stranger@example.com')
     expect((await call(env, `/v2/files/${space}/${id}`, { token: stranger })).status).toBe(404)
     expect((await call(env, `/i/${hash}`)).status).toBe(404)
   })
-
   test('never for bytes only somebody outside the space keeps, whose hash is all anybody knows', async () => {
     const other = await signIn(env, 'other@example.com')
     const data = bytes(300, 9)
     await upload(data, 'application/pdf', other)
-
     const placed = await place('theirs.pdf', await hashOf(data))
     expect(placed.results[0]).toMatchObject({ refused: 'gone' })
   })
 })
-
 describe('a file replaced', () => {
   test('is refused once it was purged from Recently deleted, and stays gone', async () => {
     const first = bytes(100, 1)
@@ -120,7 +104,6 @@ describe('a file replaced', () => {
         hash: string
       }
     const purged = row()
-
     const answer = await call(env, `/v2/files/${space}/${id}`, {
       method: 'PUT',
       token,
@@ -129,7 +112,6 @@ describe('a file replaced', () => {
     expect(answer.status).toBe(404)
     expect(row()).toEqual(purged)
   })
-
   test('by the later arrival, and a device that replaced it too is told what it is now', async () => {
     const first = bytes(100, 1)
     const second = bytes(100, 2)
@@ -137,14 +119,12 @@ describe('a file replaced', () => {
     for (const one of [first, second, third]) await upload(one)
     const placed = await place('picture.bin', await hashOf(first))
     const id = (placed.results[0] as { id: string }).id
-
     const laptop = await call(env, `/v2/files/${space}/${id}`, {
       method: 'PUT',
       token,
       body: { hash: await hashOf(second), base: await hashOf(first) },
     })
     expect(laptop.json).toMatchObject({ ok: true })
-
     const phone = await call<{ moved: { hash: string } }>(env, `/v2/files/${space}/${id}`, {
       method: 'PUT',
       token,
@@ -152,7 +132,6 @@ describe('a file replaced', () => {
     })
     expect(phone.json.moved.hash).toBe(await hashOf(second))
   })
-
   test("by another device stand against a delete that had not seen them, though this one's came since", async () => {
     const other = await signIn(env, 'files@example.com')
     const versions = [bytes(100, 1), bytes(100, 2), bytes(100, 3)]
@@ -160,7 +139,6 @@ describe('a file replaced', () => {
     const placed = await place('picture.bin', await hashOf(versions[0] ?? bytes(0)))
     const id = (placed.results[0] as { id: string }).id
     const seen = (await call<{ cursor: number }>(env, `/v2/spaces/${space}/feed?since=0`, { token })).json.cursor
-
     for (const [as, at] of [
       [other, 1],
       [token, 2],
@@ -175,21 +153,18 @@ describe('a file replaced', () => {
       })
       expect(answer.json).toMatchObject({ ok: true })
     }
-
     const deleted = await call<OpsResponse>(env, `/v2/spaces/${space}/ops`, {
       token,
       body: { ops: [{ op: 'op-gone', t: 'delete', id, seen }] },
     })
     expect(deleted.json.results[0]).toMatchObject({ refused: 'edited' })
   })
-
   test('by nobody who may only read the space', async () => {
     const data = bytes(64)
     await upload(data)
     const placed = await place('a.bin', await hashOf(data))
     const id = (placed.results[0] as { id: string }).id
     const reader = await invited(env, token, space, 'reader2@example.com', 'read')
-
     const answer = await call(env, `/v2/files/${space}/${id}`, {
       method: 'PUT',
       token: reader,
@@ -198,7 +173,6 @@ describe('a file replaced', () => {
     expect(answer.status).toBe(403)
   })
 })
-
 describe('the bytes an editor names', () => {
   async function elsewhere(): Promise<string> {
     const other = (await call(env, '/v1/spaces', { token, body: { name: 'Private' } })).json.space.id
@@ -209,16 +183,13 @@ describe('the bytes an editor names', () => {
     expect((await place('private.pdf', hash, token, other)).results[0]).toHaveProperty('id')
     return hash
   }
-
   test('are never what the owner keeps for another space, as a new entry', async () => {
     const hash = await elsewhere()
     const editor = await invited(env, token, space, 'editor@example.com', 'write')
-
     expect((await place('theirs.pdf', hash, editor)).results[0]).toMatchObject({
       refused: 'gone',
     })
   })
-
   test('nor as the bytes an entry is replaced by', async () => {
     const hash = await elsewhere()
     const editor = await invited(env, token, space, 'editor@example.com', 'write')
@@ -226,7 +197,6 @@ describe('the bytes an editor names', () => {
     await upload(mine, 'application/octet-stream', editor)
     const placed = await place('mine.bin', await hashOf(mine), editor)
     const id = (placed.results[0] as { id: string }).id
-
     const answer = await call(env, `/v2/files/${space}/${id}`, {
       method: 'PUT',
       token: editor,
@@ -238,21 +208,17 @@ describe('the bytes an editor names', () => {
       new TextDecoder().decode(bytes(256, 11)),
     )
   })
-
   test('may be bytes of their own', async () => {
     const editor = await invited(env, token, space, 'editor@example.com', 'write')
     const mine = bytes(64, 13)
     await upload(mine, 'application/octet-stream', editor)
-
     expect((await place('mine.bin', await hashOf(mine), editor)).results[0]).toHaveProperty('id')
   })
-
   test('or bytes this space already holds, as a file of it', async () => {
     const data = bytes(64, 14)
     await upload(data)
     await place('ours.bin', await hashOf(data))
     const editor = await invited(env, token, space, 'editor@example.com', 'write')
-
     expect((await place('ours again.bin', await hashOf(data), editor)).results[0]).toHaveProperty('id')
     const other = bytes(64, 15)
     await upload(other, 'application/octet-stream', editor)
@@ -265,10 +231,8 @@ describe('the bytes an editor names', () => {
     expect(answer.json).toMatchObject({ ok: true })
   })
 })
-
 describe('a copy kept under a hash it is not the bytes of', () => {
   const PLANTED = '<svg xmlns="http://www.w3.org/2000/svg"><text>not yours</text></svg>'
-
   async function plant(hash: string): Promise<string> {
     const other = await signIn(env, 'planter@example.com')
     const put = await call(env, `/v1/blobs/${hash}`, {
@@ -280,35 +244,29 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     expect(put.status).toBe(201)
     return other
   }
-
   async function read(hash: string): Promise<string> {
     const placed = await place('mine.bin', hash)
     const id = (placed.results[0] as { id: string }).id
     return (await call(env, `/v2/files/${space}/${id}`, { token })).text
   }
-
   test('is replaced by the real bytes when they come up in one request', async () => {
     const data = bytes(5000, 11)
     const hash = await hashOf(data)
     await plant(hash)
-
     expect((await upload(data)).status).toBe(201)
     const got = await read(hash)
     expect(got).not.toContain('not yours')
     expect(new TextEncoder().encode(got).length).toBeGreaterThan(PLANTED.length)
     expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(5000)
   })
-
   test('while a copy that is the bytes stays as it is', async () => {
     const data = bytes(4000, 13)
     const hash = await hashOf(data)
     const other = await signIn(env, 'first@example.com')
     await upload(data, 'image/png', other)
-
     expect((await upload(data, 'audio/webm')).status).toBe(201)
     expect((await env.NOTES.get(`blobs/${hash}`))?.httpMetadata?.contentType).toBe('image/png')
   })
-
   test('kept before this, is taken away by the nightly sweep, rows and all', async () => {
     const data = bytes(5000, 14)
     const hash = await hashOf(data)
@@ -319,27 +277,21 @@ describe('a copy kept under a hash it is not the bytes of', () => {
         "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 5000, 'application/octet-stream', 1)",
       )
       .run(hash, mine)
-
     const diagram = 'a'.repeat(64)
     await plant(diagram)
-
     const { sweepMisnamed } = await import('../src/sync-server-engine/src/sync2/files')
     expect(await sweepMisnamed(env)).toBe(1)
-
     expect(await env.NOTES.get(`blobs/${hash}`)).toBeNull()
     expect(env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
       many: 0,
     })
     expect(await env.NOTES.get(`blobs/${diagram}`)).not.toBeNull()
-
     expect((await upload(data)).status).toBe(201)
     expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(5000)
   })
 })
-
 describe('the quota', () => {
   const QUOTA = 1024 ** 3
-
   function shortBy(bytes: number) {
     const user = (env.db.prepare('select id from users').get() as { id: string }).id
     env.db
@@ -348,17 +300,14 @@ describe('the quota', () => {
       )
       .run(user, QUOTA - bytes)
   }
-
   test('nor bytes in one request, past it by the time the row is written', async () => {
     shortBy(2000)
     const data = bytes(1200, 23)
     env.justBefore(/insert into blobs/, () => shortBy(1500))
-
     expect((await upload(data)).status).toBe(507)
     expect(await env.NOTES.get(`blobs/${await hashOf(data)}`)).toBeNull()
   })
 })
-
 describe('the bytes an account keeps, asked', () => {
   test('for a space, are the bytes that space holds, whoever sent them', async () => {
     const data = bytes(3000, 24)
@@ -375,13 +324,11 @@ describe('the bytes an account keeps, asked', () => {
       (await call(env, '/v2/blobs/have', { token: editor, body })).json as unknown as {
         kept: string[]
       }
-
     const both = [hash, await hashOf(hidden)]
     expect(await asked({ space, hashes: both })).toEqual({ kept: [hash] })
     expect(await asked({ hashes: both })).toEqual({ kept: [] })
     expect(await asked({ space: other, hashes: both })).toEqual({ kept: [] })
   })
-
   test('answers its own rows only, and no more than ninety at once', async () => {
     const data = bytes(3000, 21)
     const hash = await hashOf(data)
@@ -389,14 +336,12 @@ describe('the bytes an account keeps, asked', () => {
     const other = await signIn(env, 'someone-else@example.com')
     const theirs = bytes(3000, 22)
     expect((await upload(theirs, 'audio/webm', other)).status).toBe(201)
-
     const asked = await call(env, '/v2/blobs/have', {
       token,
       body: { hashes: [hash, await hashOf(theirs), 'b'.repeat(64)] },
     })
     expect(asked.status).toBe(200)
     expect((asked.json as unknown as { kept: string[] }).kept).toEqual([hash])
-
     expect(
       (
         await call(env, '/v2/blobs/have', {
@@ -405,7 +350,6 @@ describe('the bytes an account keeps, asked', () => {
         })
       ).json,
     ).toEqual({ kept: [hash] })
-
     const many = Array.from({ length: 91 }, (_, at) => at.toString(16).padStart(64, '0'))
     expect((await call(env, '/v2/blobs/have', { token, body: { hashes: many } })).status).toBe(400)
     expect((await call(env, '/v2/blobs/have', { token, body: { hashes: ['not a hash'] } })).status).toBe(400)

@@ -9,12 +9,10 @@ import { type Held, setRemembers, STYLES } from './instructions'
 import { commandName } from './notes'
 
 const AGENTS = 'AGENTS.md'
-
 function rootOf(thread: Thread | null): string | null {
   const space = thread ? workspace.spaces.find((one) => one.id === thread.space) : null
   return space?.root ?? workspace.activeSpace?.root ?? null
 }
-
 export async function memory(host: Host, thread: Thread | null, args: string): Promise<void> {
   const word = args.trim().toLowerCase()
   if (word === 'on' || word === 'off') {
@@ -33,27 +31,22 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   }
   await workspace.open(path)
 }
-
 const INIT = [
   'Write AGENTS.md at the root of this space: the instructions an assistant should follow here.',
   'First look around with your tools: the folders and what goes in each, the tags in use, the templates, how notes are named and linked, the languages they are written in, and the habits they show.',
   'Then write it as a short note in sections (Layout, Conventions, Memory, with an empty Memory section for later),',
   'with create_note, or with edit_note to improve the one that is there. Change no other note.',
 ].join(' ')
-
 export function init(host: Host, thread: Thread | null): void {
   sendHere(host, thread, INIT, { mode: 'auto' })
 }
-
 export function mention(host: Host, thing: string): void {
   const { panel } = host
   if (panel.text !== undefined) panel.text = `@${thing.trim().replace(/^@/, '')}`
 }
-
 function listed(names: readonly string[], chosen?: string, prefix = ''): string {
   return names.map((name) => `${name === chosen ? '● ' : ''}${prefix}${name}`).join('  ') || '∅'
 }
-
 export async function skills(host: Host, thread: Thread | null, args: string): Promise<void> {
   const notes = (await found()).filter((one) => one.kind === 'command')
   const name = commandName(args)
@@ -72,12 +65,10 @@ export async function skills(host: Host, thread: Thread | null, args: string): P
       ),
     )
 }
-
 async function inThreadSpace(thread: Thread) {
   const root = rootOfSpace(thread.space)
   return root ? await found(root) : []
 }
-
 export async function agents(host: Host, thread: Thread | null, args: string): Promise<void> {
   const open = thread ?? host.panel.ensure?.() ?? null
   if (!open) return
@@ -105,7 +96,6 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
   if (profile.mode && !(await fromOthers(profile.path))) host.panel.setMode(profile.mode)
   host.touched(open)
 }
-
 export async function outputStyle(host: Host, thread: Thread | null, args: string): Promise<void> {
   const open = thread ?? host.panel.ensure?.() ?? null
   if (!open) return

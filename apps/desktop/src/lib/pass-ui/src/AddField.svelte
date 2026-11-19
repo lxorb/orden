@@ -6,7 +6,6 @@
   import Glyph from './Glyph.svelte'
 
   const { onadd, label }: { onadd: (kind: FieldKind) => void; label?: string } = $props()
-
   function show(event: MouseEvent) {
     menu.show(
       event,

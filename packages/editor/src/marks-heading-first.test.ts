@@ -15,7 +15,6 @@ function stateOf(doc: string): EditorState {
     }),
   )
 }
-
 function run(
   command: (target: { state: EditorState; dispatch: (one: Transaction) => void }) => boolean,
   doc: string,
@@ -25,20 +24,16 @@ function run(
   command({ state, dispatch: (one: Transaction) => (next = one.state) })
   return next.doc.toString()
 }
-
 describe('edit31 a mark over a heading and the paragraph written right under it', () => {
   test('bold gives the heading and the paragraph a run each', () => {
     expect(run(marksAcross('**'), '# Title\nSome text')).toBe('# **Title**\n**Some text**')
   })
-
   test('italic over a heading and two paragraph lines under it', () => {
     expect(run(marksAcross('*'), '## Plan\nFirst line\nsecond line').split('\n')[0]).toBe('## *Plan*')
   })
-
   test('highlight gives the heading and the paragraph a run each', () => {
     expect(run(highlightAcross(highlightTone(null)), '# Title\nSome text')).toBe('# ==Title==\n==Some text==')
   })
-
   test('bold over a line of words and the quote written right under it gives each a run', () => {
     expect(run(marksAcross('**'), 'He said:\n> Ship it')).toBe('**He said:**\n> **Ship it**')
   })

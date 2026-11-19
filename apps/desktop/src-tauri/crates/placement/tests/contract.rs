@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 use orden_placement::placement::names_its_place;
 use tauri::utils::config::WindowConfig;
 

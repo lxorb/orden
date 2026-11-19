@@ -35,13 +35,11 @@ const ENTRY = `<!DOCTYPE html>
 </body>
 </html>
 `
-
 const BARE = `<html><body>
 <div class="pageHeader">Friday, September 4, 2026</div>
 <div class="bodyText"><p class="p2"><span class="s2">Rained all afternoon.</span></p></div>
 </body></html>
 `
-
 function anExport(): Source[] {
   return [
     file('AppleJournalEntries/Index.html', '<html><body><a href="Entries/x.html">x</a></body></html>'),
@@ -55,75 +53,58 @@ function anExport(): Source[] {
     sourceOf('AppleJournalEntries/Resources/B2C3D4E5-1111-2222-3333-444455556666.mov', new Uint8Array([4, 5, 6])),
   ]
 }
-
 function noteAt(plan: Awaited<ReturnType<typeof readJournal>>, path: string): string {
   const found = plan.files.find((one) => one.path === path)
   expect(found, `${path} among ${plan.files.map((one) => one.path).join(', ')}`).toBeTruthy()
   return found?.kind === 'note' ? found.text : ''
 }
-
 describe('an Apple Journal export', () => {
   test('is what it is, by the entries it holds', async () => {
     expect(await detect(anExport())).toBe('journal')
   })
-
   test('is not read as an HTML folder, which it also looks like', async () => {
     expect(await detect([anExport()[1]!])).toBe('journal')
   })
-
   test('becomes one note per entry, named after the day it was written', async () => {
     const plan = await readJournal(anExport())
     const paths = plan.files.map((one) => one.path)
-
     expect(paths).toContain('2026-09-04 Evening on the lake.md')
     expect(paths).toContain('2026-09-04.md')
     expect(plan.format).toBe('journal')
   })
-
   test("carries the entry's day as front matter and its title as the heading", async () => {
     const plan = await readJournal(anExport())
     const note = noteAt(plan, '2026-09-04 Evening on the lake.md')
-
     expect(note.startsWith('---\ndate: 2026-09-04\n---\n')).toBe(true)
     expect(note).toContain('# Evening on the lake')
     expect(note).not.toContain('Friday, September 4, 2026')
     expect(note.match(/Evening on the lake/g)).toHaveLength(1)
   })
-
   test('keeps the words, the mood and the place the entry said', async () => {
     const note = noteAt(await readJournal(anExport()), '2026-09-04 Evening on the lake.md')
-
     expect(note).toContain('Swam at seven, then sat on the jetty.')
     expect(note).toContain('The water was warmer than the air.')
     expect(note).toContain('Calm')
   })
-
   test('brings the media beside the notes, video included', async () => {
     const plan = await readJournal(anExport())
     const paths = plan.files.map((one) => one.path)
     const note = noteAt(plan, '2026-09-04 Evening on the lake.md')
-
     expect(paths).toContain('assets/A1B2C3D4-1111-2222-3333-444455556666.heic')
     expect(paths).toContain('assets/B2C3D4E5-1111-2222-3333-444455556666.mov')
-
     expect(note).toContain('![](assets/A1B2C3D4-1111-2222-3333-444455556666.heic)')
     expect(note).toContain('(assets/B2C3D4E5-1111-2222-3333-444455556666.mov)')
   })
-
   test("leaves out Journal's own index and its JSON about each file", async () => {
     const paths = (await readJournal(anExport())).files.map((one) => one.path)
-
     expect(paths.some((one) => one.toLowerCase().includes('index'))).toBe(false)
     expect(paths.some((one) => one.endsWith('.json'))).toBe(false)
   })
-
   test('says what a reader has to know: HEIC, and the cards Journal draws', async () => {
     const said = (await readJournal(anExport())).lost
-
     expect(said.some((one) => one.includes('HEIC'))).toBe(true)
     expect(said.some((one) => one.includes('mood and activity'))).toBe(true)
   })
-
   test('a picture an entry shows that the export did not hold is counted', async () => {
     const plan = await readJournal([
       file(
@@ -133,11 +114,9 @@ describe('an Apple Journal export', () => {
       ),
       sourceOf('AppleJournalEntries/Resources/IMG 1.jpeg', new Uint8Array([1])),
     ])
-
     expect(noteAt(plan, '2026-01-05.md')).toContain('![](assets/IMG%201.jpeg)')
     expect(plan.lost).toContain('1 attachment was missing from the export or could not be read')
   })
-
   test('a map of several places is one of the cards Journal draws', async () => {
     const plan = await readJournal([
       file(
@@ -146,15 +125,12 @@ describe('an Apple Journal export', () => {
           '<div class="gridItemOverlayFooter">Old Town Market Place</div></div>',
       ),
     ])
-
     expect(noteAt(plan, '2023-12-17.md')).toContain('Old Town Market Place')
     expect(plan.lost).toContain('1 mood and activity cards are drawings, so only their words come over')
   })
-
   test('an entry with no date anywhere is still a note', async () => {
     const plan = await readJournal([file('Entries/whatever.html', '<html><body>Words</body></html>')])
     const note = plan.files[0]
-
     expect(note?.path).toBe('whatever.md')
     expect(note?.kind === 'note' && note.text).toContain('Words')
     expect(note?.kind === 'note' && note.text).not.toContain('date:')
@@ -169,11 +145,9 @@ describe('an Apple Journal export', () => {
     ])
     const note = plan.files.find((one) => one.kind === 'note')
     const text = note?.kind === 'note' ? note.text : ''
-
     expect(text).toContain('# Fine \\<img src=https://t.example/p.gif>\\<style>')
     expect(text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
   })
-
   test("a clip's address cannot end its link early and open a picture of its own", async () => {
     const plan = await readJournal([
       file(
@@ -182,7 +156,6 @@ describe('an Apple Journal export', () => {
           '<video><source src="../Resources/v.mov)![](https://t.example/p.gif"></video></div>',
       ),
     ])
-
     expect(noteAt(plan, '2026-01-05.md')).not.toContain('](https://t.example')
   })
 })

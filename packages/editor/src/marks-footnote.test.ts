@@ -16,7 +16,6 @@ function over(doc: string, command: StateCommand): string {
   command({ state, dispatch: (one: Transaction) => (state = one.state) })
   return state.doc.toString()
 }
-
 describe('small marks and links over whole lines', () => {
   test('bold over a whole footnote definition keeps its label outside', () => {
     expect(over('[^1]: a note', toggleWrap('**'))).toBe('[^1]: **a note**')

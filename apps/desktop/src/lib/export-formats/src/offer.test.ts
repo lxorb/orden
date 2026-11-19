@@ -19,35 +19,28 @@ const TEN = EXPORT_FORMATS.map((format) => format.id)
 const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
 const KINDS: ExportKind[] = ['note', 'canvas', 'file', 'none']
 const RULED = '# One\n\ntext\n\n---\n\n# Two\n\nmore\n'
-
 describe('what each kind of document goes out as', () => {
   test('gives a note the ten formats and the two variants', () => {
     expect(offeredBy('note')).toEqual([...TEN, ...VARIANTS])
   })
-
   test('gives a canvas the three its own picture code draws', () => {
     expect(offeredBy('canvas')).toEqual(['png', 'svg', 'pdf'])
   })
-
   test('never offers a canvas a format a drawing cannot be', () => {
     for (const id of ['txt', 'md', 'textbundle', 'rtf', 'jpg', 'html', 'docx', 'epub'] as const) {
       expect(offeredBy('canvas'), id).not.toContain(id)
     }
   })
-
   test('offers a file the app is only showing its own bytes and nothing else', () => {
     expect(offeredBy('file')).toEqual(['copy'])
   })
-
   test('offers nothing for a document there is nothing to export', () => {
     expect(offeredBy('none')).toEqual([])
   })
-
   test('keeps the ten in the list own fixed order', () => {
     const ten = offeredBy('note').filter((id) => TEN.some((one) => one === id))
     expect(ten).toEqual(TEN)
   })
-
   test('offers a row at most once per kind', () => {
     for (const kind of KINDS) {
       const ids = offeredBy(kind)
@@ -55,43 +48,34 @@ describe('what each kind of document goes out as', () => {
     }
   })
 })
-
 describe('which kind the thing on screen is', () => {
   test('is nothing at all with no tab open', () => {
     expect(exportKindOf(null)).toBe('none')
   })
-
   test('is a note for a note', () => {
     expect(exportKindOf({ exports: TAB_KINDS.note.exports, path: '/s/a.md' })).toBe('note')
   })
-
   test('is a note for a note with horizontal rules in it, which no longer make a deck', () => {
     expect(exportKindOf({ exports: TAB_KINDS.note.exports, path: '/s/talk.md' })).toBe('note')
   })
-
   test('is a canvas for a canvas', () => {
     expect(exportKindOf({ exports: TAB_KINDS.canvas.exports, path: '/s/b.canvas' })).toBe('canvas')
   })
-
   test('is a file for a paper with a path to read its bytes off', () => {
     expect(exportKindOf({ exports: TAB_KINDS.pdf.exports, path: '/s/paper.pdf' })).toBe('file')
   })
-
   test('is nothing for a paper with no path behind it', () => {
     expect(exportKindOf({ exports: TAB_KINDS.pdf.exports, path: null })).toBe('none')
   })
-
   test('is nothing for the graph of a space', () => {
     expect(exportKindOf({ exports: TAB_KINDS.graph.exports, path: null })).toBe('none')
   })
 })
-
 describe('the rows themselves', () => {
   test('know which of them run.ts writes', () => {
     for (const id of [...TEN, ...VARIANTS]) expect(isNoteFormat(id), id).toBe(true)
     for (const extra of EXPORT_EXTRAS) expect(isNoteFormat(extra.id), extra.id).toBe(false)
   })
-
   test('each say something other than their own id', () => {
     for (const kind of KINDS) {
       for (const id of offeredBy(kind)) {
@@ -100,32 +84,25 @@ describe('the rows themselves', () => {
       }
     }
   })
-
   test('can each be put on a key, but for the variants', () => {
     const bindable = new Set<ExportId>(EXPORT_KEYS)
     const offered = new Set(KINDS.flatMap((kind) => offeredBy(kind)))
-
     for (const id of offered) {
       if (VARIANTS.some((variant) => variant === id)) continue
       expect(bindable.has(id), id).toBe(true)
     }
   })
-
   test('are the only rows a key is offered for', () => {
     const offered = new Set(KINDS.flatMap((kind) => offeredBy(kind)))
     for (const id of EXPORT_KEYS) expect(offered.has(id), id).toBe(true)
   })
 })
-
 const CANVAS = '{"nodes":[],"edges":[]}'
-
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
 }))
-
 const written = vi.hoisted(() => new Map<string, string>())
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: { path?: string; content?: string }) => {
@@ -136,10 +113,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return held === undefined ? Promise.reject(new Error(`no ${path}`)) : Promise.resolve(held)
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
 const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { exportCommands } = await import('../../export/src/api')
@@ -147,35 +122,27 @@ registerCommandRows('export', () => Promise.resolve(exportCommands))
 const appMenu = await (await import('../../native-menu/src/api')).appMenuRows()
 const { isSubmenu } = await import('../../ui-kit/src/menu-item')
 const { SHORTCUTS } = await import('../../shortcuts/src/registry')
-
 function menuRows(): MenuItem[] {
   const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find((one) => one.id === 'file')
-
   const submenu = file?.rows.find((row) => row !== null && isSubmenu(row))
   if (!submenu || !isSubmenu(submenu)) throw new Error('Export is not a submenu of File')
-
   return submenu.rows.filter((row): row is MenuItem => row !== null && !isSubmenu(row))
 }
-
 const menuLabels = (): string[] => menuRows().map((row) => row.label)
-
 const offeredIds = (): string[] =>
   exportCommands()
     .map((command) => command.id)
     .filter((id) => id.startsWith('export-'))
     .map((id) => id.slice('export-'.length))
-
 async function only(open: () => Promise<void> | void) {
   for (const tab of [...workspace.tabs]) workspace.close(tab.id)
   await open()
 }
-
 describe('the menu, the palette and the shortcut settings', () => {
   test('offer a note what the offer says, in that order', async () => {
     await only(() => workspace.openBlank('Note.md', '# Head\n'))
     expect(offeredIds()).toEqual([...offeredBy('note')])
   })
-
   test('offer a note with rules in it, once a deck, what any note gets, its text kept', async () => {
     await only(() => workspace.openBlank('Talk.md', RULED))
     expect(workspace.active?.kind).toBe('note')
@@ -183,28 +150,23 @@ describe('the menu, the palette and the shortcut settings', () => {
     expect(offeredIds()).toEqual([...offeredBy('note')])
     expect(offeredIds().some((id) => id.startsWith('slides'))).toBe(false)
   })
-
   test('offer a canvas its three, and nothing a note has', async () => {
     await only(() => workspace.openCanvas('/space/board.canvas'))
     expect(offeredIds()).toEqual([...offeredBy('canvas')])
     expect(menuLabels()).toEqual(['Export as PNG', 'Export as SVG', 'Export as PDF'])
   })
-
   test('offer a paper what its page note offers', async () => {
     await only(() => workspace.openPdf('/space/paper.pdf'))
     expect(offeredIds()).toEqual([...offeredBy('pages')])
   })
-
   test('keep the Export menu with every row greyed out when nothing can go out', async () => {
     await only(() => workspace.openGraph())
-
     expect(offeredIds()).toEqual([...offeredBy('note')])
     expect(menuRows().length).toBeGreaterThan(0)
     expect(menuRows().filter((row) => row.label !== 'Page setup for export')).toSatisfy(
       (rows: { disabled?: boolean }[]) => rows.every((row) => row.disabled === true),
     )
   })
-
   test('show the same rows in the same order in the menu as in the palette', async () => {
     for (const open of [
       () => workspace.openBlank('Note.md', '# Head\n'),
@@ -216,10 +178,8 @@ describe('the menu, the palette and the shortcut settings', () => {
       expect(menuLabels()).toEqual(exportCommands().map((command) => command.label))
     }
   })
-
   test('put a key within reach of every row the palette offers', async () => {
     const bound = new Set(SHORTCUTS.map((one) => one.id))
-
     for (const open of [
       () => workspace.openBlank('Talk.md', RULED),
       () => workspace.openCanvas('/space/board.canvas'),
@@ -232,10 +192,8 @@ describe('the menu, the palette and the shortcut settings', () => {
       }
     }
   })
-
   test('leave a key for a format this document has not got nothing to run', async () => {
     await only(() => workspace.openCanvas('/space/board.canvas'))
-
     for (const id of ['docx', 'epub', 'txt']) {
       expect(
         exportCommands().find((command) => command.id === `export-${id}`),

@@ -15,7 +15,6 @@ function stateOf(doc: string, dragged: string): EditorState {
     }),
   )
 }
-
 function moved(doc: string, word: string, at: number): string {
   const state = stateOf(doc, word)
   const from = doc.indexOf(word)
@@ -31,7 +30,6 @@ function moved(doc: string, word: string, at: number): string {
   expect(after.sliceDoc(after.selection.main.from, after.selection.main.to)).toBe(word)
   return after.doc.toString()
 }
-
 function copied(doc: string, text: string, at: number): string {
   const state = stateOf(doc, '\u0000')
   return state
@@ -42,7 +40,6 @@ function copied(doc: string, text: string, at: number): string {
     })
     .state.doc.toString()
 }
-
 describe('a word dragged between words', () => {
   test.each([
     [
@@ -78,7 +75,6 @@ describe('a word dragged between words', () => {
     ['- one **two** three four\n', '- one **two** three four\n', 'one', '- one **two** three four\n'.indexOf('two')],
     ['a **two** b\n', 'a b **two**\n', 'b', 'a **'.length],
   ])('%j', (input, wanted, extra, last) => expect(moved(input, extra, last)).toBe(wanted))
-
   test.each([
     ['abcdef\n', 'abcxdef\n', 'x', 3],
     ['one, two\n', 'one x, two\n', 'x', 3],

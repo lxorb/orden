@@ -7,11 +7,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: async () => undefined,
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('./api')
-
 test('the recent list is the notes in a space', () => {
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
   workspace.device.remember('/downloads/Outside.md')

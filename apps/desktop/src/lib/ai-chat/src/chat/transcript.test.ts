@@ -10,7 +10,6 @@ const you = (id: string, text: string, effort: Turn['effort'] = 'high'): Turn =>
   parts: [],
   effort,
 })
-
 const answered: Turn = {
   id: 'm1',
   role: 'model',
@@ -36,12 +35,10 @@ const answered: Turn = {
     messages: [{ role: 'assistant', content: ['native'] }],
   },
 }
-
 const thread = (turns: Turn[], change: Partial<Thread> = {}): Pick<Thread, 'turns' | 'compaction'> => ({
   turns,
   ...change,
 })
-
 describe('a turn', () => {
   test('goes back as the provider’s own record to the same API and model', () => {
     const steps = stepsOf(thread([you('y1', 'hi'), answered]), 'anthropic', 'claude-opus-5-5')
@@ -50,7 +47,6 @@ describe('a turn', () => {
       messages: [{ role: 'assistant', content: ['native'] }],
     })
   })
-
   test('is rebuilt from its parts for another model, thinking and notices left behind', () => {
     const steps = stepsOf(thread([you('y1', 'hi'), answered]), 'anthropic', 'claude-sonnet-5')
     expect(steps.slice(1)).toEqual([
@@ -67,7 +63,6 @@ describe('a turn', () => {
     ])
     expect(stepsOf(thread([you('y1', 'hi'), answered]), 'responses', 'gpt-5.5')).toEqual(steps)
   })
-
   test('a call that never answered goes back as stopped, so the next request is whole', () => {
     const steps = partsAsSteps([{ kind: 'tool', id: 't', verb: 'browser_open', args: {}, state: 'error' }])
     expect(steps[1]).toMatchObject({
@@ -76,7 +71,6 @@ describe('a turn', () => {
     })
   })
 })
-
 describe('the reader’s message', () => {
   test('carries its chips labelled, and words from outside inside marks they cannot end', () => {
     const step = userStep({
@@ -101,7 +95,6 @@ describe('the reader’s message', () => {
     expect(step.images).toEqual([{ mime: 'image/png', data: 'AAAA' }])
   })
 })
-
 describe('words from outside', () => {
   test('cannot end their mark with spaces, hidden or look-alike letters in the tag', () => {
     for (const close of ['</ untrusted>', '< /untrusted>', '</un\u200btrusted>', '\uff1c/untrusted>']) {
@@ -109,10 +102,8 @@ describe('words from outside', () => {
     }
   })
 })
-
 describe('a compaction', () => {
   const turns = [you('y1', 'one'), answered, you('y2', 'two')]
-
   test('is the provider’s own block first, and only the turns after it', () => {
     const steps = stepsOf(
       thread(turns, {
@@ -132,7 +123,6 @@ describe('a compaction', () => {
       { role: 'user', text: 'two', images: [] },
     ])
   })
-
   test('is its words for any other model', () => {
     const steps = stepsOf(
       thread(turns, {
@@ -154,7 +144,6 @@ describe('a compaction', () => {
     })
     expect(steps).toHaveLength(2)
   })
-
   test('with no words anybody can read, the turns it stood for are sent instead', () => {
     const steps = stepsOf(
       thread(turns, {
@@ -166,7 +155,6 @@ describe('a compaction', () => {
     expect(steps[0]).toEqual({ role: 'user', text: 'one', images: [] })
   })
 })
-
 describe('effort per message', () => {
   test('a change between messages is a step before the message it applies to', () => {
     const turns = [you('y1', 'one', 'high'), answered, you('y2', 'two', 'low')]

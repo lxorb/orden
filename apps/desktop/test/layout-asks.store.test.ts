@@ -8,7 +8,6 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
 }))
-
 const { Disk, memoryStorage } = await import('./disk')
 const d = new Disk()
 disk.current = d
@@ -22,14 +21,12 @@ serveWorkspace({
   },
 })
 const { NoteDoc, Tab } = await import('../src/lib/documents/src/api')
-
 function terminal() {
   const note = new NoteDoc({ kind: 'terminal', path: null, name: 'Terminal', text: '', dirty: false }, () => undefined)
   const tab = new Tab(note, workspace.panes.focusedId)
   workspace.tabs = [...workspace.tabs, tab]
   return tab
 }
-
 beforeEach(async () => {
   await workspace.writesSettled()
   d.reset()
@@ -47,7 +44,6 @@ beforeEach(async () => {
   workspace.saveLayout('just a')
   workspace.tabs = []
 })
-
 describe('a layout over a terminal', () => {
   test('refused, everything stays', async () => {
     const shell = terminal()
@@ -57,7 +53,6 @@ describe('a layout over a terminal', () => {
     expect(workspace.tabs).toEqual([shell])
     expect(workspace.closed.stack).toEqual([])
   })
-
   test('agreed, it goes, and can be reopened with the rest', async () => {
     terminal()
     await workspace.open('/s/b.md')
@@ -66,14 +61,12 @@ describe('a layout over a terminal', () => {
     expect(workspace.closed.stack.map((one) => one.draft.kind).sort()).toEqual(['note', 'terminal'])
     expect(workspace.closed.stack.at(-1)?.batch).toBeDefined()
   })
-
   test('with no terminal nothing is asked', async () => {
     await workspace.open('/s/b.md')
     await workspace.useLayout('just a')
     expect(asked.tabs).toEqual([])
     expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/s/a.md'])
   })
-
   test('a note the layout holds as well is no tab going', async () => {
     await workspace.open('/s/a.md')
     await workspace.useLayout('just a')

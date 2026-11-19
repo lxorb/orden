@@ -19,19 +19,16 @@ import { madeTwice } from './twins'
 import { workspace } from './ports'
 
 const BATCH = 100
-
 function hidden(path: string): boolean {
   const parts = path.replace(/\\/g, '/').split('/')
   const name = parts.at(-1) ?? ''
   return parts.some((part, at) => part.startsWith('.') && !(at === parts.length - 1 && carriedOwn(name)))
 }
-
 function foreign(path: string): boolean {
   if (!inForeignCopy(path)) return false
   void askSheet('sync-mark')
   return true
 }
-
 export function kept(engine: Engine, path: string, dir: boolean): boolean {
   const inside = [...engine.core.spaces.values()]
     .map((space) => relative(space.row.root, path, engine.core.world.foldsCase))
@@ -39,9 +36,7 @@ export function kept(engine: Engine, path: string, dir: boolean): boolean {
   if (hidden(inside ?? path) || foreign(path)) return false
   return dir || holdsDocument(kindOfName(path)) || !!engine.core.world.blobs
 }
-
 let toldOfLimit = false
-
 async function limitReached(): Promise<void> {
   if (toldOfLimit) return
   toldOfLimit = true
@@ -52,30 +47,25 @@ async function limitReached(): Promise<void> {
     'watch-limit',
   )
 }
-
 export interface Watching {
   engine: Engine
   ready(spaceId: string): boolean
   changed(): void
   moved?(from: string, to: string, kind: 'file' | 'folder'): Promise<void>
 }
-
 export interface Watched {
   follow(): void
   caughtUp(spaceId: string): void
   stop(): void
 }
-
 function spaceAt(engine: Engine, root: string) {
   return [...engine.core.spaces.values()].find((one) => samePath(one.row.root, root))
 }
-
 export async function watchFolders(how: Watching): Promise<Watched> {
   const mounts = await keptMounts()
   const queue: (() => Promise<void>)[] = []
   let draining = false
   let stopped = false
-
   const drain = async () => {
     if (draining) return
     draining = true
@@ -90,13 +80,11 @@ export async function watchFolders(how: Watching): Promise<Watched> {
       draining = false
     }
   }
-
   const missed = new Set<string>()
   const started = new Set<string>()
   const behind = (id: string | undefined) => {
     if (id !== undefined && !how.ready(id)) missed.add(id)
   }
-
   const heard = (news: SpaceNews) => {
     if (news.unwatched === 'limit') void limitReached()
     if (news.gone) return
@@ -119,7 +107,6 @@ export async function watchFolders(how: Watching): Promise<Watched> {
     }
     void drain()
   }
-
   const inside = new Map<string, () => void>()
   const hearInside = (roots: readonly string[]) => {
     for (const [root, stop] of inside) {
@@ -140,7 +127,6 @@ export async function watchFolders(how: Watching): Promise<Watched> {
       heard({ root, changes: [], scan: true, gone: false })
     }
   }
-
   let watched: string | null = null
   const follow = () => {
     if (stopped) return
@@ -171,7 +157,6 @@ export async function watchFolders(how: Watching): Promise<Watched> {
     },
   }
 }
-
 async function changed(how: Watching, change: SpaceChange): Promise<void> {
   const engine = how.engine
   const placed = engine.placed(change.path)
@@ -215,31 +200,26 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
   }
   if (change.kind === 'created' || !change.dir) await came(engine, change.path, change.dir)
 }
-
 function lockedAlike(from: string, to: string): void {
   const desk = workspace()
   desk.copied(from, to, desk.rootHolding(from), desk.rootHolding(to))
 }
-
 async function gone(engine: Engine, path: string): Promise<void> {
   if (engine.ownWork(path) || !engine.entryAt(path)) return
   if (await engine.core.world.disk.exists(path)) return
   await engine.removed(path)
 }
-
 async function came(engine: Engine, path: string, dir: boolean): Promise<void> {
   if (engine.ownWork(path) || engine.entryAt(path)) return
   if (!(await engine.core.world.disk.exists(path))) return
   await made(engine, path, dir)
 }
-
 function wantedFolder(engine: Engine, path: string): boolean {
   const placed = engine.placed(path)
   if (!placed) return false
   const { space } = placed
   return space.wantedAt(placed.path).some((id) => space.entries.get(id)?.kind === 'folder')
 }
-
 async function made(engine: Engine, path: string, dir: boolean) {
   if (dir && wantedFolder(engine, path)) return
   if (dir || !holdsDocument(kindOfName(path))) {
@@ -249,7 +229,6 @@ async function made(engine: Engine, path: string, dir: boolean) {
   const text = await engine.core.world.disk.read(path)
   if (text !== null) await engine.created(path, dir, text)
 }
-
 export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
   const space = spaceAt(engine, root)
@@ -259,7 +238,6 @@ export async function scanned(how: Watching, root: string): Promise<void> {
   if (!listed) return
   const seen = new Set<string>()
   const unread: string[] = []
-
   for (const one of listed) {
     const inside = relative(root, one.path, engine.core.world.foldsCase)
     if (inside === null) continue
@@ -274,7 +252,6 @@ export async function scanned(how: Watching, root: string): Promise<void> {
       await engine.stamped(one.path, one.mtime, one.size)
     }
   }
-
   for (const entry of [...space.entries.values()]) {
     if (!entry.local_path || entry.deleted || seen.has(space.key(entry.local_path))) continue
     if (hidden(entry.local_path) || inForeignCopy(entry.local_path)) continue
@@ -283,7 +260,6 @@ export async function scanned(how: Watching, root: string): Promise<void> {
     if (engine.ownWork(full) || (await engine.core.world.disk.exists(full))) continue
     await engine.removed(full)
   }
-
   const disk = engine.core.world.disk
   for (const twin of madeTwice(space)) {
     const from = engine.core.world.join(root, twin.from)

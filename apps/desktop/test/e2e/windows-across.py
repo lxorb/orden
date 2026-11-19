@@ -1,6 +1,5 @@
 
 from playwright.sync_api import Browser, BrowserContext, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -8,19 +7,16 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 WS = "window.ordenApp.workspace"
 LIVE = f"()=>{WS}.active.note.latest"
 READ = f"(p)=>{WS}.noteText(p)"
-
 def type_in(page: Page, words: str) -> None:
     page.bring_to_front()
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
     page.keyboard.type(words, delay=2)
-
 def another(ctx: BrowserContext, url: str) -> Page:
     page = ctx.new_page()
     page.goto(url)
     DRIVE.ready(page)
     return page
-
 def line_endings(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -34,12 +30,10 @@ def line_endings(browser: Browser) -> None:
     DRIVE.open_note(b, "CR")
     if "\r" in a.evaluate(LIVE) or "\r" in (a.evaluate(f"()=>{WS}.active.note.onDisk") or ""):
         wrong("a note holds a line ending its rope does not")
-
     type_in(b, "FROM-B ")
     wait_for(a, f"()=>{WS}.active.note.latest.includes('FROM-B')", "A hears B")
     if a.evaluate(f"()=>{WS}.active.note.dirty"):
         wrong("A heard B and is dirty for it")
-
     type_in(a, "FROM-A ")
     wait_for(b, f"()=>{WS}.active.note.latest.includes('FROM-A')", "B hears A: A went on writing")
     wait_for(a, f"()=>!{WS}.active.note.dirty", "A clean again")
@@ -52,7 +46,6 @@ def line_endings(browser: Browser) -> None:
     if a.evaluate(LIVE) != b.evaluate(LIVE):
         wrong("the two windows hold different words")
     ctx.close()
-
 def out_of_sight(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -72,7 +65,6 @@ def out_of_sight(browser: Browser) -> None:
     b.evaluate(f"()=>{WS}.persist()")
     a.close(run_before_unload=True)
     b.close(run_before_unload=True)
-
     c = ctx.new_page()
     c.goto(DRIVE.origin)
     DRIVE.ready(c)
@@ -89,7 +81,6 @@ def out_of_sight(browser: Browser) -> None:
     if c.evaluate(held) != 1:
         wrong(f"the words came back {c.evaluate(held)} times")
     ctx.close()
-
 def no_room(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -103,7 +94,6 @@ def no_room(browser: Browser) -> None:
     b.evaluate(f"()=>{WS}.persist()")
     a.close(run_before_unload=True)
     b.close(run_before_unload=True)
-
     c = ctx.new_page()
     c.add_init_script(
         "const put = Storage.prototype.setItem;"
@@ -121,7 +111,6 @@ def no_room(browser: Browser) -> None:
     if not kept:
         wrong("storage full, and the only entry holding the words let them go")
     ctx.close()
-
 def stale(browser: Browser, gone: bool) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -150,7 +139,6 @@ def stale(browser: Browser, gone: bool) -> None:
     else:
         type_in(b, "NEWER-IN-B ")
         wait_for(b, f"()=>!{WS}.active.note.dirty", "B wrote")
-
     c = ctx.new_page()
     c.goto(DRIVE.origin)
     DRIVE.ready(c)
@@ -172,7 +160,6 @@ def stale(browser: Browser, gone: bool) -> None:
             if disk.count(token) != 1:
                 wrong(f"{token} is on the disk {disk.count(token)} times: {disk!r}")
     ctx.close()
-
 def heard_writes(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -194,7 +181,6 @@ def heard_writes(browser: Browser) -> None:
     if "[[Renamed]]" not in disk or "TYPED-IN-A" not in disk or "[[Target]]" in disk:
         wrong(f"the disk says {disk!r}")
     ctx.close()
-
 def rewrite_in_turn(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -223,7 +209,6 @@ def rewrite_in_turn(browser: Browser) -> None:
         if token not in disk:
             wrong(f"{token} is not on the disk: {disk!r}")
     ctx.close()
-
 def busy_launch(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -243,7 +228,6 @@ def busy_launch(browser: Browser) -> None:
     if keys[0] == keys[1]:
         wrong(f"two windows on one session: {keys!r}")
     ctx.close()
-
 def space_made(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -254,7 +238,6 @@ def space_made(browser: Browser) -> None:
     b.evaluate(f"async()=>{{await {WS}.addSpace('Second')}}")
     wait_for(a, f"()=>{WS}.spaces.some(s=>s.name==='Second')", "the other window offers the space")
     ctx.close()
-
 def drive(browser: Browser) -> None:
     space_made(browser)
     say("a space made in the other window: held")
@@ -274,5 +257,4 @@ def drive(browser: Browser) -> None:
     say("a rewrite in the file's turn: held")
     busy_launch(browser)
     say("a busy launch: held")
-
 raise SystemExit(DRIVE.run(drive))

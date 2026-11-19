@@ -13,12 +13,9 @@
   let error = $state<string | null>(null)
   let pictureError = $state<string | null>(null)
   let looking = $state(false)
-
   const received = $derived(feedback.received)
-
   $effect(() => (feedback.open ? overlays.show(() => feedback.close()) : undefined))
   $effect(() => closeOnBack(feedback.open, () => feedback.close()))
-
   $effect(() => {
     if (!feedback.open) return
     text = ''
@@ -28,10 +25,8 @@
     pictureError = null
     looking = false
   })
-
   const day = (at: number) =>
     new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
-
   async function send() {
     if (!text.trim() || sending) return
     sending = true
@@ -47,7 +42,6 @@
       sending = false
     }
   }
-
   async function add(files: Iterable<File>) {
     const given = picturesAmong(files)
     if (!given.length) return
@@ -63,19 +57,16 @@
       if (pictures.length < MOST_PICTURES) pictures = [...pictures, picture]
     }
   }
-
   function remove(id: string) {
     pictures = pictures.filter((one) => one.id !== id)
     pictureError = null
   }
-
   function pasted(event: ClipboardEvent) {
     const files = event.clipboardData ? picturesAmong(event.clipboardData.files) : []
     if (!files.length) return
     event.preventDefault()
     void add(files)
   }
-
   function carriesFiles(event: DragEvent): boolean {
     return event.dataTransfer?.types.includes('Files') ?? false
   }
@@ -230,24 +221,20 @@
 <style>
   .sheet {
     --screen-width: var(--screen-ask);
-
     z-index: var(--z-sheet);
     padding: var(--space-5);
   }
-
   form {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
   }
-
   .title {
     margin: 0;
     font-size: var(--text-base);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   textarea {
     width: 100%;
     min-height: 7.5rem;
@@ -264,11 +251,9 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   textarea::placeholder {
     color: var(--muted);
   }
-
   .detail,
   .error {
     margin: 0;
@@ -276,17 +261,14 @@
     line-height: 1.5;
     color: var(--muted-strong);
   }
-
   .error {
     color: var(--danger);
   }
-
   .received {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
-
   .link {
     align-self: flex-start;
     color: var(--accent);
@@ -295,7 +277,6 @@
     text-decoration: underline;
     text-underline-offset: 2px;
   }
-
   .see {
     margin-inline-end: auto;
     padding: 0;
@@ -308,13 +289,11 @@
     text-underline-offset: 2px;
     cursor: pointer;
   }
-
   @media (hover: hover) {
     .see:hover {
       color: var(--text-strong);
     }
   }
-
   .past {
     display: flex;
     flex-direction: column;
@@ -324,21 +303,18 @@
     overflow-y: auto;
     list-style: none;
   }
-
   .past a {
     display: flex;
     gap: var(--space-3);
     color: var(--text-strong);
     text-decoration: none;
   }
-
   .when {
     flex: none;
     color: var(--muted);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
-
   .pictures {
     display: flex;
     flex-wrap: wrap;
@@ -347,11 +323,9 @@
     padding: 0;
     list-style: none;
   }
-
   .pictures li {
     position: relative;
   }
-
   .pictures img {
     display: block;
     width: 72px;
@@ -360,7 +334,6 @@
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-md);
   }
-
   .remove {
     position: absolute;
     top: -6px;
@@ -376,20 +349,17 @@
     color: var(--text-strong);
     cursor: pointer;
   }
-
   .remove :global(svg) {
     width: 8px;
     height: 8px;
     stroke-width: 1.6;
   }
-
   .add {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
   }
-
   .row {
     display: flex;
     flex-wrap: wrap;
@@ -397,7 +367,6 @@
     justify-content: flex-end;
     gap: var(--space-2);
   }
-
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -409,12 +378,10 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
   }
-
   :global([data-touch]) textarea,
   :global([data-touch]) .title {
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) textarea {
     padding: var(--touch-pad);
   }

@@ -5,17 +5,13 @@ import { describe, expect, test } from 'vitest'
 import { walk } from './files'
 
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
-
 const ROUTERS = new Set(['tauri.ts', 'native.ts', 'native-sync-store.ts'])
-
 const ON_DISK_ON_PURPOSE = new Set(['quick-add/src/shortcuts.ts'])
-
 function fileCommands(): string[] {
   const roots = readFileSync(join(LIB, 'web-backend/src/internal/roots.ts'), 'utf8')
   const listed = /const FILE_COMMANDS = new Set\(\[([^\]]*)\]\)/.exec(roots)?.[1] ?? ''
   return [...listed.matchAll(/'([a-z_]+)'/g)].map((one) => one[1] ?? '')
 }
-
 function nativeNames(text: string): string[] {
   const names: string[] = []
   for (const one of text.matchAll(
@@ -31,7 +27,6 @@ function nativeNames(text: string): string[] {
   if (/import\('(?:\.\.?\/)+native'\)/.test(text) && /\bnative\.invoke\b/.test(text)) names.push('native.invoke')
   return [...new Set(names)]
 }
-
 describe('a file in a space', () => {
   test('is read and written through the call that knows where Orden keeps it', () => {
     const commands = fileCommands()

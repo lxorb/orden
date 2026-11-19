@@ -8,36 +8,22 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter as _, Manager as _};
 
 pub const BINDING: &str = "ordenPass";
-
 const SCRIPT: &str = include_str!("web_pass.js");
-
 const LONGEST: usize = 64 * 1024;
-
 const LONGEST_ID: usize = 64;
-
 const LONGEST_VALUE: usize = 4096;
-
 const MOST_FORMS: usize = 64;
-
 const MOST_FIELDS: usize = 256;
-
 const MOST_VALUES: usize = 64;
-
 const MOST_FRAMES: usize = 64;
-
 const FORMS: &str = "orden://pass-forms";
-
 const MARK: &str = "orden://pass-mark";
-
 const SUBMITTED: &str = "orden://pass-submitted";
-
 const FILL: &str =
     "function (asked) { var pass = globalThis.__ordenPass; return pass ? pass.fill(asked) : false }";
-
 const KINDS: [&str; 8] = [
     "login", "username", "password", "totp", "signup", "change", "card", "identity",
 ];
-
 const ROLES: [&str; 25] = [
     "username",
     "email",
@@ -65,11 +51,9 @@ const ROLES: [&str; 25] = [
     "bday",
     "unknown",
 ];
-
 pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Place {
     pub frame: String,
@@ -77,7 +61,6 @@ pub struct Place {
     pub url: String,
     pub top: bool,
 }
-
 pub fn secure(origin: &str) -> bool {
     let Ok(url) = tauri::Url::parse(origin) else {
         return false;
@@ -88,21 +71,18 @@ pub fn secure(origin: &str) -> bool {
         _ => false,
     }
 }
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 struct PageField {
     field: String,
     role: String,
     visible: bool,
 }
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 struct PageForm {
     form: String,
     kind: String,
     fields: Vec<PageField>,
 }
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 enum Said {
@@ -123,21 +103,17 @@ enum Said {
         new_password: Option<String>,
     },
 }
-
 #[derive(Debug, PartialEq, Eq)]
 struct Heard {
     doc: Option<String>,
     said: Said,
 }
-
 fn script_named(id: &str) -> bool {
     !id.is_empty() && id.len() <= LONGEST_ID && id.bytes().all(|one| one.is_ascii_alphanumeric())
 }
-
 fn short_value(value: Option<&String>) -> bool {
     value.is_none_or(|one| one.len() <= LONGEST_VALUE)
 }
-
 impl Said {
     fn sound(&self) -> bool {
         match self {
@@ -169,7 +145,6 @@ impl Said {
         }
     }
 }
-
 fn message_read(payload: &str) -> Option<Heard> {
     if payload.len() > LONGEST {
         return None;
@@ -183,7 +158,6 @@ fn message_read(payload: &str) -> Option<Heard> {
     let said: Said = serde_json::from_value(value).ok()?;
     said.sound().then_some(Heard { doc, said })
 }
-
 fn event_told(tab: &str, place: &Place, said: &Said) -> (&'static str, Value) {
     let mut told = json!({
         "tab": tab,
@@ -231,12 +205,10 @@ fn event_told(tab: &str, place: &Place, said: &Said) -> (&'static str, Value) {
     }
     (event, told)
 }
-
 fn said_emitted(app: &AppHandle, window: &str, tab: &str, place: &Place, said: &Said) {
     let (event, body) = event_told(tab, place, said);
     let _ = app.emit_to(window, event, body);
 }
-
 fn fill_asked(
     form: &str,
     origin: &str,
@@ -255,7 +227,6 @@ fn fill_asked(
     }
     asked
 }
-
 fn fill_checked(
     frame: &str,
     origin: &str,
@@ -277,7 +248,6 @@ fn fill_checked(
     }
     Ok(())
 }
-
 #[tauri::command]
 #[allow(clippy::implicit_hasher)]
 pub async fn web_pass_fill(
@@ -294,22 +264,18 @@ pub async fn web_pass_fill(
     let view = crate::web_tabs::found(webview.app_handle(), &tab)?;
     engine::frame_fill(view, tab, frame, origin, form, values, submit).await
 }
-
 pub fn forget(tab: &str) {
     engine::forget(tab);
 }
-
 pub(crate) struct Queues<J: Send + 'static> {
     held: Mutex<HashMap<String, Sender<J>>>,
 }
-
 impl<J: Send + 'static> Queues<J> {
     pub fn new() -> Self {
         Self {
             held: Mutex::new(HashMap::new()),
         }
     }
-
     pub fn spawn(&self, tab: &str, job: J, run: fn(J)) {
         let mut held = self.held.held();
         let job = match held.get(tab) {
@@ -330,12 +296,10 @@ impl<J: Send + 'static> Queues<J> {
             }
         });
     }
-
     pub fn forget(&self, tab: &str) {
         self.held.held().remove(tab);
     }
 }
-
 fn placed_by(
     cached: Option<Place>,
     now: impl Fn(&Place) -> Option<Place>,
@@ -350,13 +314,11 @@ fn placed_by(
     }
     now(&learnt()?)
 }
-
 fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
     frames_in(tree, main)
         .into_iter()
         .find(|one| one.frame == was.frame && one.origin == was.origin)
 }
-
 pub use engine::binding_called;
 
 mod engine {
@@ -372,17 +334,13 @@ mod engine {
     use crate::engine::devtools;
 
     const PATIENCE: Duration = Duration::from_secs(5);
-
     const MOST_KNOWN: usize = 2048;
-
     #[derive(Default)]
     struct Known {
         contexts: HashMap<(String, String, i64), Place>,
         frames: HashMap<(String, String), String>,
     }
-
     static KNOWN: LazyLock<Mutex<Known>> = LazyLock::new(Mutex::default);
-
     struct Job {
         view: Webview,
         app: AppHandle,
@@ -392,13 +350,10 @@ mod engine {
         context: i64,
         payload: String,
     }
-
     static JOBS: LazyLock<super::Queues<Job>> = LazyLock::new(super::Queues::new);
-
     fn known_frames() -> MutexGuard<'static, Known> {
         KNOWN.held()
     }
-
     pub fn binding_called(
         view: &Webview,
         app: &AppHandle,
@@ -430,7 +385,6 @@ mod engine {
         };
         JOBS.spawn(tab, job, |job| job_done(&job));
     }
-
     fn job_done(job: &Job) {
         let Some(heard) = super::message_read(&job.payload) else {
             return;
@@ -460,7 +414,6 @@ mod engine {
         };
         super::said_emitted(&job.app, &job.window, &job.tab, &place, &heard.said);
     }
-
     fn place_now(
         view: &Webview,
         tab: &str,
@@ -482,15 +435,12 @@ mod engine {
             .insert((tab.to_string(), session.to_string(), context), now.clone());
         Some(now)
     }
-
     fn session_asked(session: &str) -> Option<&str> {
         (!session.is_empty()).then_some(session)
     }
-
     fn world_in(frame: &str) -> Value {
         json!({ "frameId": frame, "worldName": crate::web_worlds::WORLD })
     }
-
     fn frames_learned(view: &Webview, tab: &str, session: &str) {
         let Ok(tree) = devtools::call(
             view,
@@ -526,7 +476,6 @@ mod engine {
                 .insert((tab.to_string(), session.to_string(), context), frame);
         }
     }
-
     fn frame_filled(
         view: &Webview,
         tab: &str,
@@ -572,7 +521,6 @@ mod engine {
             .and_then(Value::as_bool)
             .unwrap_or(false))
     }
-
     pub(super) async fn frame_fill(
         view: Webview,
         tab: String,
@@ -589,7 +537,6 @@ mod engine {
         .await
         .map_err(|_| "the page could not be filled".to_string())?
     }
-
     pub(super) fn forget(tab: &str) {
         JOBS.forget(tab);
         let mut known = known_frames();
@@ -597,7 +544,6 @@ mod engine {
         known.frames.retain(|(owner, _), _| owner != tab);
     }
 }
-
 fn frames_in(tree: Option<&Value>, main: bool) -> Vec<Place> {
     let mut found = Vec::new();
     let mut walking: Vec<&Value> = tree.into_iter().collect();
@@ -631,7 +577,6 @@ fn frames_in(tree: Option<&Value>, main: bool) -> Vec<Place> {
     }
     found
 }
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -655,18 +600,15 @@ mod tests {
         };
         let forgotten = std::cell::Cell::new(false);
         let now = |was: &Place| (was.origin == elsewhere.origin).then(|| elsewhere.clone());
-
         let placed = placed_by(
             Some(place()),
             now,
             || forgotten.set(true),
             || Some(elsewhere.clone()),
         );
-
         assert_eq!(placed, Some(elsewhere.clone()));
         assert!(forgotten.get());
     }
-
     #[test]
     fn a_frame_still_where_it_was_is_not_asked_about_again() {
         let placed = placed_by(
@@ -677,7 +619,6 @@ mod tests {
         );
         assert_eq!(placed, Some(place()));
     }
-
     #[test]
     fn a_frame_the_engine_does_not_place_says_nothing() {
         assert_eq!(
@@ -685,11 +626,9 @@ mod tests {
             None
         );
     }
-
     fn place() -> Place {
         framed("F1", "https://a.example", "https://a.example/login", true)
     }
-
     fn framed(frame: &str, origin: &str, url: &str, top: bool) -> Place {
         Place {
             frame: frame.into(),
@@ -698,7 +637,6 @@ mod tests {
             top,
         }
     }
-
     #[test]
     fn a_page_is_secure_when_it_is_https_or_on_this_machine() {
         for origin in [
@@ -723,7 +661,6 @@ mod tests {
             assert!(!secure(origin), "{origin}");
         }
     }
-
     #[test]
     fn the_forms_a_page_has_are_told_with_where_the_engine_says_they_are() {
         let heard = message_read(
@@ -753,7 +690,6 @@ mod tests {
             })
         );
     }
-
     #[test]
     fn a_mark_pressed_and_a_form_sent_are_told_in_their_own_shapes() {
         let mark = message_read(r#"{"kind":"mark","form":"f1","field":"e3"}"#).expect("mark");
@@ -762,7 +698,6 @@ mod tests {
         assert_eq!(body["form"], "f1");
         assert_eq!(body["field"], "e3");
         assert_eq!(body["secure"], true);
-
         let sent = message_read(
             r#"{"kind":"submitted","form":"f1","formKind":"change","username":null,"password":"old","newPassword":"new"}"#,
         )
@@ -774,7 +709,6 @@ mod tests {
         assert_eq!(body["password"], "old");
         assert_eq!(body["newPassword"], "new");
     }
-
     #[test]
     fn what_is_not_a_message_of_the_script_s_is_dropped() {
         let long = format!(
@@ -809,7 +743,6 @@ mod tests {
             .join(",");
         assert!(message_read(&format!(r#"{{"kind":"forms","forms":[{many}]}}"#)).is_none());
     }
-
     #[test]
     fn a_document_s_name_is_kept_only_when_it_is_one() {
         let heard = message_read(r#"{"doc":"<script>","kind":"mark","form":"f1","field":"e1"}"#);
@@ -824,7 +757,6 @@ mod tests {
             }
         );
     }
-
     #[test]
     fn a_frame_is_placed_again_where_it_is_now_after_its_address_changed_in_place() {
         let was = place();
@@ -845,7 +777,6 @@ mod tests {
         let gone = json!({ "frame": { "id": "F2", "url": "https://a.example/", "securityOrigin": "https://a.example" } });
         assert_eq!(place_in(Some(&gone), true, &was), None);
     }
-
     #[test]
     fn a_page_of_endless_frames_is_read_only_so_far() {
         let children: Vec<_> = (0..500)
@@ -857,19 +788,15 @@ mod tests {
         });
         assert_eq!(frames_in(Some(&tree), true).len(), MOST_FRAMES);
     }
-
     type Run = Box<dyn FnOnce() + Send>;
-
     fn ran(run: Run) {
         run();
     }
-
     fn saying(to: Sender<&'static str>, word: &'static str) -> Run {
         Box::new(move || {
             let _ = to.send(word);
         })
     }
-
     #[test]
     fn a_tab_held_up_by_its_page_never_holds_another_tab_up() {
         let queues = Queues::<Run>::new();
@@ -895,7 +822,6 @@ mod tests {
         queues.spawn("slow", saying(heard, "again"), ran);
         assert_eq!(said.recv_timeout(Duration::from_secs(5)), Ok("again"));
     }
-
     #[test]
     fn a_frame_is_placed_by_the_engine_s_own_tree() {
         let tree = json!({
@@ -928,7 +854,6 @@ mod tests {
         assert!(other.iter().all(|one| !one.top));
         assert!(frames_in(None, true).is_empty());
     }
-
     #[test]
     fn a_fill_is_asked_only_for_known_names_on_a_secure_page() {
         let values: HashMap<String, String> = [("e1".to_string(), "alice".to_string())].into();
@@ -941,7 +866,6 @@ mod tests {
         let refused = fill_checked("F1", "https://a.example", "f1", &odd).expect_err("odd");
         assert!(!refused.contains("alice"));
     }
-
     #[test]
     fn a_fill_carries_the_origin_the_script_checks_again() {
         let values: HashMap<String, String> = [("e1".to_string(), "alice".to_string())].into();
@@ -953,7 +877,6 @@ mod tests {
         let with = fill_asked("f1", "https://a.example", Some("ab12"), &values, false);
         assert_eq!(with["doc"], "ab12");
     }
-
     #[test]
     fn the_script_is_handed_over_whole_and_answers_to_the_binding() {
         assert!(script().starts_with("(function ()"));

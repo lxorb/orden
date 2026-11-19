@@ -21,13 +21,10 @@ const MOST_MARKS = 500
 const MOST_SELECTIONS = 500
 const LONGEST_SELECTED = 20_000
 const LONGEST_MESSAGE = 2000
-
 const kept = new Map<string, Map<string, AgentMark[]>>()
-
 function noteOf(tab: Tab): string {
   return tab.note.path ?? `tab:${tab.id}`
 }
-
 function editorsOf(note: string): EditorView[] {
   return workspace.tabs.flatMap((tab) => {
     if (noteOf(tab) !== note || workspace.showing(tab.paneId) !== tab) return []
@@ -35,7 +32,6 @@ function editorsOf(note: string): EditorView[] {
     return view ? [view] : []
   })
 }
-
 function drawn(paneId: string, view: EditorView): void {
   const tab = workspace.showing(paneId)
   if (!tab) return
@@ -45,7 +41,6 @@ function drawn(paneId: string, view: EditorView): void {
     if (marks?.length) setAgentMarks(view, agent, marks)
   }
 }
-
 function marked(agent: string, note: string, marks: AgentMark[]): void {
   const notes = kept.get(agent) ?? new Map<string, AgentMark[]>()
   if (marks.length) notes.set(note, marks)
@@ -55,14 +50,12 @@ function marked(agent: string, note: string, marks: AgentMark[]): void {
   views.onPut ??= drawn
   for (const view of editorsOf(note)) setAgentMarks(view, agent, marks)
 }
-
 export function keepMarksOf(agents: ReadonlySet<string>): void {
   for (const [agent, notes] of [...kept]) {
     if (agents.has(agent)) continue
     for (const note of [...notes.keys()]) marked(agent, note, [])
   }
 }
-
 function placeIn(value: unknown, name: string): AgentPlace {
   const record = typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
   const line = Number(record.line)
@@ -72,23 +65,19 @@ function placeIn(value: unknown, name: string): AgentPlace {
   }
   return { line, ch }
 }
-
 function listOf(call: Call, name: string, most: number): Record<string, unknown>[] {
   const value = call.args[name]
   if (!Array.isArray(value)) throw new Refused('bad_arguments', `say ${name}, a list`)
   if (value.length > most) throw new Refused('bad_arguments', `at most ${most} ${name}`)
   return value.map((one) => (typeof one === 'object' && one !== null ? one : {}) as Record<string, unknown>)
 }
-
 const SEVERITIES: readonly Severity[] = ['error', 'warning', 'info']
-
 export function noteEditor(call: Call): AgentAnswer {
   const agent = call.caller.agent
   const { tab, relative } = namedTab(call, ['note'], 'a note')
   if (tab.note.path !== null) readable(tab.note.path, relative ?? tab.note.path)
   const op = need(call, 'op')
   const view = workspace.showing(tab.paneId) === tab ? views.of(tab.paneId) : undefined
-
   if (op === 'mark' || op === 'clear_marks') {
     if (agent === null) throw new Refused('by_hand', 'the command line draws no marks')
     const marks =
@@ -112,11 +101,9 @@ export function noteEditor(call: Call): AgentAnswer {
     marked(agent.id, noteOf(tab), marks)
     return done({ tab: tab.id, marks: marks.length })
   }
-
   if (!view) {
     throw new Refused('failed', `tab ${tab.id} is not on screen, so it has no editor: workspace_tabs focus shows it`)
   }
-
   switch (op) {
     case 'selection':
       return done({ tab: tab.id, ...selectionsShown(view) }, sourceOfNote(tab))
@@ -149,7 +136,6 @@ export function noteEditor(call: Call): AgentAnswer {
       throw new Refused('bad_arguments', 'op is one of selection, select, mark, clear_marks, fold, unfold, reveal')
   }
 }
-
 function selectionsShown(view: EditorView) {
   const more = view.state.selection.ranges.length - MOST_SELECTIONS
   return {
@@ -157,11 +143,9 @@ function selectionsShown(view: EditorView) {
     ...(more > 0 ? { more } : {}),
   }
 }
-
 function sourceOfNote(tab: Tab): string | null {
   return docSource({ path: tab.note.path, shared: tab.note.shared })
 }
-
 function lineOf(call: Call): number {
   const line = Number(call.args.line)
   if (!Number.isInteger(line) || line < 1) throw new Refused('bad_arguments', 'say line, from 1')

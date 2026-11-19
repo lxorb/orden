@@ -1,7 +1,5 @@
 import sys
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,27 +9,21 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 PATIENCE = 40
-
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
     return page
-
 AS_PHONE = """
 () => {
   const app = window.ordenApp
@@ -46,7 +38,6 @@ AS_PHONE = """
   root.toggleAttribute('data-narrow', true)
 }
 """
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -72,7 +63,6 @@ async () => {
   return ws.tree.children.map((one) => one.name)
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('aside .row')].map((row) => {
   const mark = row.querySelector('.mark')
@@ -84,7 +74,6 @@ ROWS = """
   ].join(' | ')
 })
 """
-
 CANVAS_ICON = """
 () => {
   const ws = window.ordenApp.workspace
@@ -93,14 +82,12 @@ CANVAS_ICON = """
   return canvas.path
 }
 """
-
 def pick(page: Page, label: str, words: str) -> None:
     page.locator(".sheet input.orden-field").fill(words)
     cell = page.locator(f'.sheet button[aria-label="{words}"]:has(svg)').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     cell.click()
     say(f"[{label}] picked {words}")
-
 def sets(page: Page, label: str, where: str) -> None:
     page.locator(".sheet input.orden-field").fill("")
     wait_for(
@@ -115,7 +102,6 @@ def sets(page: Page, label: str, where: str) -> None:
         page.locator(".sheet .orden-segmented").count() == 0,
         f"[{label}] the picker has no tabs",
     )
-
     for words, what in (("rocket", "line"), ("orden", "Orden's own mark")):
         page.locator(".sheet input.orden-field").fill(words)
         found = page.locator(f'.sheet button[aria-label="{words}"], .sheet button[aria-label="Orden"]')
@@ -125,7 +111,6 @@ def sets(page: Page, label: str, where: str) -> None:
             check(False, f"[{label}] a search for {words} finds {what}")
         page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{words}-{where}.png"))
     page.locator(".sheet input.orden-field").fill("")
-
 GEOMETRY = """
 () => {
   const sheet = document.querySelector('.sheet')
@@ -156,7 +141,6 @@ GEOMETRY = """
   return { worst: Math.max(...off), heading, walked: sheet.querySelectorAll('.cell.at').length }
 }
 """
-
 LOOKS = """
 (which) => {
   const cell = document.querySelector(which)
@@ -165,7 +149,6 @@ LOOKS = """
   return [style.backgroundColor, style.boxShadow].join(' / ')
 }
 """
-
 def aligned(page: Page, label: str) -> None:
     page.locator(".sheet input.orden-field").fill("")
     wait_for(page, "() => document.querySelectorAll('.sheet .grid .emoji').length > 8", f"[{label}] the emoji")
@@ -178,7 +161,6 @@ def aligned(page: Page, label: str) -> None:
         f"[{label}] a group's heading lines up with its glyphs ({seen['heading']})",
     )
     check(seen["walked"] == 0, f"[{label}] no cell is marked before a key is pressed")
-
     field = page.locator(".sheet input.orden-field")
     field.press("ArrowRight")
     field.press("ArrowRight")
@@ -197,13 +179,11 @@ def aligned(page: Page, label: str) -> None:
     page.wait_for_timeout(150)
     check(page.locator(".sheet .cell.at").count() == 0, f"[{label}] a new search starts unmarked")
     field.fill("")
-
 CANVAS_WORN = (
     "() => { const ws = window.ordenApp.workspace;"
     " const c = ws.files.find((one) => one.name === 'Roadmap.canvas');"
     " return c ? [window.ordenApp.links.iconOf(c.path), window.ordenApp.links.tintOf(c.path)] : null }"
 )
-
 def outline(page: Page, label: str, where: str) -> None:
     say(f"[{label}] choosing again for {page.evaluate(CANVAS_ICON)}")
     sheet = page.locator(".sheet")
@@ -221,7 +201,6 @@ def outline(page: Page, label: str, where: str) -> None:
     sheet.screenshot(path=str(SHOTS / f"picker-outline-{where}.png"))
     say(f"[{label}] wrote picker-outline-{where}.png")
     cell.click()
-
     worn = wait_for(
         page,
         f"() => {{ const w = ({CANVAS_WORN})(); return w && w[0] !== 'rocket' ? w : null }}",
@@ -232,7 +211,6 @@ def outline(page: Page, label: str, where: str) -> None:
         f"[{label}] the outline is a value of its own: `{worn}`",
     )
     check(worn is not None and worn[1] is not None, f"[{label}] and keeps the colour picked")
-
     row = page.locator("aside .row", has_text="Roadmap").locator(".mark svg.drawn")
     row.first.wait_for(state="visible", timeout=PATIENCE * 1000)
     check(
@@ -241,7 +219,6 @@ def outline(page: Page, label: str, where: str) -> None:
     )
     page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-outline-{where}.png"))
     say(f"[{label}] wrote tree-outline-{where}.png")
-
     say(f"[{label}] and once more for {page.evaluate(CANVAS_ICON)}")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
     check(
@@ -258,13 +235,11 @@ def outline(page: Page, label: str, where: str) -> None:
     )
     check(worn is not None and worn[0] == "\U0001F914", f"[{label}] in colour it is the emoji: `{worn}`")
     check(worn is not None and worn[1] is None, f"[{label}] which takes no colour")
-
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     label = where
     page = fresh(browser, label, viewport)
     try:
         say(f"[{label}] the space holds {page.evaluate(SEED)}")
-
         if where == "phone":
             page.evaluate(AS_PHONE)
             page.evaluate(
@@ -272,7 +247,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
                 " if (!ws.panel) ws.showPanel('tree') }"
             )
             page.wait_for_timeout(350)
-
         wait_for(
             page,
             "() => document.querySelectorAll('aside .row .mark svg, aside .row .mark .emoji')"
@@ -280,13 +254,10 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] a mark on every row",
         )
         page.wait_for_timeout(700)
-
         for one in page.evaluate(ROWS):
             say(f"[{label}] {one}")
-
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-{where}.png"))
         say(f"[{label}] wrote tree-{where}.png")
-
         check(
             page.locator("aside .row .mark .emoji").count() >= 1,
             f"[{label}] a note wearing an emoji draws the character",
@@ -299,14 +270,11 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             page.locator('aside .row .mark svg[style*="color"]').count() >= 1,
             f"[{label}] a note with a colour on its icon is drawn in it",
         )
-
         say(f"[{label}] choosing for {page.evaluate(CANVAS_ICON)}")
         page.locator(".sheet").wait_for(state="visible", timeout=PATIENCE * 1000)
         sets(page, label, where)
         aligned(page, label)
-
         pick(page, label, "rocket")
-
         worn = wait_for(
             page,
             "() => { const ws = window.ordenApp.workspace;"
@@ -315,22 +283,17 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] the canvas to wear what was picked",
         )
         check(worn == "rocket", f"[{label}] the canvas kept `{worn}` in its own file")
-
         page.wait_for_timeout(300)
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-chosen-{where}.png"))
         say(f"[{label}] wrote tree-chosen-{where}.png")
-
         outline(page, label, where)
     finally:
         page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         shoot(browser, "desktop", DESKTOP)
         shoot(browser, "phone", PHONE)
-
     return DRIVE.verdict(
         "icons on a note, a canvas and a folder, the picker over every set, its cells' marks, and an emoji's outline"
     )
-
 sys.exit(main())

@@ -24,7 +24,6 @@
     onquote: () => void
     onmenu: (event: MouseEvent) => void
   } = $props()
-
   const quick = $derived(emojiRecent.first(3))
 </script>
 
@@ -68,7 +67,6 @@
     padding: 2px;
     translate: 0 -55%;
   }
-
   .one {
     --glyph-size: 16px;
     display: grid;
@@ -85,22 +83,18 @@
       background var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   @media (hover: hover) {
     .one:hover {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
-
     .emoji:hover {
       transform: scale(1.15);
     }
   }
-
   .one:active {
     transform: scale(0.92);
   }
-
   .emoji {
     font-size: 16px;
     line-height: 1;

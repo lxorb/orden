@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -13,7 +12,6 @@ import tempfile
 import threading
 import time
 from typing import Any
-
 from fresh_app import ended, fresh
 from native_app import App, config_of, endpoint
 
@@ -25,11 +23,9 @@ STORM = (
 )
 TABS = 3
 WATCHED = 10.0
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         body = STORM if self.path == "/storm" else PAGE
         self.send_response(200)
@@ -37,17 +33,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-
 def window_answers(pid: int) -> str | None:
-
     if sys.platform != "win32":
         return None
     import ctypes
     from ctypes import wintypes
-
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
     from probe_app import main_window
-
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     hwnd = main_window(pid)
     if not hwnd:
@@ -56,16 +48,12 @@ def window_answers(pid: int) -> str | None:
     if not user32.SendMessageTimeoutW(hwnd, 0, 0, 0, 0x0002, 3000, ctypes.byref(result)):
         return "the window does not answer Windows"
     return None
-
 def forward(pid: int) -> None:
-
     if sys.platform != "win32":
         return
     import ctypes
-
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
     from probe_app import main_window
-
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     hwnd = main_window(pid)
     theirs = user32.GetWindowThreadProcessId(user32.GetForegroundWindow(), None)
@@ -75,9 +63,7 @@ def forward(pid: int) -> None:
     user32.SetForegroundWindow(hwnd)
     user32.BringWindowToTop(hwnd)
     user32.AttachThreadInput(ours, theirs, False)
-
 def watched(app: App, pid: int, count: int) -> list[str]:
-
     opened, live = time.monotonic(), False
     while time.monotonic() - opened < WATCHED:
         asked = time.monotonic()
@@ -91,9 +77,7 @@ def watched(app: App, pid: int, count: int) -> list[str]:
         time.sleep(0.5)
     print(f"web tab {count}: answered for {WATCHED:.0f} s, its page up: {live}", flush=True)
     return [] if live else [f"web tab {count}: its page never came up in {WATCHED:.0f} s"]
-
 def stalls(identifier: str) -> list[str]:
-
     home = pathlib.Path.home()
     folders = [
         pathlib.Path(os.environ.get("LOCALAPPDATA") or home) / identifier,
@@ -104,7 +88,6 @@ def stalls(identifier: str) -> list[str]:
     for log in (one for folder in folders for one in folder.glob("**/orden.log")):
         lines += [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if "stall" in line]
     return lines[-20:]
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -112,11 +95,9 @@ def main() -> int:
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
-
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/"
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -136,7 +117,6 @@ def main() -> int:
         time.sleep(2)
         if why := window_answers(process.pid):
             raise SystemExit(f"before any web tab: {why}")
-
         for count in range(1, TABS + 1):
             forward(process.pid)
             time.sleep(1)
@@ -146,7 +126,6 @@ def main() -> int:
             wrong += watched(app, process.pid, count)
             if wrong:
                 break
-
         if not wrong:
             before = app.answer("return orden.workspace.tabs.length", 20).get("value")
             app.answer(f"orden.workspace.openPage({json.dumps(f'{url}storm')}); return true", 20)
@@ -163,10 +142,8 @@ def main() -> int:
             for line in stalls(args.identifier):
                 print(line, flush=True)
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -19,22 +19,18 @@ export interface TreeEntry {
   pos?: string
   meta?: ItemMeta
 }
-
 export interface TreeState {
   readonly entries: Map<string, TreeEntry>
   cursor: number
   readonly done: Map<string, OpResult>
 }
-
 export interface OpContext {
   role: 'owner' | 'write' | 'read'
   device?: string
 }
-
 export function nameKey(name: string): string {
   return name.normalize('NFC').toLowerCase()
 }
-
 export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
   if (/\.(md|markdown|mdown|mkd)$/i.test(name)) return 'note'
   if (/\.canvas$/i.test(name)) return 'canvas'
@@ -44,7 +40,6 @@ export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
   if (/\.chat$/i.test(name)) return 'chat'
   return 'file'
 }
-
 export function treeState(entries: Iterable<TreeEntry> = [], cursor = 0): TreeState {
   const map = new Map<string, TreeEntry>()
   let highest = cursor
@@ -54,19 +49,15 @@ export function treeState(entries: Iterable<TreeEntry> = [], cursor = 0): TreeSt
   }
   return { entries: map, cursor: highest, done: new Map() }
 }
-
 function tick(state: TreeState): number {
   state.cursor += 1
   return state.cursor
 }
-
 interface Names {
   size: number
   byPlace: Map<string | null, Map<string, Set<TreeEntry>>>
 }
-
 const namesOf = new WeakMap<TreeState, Names>()
-
 function placeName(names: Names, entry: TreeEntry) {
   if (entry.deleted) return
   const place = names.byPlace.get(entry.parent) ?? new Map<string, Set<TreeEntry>>()
@@ -76,7 +67,6 @@ function placeName(names: Names, entry: TreeEntry) {
   if (holders) holders.add(entry)
   else place.set(key, new Set([entry]))
 }
-
 function names(state: TreeState): Names {
   const had = namesOf.get(state)
   if (had?.size === state.entries.size) return had
@@ -85,14 +75,12 @@ function names(state: TreeState): Names {
   namesOf.set(state, fresh)
   return fresh
 }
-
 function named(state: TreeState, entry: TreeEntry) {
   const had = namesOf.get(state)
   if (!had) return
   had.size = state.entries.size
   placeName(had, entry)
 }
-
 function holdsName(state: TreeState, parent: string | null, key: string, except: string): boolean {
   const holders = names(state).byPlace.get(parent)?.get(key)
   if (!holders) return false
@@ -104,14 +92,12 @@ function holdsName(state: TreeState, parent: string | null, key: string, except:
   }
   return false
 }
-
 function freeName(state: TreeState, parent: string | null, wanted: string, kind: EntryKind, except: string): string {
   const free = (candidate: string) => !holdsName(state, parent, nameKey(candidate), except)
   const first = (name: string): string =>
     kind === 'folder'
       ? freeWhole(name, (candidate) => !free(candidate))
       : freePath(name, (candidate) => !free(candidate))
-
   let name = heldName(wanted)
   for (;;) {
     const found = first(name)
@@ -119,7 +105,6 @@ function freeName(state: TreeState, parent: string | null, wanted: string, kind:
     name = shortened(name, found.length - LONGEST_NAME, kind)
   }
 }
-
 function holds(state: TreeState, ancestor: string, id: string | null): boolean {
   const seen = new Set<string>()
   for (let at = id; at !== null;) {
@@ -130,17 +115,14 @@ function holds(state: TreeState, ancestor: string, id: string | null): boolean {
   }
   return false
 }
-
 function changed(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
   stamped(state, entry, device, seen)
   if (device !== undefined) entry.changesBy = { ...entry.changesBy, [device]: entry.seq }
 }
-
 function taken(state: TreeState, entry: TreeEntry, device: string | undefined) {
   stamped(state, entry, device)
   delete entry.changesBy
 }
-
 function stamped(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
   const place = placing(entry)
   const unseen = seen !== undefined && place.seq > seen && place.by !== undefined && place.by !== device
@@ -152,7 +134,6 @@ function stamped(state: TreeState, entry: TreeEntry, device: string | undefined,
   if (device === undefined) delete entry.by
   else entry.by = device
 }
-
 function revive(state: TreeState, entry: TreeEntry, device: string | undefined) {
   if (!entry.deleted) return
   entry.name = freeName(state, entry.parent, entry.name, entry.kind, entry.id)
@@ -161,7 +142,6 @@ function revive(state: TreeState, entry: TreeEntry, device: string | undefined) 
   named(state, entry)
   changed(state, entry, device)
 }
-
 function reviveAbove(state: TreeState, parent: string | null, device: string | undefined) {
   const chain: TreeEntry[] = []
   const seen = new Set<string>()
@@ -174,16 +154,13 @@ function reviveAbove(state: TreeState, parent: string | null, device: string | u
   }
   for (const folder of chain.reverse()) revive(state, folder, device)
 }
-
 function isPlace(state: TreeState, parent: string | null): boolean {
   if (parent === null) return true
   return state.entries.get(parent)?.kind === 'folder'
 }
-
 function placement(op: Op, entry: TreeEntry): OpResult {
   return { op: op.op, ok: true, id: entry.id, parent: entry.parent, name: entry.name }
 }
-
 function under(state: TreeState, folder: string): TreeEntry[] {
   const children = new Map<string, TreeEntry[]>()
   for (const entry of state.entries.values()) {
@@ -192,7 +169,6 @@ function under(state: TreeState, folder: string): TreeEntry[] {
     list.push(entry)
     children.set(entry.parent, list)
   }
-
   const out: TreeEntry[] = []
   const seen = new Set<string>([folder])
   const walk = (id: string) => {
@@ -206,45 +182,37 @@ function under(state: TreeState, folder: string): TreeEntry[] {
   walk(folder)
   return out
 }
-
 function othersAfter(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   return Object.entries(entry.changesBy ?? {}).some(([by, at]) => by !== device && at > seen)
 }
-
 function writtenSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const byOther = (by: string | undefined) => device === undefined || by !== device
   return entry.docSeq > seen && byOther(entry.docBy)
 }
-
 function placing(entry: TreeEntry): { seq: number; by: string | undefined } {
   const wordsLast = entry.seq === entry.docSeq && entry.placedSeq !== undefined
   return wordsLast ? { seq: entry.placedSeq ?? entry.seq, by: entry.placedBy } : { seq: entry.seq, by: entry.by }
 }
-
 function changedSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const place = placing(entry)
   const byOther = device === undefined || place.by !== device
   return (place.seq > seen && byOther) || writtenSince(entry, seen, device) || othersAfter(entry, seen, device)
 }
-
 function othersSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const place = placing(entry)
   const byOther = place.by !== undefined && (device === undefined || place.by !== device)
   return (place.seq > seen && byOther) || writtenSince(entry, seen, device) || othersAfter(entry, seen, device)
 }
-
 class Rules {
   constructor(
     private readonly state: TreeState,
     private readonly device: string | undefined,
   ) {}
-
   made(op: Op, id: string, kind: EntryKind, parent: string | null, wanted: string, pos?: string): OpResult {
     const { state, device } = this
     const existing = state.entries.get(id)
     if (existing) return existing.deleted ? { op: op.op, refused: 'gone' } : placement(op, existing)
     if (!isPlace(state, parent)) return { op: op.op, refused: 'gone' }
-
     reviveAbove(state, parent, device)
     const entry: TreeEntry = {
       id,
@@ -261,7 +229,6 @@ class Rules {
     named(state, entry)
     return placement(op, entry)
   }
-
   merged(op: Op & { t: 'create' }): OpResult | null {
     if (!op.mergeable) return null
     const key = nameKey(op.name)
@@ -271,18 +238,15 @@ class Rules {
     }
     return null
   }
-
   target(op: Op & { id: string }): TreeEntry | OpResult {
     const entry = this.state.entries.get(op.id)
     if (!entry) return { op: op.op, refused: 'gone' }
     if (!entry.deleted) return entry
     if (entry.seq <= op.seen) return { op: op.op, refused: 'gone' }
-
     reviveAbove(this.state, entry.parent, this.device)
     revive(this.state, entry, this.device)
     return entry
   }
-
   renamed(op: Op & { t: 'rename' }): OpResult {
     const entry = this.target(op)
     if (!isEntry(entry)) return entry
@@ -294,7 +258,6 @@ class Rules {
     }
     return placement(op, entry)
   }
-
   moved(op: Op & { t: 'move' }): OpResult {
     const { state, device } = this
     const current = state.entries.get(op.id)
@@ -302,7 +265,6 @@ class Rules {
     if (current.kind === 'folder' && holds(state, current.id, op.parent)) {
       return { op: op.op, refused: 'cycle' }
     }
-
     const entry = this.target(op)
     if (!isEntry(entry)) return entry
     reviveAbove(state, op.parent, device)
@@ -318,7 +280,6 @@ class Rules {
     }
     return placement(op, entry)
   }
-
   placed(op: Op & { t: 'place' }): OpResult {
     const entry = this.state.entries.get(op.id)
     if (!entry || entry.deleted) return { op: op.op, refused: 'gone' }
@@ -328,7 +289,6 @@ class Rules {
     }
     return placement(op, entry)
   }
-
   described(op: Op & { t: 'meta' }): OpResult {
     const entry = this.state.entries.get(op.id)
     if (!entry || entry.deleted) return { op: op.op, refused: 'gone' }
@@ -340,13 +300,11 @@ class Rules {
     }
     return placement(op, entry)
   }
-
   deleted(op: Op & { t: 'delete' }): OpResult {
     const { state, device } = this
     const entry = state.entries.get(op.id)
     if (!entry) return { op: op.op, refused: 'gone' }
     if (entry.deleted) return { op: op.op, ok: true }
-
     if (entry.kind !== 'folder') {
       if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
       entry.deleted = true
@@ -354,9 +312,7 @@ class Rules {
       entry.deletedIn = entry.seq
       return { op: op.op, ok: true }
     }
-
     if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
-
     const inside = under(state, entry.id).filter((one) => !one.deleted)
     const changed = new Set(inside.filter((one) => changedSince(one, op.seen, device)).map((one) => one.id))
     const cameWith = (one: TreeEntry): boolean => {
@@ -374,7 +330,6 @@ class Rules {
         at = state.entries.get(at)?.parent ?? null
       }
     }
-
     const batch = state.cursor + 1
     for (const one of inside.reverse()) {
       if (kept.has(one.id)) continue
@@ -382,14 +337,12 @@ class Rules {
       one.deletedIn = batch
       taken(state, one, device)
     }
-
     if (kept.has(entry.id)) return { op: op.op, refused: 'edited' }
     entry.deleted = true
     entry.deletedIn = batch
     taken(state, entry, device)
     return { op: op.op, ok: true }
   }
-
   restored(op: Op & { t: 'restore' }): OpResult {
     const { state, device } = this
     const entry = state.entries.get(op.id)
@@ -398,11 +351,9 @@ class Rules {
       changed(state, entry, device)
       return placement(op, entry)
     }
-
     const batch = entry.deletedIn
     reviveAbove(state, entry.parent, device)
     revive(state, entry, device)
-
     if (entry.kind === 'folder' && batch !== undefined) {
       for (const one of under(state, entry.id)) {
         if (one.deleted && one.deletedIn === batch) revive(state, one, device)
@@ -410,7 +361,6 @@ class Rules {
     }
     return placement(op, entry)
   }
-
   applied(op: Op): OpResult {
     switch (op.t) {
       case 'mkdir':
@@ -432,21 +382,17 @@ class Rules {
     }
   }
 }
-
 function isEntry(value: TreeEntry | OpResult): value is TreeEntry {
   return 'kind' in value
 }
-
 export function applyOp(state: TreeState, op: Op, context: OpContext): OpResult {
   const before = state.done.get(op.op)
   if (before) return before
-
   const result: OpResult =
     context.role === 'read' ? { op: op.op, refused: 'role' } : new Rules(state, context.device).applied(op)
   state.done.set(op.op, result)
   return result
 }
-
 export function contentChanged(state: TreeState, id: string, device?: string): number {
   const entry = state.entries.get(id)
   if (!entry) return state.cursor

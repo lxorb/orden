@@ -10,13 +10,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 describe('a footnote definition right under a paragraph', () => {
   test('is passed as a block of its own when the paragraph moves down', () => {
     const doc = 'Claim.[^1]\n[^1]: Smith, 2020.\n\nNext para'

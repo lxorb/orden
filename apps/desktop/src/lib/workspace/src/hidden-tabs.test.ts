@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const sent = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
 const answers = vi.hoisted(() => [] as (string | null)[])
 const asked = vi.hoisted(() => ({ count: 0 }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -12,7 +11,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: () => {
@@ -21,28 +19,22 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { hiddenTabs } = await import('./hidden-tabs.svelte')
 const { pages } = await import('../../web-tab/src/pages.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 await import('../../web-tab/src/sleeping')
 type Tab = import('./workspace.svelte').Tab
-
 function webTab(id: string, live = true): Tab {
   pages.of(id).live = live
   return { id, kind: 'web', paneId: 'aside' } as Tab
 }
-
 const sending = () => new Promise<void>((go) => setTimeout(go, 0))
-
 async function paused() {
   await sending()
   return sent.filter((one) => one.command === 'web_pause').map((one) => [one.args.tab, one.args.paused])
 }
-
 beforeEach(async () => {
   hiddenTabs.set('run')
   await sending()
@@ -53,7 +45,6 @@ beforeEach(async () => {
   hiddenTabs.choice = 'ask'
   agentMarks.on = {}
 })
-
 describe('until somebody has answered', () => {
   test('the first switch away from a running page asks, and Pause pauses it', async () => {
     answers.push('pause')
@@ -63,7 +54,6 @@ describe('until somebody has answered', () => {
     expect(await paused()).toEqual([['a', true]])
     expect(localStorage.getItem('orden:hidden-tabs')).toBe('"pause"')
   })
-
   test('a question dismissed lets the pages run, and the next switch asks again', async () => {
     answers.push(null)
     await hiddenTabs.left([webTab('a')])
@@ -73,7 +63,6 @@ describe('until somebody has answered', () => {
     await hiddenTabs.left([webTab('a')])
     expect(asked.count).toBe(2)
   })
-
   test('Keep running is kept, and nothing is asked again', async () => {
     answers.push('run')
     await hiddenTabs.left([webTab('a')])
@@ -82,13 +71,11 @@ describe('until somebody has answered', () => {
     expect(hiddenTabs.choice).toBe('run')
     expect(await paused()).toEqual([])
   })
-
   test('a set with no page running asks nothing', async () => {
     await hiddenTabs.left([webTab('a', false), { id: 'n', kind: 'note', paneId: 'aside' } as Tab])
     expect(asked.count).toBe(0)
   })
 })
-
 describe('pausing', () => {
   test('the set coming back lets run what was paused in it, and nothing else', async () => {
     hiddenTabs.set('pause')
@@ -98,14 +85,12 @@ describe('pausing', () => {
     hiddenTabs.came([webTab('a'), webTab('c')])
     expect(await paused()).toEqual([['a', false]])
   })
-
   test('a tab an agent is acting in is left running', async () => {
     hiddenTabs.set('pause')
     agentMarks.on = { a: { agent: 'claude', colour: '#000', stopped: false } }
     await hiddenTabs.left([webTab('a'), webTab('b')])
     expect(await paused()).toEqual([['b', true]])
   })
-
   test('choosing Keep running lets every paused page run again', async () => {
     hiddenTabs.set('pause')
     await hiddenTabs.left([webTab('a')])

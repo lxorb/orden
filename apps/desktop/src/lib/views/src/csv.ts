@@ -17,12 +17,10 @@ function viewCsv(live: LiveView): string | null {
   )
   return csvText(header, rows)
 }
-
 export async function copyCsv(live: LiveView): Promise<void> {
   const csv = viewCsv(live)
   if (csv !== null) await copyText(csv)
 }
-
 export async function saveCsv(live: LiveView, name: string): Promise<void> {
   const csv = viewCsv(live)
   if (csv !== null) await deliver(name, 'csv', 'Spreadsheet', { text: csv, mime: 'text/csv' })

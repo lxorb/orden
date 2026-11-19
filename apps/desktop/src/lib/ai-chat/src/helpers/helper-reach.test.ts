@@ -11,11 +11,9 @@ vi.mock('../api', () => ({
     agentResult: () => Promise.resolve({ refused: 'no' }),
   }),
 }))
-
 const { offeredWithin } = await import('./run')
 const { runAgent } = await import('../../../agent-host/src/helpers')
 const { callerOf } = await import('../../../automation/src/api')
-
 const provider = (id: string): Provider => ({ id, kind: id, name: id, model: '' }) as Provider
 const CLAUDE = { provider: provider('claude-code'), models: [] }
 const CODEX = { provider: provider('codex'), models: [] }
@@ -27,7 +25,6 @@ const wide = (id: string) => ({
   sites: {},
   programs: [],
 })
-
 describe('a helper of an agent whose grant is narrowed', () => {
   test('runs on another provider only if that provider reaches no further', () => {
     const grants = [{ id: 'orden-claude-code', ...narrow }, wide('orden-codex')]
@@ -39,7 +36,6 @@ describe('a helper of an agent whose grant is narrowed', () => {
     expect(offeredWithin([CLAUDE, CODEX], narrow, 'claude-code', alike)).toEqual([CLAUDE, CODEX])
     expect(offeredWithin([CLAUDE, CODEX], narrow, 'claude-code', null)).toEqual([CLAUDE])
   })
-
   test('runs on another provider only if its sites, scripts, asks and supervision are as strict', () => {
     const scopes = ['notes.read', 'browser', 'agents']
     const grant = (id: string, more: object) => ({
@@ -71,7 +67,6 @@ describe('a helper of an agent whose grant is narrowed', () => {
     expect(offered({ asks: { terminal: false } }, {})).toEqual(both)
     expect(offered({}, { always: { 'shop.example': ['paying'] } })).toEqual(['claude-code'])
   })
-
   test('under Full permissions the asker reaches every scope, program and script, but not past a site it blocks', () => {
     const kept = { id: 'harness', ...narrow, spaces: 'all' as const, mode: 'unsupervised' }
     const grants = [kept, wide('orden-claude-code')]
@@ -81,14 +76,12 @@ describe('a helper of an agent whose grant is narrowed', () => {
     const theirs = [blocked, wide('orden-claude-code')]
     expect(offeredWithin([CLAUDE], { ...blocked, mode: 'autonomous' }, null, theirs)).toEqual([])
   })
-
   test('a session that asks first starts no helper that asks less, whatever its kept grant says', () => {
     const kept = { ...wide('orden-codex'), mode: 'unsupervised' }
     const grants = [kept, { ...wide('orden-claude-code'), mode: 'unsupervised' }]
     expect(offeredWithin([CLAUDE], kept, 'codex', grants)).toEqual([CLAUDE])
     expect(offeredWithin([CLAUDE], { ...kept, mode: 'confirm' }, 'codex', grants)).toEqual([])
   })
-
   test('a client under Full permissions starts a helper; a narrower or site-blocking one is refused', async () => {
     const client = (mode: string, sites: Record<string, string> = {}) =>
       callerOf({ id: 'codex', name: 'Codex', scopes: ['notes.read'], spaces: 'all', mode, sites })
@@ -102,7 +95,6 @@ describe('a helper of an agent whose grant is narrowed', () => {
     await expect(run(client('autonomous', { 'bank.example': 'deny' }))).rejects.toThrow('grant is narrower')
     asked.length = 0
   })
-
   test('carries the reach of the built-in agent that asked for it', async () => {
     const caller = callerOf({
       id: 'orden-claude-code',

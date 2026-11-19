@@ -9,14 +9,11 @@
     colour: string | null
     size?: number
   }
-
   const { name, icon, colour, size = 40 }: Props = $props()
-
   const LIGHT: Rgb = [255, 255, 255]
   const DARK: Rgb = [17, 20, 26]
   const ground = $derived(colour ?? '#7a8494')
   const ink = $derived(hexOf(inkFor(rgbOf(ground) ?? DARK, [LIGHT, DARK])))
-
   const letter = $derived(Array.from(name.trim())[0]?.toLocaleUpperCase() ?? '?')
 </script>
 
@@ -46,12 +43,10 @@
     place-items: center;
     flex: none;
   }
-
   .logo :global(svg) {
     width: 100%;
     height: 100%;
   }
-
   .mono {
     display: grid;
     place-items: center;

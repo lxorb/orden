@@ -7,34 +7,27 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
     finished: Promise.resolve(),
     onfinish: null,
   }) as unknown as Animation
-
 const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
 const { previewDelay } = await import('../../src/lib/tab-strip/src/preview-delay.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 type Tab = import('../../src/lib/workspace/src/api').Tab
-
 function tab(id: string, shown: string): Tab {
   return { id, shown, kind: 'note', path: null, paneId: 'nowhere' } as unknown as Tab
 }
-
 const BOX = { left: 100, right: 300, bottom: 38 }
 const alpha = tab('a', 'Alpha')
 const beta = tab('b', 'Beta')
-
 const shownFor = () => hovering.card?.title ?? null
-
 beforeEach(() => {
   vi.useFakeTimers()
 })
-
 afterEach(() => {
   previewDelay.set(500)
   hovering.hush()
@@ -44,19 +37,16 @@ afterEach(() => {
   vi.useRealTimers()
   viewport.device = 'desktop'
 })
-
 test('waits the Tab preview delay before the first card, half a second, and is drawn', async () => {
   expect(previewDelay.ms).toBe(500)
   hovering.enter({ tab: alpha, box: BOX })
   await elapse(previewDelay.ms - 50)
   expect(shownFor()).toBeNull()
-
   await elapse(60)
   await settle()
   expect(shownFor()).toBe('Alpha')
   expect(document.querySelector('.card')?.textContent).toContain('Alpha')
 })
-
 test('waits as long as the setting says, two seconds at most', async () => {
   previewDelay.set(5000)
   expect(previewDelay.ms).toBe(2000)
@@ -68,41 +58,33 @@ test('waits as long as the setting says, two seconds at most', async () => {
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
-
 test('moves to the tab beside at once, and goes once the pointer has left the strip', async () => {
   hovering.enter({ tab: alpha, box: BOX })
   await elapse(previewDelay.ms + 10)
   await settle()
-
   hovering.leave('a')
   hovering.enter({ tab: beta, box: { ...BOX, left: 300, right: 500 } })
   await settle()
   expect(shownFor()).toBe('Beta')
   expect(hovering.card?.sliding).toBe(true)
-
   hovering.leave('b')
   await settle()
   expect(shownFor()).toBeNull()
-
   hovering.enter({ tab: alpha, box: BOX })
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
-
 test('goes on a press, and says nothing more about the tab pressed', async () => {
   hovering.enter({ tab: alpha, box: BOX })
   await elapse(previewDelay.ms + 10)
   await settle()
-
   window.dispatchEvent(new PointerEvent('pointerdown'))
   expect(shownFor()).toBeNull()
-
   hovering.enter({ tab: alpha, box: BOX })
   await elapse(previewDelay.ms + 10)
   await settle()
   expect(shownFor()).toBeNull()
 })
-
 test('never comes over a menu', async () => {
   const close = overlays.show(() => undefined)
   try {
@@ -114,20 +96,17 @@ test('never comes over a menu', async () => {
     close()
   }
 })
-
 test('never under a finger', async () => {
   viewport.device = 'phone'
   hovering.enter({ tab: alpha, box: BOX, focused: true })
   await settle()
   expect(shownFor()).toBeNull()
 })
-
 test('comes at once for a tab the keyboard arrives at', async () => {
   hovering.enter({ tab: alpha, box: BOX, focused: true })
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
-
 test('says the space a page of another space is from, and nothing for the space on screen', async () => {
   const { workspace } = await import('../../src/lib/workspace/src/api')
   workspace.spaces = [
@@ -145,13 +124,11 @@ test('says the space a page of another space is from, and nothing for the space 
       note: { home },
       paneId: 'nowhere',
     }) as unknown as Tab
-
   hovering.enter({ tab: page('u', null, 'home'), box: BOX, focused: true })
   await settle()
   expect(hovering.card?.where).toBe('example.com')
   expect(hovering.card?.from).toEqual({ id: 'home', name: 'Home' })
   expect(document.querySelector('.card .from')?.textContent).toContain('Home')
-
   hovering.leave('u')
   await settle()
   hovering.enter({

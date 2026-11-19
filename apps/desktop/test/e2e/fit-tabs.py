@@ -1,12 +1,9 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 STANDARD = 238
-
 TABS = """() => [...document.querySelectorAll('.tab')].map((one) => {
   const label = one.querySelector('.label')
   return {
@@ -16,7 +13,6 @@ TABS = """() => [...document.querySelectorAll('.tab')].map((one) => {
     active: one.classList.contains('active'),
   }
 })"""
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1600, "height": 800})
     page.add_init_script("localStorage.setItem('orden:icon-tabs', 'no')")
@@ -27,7 +23,6 @@ def drive(browser: Browser) -> None:
         DRIVE.open_note(page, name)
     DRIVE.open_note(page, "Orden")
     page.wait_for_timeout(800)
-
     DRIVE.shot(page, "fitted")
     tabs = {one["name"]: one for one in page.evaluate(TABS)}
     short = tabs.get("Orden")
@@ -42,7 +37,6 @@ def drive(browser: Browser) -> None:
         wrong("Orden's tab does not show the whole of its name")
     if abs(far["width"] - STANDARD) > 1:
         wrong(f"the long name's tab is {far['width']:.0f}, not the standard {STANDARD}")
-
     page.add_init_script("localStorage.setItem('orden:fit-tabs', 'no')")
     page.reload()
     page.wait_for_timeout(1500)
@@ -53,5 +47,4 @@ def drive(browser: Browser) -> None:
     say(f"off: {[round(one) for one in widths]}")
     if any(abs(one - STANDARD) > 1 for one in widths):
         wrong(f"with the switch off the tabs are {widths}, not all the standard width")
-
 raise SystemExit(DRIVE.run(drive, "tabs as wide as their names"))

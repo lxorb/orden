@@ -31,10 +31,8 @@
     onfiles: (message: Message, index: number) => void
     oncompose: () => void
   } = $props()
-
   const OVERSCAN = 700
   const NEAR = 25
-
   let scroller = $state<HTMLElement>()
   let content = $state<HTMLElement>()
   let top = $state(0)
@@ -44,17 +42,14 @@
   let stuck = $state(true)
   let lit = $state<string | null>(null)
   let hovered = $state<{ id: string; top: number } | null>(null)
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- measurements, read when a window is built
   const measured = new Map<string, number>()
   let anchor: Anchor | null = null
   let target: { key: string; where: 'line' | 'centre' } | null = null
   let arrivedAfter = $state(Number.MAX_SAFE_INTEGER)
-
   const role = $derived(page.view.role)
   const canPost = $derived(may(role, 'post', page.view.meta.posting))
   const column = $derived(Math.max(160, width - 72))
-
   const layout = $derived.by(() => {
     const items = page.items
     const across = width
@@ -68,15 +63,12 @@
       }
     })
   })
-
   function windowAt(_measured: number, at: number, shown: number) {
     const { heights } = layout
     const { from, to } = heights.span(at, shown, OVERSCAN)
     return { from, to, above: heights.top(from), below: heights.total - heights.top(to) }
   }
-
   const span = $derived(windowAt(version, top, room))
-
   const observer = new ResizeObserver((entries) => {
     let changed = false
     for (const entry of entries) {
@@ -91,7 +83,6 @@
     }
     if (changed) version += 1
   })
-
   function measure(node: HTMLElement, key: string) {
     node.dataset.key = key
     observer.observe(node)
@@ -104,9 +95,7 @@
       },
     }
   }
-
   onMount(() => () => observer.disconnect())
-
   function settle() {
     const box = scroller
     if (!box || !page.ready) return
@@ -130,13 +119,10 @@
     }
     top = box.scrollTop
   }
-
   function settleAfter(_measured: number, _held: unknown) {
     untrack(settle)
   }
-
   $effect(() => settleAfter(version, layout))
-
   let opened = false
   $effect(() => {
     if (!page.ready || opened) return
@@ -150,7 +136,6 @@
       settle()
     })
   })
-
   $effect(() => {
     const id = page.flashed
     if (!id) return
@@ -161,7 +146,6 @@
     const done = setTimeout(() => (page.flashed = null), 1400)
     return () => clearTimeout(done)
   })
-
   function onscroll() {
     const box = scroller
     if (!box) return
@@ -170,7 +154,6 @@
     anchor = anchorAt(layout.heights, layout.keys, top)
     hovered = null
   }
-
   $effect(() => {
     const { from, to } = span
     const count = layout.items.length
@@ -180,7 +163,6 @@
       if (to > count - NEAR && page.after) void page.newer()
     })
   })
-
   function readOnScreen() {
     if (typeof document === 'undefined' || document.hidden || !document.hasFocus()) return
     const last = layout.heights.at(top + room - 8)
@@ -192,21 +174,16 @@
       }
     }
   }
-
   function readAfter(_shown: unknown, _held: unknown) {
     untrack(readOnScreen)
   }
-
   $effect(() => readAfter(span, layout))
-
   const newAt = $derived(layout.index.get('new'))
   const newAbove = $derived(lineAbove(version, top))
   const unreadBelow = $derived(unreadUnder(version, top, stuck))
-
   function lineAbove(_measured: number, at: number): boolean {
     return newAt !== undefined && layout.heights.top(newAt) < at - 8
   }
-
   function unreadUnder(_measured: number, at: number, bottom: boolean): number {
     if (bottom) return 0
     const last = layout.heights.at(at + room)
@@ -217,29 +194,24 @@
     }
     return count
   }
-
   export function toNew(): void {
     if (newAt === undefined) return
     target = { key: 'new', where: 'line' }
     settle()
   }
-
   export async function toBottom(): Promise<void> {
     if (page.after) await page.bottom()
     stuck = true
     lit = null
     settle()
   }
-
   export function focusRows(): void {
     const last = [...layout.items].reverse().find((item) => item.kind === 'message')
     lit = last?.key ?? null
     scroller?.focus()
   }
-
   const messages = $derived(layout.items.flatMap((item) => (item.kind === 'message' ? [item.message] : [])))
   const litMessage = $derived(messages.find((one) => one.id === lit) ?? null)
-
   function step(by: number) {
     const at = messages.findIndex((one) => one.id === lit)
     const next = messages[Math.min(messages.length - 1, Math.max(0, (at === -1 ? messages.length : at) + by))]
@@ -253,7 +225,6 @@
     }
     if (target) settle()
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.target !== scroller || event.altKey || event.ctrlKey || event.metaKey) return
     const one = litMessage
@@ -299,7 +270,6 @@
           : undefined
     }
   }
-
   function showMenu(event: MouseEvent, message: Message) {
     menu.show(
       event,
@@ -310,7 +280,6 @@
       }),
     )
   }
-
   function pointing(event: PointerEvent) {
     if (event.pointerType !== 'mouse') return
     const row = (event.target as Element | null)?.closest('[data-message]')
@@ -329,9 +298,7 @@
     const slot = row.parentElement
     hovered = { id, top: (slot?.offsetTop ?? 0) + (row.classList.contains('head') ? 12 : 2) }
   }
-
   const hoveredMessage = $derived(hovered ? messages.find((one) => one.id === hovered?.id) : null)
-
   function longPressed(event: MouseEvent) {
     const row = (event.target as Element | null)?.closest('[data-message]')
     const id = row instanceof HTMLElement ? row.dataset.message : undefined
@@ -437,19 +404,16 @@
     min-height: 0;
     display: flex;
   }
-
   .scroller {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overflow-anchor: none;
   }
-
   .content {
     position: relative;
     padding-bottom: var(--space-2);
   }
-
   .day,
   .new {
     display: flex;
@@ -461,7 +425,6 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
   }
-
   .day::before,
   .day::after,
   .new::after {
@@ -470,28 +433,23 @@
     height: 1px;
     background: var(--line);
   }
-
   .new {
     padding-top: var(--space-1);
     color: var(--accent);
   }
-
   .new::after {
     background: var(--accent-line);
     order: -1;
   }
-
   .jump {
     --glyph-size: 14px;
     position: absolute;
     left: 50%;
     translate: -50% 0;
   }
-
   .jump.above {
     top: var(--space-2);
   }
-
   .jump.below {
     bottom: var(--space-3);
   }

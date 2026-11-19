@@ -6,7 +6,6 @@ describe('readHubFrame', () => {
     const frames = [{ t: 'poke', space: 's1', seq: 3 }, { t: 'terms' }, { t: 'ai' }, { t: 'pass' }]
     for (const frame of frames) expect(readHubFrame(JSON.stringify(frame))).toEqual(frame)
   })
-
   test('hands a chat’s poke on whole, for the chats to read', () => {
     const poke = {
       t: 'chat',
@@ -18,13 +17,11 @@ describe('readHubFrame', () => {
     }
     expect(readHubFrame(JSON.stringify(poke))).toEqual({ t: 'chat', said: poke })
   })
-
   test('drops the beat’s answer and anything that is not a frame', () => {
     for (const said of [BEAT_ANSWER, '', 'null', '[]', '{}', '{"t":"nothing"}']) {
       expect(readHubFrame(said)).toBeNull()
     }
   })
-
   test('drops a poke of the wrong shape, and the web logins’ frames of hubs from before #393', () => {
     expect(readHubFrame(JSON.stringify({ t: 'poke', space: 's1', seq: -1 }))).toBeNull()
     expect(readHubFrame(JSON.stringify({ t: 'free', key: 'a'.repeat(64) }))).toBeNull()

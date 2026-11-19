@@ -6,11 +6,9 @@
   import { pass, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
-
   const asked = $derived(ui.sheet?.kind === 'history' ? ui.sheet : null)
   let versions = $state.raw<Item[] | null>(null)
   let wrong = $state('')
-
   $effect(() => {
     const id = asked?.item
     versions = null
@@ -29,16 +27,13 @@
       current = false
     }
   })
-
   const close = () => (ui.sheet = null)
   const when = (stamp: number) => localDate(stamp, { dateStyle: 'medium', timeStyle: 'short' })
-
   async function restored(rev: number) {
     if (!asked) return
     await pass.restoreVersion(asked.item, rev)
     close()
   }
-
   async function cleared() {
     if (!asked) return
     const sure = await prompt.confirm({
@@ -84,27 +79,22 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .version {
     padding: var(--space-2) var(--space-3);
   }
-
   .version + .version {
     border-top: 1px solid var(--line);
   }
-
   .title {
     display: block;
     color: var(--text-strong);
   }
-
   .when {
     display: block;
     margin-top: 2px;
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .quiet {
     margin: 0;
     padding: var(--space-4);

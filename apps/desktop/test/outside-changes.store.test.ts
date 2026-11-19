@@ -13,7 +13,6 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
 }))
 const versions: string[] = []
 const writes: string[] = []
-
 const { Disk, memoryStorage } = await import('./disk')
 const d = new Disk()
 disk.current = d
@@ -23,9 +22,7 @@ await import('../src/lib/workspace-ports')
 const { startAcross } = await import('../src/lib/workspace/src/across')
 await startAcross()
 const { heardChange, heardNews } = await import('../src/lib/workspace/src/outside.svelte')
-
 const SPACE = '/s'
-
 async function fresh(files: Record<string, string>) {
   await workspace.writesSettled()
   d.reset()
@@ -39,18 +36,15 @@ async function fresh(files: Record<string, string>) {
   versions.length = 0
   writes.length = 0
 }
-
 function typed(words: string) {
   const note = workspace.active?.note
   if (!note) throw new Error('nothing open')
   const end = note.live.text.length
   note.live.edit([{ from: end, to: end, insert: words }], { userEvent: 'input' })
 }
-
 beforeEach(() => {
   vi.useRealTimers()
 })
-
 describe('a stale buffer written over a file another program wrote', () => {
   test('a clean tab typed in keeps what the terminal wrote', async () => {
     await fresh({ '/s/n.md': '# n\n\nmine\n' })
@@ -63,7 +57,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     expect(workspace.active?.note.latest).toContain('TERMINAL AGENT')
     expect(workspace.active?.note.dirty).toBe(false)
   })
-
   test('both writing one line keeps both', async () => {
     await fresh({ '/s/n.md': 'one\n' })
     await workspace.open('/s/n.md')
@@ -74,7 +67,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     expect(d.files.get('/s/n.md')).toContain('outside')
     expect(d.files.get('/s/n.md')).toContain('from me')
   })
-
   test('a file with Windows line endings no one else touched is written, not merged', async () => {
     await fresh({ '/s/n.md': 'one\r\ntwo\r\n' })
     await workspace.open('/s/n.md')
@@ -83,7 +75,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     expect(d.files.get('/s/n.md')).toBe('one\ntwo\nthree\n')
     expect(versions[0]).toBe('one\r\ntwo\r\n')
   })
-
   test('a plane does not merge: the last write stands and a version holds the other', async () => {
     const plane = (nodes: string) => `{"nodes":[${nodes}],"edges":[]}`
     await fresh({ '/s/c.canvas': plane('') })
@@ -96,7 +87,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     expect(d.files.get('/s/c.canvas')).toBe(plane('"mine"'))
     expect(versions).toContain(plane('"outside"'))
   })
-
   test('a file another program deleted does not come back, and the words stay', async () => {
     await fresh({ '/s/n.md': '# n\n' })
     await workspace.open('/s/n.md')
@@ -107,7 +97,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     expect(workspace.active?.note.path).toBe(null)
     expect(workspace.active?.note.latest).toContain('typed')
   })
-
   test('a folder with no note of its own: the first words make the file, closed at once', async () => {
     await fresh({ '/s/Proj/other.md': 'x' })
     await workspace.openRow('/s/Proj')
@@ -118,7 +107,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     await workspace.writesSettled()
     expect(d.files.get('/s/Proj/Proj.md')).toBe('words typed into the folder note')
   })
-
   test('a note the listing leaves out, closed within the pause, still writes', async () => {
     await fresh({ '/s/.hidden/n.md': 'x\n' })
     await workspace.loadTree()
@@ -130,7 +118,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     await workspace.writesSettled()
     expect(d.files.get('/s/.hidden/n.md')).toBe('x\ntyped\n')
   })
-
   test('a note deleted with a key still owed is not written back', async () => {
     await fresh({ '/s/n.md': 'x\n' })
     await workspace.open('/s/n.md')
@@ -140,7 +127,6 @@ describe('a stale buffer written over a file another program wrote', () => {
     expect(d.files.has('/s/n.md')).toBe(false)
   })
 })
-
 describe('the closed stack', () => {
   test('closed right after the last key, the file changed since: reopens from the file', async () => {
     await fresh({ '/s/a.md': '# a\n' })
@@ -152,7 +138,6 @@ describe('the closed stack', () => {
     await workspace.writesSettled()
     expect(workspace.closed.stack.at(-1)?.draft.dirty).toBe(false)
     expect(workspace.closed.stack.at(-1)?.draft.doc).toBe('')
-
     const outside = '# a\nwords typed then closed at once\n\nFROM THE OTHER DEVICE\n'
     d.files.set('/s/a.md', outside)
     writes.length = 0
@@ -162,7 +147,6 @@ describe('the closed stack', () => {
     expect(writes).toEqual([])
     expect(d.files.get('/s/a.md')).toBe(outside)
   })
-
   test('a write that never landed: the words come back, and what the file says is kept', async () => {
     await fresh({ '/s/a.md': '# a\n' })
     workspace.closed.stack = [
@@ -187,7 +171,6 @@ describe('the closed stack', () => {
     expect(d.files.get('/s/a.md')).toContain('THE WORDS THE CLOSED STACK SAVED')
     expect(versions).toContain('# a\nFROM THE OTHER DEVICE\n')
   })
-
   test('words still unwritten when the tab comes back at once are all there', async () => {
     await fresh({ '/s/a.md': '# a\n' })
     await workspace.open('/s/a.md')
@@ -200,7 +183,6 @@ describe('the closed stack', () => {
     expect(workspace.tabs.at(-1)?.note.latest).toBe('# a\njust typed\n')
     expect(d.files.get('/s/a.md')).toBe('# a\njust typed\n')
   })
-
   test('a refused write leaves the words on the entry', async () => {
     await fresh({ '/s/a.md': '# a\n' })
     await workspace.open('/s/a.md')
@@ -217,11 +199,9 @@ describe('the closed stack', () => {
     await workspace.writesSettled()
   })
 })
-
 describe('what the watch says, with no engine to hear it', () => {
   const stat = { size: 1, mtime: 1, id: null, dir: false }
   const modified = (path: string) => ({ kind: 'modified' as const, path, ...stat })
-
   test('a clean tab reads the file, and writes nothing', async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     await workspace.open('/s/n.md')
@@ -232,7 +212,6 @@ describe('what the watch says, with no engine to hear it', () => {
     await workspace.writesSettled()
     expect(writes).toEqual([])
   })
-
   test("the watch saying back this window's own write changes nothing", async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     await workspace.open('/s/n.md')
@@ -245,7 +224,6 @@ describe('what the watch says, with no engine to hear it', () => {
     expect(workspace.active?.note.revision).toBe(revision)
     expect(writes).toEqual([])
   })
-
   test('words waiting take the file in as they go down', async () => {
     await fresh({ '/s/n.md': 'one\n\ntwo\n' })
     await workspace.open('/s/n.md')
@@ -256,7 +234,6 @@ describe('what the watch says, with no engine to hear it', () => {
     expect(d.files.get('/s/n.md')).toBe('THEIRS\n\none\n\ntwo\ntyped\n')
     expect(workspace.active?.note.latest).toBe('THEIRS\n\none\n\ntwo\ntyped\n')
   })
-
   test('a file gone closes a clean tab', async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     await workspace.open('/s/n.md')
@@ -266,7 +243,6 @@ describe('what the watch says, with no engine to hear it', () => {
     await workspace.writesSettled()
     expect(d.files.has('/s/n.md')).toBe(false)
   })
-
   test('a file gone keeps a tab with words on no disk, as a draft', async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     await workspace.open('/s/n.md')
@@ -278,14 +254,12 @@ describe('what the watch says, with no engine to hear it', () => {
     expect(workspace.active?.note.latest).toContain('typed')
     expect(d.files.has('/s/n.md')).toBe(false)
   })
-
   test('a file said gone that is back stays', async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     await workspace.open('/s/n.md')
     await heardChange({ kind: 'removed', path: '/s/n.md', dir: false, id: null })
     expect(workspace.active?.path).toBe('/s/n.md')
   })
-
   test('a file moved takes its tab along, and a key lands at the new name', async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     await workspace.open('/s/n.md')
@@ -298,7 +272,6 @@ describe('what the watch says, with no engine to hear it', () => {
     expect(d.files.get('/s/m.md')).toBe('mine\ntyped\n')
     expect(d.files.has('/s/n.md')).toBe(false)
   })
-
   test('a new file is a row in the list', async () => {
     await fresh({ '/s/n.md': 'mine\n' })
     d.files.set('/s/fresh.md', 'from git\n')
@@ -310,7 +283,6 @@ describe('what the watch says, with no engine to hear it', () => {
     })
     await vi.waitFor(() => expect(workspace.entryAt('/s/fresh.md')).not.toBeNull())
   })
-
   test("a move of the workspace's own, said back, leaves the steps as they were", async () => {
     await fresh({ '/s/x.md': 'x\n' })
     await workspace.rename('/s/x.md', 'y.md')
@@ -319,7 +291,6 @@ describe('what the watch says, with no engine to hear it', () => {
     expect([...d.files.keys()]).toEqual(['/s/x.md'])
   })
 })
-
 describe('from the review', () => {
   const stat = { size: 1, mtime: 1, id: null, dir: false }
   const renamed = (from: string, path: string) => ({
@@ -329,7 +300,6 @@ describe('from the review', () => {
     ...stat,
   })
   const removed = (path: string) => ({ kind: 'removed' as const, path, dir: false, id: null })
-
   test('words only a closed tab holds outlive the file going, heard or not', async () => {
     for (const heard of [true, false]) {
       await fresh({ '/s/n.md': 'old\n' })
@@ -350,7 +320,6 @@ describe('from the review', () => {
       expect(d.files.has('/s/n.md')).toBe(false)
     }
   })
-
   test('a write from another document at the path does not spend the words of the first', async () => {
     await fresh({ '/s/n.md': 'old\n' })
     workspace.closed.stack = [
@@ -374,7 +343,6 @@ describe('from the review', () => {
     await workspace.writesSettled()
     expect(workspace.closed.stack.at(-1)?.draft.doc).toContain('PRECIOUS')
   })
-
   test('a rename said back through another window leaves its own step whole', async () => {
     await fresh({ '/s/x.md': 'x\n' })
     await workspace.rename('/s/x.md', 'y.md')
@@ -389,7 +357,6 @@ describe('from the review', () => {
     await workspace.undoFileAction()
     expect([...d.files.keys()]).toEqual(['/s/x.md'])
   })
-
   test('seventy notes moved in one burst all go back', async () => {
     const files: Record<string, string> = {}
     for (let at = 0; at < 70; at++) files[`/s/n${String(at)}.md`] = 'n\n'
@@ -402,7 +369,6 @@ describe('from the review', () => {
     await workspace.undoFileAction()
     for (const path of paths) expect(d.files.has(path)).toBe(true)
   })
-
   test('a move still under way is not taken for another program', async () => {
     await fresh({ '/s/w.md': 'w\n' })
     await workspace.rename('/s/w.md', 'x.md')
@@ -417,7 +383,6 @@ describe('from the review', () => {
     stop()
     expect(heard).toEqual([])
   })
-
   test('a move there and back with nothing said leaves a later move outside heard', async () => {
     await fresh({ '/s/a.md': 'a\n' })
     await workspace.open('/s/a.md')
@@ -428,7 +393,6 @@ describe('from the review', () => {
     await heardChange(renamed('/s/a.md', '/s/b.md'))
     expect(workspace.active?.path).toBe('/s/b.md')
   })
-
   test('a file that vanishes outside and returns has lost nothing kept by path', async () => {
     await fresh({ '/s/n.md': 'n\n' })
     await workspace.open('/s/n.md')
@@ -441,20 +405,16 @@ describe('from the review', () => {
     expect(heard).toEqual([])
     expect(workspace.tabs).toEqual([])
     expect(workspace.folderIcons.iconOf('/s/n.md')).toBe('star')
-
     d.files.set('/s/n.md', 'n\n')
     await workspace.reopenClosed()
     expect(workspace.active?.path).toBe('/s/n.md')
   })
 })
-
 describe('the highlights beside a PDF, changed by another program', () => {
   const stat = { size: 1, mtime: 1, id: null, dir: false }
-
   test('tell the pages of that PDF, whether written, made or deleted', async () => {
     const { marksFromOutside } = await import('../src/lib/pdf/src/api')
     const before = marksFromOutside('/s/Paper.pdf')
-
     await heardChange({ kind: 'modified', path: '/s/Paper.pdf.highlights.json', ...stat })
     await heardChange({ kind: 'created', path: '/s/Paper.pdf.highlights.json', ...stat })
     await heardChange({
@@ -464,24 +424,19 @@ describe('the highlights beside a PDF, changed by another program', () => {
       id: null,
     })
     await heardChange({ kind: 'modified', path: '/s/Paper.pdf', ...stat })
-
     expect(marksFromOutside('/s/Paper.pdf')).toBe(before + 3)
   })
 })
-
 describe('a PDF changed by another program', () => {
   const stat = { size: 1, mtime: 1, id: null, dir: false }
   const AT = { file: 'Paper.pdf', note: '/s/Paper.pages', root: '/s' }
-
   test('tells the page notes drawing it to draw it again, and nothing for its highlights', async () => {
     const { paperEdition } = await import('../src/lib/pdf/src/api')
     const before = paperEdition(AT)
-
     await heardChange({ kind: 'modified', path: '/s/Paper.pdf.highlights.json', ...stat })
     await heardChange({ kind: 'modified', path: '/s/Other.pdf', ...stat })
     await vi.waitFor(() => expect(paperEdition({ ...AT, file: 'Other.pdf' })).toBe(1))
     expect(paperEdition(AT)).toBe(before)
-
     await heardChange({ kind: 'modified', path: '/s/Paper.pdf', ...stat })
     await vi.waitFor(() => expect(paperEdition(AT)).toBe(before + 1))
     await heardChange({ kind: 'removed', path: '/s/Paper.pdf', dir: false, id: null })

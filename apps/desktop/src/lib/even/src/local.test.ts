@@ -7,11 +7,9 @@ import { STORAGE_KEY as ARCHIVED_KEY } from '../../space-kept/src/archive.svelte
 import { EXPANDED_KEY, ICON_TINTS_KEY, ICONS_KEY, RECENT_KEY, TAGS_KEY } from '../../workspace/src/device.svelte'
 
 const phone = vi.hoisted(() => ({ held: new Map<string, string>(), reachable: false }))
-
 vi.mock('./sdk', () => ({
   connectStore: async () => {
     while (!phone.reachable) await new Promise((resolve) => setTimeout(resolve, 20))
-
     return {
       read: (key: string) => Promise.resolve(phone.held.get(key) ?? ''),
       write: (key: string, value: string) => {
@@ -21,17 +19,13 @@ vi.mock('./sdk', () => ({
     }
   },
 }))
-
 let jar = ''
-
 beforeAll(async () => {
   await import('./local')
 })
-
 async function launch() {
   vi.useRealTimers()
   vi.resetModules()
-
   vi.stubGlobal('document', {
     get cookie() {
       return jar
@@ -43,11 +37,9 @@ async function launch() {
         .split(';')
         .map((part) => part.trim())
         .filter((part) => part && !part.startsWith(`${name}=`))
-
       jar = [...rest, pair].join('; ')
     },
   })
-
   const store = new Map<string, string>()
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => store.get(key) ?? null,
@@ -57,91 +49,72 @@ async function launch() {
     key: () => null,
     length: 0,
   })
-
   const module = await import('./local')
   vi.useFakeTimers()
-
   return module
 }
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 beforeEach(() => {
   jar = ''
   phone.held.clear()
   phone.reachable = true
 })
-
 describe('settings across launches', () => {
   test('a setting written in one launch is there in the next', async () => {
     const first = await launch()
     const one = first.installLocal()
     localStorage.setItem('orden:theme', 'dark')
     await vi.advanceTimersByTimeAsync(1000)
-
     const second = await launch()
     second.installLocal()
-
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(one.getItem('orden:theme')).toBe('dark')
   })
-
   test('it is there at the first paint, without waiting for the phone', async () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:theme', 'dark')
     await vi.advanceTimersByTimeAsync(1000)
-
     phone.reachable = false
     const second = await launch()
     second.installLocal()
-
     expect(localStorage.getItem('orden:theme')).toBe('dark')
   })
-
   test('what the cookie could not hold comes back from the phone', async () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:theme', 'dark')
     localStorage.setItem('orden:layouts', 'x'.repeat(6000))
     await vi.advanceTimersByTimeAsync(1000)
-
     const second = await launch()
     const local = second.installLocal()
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('orden:layouts')).toBeNull()
-
     await second.fillLocal(local)
     expect(localStorage.getItem('orden:layouts')).toHaveLength(6000)
   })
-
   test('a setting changed this launch is not undone by the phone answering late', async () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:theme', 'dark')
     await vi.advanceTimersByTimeAsync(1000)
-
     const second = await launch()
     const local = second.installLocal()
     localStorage.setItem('orden:theme', 'light')
-
     await second.fillLocal(local)
     expect(localStorage.getItem('orden:theme')).toBe('light')
   })
-
   test('the page keeps working when there is no cookie and no phone', async () => {
     phone.reachable = false
     const only = await launch()
     only.installLocal()
-
     localStorage.setItem('orden:theme', 'dark')
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('nothing')).toBeNull()
   })
 })
-
 describe('which store a key rides in', () => {
   function mirrors(notes: number): string {
     const held: Record<string, unknown> = {}
@@ -153,60 +126,47 @@ describe('which store a key rides in', () => {
         rev: at,
       }
     }
-
     return JSON.stringify({ mirrors: { '/Notes': { spaceId: 's', notes: held, files: {} } } })
   }
-
   test('is decided by what it is for, not by how big it is', async () => {
     expect(encodeURIComponent(mirrors(20)).length).toBeGreaterThan(3500)
-
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:theme', 'dark')
     localStorage.setItem('orden:mirrors', mirrors(20))
     localStorage.setItem('orden:recent', JSON.stringify(['/Notes/One.md', '/Notes/Two.md']))
     await vi.advanceTimersByTimeAsync(1000)
-
     phone.reachable = false
     const second = await launch()
     second.installLocal()
-
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('orden:mirrors')).toBeNull()
     expect(localStorage.getItem('orden:recent')).toBeNull()
   })
-
   test('and the bookkeeping comes back whole when the phone answers', async () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:mirrors', mirrors(20))
     await vi.advanceTimersByTimeAsync(1000)
-
     const second = await launch()
     const local = second.installLocal()
     expect(localStorage.getItem('orden:mirrors')).toBeNull()
-
     await second.fillLocal(local)
     expect(localStorage.getItem('orden:mirrors')).toBe(mirrors(20))
   })
-
   test('and one an older build truncated into the cookie is not read at all', async () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('orden:mirrors', mirrors(20))
     await vi.advanceTimersByTimeAsync(1000)
-
     const short = JSON.stringify({ 'orden:mirrors': mirrors(3) })
     jar = `orden:local=${encodeURIComponent(short)}`
-
     const second = await launch()
     const local = second.installLocal()
     expect(localStorage.getItem('orden:mirrors')).toBeNull()
-
     await second.fillLocal(local)
     expect(localStorage.getItem('orden:mirrors')).toBe(mirrors(20))
   })
-
   test('leaves everything else where it was, so nothing moved by accident', () => {
     const kept = forTheCookie({
       'orden:theme': 'dark',
@@ -217,7 +177,6 @@ describe('which store a key rides in', () => {
       'orden:mirrors': '{}',
       'orden:recovery': '{"every":5}',
     })
-
     expect(Object.keys(kept).sort()).toEqual([
       'orden:accent',
       'orden:modes',
@@ -226,7 +185,6 @@ describe('which store a key rides in', () => {
       'orden:workspace',
     ])
   })
-
   test('names the keys those stores actually use', () => {
     const owned = [
       MIRRORS_KEY,
@@ -239,7 +197,6 @@ describe('which store a key rides in', () => {
       FOLDER_ICONS_KEY,
       ARCHIVED_KEY,
     ]
-
     expect(forTheCookie(Object.fromEntries(owned.map((one) => [one, 'x'])))).toEqual({})
   })
 })

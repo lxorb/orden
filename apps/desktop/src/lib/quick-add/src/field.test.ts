@@ -15,28 +15,22 @@ test('the line as runs words and chips, in order, each where it was typed', () =
     { text: 'p1', chip: 'priority', from: 18 },
   ])
 })
-
 describe('a span turned back into words', () => {
   const span = { from: 9, to: 17 }
-
   test('moves with the words when something is typed before it', () => {
     expect(carried([span], 'Call mum tomorrow', 'Now call mum tomorrow')).toEqual([{ from: 13, to: 21 }])
   })
-
   test('stays when something is typed after it', () => {
     expect(carried([span], 'Call mum tomorrow', 'Call mum tomorrow p1')).toEqual([span])
   })
-
   test('goes when the edit reaches into it', () => {
     expect(carried([span], 'Call mum tomorrow', 'Call mum tomorow')).toEqual([])
   })
 })
-
 test('a chip taken out closes the gap it leaves', () => {
   expect(without('Call mum tomorrow at noon', { from: 9, to: 17 })).toBe('Call mum at noon')
   expect(without('tomorrow call mum', { from: 0, to: 8 })).toBe('call mum')
 })
-
 test('a paste of several lines is a task a line, each without the mark it was copied with', () => {
   expect(pastedLines('- [ ] Milk\r\n* Bread tomorrow\n\n2. Eggs #shop\n   \n• Butter\nplain words')).toEqual([
     'Milk',
@@ -47,7 +41,6 @@ test('a paste of several lines is a task a line, each without the mark it was co
   ])
   expect(pastedLines('one line')).toEqual(['one line'])
 })
-
 describe('a word that asks for a suggestion', () => {
   test('is a label after # @ %', () => {
     expect(tokenAt('Call mum #fa', 12)).toEqual({ sign: '#', query: 'fa', from: 9, to: 12 })
@@ -56,13 +49,11 @@ describe('a word that asks for a suggestion', () => {
     expect(tokenAt('Call mum', 8)).toBeNull()
     expect(tokenAt('#family call', 3)).toBeNull()
   })
-
   test('is offered what starts with it first, then what holds it', () => {
     expect(suggestions('fa', ['family', 'farm', 'breakfast', 'work'])).toEqual(['family', 'farm', 'breakfast'])
     expect(suggestions('', ['a', 'b'])).toEqual(['a', 'b'])
     expect(suggestions('family', ['family'])).toEqual([])
   })
-
   test('is replaced by the one chosen, the caret after it', () => {
     const token = tokenAt('Call mum #fa tomorrow', 12)
     if (!token) throw new Error('no token')

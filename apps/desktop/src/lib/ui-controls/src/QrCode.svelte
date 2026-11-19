@@ -2,9 +2,7 @@
   import { whenLoaded } from '@orden/contracts'
 
   const { value, label }: { value: string; label: string } = $props()
-
   let drawn = $state<string | null>(null)
-
   $effect(() => {
     const text = value
     drawn = null
@@ -33,7 +31,6 @@
     background: #fff;
     line-height: 0;
   }
-
   .qr :global(svg) {
     display: block;
     width: var(--qr-size, 8.5rem);

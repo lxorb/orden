@@ -3,19 +3,16 @@ import { afterEach, expect, test, vi } from 'vitest'
 import type { Listing } from './commands'
 
 type Heard = (event: { payload: { folders: string[] } }) => void
-
 const ears = vi.hoisted(() => ({
   heard: null as Heard | null,
   open: null as (() => void) | null,
   calls: [] as string[],
   disk: new Map<string, string[]>(),
 }))
-
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
 }))
-
 vi.mock('@tauri-apps/api/event', () => ({
   listen: async (_event: string, heard: Heard) => {
     await new Promise<void>((resolve) => (ears.open = resolve))
@@ -23,7 +20,6 @@ vi.mock('@tauri-apps/api/event', () => ({
     return () => undefined
   },
 }))
-
 vi.mock('./commands', () => ({
   CHANGED: 'explorer://changed',
   listFolder: (path: string): Promise<Listing> => {
@@ -55,19 +51,15 @@ vi.mock('./commands', () => ({
     return Promise.resolve()
   },
 }))
-
 const { workspace } = await import('../../workspace/src/api')
 const ExplorerColumn = (await import('./ExplorerColumn.svelte')).default
 const { viewOf } = await import('./view.svelte')
-
 let close: (() => void) | undefined
-
 afterEach(() => {
   close?.()
   close = undefined
   document.body.replaceChildren()
 })
-
 test('a folder is watched only once its changes can be heard, and the column beside the list follows its own folder', async () => {
   ears.disk.set('/home/me/letters', ['a.txt'])
   const tab = workspace.openUnsaved('explorer', '', 'me')
@@ -79,7 +71,6 @@ test('a folder is watched only once its changes can be heard, and the column bes
   const made = mount(ExplorerColumn, { target, props: { view, folder: '/home/me/letters' } })
   close = () => void unmount(made)
   await vi.waitFor(() => expect(ears.calls).toEqual(['list /home/me', 'list /home/me/letters']))
-
   ears.open?.()
   await vi.waitFor(() =>
     expect([...ears.calls].sort()).toEqual([
@@ -89,7 +80,6 @@ test('a folder is watched only once its changes can be heard, and the column bes
       'watch /home/me/letters',
     ]),
   )
-
   ears.disk.set('/home/me/letters', ['a.txt', 'b.txt'])
   ears.heard?.({ payload: { folders: ['/home/me/letters'] } })
   await vi.waitFor(() => {
@@ -97,7 +87,6 @@ test('a folder is watched only once its changes can be heard, and the column bes
     const names = [...target.querySelectorAll('.orden-row-label')].map((one) => one.textContent)
     expect(names).toEqual(['a.txt', 'b.txt'])
   })
-
   close()
   close = undefined
   view.stop()

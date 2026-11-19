@@ -3,21 +3,15 @@ import { readSession, type Session } from './session'
 
 export const FIRST_SESSION = 'orden:workspace'
 const REMEMBERED = 'orden:window-slot'
-
 const MOST_SLOTS = 64
-
 const RELOAD_AT_MOST = 1_500
-
 export const slotLock = (slot: number) => `orden:window:${slot}`
-
 export const sessionOf = (slot: number) => (slot === 0 ? FIRST_SESSION : `${FIRST_SESSION}:${slot}`)
-
 export function slotOf(key: string): number | null {
   if (key === FIRST_SESSION) return 0
   const held = key.startsWith(`${FIRST_SESSION}:`) ? Number(key.slice(FIRST_SESSION.length + 1)) : 0
   return held > 0 && Number.isInteger(held) ? held : null
 }
-
 function remembered(): number | null {
   try {
     const said = sessionStorage.getItem(REMEMBERED)
@@ -28,7 +22,6 @@ function remembered(): number | null {
     return null
   }
 }
-
 function remember(slot: number) {
   try {
     sessionStorage.setItem(REMEMBERED, String(slot))
@@ -36,16 +29,12 @@ function remember(slot: number) {
     // A slot that cannot be kept across a reload is found again by asking.
   }
 }
-
 export const LEAVING_GRACE = 10_000
-
 const leavingMark = (slot: number) => `orden:window-left:${slot}`
-
 export function leftLately(slot: number, storage: Storage, now = Date.now()): boolean {
   const at = Number(storage.getItem(leavingMark(slot)))
   return at > 0 && now - at < LEAVING_GRACE
 }
-
 function holdingFrom(slot: number): number {
   forget(leavingMark(slot))
   remember(slot)
@@ -54,9 +43,7 @@ function holdingFrom(slot: number): number {
   }
   return slot
 }
-
 const forever = () => new Promise<never>(() => undefined)
-
 function ownAgain(locks: LockManager, slot: number): Promise<boolean> {
   return new Promise((resolve) => {
     const giving = new AbortController()
@@ -84,7 +71,6 @@ function ownAgain(locks: LockManager, slot: number): Promise<boolean> {
     }
   })
 }
-
 export function freshWindow(first: unknown): Session | null {
   const session = readSession(first)
   if (!session) return null
@@ -99,7 +85,6 @@ export function freshWindow(first: unknown): Session | null {
     ...(known ? { known } : {}),
   }
 }
-
 export function othersInStorage(slot: number): boolean {
   try {
     for (let at = 0; at < localStorage.length; at += 1) {
@@ -111,7 +96,6 @@ export function othersInStorage(slot: number): boolean {
   }
   return false
 }
-
 export async function takeSlot(locks: LockManager | undefined = locksHere()): Promise<number> {
   if (!(await locksWork(locks)) || !locks) return 0
   const again = remembered()

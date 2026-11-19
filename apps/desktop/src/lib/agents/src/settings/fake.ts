@@ -13,15 +13,12 @@ export function freeId(client: string, taken: readonly string[]): string {
   }
   stem = stem.replace(/-+$/, '') || 'agent'
   if (!taken.includes(stem)) return stem
-
   for (let n = 2; n < 10_000; n++) {
     if (!taken.includes(`${stem}-${n}`)) return `${stem}-${n}`
   }
   return stem
 }
-
 const copy = <T>(value: T): T => structuredClone(value)
-
 export class FakeCrate implements AgentsCrate {
   grants: Grant[] = []
   log = new Map<string, unknown[]>()
@@ -29,18 +26,15 @@ export class FakeCrate implements AgentsCrate {
   writes = 0
   failing: Error | null = null
   private listeners = new Set<(event: Heard) => void>()
-
   private fail(): Promise<void> {
     const failing = this.failing
     this.failing = null
     return failing ? Promise.reject(failing) : Promise.resolve()
   }
-
   async read(): Promise<Grant[]> {
     await this.fail()
     return copy(this.grants)
   }
-
   async write(grants: Grant[]): Promise<Grant[]> {
     await this.fail()
     this.writes += 1
@@ -50,7 +44,6 @@ export class FakeCrate implements AgentsCrate {
     })
     return copy(this.grants)
   }
-
   async mint(name: string): Promise<Minted> {
     await this.fail()
     const trimmed = name.trim()
@@ -66,15 +59,12 @@ export class FakeCrate implements AgentsCrate {
     this.grants.push(grant)
     return { grant: copy(grant), token: 'f3a1'.repeat(16) }
   }
-
   days(): Promise<string[]> {
     return Promise.resolve([...this.log.keys()].sort().reverse())
   }
-
   day(day: string): Promise<unknown[]> {
     return Promise.resolve(copy(this.log.get(day) ?? []))
   }
-
   async clear(agent: string | null): Promise<void> {
     await this.fail()
     for (const [day, lines] of this.log) {
@@ -83,20 +73,16 @@ export class FakeCrate implements AgentsCrate {
       else this.log.delete(day)
     }
   }
-
   program(): Promise<string | null> {
     return Promise.resolve(this.path)
   }
-
   hear(on: (event: Heard) => void): Promise<() => void> {
     this.listeners.add(on)
     return Promise.resolve(() => this.listeners.delete(on))
   }
-
   emit(event: Heard) {
     for (const one of this.listeners) one(event)
   }
-
   pair(client: string, at = Date.now()): Grant {
     const grant = ownGrant(
       freeId(
@@ -110,7 +96,6 @@ export class FakeCrate implements AgentsCrate {
     this.emit({ kind: 'answered', agent: grant.id })
     return grant
   }
-
   called(agent: string, verb: string, at: number, args: Record<string, unknown> = {}, status = 'ok', code?: string) {
     const day = new Date(at).toISOString().slice(0, 10)
     const line = { at, agent, verb, args, status, ms: 12, ...(code ? { code } : {}) }
@@ -119,7 +104,6 @@ export class FakeCrate implements AgentsCrate {
     else this.log.set(day, [line])
   }
 }
-
 export function seeded(now = Date.now()): FakeCrate {
   const fake = new FakeCrate()
   const hour = 60 * 60 * 1000
@@ -131,13 +115,11 @@ export function seeded(now = Date.now()): FakeCrate {
   }
   const script = thirdPartyGrant('nightly-backup', 'Nightly backup', now - 2 * 24 * hour)
   fake.grants.push(script)
-
   const own = fake.grants.find((one) => one.id === claude.id)
   if (own) {
     own.sites = { 'google.com': 'agent-store', 'bank.example': 'deny' }
     own.always = { 'shop.example': ['paying'] }
   }
-
   const morning = now - 5 * hour
   const calls: [string, Record<string, unknown>, string?][] = [
     ['read_note', { path: 'Research/Trips.md' }],
@@ -156,7 +138,6 @@ export function seeded(now = Date.now()): FakeCrate {
   fake.called(codex.id, 'read_note', now - 26 * hour, { path: 'Code/Plan.md' })
   return fake
 }
-
 export function standIn(fake: FakeCrate = seeded()): FakeCrate {
   reach.standIn = fake
   return fake

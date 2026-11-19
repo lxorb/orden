@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PASSWORD = "tulip ladder"
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -21,7 +17,6 @@ async () => {
   return { root, path: note.path }
 }
 """
-
 PROTECTION_ON = (
     "try { const kept = JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]');"
     " const list = Array.isArray(kept) ? kept : [];"
@@ -29,12 +24,9 @@ PROTECTION_ON = (
     " localStorage.setItem('orden:hidden-kinds', JSON.stringify([...list, 'shown-protection'])) }"
     " catch {}"
 )
-
 PROTECTED = """
 (where) => window.ordenApp.workspace.protection.own(where.root, where.path)?.way ?? null
 """
-
-
 def opened(browser: Browser, on: bool):
     context = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
     if on:
@@ -50,8 +42,6 @@ def opened(browser: Browser, on: bool):
     say(f"the note: {json.dumps(where)}")
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
     return context, page, where
-
-
 def drive(browser: Browser) -> None:
     context, page, where = opened(browser, False)
     row = page.locator(f'.row[data-path="{where["path"]}"]')
@@ -61,7 +51,6 @@ def drive(browser: Browser) -> None:
         wrong("Protect is in the menu while protection is off")
     say("no Protect while protection is off")
     context.close()
-
     context, page, where = opened(browser, True)
     row = page.locator(f'.row[data-path="{where["path"]}"]')
     row.click(button="right")
@@ -74,28 +63,21 @@ def drive(browser: Browser) -> None:
     page.get_by_role("button", name="Protect", exact=True).click()
     wait_for(page, f"({PROTECTED})({json.dumps(where)}) === 'password'", "the note protected", 30)
     say("protected with a password")
-
     row.click(button="right")
     page.get_by_role("menuitem", name="Lock", exact=True).click()
     wait_for(page, "document.querySelector('.locked input[type=password]')", "the lock screen")
     shot(page, "02-locked")
     if "secret words" in page.locator(".pane").first.inner_text():
         wrong("the lock screen shows the note's words")
-
     page.locator(".locked input[type=password]").fill("wrong")
     page.locator(".locked button[type=submit]").click()
     wait_for(page, "document.querySelector('.locked [role=alert]')", "the wrong password said")
-
     page.locator(".locked input[type=password]").fill(PASSWORD)
     page.locator(".locked button[type=submit]").click()
     wait_for(page, "!document.querySelector('.locked') && document.querySelector('.cm-content')", "the note open again", 30)
     shot(page, "03-open")
     say("unlocked with the password")
     context.close()
-
-
 def main() -> int:
     return DRIVE.run(drive, "a note is protected with a password, locks, and opens with it")
-
-
 raise SystemExit(main())

@@ -3,7 +3,6 @@ import { askMachine, eraseMachines } from '../src/machines/ask'
 import { isMachineHost, machineDomain } from '../src/machines/hetzner-host'
 
 type Env = Parameters<typeof askMachine>[0]
-
 function fakeMachines(
   answer: (request: Request, id: string) => Response | Error,
   options: { jurisdiction?: boolean; dev?: boolean } = {},
@@ -34,7 +33,6 @@ function fakeMachines(
   } as unknown as Env
   return { env, asked, places }
 }
-
 describe('asking a machine', () => {
   test('names the ask and the machine in headers and keeps the machine in the EU', async () => {
     const { env, asked, places } = fakeMachines(() => new Response('ok'), { jurisdiction: true })
@@ -45,7 +43,6 @@ describe('asking a machine', () => {
     expect(asked[0]?.headers.get('x-orden-id')).toBe('m-1')
     expect(asked[0]?.headers.get('x-orden-user')).toBe('u')
   })
-
   test('a development machine host is not pinned to a jurisdiction', async () => {
     const { env, places } = fakeMachines(() => new Response('ok'), {
       jurisdiction: true,
@@ -54,7 +51,6 @@ describe('asking a machine', () => {
     await askMachine(env, 'm-1', 'state')
     expect(places).toEqual([])
   })
-
   test('asks once more after a reset object, and answers null without a namespace', async () => {
     let calls = 0
     const { env } = fakeMachines(() => {
@@ -64,7 +60,6 @@ describe('asking a machine', () => {
     expect((await askMachine(env, 'm-1', 'start'))?.ok).toBe(true)
     expect(await askMachine({} as unknown as Env, 'm-1', 'start')).toBeNull()
   })
-
   test('erasing reports only the machines that acknowledged, and all of them without a namespace', async () => {
     const { env } = fakeMachines((_request, id) =>
       id === 'm-2' ? new Response('busy', { status: 409 }) : new Response('ok'),
@@ -73,7 +68,6 @@ describe('asking a machine', () => {
     expect(await eraseMachines({} as unknown as Env, ['m-1'])).toEqual(['m-1'])
   })
 })
-
 describe('machine hosts', () => {
   test('a machine host is one label under the machine domain', () => {
     expect(machineDomain({ MACHINE_DOMAIN: 'machines.example' } as unknown as Env)).toBe('machines.example')

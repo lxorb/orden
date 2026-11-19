@@ -9,19 +9,15 @@ import { firstStart, lineStart, matchesAt } from './starts'
 import { remembering, WORTH_REMEMBERING } from './tags'
 
 const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
-
 const TEX_LABEL = /\\label\s*\{[^}]*\}/g
-
 function math(written: string, display: boolean): string {
   const tex = written.replace(TEX_LABEL, '')
   const engine = mathsEngine()
   const escaped = () => tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
-
   if (!engine) {
     void loadMaths()
     return display ? `<pre>${escaped()}</pre>` : `<code>${escaped()}</code>`
   }
-
   try {
     return engine.renderToString(tex, {
       displayMode: display,
@@ -33,14 +29,11 @@ function math(written: string, display: boolean): string {
     return display ? `<pre class="math-error">${escaped()}</pre>` : `<code>${escaped()}</code>`
   }
 }
-
 const CLOSERS = new WeakMap<Token[], number>()
-
 function highlightEnd(src: string, tokens: Token[] | undefined): number {
   const left = tokens ? CLOSERS.get(tokens) : undefined
   if (left === -1) return -1
   if (left !== undefined && src.length - left >= 3) return src.length - left
-
   let at = src.indexOf('==', 3)
   while (at !== -1 && !/\S/.test(src.charAt(at - 1))) at = src.indexOf('==', at + 1)
   if (tokens && src.length >= WORTH_REMEMBERING) {
@@ -48,7 +41,6 @@ function highlightEnd(src: string, tokens: Token[] | undefined): number {
   }
   return at
 }
-
 export const highlight: MarkedExtension = remembering({
   extensions: [
     {
@@ -59,10 +51,8 @@ export const highlight: MarkedExtension = remembering({
         if (!src.startsWith('==') || !/\S/.test(src.charAt(2))) return undefined
         const end = highlightEnd(src, tokens)
         if (end === -1) return undefined
-
         const { colour, from } = readHighlight(src.slice(2, end))
         const words = src.slice(2 + from, end)
-
         return {
           type: 'highlight',
           raw: src.slice(0, end + 2),
@@ -79,7 +69,6 @@ export const highlight: MarkedExtension = remembering({
     },
   ],
 })
-
 export const scripts: MarkedExtension = remembering({
   tokenizer: {
     del: (src: string) => (src.startsWith('~~') ? false : undefined),
@@ -138,15 +127,12 @@ export const scripts: MarkedExtension = remembering({
     },
   ],
 })
-
 function drawing(token: Tokens.Generic, display: boolean): string {
   const tex = String(token.text ?? '')
   const tag = display ? 'div' : 'span'
   const named = display ? 'math-block' : 'math-inline'
-
   return `<${tag} class="${named}" data-tex="${escape(tex)}">${math(tex, display)}</${tag}>`
 }
-
 export const maths: MarkedExtension = remembering({
   extensions: [
     {
@@ -166,54 +152,44 @@ export const maths: MarkedExtension = remembering({
     },
   ],
 })
-
 function afterMarker(tokens: Token[], cut: number): Token[] {
   const out: Token[] = []
   let left = cut
-
   for (const token of tokens) {
     if (left <= 0) {
       out.push(token)
       continue
     }
-
     const raw = token.raw
     if (raw.length <= left) {
       left -= raw.length
       continue
     }
-
     const kept = raw.slice(left)
     left = 0
     if (token.type === 'text') out.push({ ...token, raw: kept, text: kept })
   }
-
   return out
 }
-
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
       const first = token.tokens[0]
       const opening = first && opensCallout(first) ? (first as Tokens.Paragraph) : null
       const found = opening ? calloutOf(opening.text) : null
-
       if (!opening || !found) {
         return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
       }
-
       const inside = afterMarker(opening.tokens, found.taken)
       const rest: Token[] = inside.length
         ? [{ ...opening, text: found.rest, tokens: inside }, ...token.tokens.slice(1)]
         : token.tokens.slice(1)
-
       const look = found.look === null ? '' : ` callout-${found.look}`
       const title = escape(found.title || found.label)
       const box = found.foldable ? 'details' : 'div'
       const head = found.foldable ? 'summary' : 'p'
       const open = found.foldable && !found.folded ? ' open' : ''
       const chevron = found.foldable ? calloutChevron() : ''
-
       return (
         `<${box} class="callout${look}" data-callout="${escape(found.type)}"${open}>` +
         `<${head} class="callout-title">` +
@@ -223,7 +199,6 @@ export const callouts: MarkedExtension = {
     },
   },
 }
-
 export const emoji: MarkedExtension = remembering({
   extensions: [
     {
@@ -233,23 +208,19 @@ export const emoji: MarkedExtension = remembering({
       tokenizer(src: string) {
         const match = /^:([a-z0-9_+-]+):/i.exec(src)
         if (!match?.[1]) return undefined
-
         const table = emojiTable()
         if (!table) {
           void loadEmoji()
           return undefined
         }
-
         const character = table.get(match[1])
         if (!character) return undefined
-
         return { type: 'emoji', raw: match[0], text: character }
       },
       renderer: (token: Tokens.Generic) => String(token.text),
     },
   ],
 })
-
 export const definitionLists: MarkedExtension = {
   extensions: [
     {
@@ -260,24 +231,19 @@ export const definitionLists: MarkedExtension = {
           .map((item) => {
             const term = `<dt>${this.parser.parseInline(item.term)}</dt>`
             const details = item.details.map((detail) => `<dd>${this.parser.parseInline(detail)}</dd>`).join('\n')
-
             return `${term}\n${details}`
           })
           .join('\n')
-
         return `<dl>\n${body}\n</dl>\n`
       },
     },
   ],
 }
-
 const DEFINITION = /\*\[[^\]\n]+\]:/y
-
 function definition(src: string, at: number): number | null {
   const line = lineStart(src, at, { orString: true })
   return line !== null && matchesAt(DEFINITION, src, at) ? line : null
 }
-
 export const abbreviations: MarkedExtension = {
   extensions: [
     {
@@ -287,7 +253,6 @@ export const abbreviations: MarkedExtension = {
       tokenizer(src: string) {
         const match = /^\*\[([^\]\n]+)\]:[ \t]*(.*)(?:\r?\n|$)/.exec(src)
         if (!match) return undefined
-
         return {
           type: 'abbrDef',
           raw: match[0],
@@ -299,47 +264,35 @@ export const abbreviations: MarkedExtension = {
     },
   ],
 }
-
 const ABBREV_DEF = /^\*\[([^\]\n]+)\]:[ \t]*(.*)$/
-
 export function collectAbbreviations(source: string): Map<string, string> {
   const found = new Map<string, string>()
   if (!source.includes('*[')) return found
-
   const code = new CodeBlocks()
-
   for (const line of source.split('\n')) {
     if (code.line(line) !== WORDS) continue
-
     const match = ABBREV_DEF.exec(line)
     if (!match) continue
-
     const term = match[1]?.trim()
     if (term) found.set(term, (match[2] ?? '').trim())
   }
-
   return found
 }
-
 const FOOTNOTE_DEF = /\[\^[^\]\s]+\]:\s*\S/y
 const REF_STOPS = new WeakMap<Token[], number>()
 const A_REF_STOP = /[\]\s]/g
-
 function footnoteRefEnd(src: string, tokens: Token[]): number {
   const left = REF_STOPS.get(tokens)
   if (left !== undefined && src.length - left >= 2) return src.length - left
-
   A_REF_STOP.lastIndex = 2
   const at = A_REF_STOP.exec(src)?.index ?? src.length
   if (src.length >= WORTH_REMEMBERING) REF_STOPS.set(tokens, src.length - at)
   return at
 }
-
 function footnoteDefinition(src: string, at: number): number | null {
   const line = lineStart(src, at, { orString: true })
   return line !== null && matchesAt(FOOTNOTE_DEF, src, at) ? line : null
 }
-
 export const footnotes: MarkedExtension = remembering({
   extensions: [
     {
@@ -349,7 +302,6 @@ export const footnotes: MarkedExtension = remembering({
       tokenizer(src: string) {
         const match = /^\[\^([^\]\s]+)\]:\s*(.+)(?:\r?\n|$)/.exec(src)
         if (!match) return undefined
-
         return {
           type: 'footnoteDef',
           raw: match[0],

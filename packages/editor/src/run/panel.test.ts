@@ -23,21 +23,17 @@ function state(doc: string) {
     }),
   )
 }
-
 const FENCED = 'intro\n\n```js\nconsole.log(1)\n```\n\ntail\n'
-
 describe('which fences can be run', () => {
   test('accepts the spellings of JavaScript, whatever their case', () => {
     for (const language of ['js', 'javascript', 'mjs', 'cjs', 'JS', ' JavaScript '])
       expect(isRunnableLanguage(language), language).toBe(true)
   })
-
   test('refuses everything that is not JavaScript', () => {
     for (const language of ['', 'ts', 'typescript', 'jsx', 'node', 'python', 'mermaid', 'json'])
       expect(isRunnableLanguage(language), language).toBe(false)
   })
 })
-
 describe('finding the fence the caret is in', () => {
   test('reaches it from inside the code', () => {
     const found = runnableFenceAt(state(FENCED), FENCED.indexOf('console'))
@@ -46,68 +42,55 @@ describe('finding the fence the caret is in', () => {
     expect(found?.from).toBe(FENCED.indexOf('```js'))
     expect(found?.to).toBe(FENCED.indexOf('```\n\ntail') + 3)
   })
-
   test.each([
     [state(FENCED), FENCED.indexOf('```js') + 2],
     [state(FENCED), FENCED.indexOf('```\n\ntail') + 1],
   ])('%j', (input, extra) => expect(runnableFenceAt(input, extra)).not.toBeNull())
-
   test.each([
     [state(FENCED), 2],
     [state(FENCED), FENCED.indexOf('tail')],
   ])('%j', (input, extra) => expect(runnableFenceAt(input, extra)).toBeNull())
-
   test('finds nothing in a fence of another language', () => {
     const other = 'x\n\n```python\nprint(1)\n```\n'
     expect(runnableFenceAt(state(other), other.indexOf('print'))).toBeNull()
   })
-
   test('reads a fence of more than one line whole', () => {
     const many = '```js\nlet a = 1\na += 1\na\n```\n'
     expect(runnableFenceAt(state(many), many.indexOf('a += 1'))?.code).toBe('let a = 1\na += 1\na')
   })
-
   test('reads a fence inside a list item whole, prefix and all', () => {
     const inList = '- item\n\n  ```js\n  let a = 1\n  a += 1\n  a\n  ```\n'
     expect(runnableFenceAt(state(inList), inList.indexOf('a += 1'))?.code).toBe('let a = 1\na += 1\na')
   })
-
   test('reads a fence inside a blockquote whole', () => {
     const quoted = '> ```js\n> let a = 1\n> a += 1\n> ```\n'
     expect(runnableFenceAt(state(quoted), quoted.indexOf('a += 1'))?.code).toBe('let a = 1\na += 1')
   })
 })
-
 function started(doc = FENCED) {
   const from = doc.indexOf('```js')
   const to = doc.indexOf('```\n\ntail') + 3
   const begun = state(doc).update({
     effects: openRun.of({ run: 1, from, to, startedAt: 1000 }),
   }).state
-
   return { begun, from, to }
 }
-
 const only = (value: EditorState): RunPanel | undefined => value.field(runPanels)[0]
-
 describe('the panel state', () => {
   test('opens a panel on the block the run belongs to', () => {
     const { begun, from, to } = started()
     expect(only(begun)).toMatchObject({ run: 1, from, to, status: 'running', lines: [] })
   })
-
   test('moves with the text above it', () => {
     const { begun, from, to } = started()
     const after = parsed(begun.update({ changes: { from: 0, insert: 'a new first line\n' } }).state)
     expect(only(after)).toMatchObject({ from: from + 17, to: to + 17 })
   })
-
   test('stays put when the text below it changes', () => {
     const { begun, from, to } = started()
     const after = parsed(begun.update({ changes: { from: begun.doc.length, insert: 'more\n' } }).state)
     expect(only(after)).toMatchObject({ from, to })
   })
-
   test('keeps its output while it moves', () => {
     const { begun } = started()
     const withLines = parsed(
@@ -118,38 +101,31 @@ describe('the panel state', () => {
     const after = parsed(withLines.update({ changes: { from: 0, insert: 'x\n' } }).state)
     expect(only(after)?.lines).toEqual([{ level: 'log', text: 'hi' }])
   })
-
   test('stays on a fence that is indented into a list item', () => {
     const inList = '- item\n\n  ```js\n  console.log(1)\n  ```\n\ntail\n'
     const from = inList.indexOf('  ```js')
     const begun = state(inList).update({
       effects: openRun.of({ run: 1, from, to: inList.indexOf('  ```\n\ntail') + 5, startedAt: 1 }),
     }).state
-
     const after = parsed(begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state)
     expect(after.field(runPanels)).toHaveLength(1)
   })
-
   test('stays on a fence inside a blockquote', () => {
     const quoted = '> ```js\n> console.log(1)\n> ```\n\ntail\n'
     const begun = state(quoted).update({
       effects: openRun.of({ run: 1, from: 0, to: quoted.indexOf('> ```\n') + 5, startedAt: 1 }),
     }).state
-
     const after = parsed(begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state)
     expect(after.field(runPanels)).toHaveLength(1)
   })
-
   test('keeps naming the same block when text is typed at the fence line start', () => {
     const doc = '```js\nconsole.log(1)\n```\n\ntail\n'
     const to = doc.indexOf('```\n\ntail') + 3
     const begun = state(doc).update({
       effects: openRun.of({ run: 1, from: 0, to, startedAt: 1 }),
     }).state
-
     const indented = parsed(begun.update({ changes: { from: 0, insert: ' ' } }).state)
     expect(only(indented)?.from).toBe(0)
-
     const again = parsed(
       indented.update({
         effects: openRun.of({ run: 2, from: 0, to: to + 1, startedAt: 2 }),
@@ -158,13 +134,11 @@ describe('the panel state', () => {
     expect(again.field(runPanels)).toHaveLength(1)
     expect(only(again)?.run).toBe(2)
   })
-
   test('goes when the block it belongs to is deleted', () => {
     const { begun, from, to } = started()
     const after = parsed(begun.update({ changes: { from, to, insert: '' } }).state)
     expect(after.field(runPanels)).toEqual([])
   })
-
   test('goes when the whole note is replaced, as a reopened note replaces it', () => {
     const { begun } = started()
     const after = parsed(
@@ -174,19 +148,16 @@ describe('the panel state', () => {
     )
     expect(after.field(runPanels)).toEqual([])
   })
-
   test('goes when the fence stops being a fence', () => {
     const { begun, from } = started()
     const after = parsed(begun.update({ changes: { from, to: from + 3, insert: '' } }).state)
     expect(after.field(runPanels)).toEqual([])
   })
-
   test('survives the language on the fence being retyped', () => {
     const { begun, from } = started()
     const after = parsed(begun.update({ changes: { from: from + 3, to: from + 5, insert: 'mjs' } }).state)
     expect(after.field(runPanels)).toHaveLength(1)
   })
-
   test('appends output as it arrives', () => {
     const { begun } = started()
     const first = parsed(
@@ -199,13 +170,11 @@ describe('the panel state', () => {
         effects: addRunLines.of({ run: 1, lines: [{ level: 'error', text: 'two' }] }),
       }).state,
     )
-
     expect(only(second)?.lines).toEqual([
       { level: 'log', text: 'one' },
       { level: 'error', text: 'two' },
     ])
   })
-
   test('ignores output from a run that has been replaced', () => {
     const { begun } = started()
     const after = parsed(
@@ -215,7 +184,6 @@ describe('the panel state', () => {
     )
     expect(only(after)?.lines).toEqual([])
   })
-
   test('stops keeping output once there is too much of it, and says so', () => {
     const { begun } = started()
     const many = Array.from({ length: MAX_RUN_LINES + 10 }, (_, index) => ({
@@ -223,11 +191,9 @@ describe('the panel state', () => {
       text: String(index),
     }))
     const after = parsed(begun.update({ effects: addRunLines.of({ run: 1, lines: many }) }).state)
-
     expect(only(after)?.lines).toHaveLength(MAX_RUN_LINES)
     expect(only(after)?.truncated).toBe(true)
   })
-
   test('records how a run ended and how long it took', () => {
     const { begun } = started()
     const after = parsed(
@@ -237,7 +203,6 @@ describe('the panel state', () => {
     )
     expect(only(after)).toMatchObject({ status: 'timeout', elapsed: 10_000 })
   })
-
   test('lets the first ending stand, so a timeout cannot overwrite a result', () => {
     const { begun } = started()
     const done = parsed(
@@ -252,7 +217,6 @@ describe('the panel state', () => {
     )
     expect(only(later)).toMatchObject({ status: 'done', elapsed: 4 })
   })
-
   test('replaces the panel of the block when it is run again', () => {
     const { begun, from, to } = started()
     const again = parsed(
@@ -263,11 +227,9 @@ describe('the panel state', () => {
         ],
       }).state,
     )
-
     expect(again.field(runPanels)).toHaveLength(1)
     expect(only(again)).toMatchObject({ run: 2, lines: [] })
   })
-
   test('leaves the other blocks alone when one of them is run', () => {
     const two = '```js\n1\n```\n\n```js\n2\n```\n'
     const first = two.indexOf('```js')
@@ -278,16 +240,13 @@ describe('the panel state', () => {
         openRun.of({ run: 2, from: second, to: second + 11, startedAt: 2 }),
       ],
     }).state
-
     expect(both.field(runPanels).map((panel) => panel.run)).toEqual([1, 2])
   })
-
   test('is dismissed on its own', () => {
     const { begun } = started()
     const after = parsed(begun.update({ effects: dropRun.of(1) }).state)
     expect(after.field(runPanels)).toEqual([])
   })
-
   test('is nowhere near the document, whatever it holds', () => {
     const { begun } = started()
     const after = parsed(
@@ -297,14 +256,12 @@ describe('the panel state', () => {
     )
     expect(after.doc.toString()).toBe(FENCED)
   })
-
   test('follows a selection change without being rebuilt', () => {
     const { begun } = started()
     const after = parsed(begun.update({ selection: EditorSelection.cursor(0) }).state)
     expect(after.field(runPanels)).toBe(begun.field(runPanels))
   })
 })
-
 describe('showing how long a run took', () => {
   test.each([
     [0, '0 ms'],

@@ -13,9 +13,7 @@ use unix as here_on;
 use win as here_on;
 
 pub const MOST_FRAMES: usize = 64;
-
 pub const MOST_THREADS: usize = 256;
-
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Frame {
     pub module: String,
@@ -23,7 +21,6 @@ pub struct Frame {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub symbol: Option<String>,
 }
-
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Thread {
     pub name: String,
@@ -33,13 +30,11 @@ pub struct Thread {
     pub main: Option<bool>,
     pub frames: Vec<Frame>,
 }
-
 pub struct Raw {
     pub name: String,
     pub main: bool,
     pub ips: Vec<usize>,
 }
-
 pub struct Place {
     pub module: [u8; 128],
     pub module_len: usize,
@@ -47,13 +42,11 @@ pub struct Place {
     pub symbol: [u8; 128],
     pub symbol_len: usize,
 }
-
 impl Default for Place {
     fn default() -> Self {
         Self::new()
     }
 }
-
 impl Place {
     pub const fn new() -> Self {
         Self {
@@ -64,15 +57,12 @@ impl Place {
             symbol_len: 0,
         }
     }
-
     pub fn module(&self) -> &[u8] {
         &self.module[..self.module_len]
     }
-
     pub fn symbol(&self) -> &[u8] {
         &self.symbol[..self.symbol_len]
     }
-
     pub fn name_module(&mut self, path: &[u8]) {
         let name = path
             .rsplit(|one| *one == b'/' || *one == b'\\')
@@ -80,52 +70,42 @@ impl Place {
             .unwrap_or_default();
         self.module_len = fill(&mut self.module, name);
     }
-
     #[cfg_attr(windows, allow(dead_code))]
     pub fn name_symbol(&mut self, said: &[u8]) {
         self.symbol_len = fill(&mut self.symbol, said);
     }
 }
-
 fn fill(into: &mut [u8], from: &[u8]) -> usize {
     let len = from.len().min(into.len());
     into[..len].copy_from_slice(&from[..len]);
     len
 }
-
 pub fn start() {
     here_on::start();
 }
-
 #[cfg_attr(windows, allow(dead_code))]
 pub fn trace_into(ips: &mut [usize]) -> usize {
     here_on::trace(ips)
 }
-
 pub fn mark_main() {
     here_on::mark_main();
 }
-
 pub fn walking() -> here_on::Walking {
     here_on::walking()
 }
-
 pub fn here() -> Vec<usize> {
     let mut ips = [0usize; MOST_FRAMES];
     let len = here_on::trace(&mut ips);
     ips[..len].to_vec()
 }
-
 pub fn every_thread(within: Duration) -> Vec<Raw> {
     let mut found = here_on::every_thread(within);
     found.sort_by_key(|one| (!one.main, one.ips.is_empty()));
     found
 }
-
 pub fn place_of(ip: usize, into: &mut Place) {
     here_on::place_of(ip, into);
 }
-
 pub fn frame_of(ip: usize) -> Frame {
     let mut place = Place::new();
     place_of(ip, &mut place);
@@ -147,7 +127,6 @@ pub fn frame_of(ip: usize) -> Frame {
         symbol,
     }
 }
-
 pub fn resolved(raw: &Raw, crashed: bool) -> Thread {
     Thread {
         name: raw.name.clone(),
@@ -156,7 +135,6 @@ pub fn resolved(raw: &Raw, crashed: bool) -> Thread {
         frames: raw.ips.iter().map(|ip| frame_of(*ip)).collect(),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{every_thread, frame_of, here, Place};
@@ -171,7 +149,6 @@ mod tests {
             std::hint::black_box(deeper(left - 1))
         }
     }
-
     #[test]
     fn this_thread_is_traced_through_its_callers() {
         let ips = deeper(4);
@@ -180,7 +157,6 @@ mod tests {
         assert_ne!(frame.module, "?");
         assert!(frame.offset.starts_with("0x"));
     }
-
     #[test]
     fn a_module_is_named_by_its_file_alone() {
         let mut place = Place::new();
@@ -189,7 +165,6 @@ mod tests {
         place.name_module(b"/home/someone/.local/bin/orden");
         assert_eq!(place.module(), b"orden");
     }
-
     #[test]
     fn a_thread_that_waits_is_found_where_it_waits() {
         let (told, heard) = mpsc::channel::<()>();
@@ -203,11 +178,9 @@ mod tests {
             .expect("a thread");
         readied.recv().expect("readied");
         std::thread::sleep(Duration::from_millis(50));
-
         let threads = every_thread(Duration::from_secs(30));
         told.send(()).expect("told");
         waiter.join().expect("joined");
-
         assert!(threads.len() >= 2, "only {} threads", threads.len());
         let found = threads
             .iter()

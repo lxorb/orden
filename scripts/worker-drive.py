@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import re
 import sys
 import time
@@ -9,7 +8,6 @@ from linux_app import run
 OUT, LABEL = Path(sys.argv[1]), sys.argv[2]
 SINCE = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 ANSWERED = re.compile(r"a worker answered at (\d+)")
-
 seen = ""
 for _ in range(60):
     seen = run("document.body.innerText") or ""

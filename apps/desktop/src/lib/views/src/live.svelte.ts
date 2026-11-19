@@ -22,19 +22,15 @@ export interface Source {
   shown?: () => Shown | undefined
   keep?: (shown: Shown) => void
 }
-
 export interface Shown {
   at: number
   typed: string
 }
-
 export type Builder =
   | { kind: 'colour' | 'automations' }
   | { kind: 'rollup' | 'button' | 'formula'; column?: string }
   | { kind: 'options' | 'name'; column: string }
-
 const SEARCH_QUIET = 160
-
 export class LiveView {
   base = $state.raw<Base | null>(null)
   #at = $state(0)
@@ -45,7 +41,6 @@ export class LiveView {
   rows = $state.raw<readonly Row[]>([])
   builder = $state<Builder | null>(null)
   refused = $state(0)
-
   private readonly stops: (() => void)[] = []
   private once = false
   private loads = 0
@@ -54,13 +49,10 @@ export class LiveView {
   private missed = false
   private writing: Promise<void> = Promise.resolve()
   private readonly quiet = afterQuiet(() => (this.searched = this.typed.trim()), SEARCH_QUIET)
-
   fixed = $state(false)
-
   get writtenAt(): string | null {
     return this.source.path ?? null
   }
-
   constructor(private readonly source: Source) {
     const shown = source.shown?.()
     if (shown) {
@@ -70,20 +62,16 @@ export class LiveView {
       this.once = true
     }
   }
-
   get at(): number {
     return this.#at
   }
-
   set at(at: number) {
     this.#at = at
     this.kept()
   }
-
   private kept() {
     this.source.keep?.({ at: this.#at, typed: this.typed })
   }
-
   start(): () => void {
     const scope = this.source.scope ?? undefined
     this.rows = store.shown(scope)
@@ -103,12 +91,10 @@ export class LiveView {
     void this.reload()
     return () => this.stop()
   }
-
   private stop() {
     for (const stop of this.stops.splice(0)) stop()
     this.quiet.cancel()
   }
-
   private daily() {
     this.stops.push(
       $effect.root(() => {
@@ -119,7 +105,6 @@ export class LiveView {
       }),
     )
   }
-
   async reload() {
     const asked = ++this.loads
     const changes = this.changes
@@ -148,9 +133,7 @@ export class LiveView {
       this.failed = true
     }
   }
-
   readonly view = $derived.by((): View | null => this.base?.views[this.at] ?? null)
-
   readonly context = $derived.by((): Context =>
     contextFor({
       rows: this.rows,
@@ -160,7 +143,6 @@ export class LiveView {
       search: this.searched,
     }),
   )
-
   readonly answer = $derived.by((): Answer | null => {
     const base = this.base
     if (!base) return null
@@ -170,9 +152,7 @@ export class LiveView {
       return null
     }
   })
-
   readonly locked = $derived(this.base?.orden.locked === true || this.view?.orden.locked === true)
-
   colourOf(row: Row): string | null {
     const base = this.base
     const expression = this.view?.orden.colour
@@ -180,9 +160,7 @@ export class LiveView {
     const tone = cellValue(base, expression, row, this.context)
     return typeof tone === 'string' ? toneColour(tone) : null
   }
-
   readonly columns = $derived.by((): string[] => (this.base ? columnsOf(this.base, this.at, this.rows) : []))
-
   search(words: string) {
     this.typed = words
     this.kept()
@@ -191,7 +169,6 @@ export class LiveView {
       this.searched = ''
     } else this.quiet()
   }
-
   async change(next: Base, show?: number): Promise<void> {
     this.changes++
     this.saving++

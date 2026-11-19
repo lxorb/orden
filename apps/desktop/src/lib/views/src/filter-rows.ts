@@ -2,27 +2,22 @@ import type { Filter } from '@orden/bases'
 
 export type Operator = '==' | '!=' | '<' | '>' | '<=' | '>=' | 'contains' | 'empty' | 'filled' | 'tag'
 export const OPERATORS: readonly Operator[] = ['==', '!=', '<', '>', '<=', '>=', 'contains', 'empty', 'filled', 'tag']
-
 export interface ValueRow {
   property: string
   op: Operator
   value: string
   quoted?: boolean
 }
-
 export type FilterRow = ValueRow | { kept: Filter }
-
 export interface FilterRows {
   join: 'and' | 'or'
   rows: FilterRow[]
 }
-
 export type Holds = 'truth' | 'number' | 'link' | 'other'
 export type HoldsOf = (property: string) => Holds | undefined
 const askedByNull = (holds: Holds | undefined) => holds === 'truth' || holds === 'link'
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
 const CLOCK = /^(today|now)\(\)(\s*[+-]\s*"[^"]*")?$/
-
 function literal(value: string, text: boolean): string {
   const trimmed = value.trim()
   if (text) return JSON.stringify(value)
@@ -32,14 +27,12 @@ function literal(value: string, text: boolean): string {
   if (CLOCK.test(trimmed)) return trimmed
   return JSON.stringify(value)
 }
-
 function unliteral(written: string): { value: string; quoted: boolean } | null {
   const value = valueIn(written)
   if (value === null) return null
   const quoted = /^"(?:[^"\\]|\\.)*"$/.test(written.trim())
   return { value, quoted: quoted && literal(value, false) !== written.trim() }
 }
-
 function valueIn(written: string): string | null {
   const trimmed = written.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed) || trimmed === 'true' || trimmed === 'false') return trimmed
@@ -49,13 +42,11 @@ function valueIn(written: string): string | null {
   if (/^"(?:[^"\\]|\\.)*"$/.test(trimmed)) return String(JSON.parse(trimmed))
   return null
 }
-
 export const withProperty = (row: ValueRow, property: string): ValueRow => ({
   property,
   op: row.op,
   value: row.value,
 })
-
 export function expressionOf(row: ValueRow, holds?: HoldsOf): string {
   const { property, op, value } = row
   const text = row.quoted === true
@@ -79,45 +70,36 @@ export function expressionOf(row: ValueRow, holds?: HoldsOf): string {
         : `file.hasTag(${JSON.stringify(value.replace(/^#/, ''))})`
   }
 }
-
 const quotedRow = (read: { value: string; quoted: boolean }) => (read.quoted ? read : { value: read.value })
-
 export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   const text = expression.trim()
-
   const tag = /^(file|task)\.hasTag\(("(?:[^"\\]|\\.)*")\)$/.exec(text)
   if (tag?.[2]) {
     return { property: `${tag[1] ?? 'file'}.tags`, op: 'tag', value: String(JSON.parse(tag[2])) }
   }
-
   const contains = /^([A-Za-z_][\w.]*)\.contains\((.+)\)$/.exec(text)
   if (contains?.[1] && contains[2]) {
     const read = unliteral(contains[2])
     if (read !== null) return { property: contains[1], op: 'contains', ...quotedRow(read) }
   }
-
   const nulled = /^([A-Za-z_][\w.]*)\s*(==|!=)\s*null$/.exec(text)
   if (nulled?.[1] && askedByNull(holds?.(nulled[1]))) {
     return { property: nulled[1], op: nulled[2] === '==' ? 'empty' : 'filled', value: '' }
   }
-
   const compared = /^([A-Za-z_][\w.]*)\s*(==|!=|<=|>=|<|>)\s*(.+)$/.exec(text)
   const op = OPERATORS.find((one) => one === compared?.[2])
   if (compared?.[1] && compared[3] && op) {
     const read = unliteral(compared[3])
     if (read !== null) return { property: compared[1], op, ...quotedRow(read) }
   }
-
   const empty = /^(!?)([A-Za-z_][\w.]*)\.isEmpty\(\)$/.exec(text)
   if (empty?.[2]) return { property: empty[2], op: empty[1] ? 'filled' : 'empty', value: '' }
-
   const bare = /^(!?)([A-Za-z_][\w.]*)$/.exec(text)
   if (bare?.[2] && bare[2].includes('.') && holds?.(bare[2]) === 'other') {
     return { property: bare[2], op: bare[1] ? 'empty' : 'filled', value: '' }
   }
   return { kept: expression }
 }
-
 export function rowsOf(filter: Filter | undefined, holds?: HoldsOf): FilterRows {
   const memberRow = (member: Filter): FilterRow =>
     typeof member === 'string' ? rowOf(member, holds) : { kept: member }
@@ -127,7 +109,6 @@ export function rowsOf(filter: Filter | undefined, holds?: HoldsOf): FilterRows 
   if ('or' in filter) return { join: 'or', rows: filter.or.map(memberRow) }
   return { join: 'and', rows: [{ kept: filter }] }
 }
-
 export function filterOf(rows: FilterRows, holds?: HoldsOf): Filter | undefined {
   const members = rows.rows.map((row): Filter => ('kept' in row ? row.kept : expressionOf(row, holds)))
   if (!members.length) return undefined

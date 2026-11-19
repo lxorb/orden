@@ -5,14 +5,12 @@ pub fn lane<T: Send + 'static>(work: impl Fn(T) + Send + 'static) -> Sender<T> {
     std::thread::spawn(move || taken.into_iter().for_each(work));
     send
 }
-
 pub async fn off_the_runtime<T: Send + 'static>(work: impl FnOnce() -> T + Send + 'static) -> T {
     match tauri::async_runtime::spawn_blocking(work).await {
         Ok(done) => done,
         Err(error) => panic!("{error}"),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{lane, off_the_runtime};
@@ -23,15 +21,12 @@ mod tests {
     fn work_is_done_in_the_order_it_was_sent() {
         let (done, heard) = channel();
         let send = lane(move |one: u32| done.send(one).expect("the test listening"));
-
         for one in 0..100 {
             send.send(one).expect("the lane");
         }
-
         let order: Vec<u32> = heard.iter().take(100).collect();
         assert_eq!(order, (0..100).collect::<Vec<_>>());
     }
-
     #[test]
     fn work_waiting_off_the_runtime_leaves_its_workers_free() {
         let workers = std::thread::available_parallelism().map_or(4, usize::from);

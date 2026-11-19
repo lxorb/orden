@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const asked = vi.hoisted(() => [] as { command: string; args?: unknown }[])
 const answer = vi.hoisted((): { taken: unknown } => ({ taken: null }))
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
@@ -13,21 +12,17 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(0)
   },
 }))
-
 const { takeIn } = await import('./outside')
 const { ROOTS_MOVED, rootsMoved } = await import('./roots-moved')
 const { OUTSIDE_FOLDER: OUTSIDE } = await import('@orden/contracts')
-
 const SESSION = JSON.stringify({
   spaces: [{ id: 'kept-id', name: 'Work', root: '/Vault/Work' }],
   tabs: [{ path: '/Vault/Work/Plans.md' }],
 })
-
 beforeEach(() => {
   localStorage.clear()
   asked.length = 0
 })
-
 describe('a folder outside, taken in', () => {
   test('is followed by everything stored under each space, once, and then settled', async () => {
     localStorage.setItem('orden:workspace', SESSION)
@@ -56,12 +51,10 @@ describe('a folder outside, taken in', () => {
     })
     expect(asked.map((one) => one.command)).toContain('settle_outside')
   })
-
   test('starts the page over where the spaces came in, even with nothing stored of them', async () => {
     answer.taken = { folder: '/Vault', moved: [{ from: '/Vault/A', to: '/Spaces/A' }], left: [] }
     expect(await takeIn()).toBe(true)
   })
-
   test('is not settled while a space of it could not be copied, nor started over twice', async () => {
     localStorage.setItem('orden:workspace', SESSION)
     answer.taken = {
@@ -78,7 +71,6 @@ describe('a folder outside, taken in', () => {
       left: ['Home'],
     })
   })
-
   test('is nothing where the crate has nothing to take in', async () => {
     answer.taken = null
     expect(await takeIn()).toBe(false)

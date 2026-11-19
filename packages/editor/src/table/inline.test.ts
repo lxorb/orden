@@ -10,10 +10,8 @@ function html(source: string): string {
         return `<${node.tag}${attribute}>${show(node.children)}</${node.tag}>`
       })
       .join('')
-
   return show(parseInline(source))
 }
-
 describe('a table cell', () => {
   test.each([
     ['**Orden**', '<strong>Orden</strong>'],
@@ -31,19 +29,16 @@ describe('a table cell', () => {
     ['`x` and \\| and `y \\| z`', '<code>x</code> and | and <code>y | z</code>'],
     ['`C:\\temp`', '<code>C:\\temp</code>'],
   ])('%j', (input, wanted) => expect(html(input)).toEqual(wanted))
-
   test('keeps text that only looks like markup as text', () => {
     expect(parseInline('a < b & c')).toEqual([{ text: 'a < b & c' }])
   })
 })
-
 describe('links in a cell', () => {
   test.each([
     ['[Orden](https://orden.so)', '<a href="https://orden.so">Orden</a>'],
     ['[tap](javascript:alert(1))', '<a>tap</a>'],
   ])('%j', (input, wanted) => expect(html(input)).toEqual(wanted))
 })
-
 describe('a wikilink in a cell', () => {
   test.each([
     ['[[Note]]', [{ text: 'Note' }]],

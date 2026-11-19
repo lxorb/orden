@@ -2,28 +2,23 @@ import type { Allowance } from './types'
 
 const GB = 1_000_000_000
 const HOUR = 3600
-
 export interface MachineSize {
   vcpu: number
   memGib: number
   diskGb: number
 }
-
 export const SMALL: MachineSize = { vcpu: 0.5, memGib: 2, diskGb: 8 }
-
 export const FREE: Allowance = {
   awakeS: 20 * HOUR,
   cpuS: 10 * HOUR,
   homeBytes: 5 * GB,
   egressBytes: 20 * GB,
 }
-
 export const ALLOWANCE: Allowance = {
   ...FREE,
   awakeS: Number.MAX_SAFE_INTEGER,
   cpuS: Number.MAX_SAFE_INTEGER,
 }
-
 export interface Usage {
   awakeS: number
   cpuS: number
@@ -31,9 +26,7 @@ export interface Usage {
   diskGbS: number
   egressBytes: number
 }
-
 export const NONE: Usage = { awakeS: 0, cpuS: 0, memGibS: 0, diskGbS: 0, egressBytes: 0 }
-
 export const PRICES = {
   vcpuS: 0.072 / HOUR,
   memGibS: 0.009 / HOUR,
@@ -43,7 +36,6 @@ export const PRICES = {
   objectGb: 0.128,
   storedGbMonth: 0.015,
 } as const
-
 export function accrue(usage: Usage, seconds: number, size: MachineSize, cpuS: number, egressBytes: number): Usage {
   const awake = Math.max(0, seconds)
   return {
@@ -54,7 +46,6 @@ export function accrue(usage: Usage, seconds: number, size: MachineSize, cpuS: n
     egressBytes: usage.egressBytes + Math.max(0, egressBytes),
   }
 }
-
 export const sum = (usages: readonly Usage[]): Usage =>
   usages.reduce(
     (total, one) => ({
@@ -66,7 +57,6 @@ export const sum = (usages: readonly Usage[]): Usage =>
     }),
     NONE,
   )
-
 export const spend = (usage: Usage, storedBytes = 0): number =>
   usage.cpuS * PRICES.vcpuS +
   usage.memGibS * PRICES.memGibS +
@@ -74,17 +64,14 @@ export const spend = (usage: Usage, storedBytes = 0): number =>
   (usage.egressBytes / GB) * PRICES.egressGb +
   usage.awakeS * PRICES.objectGb * PRICES.objectGbS +
   (storedBytes / GB) * PRICES.storedGbMonth
-
 export const budgetLeft = (ceiling: number, usage: Usage, storedBytes = 0): number =>
   ceiling - spend(usage, storedBytes)
-
 export const usedOf = (usage: Usage, homeBytes: number): Allowance => ({
   awakeS: usage.awakeS,
   cpuS: usage.cpuS,
   homeBytes,
   egressBytes: usage.egressBytes,
 })
-
 export function shares(used: Allowance, limit: Allowance): Allowance {
   const share = (one: number, of: number) => (of > 0 ? Math.min(1, Math.max(0, one / of)) : 1)
   return {
@@ -94,16 +81,12 @@ export function shares(used: Allowance, limit: Allowance): Allowance {
     egressBytes: share(used.egressBytes, limit.egressBytes),
   }
 }
-
 const NEAR = 0.8
-
 export const near = (used: Allowance, limit: Allowance): boolean => shares(used, limit).awakeS >= NEAR
-
 export function monthOf(at: number): string {
   const date = new Date(at)
   return `${String(date.getUTCFullYear())}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
 }
-
 export function resetAt(at: number): number {
   const date = new Date(at)
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)

@@ -7,11 +7,9 @@ class OnlineMachine {
   busy = $state(false)
   offers = $state<Offers | null>(null)
   picking = $state(false)
-
   get near(): boolean {
     return this.known !== null && near(this.known.used, this.known.limit)
   }
-
   async refresh(): Promise<void> {
     try {
       this.known = await online()
@@ -20,7 +18,6 @@ class OnlineMachine {
       this.refused = refusedOf(error)
     }
   }
-
   async offer(): Promise<void> {
     try {
       this.offers = await offers()
@@ -28,17 +25,14 @@ class OnlineMachine {
       this.offers = null
     }
   }
-
   async chosen(): Promise<void> {
     this.picking = false
     await this.refresh()
   }
-
   heard(state: MachineState) {
     const machine = this.known?.machine
     if (machine && machine.state !== state) machine.state = state
   }
-
   async startStop(start: boolean): Promise<void> {
     this.busy = true
     try {
@@ -52,5 +46,4 @@ class OnlineMachine {
     await this.refresh()
   }
 }
-
 export const machine = new OnlineMachine()

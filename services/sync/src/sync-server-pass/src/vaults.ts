@@ -29,7 +29,6 @@ import { fromOf, membersOf, tell, tellVault } from './tell'
 import { fieldsSent, jsonOf, optionalIn } from './trust-body'
 
 export const vaults = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 vaults.put('/vaults/:id', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -49,7 +48,6 @@ vaults.put('/vaults/:id', async (context) => {
   if (proof === undefined || accepted === undefined) {
     return context.json({ error: NOT_A_PROOF }, 400)
   }
-
   const db = context.env.DB
   if (rev === 0) {
     if (!isSealed(key, MOST_KEY_BYTES) || !isCount(keyVersion) || keyVersion < 1) {
@@ -84,11 +82,9 @@ vaults.put('/vaults/:id', async (context) => {
     await tell(context.env, [user.id], from)
     return context.json({ rev: 1 })
   }
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
-
   const results = await db.batch([
     bump(db),
     db
@@ -108,7 +104,6 @@ vaults.put('/vaults/:id', async (context) => {
   await tellVault(context.env, id, [user.id], from)
   return context.json({ rev: rev + 1 })
 })
-
 vaults.put('/vaults/:id/trust', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -156,7 +151,6 @@ vaults.put('/vaults/:id/trust', async (context) => {
   await tellVault(context.env, id, [user.id], from)
   return context.json({ ok: true })
 })
-
 vaults.delete('/vaults/:id', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -164,7 +158,6 @@ vaults.delete('/vaults/:id', async (context) => {
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (held.role !== 'owner') return context.json({ error: NOT_YOUR_ROLE }, 403)
-
   const told = await membersOf(context.env, id)
   const db = context.env.DB
   await db.batch([
@@ -185,7 +178,6 @@ vaults.delete('/vaults/:id', async (context) => {
   await tell(context.env, [user.id, ...told], from)
   return context.json({ ok: true })
 })
-
 vaults.get('/vaults/:id/items', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')

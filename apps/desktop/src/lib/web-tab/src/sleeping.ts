@@ -10,7 +10,6 @@ export interface Held {
   peek(tabId: string): Page | undefined
   park(tabId: string, hidden?: boolean): Promise<void>
 }
-
 function resting(id: string, page: Page): Resting {
   const site = siteOf(page.url)
   const allowed = (ask: 'camera' | 'microphone' | 'notifications') => grants.said(site, ask, page.inPrivate) === 'allow'
@@ -30,12 +29,10 @@ function resting(id: string, page: Page): Resting {
     inPrivate: page.inPrivate,
   }
 }
-
 export function rest(pages: Held, tabId: string, refused = false): void {
   const page = pages.peek(tabId)
   if (!page?.live || page.onScreen) return
   const one = resting(tabId, page)
-
   clearTimeout(page.resting)
   page.resting = undefined
   const { act, again } = refused ? { act: null, again: FROZEN_AFTER } : judged(one, saver.mode, Date.now())
@@ -46,7 +43,6 @@ export function rest(pages: Held, tabId: string, refused = false): void {
   if (act === 'freeze') void lull(pages, tabId, page, true)
   if (again !== null) page.resting = setTimeout(() => rest(pages, tabId), again)
 }
-
 export function lull(pages: Held, tabId: string, page: Page, paused: boolean): Promise<void> {
   page.frozen = paused
   page.lulling = page.lulling.then(async () => {
@@ -58,7 +54,6 @@ export function lull(pages: Held, tabId: string, page: Page, paused: boolean): P
   })
   return page.lulling
 }
-
 export function bound(pages: Held): void {
   const all = pages.each().map(([id, page]) => resting(id, page))
   for (const id of overCap(all, saver.mode, Date.now())) void pages.park(id, true)

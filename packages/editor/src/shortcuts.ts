@@ -14,24 +14,17 @@ export interface BindingSpec {
   contextual?: boolean
   alias?: boolean
 }
-
 export type KeyOverrides = Record<string, string | null>
-
 const shortcutKeys = Facet.define<KeyOverrides, KeyOverrides>({
   combine: (values) => values[0] ?? {},
 })
-
 const chosen = new Compartment()
-
 export const shortcutExtensions = (overrides: KeyOverrides = {}): Extension => chosen.of(shortcutKeys.of(overrides))
-
 export const shortcutEffect = (overrides: KeyOverrides): StateEffect<unknown> =>
   chosen.reconfigure(shortcutKeys.of(overrides))
-
 export function setShortcutKeys(view: EditorView, overrides: KeyOverrides) {
   view.dispatch({ effects: shortcutEffect(overrides) })
 }
-
 export function defaultKeyFor(
   spec: Pick<BindingSpec, 'key' | 'mac' | 'win' | 'linux'>,
   platform: 'mac' | 'win' | 'linux',
@@ -39,21 +32,16 @@ export function defaultKeyFor(
   const own = platform === 'mac' ? spec.mac : platform === 'win' ? spec.win : spec.linux
   return own === undefined ? spec.key : own
 }
-
 const PLATFORMS = ['mac', 'win', 'linux'] as const
-
 export function bindings(specs: BindingSpec[], overrides: KeyOverrides): KeyBinding[] {
   const built: KeyBinding[] = []
-
   for (const spec of specs) {
     const chosen = spec.id in overrides ? (overrides[spec.id] ?? null) : undefined
     if (chosen === null) continue
-
     const binding: KeyBinding = { run: spec.run }
     if (spec.shift) binding.shift = spec.shift
     if (spec.scope) binding.scope = spec.scope
     if (spec.preventDefault) binding.preventDefault = true
-
     if (chosen === undefined) {
       const split = PLATFORMS.some((platform) => spec[platform] === null)
       if (spec.key !== null && !split) binding.key = spec.key
@@ -65,13 +53,10 @@ export function bindings(specs: BindingSpec[], overrides: KeyOverrides): KeyBind
     } else {
       binding.key = chosen
     }
-
     built.push(binding)
   }
-
   return built
 }
-
 export function boundKeymap(specs: BindingSpec[]): Extension {
   return keymap.compute([shortcutKeys], (state) => bindings(specs, state.facet(shortcutKeys)))
 }

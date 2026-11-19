@@ -11,7 +11,6 @@ const POLICY = [
   "form-action 'none'",
   "frame-ancestors 'none'",
 ].join('; ')
-
 export async function servePassLink(env: Env, request: Request): Promise<Response> {
   if (!env.ASSETS) return new Response('Not found', { status: 404 })
   const page = await servePage(env.ASSETS, request, '/pass-link.html')

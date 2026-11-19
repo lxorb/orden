@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -22,7 +20,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 600))
 }
 """
-
 FOREIGN = """
 () => {
   const own = (node) => !!node.closest('.canvas, .under, .ground, header[data-chrome="top"], [data-notices]')
@@ -39,7 +36,6 @@ FOREIGN = """
   return [...found].map(([name, at]) => name + ' at ' + at.join(','))
 }
 """
-
 CLEAR_TOP = """
 () => {
   const top = document.querySelector('.canvas .top')
@@ -61,13 +57,11 @@ CLEAR_TOP = """
   return { crossing, through }
 }
 """
-
 def open_overview(page: Page) -> None:
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
     page.wait_for_selector(".canvas .window", timeout=8000)
     page.wait_for_timeout(1500)
-
 def pan_up(page: Page) -> None:
     page.mouse.move(700, 860)
     page.mouse.down()
@@ -76,7 +70,6 @@ def pan_up(page: Page) -> None:
         page.wait_for_timeout(16)
     page.mouse.up()
     page.wait_for_timeout(700)
-
 def drive(browser: Browser) -> None:
     for side in (False, True):
         label = "sidebar" if side else "plain"
@@ -111,5 +104,4 @@ def drive(browser: Browser) -> None:
         else:
             say(f"ok   [{label}] panned under it, the bubbles stay clear of the buttons at the top")
         page.close()
-
 raise SystemExit(DRIVE.run(drive, "nothing floats over the overview, and its buttons stay clear of the bubbles"))

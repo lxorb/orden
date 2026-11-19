@@ -12,12 +12,10 @@ function baseFileName(name: string): string {
     .trim()
   return `${cleaned || 'View'}.base`
 }
-
 export function copiesToBase(): boolean {
   const root = workspace.activeSpace?.root
   return basesOn() && root !== undefined && canWriteAt(root)
 }
-
 export async function copyToBase(yaml: string, name: string): Promise<string | null> {
   const root = workspace.activeSpace?.root
   if (root === undefined || !copiesToBase()) return null

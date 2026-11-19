@@ -29,26 +29,21 @@ pub enum News {
     Whole,
     Gone,
 }
-
 const ASKED_WITHIN: Duration = Duration::from_secs(5);
 const APP_WITHIN: Duration = Duration::from_secs(4);
 const FIRST_WITHIN: Duration = Duration::from_secs(2);
-
 struct Frames {
     last: Mutex<Option<Frame>>,
     came: Condvar,
     seen: Mutex<Option<Sender<News>>>,
 }
-
 struct Frame {
     bytes: Vec<u8>,
     size: (u16, u16),
 }
-
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.held()
 }
-
 impl Frames {
     fn tell(&self, news: News) {
         if let Some(seen) = lock(&self.seen).as_ref() {
@@ -56,15 +51,12 @@ impl Frames {
         }
     }
 }
-
 define_class!(
     #[unsafe(super(NSObject))]
     #[name = "OrdenApplicationFrames"]
     #[ivars = Arc<Frames>]
     struct Output;
-
     unsafe impl NSObjectProtocol for Output {}
-
     unsafe impl SCStreamOutput for Output {
         #[unsafe(method(stream:didOutputSampleBuffer:ofType:))]
         fn did_output(
@@ -88,7 +80,6 @@ define_class!(
             frames.tell(if resized { News::Resized } else { News::Drawn });
         }
     }
-
     unsafe impl SCStreamDelegate for Output {
         #[unsafe(method(stream:didStopWithError:))]
         fn did_stop(&self, _stream: &SCStream, _error: &NSError) {
@@ -96,7 +87,6 @@ define_class!(
         }
     }
 );
-
 impl Output {
     fn new(frames: Arc<Frames>) -> Retained<Self> {
         let this = Self::alloc().set_ivars(frames);
@@ -106,7 +96,6 @@ impl Output {
         }
     }
 }
-
 #[allow(unsafe_code)]
 fn is_new(buffer: &CMSampleBuffer) -> bool {
     unsafe {
@@ -123,7 +112,6 @@ fn is_new(buffer: &CMSampleBuffer) -> bool {
             .is_some_and(|status| status.integerValue() == SCFrameStatus::Complete.0)
     }
 }
-
 #[allow(unsafe_code)]
 fn copied(buffer: &CMSampleBuffer) -> Option<Frame> {
     unsafe {
@@ -156,7 +144,6 @@ fn copied(buffer: &CMSampleBuffer) -> Option<Frame> {
         frame
     }
 }
-
 pub struct Capture {
     stream: Retained<SCStream>,
     output: Retained<Output>,
@@ -167,12 +154,10 @@ pub struct Capture {
     current: Vec<u8>,
     current_size: (u16, u16),
 }
-
 pub fn parse(name: &str) -> Option<(CGDirectDisplayID, i32)> {
     let (display, pid) = name.split_once('/')?;
     Some((display.parse().ok()?, pid.parse().ok()?))
 }
-
 impl Capture {
     pub fn open(name: &str, seen: Sender<News>) -> Result<Capture, String> {
         let (display, pid) = parse(name).ok_or("not an application's display")?;
@@ -197,7 +182,6 @@ impl Capture {
             current_size: (0, 0),
         })
     }
-
     #[allow(unsafe_code)]
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let now = super::display::pixels_of(self.display);
@@ -232,7 +216,6 @@ impl Capture {
         Ok((&self.current, self.current_size))
     }
 }
-
 impl Drop for Capture {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
@@ -246,7 +229,6 @@ impl Drop for Capture {
         }
     }
 }
-
 #[allow(unsafe_code)]
 fn configuration(size: (usize, usize)) -> Retained<SCStreamConfiguration> {
     unsafe {
@@ -260,7 +242,6 @@ fn configuration(size: (usize, usize)) -> Retained<SCStreamConfiguration> {
         configuration
     }
 }
-
 #[allow(unsafe_code)]
 fn shareable() -> Result<Retained<SCShareableContent>, String> {
     let (tell, heard) = std::sync::mpsc::channel();
@@ -283,7 +264,6 @@ fn shareable() -> Result<Retained<SCShareableContent>, String> {
         .flatten()
         .ok_or_else(|| "this Mac said nothing may be captured".to_owned())
 }
-
 #[allow(unsafe_code)]
 fn filter(display: CGDirectDisplayID, pid: i32) -> Result<Retained<SCContentFilter>, String> {
     let until = Instant::now() + APP_WITHIN;
@@ -325,7 +305,6 @@ fn filter(display: CGDirectDisplayID, pid: i32) -> Result<Retained<SCContentFilt
         std::thread::sleep(Duration::from_millis(200));
     }
 }
-
 #[allow(unsafe_code)]
 fn start(
     filter: &SCContentFilter,
@@ -362,7 +341,6 @@ fn start(
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

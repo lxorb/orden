@@ -18,10 +18,8 @@ const span = (id: string, start: number, end: number, change: Partial<Span> = {}
   device: null,
   ...change,
 })
-
 const seen = (id: string, source: Span['source'], place: string, start: number, end: number) =>
   span(id, start, end, { source, place, label: place })
-
 const minutes = (from: number, to: number, change: Partial<Minute> = {}): Minute[] => {
   const out: Minute[] = []
   for (let at = from; at < to; at += MINUTE) {
@@ -40,9 +38,7 @@ const minutes = (from: number, to: number, change: Partial<Minute> = {}): Minute
   }
   return out
 }
-
 const DAY = 24 * HOUR
-
 describe('a lane of the day', () => {
   test('joins the same app across a short gap, and keeps others apart', () => {
     const spans = [
@@ -58,7 +54,6 @@ describe('a lane of the day', () => {
       ['Firefox', 40 * MINUTE, 50 * MINUTE],
     ])
   })
-
   test('a day of many switches between places is drawn in time that grows with the switches', () => {
     const switches = (count: number) =>
       Array.from({ length: count }, (_, index) =>
@@ -68,7 +63,6 @@ describe('a lane of the day', () => {
     expect(bands.length).toBeGreaterThan(1000)
   })
 })
-
 describe('what happened in a stretch', () => {
   const spans = [
     span('said', 0, 2 * HOUR, { source: 'timer', activity: 'study' }),
@@ -81,7 +75,6 @@ describe('what happened in a stretch', () => {
     ...minutes(2 * HOUR, 150 * MINUTE, { locked: true, active: 0 }),
     ...minutes(3 * HOUR, 4 * HOUR),
   ]
-
   test('is what was said, the active and locked time, and the places, inside it only', () => {
     const found = within(spans, day, 0, 2 * HOUR, DAY)
     expect(found.said).toEqual([{ activity: 'study', ms: 2 * HOUR }])
@@ -93,12 +86,10 @@ describe('what happened in a stretch', () => {
     ])
     expect(within(spans, day, 2 * HOUR, 3 * HOUR, DAY).locked).toBe(30 * MINUTE)
   })
-
   test('shows busy time nobody said anything about, once it lasts a quarter of an hour', () => {
     expect(unsaid(spans, day, 0, DAY, DAY)).toEqual([{ from: 3 * HOUR, to: 4 * HOUR, active: 60 * 30 * 1000 }])
     expect(unsaid(spans, minutes(5 * HOUR, 5 * HOUR + 10 * MINUTE), 0, DAY, DAY)).toEqual([])
   })
-
   test('says what an activity was really made of', () => {
     expect(madeOf(spans, 'study', 'site', 0, DAY, DAY).map((one) => [one.key, one.ms])).toEqual([
       ['moodle.ethz.ch', 90 * MINUTE],
@@ -106,7 +97,6 @@ describe('what happened in a stretch', () => {
     ])
   })
 })
-
 test('the minutes, gathered for a lane say how much of each stretch was seen, busy and away, and the machine in it', () => {
   const day = [
     ...minutes(0, 10 * MINUTE, { active: 60, cpu: 0.2, battery: 0.9 }),
@@ -118,14 +108,12 @@ test('the minutes, gathered for a lane say how much of each stretch was seen, bu
   expect(second).toMatchObject({ seen: 0.5, active: 0, away: 0.5, battery: 0.8 })
   expect(third).toMatchObject({ seen: 0, active: 0, cpu: null, battery: null })
 })
-
 test('the hours a day is drawn across are the working day at least, and reach out to whatever happened outside it', () => {
   expect(hoursShown(0, DAY, [])).toEqual([8 * HOUR, 18 * HOUR])
   expect(hoursShown(0, DAY, [6.5 * HOUR, 21.2 * HOUR])).toEqual([6 * HOUR, 22 * HOUR])
   expect(hoursShown(0, DAY, [-HOUR, 30 * HOUR])).toEqual([8 * HOUR, 18 * HOUR])
   expect(hoursShown(0, DAY, [23.5 * HOUR])).toEqual([8 * HOUR, DAY])
 })
-
 test('entries drawn side by side share the room only where they overlap', () => {
   const laid = stacked([
     { id: 'a', from: 0, to: 10 },

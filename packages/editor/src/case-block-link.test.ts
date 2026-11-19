@@ -16,16 +16,13 @@ function recasedNote(command: StateCommand, doc: string): string {
   command({ state, dispatch: (transaction) => (state = transaction.state) })
   return state.doc.toString()
 }
-
 describe('changing case over a wikilink to a block, with no alias', () => {
   test('upper case leaves the block id the link points to alone', () => {
     expect(recasedNote(upperCase, 'see [[Plan#^step-1]] now')).toContain('#^step-1]]')
   })
-
   test('title case leaves the block id of an embed alone', () => {
     expect(recasedNote(titleCase, 'the steps ![[Plan#^a1b2c3]]')).toContain('#^a1b2c3]]')
   })
-
   test('upper case leaves a same-note block link alone', () => {
     expect(recasedNote(upperCase, 'back to [[#^intro1]]')).toBe('BACK TO [[#^intro1]]')
   })

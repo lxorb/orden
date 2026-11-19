@@ -10,15 +10,12 @@
 
   let opened = $state<string | null>(null)
   let link = $state('')
-
   onMount(() => void extensions.start())
-
   async function add(event: SubmitEvent) {
     event.preventDefault()
     if (!link.trim()) return
     if (await extensions.install(link.trim())) link = ''
   }
-
   async function options(id: string) {
     const page = await extensions.optionsOf(id)
     if (!page) return
@@ -109,7 +106,6 @@
     text-align: start;
     cursor: pointer;
   }
-
   .extension img,
   .extension svg {
     flex: none;
@@ -117,7 +113,6 @@
     height: var(--icon-lg);
     object-fit: contain;
   }
-
   .extension svg {
     fill: none;
     stroke: currentColor;
@@ -126,41 +121,34 @@
     stroke-linejoin: round;
     color: var(--muted);
   }
-
   .what {
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
-
   .named {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   small {
     color: var(--muted-strong);
     font-size: var(--text-xs);
   }
-
   .warn {
     color: var(--danger);
   }
-
   .details {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     padding: 0 0 var(--space-2) calc(var(--icon-lg) + var(--space-2));
   }
-
   .details p {
     margin: 0;
     font-size: var(--text-xs);
   }
-
   .asks {
     margin: 0;
     padding: 0;
@@ -172,27 +160,22 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
   }
-
   .asks li {
     padding: 1px var(--space-1);
     border-radius: var(--radius-sm);
     background: var(--surface-2);
   }
-
   .rows {
     display: flex;
     gap: var(--space-2);
   }
-
   .danger {
     color: var(--danger);
   }
-
   form input {
     flex: 1;
     min-width: 0;
   }
-
   p.warn {
     margin: 0;
     font-size: var(--text-xs);

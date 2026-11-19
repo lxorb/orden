@@ -6,11 +6,8 @@ use std::time::{Duration, Instant};
 use super::report::{self, Report};
 
 pub const HUNG: Duration = Duration::from_secs(10);
-
 const LATE_TICK: Duration = Duration::from_secs(3);
-
 const REWRITTEN: Duration = Duration::from_secs(5);
-
 struct Page {
     heard: Instant,
     visible: bool,
@@ -18,19 +15,16 @@ struct Page {
     hung: Option<(Instant, Report)>,
     written: Option<Instant>,
 }
-
 #[derive(Default)]
 pub struct Pages {
     pages: HashMap<String, Page>,
     looked: Option<Instant>,
 }
-
 pub enum Seen {
     Hung(Report),
     Still(Report),
     Answered(Report),
 }
-
 impl Pages {
     pub fn heard(&mut self, label: &str, whose: &str, visible: bool, at: Instant) -> Option<Seen> {
         let page = self.pages.entry(label.to_owned()).or_insert_with(|| Page {
@@ -47,7 +41,6 @@ impl Pages {
         report.summary = summary(&page.whose, report.held.unwrap_or(0));
         Some(Seen::Answered(report))
     }
-
     pub fn gone(&mut self, label: &str) -> Option<Seen> {
         let page = self.pages.remove(label)?;
         let (since, mut report) = page.hung?;
@@ -55,7 +48,6 @@ impl Pages {
         report.reason = Some("closed while unresponsive".to_owned());
         Some(Seen::Answered(report))
     }
-
     pub fn look(&mut self, at: Instant, window_answers: bool) -> Vec<Seen> {
         let late = self
             .looked
@@ -94,47 +86,38 @@ impl Pages {
         seen
     }
 }
-
 fn summary(whose: &str, held: u64) -> String {
     format!("{whose} page did not answer for {} s", held / 1000)
 }
-
 fn millis(span: Duration) -> u64 {
     u64::try_from(span.as_millis()).unwrap_or(u64::MAX)
 }
-
 static PAGES: Mutex<Option<Pages>> = Mutex::new(None);
-
 fn with<T>(work: impl FnOnce(&mut Pages) -> T) -> T {
     let mut held = PAGES.held();
     work(held.get_or_insert_with(Pages::default))
 }
-
 fn kept(seen: Seen) {
     match seen {
         Seen::Hung(report) | Seen::Still(report) => report::keep(&report, true),
         Seen::Answered(report) => report::keep(&report, false),
     }
 }
-
 pub fn heard(label: &str, whose: &str, visible: bool) {
     if let Some(seen) = with(|pages| pages.heard(label, whose, visible, Instant::now())) {
         kept(seen);
     }
 }
-
 pub fn gone(label: &str) {
     if let Some(seen) = with(|pages| pages.gone(label)) {
         kept(seen);
     }
 }
-
 pub fn look(window_answers: bool) {
     for seen in with(|pages| pages.look(Instant::now(), window_answers)) {
         kept(seen);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{Pages, Seen, HUNG};
@@ -145,7 +128,6 @@ mod tests {
         let mut pages = Pages::default();
         let start = Instant::now();
         assert!(pages.heard("main", "The window’s", true, start).is_none());
-
         let mut at = start;
         let mut hung = None;
         while at < start + HUNG + Duration::from_secs(4) {
@@ -161,14 +143,12 @@ mod tests {
         assert_eq!(hung.kind, "engine");
         assert_eq!(hung.process.as_deref(), Some("renderer"));
         assert_eq!(hung.reason.as_deref(), Some("unresponsive"));
-
         let Some(Seen::Answered(done)) = pages.heard("main", "The window’s", true, at) else {
             panic!("the page answered again");
         };
         assert_eq!(done.id, hung.id);
         assert!(done.held.is_some_and(|held| held >= 13_000));
     }
-
     #[test]
     fn a_page_is_not_hung_while_hidden_while_the_window_is_stuck_or_after_a_sleep() {
         let mut pages = Pages::default();

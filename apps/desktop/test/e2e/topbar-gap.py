@@ -1,12 +1,9 @@
 from typing import Any
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SLIVER = 24
-
 MEASURE = """
 () => {
   const bar = document.querySelector('header[data-chrome="top"]')
@@ -31,7 +28,6 @@ MEASURE = """
   return { boxes, drag: Math.max(0, ...drags), right: right ? right.left : null }
 }
 """
-
 def row(page: Any, state: str) -> dict[str, Any]:
     DRIVE.settled(page)
     page.wait_for_timeout(400)
@@ -45,15 +41,12 @@ def row(page: Any, state: str) -> dict[str, Any]:
         wrong(f"[{state}] nothing to drag the window by ahead of the buttons: {seen['drag']}px")
     shot(page, state, clip={"x": 0, "y": 0, "width": page.viewport_size["width"], "height": 44})
     return seen
-
 def drive(browser: Any) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 760})
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n", "# Kestrel\n\nA bird.\n")
     DRIVE.open_note(page, "Plan")
-
     note = row(page, "01-note")
-
     page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     wait_for(page, "window.ordenApp.workspace.active?.note?.kind === 'web'", "the web tab")
     web = row(page, "02-web-tab")
@@ -61,17 +54,14 @@ def drive(browser: Any) -> None:
         wrong(f"the right side's button is not in the bar: {note['right']}, {web['right']}")
     elif abs(note["right"] - web["right"]) > 0.5:
         wrong(f"the right side's button moves between a note and a web tab: {note['right']} -> {web['right']}")
-
     DRIVE.open_note(page, "Plan")
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
     row(page, "03-left-toggled")
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar('right')")
     row(page, "04-right-toggled")
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar('right')")
-
     page.set_viewport_size({"width": 640, "height": 760})
     row(page, "05-narrow")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -84,11 +74,9 @@ def drive(browser: Any) -> None:
     )
     DRIVE.open_note(page, "Plan")
     row(page, "06-narrow-many-tabs")
-
     page.set_viewport_size({"width": 1180, "height": 760})
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     row(page, "07-split")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -97,5 +85,4 @@ def drive(browser: Any) -> None:
     )
     wait_for(page, "document.querySelector('header[data-chrome=\"top\"] .strip .link')", "the chain")
     row(page, "08-filled-twinned")
-
 raise SystemExit(DRIVE.run(drive))

@@ -6,7 +6,6 @@ const world = vi.hoisted(() => ({
   hrefs: [] as string[],
   closed: 0,
 }))
-
 vi.mock('../../ai-chat/src/quick.svelte', () => ({
   side: { open: false, of: null },
   quick: {
@@ -30,7 +29,6 @@ vi.mock('../../ai-chat/src/quick.svelte', () => ({
     drop: () => undefined,
   },
 }))
-
 vi.mock('../../link-index/src/api', async (original) => ({
   ...(await original<typeof import('../../link-index/src/api')>()),
   links: {
@@ -39,15 +37,12 @@ vi.mock('../../link-index/src/api', async (original) => ({
     version: 0,
   },
 }))
-
 vi.mock('../../workspace/src/api', async (original) => ({
   ...(await original<typeof import('../../workspace/src/api')>()),
   followNote: (jump: { path: string | null; target: string }) => world.followed.push(jump),
   followHref: (href: string) => world.hrefs.push(href),
 }))
-
 const QuickQuestion = (await import('./QuickQuestion.svelte')).default
-
 test('a note an answer names opens from the quick question, as from the side chat', () => {
   const target = document.createElement('div')
   document.body.append(target)

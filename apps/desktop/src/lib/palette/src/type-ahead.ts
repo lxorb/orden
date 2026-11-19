@@ -1,26 +1,20 @@
 import { takesWords } from '../../ui-controls/src/api'
 
 export const TYPED_AHEAD_FOR = 400
-
 const NAMED_KEY = /^[A-Z][A-Za-z\d]+$/
-
 const ASKING = '[role="dialog"], [role="alertdialog"], dialog'
-
 export interface Hands {
   listen(on: boolean, to: EventListenerObject): void
   focused(): Element | null
   put(into: Element, text: string, enter: boolean): void
 }
-
 export class TypeAhead {
   private text = ''
   private enter = false
   private on = false
   private from: Element | null = null
   private timer: ReturnType<typeof setTimeout> | undefined
-
   constructor(private readonly hands: Hands) {}
-
   hold(from: Element | null): void {
     this.end()
     const at = this.hands.focused()
@@ -30,11 +24,9 @@ export class TypeAhead {
     this.hands.listen(true, this)
     this.timer = setTimeout(() => this.arrived(this.hands.focused()), TYPED_AHEAD_FOR)
   }
-
   letGo(into: Element | null): void {
     if (this.on) this.arrived(into)
   }
-
   handleEvent(event: Event): void {
     if (!this.on) return
     if (event.type === 'focusin') {
@@ -59,18 +51,15 @@ export class TypeAhead {
     press.preventDefault()
     press.stopImmediatePropagation()
   }
-
   private asking(at: EventTarget | null): boolean {
     return at instanceof Element && !this.from?.contains(at) && at.closest(ASKING) !== null
   }
-
   private arrived(target: Element | null): void {
     const { text, enter } = this
     this.end()
     if (!target || target !== this.hands.focused() || !takesWords(target)) return
     if (text || enter) this.hands.put(target, text, enter)
   }
-
   private end(): void {
     if (this.on) this.hands.listen(false, this)
     clearTimeout(this.timer)
@@ -81,12 +70,10 @@ export class TypeAhead {
     this.enter = false
   }
 }
-
 function typed(text: string): void {
   // eslint-disable-next-line @typescript-eslint/no-deprecated -- the only edit a field's own undo keeps
   document.execCommand('insertText', false, text)
 }
-
 export const typeAhead = new TypeAhead({
   listen: (on, to) => {
     for (const type of ['keydown', 'focusin']) {

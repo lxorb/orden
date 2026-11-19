@@ -1,30 +1,24 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PLAN = "# Plan\n\nWhat we are doing this week, and why it matters.\n"
-
 RIGHT = 'header [data-side-toggle="right"]'
 PAD_TAB = '[data-tab="scratchpad"]'
 YOU = "[data-phone-you]"
 PAD_ITEM = '[role="menuitem"]:has-text("Scratchpad")'
 CARD = "[data-scratchpad-card] .cm-content"
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 ON_TOP = """() => {
   const card = document.querySelector('[data-scratchpad]')?.getBoundingClientRect()
   if (!card || !card.width || !card.height) return false
   const at = document.elementFromPoint(card.x + card.width / 2, card.y + card.height / 2)
   return !!at?.closest('[data-scratchpad-card]')
 }"""
-
 STATE = """() => ({
   pressed: document.querySelector('[data-tab="scratchpad"]')?.getAttribute('aria-selected') ?? 'false',
   card: !!document.querySelector('[data-scratchpad-card] .cm-content'),
@@ -33,7 +27,6 @@ STATE = """() => ({
   tabs: window.ordenApp.workspace.tabs.map((one) => one.name),
   words: document.querySelector('[data-scratchpad-card] .cm-content')?.textContent ?? null,
 })"""
-
 def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
     page = DRIVE.page(
         browser,
@@ -47,14 +40,12 @@ def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
     DRIVE.seed(page, PLAN)
     DRIVE.open_note(page, "Plan")
     return page
-
 def show_pad(page: Page) -> None:
     if not page.locator(PAD_TAB).is_visible():
         page.locator(RIGHT).click()
         page.locator(PAD_TAB).wait_for(state="visible", timeout=5000)
     if page.locator(PAD_TAB).get_attribute("aria-selected") != "true":
         page.locator(PAD_TAB).click()
-
 def pad_on_phone(page: Page) -> None:
     if not page.locator(YOU).is_visible():
         page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
@@ -65,24 +56,20 @@ def pad_on_phone(page: Page) -> None:
     page.locator(PAD_ITEM).tap()
     page.wait_for_timeout(300)
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel) ws.closePanel() }")
-
 def gone(page: Page) -> None:
     try:
         page.wait_for_function(f"!document.querySelector('{CARD}')", timeout=3000, polling=50)
     except Exception:  # noqa: BLE001 - still up, which the check after this says
         pass
-
 def no_tab(page: Page, where: str) -> None:
     tabs = page.evaluate(STATE)["tabs"]
     if any("Scratchpad" in one for one in tabs):
         wrong(f"[{where}] the scratchpad is in the tab strip: {tabs}")
-
 def desktop(browser: Browser, scheme: str) -> None:
     page = opened(browser, scheme)
     shot(page, f"{scheme}/01-the-switch")
     if page.evaluate(STATE)["pressed"] != "false":
         wrong(f"[{scheme}] the switch reads as pressed before it is")
-
     page.locator(".cm-content").first.click()
     show_pad(page)
     wait_for(page, f"document.querySelector('{CARD}')", "the card")
@@ -92,11 +79,9 @@ def desktop(browser: Browser, scheme: str) -> None:
     if state["pressed"] != "true" or not state["inCard"]:
         wrong(f"[{scheme}] the card did not come up with the keyboard in it: {state}")
     no_tab(page, scheme)
-
     page.keyboard.type("A thought before it has a home")
     page.wait_for_timeout(200)
     shot(page, f"{scheme}/02-the-card")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
     gone(page)
@@ -105,7 +90,6 @@ def desktop(browser: Browser, scheme: str) -> None:
     if state["card"] or state["pressed"] != "false" or not state["inNote"]:
         wrong(f"[{scheme}] Escape left the card up or the keyboard nowhere: {state}")
     shot(page, f"{scheme}/03-escape")
-
     page.keyboard.press("Control+Shift+X")
     wait_for(page, f"document.querySelector('{CARD}')", "the card from the key")
     page.wait_for_timeout(350)
@@ -114,7 +98,6 @@ def desktop(browser: Browser, scheme: str) -> None:
         wrong(f"[{scheme}] the words did not come back with the card: {state}")
     if not state["inCard"]:
         wrong(f"[{scheme}] the key did not put the keyboard in the card")
-
     page.wait_for_timeout(1200)
     page.reload()
     DRIVE.ready(page)
@@ -126,14 +109,12 @@ def desktop(browser: Browser, scheme: str) -> None:
         wrong(f"[{scheme}] the words were lost over a reload")
     no_tab(page, f"{scheme} reload")
     shot(page, f"{scheme}/04-after-a-reload")
-
     page.locator(RIGHT).click()
     page.wait_for_timeout(400)
     gone(page)
     if page.evaluate(STATE)["card"]:
         wrong(f"[{scheme}] the right side's button did not put the card away")
     page.context.close()
-
 def phone(browser: Browser) -> None:
     page = opened(browser, "light", phone=True)
     if page.evaluate("document.documentElement.dataset.device") != "phone":
@@ -160,7 +141,6 @@ def phone(browser: Browser) -> None:
     no_tab(page, "phone")
     shot(page, "light/05-a-phone")
     page.context.close()
-
 UNDER = """() => {
   const bar = document.querySelector('.cluster')
   const panes = document.querySelector('[data-panes]')
@@ -174,14 +154,12 @@ UNDER = """() => {
     panesInert: !!panes?.inert,
   }
 }"""
-
 COLUMN = """(where) => {
   const content = document.querySelector(`${where} .cm-content`)
   if (!content) return null
   const style = getComputedStyle(content)
   return { left: Math.round(content.getBoundingClientRect().x), top: style.paddingTop, measure: style.maxWidth }
 }"""
-
 def over_a_drawing(browser: Browser) -> None:
     page = opened(browser, "light", phone=True)
     note = page.evaluate(COLUMN, "[data-panes]")
@@ -193,7 +171,6 @@ def over_a_drawing(browser: Browser) -> None:
         pad_on_phone(page)
         wait_for(page, f"document.querySelector('{CARD}')", f"the scratchpad over the {kind}")
         page.wait_for_timeout(500)
-
         under = page.evaluate(UNDER)
         say(f"[phone, {kind}] under the scratchpad: {under}")
         if under["barSeen"] or not under["panesHidden"] or not under["panesInert"]:
@@ -202,11 +179,9 @@ def over_a_drawing(browser: Browser) -> None:
             wrong(f"[phone] something is drawn over the scratchpad on a {kind}")
         if not page.locator("header .title .mark").count():
             wrong(f"[phone] the bar names the scratchpad over a {kind} without a note's mark")
-
         column = page.evaluate(COLUMN, "[data-scratchpad]")
         if not note or not column or column != note:
             wrong(f"[phone] the scratchpad's words are not in a note's column ({column}, not {note})")
-
         page.locator(CARD).tap()
         page.evaluate("() => { window.ordenApp.viewport.keyboard = 300; window.ordenApp.viewport.typing = true }")
         wait_for(page, "document.querySelector('.orden-bar.docked')", f"the strip over the keyboard on a {kind}")
@@ -221,7 +196,6 @@ def over_a_drawing(browser: Browser) -> None:
                 wrong(f"[phone] Bold on the strip did not format the scratchpad over a {kind}")
         shot(page, f"light/06-over-a-{kind.replace(' ', '-')}")
         page.evaluate("() => { window.ordenApp.viewport.keyboard = 0; window.ordenApp.viewport.typing = false }")
-
         pad_on_phone(page)
         page.wait_for_timeout(600)
         back = page.evaluate(UNDER)
@@ -231,7 +205,6 @@ def over_a_drawing(browser: Browser) -> None:
         shot(page, f"light/07-the-{kind.replace(' ', '-')}-again")
         say(f"[phone] the scratchpad over a {kind} is a note like any other, and the {kind} comes back")
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -242,5 +215,4 @@ def main() -> int:
         say("--- a phone, over a drawing ---")
         over_a_drawing(browser)
     return DRIVE.verdict("the scratchpad is a card on the right side or a phone's one note, never a tab")
-
 raise SystemExit(main())

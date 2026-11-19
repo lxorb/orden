@@ -12,7 +12,6 @@ const MODEL: ModelInfo = {
   images: true,
   fast: true,
 }
-
 function ask(change: Partial<Ask> = {}): Ask {
   return {
     provider: { id: 'openai', kind: 'openai', name: 'OpenAI', model: '' },
@@ -28,13 +27,11 @@ function ask(change: Partial<Ask> = {}): Ask {
     ...change,
   }
 }
-
 function read(name: string) {
   const reader = responses.reader(400_000)
   const heard = events(name).map((one) => reader.heard(one))
   return { reader, heard, answer: reader.answer() }
 }
-
 describe('a recorded call', () => {
   test('is a running tool part with its whole arguments', () => {
     const { reader, answer } = read('responses-1')
@@ -52,7 +49,6 @@ describe('a recorded call', () => {
       { id: 'call_whhAkk5hpS3jCjQyaLDk7f1G', name: 'read_note', args: { path: 'Birds.md' } },
     ])
   })
-
   test('keeps the encrypted reasoning for the next request, without the ids nothing stored', () => {
     const { answer } = read('responses-1')
     const items = answer.messages as Record<string, unknown>[]
@@ -64,7 +60,6 @@ describe('a recorded call', () => {
     }
   })
 })
-
 describe('the recorded answer to it', () => {
   test('streams its words and counts what it cost', () => {
     const { reader, answer, heard } = read('responses-2')
@@ -77,7 +72,6 @@ describe('the recorded answer to it', () => {
     expect(heard.find((one) => one.model)?.model).toBe('gpt-5.4-mini-2026-03-17')
   })
 })
-
 describe('the request', () => {
   test('is stored nowhere and streamed, with reasoning, its summary and its carry-over', () => {
     const { url, body } = responses.request(ask())
@@ -100,7 +94,6 @@ describe('the request', () => {
       ],
     })
   })
-
   test('off is none, auto is nothing, fast is the priority tier on a key', () => {
     expect(responses.request(ask({ effort: 'off' })).body).toMatchObject({
       reasoning: { effort: 'none' },
@@ -109,7 +102,6 @@ describe('the request', () => {
     expect(auto.reasoning).toEqual({ summary: 'auto' })
     expect(auto.service_tier).toBe('priority')
   })
-
   test('a plan’s tools sit in one namespace, and it is never asked for a tier', () => {
     const plan = responses.request(
       ask({ provider: { id: 'chatgpt', kind: 'chatgpt', name: 'ChatGPT', model: '' }, fast: true }),
@@ -133,7 +125,6 @@ describe('the request', () => {
     expect(plan).not.toHaveProperty('max_output_tokens')
     expect(plan).toMatchObject({ store: false, stream: true })
   })
-
   test('the answer to a call goes back as its output, pictures as data', () => {
     const items = responses.results([
       {
@@ -157,7 +148,6 @@ describe('the request', () => {
       },
     ])
   })
-
   test('a turn rebuilt from its parts is a message, its calls and their outputs', () => {
     expect(
       itemsOf([

@@ -1,20 +1,14 @@
 export type Who = `user:${string}` | `guest:${string}` | `program:${string}`
-
 export type Mention = Who | 'here' | 'everyone'
-
 export type Role = 'read' | 'write' | 'owner'
-
 export type Posting = 'writers' | 'owner'
-
 export type Notify = 'all' | 'mentions' | 'nothing'
-
 export interface Pointer {
   v: 1
   chat: string
   icon?: string
   iconColor?: string
 }
-
 export interface FileRef {
   hash: string
   name: string
@@ -27,7 +21,6 @@ export interface FileRef {
   wave?: number[]
   loop?: boolean
 }
-
 export interface Preview {
   url: string
   title: string
@@ -35,14 +28,12 @@ export interface Preview {
   text?: string
   picture?: string
 }
-
 export interface Poll {
   question: string
   answers: string[]
   several: boolean
   ends?: number
 }
-
 export interface Post {
   kind: 'post'
   id: string
@@ -57,7 +48,6 @@ export interface Post {
   alsoToChat?: boolean
   mentions?: Mention[]
 }
-
 export type Event =
   | Post
   | { kind: 'edit'; id: string; target: string; body: string; files?: FileRef[] }
@@ -67,7 +57,6 @@ export type Event =
   | { kind: 'vote'; id: string; target: string; answers: number[] }
   | { kind: 'meta'; id: string; topic?: string; posting?: Posting; slowmode?: number }
   | { kind: 'schedule'; id: string; sendAt: number; post: Post }
-
 export interface Placed {
   seq: number
   at: number
@@ -75,14 +64,11 @@ export interface Placed {
   device?: string
   madeAt?: number
 }
-
 export type Logged = Event & Placed
-
 export interface Wording {
   body: string
   at: number
 }
-
 export interface Message {
   id: string
   seq: number
@@ -105,13 +91,11 @@ export interface Message {
   replies: number
   lastReplyAt?: number
 }
-
 export interface Meta {
   topic: string
   posting: Posting
   slowmode: number
 }
-
 export interface Member {
   who: Who
   name: string

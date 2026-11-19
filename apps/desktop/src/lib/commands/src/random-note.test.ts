@@ -7,7 +7,6 @@ const space = {
   archived: new Set<string>(),
   opened: [] as string[],
 }
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get notes() {
@@ -24,12 +23,9 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const { openRandomNote, pickOne, randomChoices } = await import('./random-note')
-
 const ROOT = '/spaces/Work'
 const at = (name: string) => `${ROOT}/${name}`
-
 beforeEach(() => {
   space.notes = ['Plan.md', 'Ideas.md', 'Old.md', 'Hidden.md', 'Paper.pdf', 'Board.canvas'].map((name) => ({
     path: at(name),
@@ -39,50 +35,39 @@ beforeEach(() => {
   space.archived = new Set([at('Old.md')])
   space.opened = []
 })
-
 describe('choosing one', () => {
   test('evenly, across the whole of what there is', () => {
     const choices = ['a', 'b', 'c', 'd']
-
     expect(pickOne(choices, 0)).toBe('a')
     expect(pickOne(choices, 0.25)).toBe('b')
     expect(pickOne(choices, 0.5)).toBe('c')
     expect(pickOne(choices, 0.999999)).toBe('d')
   })
-
   test('nothing, from nothing', () => {
     expect(pickOne([], 0.5)).toBeNull()
   })
 })
-
 describe('a random note of the space', () => {
   test('is never the open note, a file that is not a note, or one left out', () => {
     expect(randomChoices()).toEqual([at('Ideas.md')])
   })
-
   test('opens the note it chose', () => {
     space.excluded = new Set()
     space.archived = new Set()
-
     openRandomNote(0)
     openRandomNote(0.99)
-
     expect(space.opened).toEqual([at('Ideas.md'), at('Hidden.md')])
   })
-
   test('opens nothing where there is nothing else to open', () => {
     space.notes = [{ path: at('Plan.md') }]
-
     expect(randomChoices()).toEqual([])
     openRandomNote(0.5)
     expect(space.opened).toEqual([])
   })
-
   test('with nothing open, every note is a choice', () => {
     space.active = null
     space.excluded = new Set()
     space.archived = new Set()
-
     expect(randomChoices()).toEqual(['Plan.md', 'Ideas.md', 'Old.md', 'Hidden.md'].map(at))
   })
 })

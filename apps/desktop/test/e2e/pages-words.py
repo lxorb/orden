@@ -1,15 +1,11 @@
 import base64
 import os
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 MOD = "Control"
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -29,7 +25,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 SPAN = """
 (text) => {
   const span = [...document.querySelectorAll('.pages .sheet .words span')].find((one) => one.textContent.startsWith(text))
@@ -38,7 +33,6 @@ SPAN = """
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
 """
-
 CLOSE = """
 () => {
   const close = document.querySelector('.pages .sheet canvas.close.there')
@@ -46,16 +40,13 @@ CLOSE = """
   return close && box ? { pixels: close.width, shown: box.width * devicePixelRatio } : null
 }
 """
-
 COPIED = """
 () => {
   window.__copied = []
   document.addEventListener('copy', () => window.__copied.push(String(getSelection())), true)
 }
 """
-
 INK = "() => window.ordenApp.pages.current.store.canvas.ink.length"
-
 ZOOM = """
 ([scale]) => {
   const store = window.ordenApp.pages.current.store
@@ -63,8 +54,6 @@ ZOOM = """
   store.camera = store.held({ x: page.x + 100, y: page.y + 78, scale })
 }
 """
-
-
 def paper() -> bytes:
     w, h = 595, 842
     lines = [f"BT /F1 9 Tf 40 {h - 60 - row * 12} Td (Line {row + 1}: the kestrel hangs above the field.) Tj ET" for row in range(60)]
@@ -87,8 +76,6 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size 6>>\nstartxref\n%d\n%%%%EOF\n" % table
     return bytes(out)
-
-
 def across(page, box, beyond: float = 0) -> None:
     y = box["y"] + box["height"] / 2
     page.mouse.move(box["x"] + 1, y)
@@ -96,8 +83,6 @@ def across(page, box, beyond: float = 0) -> None:
     for step in range(1, 13):
         page.mouse.move(box["x"] + 1 + (box["width"] - 2 + beyond) * step / 12, y)
     page.mouse.up()
-
-
 def opened(context) -> Page | None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
@@ -113,25 +98,18 @@ def opened(context) -> Page | None:
     wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 60", "the page's words", 20)
     page.evaluate(COPIED)
     return page
-
-
 def menu_rows(page: Page) -> list[str]:
     return [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
-
-
 def by_pen_and_finger(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=2, has_touch=True, permissions=["clipboard-read", "clipboard-write"])
     page = opened(context)
     if not page:
         return
     cdp = context.new_cdp_session(page)
-
     line = page.evaluate(SPAN, "Line 8:")
     y = line["y"] + line["height"] / 2
-
     def pen(what: str, x: float) -> None:
         cdp.send("Input.dispatchMouseEvent", {"type": what, "x": x, "y": y, "button": "left", "buttons": 0 if what == "mouseReleased" else 1, "clickCount": 1, "pointerType": "pen", "force": 0.5})
-
     pen("mousePressed", line["x"] + 1)
     for step in range(1, 13):
         pen("mouseMoved", line["x"] + 1 + (line["width"] - 2) * step / 12)
@@ -150,7 +128,6 @@ def by_pen_and_finger(browser: Browser) -> None:
     shot(page, "pen-chosen")
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
-
     line = page.evaluate(SPAN, "Line 10:")
     y = line["y"] + line["height"] / 2
     x = line["x"] + line["width"] * 0.38
@@ -168,7 +145,6 @@ def by_pen_and_finger(browser: Browser) -> None:
         wrong(f"a finger swept over words chose {chosen!r} instead of moving the page")
     if not moved:
         wrong("a finger swept over words did not move the page")
-
     line = page.evaluate(SPAN, "Line 10:")
     y = line["y"] + line["height"] / 2
     x = line["x"] + line["width"] * 0.38
@@ -201,15 +177,12 @@ def by_pen_and_finger(browser: Browser) -> None:
     if page.evaluate(INK):
         wrong("choosing words with a finger drew ink")
     context.close()
-
-
 def drive(browser: Browser) -> None:
     by_pen_and_finger(browser)
     context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=2)
     page = opened(context)
     if not page:
         return
-
     line = page.evaluate(SPAN, "Line 3:")
     if not line:
         wrong("no words for line 3 on the page")
@@ -227,7 +200,6 @@ def drive(browser: Browser) -> None:
     if page.evaluate(INK):
         wrong("choosing words drew ink")
     shot(page, "words-chosen")
-
     page.evaluate("() => getSelection().removeAllRanges()")
     page.locator(".pages").first.focus()
     page.keyboard.press(f"{MOD}+a")
@@ -242,7 +214,6 @@ def drive(browser: Browser) -> None:
     if not whole or not whole["inside"] or "Line 1:" not in whole["text"] or "Line 60:" not in whole["text"]:
         wrong(f"{MOD}+A in the page note did not choose the page's words alone: {whole and {**whole, 'text': whole['text'][:120]}}")
     page.evaluate("() => getSelection().removeAllRanges()")
-
     for beyond in (6, 40):
         page.evaluate("() => getSelection().removeAllRanges()")
         line = page.evaluate(SPAN, "Line 4:")
@@ -251,7 +222,6 @@ def drive(browser: Browser) -> None:
         say(f"dragged {beyond}px past the end of line 4: {chosen!r}")
         if "Line 4: the kestrel hangs above the field." not in chosen or "Line 5" in chosen:
             wrong(f"dragging past the end of a line of the PDF chose {chosen!r}")
-
     page.locator(".pages").first.focus()
     page.keyboard.press("d")
     line = page.evaluate(SPAN, "Line 6:")
@@ -263,7 +233,6 @@ def drive(browser: Browser) -> None:
     if page.evaluate(INK) != 1:
         wrong(f"with the pen, a stroke over words left {page.evaluate(INK)} strokes")
     page.keyboard.press("v")
-
     page.evaluate("() => { getSelection().removeAllRanges(); const store = window.ordenApp.pages.current.store; store.pickAll(store.canvas.ink.map((one) => one.id)) }")
     page.wait_for_timeout(200)
     before = page.evaluate("() => window.ordenApp.pages.current.store.canvas.ink[0].points[0].y")
@@ -281,7 +250,6 @@ def drive(browser: Browser) -> None:
     if after <= before or chosen.strip():
         wrong(f"dragging a picked stroke that lies over words chose {chosen!r} and moved it from {before} to {after}")
     page.evaluate("() => window.ordenApp.pages.current.store.clearPicked()")
-
     page.evaluate("() => window.ordenApp.pages.current.store.zoomTo(3)")
     page.wait_for_timeout(600)
     page.locator(".pages").first.focus()
@@ -306,7 +274,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(200)
     if page.evaluate("() => !!document.querySelector('.pages .sheet .hit')"):
         wrong("the marks of a closed find stay on the page")
-
     for scale in (8, 16, 32):
         page.evaluate(ZOOM, [scale])
         wait_for(page, f"({CLOSE.strip()})() !== null", f"a close-up at {scale * 100}%", 15)
@@ -320,7 +287,6 @@ def drive(browser: Browser) -> None:
         if stretch > 1.15:
             wrong(f"at {got * 100:.0f}% the words are stretched {stretch:.2f}x")
         shot(page, f"zoom-{scale * 100}")
-
     line = page.evaluate(SPAN, "Line 1:")
     if line:
         across(page, {**line, "x": max(line["x"], 40), "width": min(line["width"], 900)})
@@ -329,6 +295,4 @@ def drive(browser: Browser) -> None:
         if not chosen.strip() or chosen not in "Line 1: the kestrel hangs above the field.":
             wrong(f"at 3200% a drag over words chose {chosen!r}")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a PDF's words in a page note can be chosen and copied, and stay sharp at any zoom"))

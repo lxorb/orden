@@ -1,15 +1,11 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 from settling import HIDE_CARET, quiet
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SIZE = {"width": 1280, "height": 800}
-
 ARRANGE = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -25,7 +21,6 @@ async () => {
   ws.panel = null
 }
 """
-
 WATCH = """
 () => {
   const frames = []
@@ -45,7 +40,6 @@ WATCH = """
   requestAnimationFrame(tick)
 }
 """
-
 SHAPE = """
 () => {
   const aside = document.querySelector('.panels aside')
@@ -60,7 +54,6 @@ SHAPE = """
   }
 }
 """
-
 def timed(page: Page, x: int, settled: str, what: str) -> dict:
     page.evaluate("() => { window.__peek.frames.length = 0; window.__peek.moved = null }")
     page.wait_for_timeout(100)
@@ -89,7 +82,6 @@ def timed(page: Page, x: int, settled: str, what: str) -> dict:
     if len(panes) != 1:
         wrong(f"{what}: the pane moved under it: {sorted(panes)}")
     return result
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport=SIZE, color_scheme="light")
     context.add_init_script(HIDE_CARET)
@@ -101,7 +93,6 @@ def drive(browser: Browser) -> None:
     page.mouse.move(640, 400)
     quiet(page)
     page.evaluate(WATCH)
-
     runs = []
     for turn in range(3):
         shown = timed(
@@ -139,12 +130,10 @@ def drive(browser: Browser) -> None:
         if first is None or first > 34:
             wrong(f"the list took {first} ms, more than two frames, to start moving after the edge")
     DRIVE.shot(page, "02-gone")
-
     page.emulate_media(color_scheme="dark")
     page.mouse.move(0, 400)
     wait_for(page, "getComputedStyle(document.querySelector('.panels aside')).transform === 'none'", "in, dark")
     quiet(page)
     DRIVE.shot(page, "03-out-dark")
     context.close()
-
 raise SystemExit(DRIVE.run(drive))

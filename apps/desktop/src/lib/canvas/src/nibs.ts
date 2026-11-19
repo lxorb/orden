@@ -4,18 +4,14 @@ import type { Nib } from './pens.svelte'
 
 const SAMPLES = 44
 const pressureAt = (share: number): number => 0.3 + 0.7 * Math.sin(Math.PI * share) ** 0.7
-
 export function sampleStroke(nib: Nib, width: number, height: number): InkStroke {
   const room = Math.max(nib.size * 0.9, 3) + 2
   const middle = height / 2
   const swing = Math.max(0, height / 2 - room)
   const from = room
   const span = Math.max(1, width - 2 * room)
-
   const turns = nib.size > 10 ? 2 : 3
-
   const points: InkPoint[] = []
-
   for (let one = 0; one < SAMPLES; one++) {
     const share = one / (SAMPLES - 1)
     points.push({
@@ -27,7 +23,6 @@ export function sampleStroke(nib: Nib, width: number, height: number): InkStroke
       t: Math.round(share * 700),
     })
   }
-
   return {
     id: 'sample',
     tool: nib.tool,
@@ -37,6 +32,5 @@ export function sampleStroke(nib: Nib, width: number, height: number): InkStroke
     points,
   }
 }
-
 export const samplePath = (nib: Nib, width: number, height: number): string =>
   inkPath(outlineOf(sampleStroke(nib, width, height)))

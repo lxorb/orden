@@ -10,12 +10,10 @@ function foldersOf(vaults: readonly Vault[]): Folder[] {
   for (const vault of vaults) for (const one of vault.folders) seen.set(one.id, one)
   return [...seen.values()]
 }
-
 export interface Before {
   vaults: readonly VaultRow[]
   items: readonly ItemRow[]
 }
-
 export async function adoptedChange(
   before: Before,
   items: readonly Item[],

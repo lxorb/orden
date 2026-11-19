@@ -10,7 +10,6 @@ const TAPS: Record<string, Modifier> = {
   'ctrl-ctrl': 'Control',
   'alt-alt': 'Alt',
 }
-
 const PASSED = [
   'find',
   'next',
@@ -22,23 +21,17 @@ const PASSED = [
   'install',
   'escape',
 ] as const
-
 export type Passed = (typeof PASSED)[number]
-
 export interface Ask {
   tab: string
   key: Passed
 }
-
 export function readAsk(value: unknown): Ask | null {
   if (!isRecord(value) || typeof value.tab !== 'string') return null
-
   const key = PASSED.find((one) => one === value.key)
   return key ? { tab: value.tab, key } : null
 }
-
 export const addressing = $state<{ asked: { page: Page } | null }>({ asked: null })
-
 export function answer(tab: string, page: Page, key: Passed): void {
   const tapped = TAPS[key]
   if (tapped) void doubleTaps().then(({ heard }) => heard(tapped))

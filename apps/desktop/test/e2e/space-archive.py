@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -24,18 +20,13 @@ async () => {
   return ws.spaces.map((one) => one.name)
 }
 """
-
 HERE = "() => window.ordenApp.workspace.activeSpace?.name ?? null"
-
 SWITCHER_ROWS = """() => [...document.querySelectorAll('.orden-layer.spaces > .line .orden-row-label')]
   .map((one) => one.textContent.trim())"""
-
 ARCHIVED_ROWS = """() => [...document.querySelectorAll('[data-archived-spaces] .orden-row-label')]
   .map((one) => one.textContent.trim())"""
-
 PICKER_ROWS = """() => [...document.querySelectorAll('.picker .orden-row-label')]
   .map((one) => one.textContent.trim())"""
-
 FOUND = """async () => {
   const { search, workspace } = window.ordenApp
   workspace.showPanel('search')
@@ -45,9 +36,7 @@ FOUND = """async () => {
   workspace.showPanel('tree')
   return hits
 }"""
-
 PALETTE = """() => window.ordenApp.workspace.shownSpaces.map((one) => one.name)"""
-
 def switcher(page: Page) -> None:
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     page.wait_for_timeout(200)
@@ -55,11 +44,9 @@ def switcher(page: Page) -> None:
         page.locator("aside button.name").first.click()
     wait_for(page, "document.querySelector('.orden-layer.spaces')", "the list of spaces")
     page.wait_for_timeout(300)
-
 def closed(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.orden-layer.spaces')", "the list of spaces closed")
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 1280, "height": 820}, color_scheme="light", reduced_motion="reduce"
@@ -71,7 +58,6 @@ def drive(browser: Browser) -> None:
     say(f"the spaces: {page.evaluate(SEED)}")
     if page.evaluate(HERE) != "Old":
         wrong(f"the drive is in {page.evaluate(HERE)!r}, not Old")
-
     switcher(page)
     page.locator(".orden-layer.spaces > .line").filter(has_text="Old").locator(".more").click()
     wait_for(page, "document.querySelector('[role=menu].menu')", "Old's menu")
@@ -82,7 +68,6 @@ def drive(browser: Browser) -> None:
     page.locator(".menu [role=menuitem]", has_text="Archive").first.click()
     wait_for(page, f"({HERE})() !== 'Old'", "the window to leave Old")
     say(f"the window went to {page.evaluate(HERE)!r}")
-
     switcher(page)
     rows, archived = page.evaluate(SWITCHER_ROWS), page.evaluate(ARCHIVED_ROWS)
     say(f"the switcher: {rows}, archived {archived}")
@@ -92,7 +77,6 @@ def drive(browser: Browser) -> None:
     if archived != ["Old"]:
         wrong(f"the switcher's Archived holds {archived}, not Old")
     closed(page)
-
     page.keyboard.press("Control+Space")
     wait_for(page, "document.querySelector('.picker[data-spaces-open]')", "Ctrl+Space")
     picker = page.evaluate(PICKER_ROWS)
@@ -102,14 +86,12 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     if "Old" in page.evaluate(PALETTE):
         wrong("the lists of spaces still hold Old")
-
     hits = page.evaluate(FOUND)
     say(f"the search for Old's word: {hits} hits")
     if hits:
         wrong(f"the search found {hits} of Old's words")
     if page.evaluate("() => window.ordenApp.workspace.spaces.some((one) => one.name === 'Old')") is not True:
         wrong("Old is gone from the spaces themselves")
-
     switcher(page)
     page.locator("[data-archived-spaces] .orden-row", has_text="Old").first.click()
     wait_for(page, f"({HERE})() === 'Old'", "Old open again")
@@ -128,10 +110,7 @@ def drive(browser: Browser) -> None:
     say(f"Old's notes: {json.dumps(notes)}")
     if "Trip.md" not in notes:
         wrong("Old's note is not where it was")
-
     context.close()
-
 def main() -> int:
     return DRIVE.run(drive, "a whole space is put away out of every list, and comes back")
-
 raise SystemExit(main())

@@ -8,7 +8,6 @@ const asked = vi.hoisted(() => ({
   spaces: new Map<string, string>(),
   answer: (): Promise<boolean> => Promise.resolve(true),
 }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -18,7 +17,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 vi.mock('../../chats-client/src/http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../chats-client/src/http')>()),
   moveChat: async (chat: string, space: string) => {
@@ -29,11 +27,9 @@ vi.mock('../../chats-client/src/http', async (importOriginal) => ({
   },
   listChats: () => Promise.resolve({ chats: [...asked.spaces].map(([id, space]) => ({ id, space }) as never) }),
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('./workspace.svelte')
 await import('../../workspace-ports')
 const { account } = await import('../../accounts/src/account.svelte')
@@ -43,22 +39,18 @@ const { failed } = await import('./notices.svelte')
 const { spacesOfPaths } = await import('../../tab-strip/src/to-space')
 const { keepOwnPointer } = await import('../../chats-client/src/places')
 const { prompt } = await import('../../ui-kit/src/prompt.svelte')
-
 const SHARED = '/spaces/Team'
 const OWNERS = '/spaces/Lab'
 const MINE = '/spaces/Mine'
 const POINTER = `${SHARED}/Plans.chat`
-
 const space = (id: string, role: 'owner' | 'write', people: string[] = []) =>
   ({ id, name: id, role, shared: role !== 'owner', people }) as never
-
 beforeEach(async () => {
   const one = disk.current!
   one.reset()
   for (const root of [SHARED, OWNERS, MINE]) one.folders.add(root)
   one.files.set(POINTER, chatText({ v: 1, chat: CHAT }))
   one.files.set(`${SHARED}/Plan.md`, '# Plan\n')
-
   workspace.spaces = [
     { id: 'team', name: 'Team', root: SHARED },
     { id: 'lab', name: 'Lab', root: OWNERS },
@@ -83,14 +75,11 @@ beforeEach(async () => {
   failed.dismiss()
   await workspace.loadTree()
 })
-
 const there = (path: string) => disk.current?.files.has(path) ?? false
-
 test('a writer is offered only the owner’s other spaces for a chat, any for a note', () => {
   expect(spacesOfPaths([POINTER]).map((one) => one.id)).toEqual(['lab'])
   expect(spacesOfPaths([`${SHARED}/Plan.md`]).map((one) => one.id)).toEqual(['lab', 'mine'])
 })
-
 test('carried into the writer’s own space anyway, nothing moves and nothing is asked', async () => {
   await workspace.moveMany([POINTER], MINE).catch(() => undefined)
   expect(there(POINTER)).toBe(true)
@@ -98,7 +87,6 @@ test('carried into the writer’s own space anyway, nothing moves and nothing is
   expect(asked.moves).toEqual([])
   expect(failed.retry).not.toBeNull()
 })
-
 test('the account refusing a move the device thought fine, the pointer stays', async () => {
   asked.answer = () => Promise.reject(new ApiError(403, 'only the owner can do that'))
   await workspace.moveMany([POINTER], OWNERS).catch(() => undefined)
@@ -107,7 +95,6 @@ test('the account refusing a move the device thought fine, the pointer stays', a
   expect(there(`${OWNERS}/Plans.chat`)).toBe(false)
   expect(failed.retry).not.toBeNull()
 })
-
 test('into another of the owner’s spaces, the chat moves on the account, then the file', async () => {
   await workspace.moveMany([POINTER], OWNERS)
   expect(asked.moves).toEqual([[CHAT, 'r-lab']])
@@ -115,7 +102,6 @@ test('into another of the owner’s spaces, the chat moves on the account, then 
   expect(there(`${OWNERS}/Plans.chat`)).toBe(true)
   expect(failed.retry).toBeNull()
 })
-
 test('a folder holding a pointer is a pointer carried', async () => {
   disk.current?.folders.add(`${SHARED}/Projects`)
   disk.current?.files.set(`${SHARED}/Projects/Plans.chat`, chatText({ v: 1, chat: CHAT }))
@@ -126,7 +112,6 @@ test('a folder holding a pointer is a pointer carried', async () => {
   await workspace.moveMany([`${SHARED}/Projects`], MINE).catch(() => undefined)
   expect(there(`${SHARED}/Projects/Plans.chat`)).toBe(true)
 })
-
 test('a name already taken there, the account is not asked and nothing moves', async () => {
   disk.current?.files.set(`${OWNERS}/Plans.chat`, chatText({ v: 1, chat: `c_${'2'.repeat(32)}` }))
   await workspace.loadTree()
@@ -134,7 +119,6 @@ test('a name already taken there, the account is not asked and nothing moves', a
   expect(asked.moves).toEqual([])
   expect(there(POINTER)).toBe(true)
 })
-
 test('the file refused after the chat moved, the chat is moved back', async () => {
   const one = disk.current!
   const real = one.invoke.bind(one)
@@ -150,7 +134,6 @@ test('the file refused after the chat moved, the chat is moved back', async () =
   ])
   expect(there(POINTER)).toBe(true)
 })
-
 test('a move between spaces undone moves the chat back first', async () => {
   const { undoLastFileAction } = await import('./undoing')
   await workspace.moveMany([POINTER], OWNERS)
@@ -161,7 +144,6 @@ test('a move between spaces undone moves the chat back first', async () => {
     [CHAT, 'r-team'],
   ])
 })
-
 test('the account refusing the way back, the undo stays to be asked for again', async () => {
   const { undoLastFileAction } = await import('./undoing')
   await workspace.moveMany([POINTER], OWNERS)
@@ -171,7 +153,6 @@ test('the account refusing the way back, the undo stays to be asked for again', 
   expect(there(POINTER)).toBe(false)
   expect(workspace.undone.last).not.toBeNull()
 })
-
 test('a folder’s move between spaces undone moves the chats in it back too', async () => {
   const { undoLastFileAction } = await import('./undoing')
   disk.current?.folders.add(`${SHARED}/Proj`)
@@ -187,7 +168,6 @@ test('a folder’s move between spaces undone moves the chats in it back too', a
     [CHAT, 'r-team'],
   ])
 })
-
 test('a folder of a space not open moved into another, the chats in it go along', async () => {
   disk.current?.folders.add(`${OWNERS}/Proj`)
   disk.current?.files.set(`${OWNERS}/Proj/Plans.chat`, chatText({ v: 1, chat: CHAT }))

@@ -15,24 +15,20 @@ function lineStart(text: string, line: number): number {
   }
   return at
 }
-
 function lineAt(text: string, from: number): string {
   const end = text.indexOf('\n', from)
   return text.slice(from, end === -1 ? text.length : end).replace(/\r$/, '')
 }
-
 export function taskIn(text: string, space: string, path: string, anchor: { line: number; hash: string }): Row {
   const found = findTask(taskRowsOfText(space, path, text), anchor)
   if (!found?.anchor) throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
   return found
 }
-
 export interface Edited {
   text: string
   at: string
   next?: string
 }
-
 export function editedTask(
   text: string,
   space: string,
@@ -58,12 +54,10 @@ export function editedTask(
     insert: edit.insert,
   }))
   let after = appliedEdits(text, edits)
-
   const changed = taskOn(after, space, path, line)
   if (done !== undefined && changed.task && changed.task.done !== done) {
     after = appliedEdits(after, tick(after, line, today))
   }
-
   const hash = changed.anchor?.hash ?? ''
   const same = taskRowsOfText(space, path, after).filter((one) => one.anchor?.hash === hash)
   const wanted = done === undefined ? same : same.filter((one) => one.task?.done === done)
@@ -73,13 +67,11 @@ export function editedTask(
     : undefined
   return { text: after, at: atOf(settled), ...(next ? { next: atOf(next) } : {}) }
 }
-
 function taskOn(text: string, space: string, path: string, line: number): Row {
   const found = taskRowsOfText(space, path, text).find((one) => one.kind === 'task' && one.anchor?.line === line)
   if (!found) throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
   return found
 }
-
 export function movedTask(
   from: { text: string; space: string; path: string; anchor: { line: number; hash: string } },
   to: { text: string; under?: string } | null,

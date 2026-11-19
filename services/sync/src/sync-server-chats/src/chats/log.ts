@@ -48,28 +48,20 @@ export type ChatAsk =
   | 'profile'
   | 'open'
   | 'held-files'
-
 export type Person = Asker & { id: string; guest: boolean }
-
 interface Attached extends Person {
   login?: string
   hello: boolean
   typedAt: number
 }
-
 export type Answer = Extract<ServerFrame, { t: 'placed' } | { t: 'refused' }>
-
 const MOST_MESSAGES = 1000
 const MOST_PAGE_BYTES = 4 * 1024 * 1024
-
 const MOST_CANDIDATES = 1000
-
 const FLUSH_EVERY = 1000
 const POKE_EVERY = 2000
-
 const RETRY_FIRST = 30_000
 const RETRY_MOST = 3_600_000
-
 const NAMES_FILE = `select 1 from messages m
   where m.deleted = 0
     and (json_extract(m.json, '$.preview.picture') = ?1
@@ -77,16 +69,13 @@ const NAMES_FILE = `select 1 from messages m
                      where json_extract(f.value, '$.hash') = ?1
                         or json_extract(f.value, '$.preview') = ?1))
   limit 1`
-
 const REACHERS_FOR = 60_000
-
 function filesOfHeld(post: Post): string[] {
   return [
     ...(post.files ?? []).flatMap((file) => (file.preview ? [file.hash, file.preview] : [file.hash])),
     ...(post.preview?.picture ? [post.preview.picture] : []),
   ]
 }
-
 function attachedTo(socket: WebSocket): Attached | null {
   const held: unknown = socket.deserializeAttachment()
   if (typeof held !== 'object' || held === null) return null
@@ -103,11 +92,9 @@ function attachedTo(socket: WebSocket): Attached | null {
     typedAt: typeof one.typedAt === 'number' ? one.typedAt : 0,
   }
 }
-
 function attach(socket: WebSocket, attached: Attached): void {
   socket.serializeAttachment(attached)
 }
-
 function say(socket: WebSocket, frame: ServerFrame): void {
   try {
     socket.send(JSON.stringify(frame))
@@ -115,19 +102,15 @@ function say(socket: WebSocket, frame: ServerFrame): void {
     // Closing or closed.
   }
 }
-
 function wholeIn(value: string | null): number | null {
   if (value === null || !/^\d{1,16}$/.test(value)) return null
   return Number(value)
 }
-
 export class ChatLog implements DurableObject {
   private ready = false
   private signInsAskedAt = 0
   private reachers: { at: number; list: { id: string; guest: boolean }[] } | null = null
-
   private readonly env: Env
-
   constructor(
     private readonly ctx: DurableObjectState,
     env: Env,
@@ -135,7 +118,6 @@ export class ChatLog implements DurableObject {
     this.env = steadyEnv(env)
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
   }
-
   private get sql(): SqlStorage {
     const sql = this.ctx.storage.sql
     if (!this.ready) {
@@ -144,11 +126,9 @@ export class ChatLog implements DurableObject {
     }
     return sql
   }
-
   async fetch(request: Request): Promise<Response> {
     const headers = request.headers
     const ask = (headers.get('x-orden-chat-ask') ?? '') as ChatAsk
-
     if (ask === 'erase') return await this.erase()
     if (ask === 'open') return openAnswer(this.hasSocketOf(headers.get(OPEN_HEADER) ?? ''))
     if (ask === 'revoke') {
@@ -163,14 +143,12 @@ export class ChatLog implements DurableObject {
       if (isWho(who)) this.everyone({ t: 'profile', who })
       return new Response(null, { status: 204 })
     }
-
     this.remember(headers.get('x-orden-chat'), headers.get('x-orden-space'))
     const query = new URL(request.url).searchParams
     if (ask === 'events') return Response.json(this.eventsPage(query))
     if (ask === 'state') return Response.json(this.statePage(query))
     if (ask === 'message') return Response.json({ message: this.messageById(query.get('id')) })
     if (ask === 'search') return Response.json({ messages: this.candidates(await request.json()) })
-
     const person = personOf(headers)
     if (!person) return new Response('nobody', { status: 400 })
     switch (ask) {
@@ -196,25 +174,20 @@ export class ChatLog implements DurableObject {
         return new Response('not something a chat does', { status: 400 })
     }
   }
-
   private remember(chat: string | null, space: string | null): void {
     if (chat && readMeta(this.sql, 'chat') !== chat) setMeta(this.sql, 'chat', chat)
     if (space && readMeta(this.sql, 'space') !== space) setMeta(this.sql, 'space', space)
   }
-
   async enter(server: WebSocket, person: Person, login?: string): Promise<void> {
     await this.writeSocketRow(person.id)
-
     this.ctx.acceptWebSocket(server, [person.who])
     attach(server, { ...person, ...(login ? { login } : {}), hello: false, typedAt: 0 })
-
     try {
       await this.writeSocketRow(person.id)
     } catch (error) {
       server.close(1011, 'try again')
       throw error
     }
-
     this.ctx.waitUntil(
       this.sweep().catch((error: unknown) => {
         note(`chat ${this.chatId()} sweep`, error, null)
@@ -222,7 +195,6 @@ export class ChatLog implements DurableObject {
     )
     this.sayHere()
   }
-
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string): Promise<void> {
     if (typeof message !== 'string') return
     if ((await this.askSignIns()).has(socket)) return
@@ -233,7 +205,6 @@ export class ChatLog implements DurableObject {
       say(socket, { t: 'refused', id: null, error: INVALID })
       return
     }
-
     switch (frame.t) {
       case 'hello':
         await this.hello(socket, me, frame.since ?? 0)
@@ -249,15 +220,12 @@ export class ChatLog implements DurableObject {
         break
     }
   }
-
   async webSocketClose(socket: WebSocket): Promise<void> {
     await this.gone(socket)
   }
-
   async webSocketError(socket: WebSocket): Promise<void> {
     await this.gone(socket)
   }
-
   private async gone(socket: WebSocket): Promise<void> {
     const me = attachedTo(socket)
     if (!me) return
@@ -265,11 +233,9 @@ export class ChatLog implements DurableObject {
     if (!others) await this.forgetSocketRow(me.id)
     this.sayHere(socket)
   }
-
   private async hello(socket: WebSocket, me: Attached, since: number): Promise<void> {
     attach(socket, { ...me, hello: true })
     await this.reachersNow().catch(() => [])
-
     const head = this.head()
     if (since < head && head - since > MOST_BEHIND) {
       say(socket, { t: 'behind', seq: head })
@@ -284,26 +250,22 @@ export class ChatLog implements DurableObject {
         after = rows[rows.length - 1]?.seq ?? head
       }
     }
-
     say(socket, { t: 'here', who: this.here() })
     if (this.showsReceipts()) {
       for (const place of this.readPlaces(me.who)) say(socket, { t: 'read', ...place })
     }
   }
-
   private typing(socket: WebSocket, me: Attached, parent: string | undefined): void {
     if (me.role === 'read' || (me.role === 'write' && metaOf(this.sql).posting === 'owner')) return
     const now = Date.now()
     if (now - me.typedAt < TYPING_EVERY) return
     attach(socket, { ...me, typedAt: now })
-
     const frame: ServerFrame = { t: 'typing', who: me.who, ...(parent ? { parent } : {}) }
     for (const other of this.ctx.getWebSockets()) {
       const them = attachedTo(other)
       if (other !== socket && them?.hello && them.who !== me.who) say(other, frame)
     }
   }
-
   private here(leaving?: WebSocket): Who[] {
     const who = new Set<Who>()
     for (const socket of this.ctx.getWebSockets()) {
@@ -313,44 +275,36 @@ export class ChatLog implements DurableObject {
     }
     return [...who]
   }
-
   private sayHere(leaving?: WebSocket): void {
     const frame: ServerFrame = { t: 'here', who: this.here(leaving) }
     for (const socket of this.ctx.getWebSockets()) {
       if (socket !== leaving && attachedTo(socket)?.hello) say(socket, frame)
     }
   }
-
   private everyone(frame: ServerFrame, but?: WebSocket | null): void {
     for (const socket of this.ctx.getWebSockets()) {
       if (socket !== but && attachedTo(socket)?.hello) say(socket, frame)
     }
   }
-
   async take(person: Person, event: Event, from: WebSocket | null): Promise<Answer> {
     const sql = this.sql
     const at = Date.now()
-
     const had = placedEvent(sql, event.id)
     if (had) return { t: 'placed', id: had.id, seq: had.seq, at: had.at }
     const held = this.heldAnswer(event.id)
     if (held) return held
-
     if (event.kind === 'delete' && (await this.unschedule(person.who, event.target))) {
       return { t: 'placed', id: event.id, seq: 0, at }
     }
-
     const refused = admit(sql, event, person, at)
     if (refused) return { t: 'refused', id: event.id, error: refused }
     if (!(await this.holds(person, event))) return { t: 'refused', id: event.id, error: INVALID }
-
     if (event.kind === 'schedule' && event.sendAt > at + FLUSH_EVERY) {
       await this.schedule(person, event)
       return { t: 'placed', id: event.id, seq: 0, at: event.sendAt }
     }
     return await this.placeNow(person, event.kind === 'schedule' ? event.post : event, at, from)
   }
-
   private async placeNow(
     person: Person,
     event: Exclude<Event, { kind: 'schedule' }>,
@@ -363,7 +317,6 @@ export class ChatLog implements DurableObject {
         note(`chat ${this.chatId()} reachers`, error, null)
       })
     }
-
     const { logged, effects, called } = this.ctx.storage.transactionSync(() => {
       const placed = place(this.sql, event, person, at)
       return { ...placed, called: this.noted(placed.logged, placed.effects) }
@@ -372,7 +325,6 @@ export class ChatLog implements DurableObject {
     await this.after(logged, effects, called)
     return { t: 'placed', id: logged.id, seq: logged.seq, at: logged.at }
   }
-
   private noted(logged: Logged, effects: Effects): Who[] {
     this.flushSoon()
     if (logged.kind !== 'post') return []
@@ -399,7 +351,6 @@ export class ChatLog implements DurableObject {
     )
     return [...called]
   }
-
   private async after(logged: Logged, effects: Effects, called: readonly Who[]): Promise<void> {
     try {
       await this.keepFiles(effects, logged.at)
@@ -410,7 +361,6 @@ export class ChatLog implements DurableObject {
     if (logged.kind === 'post') await this.poke(logged, called)
     await this.plan()
   }
-
   private async holds(person: Person, event: Event): Promise<boolean> {
     const post = event.kind === 'schedule' ? event.post : event
     if (post.kind !== 'post' && post.kind !== 'edit') return true
@@ -429,12 +379,10 @@ export class ChatLog implements DurableObject {
       .all<{ hash: string }>()
     return results.length === hashes.size
   }
-
   private heldFilesOf(who: string): string[] {
     const rows = this.sql.exec<{ post: string }>('select post from scheduled where author = ?', who)
     return rows.toArray().flatMap((row) => filesOfHeld(JSON.parse(row.post) as Post))
   }
-
   private async heldNoMore(who: Who, hashes: readonly string[]): Promise<void> {
     if (!hashes.length || who.startsWith('guest:')) return
     await noteUnusedBy(this.env, hubIdOf(who), hashes, Date.now())
@@ -443,12 +391,10 @@ export class ChatLog implements DurableObject {
         note(`chat ${this.chatId()} held`, error, null)
       })
   }
-
   private heldAnswer(id: string): Answer | null {
     const row = this.sql.exec<{ send_at: number }>('select send_at from scheduled where id = ?', id).toArray()[0]
     return row ? { t: 'placed', id, seq: 0, at: row.send_at } : null
   }
-
   private async schedule(person: Person, event: Extract<Event, { kind: 'schedule' }>) {
     const sql = this.sql
     const before = sql
@@ -486,7 +432,6 @@ export class ChatLog implements DurableObject {
     )
     await this.plan()
   }
-
   private async unschedule(who: Who, message: string): Promise<boolean> {
     const row = this.sql
       .exec<{ id: string; post: string }>(
@@ -502,7 +447,6 @@ export class ChatLog implements DurableObject {
     }
     return row !== undefined
   }
-
   private scheduledOf(who: Who) {
     return this.sql
       .exec<{ id: string; send_at: number; post: string; refused: string | null }>(
@@ -517,7 +461,6 @@ export class ChatLog implements DurableObject {
         ...(one.refused ? { refused: one.refused as Refusal } : {}),
       }))
   }
-
   private async placeDue(now: number): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
@@ -531,7 +474,6 @@ export class ChatLog implements DurableObject {
         now,
       )
       .toArray()
-
     for (const one of due) {
       try {
         await this.placeOne(chat, one, now)
@@ -550,7 +492,6 @@ export class ChatLog implements DurableObject {
       }
     }
   }
-
   private async placeOne(
     chat: string,
     one: { id: string; author: string; device: string | null; post: string },
@@ -584,17 +525,14 @@ export class ChatLog implements DurableObject {
       )
     }
   }
-
   private head(): number {
     return this.sql.exec<{ seq: number | null }>('select max(seq) as seq from events').one().seq ?? 0
   }
-
   private readPlace(who: Who): number {
     return (
       this.sql.exec<{ read_seq: number }>('select read_seq from members where who = ?', who).toArray()[0]?.read_seq ?? 0
     )
   }
-
   private mentionsOf(who: Who): number {
     return this.sql
       .exec<{ many: number }>(
@@ -604,13 +542,11 @@ export class ChatLog implements DurableObject {
       )
       .one().many
   }
-
   async read(who: Who, seq: number, back: boolean, from: WebSocket | null): Promise<void> {
     const sql = this.sql
     const to = Math.min(seq, this.head())
     const was = this.readPlace(who)
     if (to === was || (to < was && !back)) return
-
     sql.exec(
       `insert into members (who, read_seq, dirty) values (?, ?, 1)
        on conflict(who) do update set read_seq = excluded.read_seq, dirty = 1`,
@@ -619,7 +555,6 @@ export class ChatLog implements DurableObject {
     )
     sql.exec('delete from mentioned where who = ? and seq <= ?', who, Math.min(to, was))
     this.flushSoon()
-
     const frame: ServerFrame = { t: 'read', who, seq: to }
     const shown = this.showsReceipts()
     for (const socket of this.ctx.getWebSockets()) {
@@ -629,19 +564,16 @@ export class ChatLog implements DurableObject {
     }
     await this.plan()
   }
-
   private showsReceipts(): boolean {
     const known = this.reachers?.list.length ?? 0
     return known > 0 && known <= RECEIPTS_UP_TO
   }
-
   private readPlaces(but: Who): { who: Who; seq: number }[] {
     return this.sql
       .exec<{ who: string; read_seq: number }>('select who, read_seq from members where read_seq > 0 and who <> ?', but)
       .toArray()
       .map((one) => ({ who: one.who as Who, seq: one.read_seq }))
   }
-
   private eventsPage(query: URLSearchParams) {
     const limit = Math.max(1, Math.min(wholeIn(query.get('limit')) ?? 200, MOST_PAGE))
     const before = wholeIn(query.get('before'))
@@ -653,7 +585,6 @@ export class ChatLog implements DurableObject {
         .reverse()
     const newer = (from: number, many: number) =>
       this.sql.exec<EventRow>('select * from events where seq > ? order by seq limit ?', from, many).toArray()
-
     let rows: EventRow[]
     let more: boolean
     if (around !== null) {
@@ -671,13 +602,11 @@ export class ChatLog implements DurableObject {
     }
     return { events: rows.map(loggedOf), more }
   }
-
   private messageById(id: string | null): Message | null {
     if (!id) return null
     const row = this.sql.exec<{ json: string }>('select json from messages where id = ?', id).toArray()[0]
     return row ? (JSON.parse(row.json) as Message) : null
   }
-
   private statePage(query: URLSearchParams) {
     const limit = Math.max(1, Math.min(wholeIn(query.get('limit')) ?? MOST_MESSAGES, MOST_MESSAGES))
     const before = wholeIn(query.get('before')) ?? Number.MAX_SAFE_INTEGER
@@ -694,7 +623,6 @@ export class ChatLog implements DurableObject {
         limit + 1,
       )
       .toArray()
-
     const messages: Message[] = []
     let bytes = 0
     for (const row of rows.slice(0, limit)) {
@@ -710,7 +638,6 @@ export class ChatLog implements DurableObject {
       next: more ? (messages.at(-1)?.seq ?? null) : null,
     }
   }
-
   candidates(asked: unknown): Message[] {
     const words = (
       Array.isArray((asked as { words?: unknown } | null)?.words) ? (asked as { words: unknown[] }).words : []
@@ -737,18 +664,15 @@ export class ChatLog implements DurableObject {
           .toArray()
     return rows.map((row) => JSON.parse(row.json) as Message)
   }
-
   private chatId(): string | null {
     return readMeta(this.sql, 'chat')
   }
-
   private flushSoon(): void {
     const sql = this.sql
     if (readMeta(sql, 'flush_at') !== null) return
     const last = Number(readMeta(sql, 'flushed_at') ?? 0)
     setMeta(sql, 'flush_at', String(Math.max(Date.now(), last + FLUSH_EVERY)))
   }
-
   private async flush(): Promise<void> {
     const chat = this.chatId()
     const sql = this.sql
@@ -760,7 +684,6 @@ export class ChatLog implements DurableObject {
     const dirty = sql
       .exec<{ who: string; read_seq: number }>('select who, read_seq from members where dirty = 1 limit 200')
       .toArray()
-
     await this.env.DB.batch([
       this.env.DB.prepare(
         `update chats set last_seq = ?, last_at = ?, last_by = ?, topic = ?, posting = ?,
@@ -776,7 +699,6 @@ export class ChatLog implements DurableObject {
           ).bind(chat, hubIdOf(one.who), one.read_seq, this.mentionsOf(one.who as Who)),
         ),
     ])
-
     for (const one of dirty) {
       sql.exec('update members set dirty = 0 where who = ? and read_seq = ?', one.who, one.read_seq)
     }
@@ -784,7 +706,6 @@ export class ChatLog implements DurableObject {
     setMeta(sql, 'flush_at', null)
     if (dirty.length === 200) this.flushSoon()
   }
-
   private async keepFiles(effects: Effects, at: number): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.files.length) return
@@ -801,7 +722,6 @@ export class ChatLog implements DurableObject {
       ),
     )
   }
-
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
@@ -817,7 +737,6 @@ export class ChatLog implements DurableObject {
       ),
     ])
   }
-
   private async reachersNow(): Promise<{ id: string; guest: boolean }[]> {
     const now = Date.now()
     if (this.reachers && now - this.reachers.at < REACHERS_FOR) return this.reachers.list
@@ -826,7 +745,6 @@ export class ChatLog implements DurableObject {
     this.reachers = { at: now, list }
     return list
   }
-
   private async poke(logged: Logged, called: readonly Who[]): Promise<void> {
     let reachers: { id: string; guest: boolean }[]
     try {
@@ -840,7 +758,6 @@ export class ChatLog implements DurableObject {
     const now = Date.now()
     const sql = this.sql
     const sendNow: string[] = []
-
     for (const one of reachers) {
       if (open.has(one.id)) continue
       const row = sql
@@ -862,7 +779,6 @@ export class ChatLog implements DurableObject {
     }
     await this.sendPokes(sendNow, now)
   }
-
   private async sendPokes(ids: readonly string[], now: number): Promise<void> {
     const chat = this.chatId()
     if (!chat || !ids.length) return
@@ -887,7 +803,6 @@ export class ChatLog implements DurableObject {
       }),
     )
   }
-
   async alarm(): Promise<void> {
     await this.askSignIns()
     const now = Date.now()
@@ -915,7 +830,6 @@ export class ChatLog implements DurableObject {
     }
     await this.plan()
   }
-
   private async plan(): Promise<void> {
     const sql = this.sql
     const flushAt = readMeta(sql, 'flush_at')
@@ -939,20 +853,16 @@ export class ChatLog implements DurableObject {
     const soonest = times.reduce((low, one) => Math.min(low, one), Infinity)
     await this.ctx.storage.setAlarm(Math.max(soonest, Date.now()))
   }
-
   private async askSignIns(): Promise<Set<WebSocket>> {
     const closed = new Set<WebSocket>()
     const now = Date.now()
     if (now - this.signInsAskedAt < ASK_SIGNINS_EVERY) return closed
     this.signInsAskedAt = now
-
     const sockets = this.ctx.getWebSockets()
     const logins = sockets.flatMap((one) => attachedTo(one)?.login ?? [])
     if (!logins.length) return closed
-
     const live = await stillSignedIn(this.env, logins).catch(() => null)
     if (!live) return closed
-
     for (const socket of sockets) {
       const login = attachedTo(socket)?.login
       if (login === undefined || live.has(login)) continue
@@ -961,7 +871,6 @@ export class ChatLog implements DurableObject {
     }
     await this.askAccess(sockets, closed)
     if (!closed.size) return closed
-
     const gone = new Set([...closed].flatMap((one) => attachedTo(one)?.id ?? []))
     for (const socket of sockets) {
       if (!closed.has(socket)) gone.delete(attachedTo(socket)?.id ?? '')
@@ -975,20 +884,17 @@ export class ChatLog implements DurableObject {
     }
     return closed
   }
-
   private async askAccess(sockets: WebSocket[], closed: Set<WebSocket>): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
     const logins = [...new Set(sockets.flatMap((one) => (closed.has(one) ? [] : (attachedTo(one)?.login ?? []))))]
     if (!logins.length) return
-
     const at = Date.now()
     const asked = await Promise.all(
       logins.map(async (login) => [login, await reachByToken(this.env, login, at, chat)] as const),
     ).catch(() => null)
     if (!asked) return
     const reached = new Map(asked)
-
     let chatLives: boolean | null = null
     for (const socket of sockets) {
       const them = attachedTo(socket)
@@ -1007,7 +913,6 @@ export class ChatLog implements DurableObject {
       closed.add(socket)
     }
   }
-
   private async lives(chat: string): Promise<boolean> {
     const row = await this.env.DB.prepare(
       `select 1 as yes from chats ch join spaces sp on sp.id = ch.space_id
@@ -1017,11 +922,9 @@ export class ChatLog implements DurableObject {
       .first<{ yes: number }>()
     return row !== null
   }
-
   private closedWho(closed: Set<WebSocket>, who: Who): boolean {
     return this.ctx.getWebSockets(who).every((one) => closed.has(one))
   }
-
   private async revoke(id: string, role: string | null): Promise<Response> {
     this.reachers = null
     const toRead = role === 'read'
@@ -1059,7 +962,6 @@ export class ChatLog implements DurableObject {
     }
     return new Response(null, { status: 204 })
   }
-
   private async erase(): Promise<Response> {
     for (const socket of this.ctx.getWebSockets()) socket.close(1008, 'this chat is gone')
     this.reachers = null
@@ -1068,7 +970,6 @@ export class ChatLog implements DurableObject {
     this.ready = false
     return new Response(null, { status: 204 })
   }
-
   private async writeSocketRow(who: string): Promise<void> {
     const chat = this.chatId()
     const space = readMeta(this.sql, 'space')
@@ -1081,7 +982,6 @@ export class ChatLog implements DurableObject {
       .bind(chat, space, who, Date.now())
       .run()
   }
-
   private async sweep(): Promise<void> {
     const chat = this.chatId()
     await sweepOpened(this.env, { name: 'chat_sockets', key: 'chat_id' }, async (other, them) =>
@@ -1090,18 +990,15 @@ export class ChatLog implements DurableObject {
         : await openIn(await askChat(this.env, other, 'open', { [OPEN_HEADER]: them })),
     )
   }
-
   private hasSocketOf(id: string): boolean {
     return !!id && this.ctx.getWebSockets().some((socket) => attachedTo(socket)?.id === id)
   }
-
   private async forgetSocketRow(who: string): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
     await this.env.DB.prepare('delete from chat_sockets where chat_id = ? and who = ?').bind(chat, who).run()
   }
 }
-
 function personOf(headers: Headers): Person | null {
   const id = headers.get('x-orden-who') ?? ''
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return null
@@ -1116,13 +1013,11 @@ function personOf(headers: Headers): Person | null {
     ...(device ? { device } : {}),
   }
 }
-
 function resultOf(answer: Answer) {
   return answer.t === 'placed'
     ? { id: answer.id, seq: answer.seq, at: answer.at }
     : { id: answer.id ?? '', refused: answer.error }
 }
-
 function standing(answer: Awaited<ReturnType<typeof reachByToken>> | null | undefined, toRead: boolean): string {
   if (!answer) return toRead ? 'read' : 'none'
   if (!answer.live) return 'ended'

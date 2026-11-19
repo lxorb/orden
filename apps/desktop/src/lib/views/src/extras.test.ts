@@ -25,12 +25,10 @@ orden:
       set: { status: To do }
 `)
 const held = [{ name: 'Bugs', space: 'Notes', base }]
-
 function plan(removed: Row[], added: Row[], all: Row[]) {
   const context = contextFor({ rows: all, today: TODAY, now: `${TODAY}T09:30:00` })
   return planned(held, removed, added, all, context, filling)
 }
-
 describe('a guarded base that could not read all of its rows', () => {
   test('gives no id, since one counted from what it read is one somebody has', () => {
     const list = '[1,2,3,4,5,6,7,8,9,10]'
@@ -50,34 +48,28 @@ orden:
     expect(out.writes).toEqual([])
   })
 })
-
 describe('a base at work on a change', () => {
   const older = noteRow('Bugs/Crash.md', 'id: BUG-1\nstatus: Doing', { ctime: day('2026-01-01') })
-
   test('a row going Done gets its date, as one change to that row', () => {
     const done = noteRow('Bugs/Crash.md', 'id: BUG-1\nstatus: Done', { ctime: day('2026-01-01') })
     const out = plan([older], [done], [done])
     expect(out.writes).toEqual([{ row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } }])
   })
-
   test('the same row looked at again fires nothing: once per change', () => {
     const done = noteRow('Bugs/Crash.md', 'id: BUG-1\nstatus: Done', { ctime: day('2026-01-01') })
     expect(plan([done], [done], [done]).writes).toEqual([])
   })
-
   test('a row made without an id gets the next, with what an added row is set to', () => {
     const made = noteRow('Bugs/New.md', '', { ctime: day('2026-02-01') })
     const out = plan([], [made], [older, made])
     expect(out.writes).toEqual([{ row: made, change: { note: { status: 'To do', id: 'BUG-2' } } }])
   })
-
   test('two rows two devices both numbered 2: the later by path is renumbered', () => {
     const first = noteRow('Bugs/A.md', 'id: BUG-2', { ctime: day('2026-03-01') })
     const second = noteRow('Bugs/B.md', 'id: BUG-2', { ctime: day('2026-03-02') })
     const out = plan([], [second], [older, first, second])
     expect(out.writes.map((one) => [one.row.path, one.change.note?.id])).toEqual([['Bugs/B.md', 'BUG-3']])
   })
-
   test('a note moved into the base is added to it: it gets an id and fires added', () => {
     const was = noteRow('Inbox/Crash.md', '', { ctime: day('2026-02-01') })
     const now = noteRow('Bugs/Crash.md', '', { ctime: day('2026-02-01') })
@@ -87,13 +79,11 @@ describe('a base at work on a change', () => {
     const away = noteRow('Bugs/Crash.md', '', { ctime: day('2026-02-01') }, 'Elsewhere')
     expect(plan([away], [now], [older, now]).writes).toHaveLength(1)
   })
-
   test('a note renamed or moved within the base is not added again', () => {
     const was = noteRow('Bugs/Crash.md', 'id: BUG-2\nstatus: Doing')
     const now = noteRow('Bugs/2026/Crash v2.md', 'id: BUG-2\nstatus: Doing')
     expect(plan([was], [now], [older, now]).writes).toEqual([])
   })
-
   test('an edit that brings a note into a base is a change, not an add', () => {
     const doneBase = readBase(`filters:
   and:
@@ -111,7 +101,6 @@ orden:
     const out = planned([{ name: 'Done', space: 'Notes', base: doneBase }], [doing], [done], [done], context, filling)
     expect(out.writes).toEqual([{ row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } }])
   })
-
   test('an edit that brings a note back into a base does not set it to what an added note is', () => {
     const live = readBase(`filters:
   and:
@@ -127,18 +116,15 @@ orden:
     const live1 = [{ name: 'Live', space: 'Notes', base: live }]
     expect(planned(live1, [archived], [doing], [doing], context, filling).writes).toEqual([])
   })
-
   test('a note outside the base is none of its business', () => {
     const film = noteRow('Films/Heat.md', 'status: Done')
     expect(plan([noteRow('Films/Heat.md', 'status: Doing')], [film], [film]).writes).toEqual([])
   })
 })
-
 describe("a property's choices", () => {
   const doing = noteRow('A.md', 'status: Doing\ntags: [a, b]')
   const done = noteRow('B.md', 'status: Done\ntags: [b, c]')
   const rows = [doing, done, noteRow('C.md', 'status: Doing')]
-
   test('start from the values the notes hold, each in the next tone', () => {
     expect(valuesOf(rows, 'note.status')).toEqual(['Doing', 'Done'])
     expect(valuesOf(rows, 'tags')).toEqual(['a', 'b', 'c'])
@@ -147,7 +133,6 @@ describe("a property's choices", () => {
       { value: 'Done', tone: '2' },
     ])
   })
-
   test('renamed, in every note holding one, a list member by member', () => {
     expect(renamedIn(doing, 'status', 'Doing', 'Busy')).toEqual({
       note: { status: 'Busy' },
@@ -157,7 +142,6 @@ describe("a property's choices", () => {
     })
     expect(renamedIn(done, 'status', 'Doing', 'Busy')).toBeNull()
   })
-
   test("renamed in the base's own notes only, not another base's of the same space", () => {
     const mine = noteRow('Bugs/Crash.md', 'status: Done')
     const theirs = noteRow('Books/Dune.md', 'status: Done')
@@ -167,13 +151,11 @@ describe("a property's choices", () => {
       { row: mine, change: { note: { status: 'Shipped' } } },
     ])
   })
-
   test("a base's ids written again under a new prefix", () => {
     const ids = [noteRow('A.md', 'id: BUG-4'), noteRow('B.md', 'id: 7')]
     expect(reprefixed(ids, 'id', 'BUG', 'ISSUE').map((one) => one.change)).toEqual([{ note: { id: 'ISSUE-4' } }])
   })
 })
-
 describe("a column's format", () => {
   test('a share as a percentage and a bar, money, and words that open', () => {
     expect(formatted(0.25, 'percent')?.text).toMatch(/25\s?%/)
@@ -186,13 +168,11 @@ describe("a column's format", () => {
     expect(formatted(3, undefined)).toBeNull()
   })
 })
-
 describe("an automation's write", () => {
   const last: FileAction = {
     kind: 'replace',
     notes: [{ path: 'C:/s/Bug.md', content: 'status: Doing', after: 'status: Done', edits: [] }],
   }
-
   test('is folded into the edit that fired it, and undoing that puts the first words back', () => {
     const joined = joinedAction(last, [
       {
@@ -212,14 +192,12 @@ describe("an automation's write", () => {
     for (const edit of [...edits].reverse()) words = words.slice(0, edit.from) + edit.insert + words.slice(edit.to)
     expect(words).toBe('status: Doing')
   })
-
   test('stands alone where something else was written in between', () => {
     expect(joinedAction(last, [{ path: 'C:/s/Bug.md', content: 'status: Done!', after: 'x', edits: [] }])).toBeNull()
     expect(joinedAction(last, [{ path: 'C:/s/Other.md', content: 'a', after: 'b', edits: [] }])).toBeNull()
     expect(joinedAction(undefined, [])).toBeNull()
   })
 })
-
 describe('notes as sub-items', () => {
   const rows = [
     noteRow('Epic.md', 'status: Doing'),
@@ -237,7 +215,6 @@ describe('notes as sub-items', () => {
       adding: false,
       parentOf: (row) => parentOf(row, context),
     }).flatMap((item) => (item.kind === 'row' ? [[item.row.path, item.depth, item.twist]] : []))
-
   test('sit under the note their parent property links to, to any depth', () => {
     expect(items()).toEqual([
       ['Epic.md', 0, 'open'],
@@ -247,7 +224,6 @@ describe('notes as sub-items', () => {
       ['B.md', 1, null],
     ])
   })
-
   test('fold under their parent, and two that name each other are not lost', () => {
     const epic = rows.find((one) => one.path === 'Epic.md')
     if (!epic) throw new Error('no epic')

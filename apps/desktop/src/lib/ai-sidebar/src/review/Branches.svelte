@@ -4,9 +4,7 @@
   import type { ReviewPanel } from '../chat-parts'
 
   const { thread, turn, panel = null }: { thread: Thread; turn: string; panel?: ReviewPanel | null } = $props()
-
   const fork = $derived(forkAt(thread, turn))
-
   function step(by: number) {
     if (switchBranch(thread, turn, by)) panel?.touched?.(thread)
   }
@@ -44,12 +42,10 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .orden-glyph {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
   }
-
   .orden-glyph > svg {
     width: var(--icon-sm);
     height: var(--icon-sm);

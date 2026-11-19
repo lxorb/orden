@@ -19,7 +19,6 @@
     onlist: (anchor: HTMLElement) => void
     onadd: (anchor: HTMLElement) => void
   } = $props()
-
   const pinned = $derived(pinnedOf(extensions.list))
 </script>
 
@@ -73,11 +72,9 @@
     height: var(--icon-md);
     object-fit: contain;
   }
-
   .add {
     gap: var(--space-1);
   }
-
   .add svg {
     width: var(--icon-sm);
     height: var(--icon-sm);

@@ -16,7 +16,6 @@ export interface CodePalette {
   punctuation: string
   property: string
 }
-
 const FOLLOW: CodePalette = {
   id: 'follow',
   name: 'Follow the theme',
@@ -29,7 +28,6 @@ const FOLLOW: CodePalette = {
   punctuation: 'var(--muted-strong)',
   property: 'var(--syntax-property, #7c6bf5)',
 }
-
 export const CODE_PALETTES: CodePalette[] = [
   FOLLOW,
   {
@@ -81,7 +79,6 @@ export const CODE_PALETTES: CodePalette[] = [
     property: '#ebcb8b',
   },
 ]
-
 const codeHighlightStyle = (palette: CodePalette) =>
   HighlightStyle.define([
     { tag: tags.keyword, color: palette.keyword },
@@ -101,17 +98,11 @@ const codeHighlightStyle = (palette: CodePalette) =>
     { tag: tags.inserted, color: 'var(--success)' },
     { tag: tags.deleted, color: 'var(--danger)' },
   ])
-
 const paletteById = (id: string): CodePalette => CODE_PALETTES.find((palette) => palette.id === id) ?? FOLLOW
-
 const codeTheme = new Compartment()
-
 const highlightingFor = once((id: string): Extension => syntaxHighlighting(codeHighlightStyle(paletteById(id))))
-
 export const codeThemeExtension = (id = 'follow'): Extension => codeTheme.of(highlightingFor(id))
-
 export const codeThemeEffect = (id: string): StateEffect<unknown> => codeTheme.reconfigure(highlightingFor(id))
-
 export function setCodeTheme(view: EditorView, id: string) {
   view.dispatch({ effects: codeThemeEffect(id) })
 }

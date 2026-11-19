@@ -13,7 +13,6 @@ const world = vi.hoisted(() => ({
   stored: new Map<string, string>(),
   local: { fits: false, ready: false, keepsUp: true, fetched: 0 },
 }))
-
 vi.mock('./listening', () => ({
   listen: (_field: unknown, engine: string, words: readonly string[]) => {
     world.started.push({ engine, words })
@@ -79,23 +78,19 @@ vi.mock('../../shortcuts/src/api', () => ({
 vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
-
 const { engines } = await import('./engines.svelte')
 const { voice } = await import('./voice.svelte')
 const { dictating, HOLD } = await import('./keys')
 const DictateButton = (await import('./DictateButton.svelte')).default
-
 let target: HTMLElement
 let field: HTMLTextAreaElement
 let drawn: ReturnType<typeof mount> | undefined
 let action: { destroy: () => void } | undefined
 let entered: number
 const owner = { field: () => field, words: () => ['Sync Worker'] }
-
 function button(): HTMLButtonElement {
   return target.querySelector<HTMLButtonElement>('button.mic')!
 }
-
 function press(held: number) {
   const at = performance.now()
   vi.spyOn(performance, 'now').mockReturnValue(at)
@@ -104,18 +99,14 @@ function press(held: number) {
   button().dispatchEvent(new PointerEvent('pointerup', { button: 0, bubbles: true }))
   vi.restoreAllMocks()
 }
-
 const chooser = () => [...target.querySelectorAll('[role="dialog"] button')].map((one) => one.textContent)
-
 async function click() {
   press(0)
   await settle()
 }
-
 function key(type: 'keydown' | 'keyup', init: KeyboardEventInit) {
   field.dispatchEvent(new KeyboardEvent(type, { bubbles: true, cancelable: true, ...init }))
 }
-
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
@@ -133,7 +124,6 @@ beforeEach(() => {
   world.stored.clear()
   engines.choose(null)
 })
-
 afterEach(() => {
   voice.cancel()
   voice.asking = null
@@ -141,21 +131,18 @@ afterEach(() => {
   if (drawn) void unmount(drawn)
   target.remove()
 })
-
 describe('with no engine chosen', () => {
   test('a press asks where the voice goes, and opens nothing', async () => {
     await click()
     expect(world.started).toEqual([])
     expect(target.querySelector('[role="dialog"]')?.textContent).toContain('Orden account')
   })
-
   test('the key asks too', async () => {
     key('keydown', { key: 'v', altKey: true })
     await settle()
     expect(world.started).toEqual([])
     expect(voice.asking).toBe(owner)
   })
-
   test('the chooser offers the provider first, and says where audio goes', async () => {
     world.provider = {
       id: 'p',
@@ -169,7 +156,6 @@ describe('with no engine chosen', () => {
     expect(rows[0]).toContain('Stays on this computer')
     expect(rows[1]).toContain('Orden account')
   })
-
   test('a choice is kept for this device and starts listening on that road', async () => {
     await click()
     target.querySelector<HTMLElement>('[role="dialog"] button')!.click()
@@ -178,12 +164,10 @@ describe('with no engine chosen', () => {
     expect(world.started).toEqual([{ engine: 'account', words: ['Sync Worker'] }])
   })
 })
-
 describe('on a computer that can hear on its own (#1151)', () => {
   beforeEach(() => {
     world.local.fits = true
   })
-
   test('the chooser offers Auto first, saying where the voice goes until the model is here', async () => {
     await click()
     const rows = chooser()
@@ -195,7 +179,6 @@ describe('on a computer that can hear on its own (#1151)', () => {
     expect(rows[2]).toContain('Orden account')
     expect(world.local.fetched).toBe(0)
   })
-
   test('Auto downloads the model and listens on the network road meanwhile', async () => {
     await click()
     target.querySelector<HTMLElement>('[role="dialog"] button')!.click()
@@ -204,7 +187,6 @@ describe('on a computer that can hear on its own (#1151)', () => {
     expect(world.local.fetched).toBe(1)
     expect(world.started).toEqual([{ engine: 'account', words: ['Sync Worker'] }])
   })
-
   test('and on this computer once the model is here', async () => {
     world.local.ready = true
     engines.choose('auto')
@@ -212,10 +194,8 @@ describe('on a computer that can hear on its own (#1151)', () => {
     expect(world.started).toEqual([{ engine: 'local', words: ['Sync Worker'] }])
   })
 })
-
 describe('with an engine chosen', () => {
   beforeEach(() => engines.choose('account'))
-
   test('a click starts and a second click finishes', async () => {
     await click()
     expect(voice.of(owner)).toBe('listening')
@@ -224,14 +204,12 @@ describe('with an engine chosen', () => {
     expect(world.finished).toBe(1)
     expect(voice.of(owner)).toBe('idle')
   })
-
   test('a press held is push-to-talk: letting go finishes', async () => {
     press(HOLD + 50)
     await settle()
     expect(world.started).toHaveLength(1)
     expect(world.finished).toBe(1)
   })
-
   test('the key reads a tap and a hold the same way', async () => {
     key('keydown', { key: 'v', altKey: true })
     key('keyup', { key: 'v', altKey: true })
@@ -240,7 +218,6 @@ describe('with an engine chosen', () => {
     key('keydown', { key: 'v', altKey: true })
     await settle()
     expect(world.finished).toBe(1)
-
     const at = performance.now()
     vi.spyOn(performance, 'now').mockReturnValue(at)
     key('keydown', { key: 'v', altKey: true })
@@ -251,7 +228,6 @@ describe('with an engine chosen', () => {
     await settle()
     expect(world.finished).toBe(2)
   })
-
   test('Escape cancels, and is spent', async () => {
     await click()
     let reached = false
@@ -261,7 +237,6 @@ describe('with an engine chosen', () => {
     expect(voice.of(owner)).toBe('idle')
     expect(reached).toBe(false)
   })
-
   test('a finish still writing down when Escape and a new start come leaves the new listening alone', async () => {
     world.slow = true
     await click()
@@ -273,14 +248,11 @@ describe('with an engine chosen', () => {
     await click()
     expect(voice.of(owner)).toBe('listening')
     const cancelled = world.cancelled
-
     for (const done of world.done) done()
     await settle()
-
     expect(voice.of(owner)).toBe('listening')
     expect(world.cancelled).toBe(cancelled)
   })
-
   test('Enter finishes, then is the field’s own Enter', async () => {
     await click()
     key('keydown', { key: 'Enter' })
@@ -289,7 +261,6 @@ describe('with an engine chosen', () => {
     expect(world.finished).toBe(1)
     expect(entered).toBe(1)
   })
-
   test('a chosen road that cannot be taken any more asks again', async () => {
     world.token = null
     world.provider = { id: 'p', kind: 'openai', name: 'OpenAI' }
@@ -297,7 +268,6 @@ describe('with an engine chosen', () => {
     expect(world.started).toEqual([])
     expect(voice.asking).toBe(owner)
   })
-
   test('a field going away takes its dictation with it', async () => {
     await click()
     action?.destroy()
@@ -305,12 +275,10 @@ describe('with an engine chosen', () => {
     expect(world.cancelled).toBe(1)
   })
 })
-
 describe('the device’s own recogniser', () => {
   afterEach(() => {
     delete (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
   })
-
   test('is offered where there is one, saying whose it is', async () => {
     Object.assign(globalThis, { webkitSpeechRecognition: vi.fn() })
     await click()
@@ -318,7 +286,6 @@ describe('the device’s own recogniser', () => {
     expect(rows.at(-1)).toContain('This device')
     expect(rows.at(-1)).toContain('maker’s servers')
   })
-
   test('is the road taken once chosen, and none of Whisper’s', async () => {
     Object.assign(globalThis, { webkitSpeechRecognition: vi.fn() })
     engines.choose('device')

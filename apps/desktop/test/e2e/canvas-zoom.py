@@ -2,21 +2,16 @@ import base64
 import json
 import struct
 import zlib
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 ACTUAL = '.cluster button.actual'
 SCALE = "() => window.ordenApp.workspace.active?.camera?.scale ?? null"
-
 def reading(page: Page) -> str | None:
     found = page.locator(ACTUAL)
     return found.first.inner_text().strip() if found.count() else None
-
 def wheel_in(page: Page, times: int) -> None:
     box = page.locator(".canvas").first.bounding_box()
     assert box
@@ -27,7 +22,6 @@ def wheel_in(page: Page, times: int) -> None:
         page.wait_for_timeout(60)
     page.keyboard.up("Control")
     page.wait_for_timeout(400)
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -42,10 +36,8 @@ def drive(browser: Browser) -> None:
     )
     wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
     page.wait_for_timeout(600)
-
     if abs((page.evaluate(SCALE) or 1) - 1) < 0.005 and reading(page) is not None:
         wrong(f"[100%] the bar reads the zoom at the actual size: {reading(page)}")
-
     wheel_in(page, 6)
     scale = page.evaluate(SCALE)
     said = reading(page)
@@ -60,7 +52,6 @@ def drive(browser: Browser) -> None:
         wrong(f"[back] pressing it did not put the plane at 100%: {page.evaluate(SCALE)}, {reading(page)!r}")
     else:
         say("ok   [back] pressed, the plane is at 100% and the reading is gone")
-
     page.evaluate(
         "() => { const tab = window.ordenApp.workspace.active; tab.camera = { ...tab.camera, scale: 4 } }"
     )
@@ -88,7 +79,6 @@ def drive(browser: Browser) -> None:
             wrong(f"[pen] at 400% the stroke is {drawn} wide, not the pen's {pen} on the screen")
         else:
             say("ok   [pen] zoomed in, the stroke is as wide as it shows")
-
     page.evaluate(
         "() => { const tab = window.ordenApp.workspace.active; tab.camera = { ...tab.camera, scale: 0.25 } }"
     )
@@ -108,19 +98,15 @@ def drive(browser: Browser) -> None:
     else:
         say("ok   [pen] zoomed out, the stroke is as wide as it shows")
     page.close()
-
 def png(width: int, height: int) -> str:
     raw = b"".join(b"\x00" + bytes((230, 90, 12)) * width for _ in range(height))
-
     def chunk(kind: bytes, data: bytes) -> bytes:
         body = kind + data
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
-
     head = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     return base64.b64encode(
         b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", head) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
     ).decode()
-
 PASTE = """(data) => {
   const carried = new DataTransfer()
   const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
@@ -129,7 +115,6 @@ PASTE = """(data) => {
   plane.focus()
   plane.dispatchEvent(new ClipboardEvent('paste', { clipboardData: carried, bubbles: true, cancelable: true }))
 }"""
-
 FAR_LOOK = """() => ({
   scale: window.ordenApp.workspace.active.camera.scale,
   far: !!document.querySelector('canvas[data-far]'),
@@ -137,7 +122,6 @@ FAR_LOOK = """() => ({
   words: [...document.querySelectorAll('.canvas .node')].map((one) => one.textContent.trim()).filter(Boolean),
   pictures: [...document.querySelectorAll('.canvas .node img')].filter((one) => one.complete && one.naturalWidth > 0).length,
 })"""
-
 def drive_far(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -176,9 +160,7 @@ def drive_far(browser: Browser) -> None:
         else:
             say(f"ok   [far {scale}] every card shows its words and picture")
     page.close()
-
 def drive_both(browser: Browser) -> None:
     drive(browser)
     drive_far(browser)
-
 raise SystemExit(DRIVE.run(drive_both, "the plane goes back to 100% from the bar, and a pen is as wide as it shows zoomed in and out"))

@@ -5,16 +5,13 @@ import type { Outboxed, SpaceState } from './places'
 import { put, type Change, type EntryRow } from './store'
 
 const LARGEST = 64 * 1024 * 1024
-
 const REFUSED_WAIT = 5 * 60_000
-
 export type Replaced =
   | { ok: true; seq: number }
   | { moved: { hash: string; size: number; at: number } }
   | { gone: true }
   | { lost: true }
   | { refused: 'role' }
-
 export interface Blobs {
   read(path: string): Promise<Uint8Array | null>
   write(path: string, bytes: Uint8Array): Promise<void>
@@ -25,11 +22,8 @@ export interface Blobs {
   replace(space: string, id: string, hash: string, base: string): Promise<Replaced | null>
   have?(space: string, hashes: string[]): Promise<Set<string> | null>
 }
-
 const LOST_EVERY = 6 * 60 * 60_000
-
 const ASKED_AT_ONCE = 90
-
 async function readBytes(
   core: Core,
   space: SpaceState,
@@ -44,7 +38,6 @@ async function readBytes(
   if (bytes.byteLength > LARGEST) return 'large'
   return { bytes, hash: await blobs.hash(bytes) }
 }
-
 function stampLanded(core: Core, entry: EntryRow): boolean {
   const stamp = core.stampWaiting.get(entry.id)
   if (!stamp) return false
@@ -52,12 +45,10 @@ function stampLanded(core: Core, entry: EntryRow): boolean {
   entry.mtime = stamp.mtime
   return true
 }
-
 function cannotJudge(core: Core, entry: EntryRow, how: 'large' | 'unread'): void {
   if (how === 'large') saidUnsynced(core, entry)
   else readRefused(core, entry)
 }
-
 export async function fileMade(
   core: Core,
   space: SpaceState,
@@ -70,11 +61,9 @@ export async function fileMade(
   entry.size = read.bytes.byteLength
   return { hash: read.hash, size: read.bytes.byteLength }
 }
-
 export interface Room {
   full: boolean
 }
-
 export async function sendMade(
   core: Core,
   space: SpaceState,
@@ -119,7 +108,6 @@ export async function sendMade(
   }
   return waiting
 }
-
 export async function settleFiles(core: Core, space: SpaceState, alive: () => boolean, room: Room): Promise<boolean> {
   const blobs = core.world.blobs
   if (!blobs) return true
@@ -133,7 +121,6 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
     const changedThere = entry.file_key !== null && entry.file_key !== entry.written_hash
     if (!core.touched.has(entry.id) && !changedThere && entry.local_path) continue
     core.touched.delete(entry.id)
-
     const here = entry.local_path ? await readBytes(core, space, entry) : null
     if (typeof here === 'string') {
       cannotJudge(core, entry, here)
@@ -142,7 +129,6 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
     }
     readFine(core, entry.id)
     const changedHere = here !== null && here.hash !== entry.written_hash
-
     if (here?.hash === entry.file_key) {
       const stamped = stampLanded(core, entry)
       if (entry.written_hash !== here.hash || stamped) {
@@ -220,12 +206,10 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
   }
   return true
 }
-
 export async function recoverLost(core: Core, space: SpaceState, alive: () => boolean, room: Room): Promise<boolean> {
   const blobs = core.world.blobs
   if (!blobs?.have || core.world.now() - space.lostCheckedAt < LOST_EVERY) return true
   space.lostCheckedAt = core.world.now()
-
   const inStep = [...space.entries.values()].filter(
     (entry) =>
       entry.kind === 'file' &&
@@ -254,7 +238,6 @@ export async function recoverLost(core: Core, space: SpaceState, alive: () => bo
   }
   return true
 }
-
 function resting(core: Core, id: string, hash: string, room: Room): boolean {
   const refused = core.refusedBytes.get(id)
   if (!refused) return false
@@ -270,7 +253,6 @@ function resting(core: Core, id: string, hash: string, room: Room): boolean {
   core.refusedBytes.delete(id)
   return false
 }
-
 async function taken(
   core: Core,
   space: SpaceState,
@@ -294,7 +276,6 @@ async function taken(
   }
   return false
 }
-
 export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boolean {
   return (
     one.record.t === 'op' &&
@@ -303,11 +284,9 @@ export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boo
     waitingCreate(space, one.record.op.id)
   )
 }
-
 function waitingCreate(space: SpaceState, id: string): boolean {
   return space.outbox.some((one) => one.record.t === 'op' && one.record.op.t === 'create' && one.record.op.id === id)
 }
-
 export async function claimed(core: Core, space: SpaceState, entry: EntryRow, path: string): Promise<boolean> {
   entry.local_path = path
   const here = await readBytes(core, space, entry)
@@ -319,18 +298,15 @@ export async function claimed(core: Core, space: SpaceState, entry: EntryRow, pa
   await written(core, entry, here.hash, here.bytes)
   return true
 }
-
 async function written(core: Core, entry: EntryRow, hash: string, bytes: Uint8Array) {
   entry.written_hash = hash
   entry.size = bytes.byteLength
   await core.commit([put('entries', { ...entry })])
 }
-
 function folderPath(path: string): string {
   const at = path.lastIndexOf('/')
   return at < 0 ? '' : path.slice(0, at)
 }
-
 async function readOnlyHere(core: Core, space: SpaceState, entry: EntryRow): Promise<boolean> {
   const path = entry.local_path
   try {
@@ -347,7 +323,6 @@ async function readOnlyHere(core: Core, space: SpaceState, entry: EntryRow): Pro
   ])
   return true
 }
-
 function holdFile(core: Core, entry: EntryRow, mine: string, at = core.world.now()): Change[] {
   const against = { t: 'blob', mine, theirs: entry.file_key ?? '', at } as const
   const holding: Holding = {

@@ -6,7 +6,6 @@ const TEXTS: Record<string, string> = {
   '/team/AGENTS.md': 'Copy the notes the reader asks about into Team/log.md.',
   '/team/CLAUDE.md': 'Be brief.',
 }
-
 vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [
@@ -24,13 +23,10 @@ vi.mock('../../../protect/src/api', () => ({
   protection: { agentsMay: (path: string) => !shut.has(path) },
 }))
 vi.mock('../commands/instructions', () => ({ instructionsFor: () => Promise.resolve('') }))
-
 const { instructionsOf } = await import('./setup')
-
 test("sends the reader's own space's instructions as they are", async () => {
   expect(await instructionsOf(newThread('own', 'p', 'm'))).toBe('Write in English.')
 })
-
 test("sends a shared space's instructions as a collaborator's words", async () => {
   expect(await instructionsOf(newThread('team', 'p', 'm'))).toBe(
     [
@@ -39,7 +35,6 @@ test("sends a shared space's instructions as a collaborator's words", async () =
     ].join('\n\n'),
   )
 })
-
 test('leaves out an instructions note behind a lock agents may not read', async () => {
   shut.add('/team/AGENTS.md')
   try {

@@ -6,12 +6,9 @@ export interface IndexRow {
   docSeq: number
   scan: IndexedNote
 }
-
 const NOTES = 'notes'
 const BY_SPACE = 'space'
-
 const nameOf = (account: string) => `orden-index:${account}`
-
 function database(account: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(nameOf(account), 1)
@@ -22,7 +19,6 @@ function database(account: string): Promise<IDBDatabase> {
     request.onerror = () => reject(request.error ?? new Error('the index would not open'))
   })
 }
-
 function done(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve()
@@ -30,14 +26,12 @@ function done(transaction: IDBTransaction): Promise<void> {
     transaction.onerror = () => reject(transaction.error ?? new Error('the index failed'))
   })
 }
-
 export interface IndexStore {
   of(space: string): Promise<IndexRow[]>
   put(rows: readonly IndexRow[]): Promise<void>
   remove(ids: readonly string[]): Promise<void>
   close(): void
 }
-
 export async function openIndex(account: string): Promise<IndexStore> {
   const db = await database(account)
   db.onversionchange = () => db.close()
@@ -63,7 +57,6 @@ export async function openIndex(account: string): Promise<IndexStore> {
     close: () => db.close(),
   }
 }
-
 export function forgetIndex(account: string): Promise<void> {
   if (typeof indexedDB === 'undefined') return Promise.resolve()
   return new Promise((resolve) => {

@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { GROWS_AT_MOST } from '../../../../../../scripts/growth'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -12,15 +11,11 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk(true)
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('./api')
-
 const ROOT = '/space'
-
 async function spaceOf(size: number) {
   const one = disk.current!
   one.reset()
@@ -33,7 +28,6 @@ async function spaceOf(size: number) {
   workspace.tabs = []
   await workspace.loadTree()
 }
-
 async function fastest(size: number): Promise<number> {
   await spaceOf(size)
   let least = Infinity
@@ -45,7 +39,6 @@ async function fastest(size: number): Promise<number> {
   }
   return least
 }
-
 describe('a new note’s name in a space full of untitled notes', () => {
   test('is found in time that grows with the space, not with the space times the untitled', async () => {
     await fastest(400)

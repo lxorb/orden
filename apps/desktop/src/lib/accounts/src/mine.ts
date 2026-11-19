@@ -9,17 +9,14 @@ function held(): string {
   if (!token) throw new Error('sign in first')
   return token
 }
-
 function worn(token: string, profile: OwnProfile): void {
   if (account.accountToken !== token || !account.user) return
   account.user = { ...account.user, ...profile }
 }
-
 export async function changeProfile(changes: ProfileChanges): Promise<void> {
   const token = held()
   worn(token, await saveProfile(token, changes))
 }
-
 export async function wearFace(picture: HTMLCanvasElement, crop: Crop, view: number) {
   const token = held()
   const { s, l } = await faceFrom(picture, crop, view)
@@ -32,12 +29,10 @@ export async function wearFace(picture: HTMLCanvasElement, crop: Crop, view: num
     }),
   )
 }
-
 export async function removeFace(): Promise<void> {
   const token = held()
   worn(token, await dropAvatar(token))
 }
-
 export async function nameIn(space: string, nick: string): Promise<void> {
   const token = held()
   const kept = await saveNick(token, space, nick)
@@ -45,7 +40,6 @@ export async function nameIn(space: string, nick: string): Promise<void> {
   if (!user || account.accountToken !== token) return
   account.user = { ...user, nicks: withOrWithout(user.nicks ?? {}, space, kept) }
 }
-
 export async function keepZone(): Promise<void> {
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
   if (!account.user || !zone || account.user.zone === zone) return

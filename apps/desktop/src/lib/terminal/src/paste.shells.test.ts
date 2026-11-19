@@ -6,7 +6,6 @@ import { afterAll, describe, expect, test } from 'vitest'
 import { spokenPath } from './paste'
 
 const windows = process.platform === 'win32'
-
 function found(name: string): string | null {
   const names = windows ? [`${name}.exe`] : [name]
   for (const folder of (process.env.PATH ?? '').split(delimiter)) {
@@ -17,14 +16,12 @@ function found(name: string): string | null {
   }
   return null
 }
-
 interface Shell {
   name: string
   script: string
   lines: (spoken: string[]) => string
   args: string[]
 }
-
 const SHELLS: Shell[] = [
   ...(windows ? [] : ['bash', 'dash', 'zsh', 'ksh', 'fish', 'tcsh']).map((name) => ({
     name,
@@ -46,7 +43,6 @@ const SHELLS: Shell[] = [
     args: [],
   },
 ]
-
 function drawn(count: number): string[] {
   const letters = '\'"\\$`;&|<>(){}[]*?!#~%@,=^ ‘’‚‛xyé'
   let seed = 1611
@@ -58,7 +54,6 @@ function drawn(count: number): string[] {
     Array.from({ length: 1 + (next() % 12) }, () => letters.charAt(next() % letters.length)).join(''),
   )
 }
-
 const NAMES = [
   "it's here",
   "a\\';touch PWNED;#",
@@ -78,10 +73,8 @@ const NAMES = [
   "ends'#",
   ...drawn(200),
 ]
-
 const room = mkdtempSync(join(tmpdir(), 'orden-said-'))
 afterAll(() => rmSync(room, { recursive: true, force: true }))
-
 describe('a dropped name, read back by the shell it lands in', () => {
   for (const shell of SHELLS) {
     const program = found(shell.name)
@@ -100,16 +93,13 @@ describe('a dropped name, read back by the shell it lands in', () => {
     })
   }
 })
-
 describe('a dropped name for a host whose shell is not known', () => {
   const root = '/t/'
   const kept = NAMES.filter((name) => spokenPath(root + name, 'ssh:box') !== null)
-
   test('leaves out only a name cmd or nu would act on', () => {
     expect(kept.length).toBeGreaterThan(20)
     for (const name of NAMES) if (!kept.includes(name)) expect(name).toMatch(/[&|<>^%"']/)
   })
-
   for (const shell of SHELLS) {
     const program = found(shell.name)
     const posix = shell.script === 'said.sh'

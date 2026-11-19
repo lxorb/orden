@@ -2,49 +2,38 @@ import { frameDocument, literal } from '../web-frame'
 import { formatRunValues } from './format'
 
 type RunLevel = 'log' | 'info' | 'warn' | 'error' | 'debug' | 'result' | 'exception'
-
 export interface RunLine {
   level: RunLevel
   text: string
 }
-
 export interface RunMessage {
   run: number
   lines: RunLine[]
   ready: boolean
   done: boolean
 }
-
 const KIND = 'orden-run'
-
 const LEVELS: readonly string[] = ['log', 'info', 'warn', 'error', 'debug', 'result', 'exception']
-
 const MAX_LINE = 2_000
-
 export function parseRunMessage(data: unknown, run: number): RunMessage | null {
   if (typeof data !== 'object' || data === null) return null
-
   const message = data as Record<string, unknown>
   if (message.orden !== KIND || message.run !== run) return null
   if (!Array.isArray(message.lines)) return null
-
   const lines: RunLine[] = []
   for (const entry of message.lines) {
     if (typeof entry !== 'object' || entry === null) return null
     const line = entry as Record<string, unknown>
     if (typeof line.text !== 'string') return null
     if (typeof line.level !== 'string' || !LEVELS.includes(line.level)) return null
-
     const text = line.text
     lines.push({
       level: line.level as RunLevel,
       text: text.length > MAX_LINE ? `${text.slice(0, MAX_LINE)}…` : text,
     })
   }
-
   return { run, lines, ready: message.ready === true, done: message.done === true }
 }
-
 export function runnerDocument(code: string, run: number, script: string): string {
   return frameDocument({
     head: `<meta http-equiv="Content-Security-Policy" content="${RUNNER_POLICY}">
@@ -53,10 +42,8 @@ export function runnerDocument(code: string, run: number, script: string): strin
     script,
   })
 }
-
 const RUNNER_POLICY =
   "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; worker-src blob:; form-action 'none'"
-
 function runnerProgram(code: string, run: number): string {
   return `(function () {
   var RUN = ${run}
@@ -85,7 +72,6 @@ function runnerProgram(code: string, run: number): string {
   worker.postMessage({ run: RUN, code: CODE })
 })()`
 }
-
 const WORKER = `self.onmessage = function (event) {
   self.onmessage = null
   var RUN = event.data.run

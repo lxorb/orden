@@ -15,7 +15,6 @@ pub struct Tool {
     pub input: Value,
     pub annotations: Option<Value>,
 }
-
 impl Tool {
     pub fn listed(&self) -> Value {
         let mut said = json!({
@@ -29,20 +28,16 @@ impl Tool {
         said
     }
 }
-
 pub fn table() -> &'static [Tool] {
     static TABLE: OnceLock<Vec<Tool>> = OnceLock::new();
     TABLE.get_or_init(|| serde_json::from_str(include_str!("tools.json")).unwrap_or_default())
 }
-
 pub fn find(name: &str) -> Option<&'static Tool> {
     table().iter().find(|tool| tool.name == name)
 }
-
 pub fn of_the_crate(name: &str) -> bool {
     NAMES.contains(&name)
 }
-
 pub fn reaches(grant: &Grant, name: &str) -> bool {
     let browsing = grant.holds(Scope::Browser) || grant.holds(Scope::BrowserReader);
     match name {
@@ -65,7 +60,6 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
             .is_some_and(|(_, needs)| needs.is_none_or(|scope| grant.holds(scope))),
     }
 }
-
 pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static Tool> {
     table()
         .iter()
@@ -75,11 +69,9 @@ pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static 
         })
         .collect()
 }
-
 pub fn unpaired() -> Vec<&'static Tool> {
     find("agent_status").into_iter().collect()
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -87,13 +79,10 @@ mod tests {
     use std::collections::BTreeMap;
 
     const OWN: [&str; 2] = ["agent_pair", "agent_bye"];
-
     const PROBE: &str = "__orden_probe";
-
     fn names() -> BTreeSet<&'static str> {
         table().iter().map(|tool| tool.name.as_str()).collect()
     }
-
     #[test]
     fn the_table_reads_whole_with_one_row_a_name() {
         let raw: Vec<Value> =
@@ -110,7 +99,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn every_verb_is_a_tool_and_every_tool_a_verb() {
         let verbs: BTreeSet<&str> = NAMES
@@ -121,7 +109,6 @@ mod tests {
             .collect();
         assert_eq!(names(), verbs);
     }
-
     fn sample(schema: &Value) -> Value {
         if let Some(first) = schema.get("enum").and_then(|all| all.get(0)) {
             return first.clone();
@@ -147,7 +134,6 @@ mod tests {
             _ => json!("e1"),
         }
     }
-
     fn objects(schema: &Value, at: &[Value], found: &mut Vec<(Vec<Value>, Value)>) {
         if schema.get("type").and_then(Value::as_str) == Some("object")
             && schema.get("properties").is_some()
@@ -165,21 +151,18 @@ mod tests {
             objects(&schema["items"], &deeper, found);
         }
     }
-
     fn at<'a>(value: &'a mut Value, place: &[Value]) -> &'a mut Value {
         place.iter().fold(value, |inside, step| match step {
             Value::String(key) => &mut inside[key.as_str()],
             _ => &mut inside[0],
         })
     }
-
     fn refusal(verb: &str, args: Value) -> String {
         match Verb::read(verb, args.clone()) {
             Some(Err(why)) => why,
             other => panic!("{verb} took {args}: {other:?}"),
         }
     }
-
     fn expected(why: &str) -> BTreeSet<String> {
         let Some((_, after)) = why.split_once("expected") else {
             return BTreeSet::new();
@@ -191,14 +174,12 @@ mod tests {
             .map(str::to_owned)
             .collect()
     }
-
     fn keys(schema: &Value) -> BTreeSet<String> {
         schema["properties"]
             .as_object()
             .map(|all| all.keys().cloned().collect())
             .unwrap_or_default()
     }
-
     fn required(schema: &Value) -> BTreeSet<String> {
         schema["required"]
             .as_array()
@@ -210,7 +191,6 @@ mod tests {
             })
             .unwrap_or_default()
     }
-
     #[test]
     fn every_crate_tools_schema_is_its_verbs_own() {
         for tool in table().iter().filter(|tool| of_the_crate(&tool.name)) {
@@ -220,7 +200,6 @@ mod tests {
                 matches!(Verb::read(verb, full.clone()), Some(Ok(_))),
                 "{verb}: a sample of its schema does not read: {full}"
             );
-
             let mut found = Vec::new();
             objects(&tool.input, &[], &mut found);
             for (place, schema) in found {
@@ -233,7 +212,6 @@ mod tests {
                     expected(&why)
                 };
                 assert_eq!(keys(&schema), takes, "{verb} at {place:?}: {why}");
-
                 let mut needs = BTreeSet::new();
                 for key in keys(&schema) {
                     let mut without = full.clone();
@@ -250,7 +228,6 @@ mod tests {
                     }
                 }
                 assert_eq!(required(&schema), needs, "{verb} at {place:?}");
-
                 for (key, one) in schema["properties"].as_object().into_iter().flatten() {
                     let (words, inside_a_list) = match (one.get("enum"), one["items"].get("enum")) {
                         (Some(words), _) => (words, false),
@@ -279,7 +256,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn every_shape_of_several_reads_back() {
         for tool in table().iter().filter(|tool| of_the_crate(&tool.name)) {
@@ -309,20 +285,17 @@ mod tests {
             }
         }
     }
-
     fn grant(scopes: &[Scope]) -> Grant {
         let mut grant = Grant::own("a".into(), "A");
         grant.scopes = scopes.to_vec();
         grant
     }
-
     fn listed_names(grant: &Grant, window: Option<&BTreeSet<String>>) -> BTreeSet<String> {
         listed(grant, window)
             .into_iter()
             .map(|tool| tool.name.clone())
             .collect()
     }
-
     #[test]
     fn an_agent_with_notes_and_no_browser_is_shown_no_browser() {
         let every: BTreeSet<String> = AGENT_VERBS
@@ -336,7 +309,6 @@ mod tests {
         assert!(!shown.iter().any(|one| one.starts_with("browser_")));
         assert!(!shown.contains("edit_note"));
     }
-
     #[test]
     fn an_agent_is_shown_only_the_tools_its_reach_allows() {
         let shown = listed_names(&grant(&[Scope::BrowserReader]), None);
@@ -352,7 +324,6 @@ mod tests {
         let names: Vec<&str> = unpaired().iter().map(|tool| tool.name.as_str()).collect();
         assert_eq!(names, ["agent_status"]);
     }
-
     #[test]
     fn the_windows_verbs_wait_for_the_window_to_say_it_has_them() {
         let own = Grant::own("a".into(), "A");
@@ -364,7 +335,6 @@ mod tests {
         assert!(after.contains("read_note"));
         assert!(!after.contains("edit_note"));
     }
-
     #[test]
     fn emils_defaults_list_all_but_three_kinds() {
         let every: BTreeSet<String> = AGENT_VERBS
@@ -381,7 +351,6 @@ mod tests {
             BTreeSet::from(["browser_evaluate", "write_setting"])
         );
     }
-
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();

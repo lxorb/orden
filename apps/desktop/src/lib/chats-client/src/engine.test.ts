@@ -11,13 +11,10 @@ interface Device {
   cache: MemoryCache
   engine: ChatEngine
 }
-
 const engines: ChatEngine[] = []
-
 afterEach(() => {
   for (const engine of engines.splice(0)) engine.stop()
 })
-
 async function device(account: Account, who: Who, cache = new MemoryCache()): Promise<Device> {
   const made: Device = { who, online: true, cache, engine: null as unknown as ChatEngine }
   made.engine = new ChatEngine(
@@ -29,7 +26,6 @@ async function device(account: Account, who: Who, cache = new MemoryCache()): Pr
   await made.engine.load()
   return made
 }
-
 async function kept(one: Device): Promise<Map<string, Message>> {
   const out = new Map<string, Message>()
   const asked = new Set<string>()
@@ -46,7 +42,6 @@ async function kept(one: Device): Promise<Map<string, Message>> {
   }
   return out
 }
-
 async function settle(devices: readonly Device[]): Promise<void> {
   for (const one of devices) one.online = true
   for (let round = 0; round < 4; round++) {
@@ -60,7 +55,6 @@ async function settle(devices: readonly Device[]): Promise<void> {
     }
   }
 }
-
 async function expectOneState(account: Account, devices: readonly Device[]): Promise<void> {
   const truth = new Map([...account.state()].filter(([, message]) => keepsRow(message)))
   for (const one of devices) {
@@ -72,7 +66,6 @@ async function expectOneState(account: Account, devices: readonly Device[]): Pro
     ).toEqual([])
   }
 }
-
 describe('three devices in one chat', () => {
   test('offline posts, edits and deletes crossing end in one state', async () => {
     for (let seed = 1; seed <= 25; seed++) {
@@ -85,7 +78,6 @@ describe('three devices in one chat', () => {
       ]
       let clock = 1_000
       const id = () => ulid((clock += 1), next)
-
       for (let step = 0; step < 60; step++) {
         const one = devices[Math.floor(next() * devices.length)]!
         const roll = next()
@@ -119,12 +111,10 @@ describe('three devices in one chat', () => {
         if ((event.kind === 'edit' || event.kind === 'delete') && target?.author !== one.who) continue
         await one.engine.queue(CHAT, event)
       }
-
       await settle(devices)
       await expectOneState(account, devices)
     }
   })
-
   test('an outbox outlives a crash and is placed once', async () => {
     const account = new Account()
     const cache = new MemoryCache()
@@ -136,33 +126,27 @@ describe('three devices in one chat', () => {
     const message = id()
     await first.engine.queue(CHAT, { kind: 'post', id: id(), message, body: 'before the crash' })
     await first.engine.queue(CHAT, { kind: 'edit', id: id(), target: message, body: 'and after' })
-
     const [post] = await cache.outbox()
     if (post) account.place('user:ana', post.event)
     first.engine.stop()
-
     const again = await device(account, 'user:ana', cache)
     expect(again.engine.pending(CHAT)).toHaveLength(2)
     await settle([again])
-
     expect(account.log.map((one) => one.kind)).toEqual(['post', 'edit'])
     await expectOneState(account, [again])
     expect((await kept(again)).get(message)?.body).toBe('and after')
   })
-
   test('a refusal stays until the reader retries or lets it go', async () => {
     const account = new Account()
     const ana = await device(account, 'user:ana')
     await ana.engine.queue(CHAT, { kind: 'delete', id: 'e1', target: 'nobody' })
     await settle([ana])
     expect(ana.engine.pending(CHAT).map((row) => row.refused)).toEqual(['gone'])
-
     await ana.engine.drop(['e1'])
     expect(ana.engine.pending(CHAT)).toEqual([])
     expect(await ana.cache.outbox()).toEqual([])
   })
 })
-
 describe('a stopped engine', () => {
   test('sends no more of its outbox once stopped, though batches were left', async () => {
     let online = false
@@ -198,10 +182,8 @@ describe('a stopped engine', () => {
         body: `line ${String(one)}`,
       })
     }
-
     online = true
     await engine.flush(CHAT)
-
     expect(posted).toEqual([50])
   })
 })

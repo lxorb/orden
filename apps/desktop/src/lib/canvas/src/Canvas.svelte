@@ -94,7 +94,6 @@
   import { freeScroll, holdFreeScroll } from './free-scroll'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
-
   const store = untrack(() => new CanvasStore(tab))
   const SLACK = 800
   const QUANTUM = 400
@@ -126,12 +125,10 @@
   const originY = $derived(spanY / 2 - camera.y * camera.scale)
   let twisted = 0
   let twistedTo = 0
-
   function find() {
     finding = true
     askedFind++
   }
-
   function twist(x: number, y: number, by: number) {
     if (!modes.canvasTurnSnaps) {
       store.camera = turned(camera, width, height, x, y, by)
@@ -142,9 +139,7 @@
     store.camera = turned(camera, width, height, x, y, snapped(twisted) - turn)
     twistedTo = turnOf(store.camera)
   }
-
   const onScreen = (point: { x: number; y: number }) => screenPoint(camera, width, height, point)
-
   function screenBox(box: { x: number; y: number; width: number; height: number }) {
     const corners = [
       onScreen(box),
@@ -161,132 +156,97 @@
       bottom: ys.reduce((high, one) => Math.max(high, one), -Infinity),
     }
   }
-
   const THINNING = 210
   let crossing = untrack(() => settled(latticeLevel(camera.scale)))
   let stands = $state(crossing.at)
   let thinning = 0
   let thinnedAt = 0
   const patterns = $derived(latticeLayers(stands, camera.scale))
-
   $effect(() => {
     const want = latticeLevel(camera.scale, crossing.to)
     if (want === crossing.to) return
-
     crossing = aimed(crossing, want)
-
     if (!dur(THINNING)) {
       crossing = settled(want)
       stands = crossing.at
       return
     }
-
     const frame = (now: number) => {
       const dt = thinnedAt ? now - thinnedAt : 16
       thinnedAt = now
-
       crossing = stepped(crossing, dt, dur(THINNING))
       stands = crossing.at
       thinning = fading(crossing) ? requestAnimationFrame(frame) : 0
     }
-
     if (thinning) return
-
     thinnedAt = 0
     thinning = requestAnimationFrame(frame)
   })
-
   $effect(() => () => cancelAnimationFrame(thinning))
-
   const gesture = $derived(machine.gesture)
   const drag = $derived(gesture?.kind === 'drag' ? gesture : null)
   const sizing = $derived(gesture?.kind === 'resize' ? gesture : null)
   const inking = $derived(gesture?.kind === 'ink' ? gesture : null)
   const pulling = $derived(gesture?.kind === 'pull' ? gesture : null)
   const rewiring = $derived(gesture?.kind === 'reconnect' ? gesture : null)
-
   function bystanders(ids: readonly string[]) {
     const moving = new Set(ids)
     return store.canvas.nodes.filter((node) => !moving.has(node.id)).map(boxOf)
   }
-
   const dragSnap = $derived.by(() => {
     if (!drag) return NO_SNAP
-
     const box = pickedBox(store.canvas, drag.ids)
     if (!box) return NO_SNAP
-
     const snap = snapMove({ ...box, x: box.x + drag.dx, y: box.y + drag.dy }, bystanders(drag.ids), GRID / 2)
-
     return { dx: drag.dx + snap.dx, dy: drag.dy + snap.dy, guides: snap.guides }
   })
-
   const sizeSnap = $derived.by(() => {
     if (!sizing) return NO_SNAP
-
     const box = pickedBox(store.canvas, sizing.ids)
     if (!box) return NO_SNAP
-
     const now = {
       x: box.x + (sizing.handle.includes('w') ? sizing.dx : 0),
       y: box.y + (sizing.handle.includes('n') ? sizing.dy : 0),
       width: box.width + (sizing.handle.includes('e') ? sizing.dx : 0),
       height: box.height + (sizing.handle.includes('s') ? sizing.dy : 0),
     }
-
     if (sizing.aspect) return { dx: sizing.dx, dy: sizing.dy, guides: [] }
-
     const snap = snapResize(now, sizing.handle, bystanders(sizing.ids), GRID / 2)
     return { dx: sizing.dx + snap.dx, dy: sizing.dy + snap.dy, guides: snap.guides }
   })
-
   const JOINS = new Set(['line', 'arrow', 'elbow'])
-
   const joining = $derived.by(() => {
     if (!pulling?.fromNode || !JOINS.has(pulling.tool)) return null
-
     const found = hitFor(pulling.to, false)
     if (!found.node || found.node === pulling.fromNode) return null
-
     const node = shown.nodes.find((one) => one.id === found.node)
     if (!node) return null
-
     const from = shown.nodes.find((one) => one.id === pulling.fromNode)
     const side = facingSide(boxOf(node), { ...pulling.from, width: 0, height: 0 })
     const leaves = from ? sidePoint(boxOf(from), facingSide(boxOf(from), boxOf(node))) : pulling.from
-
     return { id: node.id, side, at: sidePoint(boxOf(node), side), leaves }
   })
-
   const pullSnap = $derived.by(() => {
     if (!pulling) return NO_SNAP
     if (joining) return NO_SNAP
-
     return snapPoint(pulling.to, store.canvas.nodes.map(boxOf), GRID / 2)
   })
-
   const pullTo = $derived.by(() => {
     if (!pulling) return null
     if (joining) return joining.at
-
     return { x: pulling.to.x + pullSnap.dx, y: pulling.to.y + pullSnap.dy }
   })
-
   const rewiredTo = $derived.by(() => {
     if (!rewiring) return null
-
     const found = hitFor(rewiring.to, false)
     const node = found.node ? shown.nodes.find((one) => one.id === found.node) : null
     if (!node) return { at: rewiring.to, onto: null }
-
     const other = shown.edges.find((one) => one.id === rewiring.edge)
     const far = other && (rewiring.end === 'from' ? other.toNode : other.fromNode)
     const anchor = shown.nodes.find((one) => one.id === far)
     const side = anchor ? facingSide(boxOf(node), boxOf(anchor)) : 'top'
-
     return { at: sidePoint(boxOf(node), side), onto: node.id }
   })
-
   let carriedInk = $state.raw<{
     dx: number
     dy: number
@@ -300,14 +260,12 @@
     turn: 0,
     about: STILL,
   })
-
   const shown = $derived.by((): Plane => {
     const base = store.canvas
     if (drag) return movedBy(base, drag.ids, dragSnap.dx, dragSnap.dy)
     if (sizing) {
       return resizedPick(base, sizing.ids, sizing.handle, sizeSnap.dx, sizeSnap.dy, sizing.aspect)
     }
-
     if (inking) {
       const moved = { ...carriedInk, sx: carriedInk.scale, sy: carriedInk.scale }
       const wanted = new Set(store.picked)
@@ -316,19 +274,15 @@
         ink: base.ink.map((stroke) => (wanted.has(stroke.id) ? transformed(stroke, moved) : stroke)),
       }
     }
-
     return base
   })
-
   const roughX = $derived(Math.round(camera.x / QUANTUM))
   const roughY = $derived(Math.round(camera.y / QUANTUM))
   const roughZoom = $derived(Math.round(Math.log2(camera.scale) * 4))
-
   const inView = $derived.by(() => {
     const scale = 2 ** (roughZoom / 4)
     const across = spanX / scale + 2 * SLACK
     const down = spanY / scale + 2 * SLACK
-
     return {
       x: roughX * QUANTUM - across / 2,
       y: roughY * QUANTUM - down / 2,
@@ -336,26 +290,19 @@
       height: down,
     }
   })
-
   let playing = $state.raw<ReadonlySet<string>>(new Set())
-
   function heard(id: string, on: boolean) {
     if (playing.has(id) === on) return
     playing = new Set(on ? [...playing, id] : [...playing].filter((one) => one !== id))
   }
-
   const cards = $derived(shown.nodes.filter((node) => playing.has(node.id) || overlaps(boxOf(node), inView)))
-
   const watched = $derived.by(() => {
     const across = spanX / camera.scale / 2
     const down = spanY / camera.scale / 2
     return { x: camera.x - across, y: camera.y - down, width: across * 2, height: down * 2 }
   })
-
   const far = $derived(cards.length > MOST_CARDS || (!placed && !store.framed && shown.nodes.length > MOST_CARDS))
-
   const wanted = $derived(far ? cards.filter((node) => node.id === store.editing || playing.has(node.id)) : cards)
-
   const onPage = $derived.by(() => {
     const scale = 2 ** (roughZoom / 4)
     const across = spanX / scale + 2 * QUANTUM
@@ -367,16 +314,13 @@
       height: down,
     }
   })
-
   let madeAround = $state.raw<ReadonlySet<string>>(new Set())
-
   const drawnCards = $derived.by(() => {
     const waiting = wanted.filter((node) => !madeAround.has(node.id) && !overlaps(boxOf(node), onPage))
     if (waiting.length <= MADE_A_FRAME) return wanted
     const late = new Set(waiting.map((node) => node.id))
     return wanted.filter((node) => !late.has(node.id))
   })
-
   $effect(() => {
     const all = wanted
     const made = madeAround
@@ -391,30 +335,23 @@
     })
     return () => cancelAnimationFrame(frame)
   })
-
   const drawnEdges = $derived.by(() => {
     if (far) return []
     const near = new Set(cards.map((node) => node.id))
     return shown.edges.filter((edge) => near.has(edge.fromNode) || near.has(edge.toNode))
   })
-
   const picked = $derived(store.pickedSet)
-
   const holdsShape = $derived.by(() => {
     if (!store.picked.length) return false
     const cards = store.canvas.nodes.filter((node) => store.pickedSet.has(node.id))
     return cards.length === store.pickedSet.size && cards.every((node) => node.type === 'file' && isPicture(node.file))
   })
-
   const box = $derived(pickedBox(shown, store.picked))
   const inked = $derived(new Set(store.canvas.ink.map((stroke) => stroke.id)))
-
   const describes = $derived(
     `Canvas: ${store.canvas.nodes.length} cards, ${store.canvas.edges.length} links, ${store.canvas.ink.length} drawings`,
   )
-
   const lassoed = $derived(store.picked.length > 0 && store.picked.every((id) => inked.has(id)))
-
   const ported = $derived.by(() => {
     if (gesture || store.editing !== null || tools.which !== 'select') return null
     const under = machine.hovered
@@ -422,24 +359,18 @@
     if (!node || !roomFor(boxOf(node), camera.scale, PORT)) return null
     return node.id
   })
-
   const portedBox = $derived(shown.nodes.find((node) => node.id === ported) ?? null)
-
   const drawing = $derived.by(() => {
     if (gesture?.kind !== 'connect') return null
-
     const from = shown.nodes.find((node) => node.id === gesture.id)
     if (!from) return null
-
     return { from: sidePoint(boxOf(from), gesture.side), to: gesture.to, side: gesture.side }
   })
-
   const band = $derived(gesture?.kind === 'band' ? rectBetween(gesture.from, gesture.to) : null)
   const lasso = $derived(gesture?.kind === 'lasso' ? gesture.points : null)
   const pullFrom = $derived(joining?.leaves ?? pulling?.from ?? null)
   const pullBox = $derived(pullFrom && pullTo ? rectBetween(pullFrom, pullTo) : null)
   const PLAIN = new Set(['text', 'words', 'file', 'picture', 'link', 'group', 'rect', 'ellipse'])
-
   function pulledPath(tool: string, from: Point, to: Point, box: Box): string {
     const line = isLineShape(tool as Shape)
     const points = shapePath({
@@ -449,21 +380,16 @@
       ...box,
       ...(line && (to.y - from.y) * (to.x - from.x) < 0 ? { up: true } : {}),
     })
-
     const d = `M ${points.map((one) => `${Math.round(one.x)} ${Math.round(one.y)}`).join(' L ')}`
     return line ? d : `${d} Z`
   }
-
   const HEAD = 11
-
   const pullHead = $derived.by(() => {
     if (pulling?.tool !== 'arrow' || !pullFrom || !pullTo) return null
-
     const dx = pullTo.x - pullFrom.x
     const dy = pullTo.y - pullFrom.y
     const away = Math.hypot(dx, dy)
     if (away < 1) return null
-
     return {
       x: pullTo.x,
       y: pullTo.y,
@@ -471,31 +397,23 @@
       size: Math.min(HEAD, away / 3),
     }
   })
-
   const edgeHandles = $derived.by(() => {
     if (gesture) return []
-
     const out: { key: string; at: Point }[] = []
     const byId = new Map(shown.nodes.map((node) => [node.id, node]))
     for (const edge of shown.edges) {
       if (!store.isPicked(edge.id)) continue
-
       const from = byId.get(edge.fromNode)
       const to = byId.get(edge.toNode)
       if (!from || !to) continue
-
       const ends = edgeEnds(edge, boxOf(from), boxOf(to))
       out.push({ key: `${edge.id}:from`, at: ends.from }, { key: `${edge.id}:to`, at: ends.to })
     }
-
     return out
   })
-
   let predicted = $state.raw<InkPoint[]>([])
-
   const live = $derived.by(() => {
     if (gesture?.kind !== 'draw') return null
-
     return {
       id: 'live',
       tool: gesture.stroke.tool,
@@ -504,28 +422,22 @@
       points: [...gesture.stroke.points, ...predicted],
     }
   })
-
   const guides = $derived(
     dragSnap.guides.length ? dragSnap.guides : sizeSnap.guides.length ? sizeSnap.guides : pullSnap.guides,
   )
-
   const modulo = (value: number, by: number): number => (by > 0 ? ((value % by) + by) % by : 0)
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(tab.note.revision)
     if (store.follow() && !store.framed && width && height) store.fit(width, height)
   })
-
   $effect(() => {
     const id = store.editing
     const room = height - viewport.covered
     if (id === null || !viewport.touch || !viewport.typing || room <= 0) return
-
     untrack(() => {
       const node = store.canvas.nodes.find((one) => one.id === id)
       if (!node) return
-
       const { top, bottom } = screenBox(node)
       const low = bottom - (room - CARD_MARGIN)
       const high = CARD_MARGIN - top
@@ -533,41 +445,32 @@
       if (by) store.camera = panned(camera, 0, -by)
     })
   })
-
   $effect(() => {
     const ink = tools.which === 'draw' || tools.which === 'erase' || tools.which === 'lasso'
     if (ink) untrack(() => (store.editing !== null ? (store.editing = null) : undefined))
   })
-
   $effect(() => {
     const element = host
     if (!element) return
-
     const watcher = new ResizeObserver(() => measure(element))
     watcher.observe(element)
     measure(element)
     palette = readPalette(element)
-
     return () => watcher.disconnect()
   })
-
   $effect(() => {
     const element = host
     if (!element || typeof MutationObserver === 'undefined') return
-
     const watcher = new MutationObserver(() => (palette = readPalette(element)))
     watcher.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class', 'style', 'data-theme'],
     })
-
     return () => watcher.disconnect()
   })
-
   $effect(() => {
     store.readOnly = !canWriteIn(tab.note)
   })
-
   $effect(() => {
     rooms.drawing(tab.note.key, store)
     return () => {
@@ -575,22 +478,17 @@
       rooms.drawing(tab.note.key, null)
     }
   })
-
   $effect(() => {
     const shared = store.shared
     if (!shared) return
-
     shared.hand(pointing, live)
   })
-
   $effect(() => {
     if (focused && store.editing === null && !finding) host?.focus({ preventScroll: true })
   })
-
   $effect(() => {
     const element = host
     if (!element) return
-
     element.addEventListener('wheel', onWheel, { passive: false })
     const unpinch = heldGestures(
       element,
@@ -609,43 +507,33 @@
       unpinch()
     }
   })
-
   function measure(element: HTMLElement) {
     const rect = element.getBoundingClientRect()
     if (!rect.width || !rect.height) return
-
     const was = height
     width = Math.round(rect.width)
     height = Math.round(rect.height)
-
     if (placed && viewport.touch && was && height !== was) {
       store.camera = panned(camera, 0, -(height - was) / 2)
     }
-
     if (placed) return
     placed = true
-
     if (!store.framed) store.fit(width, height)
   }
-
   function planeAt(event: { clientX: number; clientY: number }): Point {
     const element = host
     if (!element) return { x: 0, y: 0 }
-
     const rect = element.getBoundingClientRect()
     return graphPoint(camera, width, height, event.clientX - rect.left, event.clientY - rect.top)
   }
-
   function pasteSpot(): Point {
     if (arrow) return planeAt(arrow)
     return graphPoint(camera, width, height, width / 2, height / 2)
   }
-
   function screenAt(event: { clientX: number; clientY: number }): Point {
     const rect = host?.getBoundingClientRect()
     return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) }
   }
-
   const hitFor = (point: Point, coarse: boolean): Hit =>
     hitAt(
       {
@@ -659,7 +547,6 @@
       },
       point,
     )
-
   function sampleOf(event: PointerEvent, began: number): InkPoint {
     const point = planeAt(event)
     return {
@@ -669,42 +556,34 @@
       t: Math.max(0, Math.round(event.timeStamp - began)),
     }
   }
-
   let began = 0
   let holding = 0
   let held: Point = { x: 0, y: 0 }
   const A_TWITCH = 6
-
   function waitForHold(point: Point) {
     window.clearTimeout(holding)
     held = point
     holding = window.setTimeout(() => send({ kind: 'held', at: point }), HELD)
   }
-
   function stopHolding() {
     window.clearTimeout(holding)
     holding = 0
   }
-
   $effect(() => () => {
     stopHolding()
     stopDoubting()
   })
-
   function swallowTheNextClick() {
     const stop = (event: MouseEvent) => {
       event.stopPropagation()
       event.preventDefault()
     }
-
     window.addEventListener('click', stop, { capture: true, once: true })
     window.setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 900)
   }
-
   let gestures = 0
   let cloning: string | null = null
   const putting = () => ({ colour: tools.colour, path: tab.path })
-
   function send(input: Input) {
     const preview = shown
     const aiming = pullTo
@@ -726,13 +605,10 @@
       penSeen: hand.penSeen,
       fingerDraws: hand.fingerDraws,
     })
-
     if (beginning && next.machine.gesture) gestures += 1
-
     machine = next.machine
     for (const effect of next.effects) apply(effect, preview, aiming)
   }
-
   function apply(effect: Effect, preview: Plane, aiming: Point | null) {
     switch (effect.do) {
       case 'pick':
@@ -823,40 +699,31 @@
         break
     }
   }
-
   function assistShape() {
     const one = machine.gesture
     if (one?.kind !== 'draw') return
-
     const stroke = { id: 'live', ...one.stroke }
     const shape = assisted(stroke)
     if (!shape) return
-
     machine = {
       ...machine,
       gesture: { ...one, stroke: { ...one.stroke, points: tidyShape(stroke, shape).points } },
     }
     predicted = []
   }
-
   const kindOf = (event: PointerEvent) => penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
-
   const contacts = new Contacts()
-
   const stylus = new Stylus({
     agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
     touch: typeof navigator === 'undefined' ? false : navigator.maxTouchPoints > 0,
     coalesced: typeof PointerEvent === 'function' && 'getCoalescedEvents' in PointerEvent.prototype,
     predicted: typeof PointerEvent === 'function' && 'getPredictedEvents' in PointerEvent.prototype,
   })
-
   const trace = new Trace()
   let traced = $state('')
   let profile = $state(stylus.line)
-
   function note(what: string, event: PointerEvent) {
     if (stylus.saw(event)) profile = stylus.line
-
     if (
       trace.note({
         what,
@@ -869,19 +736,15 @@
       traced = trace.line
     }
   }
-
   let lastPen = false
   const right = new RightPan()
   const GRACE = 160
   let doubting: { id: number; timer: number } | null = null
-
   function stopDoubting(id?: number) {
     if (!doubting || (id !== undefined && doubting.id !== id)) return
-
     window.clearTimeout(doubting.timer)
     doubting = null
   }
-
   function capture(id: number) {
     try {
       host?.setPointerCapture(id)
@@ -890,32 +753,24 @@
       // not promised to this element.
     }
   }
-
   function onPointerDown(event: PointerEvent) {
     const { kind, eraser } = kindOf(event)
     const pen = kind === 'pen'
     note('down', event)
-
     if (contacts.echo(event)) return
-
     lastPen = pen
-
     if (event.button === 2 && !pen) {
       if (right.down(event)) capture(event.pointerId)
       return
     }
-
     const point = planeAt(event)
     arrow = { clientX: event.clientX, clientY: event.clientY }
     const spare = !pen && !drives(machine, event.pointerId)
     if (!spare) began = event.timeStamp
-
     const coarse = kind === 'touch'
     contacts.came(event.pointerId, { pen, eraser })
-
     if (pen) hand.sawPen()
     capture(event.pointerId)
-
     send({
       kind: 'down',
       id: event.pointerId,
@@ -931,10 +786,8 @@
       sample: sampleOf(event, began),
       hit: hitFor(point, coarse),
     })
-
     if (coarse && !machine.penDown && !spare) waitForHold(point)
   }
-
   function repairPen(event: PointerEvent, point: Point) {
     const now = kindOf(event)
     const turned = contacts.turned(event.pointerId, {
@@ -942,12 +795,10 @@
       eraser: now.eraser,
     })
     if (!turned) return
-
     lastPen = true
     if (turned.first) hand.sawPen()
     stopHolding()
     began = event.timeStamp
-
     send({
       kind: 'penned',
       id: event.pointerId,
@@ -957,16 +808,13 @@
       hit: hitFor(point, false),
     })
   }
-
   function onPointerMove(event: PointerEvent) {
     note('move', event)
-
     if (right.holds(event)) {
       const by = right.move(event)
       if (by) store.camera = panned(camera, by.dx, by.dy)
       return
     }
-
     if (hovering(event) && machine.driver?.id === event.pointerId && contacts.has(event.pointerId)) {
       onPointerUp(event)
       return
@@ -974,26 +822,21 @@
     if (hovering(event) && host?.hasPointerCapture(event.pointerId)) {
       host.releasePointerCapture(event.pointerId)
     }
-
     const floating = hovering(event) || !contacts.has(event.pointerId)
     const ours = drives(machine, event.pointerId)
-
     if (!floating) stopDoubting(event.pointerId)
-
     const point = planeAt(event)
     arrow = { clientX: event.clientX, clientY: event.clientY }
     if (store.shared) pointing = point
     const kind = kindOf(event).kind
     const coarse = kind === 'touch'
     lastPen = kind === 'pen'
-
     const drawing = ours && !floating && machine.gesture?.kind === 'draw' ? machine.gesture : null
     const samples = drawing
       ? (typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event]).map((one) =>
           sampleOf(one, began),
         )
       : []
-
     if (drawing) {
       const guessed =
         typeof event.getPredictedEvents === 'function'
@@ -1002,22 +845,16 @@
       const laid = drawing.stroke.points
       const nib = samples[samples.length - 1] ?? laid[laid.length - 1]
       const before = samples.length > 1 ? samples[samples.length - 2] : laid[laid.length - (samples.length ? 1 : 2)]
-
       predicted = leadPoint(before, nib, guessed)
     }
-
     if (!floating) repairPen(event, point)
-
     if (ours && holding && Math.hypot(point.x - held.x, point.y - held.y) * camera.scale > A_TWITCH) {
       stopHolding()
     }
-
     const wants = !machine.gesture || machine.gesture.kind === 'erase' || machine.gesture.kind === 'pull'
     const found = wants ? hitFor(point, coarse) : NOTHING
-
     if (!machine.gesture) over = overOf(found)
     if (ours) rubAt = machine.gesture?.kind === 'erase' ? point : null
-
     send({
       kind: 'move',
       id: event.pointerId,
@@ -1026,13 +863,10 @@
       samples,
       hit: found,
     })
-
     if (ours && machine.gesture?.kind === 'draw' && !holding) waitForHold(point)
   }
-
   function onPointerUp(event: PointerEvent) {
     note('up', event)
-
     const lifted = right.up(event)
     if (lifted) {
       if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
@@ -1048,10 +882,8 @@
     stopDoubting(event.pointerId)
     contacts.went(event.pointerId)
     if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
-
     const point = planeAt(event)
     const wasInk = ours && machine.gesture?.kind === 'ink'
-
     send({
       kind: 'up',
       id: event.pointerId,
@@ -1059,7 +891,6 @@
       screen: screenAt(event),
       hit: hitFor(point, event.pointerType === 'touch'),
     })
-
     if (wasInk) {
       const moved = carriedInk
       carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
@@ -1084,7 +915,6 @@
       }
     }
   }
-
   function onPointerCancel(event: PointerEvent) {
     note('cancel', event)
     right.cancel(event.pointerId)
@@ -1092,7 +922,6 @@
       stopHolding()
       rubAt = null
     }
-
     const pen = machine.driver?.kind === 'pen' && machine.driver.id === event.pointerId
     if (pen && machine.gesture) {
       stopDoubting()
@@ -1109,7 +938,6 @@
       }
       return
     }
-
     contacts.went(event.pointerId)
     if (drives(machine, event.pointerId)) {
       predicted = []
@@ -1117,14 +945,11 @@
     }
     send({ kind: 'cancel', id: event.pointerId })
   }
-
   function onWheel(event: WheelEvent) {
     const element = host
     if (!element) return
-
     event.preventDefault()
     const rect = element.getBoundingClientRect()
-
     if (event.ctrlKey || event.metaKey) {
       if (pinching()) return
       store.camera = zoomed(
@@ -1137,36 +962,28 @@
       )
       return
     }
-
     const by = freeScroll.wheel(event)
     store.camera = panned(camera, -by.x, -by.y)
   }
-
   $effect(() => holdFreeScroll())
-
   function onDoubleClick(event: MouseEvent) {
     if (touchMultiTapAt > 0 && performance.now() - touchMultiTapAt < 300) return
     if (tools.which !== 'select') return
-
     const point = planeAt(event)
     void run.open(store, hitFor(point, false), point)
   }
-
   function onTapClick(event: MouseEvent) {
     const target = event.target
     if (target instanceof Element && target.closest('.cluster, button, input, textarea, [contenteditable="true"]')) {
       return
     }
-
     const pointerType = 'pointerType' in event ? (event as PointerEvent).pointerType : ''
     const touch = pointerType === 'touch' || performance.now() - touchUpAt < 350
     if (!touch || store.editing !== null || event.detail !== 2) return
-
     touchMultiTapAt = performance.now()
     event.preventDefault()
     store.undo()
   }
-
   function showMenu(point: Point, about = false, buttons = 0) {
     const found = hitFor(point, viewport.touch)
     if (found.node && !store.isPicked(found.node)) store.pick(found.node)
@@ -1174,11 +991,9 @@
     if (found.stroke && !store.isPicked(found.stroke)) store.pick(found.stroke)
     const bare = !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
     const under = about ? null : nodeAt(shown.nodes, point, 12)
-
     const rect = host?.getBoundingClientRect()
     const at = onScreen(point)
     const screen = { clientX: (rect?.left ?? 0) + at.x, clientY: (rect?.top ?? 0) + at.y }
-
     const near = viewport.touch
     menu.show(
       new MouseEvent('contextmenu', { ...screen, buttons }),
@@ -1202,30 +1017,23 @@
       { title: 'Canvas', near },
     )
   }
-
   function onContextMenu(event: MouseEvent) {
     event.preventDefault()
     if (right.ownsMenu(event.timeStamp)) return
     if (lastPen || (hand.penSeen && viewport.touch)) return
-
     showMenu(planeAt(event), false, event.buttons)
   }
-
   function typing(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false
-
     return target.isContentEditable || target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
   }
-
   function onKeyDown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (typing(event.target) || keyElsewhere(event, event.currentTarget)) return
-
     if (event.key === ' ' && store.editing === null) {
       event.preventDefault()
       send({ kind: 'space', down: true })
       return
     }
-
     if (event.key === 'Escape') {
       if (store.editing !== null) store.editing = null
       else if (narrowed) narrowed = false
@@ -1233,9 +1041,7 @@
       else store.clearPicked()
       return
     }
-
     if (store.editing !== null) return
-
     if (
       run.keys(store, event, {
         width,
@@ -1249,56 +1055,44 @@
       event.preventDefault()
       return
     }
-
     if (shortcuts.pressed('edit.select-all', event)) {
       event.preventDefault()
       store.pickAll([...store.canvas.nodes.map((node) => node.id), ...store.canvas.ink.map((stroke) => stroke.id)])
       return
     }
-
     if (shortcuts.pressed('edit.undo', event)) {
       event.preventDefault()
       store.undo()
       return
     }
-
     if (shortcuts.pressed('edit.redo', event) || shortcuts.pressed('edit.redo.alt', event)) {
       event.preventDefault()
       store.redo()
     }
   }
-
   function onKeyUp(event: KeyboardEvent) {
     if (event.key === ' ') letGoOfSpace()
     tools.released(event)
   }
-
   function letGoOfSpace() {
     if (machine.spacing) send({ kind: 'space', down: false })
   }
-
   function onFocusOut(event: FocusEvent) {
     const going = event.relatedTarget
     if (!(going instanceof Node && host?.contains(going))) letGoOfSpace()
   }
-
   function onCopy(event: ClipboardEvent) {
     if (typing(event.target) || store.editing !== null || !store.picked.length) return
-
     event.preventDefault()
     event.clipboardData?.setData('text/plain', writeCanvas(subset(store.canvas, store.picked)))
   }
-
   function onCut(event: ClipboardEvent) {
     if (typing(event.target) || store.editing !== null || !store.picked.length) return
-
     onCopy(event)
     run.remove(store)
   }
-
   function onPaste(event: ClipboardEvent) {
     if (typing(event.target) || store.editing !== null) return
-
     const data = event.clipboardData
     const files = filesIn(data).filter(isCanvasFile)
     const words = wordsBesidePicture(data?.getData('text/html') ?? '', data?.getData('text/plain') ?? '')
@@ -1307,27 +1101,21 @@
       placeFiles(files, pasteSpot())
       return
     }
-
     const text = event.clipboardData?.getData('text/plain').trim()
     if (!text) return
-
     const types = [...(event.clipboardData?.types ?? [])]
     if (pastesMarkup(types, text)) tab.note.pasted = true
-
     event.preventDefault()
     run.paste(store, readCanvas(text), text, pasteSpot())
   }
-
   function onDrop(event: DragEvent) {
     const point = planeAt(event)
     const paths = draggedPaths(event.dataTransfer)
-
     if (paths.length) {
       event.preventDefault()
       void run.dropPaths(store, paths, point)
       return
     }
-
     const transfer = event.dataTransfer
     const dropped = filesIn(transfer)
     const reading = dropped.length ? null : carriedFiles.read(transfer ?? null)
@@ -1338,11 +1126,9 @@
     }
     const files = dropped.filter(isCanvasFile)
     if (!files.length) return
-
     event.preventDefault()
     placeFiles(files, point)
   }
-
   function filesIn(transfer: DataTransfer | null | undefined): File[] {
     if (!transfer) return []
     const listed = [...transfer.files]
@@ -1352,50 +1138,39 @@
       .map((item) => item.getAsFile())
       .filter((file): file is File => file !== null)
   }
-
   function placeFiles(files: readonly File[], point: { x: number; y: number }) {
     void run.dropFiles(store, files, point, tab.path)
   }
-
   function isCanvasFile(file: File): boolean {
     return file.type.startsWith('image/') || isPicture(file.name) || isPdfFile(file)
   }
-
   const pickedColour = $derived.by(() => {
     const first = store.picked[0]
     if (!first) return null
-
     const node = store.canvas.nodes.find((one) => one.id === first)
     return node?.color ?? store.canvas.edges.find((one) => one.id === first)?.color ?? null
   })
-
   function colourPicked(colour: string | null) {
     store.edit(coloured(store.canvas, store.picked, colour))
     if (colour !== null) tools.colour = colour
   }
-
   const pickedSpan = $derived.by(() => {
     if (box) return box
-
     const edge = shown.edges.find((one) => store.isPicked(one.id))
     const from = edge && shown.nodes.find((one) => one.id === edge.fromNode)
     const to = edge && shown.nodes.find((one) => one.id === edge.toNode)
     if (!edge || !from || !to) return null
-
     const at = edgeMiddle(edgeEnds(edge, boxOf(from), boxOf(to)))
     return { x: at.x, y: at.y, width: 0, height: 0 }
   })
-
   const overPicked = $derived.by(() => {
     const box = pickedSpan
     if (!box || gesture || store.editing !== null || !store.picked.length) return null
-
     const seen = screenBox(box)
     const middle = (seen.left + seen.right) / 2
     const above = seen.top
     const under = seen.bottom
     const below = above < ROOM
-
     return {
       at: {
         x: Math.min(Math.max(middle, ROOM), Math.max(ROOM, width - ROOM)),
@@ -1404,10 +1179,8 @@
       below,
     }
   })
-
   let over = $state.raw<Over>(null)
   let rubAt = $state.raw<Point | null>(null)
-
   function overOf(found: Hit): Over {
     if (found.handle) return found.handle
     if (found.ink === 'turn') return 'turn'
@@ -1415,21 +1188,16 @@
     if (found.ink) return found.ink
     if (found.port || found.endpoint) return 'port'
     if (found.node || found.edge || found.stroke) return 'thing'
-
     return null
   }
-
   const inHand = $derived.by(() => {
     const which = tools.which
     if (which === 'hand' || which === 'draw' || which === 'erase' || which === 'lasso') return which
     if (puts(which)) return 'put' as const
-
     return 'select' as const
   })
-
   const cursor = $derived.by(() => {
     if (viewport.touch) return undefined
-
     return cursorFor({
       tool: inHand,
       busy: gesture !== null,
@@ -1442,20 +1210,15 @@
       rub: { size: pens.whole ? pens.strokeRub : pens.rub, whole: pens.whole },
     })
   })
-
   const rubbing = $derived.by(() => {
     if (gesture?.kind !== 'erase' || gesture.whole || !rubAt) return null
-
     return { at: rubAt, reach: pens.rub / camera.scale }
   })
-
   const pickedWidth = $derived.by(() => {
     const stroke = store.canvas.ink.find((one) => store.isPicked(one.id))
     return stroke && shownWidth(stroke.size, camera.scale)
   })
-
   const onFrame = $derived(store.canvas.nodes.some((node) => node.type === 'group' && picked.has(node.id)))
-
   const bare = $derived(!store.canvas.nodes.length && !store.canvas.edges.length && !store.canvas.ink.length)
 </script>
 
@@ -1794,13 +1557,11 @@
     -webkit-tap-highlight-color: transparent;
     cursor: default;
   }
-
   .turned {
     position: absolute;
     inset: 0;
     transform-origin: center;
   }
-
   .dots {
     position: absolute;
     pointer-events: none;
@@ -1808,7 +1569,6 @@
     background-size: var(--dot-step) var(--dot-step);
     will-change: transform;
   }
-
   .plane {
     position: absolute;
     left: 0;
@@ -1817,7 +1577,6 @@
     height: 0;
     transform-origin: 0 0;
   }
-
   .port,
   .handle,
   .turn {
@@ -1826,7 +1585,6 @@
     translate: -50% -50%;
     z-index: var(--z-grip);
   }
-
   .port {
     border-radius: 50%;
     background: var(--surface);
@@ -1834,32 +1592,26 @@
     opacity: 0.75;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .port:hover {
     opacity: 1;
   }
-
   .port.aiming {
     background: var(--accent);
     opacity: 1;
     z-index: var(--z-tools);
   }
-
   .port.aiming.loose {
     background: var(--surface);
     border-style: dashed;
   }
-
   .handle {
     border-radius: 2px;
     background: var(--surface);
     border: 1.5px solid var(--accent);
   }
-
   .handle.round {
     border-radius: 50%;
   }
-
   .rubbing {
     position: absolute;
     box-sizing: border-box;
@@ -1871,13 +1623,11 @@
     pointer-events: none;
     z-index: var(--z-tools);
   }
-
   .turn {
     border-radius: 50%;
     background: var(--surface);
     border: 1.5px solid var(--accent);
   }
-
   .frame {
     position: absolute;
     box-sizing: border-box;
@@ -1886,7 +1636,6 @@
     pointer-events: none;
     z-index: var(--z-grip);
   }
-
   .band {
     position: absolute;
     background: var(--accent-soft);
@@ -1895,20 +1644,16 @@
     pointer-events: none;
     z-index: var(--z-grip);
   }
-
   .band.pulling {
     background: none;
     border-style: dashed;
   }
-
   .band.pulling.round {
     border-radius: 50%;
   }
-
   .band.pulling.framed {
     border-radius: var(--radius-lg);
   }
-
   .drawing {
     position: absolute;
     left: 0;
@@ -1916,20 +1661,17 @@
     pointer-events: none;
     z-index: var(--z-grip);
   }
-
   .drawing path {
     fill: none;
     stroke: var(--accent);
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .drawing path.point {
     fill: var(--accent);
     stroke: none;
     stroke-dasharray: none;
   }
-
   .guide {
     position: absolute;
     background: var(--accent);
@@ -1937,7 +1679,6 @@
     pointer-events: none;
     z-index: var(--z-grip);
   }
-
   .lasso {
     position: absolute;
     left: 0;
@@ -1945,12 +1686,10 @@
     pointer-events: none;
     z-index: var(--z-grip);
   }
-
   .lasso path {
     fill: var(--accent-soft);
     stroke: var(--accent);
   }
-
   .hint {
     position: absolute;
     left: 50%;
@@ -1965,11 +1704,9 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   :global([data-touch]) .hint {
     font-size: var(--touch-text);
   }
-
   .unseen {
     position: absolute;
     left: -9999px;

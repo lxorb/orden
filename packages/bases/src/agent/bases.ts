@@ -6,15 +6,12 @@ import type { Base, Context, Filter, Sort, View } from '../types'
 import { AgentError } from './tasks'
 
 type Args = Record<string, unknown>
-
 const isRecord = (value: unknown): value is Args => value !== null && typeof value === 'object' && !Array.isArray(value)
-
 function keyOf(name: string): string | null {
   const key = name.startsWith('note.') ? name.slice(5) : name
   if (/^(?:file|formula)\./.test(key) || !isPropertyName(key)) return null
   return key
 }
-
 export function rowWords(text: string, ...sets: Args[]): string {
   const merged: Args = {}
   for (const one of sets) Object.assign(merged, one)
@@ -27,12 +24,10 @@ export function rowWords(text: string, ...sets: Args[]): string {
   }
   return withProperties(text, merged)
 }
-
 function tagsIn(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String)
   return typeof value === 'string' ? [value] : []
 }
-
 export function withProperties(text: string, properties: Args): string {
   let after = text
   for (const [name, value] of Object.entries(properties)) {
@@ -55,18 +50,15 @@ export function withProperties(text: string, properties: Args): string {
   }
   return after
 }
-
 function listItem(value: unknown): ListItem {
   if (value === null || typeof value === 'number' || typeof value === 'boolean') return value
   return typeof value === 'string' ? value : JSON.stringify(value)
 }
-
 function required(filter: Filter | undefined): string[] {
   if (filter === undefined) return []
   if (typeof filter === 'string') return [filter]
   return 'and' in filter ? filter.and.flatMap(required) : []
 }
-
 const QUOTED = String.raw`"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'`
 const IN_FOLDER = new RegExp(String.raw`^\s*file\.inFolder\(\s*(?:${QUOTED})\s*\)\s*$`)
 const FOLDER_IS = new RegExp(String.raw`^\s*file\.folder\s*==\s*(?:${QUOTED})\s*$`)
@@ -74,7 +66,6 @@ const HAS_TAG = new RegExp(String.raw`^\s*file\.hasTag\(\s*(?:${QUOTED})\s*\)\s*
 const EQUALS = new RegExp(
   String.raw`^\s*(?:note\.)?([A-Za-z_][\w-]*)\s*==\s*(?:${QUOTED}|(true|false|-?\d+(?:\.\d+)?))\s*$`,
 )
-
 function linkName(link: string | undefined): string | undefined {
   const name = link
     ?.replace(/^\[\[|\]\]$/g, '')
@@ -82,18 +73,15 @@ function linkName(link: string | undefined): string | undefined {
     ?.trim()
   return name === '' ? undefined : name
 }
-
 export function filledTemplate(text: string, title: string, clock: Pick<Context, 'today' | 'now'>): string {
   return withoutTemplateKeys(fillTemplate(text, { title, today: clock.today, time: clock.now.slice(11, 16) }))
 }
-
 export function rowPlace(base: Base, view?: string): { folder?: string; properties: Args; template?: string } {
   const chosen = view === undefined ? base.views[0] : base.views.find((one) => one.name === view)
   const template = linkName(chosen?.orden.template ?? base.orden.template)
   const properties: Args = {}
   const tags: string[] = []
   let folder: string | undefined
-
   for (const expression of [...required(base.filters), ...required(chosen?.filters)]) {
     const inFolder = IN_FOLDER.exec(expression) ?? FOLDER_IS.exec(expression)
     if (inFolder) {
@@ -123,7 +111,6 @@ export function rowPlace(base: Base, view?: string): { folder?: string; properti
     ...(template === undefined ? {} : { template }),
   }
 }
-
 export function noteName(title: string): string {
   const name = title
     .replace(/[\\/:*?"<>|#^[\]]+/g, ' ')
@@ -133,12 +120,10 @@ export function noteName(title: string): string {
     .trim()
   return name.replace(/\.+$/, '') || 'Untitled'
 }
-
 function words(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value.trim()) throw new AgentError('bad_arguments', `say ${name}`)
   return value.trim()
 }
-
 function sortsOf(value: unknown): Sort[] {
   const list = Array.isArray(value) ? value : value === undefined ? [] : [value]
   return list.map((one) => {
@@ -152,13 +137,11 @@ function sortsOf(value: unknown): Sort[] {
     }
   })
 }
-
 function filterOf(value: unknown): Filter {
   const filter = readFilter(value)
   if (filter === null) throw new AgentError('bad_arguments', 'a filter is an expression, or {and|or|not: [filters]}')
   return filter
 }
-
 function viewWith(view: View, said: Args): View {
   const next: View = { ...view, orden: { ...view.orden }, options: { ...view.options } }
   if (said.type !== undefined) next.type = words(said.type, 'type')
@@ -196,7 +179,6 @@ function viewWith(view: View, said: Args): View {
   }
   return next
 }
-
 function named(base: Base, said: Args): number {
   if (said.view === undefined && said.name === undefined) return 0
   const name = typeof said.view === 'string' ? said.view : said.name
@@ -204,9 +186,7 @@ function named(base: Base, said: Args): number {
   if (at === -1) throw new AgentError('not_found', `there is no view called ${String(name)}`)
   return at
 }
-
 const MOST_OPS = 500
-
 export function editedBase(base: Base, ops: unknown): Base {
   if (!Array.isArray(ops) || !ops.length) throw new AgentError('bad_arguments', 'ops is a list of edits')
   if (ops.length > MOST_OPS) throw new AgentError('bad_arguments', `at most ${MOST_OPS} ops a call`)
@@ -216,7 +196,6 @@ export function editedBase(base: Base, ops: unknown): Base {
     formulas: { ...base.formulas },
     properties: { ...base.properties },
   }
-
   for (const raw of ops) {
     if (!isRecord(raw)) throw new AgentError('bad_arguments', 'an op is an object with op')
     switch (raw.op) {

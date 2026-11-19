@@ -5,7 +5,6 @@ export interface SourceMark {
   fill: string
   ink: string
 }
-
 const MARKS: Record<SourceId, SourceMark> = {
   proton: { letters: 'P', fill: '#6d4aff', ink: '#ffffff' },
   bitwarden: { letters: 'B', fill: '#175ddc', ink: '#ffffff' },
@@ -27,7 +26,6 @@ const MARKS: Record<SourceId, SourceMark> = {
   orden: { letters: 'O', fill: '#5b4be0', ink: '#ffffff' },
   csv: { letters: 'CSV', fill: '#5f6b7a', ink: '#ffffff' },
 }
-
 const PLACES: Record<Exclude<SourceId, 'csv'>, { place: string; format: string }> = {
   proton: { place: 'Settings › Export', format: 'ZIP' },
   bitwarden: { place: 'Tools › Export vault', format: 'JSON' },
@@ -48,15 +46,12 @@ const PLACES: Record<Exclude<SourceId, 'csv'>, { place: string; format: string }
   kaspersky: { place: 'Settings › Import/Export › Export to text file', format: 'TXT' },
   orden: { place: 'Pass › Settings › Export', format: 'JSON' },
 }
-
 export function markOf(id: SourceId): SourceMark {
   return MARKS[id]
 }
-
 export function kindsOf(source: Source): string {
   return source.accept.map((one) => one.replace(/^\./, '')).join(', ')
 }
-
 export function stepsOf(source: Source): string {
   if (source.id === 'csv') {
     return 'Export a CSV file whose first row names its columns, such as name, url, username, password and note.'

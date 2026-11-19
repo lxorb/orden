@@ -2,11 +2,9 @@ import { Worker } from 'node:worker_threads'
 
 export const STALL = 60_000
 const BEAT = 1000
-
 export function stalled(last: number, now: number, limit = STALL): boolean {
   return now - last > limit
 }
-
 const WORKER = `
 const { workerData } = require('node:worker_threads')
 const { writeSync } = require('node:fs')
@@ -18,7 +16,6 @@ setInterval(() => {
   process.kill(process.pid, 'SIGKILL')
 }, workerData.beat)
 `
-
 export function watch(limit = STALL, beat = BEAT): () => void {
   const shared = new SharedArrayBuffer(8)
   const slot = new BigInt64Array(shared)

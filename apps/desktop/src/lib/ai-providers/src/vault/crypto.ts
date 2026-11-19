@@ -7,22 +7,18 @@ const SEAL_LABEL = new TextEncoder().encode('nib ai vault 1')
 const NONCE = 12
 const POINT = 65
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
-
 export interface DeviceKey {
   id: string
   pub: string
   priv: JsonWebKey
 }
-
 async function hex(bytes: Uint8Array<ArrayBuffer>, length: number): Promise<string> {
   const digest = new Uint8Array(await subtle().digest('SHA-256', bytes))
   return [...digest.slice(0, length)].map((one) => one.toString(16).padStart(2, '0')).join('')
 }
-
 export async function idOf(pub: string): Promise<string> {
   return await hex(unbase64(pub), 16)
 }
-
 export async function newDeviceKey(): Promise<DeviceKey> {
   const pair = await subtle().generateKey(CURVE, true, ['deriveBits'])
   const pub = new Uint8Array(await subtle().exportKey('raw', pair.publicKey))
@@ -32,7 +28,6 @@ export async function newDeviceKey(): Promise<DeviceKey> {
     priv: await subtle().exportKey('jwk', pair.privateKey),
   }
 }
-
 export function deviceKeyIn(value: unknown): DeviceKey | null {
   if (typeof value !== 'object' || value === null) return null
   const { id, pub, priv } = value as Record<string, unknown>
@@ -44,11 +39,9 @@ export function deviceKeyIn(value: unknown): DeviceKey | null {
     ? { id, pub, priv }
     : null
 }
-
 export function newVaultKey(): Uint8Array<ArrayBuffer> {
   return globalThis.crypto.getRandomValues(new Uint8Array(32))
 }
-
 async function wrapping(secret: CryptoKey, them: CryptoKey, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const shared = await subtle().deriveBits({ name: 'ECDH', public: them }, secret, 256)
   const material = await subtle().importKey('raw', shared, 'HKDF', false, ['deriveKey'])
@@ -60,7 +53,6 @@ async function wrapping(secret: CryptoKey, them: CryptoKey, salt: Uint8Array<Arr
     ['encrypt', 'decrypt'],
   )
 }
-
 function joined(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
   const all = new Uint8Array(parts.reduce((sum, one) => sum + one.length, 0))
   let at = 0
@@ -70,7 +62,6 @@ function joined(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
   }
   return all
 }
-
 export async function wrap(key: Uint8Array<ArrayBuffer>, to: string): Promise<string> {
   const target = unbase64(to)
   const them = await subtle().importKey('raw', target, CURVE, false, [])
@@ -81,7 +72,6 @@ export async function wrap(key: Uint8Array<ArrayBuffer>, to: string): Promise<st
   const sealed = new Uint8Array(await subtle().encrypt({ name: 'AES-GCM', iv: nonce }, sealing, key))
   return base64(joined(ephemeral, nonce, sealed))
 }
-
 export async function unwrap(wrapped: string, mine: DeviceKey): Promise<Uint8Array<ArrayBuffer>> {
   const all = unbase64(wrapped)
   const ephemeral = all.slice(0, POINT)
@@ -92,7 +82,6 @@ export async function unwrap(wrapped: string, mine: DeviceKey): Promise<Uint8Arr
   const sealing = await wrapping(secret, them, joined(ephemeral, unbase64(mine.pub)))
   return new Uint8Array(await subtle().decrypt({ name: 'AES-GCM', iv: nonce }, sealing, sealed))
 }
-
 export async function authOf(key: Uint8Array<ArrayBuffer>): Promise<string> {
   const material = await subtle().importKey('raw', key, 'HKDF', false, ['deriveBits'])
   const bits = await subtle().deriveBits(
@@ -102,11 +91,9 @@ export async function authOf(key: Uint8Array<ArrayBuffer>): Promise<string> {
   )
   return base64(new Uint8Array(bits))
 }
-
 async function vaultKey(key: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   return await subtle().importKey('raw', key, 'AES-GCM', false, ['encrypt', 'decrypt'])
 }
-
 export async function seal(key: Uint8Array<ArrayBuffer>, text: string): Promise<string> {
   const nonce = globalThis.crypto.getRandomValues(new Uint8Array(NONCE))
   const sealed = await subtle().encrypt(
@@ -116,7 +103,6 @@ export async function seal(key: Uint8Array<ArrayBuffer>, text: string): Promise<
   )
   return base64(joined(nonce, new Uint8Array(sealed)))
 }
-
 export async function open(key: Uint8Array<ArrayBuffer>, sealed: string): Promise<string> {
   const all = unbase64(sealed)
   const opened = await subtle().decrypt(
@@ -126,7 +112,6 @@ export async function open(key: Uint8Array<ArrayBuffer>, sealed: string): Promis
   )
   return new TextDecoder().decode(opened)
 }
-
 export async function fingerprint(secret: string): Promise<string> {
   return await hex(new TextEncoder().encode(`nib ai vault ${secret}`), 16)
 }

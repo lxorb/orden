@@ -13,13 +13,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, cursor: number) {
   const state = parsed(
     EditorState.create({
@@ -32,7 +29,6 @@ function viewOf(doc: string, cursor: number) {
   open.push(view)
   return view
 }
-
 describe('Home in a bullet item', () => {
   test('stops after the hidden bullet, where the words start', () => {
     const doc = 'intro\n\n- first item\n- second item\n\nend'
@@ -42,7 +38,6 @@ describe('Home in a bullet item', () => {
     cursorLineBoundaryBackward(view)
     expect(view.state.selection.main.head).toBe(doc.indexOf('first item'))
   })
-
   test('stops after the hidden box of a task, where the words start', () => {
     const doc = 'intro\n\n- [ ] buy milk\n\nend'
     const end = doc.indexOf('buy milk') + 'buy milk'.length

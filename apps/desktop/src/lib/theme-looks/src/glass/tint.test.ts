@@ -11,16 +11,13 @@ const dark = paletteOf(glassCss, 'dark', names)
 const light = paletteOf(glassCss, 'light', names)
 if (!dark || !light) throw new Error('glass.css no longer states both sides')
 const sides: Sides = { dark, light }
-
 const PAPER: Record<Scheme, Rgb> = { dark: [14, 16, 19], light: [251, 252, 253] }
 const SCHEMES: Scheme[] = ['dark', 'light']
-
 function rgb(hex: string): Rgb {
   const found = rgbOf(hex)
   if (!found) throw new Error(`not a colour: ${hex}`)
   return found
 }
-
 const SITES: Record<string, Rgb> = {
   'white Google': [255, 255, 255],
   'black YouTube': [15, 15, 15],
@@ -32,13 +29,11 @@ const SITES: Record<string, Rgb> = {
   'mid grey': [128, 128, 128],
   'teal header': [0, 128, 128],
 }
-
 function reads(scheme: Scheme, ground: Rgb): boolean {
   const side = sides[scheme]
   const grounds = [ground, over(side.text, 0.1, ground), over(side.layer.colour, side.layer.alpha, ground)]
   return grounds.every((one) => ratio(side.ink, one) >= AA)
 }
-
 describe("a page's bar", () => {
   test('is the page itself where its words read on it, which is most pages', () => {
     for (const app of SCHEMES) {
@@ -56,7 +51,6 @@ describe("a page's bar", () => {
       })
     }
   })
-
   test('is moved the least way that makes it read where the page is too loud to', () => {
     const bar = barFor(SITES.red!, 'dark', sides)
     expect(bar.colour).not.toBe('#ff0000')
@@ -65,7 +59,6 @@ describe("a page's bar", () => {
     expect(r).toBeGreaterThan(g + 40)
     expect(r).toBeGreaterThan(b + 40)
   })
-
   test("keeps every word at AA on every site, under either of the reader's schemes", () => {
     for (const [name, page] of Object.entries(SITES)) {
       for (const app of SCHEMES) {
@@ -75,7 +68,6 @@ describe("a page's bar", () => {
     }
   })
 })
-
 describe('the frame', () => {
   test('is mostly the page, and the page alone where it reads as it is', () => {
     const frame = frameFor({ colour: SITES['white Google']!, page: true }, 'dark', sides, PAPER.dark)
@@ -84,7 +76,6 @@ describe('the frame', () => {
     const paper = frameFor({ colour: SITES.red!, page: true }, 'dark', sides, PAPER.dark)
     expect(paper.wash).toBeGreaterThanOrEqual(PAGE_WASH)
   })
-
   test('keeps every word at AA over the paper beneath it, for every site and every Tint', () => {
     for (const [name, page] of Object.entries(SITES)) {
       for (const app of SCHEMES) {
@@ -96,7 +87,6 @@ describe('the frame', () => {
       }
     }
   })
-
   test("is a tone of a note's mark, always in the reader's own scheme", () => {
     const green: Rgb = [0, 160, 90]
     const frame = frameFor({ colour: green, page: false }, 'dark', sides, PAPER.dark)
@@ -115,7 +105,6 @@ describe('the frame', () => {
       }
     }
   })
-
   test('keeps every word at AA over a mark of any colour', () => {
     const marks: Rgb[] = [
       [255, 0, 0],
@@ -133,23 +122,19 @@ describe('the frame', () => {
       }
     }
   })
-
   test('with no Tint is the chrome’s colour', () => {
     const page = { colour: SITES['Twitter blue']!, page: true }
     const plain = frameFor(page, 'dark', sides, PAPER.dark, { strength: 0 })
     const scheme = barFor(SITES['Twitter blue']!, 'dark', sides).scheme
     expect(rgb(plain.tint)).toEqual(sides[scheme].scrim.map(Math.round))
   })
-
   test('starts where glass always started: all of what is open', () => {
     expect(DIALS).toEqual({ strength: 1 })
   })
 })
-
 describe("glass's own pair", () => {
   const white: Rgb = [255, 255, 255]
   const black: Rgb = [0, 0, 0]
-
   function readsGrained(scheme: Scheme, ground: Rgb, aim: number): boolean {
     const side = sides[scheme]
     return [white, black].every((speck) => {
@@ -159,7 +144,6 @@ describe("glass's own pair", () => {
       return ratio(side.ink, grained) >= aim && stacked.every((one) => ratio(side.ink, one) >= AA)
     })
   }
-
   const own: Record<string, Stops> = {
     'white to black': [white, black],
     'red to green': [
@@ -171,7 +155,6 @@ describe("glass's own pair", () => {
       [0, 60, 255],
     ],
   }
-
   test('starts on a light blue in the top left going to a soft pink-purple', () => {
     for (const scheme of SCHEMES) {
       expect(stopsOf(undefined, scheme, 'violet', dark.scrim).map(hexOf)).toEqual(DAWN[scheme])
@@ -180,7 +163,6 @@ describe("glass's own pair", () => {
     expect(blue![2]).toBeGreaterThan(blue![0])
     expect(pink![0]).toBeGreaterThan(pink![1])
   })
-
   test('wears each pair it offers as it is, whole', () => {
     for (const pair of PAIRS) {
       for (const app of SCHEMES) {
@@ -191,7 +173,6 @@ describe("glass's own pair", () => {
       }
     }
   })
-
   test('is deeper and greyer at night than by day', () => {
     for (const pair of PAIRS) {
       for (const at of [0, 1]) {
@@ -202,7 +183,6 @@ describe("glass's own pair", () => {
       }
     }
   })
-
   test('keeps every word at AA over every colour of the blend and the grain', () => {
     const pairs: Record<string, (app: Scheme) => Stops> = {
       ...Object.fromEntries(
@@ -222,7 +202,6 @@ describe("glass's own pair", () => {
       }
     }
   })
-
   test('with no Tint is the chrome alone, and in the reader’s own scheme whatever its colours', () => {
     const plain = pairFor(own['white to black']!, 'light', sides, { strength: 0 })
     expect(plain.tint).toBe(plain.second)
@@ -231,7 +210,6 @@ describe("glass's own pair", () => {
       expect(pairFor(own['red to green']!, app, sides).scheme).toBe(app)
     }
   })
-
   test('paints exactly the grain the sums count', () => {
     expect(glassCss).toContain(`intercept='${GRAIN}'`)
   })

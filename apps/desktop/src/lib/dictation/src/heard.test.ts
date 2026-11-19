@@ -5,17 +5,14 @@ describe('the prompt', () => {
   test('names the words around the field, then the text it continues', () => {
     expect(promptOf('Kannst du bitte', ['Sync Worker', 'Emil'])).toBe('Sync Worker, Emil. Kannst du bitte')
   })
-
   test('is the names alone in an empty field, and nothing with neither', () => {
     expect(promptOf('', ['Jürgen Weißmüller'])).toBe('Jürgen Weißmüller')
     expect(promptOf('   ', [])).toBe('')
   })
-
   test('names each once, and leaves out what is not a name', () => {
     const long = 'a title that goes on far longer than any name anybody would ever say'
     expect(promptOf('', ['Tauri', ' Tauri ', '', long])).toBe('Tauri')
   })
-
   test('keeps the end of a long text, from the start of a word', () => {
     const before = `${'Wort '.repeat(100)}und dann das Ende`
     const prompt = promptOf(before, [])
@@ -23,7 +20,6 @@ describe('the prompt', () => {
     expect(prompt.length).toBeLessThanOrEqual(160)
     expect(prompt.startsWith('Wort')).toBe(true)
   })
-
   test('fits the route, dropping names rather than cutting one in half', () => {
     const names = Array.from({ length: 60 }, (_one, at) => `Name${at}`)
     const prompt = promptOf('x '.repeat(200), names)
@@ -31,7 +27,6 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/^Name0, Name1, .*Name\d+\. x/)
   })
 })
-
 describe('an answer', () => {
   test.each([
     ['Untertitel der Amara.org-Community', '', 0, ''],

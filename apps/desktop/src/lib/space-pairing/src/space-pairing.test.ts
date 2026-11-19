@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const world = vi.hoisted(() => ({
   spaces: [] as { id: string; name: string; root: string }[],
   made: [] as string[],
@@ -18,7 +17,6 @@ const world = vi.hoisted(() => ({
   onDisk: [] as { id: string; name: string; root: string }[],
   reading: null as Promise<void> | null,
 }))
-
 vi.mock('../../accounts/src/client', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../accounts/src/client')>()
   const { ApiError } = original
@@ -59,7 +57,6 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
     },
   }
 })
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: () => Promise.reject(new Error('no disk here')),
   isNative: true,
@@ -67,7 +64,6 @@ vi.mock('../../platform/src/tauri', () => ({
   platform: () => 'windows',
   joinPath: (...parts: string[]) => parts.join('/'),
 }))
-
 vi.mock('../../seeded/src/api', () => ({
   seedSpaceRoot: () => null,
   forgetSeedSpace: () => undefined,
@@ -75,7 +71,6 @@ vi.mock('../../seeded/src/api', () => ({
 vi.mock('./seed-space', () => ({ untouchedSeedSpace: () => Promise.resolve(null) }))
 vi.mock('../../sharing/src/api', () => ({ rememberRoles: () => undefined }))
 vi.mock('../../protect/src/api', () => ({ pulled: () => Promise.resolve() }))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get spaces() {
@@ -125,12 +120,10 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const { account } = await import('../../accounts/src/account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('../../left-spaces/src/api')
 const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } = await import('../../space-owed/src/api')
-
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []
   return {
@@ -143,14 +136,12 @@ function pairing() {
     },
   }
 }
-
 function signedIn(id: string, spaces: string[]) {
   account.user = { id, email: `${id}@example.com` } as typeof account.user
   account.token = `token-${id}`
   account.spaces = spaces.map((name) => ({ id: `${id}-${name}`, name, role: 'owner' })) as never
   account.deletedSpaces = []
 }
-
 beforeEach(() => {
   localStorage.clear()
   world.spaces = [
@@ -169,15 +160,12 @@ beforeEach(() => {
   world.onDisk = []
   world.reading = null
 })
-
 describe('signing in on a device another account signed out of', () => {
   test('neither uploads nor pairs by name the spaces that account left here', async () => {
     leaveSpaces('a', ['/Hunt out'])
     signedIn('b', ['Hunt out'])
     const { pairs, pairing: held } = pairing()
-
     await pairSpaces('token-b', held)
-
     expect(world.made).toEqual(['Fresh'])
     expect(pairs.some((one) => one.root === '/Hunt out')).toBe(false)
     expect(world.adopted).toEqual([{ name: 'Hunt out', fresh: true }])
@@ -185,26 +173,21 @@ describe('signing in on a device another account signed out of', () => {
     expect(leftBy('/Hunt out')).toBe('a')
     expect(leftBy('/Fresh')).toBe('b')
   })
-
   test('gives them back to the account that left them', async () => {
     leaveSpaces('a', ['/Hunt out'])
     signedIn('a', ['Hunt out'])
     const { pairs, pairing: held } = pairing()
-
     await pairSpaces('token-a', held)
-
     expect(pairs).toContainEqual({ root: '/Hunt out', spaceId: 'a-Hunt out', shared: false })
     expect(world.made).toEqual(['Fresh'])
     expect(leftBy('/Hunt out')).toBe('a')
   })
 })
-
 describe('a space somebody shared that this device keeps', () => {
   function sharedWith(id: string, names: string[]) {
     signedIn(id, [])
     account.spaces = names.map((name) => ({ id: `${id}-${name}`, name, role: 'write' })) as never
   }
-
   async function keptOnce() {
     world.spaces = [{ id: '1', name: 'Team', root: '/Team' }]
     sharedWith('a', ['Team'])
@@ -214,44 +197,34 @@ describe('a space somebody shared that this device keeps', () => {
     world.made = []
     world.adopted = []
   }
-
   test('is taken back into its folder on a new sign-in, not sent up as the account’s own and copied', async () => {
     await keptOnce()
     const { pairs, pairing: held } = pairing()
-
     await pairSpaces('token-a', held)
-
     expect(world.made).toEqual([])
     expect(world.adopted).toEqual([])
     expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: true }])
     expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
   })
-
   test('comes back into its own folder after its link was dropped, not into a numbered copy', async () => {
     await keptOnce()
     world.spaces = []
     world.onDisk = [{ id: '1', name: 'Team', root: '/Team' }]
     const { pairs, pairing: held } = pairing()
-
     await pairSpaces('token-a', held)
     await pairSpaces('token-a', held)
-
     expect(world.made).toEqual([])
     expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: true }])
     expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
   })
-
   test('is still copied beside a folder of that name it never lived in', async () => {
     world.spaces = []
     world.onDisk = [{ id: '1', name: 'Team', root: '/Team' }]
     sharedWith('a', ['Team'])
     const { pairs, pairing: held } = pairing()
-
     await pairSpaces('token-a', held)
-
     expect(pairs).toEqual([{ root: '/Team 2', spaceId: 'a-Team', shared: true }])
   })
-
   test('is not taken into the folder it lived in for another account', async () => {
     await keptOnce()
     world.spaces = []
@@ -259,13 +232,10 @@ describe('a space somebody shared that this device keeps', () => {
     signedIn('b', [])
     account.spaces = [{ id: 'a-Team', name: 'Team', role: 'write' }] as never
     const { pairs, pairing: held } = pairing()
-
     await pairSpaces('token-b', held)
-
     expect(pairs).toEqual([{ root: '/Team 2', spaceId: 'a-Team', shared: true }])
   })
 })
-
 describe('a round of pairing that starts before the window has read its spaces', () => {
   test('reads them first, so a space this device keeps is not made again as a copy', async () => {
     world.restored = false
@@ -274,14 +244,11 @@ describe('a round of pairing that starts before the window has read its spaces',
     signedIn('a', ['Team'])
     const { pairs, pairing: held } = pairing()
     pairs.push({ root: '/Team', spaceId: 'a-Team', shared: false })
-
     await pairSpaces('token-a', held)
-
     expect(world.adopted).toEqual([])
     expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
     expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: false }])
   })
-
   test('waits for the window to read them, so a space made there meanwhile is paired, not copied', async () => {
     world.restored = false
     world.spaces = []
@@ -291,34 +258,28 @@ describe('a round of pairing that starts before the window has read its spaces',
     })
     signedIn('a', ['Notes'])
     const { pairs, pairing: held } = pairing()
-
     const round = pairSpaces('token-a', held)
     await new Promise((done) => setTimeout(done, 0))
     world.onDisk = [{ id: '1', name: 'Notes', root: '/Notes' }]
     read()
     await round
-
     expect(world.adopted).toEqual([])
     expect(world.spaces.map((one) => one.root)).toEqual(['/Notes'])
     expect(pairs).toEqual([{ root: '/Notes', spaceId: 'a-Notes', shared: false }])
   })
 })
-
 describe('a space sync keeps under another spelling of its folder', () => {
   test('wears its icon under the folder this device shows', async () => {
     world.spaces = [{ id: '1', name: 'Work', root: 'C:\\Users\\Ada\\Work' }]
     signedIn('a', ['Work'])
     const { pairs, pairing: held } = pairing()
     pairs.push({ root: 'c:/users/ada/work/', spaceId: 'a-Work', shared: false })
-
     await pairSpaces('token-a', held)
-
     expect(world.icons).toEqual(['C:\\Users\\Ada\\Work'])
     expect(world.made).toEqual([])
     expect(pairs).toHaveLength(1)
   })
 })
-
 describe('a space deleted while the account could not be reached', () => {
   test('is not brought back down, and the account is told once it answers', async () => {
     world.spaces = [{ id: '2', name: 'Fresh', root: '/Fresh' }]
@@ -326,38 +287,30 @@ describe('a space deleted while the account could not be reached', () => {
     world.online = false
     await endSpace('token-a', 'a', 'a-Gone', 'delete')
     expect(endsOwed('a')).toEqual(new Set(['a-Gone']))
-
     const { pairs, pairing: held } = pairing()
     pairs.push({ root: '/Fresh', spaceId: 'a-Fresh', shared: false })
     await pairSpaces('token-a', held)
-
     expect(world.adopted).toEqual([])
     expect(endsOwed('a')).toEqual(new Set(['a-Gone']))
-
     world.online = true
     await pairSpaces('token-a', held)
-
     expect(world.adopted).toEqual([])
     expect(world.ended).toEqual(['delete a-Gone'])
     expect(endsOwed('a')).toEqual(new Set())
   })
-
   test('and one left is left once the account answers, for that account only', async () => {
     world.spaces = []
     signedIn('a', ['Theirs'])
     world.online = false
     await endSpace('token-a', 'a', 'a-Theirs', 'leave')
     expect(endsOwed('b')).toEqual(new Set())
-
     world.online = true
     const { pairing: held } = pairing()
     await pairSpaces('token-a', held)
-
     expect(world.ended).toEqual(['leave a-Theirs'])
     expect(world.adopted).toEqual([])
   })
 })
-
 describe('a space deleted while something in the way answered for the account', () => {
   test('is still owed, and the account is told once it answers', async () => {
     world.spaces = []
@@ -365,16 +318,13 @@ describe('a space deleted while something in the way answered for the account', 
     world.blocked = true
     await endSpace('token-a', 'a', 'a-Gone', 'delete')
     expect(endsOwed('a')).toEqual(new Set(['a-Gone']))
-
     world.blocked = false
     const { pairing: held } = pairing()
     await pairSpaces('token-a', held)
-
     expect(world.ended).toEqual(['delete a-Gone'])
     expect(endsOwed('a')).toEqual(new Set())
   })
 })
-
 describe('a space ended while the sign-in had run out', () => {
   test('is still owed, and is not brought back down once the account is in again', async () => {
     world.spaces = [{ id: '2', name: 'Fresh', root: '/Fresh' }]
@@ -383,16 +333,13 @@ describe('a space ended while the sign-in had run out', () => {
     await endSpace('token-a', 'a', 'a-Gone', 'delete')
     await endSpace('token-a', 'a', 'a-Fresh', 'leave')
     expect(endsOwed('a')).toEqual(new Set(['a-Gone', 'a-Fresh']))
-
     world.expired = false
     const { pairing: held } = pairing()
     await pairSpaces('token-a', held)
-
     expect(world.ended).toEqual(['delete a-Gone', 'leave a-Fresh'])
     expect(world.adopted).toEqual([])
     expect(endsOwed('a')).toEqual(new Set())
   })
-
   test('keeps its icon and the order chosen for when the account is in again', async () => {
     world.spaces = [{ id: '1', name: 'Work', root: '/Work' }]
     signedIn('a', ['Work'])
@@ -400,17 +347,14 @@ describe('a space ended while the sign-in had run out', () => {
     await sendIcon('token-a', 'a', 'a-Work', { icon: 'star', tint: null })
     await sendOrder('token-a', 'a', ['a-Work'])
     expect(iconOwed('a', 'a-Work')).toEqual({ icon: 'star', tint: null })
-
     world.expired = false
     const { pairs, pairing: held } = pairing()
     pairs.push({ root: '/Work', spaceId: 'a-Work', shared: false })
     await pairSpaces('token-a', held)
-
     expect(world.ended).toEqual(expect.arrayContaining(['icon a-Work star', 'order a-Work']))
     expect(iconOwed('a', 'a-Work')).toBeNull()
   })
 })
-
 describe('the order the account keeps', () => {
   test('is put on the spaces it pairs, whatever each is called on this device', async () => {
     world.spaces = [
@@ -421,13 +365,10 @@ describe('the order the account keeps', () => {
     const { pairs, pairing: held } = pairing()
     pairs.push({ root: '/Job', spaceId: 'a-Work', shared: false })
     pairs.push({ root: '/Home', spaceId: 'a-Home', shared: false })
-
     await pairSpaces('token-a', held)
-
     expect(world.order).toEqual(['/Home', '/Job'])
   })
 })
-
 describe('an icon chosen while the account could not be reached', () => {
   test('stays, and reaches the account once it answers', async () => {
     world.spaces = [{ id: '1', name: 'Work', root: '/Work' }]
@@ -436,37 +377,28 @@ describe('an icon chosen while the account could not be reached', () => {
     await sendIcon('token-a', 'a', 'a-Work', { icon: 'star', tint: null })
     const { pairs, pairing: held } = pairing()
     pairs.push({ root: '/Work', spaceId: 'a-Work', shared: false })
-
     await pairSpaces('token-a', held)
-
     expect(world.icons).toEqual([])
     expect(iconOwed('a', 'a-Work')).toEqual({ icon: 'star', tint: null })
-
     world.online = true
     await pairSpaces('token-a', held)
-
     expect(world.icons).toEqual([])
     expect(world.ended).toEqual(['icon a-Work star'])
     expect(iconOwed('a', 'a-Work')).toBeNull()
-
     await pairSpaces('token-a', held)
     expect(world.icons).toEqual(['/Work'])
   })
 })
-
 test('a space deleted while the device pairs is not brought back by that same pairing', async () => {
   world.spaces = [{ id: '2', name: 'Fresh', root: '/Fresh' }]
   signedIn('a', ['Gone'])
   world.online = false
   world.onMade = () => endSpace('token-a', 'a', 'a-Gone', 'delete')
   const { pairing: held } = pairing()
-
   await pairSpaces('token-a', held)
-
   expect(world.made).toEqual(['Fresh'])
   expect(world.adopted).toEqual([])
 })
-
 test('an order chosen while the account could not be reached is not undone by it', async () => {
   world.spaces = [
     { id: '1', name: 'Work', root: '/Work' },
@@ -478,19 +410,15 @@ test('an order chosen while the account could not be reached is not undone by it
   pairs.push({ root: '/Home', spaceId: 'a-Home', shared: false })
   world.online = false
   await sendOrder('token-a', 'a', ['a-Home', 'a-Work'])
-
   await pairSpaces('token-a', held)
   expect(world.order).toEqual([])
-
   world.online = true
   await pairSpaces('token-a', held)
   expect(world.ended).toEqual(['order a-Home a-Work'])
   expect(world.order).toEqual([])
-
   await pairSpaces('token-a', held)
   expect(world.order).toEqual(['/Work', '/Home'])
 })
-
 test('a guest who left a space while away leaves it once the account answers', async () => {
   world.spaces = []
   account.user = null
@@ -501,11 +429,9 @@ test('a guest who left a space while away leaves it once the account answers', a
   expect(who).toBe('guest:g1')
   world.online = false
   await endSpace('token-g', who ?? '', 'theirs', 'leave')
-
   world.online = true
   const { pairing: held } = pairing()
   await pairSpaces('token-g', held)
-
   expect(world.ended).toEqual(['leave theirs'])
   expect(world.adopted).toEqual([])
   account.guest = null

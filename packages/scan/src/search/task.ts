@@ -5,7 +5,6 @@ import { type Hit, type Range, shownWhole } from './match'
 export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[] } | null {
   const task = taskAt(hit.text)
   if (!task) return null
-
   return {
     done: task.done,
     text: hit.text.slice(task.marker),
@@ -15,6 +14,5 @@ export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[]
       .map((range) => ({ from: Math.max(range.from, 0), to: range.to })),
   }
 }
-
 export const taskWordsOf = (hit: Hit): string | null =>
   shownWhole(hit.text) ? (readTask(hit.text)?.text ?? null) : null

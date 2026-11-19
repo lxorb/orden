@@ -17,18 +17,14 @@ import { killSession } from './limits'
 const ANSWER_WITHIN = 30_000
 const START_WITHIN = 15_000
 const LOOK_EVERY = 25
-
 export interface Events {
   out(seq: number, data: Uint8Array): void
   exit(code: number | null): void
 }
-
 const waited = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
-
 export function socketOf(holds: string, session: string): string {
   return join(holds, `${session}.sock`)
 }
-
 export class Held {
   private socket: Socket | null = null
   private readonly waiting: ToHolder[] = []
@@ -37,12 +33,10 @@ export class Held {
   private killing = false
   private ended = false
   hello: Hello | null = null
-
   constructor(
     readonly path: string,
     private readonly events: Events,
   ) {}
-
   async find(): Promise<Hello | null> {
     const socket = connect(this.path)
     const frames = new Frames()
@@ -85,7 +79,6 @@ export class Held {
     if (this.killing) this.kill()
     return hello
   }
-
   async start(holder: string, spec: Spec, env: Record<string, string>): Promise<Hello> {
     const child = spawn(process.execPath, [holder], {
       detached: true,
@@ -109,32 +102,26 @@ export class Held {
     if (!started.gone && (this.killing || !this.letGo)) child.kill('SIGKILL')
     throw new Error('the holder did not start')
   }
-
   attach(since: number): void {
     this.attached = true
     this.say({ t: 'attach', since })
     for (const frame of this.waiting.splice(0)) this.say(frame)
   }
-
   write(data: Uint8Array): void {
     this.tell({ t: 'in', data })
   }
-
   resize(cols: number, rows: number): void {
     this.tell({ t: 'size', cols, rows })
   }
-
   pause(paused: boolean): void {
     if (paused) this.socket?.pause()
     else this.socket?.resume()
   }
-
   detach(): void {
     this.letGo = true
     this.socket?.destroy()
     this.socket = null
   }
-
   kill(): void {
     this.killing = true
     this.detach()
@@ -148,25 +135,20 @@ export class Held {
     }
     rmSync(this.path, { force: true })
   }
-
   private tell(frame: ToHolder): void {
     if (this.attached) this.say(frame)
     else this.waiting.push(frame)
   }
-
   private say(frame: ToHolder): void {
     if (this.socket?.writable) this.socket.write(frameOf(frame))
   }
-
   private heard(frame: FromHolder): void {
     if (frame.t === 'out') this.events.out(frame.seq, frame.data)
     else if (frame.t === 'exit') this.end(frame.code)
   }
-
   private gone(): void {
     if (!this.letGo) this.end(null)
   }
-
   private end(code: number | null): void {
     if (this.ended) return
     this.ended = true

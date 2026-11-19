@@ -19,7 +19,6 @@
     space: string | null
     onpick: (choice: Member | Special) => void
   } = $props()
-
   const rows = $derived(
     choices.map((choice) =>
       typeof choice === 'string' ? { key: choice, choice, member: null } : { key: choice.who, choice, member: choice },
@@ -68,7 +67,6 @@
     width: min(280px, calc(100% - 2 * var(--space-3)));
     padding: var(--space-1);
   }
-
   .at {
     color: var(--muted);
     font-weight: var(--weight-strong);

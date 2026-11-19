@@ -7,16 +7,12 @@ import { dayIn } from './values'
 export interface Drop {
   change: RowChange
 }
-
 type DateField = 'due' | 'scheduled' | 'start' | 'deadline'
 const DATE_FIELDS: readonly string[] = ['due', 'scheduled', 'start', 'deadline']
 const isDateField = (field: string): field is DateField => DATE_FIELDS.includes(field)
-
 const isPriority = (value: Value): value is 1 | 2 | 3 | 4 | 5 | 6 =>
   typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 6
-
 const taskChange = (task: TaskChange): Drop => ({ change: { task } })
-
 function datedDrop(field: string, key: Value, row: Row, today: string): Drop | null {
   const task = row.task
   if (!task) return null
@@ -41,7 +37,6 @@ function datedDrop(field: string, key: Value, row: Row, today: string): Drop | n
   }
   return taskChange(change)
 }
-
 function taskDrop(field: string, key: Value, row: Row, today: string, from?: Value): Drop | null {
   const task = row.task
   if (row.kind !== 'task' || !task) return null
@@ -68,7 +63,6 @@ function taskDrop(field: string, key: Value, row: Row, today: string, from?: Val
   }
   return null
 }
-
 export function dropInto(property: string, key: Value, row: Row, from?: Value, today = todayOf()): Drop | null {
   if (property.startsWith('task.')) return taskDrop(property.slice(5), key, row, today, from)
   if (isWhen(property)) {
@@ -92,7 +86,6 @@ export function dropInto(property: string, key: Value, row: Row, from?: Value, t
   if (JSON.stringify(now) === JSON.stringify(next)) return null
   return { change: { note: { [name]: next } } }
 }
-
 function swapped(now: readonly Value[], key: Value, from: Value | undefined): Value {
   if (Array.isArray(key)) return key
   if (from === undefined || Array.isArray(from)) return key === null ? null : [key]
@@ -102,7 +95,6 @@ function swapped(now: readonly Value[], key: Value, from: Value | undefined): Va
   if (key === null || named(key) === '') return kept.length ? kept : null
   return kept.some((one) => named(one) === named(key)) ? kept : [...kept, key]
 }
-
 function joined(one: RowChange, next: RowChange): RowChange {
   const change: RowChange = {}
   if (one.note || next.note) change.note = { ...one.note, ...next.note }
@@ -110,7 +102,6 @@ function joined(one: RowChange, next: RowChange): RowChange {
   if (one.list || next.list) change.list = { ...one.list, ...next.list }
   return change
 }
-
 export function inTurn(drops: readonly (Drop | null)[]): Drop[] {
   const changes = drops.flatMap((one) => (one ? [one.change] : []))
   return changes.length ? [{ change: changes.reduce(joined) }] : []

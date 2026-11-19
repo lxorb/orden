@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 
 const written: { under: string; size: number; more: boolean; fresh?: boolean }[] = []
 let refused = ''
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: { under: string; bytes: Uint8Array; more?: boolean; fresh?: boolean }) => {
     if (command === 'explorer_write') {
@@ -33,11 +32,8 @@ vi.mock('./changes', () => ({
 }))
 const record = vi.fn()
 vi.mock('../../workspace/src/api', () => ({ workspace: { undone: { record } } }))
-
 const { WRITTEN_AT_ONCE, writeInto } = await import('./drag')
-
 const view = { reload: () => Promise.resolve(), tell: vi.fn() }
-
 describe('a file from another app dropped on a file explorer', () => {
   test('is written a piece at a time, never read whole', async () => {
     written.length = 0
@@ -52,7 +48,6 @@ describe('a file from another app dropped on a file explorer', () => {
       { under: 'film.mp4', size: 5, more: true },
     ])
   })
-
   test('that is empty is still made, and one with no pieces is read whole', async () => {
     written.length = 0
     const bare = { name: 'note.txt', arrayBuffer: () => Promise.resolve(new ArrayBuffer(3)) }
@@ -62,7 +57,6 @@ describe('a file from another app dropped on a file explorer', () => {
       { under: 'note.txt', size: 3, more: false, fresh: true },
     ])
   })
-
   test('takes back with an undo only what it made, never a folder that was already there', async () => {
     written.length = 0
     record.mockClear()

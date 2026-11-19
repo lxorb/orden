@@ -7,19 +7,15 @@ interface Remote {
   password: unknown
   spaces: Record<string, unknown>
 }
-
 function remoteOf(value: unknown): Remote | null {
   if (!isRecord(value) || !isRecord(value.spaces)) return null
   return { password: value.password, spaces: value.spaces }
 }
-
 const BASE_KEY = 'orden:protected-base'
-
 interface Base {
   space: string
   ways: Record<string, Way>
 }
-
 function bases(): Record<string, Base> {
   const saved = stored(BASE_KEY)
   if (!isRecord(saved)) return {}
@@ -31,39 +27,31 @@ function bases(): Record<string, Base> {
   }
   return out
 }
-
 const baseOf = (root: string, space: string) => {
   const known = bases()[root]
   return known?.space === space ? known.ways : null
 }
-
 const keepBase = (root: string, space: string, ways: Record<string, Way>) =>
   keepJson(BASE_KEY, { ...bases(), [root]: { space, ways } })
-
 const queued = new Map<string, Promise<void>>()
 const STIRRED_KEY = 'orden:protected-stirred'
-
 function stirredOf(root: string): number {
   const all = stored(STIRRED_KEY)
   const one = isRecord(all) ? all[root] : undefined
   return typeof one === 'number' ? one : 0
 }
-
 const alike = (one: Record<string, Way>, other: Record<string, Way>) =>
   Object.keys(one).length === Object.keys(other).length && Object.entries(one).every(([key, way]) => other[key] === way)
-
 function stir(root: string): void {
   const all = stored(STIRRED_KEY)
   keepJson(STIRRED_KEY, { ...(isRecord(all) ? all : {}), [root]: stirredOf(root) + 1 })
 }
-
 export function pushWays(root: string): Promise<void> {
   stir(root)
   const next = (queued.get(root) ?? Promise.resolve()).then(() => pushNow(root))
   queued.set(root, next)
   return next
 }
-
 async function based(root: string, spaceId: string, token: string) {
   const known = baseOf(root, spaceId)
   if (known) return known
@@ -76,7 +64,6 @@ async function based(root: string, spaceId: string, token: string) {
   protection.adopt(root, theirs, accountId)
   return theirs
 }
-
 async function pushNow(root: string): Promise<void> {
   const token = account.token
   const spaceId = syncStore()?.remoteIdFor(root) ?? null
@@ -101,14 +88,12 @@ async function pushNow(root: string): Promise<void> {
   const accountId = account.user?.id
   if (now && accountId && !alike(held, ways)) protection.adopt(root, held, accountId)
 }
-
 export async function pushPassword(token = account.token, accountId = account.user?.id ?? null): Promise<void> {
   const password = protection.password
   if (!token || !accountId || !password) return
   protection.ownedBy(accountId)
   await request('/v1/protected/password', { method: 'PUT', token, body: { password } }).catch(() => undefined)
 }
-
 export async function pulled(
   token: string,
   accountId: string,

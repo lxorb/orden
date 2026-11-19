@@ -1,8 +1,6 @@
 <script lang="ts">
   type Part = string | number | null | undefined | false
-
   const { parts, line = false }: { parts: readonly Part[]; line?: boolean } = $props()
-
   const shown = $derived(
     parts.filter((one): one is string | number => one !== null && one !== undefined && one !== false && one !== ''),
   )
@@ -21,23 +19,19 @@
     min-width: 0;
     max-width: 100%;
   }
-
   .fact {
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
   .line {
     flex-wrap: nowrap;
     overflow: hidden;
   }
-
   .line .fact {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
   .line .fact:not(:last-child) {
     flex-shrink: 0;
   }

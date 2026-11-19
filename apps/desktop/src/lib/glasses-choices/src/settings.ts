@@ -10,13 +10,11 @@ export interface Setting {
   field: Field
   onGlasses: boolean
 }
-
 const COMPACTION_WORDS: Record<string, string> = {
   none: 'Every line break',
   collapse: 'One break between blocks',
   aggressive: 'As little as possible',
 }
-
 const MARK_WORDS: { id: keyof Marks; label: string }[] = [
   { id: 'fence', label: 'Code fences' },
   { id: 'code', label: 'Inline code' },
@@ -27,7 +25,6 @@ const MARK_WORDS: { id: keyof Marks; label: string }[] = [
   { id: 'strike', label: 'Strikethrough' },
   { id: 'highlight', label: 'Highlight' },
 ]
-
 function chooser(
   label: string,
   hint: string,
@@ -47,12 +44,10 @@ function chooser(
     set,
   }
 }
-
 export function glassesSettings(): Setting[] {
   const reading = 'Reading'
   const marked = 'Markdown on the panel'
   const voice = 'Voice'
-
   return [
     {
       id: 'break',
@@ -116,7 +111,6 @@ export function glassesSettings(): Setting[] {
         set: (on) => modes.setGlassesMark(one.id, on),
       },
     })),
-
     {
       id: 'voice',
       group: voice,
@@ -132,7 +126,6 @@ export function glassesSettings(): Setting[] {
     },
   ]
 }
-
 const MARKS_INITIAL: Marks = {
   heading: false,
   bold: false,
@@ -143,7 +136,6 @@ const MARKS_INITIAL: Marks = {
   fence: true,
   link: false,
 }
-
 export function glassesGroups(): { title: string; fields: Field[] }[] {
   const out: { title: string; fields: Field[] }[] = []
   for (const setting of glassesSettings()) {
@@ -151,10 +143,8 @@ export function glassesGroups(): { title: string; fields: Field[] }[] {
     if (last?.title === setting.group) last.fields.push(setting.field)
     else out.push({ title: setting.group, fields: [setting.field] })
   }
-
   return out
 }
-
 export function wordFields(): Field[] {
   return commandWords().map((one): Field => ({
     kind: 'text',
@@ -166,15 +156,12 @@ export function wordFields(): Field[] {
     set: (value) => modes.setGlassesWord(one.id, value),
   }))
 }
-
 export function glassesStamp(): string {
   return glassesSettings()
     .map((one) => `${one.id}=${String(one.field.get())}`)
     .join('|')
 }
-
 export function resetGlasses(): void {
   resetFields(glassesSettings().map(({ field }) => field))
-
   for (const id of Object.keys(DEFAULT_WORDS)) modes.setGlassesWord(id, '')
 }

@@ -10,11 +10,9 @@ const SYSTEM = [
   'No preamble, no sign-off, and never wrap the whole reply in a code fence.',
   'Write maths as $…$ inline and $$…$$ on lines of their own.',
 ].join(' ')
-
 function noteContext(note: string): string {
   return `The note this question is in:\n\n<note>\n${note}\n</note>`
 }
-
 export async function answer(ask: AiAsk, signal: AbortSignal) {
   const provider = ai.providerFor('block')
   if (!provider) {
@@ -25,7 +23,6 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
     busy.failed(SHUT_TO_AGENTS)
     throw new Error('shut to agents')
   }
-
   const began = { yet: false, model: provider.model }
   const write = (piece: string) => {
     if (!piece) return
@@ -37,7 +34,6 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
   }
   const spelling = new TexDelimiters()
   const wrote = (piece: string) => write(spelling.push(piece))
-
   try {
     await complete({
       provider,
@@ -54,7 +50,6 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
       signal,
     })
     write(spelling.end())
-
     if (!began.yet) busy.failed('The model did not answer.')
   } catch (error) {
     if (began.yet) write(spelling.end())

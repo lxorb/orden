@@ -1,7 +1,6 @@
 import type { Row, Value } from './types'
 
 export const idText = (prefix: string, number: number): string => (prefix ? `${prefix}-${number}` : String(number))
-
 export function idNumber(value: Value | undefined, prefix: string): number | null {
   if (typeof value === 'number') return !prefix && Number.isInteger(value) ? value : null
   if (typeof value !== 'string') return null
@@ -9,7 +8,6 @@ export function idNumber(value: Value | undefined, prefix: string): number | nul
   const found = pattern.exec(value.trim())
   return found?.[1] ? Number(found[1]) : null
 }
-
 export function nextId(rows: readonly Row[], property: string, prefix: string): string {
   let highest = 0
   for (const row of rows) {
@@ -19,9 +17,7 @@ export function nextId(rows: readonly Row[], property: string, prefix: string): 
   }
   return idText(prefix, highest + 1)
 }
-
 const FORBIDDEN = '<>:"\\|?*'
-
 function spelledAlike(path: string): string[] {
   const names = path
     .normalize('NFC')
@@ -36,9 +32,7 @@ function spelledAlike(path: string): string[] {
   names[last] = (names[last] ?? '').replace(/\.md$/, '')
   return names
 }
-
 const byCode = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
-
 function byPath(a: Row, b: Row): number {
   const one = spelledAlike(a.path)
   const other = spelledAlike(b.path)
@@ -48,9 +42,7 @@ function byPath(a: Row, b: Row): number {
   }
   return one.length - other.length || byCode(a.path, b.path)
 }
-
 const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || byPath(a, b)
-
 export function idRepairs(
   rows: readonly Row[],
   property: string,

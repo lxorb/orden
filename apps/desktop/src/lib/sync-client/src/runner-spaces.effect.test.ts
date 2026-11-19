@@ -15,7 +15,6 @@ vi.mock('./store', async (importOriginal) => {
     forgetSyncStore: () => Promise.resolve(),
   }
 })
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -24,7 +23,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.mock('./watching', () => ({
   watchFolders: () => ({ stop: () => undefined, follow: () => undefined }),
 }))
-
 const { MemoryDisk } = await import('./memory-disk')
 vi.mock('./app-world', () => ({
   appWorld: () => ({
@@ -39,16 +37,13 @@ vi.mock('./app-world', () => ({
     platform: 'other',
   }),
 }))
-
 const { runner } = await import('./runner.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-
 test('a space paired after the sidebar asked which it is reaches the sidebar (#2071)', async () => {
   const seen: (string | null)[] = []
   const stop = root(() => watch(() => void seen.push(runner.remoteIdFor('/Spaces/Team'))))
   flushSync()
   expect(seen).toEqual([null])
-
   Object.assign(account, { user: { id: 'u7', syncVersion: 2 } })
   try {
     await runner.start()
@@ -57,7 +52,6 @@ test('a space paired after the sidebar asked which it is reaches the sidebar (#2
     await engine?.core.commit(engine.core.addSpace('s-team', '/Spaces/Team', 'write'))
     flushSync()
     expect(seen.at(-1)).toBe('s-team')
-
     await engine?.core.commit(engine.core.forgetSpace('s-team'))
     flushSync()
     expect(seen.at(-1)).toBeNull()

@@ -9,13 +9,11 @@ describe('asking for quick add', () => {
     quickAdd.hide()
     expect(quickAdd.open).toBe(false)
   })
-
   test('is shown empty when handed nothing', () => {
     quickAdd.show()
     expect(quickAdd.prefill).toEqual({})
     quickAdd.hide()
   })
-
   test('keeps the smart reading and the shortcut from anywhere as they were set', () => {
     quickAdd.setSmart(false)
     quickAdd.setAnywhere(false)

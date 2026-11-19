@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const DAY = 24 * 60 * 60 * 1000
-
 interface Entry {
   id: string
   kind: string
@@ -9,13 +8,10 @@ interface Entry {
   from: string
   trashedAt: number
 }
-
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
-
 const notes = new Map<string, string>()
 const unreadable = new Set<string>()
 let deviceTrash: Entry[] = []
-
 function onlyTrashed(): Entry {
   const [entry] = deviceTrash
   if (!entry) throw new Error('nothing is in the device trash')
@@ -23,7 +19,6 @@ function onlyTrashed(): Entry {
 }
 let counter = 0
 const calls: string[] = []
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
@@ -86,13 +81,11 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
     }
   },
 }))
-
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/api')>()),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
-
 const remote = {
   landsAt: null as string | null,
   moreAfter: 0,
@@ -107,7 +100,6 @@ const remote = {
   }[],
 }
 const apiCalls: string[] = []
-
 vi.mock('../../accounts/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../accounts/src/api')>()),
   api: {
@@ -143,7 +135,6 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     signOut: async () => ({ ok: true }),
   },
 }))
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -158,7 +149,6 @@ function memoryStorage(): Storage {
   }
 }
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../../workspace/src/api')
 const { account } = await import('../../accounts/src/api')
 type RemoteSpace = import('../../accounts/src/api').RemoteSpace
@@ -167,7 +157,6 @@ const { prompt } = await import('../../ui-kit/src/api')
 const { sync } = await import('../../sync-store/src/api')
 const { keptAway } = await import('../../away/src/api')
 const { protection } = await import('../../protect/src/api')
-
 beforeEach(() => {
   notes.clear()
   notes.set('/space/Idea.md', '# Idea')
@@ -187,19 +176,15 @@ beforeEach(() => {
   trash.loaded = false
   readOnly.clear()
 })
-
 afterEach(() => {
   workspace.tabs = []
 })
-
 describe('signed out', () => {
   test('a deleted note goes to the device trash and shows up in the list', async () => {
     await workspace.remove('/space/Idea.md', false)
-
     expect(calls).toContain('trash_item')
     expect(calls).not.toContain('delete_note')
     expect(notes.has('/space/Idea.md')).toBe(false)
-
     await trash.load()
     expect(trash.items).toHaveLength(1)
     expect(trash.items[0]).toMatchObject({
@@ -211,20 +196,16 @@ describe('signed out', () => {
     const [item] = trash.items
     expect(item ? item.purgeAt - item.deletedAt : null).toBe(14 * DAY)
   })
-
   test('restoring brings the note back and empties the list', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
-
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
     await trash.restore(only)
-
     expect(calls).toContain('restore_trash')
     expect(notes.get('/space/Idea.md')).toBe('restored')
     expect(trash.items).toEqual([])
   })
-
   test('a protected note is protected again once it is put back, or the deletion undone', async () => {
     protection.set('/space', '/space/Idea.md', 'password')
     await workspace.remove('/space/Idea.md', false)
@@ -233,32 +214,25 @@ describe('signed out', () => {
     if (!only) throw new Error('the deleted note is not in the list')
     await trash.restore(only)
     expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
-
     await workspace.remove('/space/Idea.md', false)
     await workspace.undoFileAction()
     expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
     protection.set('/space', '/space/Idea.md', null)
   })
-
   test('undoing the deletion restores from the trash rather than writing a copy', async () => {
     await workspace.remove('/space/Idea.md', false)
     calls.length = 0
-
     await workspace.undoFileAction()
-
     expect(calls).toContain('restore_trash')
     expect(calls).not.toContain('write_note')
     expect(deviceTrash).toEqual([])
   })
-
   test('a space goes to the device trash too', async () => {
     await workspace.deleteSpace('s')
-
     expect(calls).toContain('trash_item')
     expect(calls).not.toContain('delete_space')
     expect(onlyTrashed()).toMatchObject({ kind: 'space', from: '/space' })
   })
-
   test('a protected space is protected again once it is put back', async () => {
     protection.set('/space', '/space', 'password')
     protection.set('/space', '/space/Idea.md', 'device')
@@ -270,43 +244,33 @@ describe('signed out', () => {
     expect(protection.ways('/space')).toEqual({ '': 'password', 'Idea.md': 'device' })
     await protection.forget('/space')
   })
-
   test('undoing a deletion the trash no longer holds falls back to the snapshot', async () => {
     await workspace.remove('/space/Idea.md', false)
-
     deviceTrash = []
     calls.length = 0
-
     await workspace.undoFileAction()
-
     expect(calls).toContain('write_note')
     expect(notes.get('/space/Idea.md')).toBe('# Idea')
     expect(workspace.undone.stack).toEqual([])
   })
-
   test('an undo that could not happen stays on the stack to be tried again', async () => {
     await workspace.remove('/space/Idea.md', false)
     deviceTrash = []
     const [action] = workspace.undone.stack
     if (action?.kind !== 'delete') throw new Error('the deletion was not recorded')
     action.content = ''
-
     await workspace.undoFileAction()
-
     expect(workspace.undone.stack).toHaveLength(1)
     expect(workspace.undoLabel).toBe('Undo deleting Idea')
   })
-
   test('purging takes it away for good rather than putting it back', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
     calls.length = 0
-
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
     const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     await trash.purge(only)
-
     expect(asked).toHaveBeenCalledOnce()
     expect(calls).toContain('purge_trash')
     expect(calls).not.toContain('restore_trash')
@@ -314,36 +278,29 @@ describe('signed out', () => {
     expect(trash.items).toEqual([])
     asked.mockRestore()
   })
-
   test('purging asks first, and touches nothing when the answer is no', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
     calls.length = 0
-
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
     const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(false)
     await trash.purge(only)
-
     expect(calls).not.toContain('purge_trash')
     expect(trash.items).toHaveLength(1)
     asked.mockRestore()
   })
-
   test('a restore the disk refuses says so, and the list is read again', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
-
     deviceTrash = []
     await trash.restore(only)
-
     expect(trash.error).toBe('nothing to restore')
     expect(trash.busy).toBe(false)
     expect(trash.items).toEqual([])
   })
-
   test('a note of a space shared to be read is not put back', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
@@ -351,21 +308,17 @@ describe('signed out', () => {
     if (!only) throw new Error('the deleted note is not in the list')
     readOnly.add('/space')
     calls.length = 0
-
     expect(trash.restorable(only)).toBe(false)
     await trash.restore(only)
-
     expect(calls).not.toContain('restore_trash')
     expect(notes.has('/space/Idea.md')).toBe(false)
     expect(trash.items).toHaveLength(1)
-
     const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     await trash.purge(only)
     expect(calls).toContain('purge_trash')
     expect(trash.items).toEqual([])
     asked.mockRestore()
   })
-
   test('even said the way the crate says it, from the notes folder', async () => {
     await workspace.loadSpaces()
     readOnly.add('/space')
@@ -380,30 +333,24 @@ describe('signed out', () => {
       purgeAt: null,
       source: 'device' as const,
     }
-
     expect(trash.restorable(row as never)).toBe(false)
   })
-
   test('and one of a space that may be written is', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
-
     expect(trash.restorable(only)).toBe(true)
   })
-
   test('the sweep drops what is older than 14 days', async () => {
     await workspace.remove('/space/Idea.md', false)
     onlyTrashed().trashedAt = Date.now() - 15 * DAY
     await trash.load()
     expect(trash.items).toHaveLength(1)
-
     await trash.sweep()
     expect(trash.items).toEqual([])
   })
 })
-
 describe('signed in', () => {
   beforeEach(() => {
     account.token = 'token'
@@ -412,56 +359,42 @@ describe('signed in', () => {
     account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
     vi.spyOn(sync, 'holds').mockResolvedValue(true)
   })
-
   afterEach(() => {
     account.spaces = []
     vi.restoreAllMocks()
   })
-
   test('deleting removes the local copy; the account keeps it', async () => {
     await workspace.remove('/space/Idea.md', false)
-
     expect(calls).toContain('delete_note')
     expect(calls).not.toContain('trash_item')
   })
-
   test('a note that would not read goes to the device trash instead', async () => {
     unreadable.add('/space/Idea.md')
-
     await workspace.remove('/space/Idea.md', false)
-
     expect(calls).not.toContain('delete_note')
     expect(onlyTrashed()).toMatchObject({ kind: 'note', from: '/space/Idea.md' })
-
     await workspace.undoFileAction()
     expect(deviceTrash).toEqual([])
   })
-
   test('a note this device keeps none of goes from the account, though its words would not come', async () => {
     unreadable.add('/space/Idea.md')
     keptAway.keep([{ id: 'n1', path: '/space/Idea.md', size: 4, modified: 1 }], () => Promise.resolve(false))
-
     await workspace.remove('/space/Idea.md', false)
     keptAway.clear()
-
     expect(calls).toContain('delete_note')
     expect(calls).not.toContain('trash_item')
   })
-
   test('signing out leaves only the device’s, and a list asked before writes nothing back', async () => {
     const at = Date.now() - 2 * DAY
     remote.spaces = [{ id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 }]
     deviceTrash = [{ id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at }]
     await trash.load()
     expect(trash.items.map((item) => item.id)).toEqual(['device:d1', 'space:s2'])
-
     const loading = trash.load()
     void account.signOut()
     await loading
-
     expect(trash.items.map((item) => item.id)).toEqual(['device:d1'])
   })
-
   test('the list is the account’s, with any device leftovers', async () => {
     const at = Date.now() - 2 * DAY
     remote.notes = [
@@ -484,16 +417,13 @@ describe('signed in', () => {
         trashedAt: at - 2 * DAY,
       },
     ]
-
     await trash.load()
-
     expect(trash.items.map((item) => [item.id, item.source, item.detail])).toEqual([
       ['note:n1', 'account', 'Work / notes'],
       ['space:s2', 'account', '3 notes'],
       ['device:d1', 'device', '/space'],
     ])
   })
-
   test('restoring and purging call the account', async () => {
     const at = Date.now()
     remote.notes = [
@@ -508,13 +438,11 @@ describe('signed in', () => {
     ]
     remote.spaces = [{ id: 's2', name: 'Old', deletedAt: at, purgeAt: at + 14 * DAY, notes: 0 }]
     await trash.load()
-
     await trash.restore(trash.items.find((item) => item.id === 'note:n1')!)
     await trash.restore(trash.items.find((item) => item.id === 'space:s2')!)
     expect(apiCalls).toEqual(['restoreNote n1', 'restoreSpace s2'])
     expect(trash.items).toEqual([])
   })
-
   test('a protected note the account put back is protected again', async () => {
     vi.spyOn(sync, 'tracked').mockImplementation(() =>
       calls.includes('delete_note') ? null : { id: 'n1', version: 1, hash: '' },
@@ -538,7 +466,6 @@ describe('signed in', () => {
     expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
     protection.set('/space', '/space/Idea.md', null)
   })
-
   test('a protected note the account put back from a deleted folder is protected again', async () => {
     protection.set('/space', '/space/Private', 'password')
     await protection.gone('/space/Private', '/space')
@@ -558,7 +485,6 @@ describe('signed in', () => {
     expect(protection.own('/space', '/space/Private')?.way).toBe('password')
     await protection.forget('/space')
   })
-
   test('a protected note the account puts back under another name is protected there', async () => {
     vi.spyOn(sync, 'tracked').mockImplementation(() =>
       calls.includes('delete_note') ? null : { id: 'n3', version: 1, hash: '' },
@@ -582,20 +508,16 @@ describe('signed in', () => {
     expect(protection.own('/space', '/space/Idea 2.md')?.way).toBe('password')
     await protection.forget('/space')
   })
-
   test('purging a note asks the account to forget it', async () => {
     const at = Date.now()
     remote.notes = [{ id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at }]
     await trash.load()
-
     const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     await trash.purge(trash.items.find((item) => item.id === 'note:n1')!)
-
     expect(apiCalls).toEqual(['purgeNote n1'])
     expect(trash.items).toEqual([])
     asked.mockRestore()
   })
-
   describe('emptying', () => {
     beforeEach(async () => {
       const at = Date.now()
@@ -604,36 +526,26 @@ describe('signed in', () => {
       await trash.load()
       calls.length = 0
     })
-
     afterEach(() => {
       vi.restoreAllMocks()
     })
-
     test('takes the leftovers here and everything up there, once asked', async () => {
       vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
-
       await trash.empty()
-
       expect(calls).toContain('purge_trash')
       expect(apiCalls).toEqual(['emptyTrash'])
       expect(trash.items).toEqual([])
     })
-
     test('asks the account again while it says more is left, as a big trash takes more than one go', async () => {
       vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
       remote.moreAfter = 2
-
       await trash.empty()
-
       expect(apiCalls).toEqual(['emptyTrash', 'emptyTrash', 'emptyTrash'])
       expect(trash.items).toEqual([])
     })
-
     test('touches nothing when the question is answered no', async () => {
       vi.spyOn(prompt, 'confirm').mockResolvedValue(false)
-
       await trash.empty()
-
       expect(calls).not.toContain('purge_trash')
       expect(apiCalls).toEqual([])
       expect(trash.items).toHaveLength(2)

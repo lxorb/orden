@@ -38,7 +38,6 @@
     editing?: boolean
     onstop?: () => void
   } = $props()
-
   const value = $derived.by((): Value => {
     const base = kit.live.base
     return base ? cellValue(base, property, row, kit.live.context) : null
@@ -55,18 +54,14 @@
     })
   })
   const writable = $derived(editor !== 'none' && editor !== 'button' && kit.writes(row))
-
   function write(next: Value | null) {
     const change = changeOf(row, property, next)
     if (change) kit.write(row, change)
   }
-
   const listed = $derived(
     editor === 'list' || (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
   )
-
   const here = $derived(isDateValue(value) ? onClock(value) : null)
-
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
     const kind = listed
@@ -99,11 +94,8 @@
       to: 0,
     }
   })
-
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
-
   const shownMember = (item: ListItem): Value => (item !== null && typeof item === 'object' ? item.asWritten : item)
-
   function fromWords(words: string | null): Value | null {
     if (words === null || words === '') return null
     if (editor === 'number') return Number.isFinite(Number(words)) ? Number(words) : words
@@ -118,7 +110,6 @@
     if (editor === 'select' && base) return optionWritten(base, property, value, kit.live.rows, words)
     return words
   }
-
   function stopOnKeys(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
@@ -128,7 +119,6 @@
       void tick().then(() => cell?.focus())
     }
   }
-
   function focusIt(node: HTMLElement) {
     node.focus()
     if (node instanceof HTMLInputElement && node.type === 'text') node.select()
@@ -220,12 +210,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .chips {
     display: flex;
     gap: var(--space-1);
   }
-
   .chip {
     flex: none;
     padding: 0 0.5em;
@@ -234,16 +222,13 @@
     color: var(--text-strong);
     line-height: 1.6;
   }
-
   .link {
     color: var(--accent);
     text-decoration: none;
   }
-
   .link:hover {
     text-decoration: underline;
   }
-
   .progress {
     display: flex;
     align-items: center;
@@ -251,7 +236,6 @@
     width: 100%;
     font-variant-numeric: tabular-nums;
   }
-
   .bar {
     flex: 1;
     height: 6px;
@@ -259,28 +243,24 @@
     border-radius: 99px;
     background: var(--surface-press);
   }
-
   .fill {
     display: block;
     height: 100%;
     background: var(--accent);
     transition: inline-size var(--dur-base) var(--ease-out);
   }
-
   .shown {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .editing {
     display: flex;
     align-items: center;
     min-width: 0;
     width: 100%;
   }
-
   .edit {
     flex: 1;
     min-width: 0;

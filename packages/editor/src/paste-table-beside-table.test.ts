@@ -15,7 +15,6 @@ function stateOf(doc: string, at: number): EditorState {
     }),
   )
 }
-
 function headersIn(state: EditorState): string[] {
   const headers: string[] = []
   syntaxTree(state).iterate({
@@ -28,28 +27,23 @@ function headersIn(state: EditorState): string[] {
   })
   return headers
 }
-
 function pasted(doc: string, at: number, text: string): EditorState {
   const state = stateOf(doc, at)
   return parsed(state.update(placed(state, text)).state)
 }
-
 const first = '| Name | Age |\n| ---- | --- |\n| Ann  | 30  |'
 const second = '| City | Pop |\n| ---- | --- |\n| Oslo | 7   |'
-
 describe('edit32 a table pasted on the blank line beside another table', () => {
   test('on the blank line under a table, the pasted table stays a table of its own', () => {
     const doc = `${first}\n\nMore words.`
     const after = pasted(doc, first.length + 1, second)
     expect(headersIn(after)).toEqual(['| Name | Age |', '| City | Pop |'])
   })
-
   test('on the blank line above a table, the pasted table stays a table of its own', () => {
     const doc = `Intro.\n\n${first}`
     const after = pasted(doc, 'Intro.\n'.length, second)
     expect(headersIn(after)).toEqual(['| City | Pop |', '| Name | Age |'])
   })
-
   test('a row pasted on the blank line above a table leaves that table a table', () => {
     const doc = `Intro.\n\n${first}`
     const after = pasted(doc, 'Intro.\n'.length, '| Bob  | 41  |')

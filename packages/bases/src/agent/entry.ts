@@ -10,7 +10,6 @@ export interface Entry {
   fields: QuickFields
   description?: string
 }
-
 export function taskOf(entry: Entry): TaskFields {
   const { fields } = entry
   const task: TaskFields = {
@@ -32,7 +31,6 @@ export function taskOf(entry: Entry): TaskFields {
   if (fields.duration !== undefined) task.duration = fields.duration
   return task
 }
-
 export function linesOf(entry: Entry): string[] {
   const words = (entry.description ?? '')
     .split(/\r?\n/)
@@ -40,16 +38,13 @@ export function linesOf(entry: Entry): string[] {
     .filter((line, index, all) => line !== '' || (index > 0 && index < all.length - 1))
   return [taskLine(taskOf(entry)), ...words.map((line) => (line === '' ? '' : `  ${line}`))]
 }
-
 export interface Placed {
   at: number
   insert: string
   line: number
 }
-
 const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t#]*$/
 const ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
-
 function headingsOf(note: string, all: readonly string[]): ({ level: number; text: string } | null)[] {
   const block = frontMatterBlock(note)
   const wordsFrom = block ? note.slice(0, block.close).split('\n').length : 0
@@ -60,7 +55,6 @@ function headingsOf(note: string, all: readonly string[]): ({ level: number; tex
     return found ? { level: found[1]?.length ?? 1, text: found[2] ?? '' } : null
   })
 }
-
 function endsInList(lines: readonly string[], first: number, last: number): boolean {
   for (let index = last; index >= first; index--) {
     const line = lines[index] ?? ''
@@ -70,14 +64,12 @@ function endsInList(lines: readonly string[], first: number, last: number): bool
   }
   return false
 }
-
 function lastWords(lines: readonly string[], first: number, end: number): number {
   for (let index = end - 1; index >= first; index--) {
     if ((lines[index] ?? '').trim() !== '') return index
   }
   return -1
 }
-
 export function placeIn(note: string, lines: readonly string[], heading?: string): Placed {
   const eol = note.includes('\r\n') ? '\r\n' : '\n'
   const all = note.split(/\r?\n/)
@@ -89,7 +81,6 @@ export function placeIn(note: string, lines: readonly string[], heading?: string
   }
   const endOf = (index: number) => (offsets[index] ?? 0) + (all[index]?.length ?? 0)
   const block = lines.join(eol)
-
   let first = 0
   let end = all.length
   if (heading !== undefined) {
@@ -115,7 +106,6 @@ export function placeIn(note: string, lines: readonly string[], heading?: string
       line: last + (joins ? 1 : 2),
     }
   }
-
   const last = lastWords(all, first, end)
   if (last === -1) return { at: 0, insert: `${block}${eol}`, line: 0 }
   const joins = endsInList(all, first, last)
@@ -125,7 +115,6 @@ export function placeIn(note: string, lines: readonly string[], heading?: string
     line: last + (joins ? 1 : 2),
   }
 }
-
 export const placedEdit = (placed: Placed): TextEdit => ({
   from: placed.at,
   to: placed.at,

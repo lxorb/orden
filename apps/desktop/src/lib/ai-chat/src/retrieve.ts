@@ -11,33 +11,25 @@ export interface Passage {
   line: number
   text: string
 }
-
 const MOST_NOTES = 6
 const MOST_PASSAGES = 10
-
 const BUDGET = 3000
 const PER_NOTE = 700
 const FRONT_BUDGET = 1500
 const SELECTION_BUDGET = 800
-
 const MOST_LINES = 400
 const DEADLINE = 1500
-
 const AROUND = 3
-
 export function tokensIn(text: string): number {
   return Math.ceil(text.length / 4)
 }
-
 export function fitted(text: string, tokens: number): string {
   if (tokensIn(text) <= tokens) return text
-
   const room = tokens * 4
   const cut = text.slice(0, room)
   const lastBreak = cut.lastIndexOf('\n')
   return lastBreak > room / 2 ? cut.slice(0, lastBreak) : cut
 }
-
 const STOP = new Set(
   (
     'a an and are as at be been but by can could did do does for from had has have how i if in' +
@@ -49,57 +41,45 @@ const STOP = new Set(
     ' dass über welche welcher welches gibt habe hat haben kann können notiz notizen'
   ).split(' '),
 )
-
 export function searchWords(question: string, most = 8): string[] {
   const words = question
     .toLowerCase()
     .split(/[^\p{L}\p{N}_#-]+/u)
     .map((one) => one.replace(/^-+|-+$/g, ''))
     .filter((one) => !/^.?$/su.test(one) && !STOP.has(one))
-
   const seen = [...new Set(words)]
   const kept = new Set(
     [...seen].sort((one, other) => other.length - one.length || (one < other ? -1 : 1)).slice(0, most),
   )
-
   return seen.filter((one) => kept.has(one))
 }
-
 export function queryFor(words: readonly string[]): Query {
   return { kind: 'any', of: words.map((text) => ({ kind: 'text', text, fold: true })) }
 }
-
 export interface Ranked {
   path: string
   name: string
   score: number
   lines: number[]
 }
-
 export function ranked(hits: readonly Hit[], words: readonly string[]): Ranked[] {
   const notes = new Map<string, { name: string; lines: Set<number>; said: Map<string, number> }>()
-
   for (const hit of hits) {
     if (hit.page !== undefined) continue
-
     const held = notes.get(hit.path) ?? { name: hit.name, lines: new Set(), said: new Map() }
     if (hit.ranges.length) held.lines.add(hit.line)
-
     const line = hit.text.toLowerCase()
     const name = hit.name.toLowerCase()
     for (const word of words) {
       const worth = name.includes(word) ? 2 : line.includes(word) ? 1 : 0
       if (worth > (held.said.get(word) ?? 0)) held.said.set(word, worth)
     }
-
     notes.set(hit.path, held)
   }
-
   const saying = new Map<string, number>()
   for (const held of notes.values()) {
     for (const word of held.said.keys()) saying.set(word, (saying.get(word) ?? 0) + 1)
   }
-
   const count = notes.size
   return [...notes]
     .map(([path, held]) => ({
@@ -116,10 +96,8 @@ export function ranked(hits: readonly Hit[], words: readonly string[]): Ranked[]
         other.score - one.score || other.lines.length - one.lines.length || (one.path < other.path ? -1 : 1),
     )
 }
-
 export function linesSaying(text: string, words: readonly string[]): number[] {
   if (!words.length) return []
-
   const out: number[] = []
   text.split('\n').forEach((line, at) => {
     const folded = line.toLowerCase()
@@ -127,12 +105,10 @@ export function linesSaying(text: string, words: readonly string[]): number[] {
   })
   return out
 }
-
 function firstLine(text: string): number {
   const block = frontMatterBlock(text)
   return block ? text.slice(0, block.to).split('\n').length - 1 : 0
 }
-
 export function passagesOf(
   note: { path: string; name: string; text: string },
   lines: readonly number[],
@@ -144,20 +120,16 @@ export function passagesOf(
     const text = fitted(rows.slice(start).join('\n').trim(), tokens)
     return text ? [{ path: note.path, name: note.name, line: start, text }] : []
   }
-
   const matched = lines.filter((one) => one >= start && one < rows.length)
   if (!matched.length) return head()
-
   const runs: { from: number; to: number; line: number }[] = []
   for (const line of matched) {
     const from = Math.max(start, line - AROUND)
     const to = Math.min(rows.length - 1, line + AROUND)
     const last = runs.at(-1)
-
     if (last && from <= last.to + 1) last.to = Math.max(last.to, to)
     else runs.push({ from, to, line })
   }
-
   const out: Passage[] = []
   let left = tokens
   for (const run of runs) {
@@ -170,26 +142,20 @@ export function passagesOf(
       left,
     )
     if (!text) continue
-
     out.push({ path: note.path, name: note.name, line: run.line, text })
     left -= tokensIn(text)
   }
-
   return out
 }
-
 export function frontPassages(note: { path: string; name: string; text: string }, words: readonly string[]): Passage[] {
   const lines = linesSaying(note.text, words)
   const start = firstLine(note.text)
   const body = note.text.split('\n').slice(start).join('\n').trim()
   if (!body) return []
-
   if (tokensIn(body) > FRONT_BUDGET) return passagesOf(note, lines, FRONT_BUDGET)
-
   const line = lines.find((one) => one >= start) ?? start
   return [{ path: note.path, name: note.name, line, text: body }]
 }
-
 export interface Space {
   root: string
   excluded: readonly string[]
@@ -198,7 +164,6 @@ export interface Space {
   search?: typeof searchSpace
   deadline?: number
 }
-
 export async function retrieve(
   question: string,
   space: Space,
@@ -207,7 +172,6 @@ export async function retrieve(
   const words = searchWords(question)
   const own = front ? frontPassages(front, words) : []
   if (!words.length) return own
-
   const hits: Hit[] = []
   let open = true
   const search = space.search ?? searchSpace
@@ -221,21 +185,16 @@ export async function retrieve(
     },
     space.excluded,
   ).catch(() => undefined)
-
   await Promise.race([asked, waited(space.deadline ?? DEADLINE)])
   open = false
-
   const out = [...own]
   let spent = 0
   for (const note of ranked(hits, words).slice(0, MOST_NOTES + 1)) {
     if (spent >= BUDGET || out.length >= MOST_PASSAGES) break
-
     const path = space.relative(note.path)
     if (path === null || path === front?.path) continue
-
     const text = await space.read(note.path)
     if (text === null) continue
-
     const name = note.name.replace(/\.(?:md|markdown)$/i, '')
     const found = passagesOf({ path, name, text }, note.lines, Math.min(PER_NOTE, BUDGET - spent))
     for (const passage of found.slice(0, MOST_PASSAGES - out.length)) {
@@ -243,13 +202,10 @@ export async function retrieve(
       spent += tokensIn(passage.text)
     }
   }
-
   return out
 }
-
 export function contextFor(passages: readonly Passage[], selection: string): Message[] {
   const out: Message[] = []
-
   if (passages.length) {
     const blocks = passages.map(
       (one, at) =>
@@ -260,21 +216,16 @@ export function contextFor(passages: readonly Passage[], selection: string): Mes
       content: `Passages from the reader's notes:\n\n${blocks.join('\n\n')}`,
     })
   }
-
   if (selection.trim()) {
     out.push({
       role: 'system',
       content: `What the reader has selected in the note in front:\n\n<selection>\n${fitted(selection, SELECTION_BUDGET)}\n</selection>`,
     })
   }
-
   return out
 }
-
 const CITATION = /\[(\d{1,2}(?:\s*,\s*\d{1,2})*)\](?!\()/g
-
 const CODE = /(```[\s\S]*?(?:```|$)|`[^`\n]*`)/
-
 export function citationLinks(answer: string, count: number): string {
   return answer
     .split(CODE)
@@ -289,7 +240,6 @@ export function citationLinks(answer: string, count: number): string {
     )
     .join('')
 }
-
 export function citedIn(answer: string, count: number): number[] {
   const out: number[] = []
   for (const part of answer.split(CODE).filter((_part, at) => at % 2 === 0)) {
@@ -302,16 +252,13 @@ export function citedIn(answer: string, count: number): number[] {
   }
   return out
 }
-
 export function uncited(answer: string): string {
   return answer.replace(/ ?\[(\d{1,2}(?:\s*,\s*\d{1,2})*)\](?!\()/g, '')
 }
-
 function linkTo(source: { path: string; name: string }): string {
   const stem = source.path.replace(/\.(?:md|markdown)$/i, '')
   return stem === source.name ? `[[${stem}]]` : `[[${stem}|${source.name}]]`
 }
-
 export function linkedAnswer(
   answer: string,
   sources: readonly { path: string; name: string }[],

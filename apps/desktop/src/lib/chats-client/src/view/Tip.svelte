@@ -4,7 +4,6 @@
 
   let width = $state(0)
   let height = $state(0)
-
   const place = $derived.by(() => {
     const shown = tips.shown
     if (!shown) return { left: 0, top: 0 }

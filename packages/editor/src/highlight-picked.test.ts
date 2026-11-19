@@ -20,7 +20,6 @@ function pressed(doc: string, picked: string, emoji: string | null = null): stri
   highlightSelection({ state, dispatch: (one: Transaction) => (state = one.state) })
   return state.doc.toString()
 }
-
 describe('highlight over a word picked inside a highlighted run', () => {
   test('takes the highlight off that word, as bold does, instead of nesting marks', () => {
     expect(pressed('a ==one two three== b', 'two')).toBe('a ==one== two ==three== b')
@@ -29,7 +28,6 @@ describe('highlight over a word picked inside a highlighted run', () => {
     expect(pressed('a ==one two three== b', 'two', '🔴')).toBe('a ==one== ==🔴 two== ==three== b')
     expect(pressed('a ==🔴 one two three== b', 'two')).toBe('a ==🔴 one== ==two== ==🔴 three== b')
   })
-
   test('with the colour it already has takes a coloured highlight off that word', () => {
     expect(pressed('a ==🔴 one two three== b', 'two', '🔴')).toBe('a ==🔴 one== two ==🔴 three== b')
   })

@@ -1,23 +1,17 @@
 import json
 import sys
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 PATIENCE = 40
-
 FAVICON = (
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E"
     "%3Crect width='16' height='16' rx='3' fill='%23ff3e00'/%3E%3C/svg%3E"
 )
-
 FILES = {
     "Plan.md": "# Plan\n\nWhat we are doing.\n",
     "Svelte docs.url": f"[InternetShortcut]\nURL=https://svelte.dev/\nOrden-Icon={FAVICON}\n",
@@ -25,7 +19,6 @@ FILES = {
     "Board.canvas": '{"nodes":[],"edges":[]}',
     "Reading/Chapter.md": "# Chapter\n\nreading\n",
 }
-
 SEED = """
 async (files) => {
   const ws = window.ordenApp.workspace
@@ -54,7 +47,6 @@ async (files) => {
   return ws.bookmarks.list.map((one) => `${one.kind}:${one.path}`)
 }
 """
-
 FACES = """
 () => Object.fromEntries([
   ...[...document.querySelectorAll('.tiles .tile')].map((tile) => [
@@ -73,7 +65,6 @@ FACES = """
   ]),
 ])
 """
-
 KEPT = """
 (name) => {
   const ws = window.ordenApp.workspace
@@ -85,7 +76,6 @@ KEPT = """
   }
 }
 """
-
 TEXT = """
 async (name) => {
   const ws = window.ordenApp.workspace
@@ -93,10 +83,7 @@ async (name) => {
   return await ws.noteText(`${root}/${name}`)
 }
 """
-
 RELOADING: set[Page] = set()
-
-
 def page_error(page: Page, error: Exception) -> None:
     said = str(error)
     if page in RELOADING and ("Importing a module script failed" in said or "access control checks" in said):
@@ -105,8 +92,6 @@ def page_error(page: Page, error: Exception) -> None:
     if harmless(error):
         return
     wrong(f"page error: {error}")
-
-
 def fresh(browser: Browser) -> Page:
     page = DRIVE.page(browser, errors=False, viewport={"width": 1280, "height": 820}, device_scale_factor=2)
     page.on("pageerror", lambda error: page_error(page, error))
@@ -123,26 +108,18 @@ def fresh(browser: Browser) -> Page:
     wait_for(page, "document.querySelectorAll('.bookmarks .row').length === 1", "the folder row")
     page.wait_for_timeout(500)
     return page
-
-
 def sidebar(page: Page, name: str) -> None:
     box = page.locator("aside").first.bounding_box()
     if box:
         shot(page, name, clip={"x": 0, "y": 0, "width": box["width"] + 1, "height": 260})
-
-
 def target(page: Page, name: str):
     if name == "Reading":
         return page.locator(".bookmarks .row", has_text="Reading").first
     return page.locator(f'.tiles .tile[aria-label="{name}"]').first
-
-
 def menu_of(page: Page, name: str) -> list[str]:
     target(page, name).click(button="right")
     page.locator(".menu [role=menuitem]").first.wait_for(state="visible", timeout=PATIENCE * 1000)
     return page.locator(".menu [role=menuitem]").all_inner_texts()
-
-
 def press(page: Page, name: str, label: str) -> bool:
     said = [one.strip() for one in menu_of(page, name)]
     if label not in said:
@@ -151,8 +128,6 @@ def press(page: Page, name: str, label: str) -> bool:
         return False
     page.locator(".menu [role=menuitem]", has_text=label).first.click()
     return True
-
-
 def pick(page: Page, words: str) -> None:
     page.locator(".sheet input.orden-field").wait_for(state="visible", timeout=PATIENCE * 1000)
     page.locator(".sheet input.orden-field").fill(words)
@@ -160,8 +135,6 @@ def pick(page: Page, words: str) -> None:
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     cell.click()
     page.locator(".sheet").wait_for(state="hidden", timeout=PATIENCE * 1000)
-
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
     before = page.evaluate(FACES)
@@ -171,7 +144,6 @@ def drive(browser: Browser) -> None:
     if before.get("Svelte docs") != "picture":
         wrong(f"the web essential does not start on its site icon: {before.get('Svelte docs')}")
     sidebar(page, "01-before")
-
     for name in ("Plan", "Svelte docs", "Paper.pdf", "Board", "Reading"):
         if not press(page, name, "Choose an icon"):
             continue
@@ -182,7 +154,6 @@ def drive(browser: Browser) -> None:
         if worn.get(name) == before.get(name) or worn.get(name) in ("letter", "picture", "none"):
             wrong(f"{name} does not wear the chosen icon: {worn.get(name)}")
         sidebar(page, f"02-{name.replace(' ', '-').replace('.', '-').lower()}-chosen")
-
     plan = page.evaluate(KEPT, "Plan.md")
     if plan["meta"] != "rocket":
         wrong(f"the note's icon is not kept in its synced meta: {plan}")
@@ -194,7 +165,6 @@ def drive(browser: Browser) -> None:
     reading = page.evaluate(KEPT, "Reading")
     if reading["mapped"] != "rocket":
         wrong(f"the folder's icon is not kept in the space's synced icons: {reading}")
-
     for name in ("Plan", "Svelte docs", "Paper.pdf", "Board", "Reading"):
         if press(page, name, "Choose an icon"):
             page.locator(".sheet button", has_text="Remove icon").click()
@@ -206,19 +176,14 @@ def drive(browser: Browser) -> None:
         if after.get(name) != before.get(name):
             wrong(f"{name} did not go back to its own face: {after.get(name)} != {before.get(name)}")
     sidebar(page, "03-reset")
-
     if press(page, "Plan", "Choose an icon"):
         page.locator(".sheet input.orden-field").wait_for(state="visible", timeout=PATIENCE * 1000)
         if page.locator(".sheet button", has_text="Remove icon").count():
             wrong("Plan still offers to remove an icon it no longer wears")
         page.keyboard.press("Escape")
     page.context.close()
-
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
     return DRIVE.verdict("every kind of essential chooses, wears and puts down an icon")
-
-
 raise SystemExit(main())

@@ -29,5 +29,4 @@ export function livePreview(): Extension {
     runExtension(),
   ]
 }
-
 export { blockDecorations }

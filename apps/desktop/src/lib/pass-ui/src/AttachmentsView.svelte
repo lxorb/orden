@@ -9,13 +9,10 @@
   import Glyph from './Glyph.svelte'
 
   const { item }: { item: Item } = $props()
-
   let busy = $state<string | null>(null)
   let wrong = $state<string | null>(null)
-
   const role = $derived(pass.vaults.find((one) => one.id === item.vault)?.role ?? 'viewer')
   const editable = $derived(item.trashed === null && atLeast(role, 'editor'))
-
   async function download(id: string) {
     const attachment = item.attachments.find((one) => one.id === id)
     if (!attachment) return
@@ -29,7 +26,6 @@
       busy = null
     }
   }
-
   async function remove(id: string, name: string) {
     const sure = await prompt.confirm({
       until: pass.opened,
@@ -89,7 +85,6 @@
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }
-
   .line {
     display: flex;
     align-items: center;
@@ -99,11 +94,9 @@
     font-size: var(--text-row);
     color: var(--text);
   }
-
   .line + .line {
     border-top: 1px solid var(--line);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -111,12 +104,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .meta {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .wrong {
     padding: var(--space-2) var(--space-3);
   }

@@ -13,16 +13,13 @@ pub enum Use {
     Change,
     Into,
 }
-
 const MOST_EXPLORED: usize = 50_000;
-
 #[derive(Default)]
 struct Seen {
     last: HashMap<String, u64>,
     order: VecDeque<(u64, String)>,
     count: u64,
 }
-
 impl Seen {
     fn saw(&mut self, key: String, most: usize) {
         self.count += 1;
@@ -42,34 +39,28 @@ impl Seen {
         }
     }
 }
-
 #[derive(Default)]
 pub struct Explored(Mutex<Seen>);
-
 impl Explored {
     pub fn saw(&self, folder: &Path) {
         self.saw_within(folder, MOST_EXPLORED);
     }
-
     fn saw_within(&self, folder: &Path, most: usize) {
         let key = path_key(folder);
         if let Ok(mut seen) = self.0.lock() {
             seen.saw(key, most);
         }
     }
-
     pub fn seen(&self, folder: &Path) -> bool {
         let key = path_key(folder);
         self.0.lock().is_ok_and(|seen| seen.last.contains_key(&key))
     }
 }
-
 pub struct Fences {
     pub spaces: Option<PathBuf>,
     pub own: Vec<PathBuf>,
     pub home: Option<PathBuf>,
 }
-
 impl Fences {
     pub fn of(app: &AppHandle) -> Self {
         Self {
@@ -78,13 +69,11 @@ impl Fences {
             home: app.path().home_dir().ok(),
         }
     }
-
     pub fn in_spaces(&self, path: &Path) -> bool {
         self.spaces
             .as_deref()
             .is_some_and(|spaces| inside(spaces, path))
     }
-
     pub fn in_own(&self, path: &Path, real: &impl Fn(&Path) -> PathBuf) -> bool {
         let real_path = real(path);
         self.own
@@ -92,7 +81,6 @@ impl Fences {
             .any(|own| inside(own, path) || inside(&real(own), &real_path))
     }
 }
-
 pub fn judged(
     fences: &Fences,
     seen: &impl Fn(&Path) -> bool,
@@ -138,18 +126,15 @@ pub fn judged(
     }
     Ok(path)
 }
-
 fn stripped_by_win32(part: Component) -> bool {
     matches!(part, Component::Normal(name) if name.to_string_lossy().ends_with(['.', ' ']))
 }
-
 fn unseen(path: &Path) -> String {
     format!(
         "{} is not in a folder a file explorer has shown",
         path.display()
     )
 }
-
 fn stored(fences: &Fences, real: &impl Fn(&Path) -> PathBuf, path: &Path) -> Result<(), String> {
     let Some(spaces) = fences.spaces.as_deref() else {
         return Ok(());
@@ -166,9 +151,7 @@ fn stored(fences: &Fences, real: &impl Fn(&Path) -> PathBuf, path: &Path) -> Res
     }
     Ok(())
 }
-
 const SHALLOWEST: usize = if cfg!(windows) { 1 } else { 2 };
-
 fn is_top(fences: &Fences, path: &Path) -> bool {
     let depth = path
         .components()
@@ -180,7 +163,6 @@ fn is_top(fences: &Fences, path: &Path) -> bool {
             .as_deref()
             .is_some_and(|home| inside(path, home))
 }
-
 fn fenced(
     fences: &Fences,
     real: &impl Fn(&Path) -> PathBuf,
@@ -208,7 +190,6 @@ fn fenced(
     }
     Ok(())
 }
-
 #[cfg(all(test, unix))]
 mod tests {
     use super::{judged, stripped_by_win32, Explored, Fences, Use};
@@ -221,15 +202,12 @@ mod tests {
             home: Some(PathBuf::from("/home/me")),
         }
     }
-
     fn plain(path: &Path) -> PathBuf {
         path.to_path_buf()
     }
-
     fn judge(seen: &Explored, asked: &str, using: Use) -> Result<PathBuf, String> {
         judged(&fences(), &|one| seen.seen(one), &plain, asked, using)
     }
-
     #[test]
     fn a_folder_is_listed_wherever_the_reader_points() {
         let seen = Explored::default();
@@ -237,7 +215,6 @@ mod tests {
         assert!(judge(&seen, "/home/me/.config/orden", Use::List).is_ok());
         assert!(judge(&seen, "relative/folder", Use::List).is_err());
     }
-
     #[test]
     fn nothing_is_looked_at_or_changed_in_a_folder_no_tab_has_shown() {
         let seen = Explored::default();
@@ -254,7 +231,6 @@ mod tests {
         assert!(judge(&seen, "/home/me/Pictures/sub/a.png", Use::Look).is_err());
         assert!(judge(&seen, "/home/me/Pictures/sub", Use::Into).is_err());
     }
-
     #[test]
     fn a_name_with_spaces_at_its_ends_is_that_name_and_not_its_neighbour() {
         let seen = Explored::default();
@@ -274,7 +250,6 @@ mod tests {
         );
         assert!(judge(&seen, "/home/me/Music/a.mp3", Use::Look).is_err());
     }
-
     #[test]
     fn a_name_windows_would_cut_short_is_known() {
         let normal = |name: &'static str| Component::Normal(name.as_ref());
@@ -287,7 +262,6 @@ mod tests {
         assert!(!stripped_by_win32(Component::ParentDir));
         assert!(!stripped_by_win32(Component::CurDir));
     }
-
     #[test]
     fn a_path_is_judged_by_where_it_points() {
         let seen = Explored::default();
@@ -295,7 +269,6 @@ mod tests {
         assert!(judge(&seen, "/home/me/Music/../Pictures/a.png", Use::Change).is_ok());
         assert!(judge(&seen, "/home/me/Pictures/../Music/a.png", Use::Change).is_err());
     }
-
     #[test]
     fn the_spaces_and_orden_s_own_folders_are_never_changed() {
         let seen = Explored::default();
@@ -317,7 +290,6 @@ mod tests {
         assert!(judge(&seen, "/home/me/Documents", Use::Into).is_ok());
         assert!(judge(&seen, "/home/me/.config/orden/custom.css", Use::Look).is_ok());
     }
-
     #[test]
     fn orden_s_own_storage_of_the_spaces_is_not_shown_only_a_working_folder() {
         let seen = Explored::default();
@@ -339,7 +311,6 @@ mod tests {
         assert!(judge(&seen, &format!("{working}/Plan.md"), Use::Change).is_err());
         assert!(judge(&seen, "/home/me/Documents/Orden", Use::List).is_ok());
     }
-
     #[test]
     fn a_link_into_a_fence_is_the_fence() {
         let seen = Explored::default();
@@ -353,7 +324,6 @@ mod tests {
         assert!(judged(&fences(), &|one| seen.seen(one), &real, asked, Use::Change).is_err());
         assert!(judged(&fences(), &|one| seen.seen(one), &plain, asked, Use::Change).is_ok());
     }
-
     #[test]
     fn the_top_of_a_disk_and_the_home_folder_are_not_changed() {
         let seen = Explored::default();
@@ -365,7 +335,6 @@ mod tests {
         assert!(judge(&seen, "/media", Use::Change).is_err());
         assert!(judge(&seen, "/media/me/Stick", Use::Change).is_ok());
     }
-
     #[test]
     fn only_so_many_folders_are_kept_as_explored_the_longest_unseen_let_go_first() {
         let seen = Explored::default();
@@ -383,7 +352,6 @@ mod tests {
         assert_eq!(kept.last.len(), 4);
         assert!(kept.order.len() <= 2 * kept.last.len() + 64);
     }
-
     #[test]
     fn a_folder_seen_again_and_again_keeps_no_more_than_once_its_room() {
         let seen = Explored::default();

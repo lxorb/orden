@@ -6,7 +6,6 @@ LANDED = (
     " && [...document.querySelectorAll('style')]"
     ".every((one) => [...document.styleSheets].includes(one.sheet))"
 )
-
 UNLANDED = """
 () => [
   ...[...document.querySelectorAll('link[rel=stylesheet]')].filter((one) => !one.sheet)
@@ -16,28 +15,23 @@ UNLANDED = """
     .map((one) => `<style id="${one.id}">`),
 ]
 """
-
 MOVED_ON = """
 document.fonts.status === 'loaded'
   && document.getAnimations().every((one) => one.playState !== 'running')
   && !document.querySelector('.orden-scrollbar.is-lit, .orden-scrollbar.is-settling')
 """
 STILL = f"() => {LANDED} && {MOVED_ON}"
-
 NO_SHEET: "weakref.WeakSet[object]" = weakref.WeakSet()
-
 NO_CARET = """
   *, *::before, *::after { caret-color: transparent !important }
   .cm-cursor, .cm-cursorLayer, .cm-dropCursor { visibility: hidden !important }
 """
-
 HIDE_CARET = (
     "document.addEventListener('DOMContentLoaded', function () {"
     " var style = document.createElement('style');"
     f" style.textContent = {NO_CARET!r};"
     " document.head.appendChild(style) })"
 )
-
 FOCUS = """
 () => {
   const one = document.activeElement
@@ -45,7 +39,6 @@ FOCUS = """
   return `${one.tagName}.${one.className}#${one.id}[${one.getAttribute('aria-label') ?? ''}]`
 }
 """
-
 def quiet(page: object, settle: int = 90) -> None:
     try:
         still = f"() => {MOVED_ON}" if page in NO_SHEET else STILL
@@ -55,7 +48,6 @@ def quiet(page: object, settle: int = 90) -> None:
         if missing and page not in NO_SHEET:
             NO_SHEET.add(page)
             print(f"  a sheet never landed, what follows is drawn without it: {missing}", flush=True)
-
     was = page.evaluate(FOCUS)  # type: ignore[attr-defined]
     for _ in range(8):
         page.wait_for_timeout(settle)  # type: ignore[attr-defined]
@@ -63,7 +55,6 @@ def quiet(page: object, settle: int = 90) -> None:
         if now == was:
             return
         was = now
-
 def steady(
     page: object,
     take: Callable[[], bytes],
@@ -72,7 +63,6 @@ def steady(
     tries: int = 8,
 ) -> bytes:
     quiet(page)
-
     last = take()
     for _ in range(tries):
         page.wait_for_timeout(60)  # type: ignore[attr-defined]
@@ -80,8 +70,6 @@ def steady(
         if now == last:
             return now
         last = now
-
     if said:
         said(f"{what} never held still".strip())
-
     return last

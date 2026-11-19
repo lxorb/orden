@@ -17,7 +17,6 @@ const faked = vi.hoisted(() => ({
     keptFor: (owner: string, id: string) => unknown
   },
 }))
-
 vi.mock('../../../theme/src/api', async () => {
   const { reactive } = await import('../../../../../test/effects/runes.svelte')
   const current: 'dark' | 'light' = 'dark'
@@ -36,7 +35,6 @@ vi.mock('../../../theme/src/api', async () => {
   })
   return { theme: faked.theme, accentColour: (colour: string) => colour }
 })
-
 vi.mock('./render', () => ({
   decode: async () => ({ image: {}, width: 800, height: 600 }),
   copyOf: async () => new Blob(['copy']),
@@ -51,27 +49,21 @@ vi.mock('./render', () => ({
   }),
   toneKey: () => 'tone',
 }))
-
 vi.mock('./kept', () => ({
   keepSource: async () => true,
   keptSource: async () => null,
   forgetSource: async () => true,
 }))
-
 vi.mock('./settings', () => ({
   toneOf: () => ({ saturation: 1, tint: 0, colour: '#000000' }),
 }))
-
 vi.mock('./sheet', () => ({ showPicture: () => undefined }))
-
 let made = 0
 beforeAll(() => {
   URL.createObjectURL = () => `blob:sharp-${++made}`
   URL.revokeObjectURL = () => undefined
 })
-
 const sharpCopy = () => document.documentElement.style.getPropertyValue('--wallpaper-sharp')
-
 describe('the wallpaper sharp copy', () => {
   test('comes back after leaving the wallpaper theme and returning in the same scheme', async () => {
     const { wallpaper } = await import('./wallpaper.svelte')
@@ -89,7 +81,6 @@ describe('the wallpaper sharp copy', () => {
     expect(sharpCopy()).toContain('blob:')
   })
 })
-
 describe('a picture used as wallpaper from another theme', () => {
   test('is made at the wallpaper’s own blur, not the default', async () => {
     const { wallpaper } = await import('./wallpaper.svelte')
@@ -106,7 +97,6 @@ describe('a picture used as wallpaper from another theme', () => {
     expect(faked.blurs[0]).toBe(60)
   })
 })
-
 describe('a picture another window chose', () => {
   test('is the one this window wears, not the one it had', async () => {
     const { wallpaper } = await import('./wallpaper.svelte')

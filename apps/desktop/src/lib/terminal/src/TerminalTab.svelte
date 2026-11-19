@@ -10,22 +10,17 @@
   import { sessionOf } from './sessions.svelte'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
-
   const tab = untrack(() => shown)
   const session = sessionOf(tab)
-
   let place = $state<HTMLElement>()
-
   onMount(() => {
     if (place)
       void session.attach(
         place,
         untrack(() => focused),
       )
-
     return () => session.detach()
   })
-
   $effect(() => {
     if (focused) untrack(() => session.focus())
   })
@@ -81,36 +76,29 @@
     min-height: 0;
     background: var(--terminal-ground, var(--bg));
   }
-
   .place {
     position: relative;
     flex: 1;
     min-height: 0;
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   .place.is-waiting {
     opacity: 0.55;
   }
-
   .place :global(.orden-terminal) {
     position: absolute;
     inset: var(--space-2) 0 0 var(--space-3);
   }
-
   .place :global(.xterm) {
     height: 100%;
   }
-
   .place :global(.xterm-viewport) {
     background-color: transparent;
   }
-
   .place :global(.orden-echoing .xterm-cursor) {
     box-shadow: none !important;
     outline: none !important;
   }
-
   .bar {
     position: absolute;
     bottom: var(--space-4);
@@ -123,7 +111,6 @@
     background: var(--surface);
     box-shadow: var(--shadow-md);
   }
-
   .bar button {
     padding: var(--space-1) var(--space-3);
     border: none;
@@ -136,15 +123,12 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .bar .words {
     display: block;
   }
-
   .bar .take {
     white-space: nowrap;
   }
-
   .bar .note {
     white-space: nowrap;
     align-self: center;
@@ -153,13 +137,11 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   @media (hover: hover) {
     .bar button:hover {
       background: var(--surface-hover);
     }
   }
-
   .bar button:active {
     background: var(--surface-press);
   }

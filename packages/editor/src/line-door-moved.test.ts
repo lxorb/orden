@@ -17,11 +17,9 @@ test('a key pressed before the commands land never runs in the note shown by the
   const first = new SharedDoc('b\na')
   const second = new SharedDoc('d\nc')
   first.join(view)
-
   sortLines(view)
   second.join(view)
   await loadLineCommands()
-
   expect(state.doc.toString()).toBe('d\nc')
   expect(first.text.toString()).toBe('b\na')
 })

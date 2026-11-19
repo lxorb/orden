@@ -6,7 +6,6 @@ import type { Canvas, PageNode } from '@orden/markdown/canvas'
 
 const PIXEL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
-
 const held = vi.hoisted(() => ({
   bytes: null as Uint8Array | null,
   drawn: [] as string[],
@@ -17,7 +16,6 @@ const held = vi.hoisted(() => ({
   zipped: [] as { path: string; body: unknown }[],
   printed: 0,
 }))
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   fileBytes: () => Promise.resolve(held.bytes),
@@ -59,25 +57,20 @@ vi.mock('../../files-out/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const { exportPagesPng, exportPagesSvg, pagesPdf, printPages, sheetStyle } = await import('./out')
-
 const SIZES = [
   { width: 816, height: 1056 },
   { width: 816, height: 1056 },
 ]
-
 function inked(canvas: Canvas, page: PageNode, id: string, colour: string) {
   const point = { x: page.x + 40, y: page.y + 40, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
   canvas.ink = [...canvas.ink, { id, tool: 'pen', color: colour, size: 4, points: [point] }]
 }
-
 function paperNote(): Canvas {
   const canvas = pagesFromPdf('Paper.pdf', SIZES)
   inked(canvas, canvas.nodes[0] as PageNode, 'a', '#ff0000')
   return canvas
 }
-
 const out = (canvas: Canvas) => ({
   canvas,
   palette: {},
@@ -85,13 +78,11 @@ const out = (canvas: Canvas) => ({
   path: '/notes/Paper.canvas',
   root: '/notes',
 })
-
 async function paper(pages = 2): Promise<PDFDocument> {
   const doc = await PDFDocument.create()
   for (let at = 0; at < pages; at += 1) doc.addPage([612, 792])
   return doc
 }
-
 async function ownerLocked(): Promise<Uint8Array> {
   const plain = await (await paper()).save({ useObjectStreams: false })
   const text = String.fromCharCode(...plain)
@@ -99,7 +90,6 @@ async function ownerLocked(): Promise<Uint8Array> {
   const locked = text.replace('trailer\n<<', 'trailer\n<<\n/Encrypt 1 0 R')
   return Uint8Array.from(locked, (one) => one.charCodeAt(0))
 }
-
 async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
   const sheet = (await PDFDocument.load(bytes)).getPage(at)
   return (sheet.node.Contents() as PDFArray)
@@ -108,7 +98,6 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
     .map((one) => new TextDecoder().decode(one))
     .join('\n')
 }
-
 afterEach(() => {
   held.bytes = null
   held.drawn = []
@@ -120,20 +109,16 @@ afterEach(() => {
   held.printed = 0
   busy.clear()
 })
-
 describe('a sheet made from a paper, as a picture', () => {
   test('carries the paper’s page under its ink in an SVG', async () => {
     await exportPagesSvg(out(paperNote()))
-
     const first = String(held.zipped[0]?.body)
     expect(first).toContain(`<image href="${PIXEL}"`)
     expect(first.indexOf('<image')).toBeLessThan(first.indexOf('<path'))
     expect(held.asked).toEqual([1, 2])
   })
-
   test('and under the picture a PNG is rasterised from, drawn as it is rather than encoded into it', async () => {
     await exportPagesPng(out(paperNote()))
-
     expect(held.drawn).toHaveLength(2)
     expect(held.under).toEqual([
       { width: 1, page: 1 },
@@ -144,42 +129,31 @@ describe('a sheet made from a paper, as a picture', () => {
     expect(held.drawn[0]).toContain('<path')
     expect(held.asked).toEqual([1, 2])
   })
-
   test('a sheet of its own has no paper to ask for', async () => {
     await exportPagesSvg(out(emptyPages()))
-
     expect(held.asked).toEqual([])
     expect(String(held.zipped[0]?.body)).not.toContain('<image')
   })
 })
-
 describe('a paper locked by its owner', () => {
   const WORD = 'This PDF is locked by its owner'
-
   test('does not go out as a PDF, and says why', async () => {
     held.bytes = await ownerLocked()
-
     expect(await pagesPdf(out(paperNote()))).toBeNull()
     expect(busy.trouble).toBe(WORD)
   })
-
   test('and is not printed', async () => {
     held.bytes = await ownerLocked()
-
     await printPages(out(paperNote()))
-
     expect(held.printed).toBe(0)
     expect(busy.trouble).toBe(WORD)
   })
-
   test('leaves its page out of a PNG and an SVG, which keep the ink, and says why', async () => {
     held.locked = true
-
     await exportPagesSvg(out(paperNote()))
     expect(String(held.zipped[0]?.body)).not.toContain('<image')
     expect(String(held.zipped[0]?.body)).toContain('<path')
     expect(busy.trouble).toBe(WORD)
-
     busy.clear()
     await exportPagesPng(out(paperNote()))
     expect(held.drawn[0]).not.toContain('<image')
@@ -187,31 +161,25 @@ describe('a paper locked by its owner', () => {
     expect(held.asked).toEqual([])
   })
 })
-
 describe('a note shared on its own', () => {
   test('asks for its paper by the note’s id on the account', async () => {
     await exportPagesSvg({ ...out(paperNote()), shared: 'note-1' })
     expect(held.at[0]).toMatchObject({ shared: 'note-1' })
   })
-
   test('as a PDF, reads its paper by the note’s id on the account', async () => {
     held.bytes = await (await paper()).save()
     const bytes = await pagesPdf({ ...out(paperNote()), path: null, root: null, shared: 'note-1' })
-
     expect(held.at[0]).toMatchObject({ file: 'Paper.pdf', shared: 'note-1' })
     expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
   })
 })
-
 test('one page of a paper on two sheets makes two sheets, each with its own ink', async () => {
   held.bytes = await (await paper()).save()
   const canvas = paperNote()
   const [, second] = canvas.nodes as [PageNode, PageNode]
   second.page = 1
   inked(canvas, second, 'b', '#0000ff')
-
   const bytes = await pagesPdf(out(canvas))
-
   expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
   const [one, two] = [await contentOf(bytes!, 0), await contentOf(bytes!, 1)]
   expect(one).toContain('1 0 0 rg')
@@ -219,13 +187,11 @@ test('one page of a paper on two sheets makes two sheets, each with its own ink'
   expect(two).toContain('0 0 1 rg')
   expect(two).not.toContain('1 0 0 rg')
 })
-
 test('pages of more than one size, printed give every sheet a paper of its own size', () => {
   const style = sheetStyle([
     { width: 816, height: 1056 },
     { width: 1056, height: 816 },
   ])
-
   expect(style).toContain('@page s0{size:816px 1056px;margin:0}')
   expect(style).toContain('@page s1{size:1056px 816px;margin:0}')
   expect(style).toContain('.s1{page:s1;width:1056px;height:816px}')

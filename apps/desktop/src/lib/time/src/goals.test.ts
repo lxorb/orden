@@ -4,7 +4,6 @@ import { dueOf, lengthIn, LONG_TIMER, reachedOf } from './goals'
 import type { Goal, Span } from './records'
 
 const at = (day: number, hours: number) => new Date(2026, 10, day, hours).getTime()
-
 const span = (id: string, start: number, end: number | null, change: Partial<Span> = {}): Span => ({
   id,
   start,
@@ -18,10 +17,8 @@ const span = (id: string, start: number, end: number | null, change: Partial<Spa
   device: null,
   ...change,
 })
-
 const DAILY: Goal = { id: 'day-uni', activity: 'uni', per: 'day', ms: 2 * HOUR }
 const WEEKLY: Goal = { id: 'week-uni', activity: 'uni', per: 'week', ms: 10 * HOUR }
-
 describe('a goal', () => {
   test('counts the activity’s time in the day or week it is in, and no other', () => {
     const spans = [
@@ -32,7 +29,6 @@ describe('a goal', () => {
     expect(reachedOf(DAILY, spans, at(5, 20))).toBe(HOUR)
     expect(reachedOf(WEEKLY, spans, at(5, 20))).toBe(4 * HOUR)
   })
-
   test('is said in hours and minutes, or in hours', () => {
     expect(lengthIn('1:30')).toBe(90 * MINUTE)
     expect(lengthIn('2')).toBe(2 * HOUR)
@@ -43,7 +39,6 @@ describe('a goal', () => {
     expect(lengthIn('1:75')).toBeNull()
   })
 })
-
 describe('what is due to be told', () => {
   test('is a goal once it is reached, once in its day', () => {
     const spans = [span('a', at(5, 9), at(5, 12))]
@@ -54,7 +49,6 @@ describe('what is due to be told', () => {
     const tomorrow = [...spans, span('b', at(6, 9), at(6, 12))]
     expect(dueOf([DAILY], tomorrow, at(6, 13), told)).toHaveLength(1)
   })
-
   test('is a timer left running for hours, once', () => {
     const running = [span('t', at(5, 8), null, { source: 'timer' })]
     expect(dueOf([], running, at(5, 8) + LONG_TIMER - 1, new Set())).toEqual([])

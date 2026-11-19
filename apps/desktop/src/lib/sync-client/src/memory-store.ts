@@ -17,7 +17,6 @@ import {
 } from './store'
 
 type Row = Record<string, unknown>
-
 function copied(row: Row): Row {
   const out: Row = {}
   for (const [key, value] of Object.entries(row)) {
@@ -25,12 +24,10 @@ function copied(row: Row): Row {
   }
   return out
 }
-
 interface Tables {
   keyed: Map<TableName, Map<string, Row>>
   log: Row[]
 }
-
 function emptyTables(): Tables {
   const keyed = new Map<TableName, Map<string, Row>>()
   for (const name of Object.keys(TABLES) as TableName[]) {
@@ -38,17 +35,14 @@ function emptyTables(): Tables {
   }
   return { keyed, log: [] }
 }
-
 export class MemoryStore {
   private tables = emptyTables()
   private clean = true
   private readonly device: string
   writes = 0
-
   constructor(device = 'memory-device') {
     this.device = device
   }
-
   open(): SyncStore {
     const opened: Opened = {
       device: this.device,
@@ -58,11 +52,9 @@ export class MemoryStore {
     }
     this.clean = false
     let closed = false
-
     const alive = () => {
       if (closed) throw new StoreError('the sync store is closed')
     }
-
     return {
       opened,
       read: <const Q extends readonly Query[]>(queries: Q): Promise<Answers<Q>> => {
@@ -84,13 +76,11 @@ export class MemoryStore {
       },
     }
   }
-
   private rowsOf(table: TableName): Map<string, Row> {
     const rows = this.tables.keyed.get(table)
     if (!rows) throw new StoreError(`${table} rows have no key`)
     return rows
   }
-
   private read<const Q extends readonly Query[]>(queries: Q): Answers<Q> {
     return queries.map((query) => {
       queryOf(query)
@@ -101,7 +91,6 @@ export class MemoryStore {
       return answerOf(query, this.scanned(query.table, query.space).map(copied))
     }) as Answers<Q>
   }
-
   private scanned(table: TableName, space: string | undefined): Row[] {
     const spec = TABLES[table]
     const all =
@@ -110,19 +99,16 @@ export class MemoryStore {
     const column = spec.space
     return all.filter((row) => row[column] === space)
   }
-
   private write(changes: readonly Change[]): number[] {
     for (const change of changes) changeOf(change)
     const counts = changes.map((change) => applied(this.tables, change))
     this.writes += 1
     return counts
   }
-
   rows<T extends TableName>(table: T): Rows[T][] {
     return this.scanned(table, undefined).map((row) => rowOf(table, copied(row)))
   }
 }
-
 function order(table: TableName, a: Row, b: Row): number {
   if (table === 'outbox') {
     const age = Number(a.made_at) - Number(b.made_at)
@@ -131,7 +117,6 @@ function order(table: TableName, a: Row, b: Row): number {
   const key = TABLES[table].key ?? ''
   return String(a[key]) < String(b[key]) ? -1 : String(a[key]) > String(b[key]) ? 1 : 0
 }
-
 function applied(tables: Tables, change: Change): number {
   const spec = TABLES[change.table]
   switch (change.t) {

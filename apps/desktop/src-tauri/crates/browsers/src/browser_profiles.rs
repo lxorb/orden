@@ -13,13 +13,11 @@ pub struct Profile {
     pub path: String,
     pub files: Vec<String>,
 }
-
 #[derive(Serialize)]
 pub struct Browser {
     pub id: &'static str,
     pub profiles: Vec<Profile>,
 }
-
 #[tauri::command(async)]
 pub fn browser_profiles() -> Vec<Browser> {
     ["safari", "firefox"]
@@ -32,21 +30,17 @@ pub fn browser_profiles() -> Vec<Browser> {
         .filter(|one| !one.profiles.is_empty())
         .collect()
 }
-
 #[tauri::command(async)]
 pub fn read_browser_file(browser: String, profile: String, file: String) -> Result<String, String> {
     read_listed(&browser, &profile, &file, &profiles_of(&browser))
 }
-
 const DATABASES: [&str; 2] = ["History", "Favicons"];
-
 fn is_database(file: &str) -> bool {
     Path::new(file)
         .extension()
         .is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
         || DATABASES.contains(&file)
 }
-
 pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
     match browser {
         "zen" => zen_profiles::listed(),
@@ -56,9 +50,7 @@ pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
         _ => Vec::new(),
     }
 }
-
 const MOST_BYTES: u64 = 128 * 1024 * 1024;
-
 pub(crate) fn read_listed(
     browser: &str,
     profile: &str,
@@ -78,7 +70,6 @@ pub(crate) fn read_listed(
     let bytes = fs::read(&path).map_err(|error| format!("{file} could not be read: {error}"))?;
     Ok(BASE64.encode(bytes))
 }
-
 pub(crate) fn copied(folder: &Path, database: &str) -> std::io::Result<tempfile::TempDir> {
     let copy = tempfile::tempdir()?;
     fs::copy(folder.join(database), copy.path().join(database))?;
@@ -86,7 +77,6 @@ pub(crate) fn copied(folder: &Path, database: &str) -> std::io::Result<tempfile:
     let _ = fs::copy(folder.join(&log), copy.path().join(&log));
     Ok(copy)
 }
-
 pub(crate) fn present(profile: &Path, names: &[&str]) -> Vec<String> {
     names
         .iter()
@@ -94,7 +84,6 @@ pub(crate) fn present(profile: &Path, names: &[&str]) -> Vec<String> {
         .map(|name| (*name).to_owned())
         .collect()
 }
-
 pub(crate) fn newest(profile: &Path, folder: &str, prefix: &str, suffix: &str) -> Option<String> {
     let name = fs::read_dir(profile.join(folder))
         .into_iter()
@@ -105,7 +94,6 @@ pub(crate) fn newest(profile: &Path, folder: &str, prefix: &str, suffix: &str) -
         .max()?;
     Some(format!("{folder}/{name}"))
 }
-
 pub(crate) fn once(all: impl IntoIterator<Item = Profile>) -> Vec<Profile> {
     all.into_iter().fold(Vec::new(), |mut kept, one| {
         if !kept.iter().any(|held: &Profile| held.path == one.path) {
@@ -114,12 +102,10 @@ pub(crate) fn once(all: impl IntoIterator<Item = Profile>) -> Vec<Profile> {
         kept
     })
 }
-
 pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>) -> Vec<Profile> {
     let Ok(text) = fs::read_to_string(home.join("profiles.ini")) else {
         return Vec::new();
     };
-
     let mut found: Vec<(u8, Profile)> = Vec::new();
     let opened = installed_defaults(&text);
     for entry in entries_in(&text) {
@@ -148,11 +134,9 @@ pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>)
             },
         ));
     }
-
     found.sort_by_key(|(rank, _)| *rank);
     found.into_iter().map(|(_, one)| one).collect()
 }
-
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Entry {
     pub(crate) name: String,
@@ -160,11 +144,9 @@ pub(crate) struct Entry {
     pub(crate) relative: bool,
     pub(crate) default: bool,
 }
-
 fn rows(text: &str) -> Vec<(String, String, String)> {
     let mut section = String::new();
     let mut found = Vec::new();
-
     for line in text.lines().map(str::trim) {
         if line.is_empty() || line.starts_with(';') || line.starts_with('#') {
             continue;
@@ -184,10 +166,8 @@ fn rows(text: &str) -> Vec<(String, String, String)> {
             ));
         }
     }
-
     found
 }
-
 pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
     let rows = rows(text);
     let mut sections: Vec<&str> = Vec::new();
@@ -198,7 +178,6 @@ pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
             sections.push(section);
         }
     }
-
     sections
         .into_iter()
         .filter_map(|section| {
@@ -219,7 +198,6 @@ pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
         })
         .collect()
 }
-
 pub(crate) fn installed_defaults(text: &str) -> Vec<String> {
     rows(text)
         .into_iter()
@@ -229,7 +207,6 @@ pub(crate) fn installed_defaults(text: &str) -> Vec<String> {
         .map(|(_, _, value)| value)
         .collect()
 }
-
 pub(crate) fn known(
     browser: &str,
     profile: &str,

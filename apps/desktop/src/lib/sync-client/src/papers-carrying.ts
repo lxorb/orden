@@ -16,15 +16,11 @@ import type { Mirror } from '../../sync-mirror/src/api'
 import { type Carried, type Carrying, carryPapers, forgetLacking, paperFor } from './papers-carried'
 
 const EVERY = 3000
-
 const KEY = 'orden:papers-carried:'
-
 let carrying: Promise<void> | null = null
 let lastAt = 0
 let lastToken: string | null = null
-
 let record: { whose: string; carried: Map<string, string> } | null = null
-
 function carriedFor(whose: string): Map<string, string> {
   if (record?.whose !== whose) {
     const held = recordOf(stored(KEY + whose), isString)
@@ -32,7 +28,6 @@ function carriedFor(whose: string): Map<string, string> {
   }
   return record.carried
 }
-
 function how(token: string, whose: string, said: Carrying['said'] = () => undefined): Carrying {
   const carried = carriedFor(whose)
   return {
@@ -61,7 +56,6 @@ function how(token: string, whose: string, said: Carrying['said'] = () => undefi
     said,
   }
 }
-
 async function onDisk(path: string): Promise<boolean> {
   if (isNative) {
     const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
@@ -72,7 +66,6 @@ async function onDisk(path: string): Promise<boolean> {
     () => false,
   )
 }
-
 export function mirroredPages(
   mirrors: readonly Mirror[],
   spaces: readonly { root: string; name: string }[],
@@ -91,19 +84,16 @@ export function mirroredPages(
   }
   return out
 }
-
 export function carryNow(notes: () => Carried[], said: Carrying['said']): Promise<void> {
   const token = account.token
   const whose = account.user?.id
   if (!token || !whose || carrying || Date.now() - lastAt < EVERY) return Promise.resolve()
-
   lastAt = Date.now()
   if (token !== lastToken) forgetLacking()
   lastToken = token
   carrying = carryPapers(notes(), how(token, whose, said)).finally(() => (carrying = null))
   return carrying
 }
-
 export async function paperFromAccount(id: string, note: string | null): Promise<Uint8Array | null> {
   const token = account.token
   if (!token) return null

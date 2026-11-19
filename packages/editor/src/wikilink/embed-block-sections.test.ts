@@ -8,11 +8,9 @@ import { embedWidget } from './embed'
 import { type NoteIndex, noteIndex } from './notes'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const PLAN = [
   '# Plan',
   '',
@@ -46,7 +44,6 @@ const PLAN = [
   '``` ^older',
   '',
 ].join('\n')
-
 const SPACE: NoteIndex = {
   notes: [
     {
@@ -62,7 +59,6 @@ const SPACE: NoteIndex = {
   read: () => Promise.resolve(PLAN),
   render: (source) => Promise.resolve(source),
 }
-
 async function embedded(inner: string): Promise<string> {
   const parsed = parseWikilink(inner, true)
   if (!parsed) throw new Error(`${inner} is not a link`)
@@ -78,27 +74,23 @@ async function embedded(inner: string): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 0))
   return frame.querySelector('.orden-embed-body')?.innerHTML ?? ''
 }
-
 describe('a block named on its own line under a table or fence written right under its heading', () => {
   test('a table embed shows the table, not the heading above it', async () => {
     const shown = await embedded('Plan#^prices')
     expect(shown).toContain('| Desk | 120 |')
     expect(shown).not.toContain('Prices')
   })
-
   test('a code embed shows the code, not the heading above it', async () => {
     const shown = await embedded('Plan#^setup')
     expect(shown).toContain('npm install')
     expect(shown).not.toContain('Setup')
   })
 })
-
 describe('a block named on the line right under a closing fence', () => {
   test('the embed shows the code above it', async () => {
     const shown = await embedded('Plan#^snippet')
     expect(shown).toContain('run()')
   })
-
   test('a code embed named on its closing fence by an older build shows the code', async () => {
     const shown = await embedded('Plan#^older')
     expect(shown).toContain('print(1)')

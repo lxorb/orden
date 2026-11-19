@@ -1,52 +1,42 @@
 use std::path::{Path, PathBuf};
 
 const SUFFIX: &str = ".icloud";
-
 #[cfg(any(target_os = "macos", test))]
 const DATALESS: u32 = 0x4000_0000;
-
 #[cfg(any(target_os = "macos", test))]
 fn flags_are_dataless(flags: u32) -> bool {
     flags & DATALESS != 0
 }
-
 #[cfg(target_os = "macos")]
 pub fn is_dataless(meta: &std::fs::Metadata) -> bool {
     use std::os::macos::fs::MetadataExt as _;
     flags_are_dataless(meta.st_flags())
 }
-
 #[cfg(not(target_os = "macos"))]
 pub fn is_dataless(_meta: &std::fs::Metadata) -> bool {
     false
 }
-
 #[cfg(target_os = "macos")]
 fn arrived(target: &Path) -> bool {
     std::fs::symlink_metadata(target).is_ok_and(|meta| !is_dataless(&meta))
 }
-
 pub fn evicted_name(name: &str) -> Option<&str> {
     name.strip_prefix('.')?
         .strip_suffix(SUFFIX)
         .filter(|real| !real.is_empty())
 }
-
 pub fn placeholder_of(target: &Path) -> Option<PathBuf> {
     let name = target.file_name()?.to_str()?;
     Some(target.with_file_name(format!(".{name}{SUFFIX}")))
 }
-
 pub fn stands_for(bytes: &[u8], name: &str) -> bool {
     let holds =
         |needle: &[u8]| !needle.is_empty() && bytes.windows(needle.len()).any(|at| at == needle);
     let wide: Vec<u8> = name.encode_utf16().flat_map(u16::to_be_bytes).collect();
     bytes.starts_with(b"bplist") && (holds(name.as_bytes()) || holds(&wide))
 }
-
 pub fn evicted(target: &Path) -> bool {
     const LONGEST: u64 = 64 * 1024;
-
     if std::fs::symlink_metadata(target).is_ok() {
         return false;
     }
@@ -62,14 +52,12 @@ pub fn evicted(target: &Path) -> bool {
         file.take(LONGEST).read_to_end(&mut bytes).is_ok() && stands_for(&bytes, name)
     })
 }
-
 #[cfg(target_os = "macos")]
 pub fn fetched(app: &tauri::AppHandle, target: &Path) -> Result<(), String> {
     use std::time::{Duration, Instant};
     use tauri::Emitter as _;
 
     const PATIENCE: Duration = Duration::from_secs(120);
-
     let dataless = std::fs::symlink_metadata(target).is_ok_and(|meta| is_dataless(&meta));
     if !dataless {
         if target.exists() {
@@ -82,23 +70,19 @@ pub fn fetched(app: &tauri::AppHandle, target: &Path) -> Result<(), String> {
             return Ok(());
         }
     }
-
     let shown = target.to_string_lossy().to_string();
     let say = |done: bool| {
         let _ = app.emit(EVENT, Fetching { path: &shown, done });
     };
-
     say(false);
     if let Err(error) = download(target) {
         say(true);
         return if dataless { Ok(()) } else { Err(error) };
     }
-
     let deadline = Instant::now() + PATIENCE;
     while !arrived(target) && Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(100));
     }
-
     say(true);
     if arrived(target) {
         Ok(())
@@ -106,17 +90,14 @@ pub fn fetched(app: &tauri::AppHandle, target: &Path) -> Result<(), String> {
         Err(format!("{shown} is still downloading from iCloud"))
     }
 }
-
 #[cfg(target_os = "macos")]
 const EVENT: &str = "orden://icloud";
-
 #[cfg(target_os = "macos")]
 #[derive(Clone, serde::Serialize)]
 struct Fetching<'a> {
     path: &'a str,
     done: bool,
 }
-
 #[cfg(target_os = "macos")]
 fn download(target: &Path) -> Result<(), String> {
     use objc2_foundation::{NSFileManager, NSString, NSURL};
@@ -132,7 +113,6 @@ fn download(target: &Path) -> Result<(), String> {
             )
         })
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -156,7 +136,6 @@ mod tests {
         assert!(!stands_for(b"bplist00Other.md", "Plan.md"));
         assert!(!stands_for(b"Plan.md", "Plan.md"));
     }
-
     #[test]
     fn a_file_with_a_placeholder_is_evicted_and_one_without_is_gone() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -183,11 +162,9 @@ mod tests {
         assert!(!is_dataless(&meta));
         std::fs::remove_file(&file).unwrap();
     }
-
     fn tempfile_path() -> PathBuf {
         std::env::temp_dir().join(format!("orden-dataless-{}.md", std::process::id()))
     }
-
     #[test]
     fn a_placeholder_stands_for_the_name_inside_it_and_sits_where_it_would() {
         assert_eq!(evicted_name(".Plan.md.icloud"), Some("Plan.md"));

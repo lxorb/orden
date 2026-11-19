@@ -5,30 +5,23 @@ interface Written {
   words: string
   revision: number
 }
-
 export interface Across {
   wroteHere(path: string): void
   owe(note: NoteDoc): void
   writing(note: NoteDoc, path: string, write: (words: string) => Promise<unknown>): Promise<Written | null>
 }
-
 let across: Across | null = null
-
 export function meetAcross(one: Across | null) {
   across = one
 }
-
 let acrossSoon: (() => Promise<Across>) | null = null
 let owed: ((note: NoteDoc) => void) | null = null
-
 export function oweTo(owe: (note: NoteDoc) => void) {
   owed = owe
 }
-
 export function fetchAcross(fetch: () => Promise<Across>) {
   acrossSoon = fetch
 }
-
 export function wroteHere(path: string): void {
   if (across) {
     across.wroteHere(path)
@@ -39,7 +32,6 @@ export function wroteHere(path: string): void {
     () => undefined,
   )
 }
-
 export function writeEdited(
   note: NoteDoc,
   path: string,

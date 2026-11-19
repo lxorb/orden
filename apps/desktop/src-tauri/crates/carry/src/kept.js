@@ -10,7 +10,6 @@
   const set = Storage.prototype.setItem
   const remove = Storage.prototype.removeItem
   const clear = Storage.prototype.clear
-
   const DONE = 'orden:kept-restored'
   let done = false
   try {
@@ -27,13 +26,11 @@
       if (storage.getItem(key) !== null) remove.call(storage, key)
     }
   }
-
   function tell(command, args) {
     const internals = window.__TAURI_INTERNALS__
     if (!internals || typeof internals.invoke !== 'function') return
     internals.invoke(command, args).catch(() => undefined)
   }
-
   Storage.prototype.setItem = function (key, value) {
     set.call(this, key, value)
     if (this === storage) tell('kept_write', { key: String(key), value: String(value) })

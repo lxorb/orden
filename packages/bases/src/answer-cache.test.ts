@@ -17,11 +17,9 @@ function counting(rows: readonly Row[]): { rows: Row[]; reads: () => number } {
   )
   return { rows: counted, reads: () => reads }
 }
-
 const rows = Array.from({ length: 20 }, (_, at) =>
   noteRow(`n${at}.md`, { due: `2026-10-${String(at + 1).padStart(2, '0')}` }),
 )
-
 describe('what a view keeps between answers', () => {
   test('a view of the day keeps its rows while only the clock moves', () => {
     const view = compileView(
@@ -35,7 +33,6 @@ describe('what a view keeps between answers', () => {
     view.answer(counted, contextAt({ now: '2026-10-04T10:01:00' }))
     expect(reads()).toBe(first)
   })
-
   test('a view of the clock works its rows out again when the clock moves', () => {
     const view = compileView(
       readBase(
@@ -48,7 +45,6 @@ describe('what a view keeps between answers', () => {
     view.answer(counted, contextAt({ now: '2026-10-04T10:01:00' }))
     expect(reads()).toBeGreaterThan(first)
   })
-
   test('a view that reads other files keeps nothing', () => {
     const view = compileView(
       readBase(

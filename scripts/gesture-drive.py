@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -13,7 +12,6 @@ import tempfile
 import threading
 import time
 from typing import Any
-
 from fresh_app import ended, fresh
 from native_app import INNER, App, config_of, endpoint, forward
 
@@ -73,21 +71,17 @@ document.getElementById('press').addEventListener('click', (event) => {
   tried('pressed', kinds[next++])
 })
 </script>"""
-
 SAID: dict[str, dict[str, list[str]]] = {}
 LOCK = threading.Lock()
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
     def do_POST(self) -> None:  # noqa: N802 - the standard library's name
         size = int(self.headers.get("content-length") or 0)
         try:
@@ -98,21 +92,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             pass
         self.send_response(204)
         self.end_headers()
-
 def heard(when: str) -> dict[str, list[str]]:
     with LOCK:
         return {what: list(answers) for what, answers in SAID.get(when, {}).items()}
-
 SHOWN = (
     "(() => { const all = orden.pages.each().filter(([, one]) => one.sent && one.sent.visible);"
     " return all[0] ? { tab: all[0][0], pane: all[0][1].sent.pane } : null })()"
 )
-
 RUN_IN_THE_PAGE = (
     "const shown = {shown}; if (!shown) return false;"
     " await window.__TAURI_INTERNALS__.invoke('web_pause', {{ tab: shown.tab, paused: false }}); return true"
 )
-
 def the_page(app: App) -> tuple[str, tuple[float, float]]:
     shown = None
     until = time.monotonic() + 30
@@ -127,12 +117,10 @@ def the_page(app: App) -> tuple[str, tuple[float, float]]:
     if sys.platform == "darwin":
         return shown["tab"], (inner["x"] / inner["scale"] + across, inner["y"] / inner["scale"] + down)
     return shown["tab"], (inner["x"] + across * inner["ratio"], inner["y"] + down * inner["ratio"])
-
 def pressed_at(at: tuple[float, float]) -> None:
     x, y = round(at[0]), round(at[1])
     if sys.platform == "win32":
         import ctypes
-
         user32 = ctypes.WinDLL("user32", use_last_error=True)
         user32.SetCursorPos(x, y)
         time.sleep(0.3)
@@ -141,7 +129,6 @@ def pressed_at(at: tuple[float, float]) -> None:
         user32.mouse_event(0x0004, 0, 0, 0, 0)
     elif sys.platform == "darwin":
         import Quartz
-
         for kind in (Quartz.kCGEventMouseMoved, Quartz.kCGEventLeftMouseDown, Quartz.kCGEventLeftMouseUp):
             made = Quartz.CGEventCreateMouseEvent(None, kind, (x, y), Quartz.kCGMouseButtonLeft)
             Quartz.CGEventPost(Quartz.kCGHIDEventTap, made)
@@ -149,7 +136,6 @@ def pressed_at(at: tuple[float, float]) -> None:
     else:
         from Xlib import X, display
         from Xlib.ext import xtest
-
         shown = display.Display()
         shown.screen().root.warp_pointer(x, y)
         shown.sync()
@@ -159,7 +145,6 @@ def pressed_at(at: tuple[float, float]) -> None:
         time.sleep(0.08)
         xtest.fake_input(shown, X.ButtonRelease, 1)
         shown.sync()
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -167,11 +152,9 @@ def main() -> int:
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
-
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/gestures"
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -193,7 +176,6 @@ def main() -> int:
         if "engine" not in SAID:
             raise SystemExit("the page never said what it heard")
         tab, at = the_page(app)
-
         for _ in range(12):
             if app.eval(RUN_IN_THE_PAGE.format(shown=SHOWN)) is not True:
                 wrong.append("Orden's own script could not be run in the page")
@@ -210,7 +192,6 @@ def main() -> int:
                     wrong.append(f"the page never tried {what} with no press{through}")
                 elif "yes" in unasked[what]:
                     wrong.append(f"{what} was let through with no press{through}, after a script Orden ran in the page")
-
         for count in range(1, 4):
             for _ in range(3):
                 forward(app, process.pid)
@@ -236,10 +217,8 @@ def main() -> int:
         ended(process)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

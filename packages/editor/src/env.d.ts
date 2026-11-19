@@ -1,5 +1,4 @@
 declare module '*.css'
-
 declare module 'turndown-plugin-gfm' {
   import type TurndownService from 'turndown'
   export const gfm: TurndownService.Plugin
@@ -7,7 +6,6 @@ declare module 'turndown-plugin-gfm' {
   export const strikethrough: TurndownService.Plugin
   export const taskListItems: TurndownService.Plugin
 }
-
 declare module '*.js?raw' {
   const text: string
   export default text

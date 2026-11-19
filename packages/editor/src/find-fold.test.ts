@@ -14,13 +14,10 @@ beforeAll(async () => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await loadFind()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function folds(view: EditorView) {
   const out: [number, number][] = []
   foldedRanges(view.state).between(0, view.state.doc.length, (from, to) => {
@@ -28,7 +25,6 @@ function folds(view: EditorView) {
   })
   return out
 }
-
 describe('finding a word in a folded section', () => {
   test('opens the fold when the word ends the section', async () => {
     const doc = '# Plan\n\nsome words then target\n\n# Next\n\nmore'
@@ -51,11 +47,9 @@ describe('finding a word in a folded section', () => {
     expect(section).toEqual({ from: heading, to: end })
     if (section) view.dispatch({ effects: foldEffect.of(section) })
     expect(folds(view)).toEqual([[heading, end]])
-
     await setFind(view, { ...NO_FIND, query: 'target' })
     view.dispatch({ selection: EditorSelection.cursor(0) })
     findNext(view)
-
     expect(view.state.selection.main.to).toBe(end)
     expect(folds(view)).toEqual([])
   })

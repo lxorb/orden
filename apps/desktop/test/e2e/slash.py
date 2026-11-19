@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = "# Slash\n\nSomething already written.\n"
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -19,13 +15,11 @@ async (note) => {
   return found.name
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('.cm-tooltip-autocomplete li')].map(
   (one) => one.textContent,
 )
 """
-
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 820},
@@ -48,7 +42,6 @@ def fresh(browser: Browser, finger: bool) -> Page:
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
     return page
-
 def caret_at_end(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -61,11 +54,9 @@ def caret_at_end(page: Page) -> None:
         }"""
     )
     page.wait_for_timeout(300)
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
     caret_at_end(page)
-
     page.keyboard.type("/", delay=30)
     page.wait_for_timeout(600)
     rows = page.evaluate(ROWS)
@@ -75,7 +66,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the slash offered {len(rows)} blocks")
     if not any("Table" in one for one in rows):
         wrong("the blocks the Paragraph menu offers are not all here")
-
     page.keyboard.type("tab", delay=40)
     page.wait_for_timeout(600)
     narrowed = page.evaluate(ROWS)
@@ -83,7 +73,6 @@ def drive(browser: Browser) -> None:
     shot(page, "02-narrowed")
     if not narrowed or not any("Table" in one for one in narrowed):
         wrong(f"typing did not narrow to the table: {narrowed}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(700)
     doc = page.evaluate("() => window.orden.state.doc.toString()")
@@ -93,7 +82,6 @@ def drive(browser: Browser) -> None:
         wrong("the slash and what was typed after it are still in the note")
     if "|" not in doc:
         wrong(f"no table was written: {json.dumps(doc[-60:])}")
-
     page.evaluate("() => window.orden.focus()")
     caret_at_end(page)
     page.keyboard.type("/quo", delay=40)
@@ -107,13 +95,11 @@ def drive(browser: Browser) -> None:
         wrong("Escape left the menu open")
     if not kept.endswith("/quo"):
         wrong(f"Escape took the slash with it: {json.dumps(kept[-20:])}")
-
     page.keyboard.type("xyz", delay=30)
     page.wait_for_timeout(500)
     nothing = page.evaluate(ROWS)
     if nothing:
         wrong(f"a slash that names nothing still offered rows: {nothing}")
-
     caret_at_end(page)
     page.keyboard.type("and/or and 24/7", delay=20)
     page.wait_for_timeout(500)
@@ -121,13 +107,10 @@ def drive(browser: Browser) -> None:
     shot(page, "05-a-slash-in-a-word")
     if inside:
         wrong(f"a slash in the middle of a word opened the menu: {inside}")
-
     page.context.close()
-
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
     caret_at_end(page)
-
     page.keyboard.type("/", delay=30)
     page.wait_for_timeout(700)
     rows = page.evaluate(ROWS)
@@ -135,7 +118,6 @@ def finger(browser: Browser) -> None:
     shot(page, "10-phone")
     if not rows:
         wrong("the slash menu does not open on a phone")
-
     box = page.evaluate(
         """() => {
           const menu = document.querySelector('.cm-tooltip-autocomplete')
@@ -147,16 +129,12 @@ def finger(browser: Browser) -> None:
     say(f"[phone] the menu sits at {json.dumps(box)}")
     if not box or box["left"] < 0 or box["width"] < 80:
         wrong(f"the menu is not where a thumb can reach it: {box}")
-
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
         drive(browser)
         say("--- a finger ---")
         finger(browser)
-
     return DRIVE.verdict("a slash offers the blocks, and a slash in a word is a slash")
-
 raise SystemExit(main())

@@ -12,15 +12,12 @@ const CLAUDE_OVERRIDES: [&str; 3] = [
 ];
 const CODEX_OVERRIDES: [&str; 2] = ["OPENAI_API_KEY", "CODEX_API_KEY"];
 const GEMINI_OVERRIDES: [&str; 2] = ["GEMINI_API_KEY", "GOOGLE_API_KEY"];
-
 #[cfg(not(target_os = "macos"))]
 const CODEX_CONFIG: &str = "cli_auth_credentials_store = \"keyring\"\n";
 #[cfg(target_os = "macos")]
 const CODEX_CONFIG: &str = "cli_auth_credentials_store = \"file\"\n";
-
 #[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
 const CODEX_CONFIG_BEFORE: &str = "cli_auth_credentials_store = \"keyring\"\n";
-
 #[cfg_attr(not(any(test, target_os = "macos")), allow(dead_code))]
 fn config_now(held: Option<&str>, now: &str) -> Option<&'static str> {
     match held {
@@ -31,13 +28,11 @@ fn config_now(held: Option<&str>, now: &str) -> Option<&'static str> {
         Some(_) => None,
     }
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Home {
     tool: Tool,
     dir: PathBuf,
 }
-
 impl Home {
     pub fn variable(&self) -> &'static str {
         match self.tool {
@@ -46,11 +41,9 @@ impl Home {
             Tool::Gemini => "GEMINI_CLI_HOME",
         }
     }
-
     pub fn dir(&self) -> &Path {
         &self.dir
     }
-
     pub fn apply(&self, command: &mut Command) {
         let overrides: &[&str] = match self.tool {
             Tool::ClaudeCode => &CLAUDE_OVERRIDES,
@@ -62,7 +55,6 @@ impl Home {
         }
         command.env(self.variable(), &self.dir);
     }
-
     fn made(&self) -> Result<(), String> {
         orden_base::paths::made(&self.dir)?;
         if self.tool == Tool::Codex {
@@ -75,7 +67,6 @@ impl Home {
         Ok(())
     }
 }
-
 fn kind_of(tool: Tool) -> &'static str {
     match tool {
         Tool::ClaudeCode => "claude-code",
@@ -83,7 +74,6 @@ fn kind_of(tool: Tool) -> &'static str {
         Tool::Gemini => "gemini-cli",
     }
 }
-
 pub fn under(root: &Path, tool: Tool, account: Option<&str>) -> Result<Option<Home>, String> {
     let Some(id) = account else {
         return Ok(None);
@@ -98,11 +88,9 @@ pub fn under(root: &Path, tool: Tool, account: Option<&str>) -> Result<Option<Ho
     home.made()?;
     Ok(Some(home))
 }
-
 pub fn of(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option<Home>, String> {
     under(&orden_store::ai_accounts::root(app)?, tool, account)
 }
-
 pub fn removed(home: &Home) -> Result<(), String> {
     match std::fs::remove_dir_all(&home.dir) {
         Ok(()) => Ok(()),
@@ -110,7 +98,6 @@ pub fn removed(home: &Home) -> Result<(), String> {
         Err(error) => Err(format!("could not remove that sign-in: {error}")),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -131,7 +118,6 @@ mod tests {
         .expect("accounts");
         dir
     }
-
     #[test]
     fn the_first_account_is_the_readers_own_home() {
         let dir = root("first");
@@ -139,7 +125,6 @@ mod tests {
         assert_eq!(under(&dir, Tool::ClaudeCode, None), Ok(None));
         let _ = std::fs::remove_dir_all(&dir);
     }
-
     #[test]
     fn a_second_one_is_a_folder_of_ordens_made_on_first_use() {
         let dir = root("second");
@@ -149,7 +134,6 @@ mod tests {
         assert_eq!(home.dir(), dir.join("homes").join("claude-code-2"));
         assert!(home.dir().is_dir());
         assert_eq!(home.variable(), "CLAUDE_CONFIG_DIR");
-
         let codex = under(&dir, Tool::Codex, Some("codex-2"))
             .expect("read")
             .expect("a home");
@@ -159,7 +143,6 @@ mod tests {
         assert!(!codex.dir().exists());
         let _ = std::fs::remove_dir_all(&dir);
     }
-
     #[test]
     fn a_codex_home_keeps_its_login_out_of_a_macs_keychain() {
         assert_eq!(config_now(None, CODEX_CONFIG), Some(CODEX_CONFIG));
@@ -176,7 +159,6 @@ mod tests {
         #[cfg(target_os = "macos")]
         assert_eq!(CODEX_CONFIG, file);
     }
-
     #[test]
     fn a_program_is_started_with_its_home_and_no_key_from_the_shell() {
         let home = Home {

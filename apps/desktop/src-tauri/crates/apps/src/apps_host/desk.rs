@@ -3,18 +3,14 @@ pub mod input;
 
 pub mod clipboard {
     pub type Listener = std::sync::Arc<dyn Fn(String) + Send + Sync>;
-
     pub struct Clipboard;
-
     impl Clipboard {
         #[allow(clippy::unused_self)]
         pub fn listen(&self, _listener: Option<Listener>) {}
-
         #[allow(clippy::unused_self)]
         pub fn give(&self, _text: &str) {}
     }
 }
-
 use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -48,7 +44,6 @@ use windows::Win32::UI::WindowsAndMessaging::{
 const EVERYTHING: u32 = 0x1000_0000;
 const KEEP_EVERY: Duration = Duration::from_millis(100);
 const ASK_EVERY: Duration = Duration::from_millis(200);
-
 pub struct Desk {
     handle: isize,
     size: Mutex<(u32, u32)>,
@@ -56,41 +51,33 @@ pub struct Desk {
     pub shown: AtomicBool,
     ended: AtomicBool,
 }
-
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.held()
 }
-
 fn desks() -> MutexGuard<'static, HashMap<String, Arc<Desk>>> {
     static ALL: OnceLock<Mutex<HashMap<String, Arc<Desk>>>> = OnceLock::new();
     lock(ALL.get_or_init(Mutex::default))
 }
-
 pub fn desk(name: &str) -> Option<Arc<Desk>> {
     desks().get(name).cloned()
 }
-
 impl Desk {
     pub fn size(&self) -> (u32, u32) {
         *lock(&self.size)
     }
-
     pub fn ended(&self) -> bool {
         self.ended.load(Ordering::SeqCst)
     }
-
     #[allow(unsafe_code)]
     pub fn enter(&self) -> Result<(), String> {
         unsafe { SetThreadDesktop(HDESK(self.handle as _)) }.map_err(|error| error.to_string())
     }
 }
-
 pub struct Desktop {
     name: String,
     desk: Arc<Desk>,
     keeper: Option<std::thread::JoinHandle<()>>,
 }
-
 #[allow(unsafe_code)]
 fn station() -> String {
     let mut name = [0_u16; 256];
@@ -113,11 +100,9 @@ fn station() -> String {
         "WinSta0".to_owned()
     }
 }
-
 pub fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain([0]).collect()
 }
-
 impl Desktop {
     #[allow(unsafe_code)]
     pub fn start(width: u32, height: u32) -> Result<Desktop, String> {
@@ -155,19 +140,15 @@ impl Desktop {
             keeper: Some(keeper),
         })
     }
-
     pub fn name(&self) -> String {
         self.name.clone()
     }
-
     pub fn desk(&self) -> Arc<Desk> {
         self.desk.clone()
     }
-
     pub fn fit(&self, width: u32, height: u32) {
         *lock(&self.desk.size) = (width, height);
     }
-
     #[allow(unsafe_code)]
     pub fn run(&self, argv: &[String], folder: &Path) -> Result<Program, String> {
         let said = |error: windows::core::Error| error.to_string();
@@ -226,7 +207,6 @@ impl Desktop {
         }
     }
 }
-
 impl Drop for Desktop {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
@@ -246,25 +226,20 @@ impl Drop for Desktop {
         });
     }
 }
-
 pub struct Program {
     pid: u32,
     process: isize,
     job: isize,
 }
-
 type Programs = HashMap<u32, (isize, Arc<Desk>)>;
-
 fn programs() -> MutexGuard<'static, Programs> {
     static ALL: OnceLock<Mutex<Programs>> = OnceLock::new();
     lock(ALL.get_or_init(Mutex::default))
 }
-
 impl Program {
     pub fn pid(&self) -> u32 {
         self.pid
     }
-
     #[allow(unsafe_code)]
     pub fn wait(&self) -> Option<i32> {
         while busy(self.job) {
@@ -275,7 +250,6 @@ impl Program {
         Some(i32::from_ne_bytes(code.to_ne_bytes()))
     }
 }
-
 impl Drop for Program {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
@@ -286,7 +260,6 @@ impl Drop for Program {
         }
     }
 }
-
 #[allow(unsafe_code)]
 fn busy(job: isize) -> bool {
     let mut counts = JOBOBJECT_BASIC_ACCOUNTING_INFORMATION::default();
@@ -303,24 +276,20 @@ fn busy(job: isize) -> bool {
     };
     asked.is_ok() && counts.ActiveProcesses > 0
 }
-
 pub fn alive(pid: u32) -> bool {
     programs().get(&pid).is_some_and(|(job, _)| busy(*job))
 }
-
 pub fn close(pid: u32) {
     if let Some((_, desk)) = programs().get(&pid) {
         desk.closing.store(true, Ordering::SeqCst);
     }
 }
-
 #[allow(unsafe_code)]
 pub fn kill(pid: u32) {
     if let Some((job, _)) = programs().get(&pid) {
         let _ = unsafe { TerminateJobObject(HANDLE(*job as _), 1) };
     }
 }
-
 pub fn command_line(argv: &[String]) -> String {
     let batch = argv.first().is_some_and(|program| is_batch(program));
     argv.iter()
@@ -334,20 +303,17 @@ pub fn command_line(argv: &[String]) -> String {
         .collect::<Vec<_>>()
         .join(" ")
 }
-
 fn is_batch(program: &str) -> bool {
     std::path::Path::new(program.trim_end_matches(['.', ' ']))
         .extension()
         .is_some_and(|one| one.eq_ignore_ascii_case("bat") || one.eq_ignore_ascii_case("cmd"))
 }
-
 pub fn spoken_to_cmd(argv: &[String]) -> bool {
     !argv.first().is_some_and(|program| is_batch(program))
         || argv
             .iter()
             .all(|word| !word.contains(['"', '%', '\r', '\n', '\0']))
 }
-
 fn quoted(word: &str) -> String {
     if !word.is_empty() && !word.contains([' ', '\t', '\n', '\u{b}', '"']) {
         return word.to_owned();
@@ -373,7 +339,6 @@ fn quoted(word: &str) -> String {
     out.push('"');
     out
 }
-
 #[allow(unsafe_code)]
 pub fn shown() -> Vec<HWND> {
     let mut found = Vec::new();
@@ -391,21 +356,18 @@ pub fn shown() -> Vec<HWND> {
     }
     found
 }
-
 #[allow(unsafe_code)]
 pub fn place_of(window: HWND) -> Option<RECT> {
     let mut place = RECT::default();
     unsafe { GetWindowRect(window, &raw mut place) }.ok()?;
     (place.right > place.left && place.bottom > place.top).then_some(place)
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Main,
     Dialog,
     Other,
 }
-
 pub fn kind_of(style: u32, extended: u32, owned: bool) -> Kind {
     let caption = style & WS_CAPTION.0 == WS_CAPTION.0;
     let framed = style & WS_THICKFRAME.0 != 0;
@@ -418,14 +380,12 @@ pub fn kind_of(style: u32, extended: u32, owned: bool) -> Kind {
         _ => Kind::Other,
     }
 }
-
 pub fn centred(size: (i32, i32), view: (i32, i32)) -> (i32, i32) {
     (
         ((view.0 - size.0) / 2).max(0),
         ((view.1 - size.1) / 2).max(0),
     )
 }
-
 #[allow(unsafe_code)]
 fn keep(desk: &Desk) {
     if desk.enter().is_err() {
@@ -498,7 +458,6 @@ fn keep(desk: &Desk) {
         std::thread::sleep(KEEP_EVERY);
     }
 }
-
 #[cfg(test)]
 pub fn notepad_on(width: u32, height: u32) -> Option<(Desktop, Program)> {
     let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
@@ -516,7 +475,6 @@ pub fn notepad_on(width: u32, height: u32) -> Option<(Desktop, Program)> {
         .unwrap();
     Some((desktop, program))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -554,7 +512,6 @@ mod tests {
                 .collect::<Vec<_>>()
         );
     }
-
     #[test]
     fn a_batch_file_hears_every_word_quoted_so_cmd_runs_none_of_them() {
         let words = |all: &[&str]| all.iter().map(|one| (*one).to_owned()).collect::<Vec<_>>();
@@ -572,7 +529,6 @@ mod tests {
         assert!(!spoken_to_cmd(&words(&["C:\\x\\run.bat.", "a\nb"])));
         assert!(spoken_to_cmd(&words(&["C:\\x\\app.exe", "say \"%hi%\""])));
     }
-
     #[test]
     fn a_batch_file_run_on_a_desktop_runs_only_itself() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -589,7 +545,6 @@ mod tests {
         let said = std::fs::read_to_string(folder.path().join("said.txt")).expect("it said");
         assert_eq!(said.trim(), "\"x&echo.>pwned.txt\"");
     }
-
     #[test]
     fn places_a_main_window_a_dialog_and_leaves_a_menu() {
         let popup = 0x8000_0000;
@@ -606,7 +561,6 @@ mod tests {
         assert_eq!(centred((400, 300), (1200, 800)), (400, 250));
         assert_eq!(centred((1600, 900), (1200, 800)), (0, 0));
     }
-
     #[allow(unsafe_code)]
     fn process_of(window: HWND) -> u32 {
         let mut pid = 0;
@@ -618,7 +572,6 @@ mod tests {
         };
         pid
     }
-
     #[test]
     fn runs_a_program_on_a_desktop_of_its_own() {
         let Some((desktop, program)) = notepad_on(900, 700) else {

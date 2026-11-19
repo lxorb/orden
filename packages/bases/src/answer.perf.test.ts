@@ -6,11 +6,9 @@ import { contextAt, noteRow, taskRow } from './fixtures/rows'
 import type { Row } from './types'
 
 const CLOCKED = process.env.ORDEN_PERF === '1'
-
 const context = contextAt()
 const days = ['2026-09-28', '2026-10-02', '2026-10-04', '2026-10-05', '2026-10-09', '2026-11-01']
 const marks = [' ', ' ', ' ', 'x', '/']
-
 const tasks: Row[] = Array.from({ length: 10_000 }, (_, at) =>
   taskRow(
     `Folder ${at % 40}/Note ${at % 5000}.md`,
@@ -26,7 +24,6 @@ const notes: Row[] = Array.from({ length: 5000 }, (_, at) =>
     rating: at % 5,
   }),
 )
-
 const table = readBase(`filters:
   and:
     - file.inFolder("Folder 1") || pages > 100
@@ -46,7 +43,6 @@ views:
       rating: Average
       formula.long: Checked
 `)
-
 function timed(run: () => unknown, times = 5): number {
   let best = Infinity
   for (let one = 0; one < times; one++) {
@@ -56,16 +52,13 @@ function timed(run: () => unknown, times = 5): number {
   }
   return best
 }
-
 test('Today over ten thousand tasks', () => {
   const today = builtinView('today')
   const result = answer(today, 0, tasks, context)
   expect(result.total).toBeGreaterThan(1000)
-
   const whole = timed(() => answer(builtinView('today'), 0, tasks, context))
   if (CLOCKED) expect(whole).toBeLessThan(20)
 })
-
 test('answered again after one row changed', () => {
   const view = compileView(builtinView('today'))
   view.answer(tasks, context)
@@ -77,11 +70,9 @@ test('answered again after one row changed', () => {
   ).toBe(true)
   if (CLOCKED) expect(again).toBeLessThan(10)
 })
-
 test('a table of five thousand notes, grouped and summarised', () => {
   const result = answer(table, 'T', notes, context)
   expect(result.groups.map((group) => group.key)).toEqual(['Doing', 'Done', 'To do'])
-
   const whole = timed(() => answer(structuredClone(table), 'T', notes, context))
   if (CLOCKED) expect(whole).toBeLessThan(20)
 })

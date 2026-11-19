@@ -5,9 +5,7 @@ import type { FileOp } from '../../file-ops/src/api'
 import type { Answer, Clash } from './conflicts'
 
 const STORAGE_KEY = 'orden:sync-log'
-
 const KEPT = 60
-
 interface Pass {
   at: number
   space: string
@@ -16,48 +14,35 @@ interface Pass {
   clashed: number
   failed: string | null
 }
-
 interface Saved {
   passes?: unknown
   clashes?: unknown
 }
-
 function isPass(value: unknown): value is Pass {
   if (!value || typeof value !== 'object') return false
   const one = value as Partial<Pass>
-
   return typeof one.at === 'number' && typeof one.space === 'string'
 }
-
 function isClash(value: unknown): value is Clash {
   if (!value || typeof value !== 'object') return false
   const one = value as Partial<Clash>
-
   return typeof one.path === 'string' && typeof one.id === 'string' && typeof one.at === 'number'
 }
-
 class Record {
   passes = $state<Pass[]>([])
-
   clashes = $state<Clash[]>([])
-
   readonly waiting = $derived(this.clashes.length)
-
   restore() {
     const held: unknown = stored(STORAGE_KEY)
     const saved: Saved = isRecord(held) ? held : {}
-
     this.passes = Array.isArray(saved.passes) ? saved.passes.filter(isPass).slice(0, KEPT) : []
     this.clashes = Array.isArray(saved.clashes) ? saved.clashes.filter(isClash) : []
   }
-
   wrote(pass: Pass) {
     if (!pass.pulled && !pass.pushed && !pass.clashed && !pass.failed) return
-
     this.passes = [pass, ...this.passes].slice(0, KEPT)
     this.persist()
   }
-
   clash(clash: Clash) {
     const same = (one: Clash) => one.id === clash.id || one.path === clash.path
     this.clashes = this.clashes.some(same)
@@ -65,7 +50,6 @@ class Record {
       : [...this.clashes, clash]
     this.persist()
   }
-
   follow(op: FileOp) {
     if (op.op === 'created') return
     const from = op.op === 'moved' ? op.from : op.path
@@ -75,7 +59,6 @@ class Record {
       return one === was ? '' : one.startsWith(`${was}/`) ? one.slice(was.length) : null
     }
     if (!this.clashes.some((one) => under(one.path) !== null)) return
-
     this.clashes =
       op.op === 'moved'
         ? this.clashes.map((one) => {
@@ -85,9 +68,7 @@ class Record {
         : this.clashes.filter((one) => under(one.path) === null)
     this.persist()
   }
-
   readonly held = $derived(new Set(this.clashes.map((one) => one.path)))
-
   async settle(clash: Clash, answer: Answer): Promise<void> {
     const notes = syncStore()
     const recorded = notes?.pathOf(clash.id) ?? null
@@ -110,7 +91,6 @@ class Record {
       this.forget(clash.path)
       return
     }
-
     if (elsewhere) {
       log('warn', 'sync: a note waiting to be settled has gone, so its other copy is kept beside')
       if (answer !== 'mine') {
@@ -123,13 +103,11 @@ class Record {
       this.forget(clash.path)
       return
     }
-
     if (answer === 'theirs') {
       const { writeDown } = await import('./write-down')
       await writeDown(path, clash.theirs)
       workspaceView().reload(path, clash.theirs)
     }
-
     if (answer === 'both' && isWebTarget(path)) {
       const [{ settleShortcuts }, { writeDown }] = await Promise.all([
         import('@orden/scan/settle'),
@@ -148,40 +126,31 @@ class Record {
       ])
       await writeDown(conflictPath(path), clash.theirs)
     }
-
     this.forget(clash.path)
     if (followed) void notes.moved(recorded, path)
   }
-
   forget(path: string) {
     this.clashes = this.clashes.filter((one) => one.path !== path)
     this.persist()
   }
-
   clear() {
     this.passes = []
     this.persist()
   }
-
   forgetEverything() {
     this.passes = []
     this.clashes = []
-
     forget(STORAGE_KEY)
   }
-
   private persist() {
     keepJson(STORAGE_KEY, { passes: this.passes, clashes: this.clashes })
   }
 }
-
 export const record = new Record()
-
 function placed(path: string): string | null {
   for (const space of workspaceView().spaces) {
     const relative = withinSpace(space.root, path)
     if (relative !== null) return insideSpace(space.root, relative)
   }
-
   return null
 }

@@ -2,11 +2,9 @@ import { describe, expect, test } from 'vitest'
 import { parseQuickAdd, type QuickAdd } from './parse'
 
 const NOW = new Date(2026, 9, 7, 10, 0)
-
 const en = (text: string, options = {}) => parseQuickAdd(text, ['en'], NOW, options)
 const de = (text: string) => parseQuickAdd(text, ['de'], NOW)
 const us = (text: string) => parseQuickAdd(text, ['en-US'], NOW)
-
 function said(add: QuickAdd) {
   const fields: Record<string, unknown> = { ...add.fields }
   if (add.fields.tags.length === 0) delete fields.tags
@@ -14,7 +12,6 @@ function said(add: QuickAdd) {
   const out: Record<string, unknown> = { text: add.text, ...fields }
   return out
 }
-
 describe('days, a row of the table each', () => {
   test.each([
     ['Pay rent today', '2026-10-07'],
@@ -50,7 +47,6 @@ describe('days, a row of the table each', () => {
   ])('%s', (text, due) => {
     expect(said(en(text))).toEqual({ text: 'Pay rent', due })
   })
-
   test.each([
     ['Miete zahlen heute', '2026-10-07'],
     ['Miete zahlen morgen', '2026-10-08'],
@@ -76,7 +72,6 @@ describe('days, a row of the table each', () => {
     expect(said(de(text))).toEqual({ text: 'Miete zahlen', due })
   })
 })
-
 describe('times', () => {
   test.each([
     ['Call bank 16:00', '2026-10-07', '16:00'],
@@ -98,7 +93,6 @@ describe('times', () => {
   ])('%s', (text, due, time) => {
     expect(said(en(text))).toEqual({ text: 'Call bank', due, time })
   })
-
   test.each([
     ['Bank anrufen 16:00', '2026-10-07', '16:00'],
     ['Bank anrufen 16 Uhr', '2026-10-07', '16:00'],
@@ -114,7 +108,6 @@ describe('times', () => {
     expect(said(de(text))).toEqual({ text: 'Bank anrufen', due, time })
   })
 })
-
 describe('repeating', () => {
   test.each([
     ['Water plants every day', 'every day', '2026-10-07'],
@@ -134,7 +127,6 @@ describe('repeating', () => {
   ])('%s', (text, recurrence, due) => {
     expect(said(en(text))).toEqual({ text: 'Water plants', recurrence, due })
   })
-
   test.each([
     ['Blumen gießen jeden Tag', 'every day', '2026-10-07'],
     ['Blumen gießen täglich', 'every day', '2026-10-07'],
@@ -154,7 +146,6 @@ describe('repeating', () => {
   ])('%s', (text, recurrence, due) => {
     expect(said(de(text))).toEqual({ text: 'Blumen gießen', recurrence, due })
   })
-
   test('a time beside a rule is its time, and the day the rule gives', () => {
     expect(said(en('Gym every monday 6pm'))).toEqual({
       text: 'Gym',
@@ -163,7 +154,6 @@ describe('repeating', () => {
       time: '18:00',
     })
   })
-
   test('a day said beside a rule is its first', () => {
     expect(said(en('Gym every week fri'))).toEqual({
       text: 'Gym',
@@ -172,7 +162,6 @@ describe('repeating', () => {
     })
   })
 })
-
 describe('the marks', () => {
   test.each([
     ['p1', 1],
@@ -185,17 +174,14 @@ describe('the marks', () => {
     expect(said(en(`Fix the sink ${mark}`))).toEqual({ text: 'Fix the sink', priority })
     expect(said(de(`Spüle reparieren ${mark}`))).toEqual({ text: 'Spüle reparieren', priority })
   })
-
   test.each(['#family', '@family', '%family'])('tag %s', (mark) => {
     expect(said(en(`Call mum ${mark}`))).toEqual({ text: 'Call mum', tags: ['family'] })
     expect(said(de(`Mama anrufen ${mark}`))).toEqual({ text: 'Mama anrufen', tags: ['family'] })
   })
-
   test('assignee', () => {
     expect(said(en('Review PR +Lucile'))).toEqual({ text: 'Review PR', assignee: 'Lucile' })
     expect(said(de('PR prüfen +Lucile'))).toEqual({ text: 'PR prüfen', assignee: 'Lucile' })
   })
-
   test.each([
     ['!30m', { before: 30 }],
     ['!1h', { before: 60 }],
@@ -205,7 +191,6 @@ describe('the marks', () => {
   ])('reminder %s', (mark, remind) => {
     expect(said(en(`Call bank ${mark}`))).toEqual({ text: 'Call bank', remind: [remind] })
   })
-
   test.each([
     ['!30m', { before: 30 }],
     ['!9 Uhr', { time: '09:00' }],
@@ -213,7 +198,6 @@ describe('the marks', () => {
   ])('Erinnerung %s', (mark, remind) => {
     expect(said(de(`Bank anrufen ${mark}`))).toEqual({ text: 'Bank anrufen', remind: [remind] })
   })
-
   test.each([
     ['{fri}', '2026-10-09'],
     ['{oct 20}', '2026-10-20'],
@@ -221,7 +205,6 @@ describe('the marks', () => {
   ])('deadline %s', (mark, deadline) => {
     expect(said(en(`Draft talk ${mark}`))).toEqual({ text: 'Draft talk', deadline })
   })
-
   test.each([
     ['Draft talk by friday', 'en', '2026-10-09'],
     ['Draft talk due tomorrow', 'en', '2026-10-08'],
@@ -231,14 +214,12 @@ describe('the marks', () => {
   ])('a day said with by, due or bis is the deadline: %s', (text, lang, deadline) => {
     expect(said(lang === 'en' ? en(text) : de(text))).toEqual({ text: 'Draft talk', deadline })
   })
-
   test.each([
     ['{Fr}', '2026-10-09'],
     ['{20.10.}', '2026-10-20'],
   ])('Frist %s', (mark, deadline) => {
     expect(said(de(`Vortrag ${mark}`))).toEqual({ text: 'Vortrag', deadline })
   })
-
   test.each([
     ['for 45m', 45],
     ['for 1h30', 90],
@@ -249,7 +230,6 @@ describe('the marks', () => {
   ])('duration %s', (mark, duration) => {
     expect(said(en(`Draft talk ${mark}`))).toEqual({ text: 'Draft talk', duration })
   })
-
   test.each([
     ['für 45 Min', 45],
     ['1,5 Std', 90],
@@ -258,7 +238,6 @@ describe('the marks', () => {
     expect(said(de(`Vortrag ${mark}`))).toEqual({ text: 'Vortrag', duration })
   })
 })
-
 describe('the whole line', () => {
   test("Todoist's own example", () => {
     const add = en('Call mum tomorrow 4pm #family p1 every sunday')
@@ -278,11 +257,9 @@ describe('the whole line', () => {
       'every sunday',
     ])
   })
-
   test('a German reader typing English is understood too', () => {
     expect(said(de('Mama anrufen tomorrow'))).toEqual({ text: 'Mama anrufen', due: '2026-10-08' })
   })
-
   test('a chip turned back into words is read as words', () => {
     const text = 'Read Friday tomorrow'
     expect(said(en(text))).toEqual({ text: 'Read Friday', due: '2026-10-08' })
@@ -292,7 +269,6 @@ describe('the whole line', () => {
       due: '2026-10-09',
     })
   })
-
   test('what the line escaped stays words, and is no tag', () => {
     const text = 'Tip the waiter #tips @bob #money'
     const escaped = [text.indexOf('#tips'), text.indexOf('@bob')].map((from) => ({
@@ -304,14 +280,12 @@ describe('the whole line', () => {
       tags: ['money'],
     })
   })
-
   test('the last of two days is the day, the first stays words', () => {
     expect(said(en('Plan friday party tomorrow'))).toEqual({
       text: 'Plan friday party',
       due: '2026-10-08',
     })
   })
-
   test('a day and a time said apart both count', () => {
     expect(said(en('Call mum tomorrow and say hi at 4pm'))).toEqual({
       text: 'Call mum and say hi',
@@ -319,13 +293,11 @@ describe('the whole line', () => {
       time: '16:00',
     })
   })
-
   test('nothing at all', () => {
     expect(said(en(''))).toEqual({ text: '' })
     expect(said(en('   '))).toEqual({ text: '' })
   })
 })
-
 describe('what a person types in a hurry', () => {
   test.each([
     ['Trash every 2nd week', 'every 2 weeks'],
@@ -334,7 +306,6 @@ describe('what a person types in a hurry', () => {
   ])('%s', (text, recurrence) => {
     expect(said(en(text))).toEqual({ text: 'Trash', recurrence, due: '2026-10-07' })
   })
-
   test.each([
     ['Müll rausbringen jede 2. Woche', 'every 2 weeks'],
     ['Müll rausbringen alle zwei Wochen', 'every 2 weeks'],
@@ -342,14 +313,12 @@ describe('what a person types in a hurry', () => {
   ])('%s', (text, recurrence) => {
     expect(said(de(text))).toEqual({ text: 'Müll rausbringen', recurrence, due: '2026-10-07' })
   })
-
   test.each([
     ['Run every morning', '09:00', '2026-10-08'],
     ['Run every evening', '19:00', '2026-10-07'],
   ])('%s', (text, time, due) => {
     expect(said(en(text))).toEqual({ text: 'Run', recurrence: 'every day', due, time })
   })
-
   test.each([
     ['Laufen jeden Morgen', '09:00', '2026-10-08'],
     ['Laufen jeden Abend', '19:00', '2026-10-07'],
@@ -357,7 +326,6 @@ describe('what a person types in a hurry', () => {
   ])('%s', (text, time, due) => {
     expect(said(de(text))).toEqual({ text: 'Laufen', recurrence: 'every day', due, time })
   })
-
   test('a time said beside every morning is the time', () => {
     expect(said(de('Laufen jeden Morgen um 7'))).toEqual({
       text: 'Laufen',
@@ -366,7 +334,6 @@ describe('what a person types in a hurry', () => {
       time: '07:00',
     })
   })
-
   test.each([
     ['Standup every day at 9', 'every day', '2026-10-08'],
     ['Standup every day at 11', 'every day', '2026-10-07'],
@@ -376,7 +343,6 @@ describe('what a person types in a hurry', () => {
   ])('%s: a repeat whose time today has gone starts at its next one', (text, recurrence, due) => {
     expect(said(en(text))).toMatchObject({ text: 'Standup', recurrence, due })
   })
-
   test.each([
     ['Birthday every feb 14'],
     ['Birthday every February 14th'],
@@ -390,7 +356,6 @@ describe('what a person types in a hurry', () => {
       due: '2027-02-14',
     })
   })
-
   test('Geburtstag jeden 14. Februar is once a year on that day', () => {
     expect(said(de('Geburtstag jeden 14. Februar'))).toEqual({
       text: 'Geburtstag',
@@ -398,11 +363,9 @@ describe('what a person types in a hurry', () => {
       due: '2027-02-14',
     })
   })
-
   test('a day the month never has is no yearly date', () => {
     expect(said(en('Birthday every feb 30')).recurrence).not.toContain('30')
   })
-
   test.each([
     ['Present every first monday', 'en'],
     ['Present every 1st monday', 'en'],
@@ -415,7 +378,6 @@ describe('what a person types in a hurry', () => {
       due: '2026-11-02',
     })
   })
-
   test.each([
     ['Clean next weekend', 'en', '2026-10-17'],
     ['Clean nächstes Wochenende', 'de', '2026-10-17'],
@@ -427,7 +389,6 @@ describe('what a person types in a hurry', () => {
   ])('%s', (text, lang, due) => {
     expect(said(lang === 'en' ? en(text) : de(text))).toEqual({ text: 'Clean', due })
   })
-
   test('a German time with a dot after um', () => {
     expect(said(de('Bank anrufen um 15.30'))).toEqual({
       text: 'Bank anrufen',
@@ -436,7 +397,6 @@ describe('what a person types in a hurry', () => {
     })
     expect(said(de('Zug um 7.05'))).toEqual({ text: 'Zug', due: '2026-10-08', time: '07:05' })
   })
-
   test('am Morgen is the morning, not tomorrow', () => {
     expect(said(de('Laufen am Morgen'))).toEqual({
       text: 'Laufen',
@@ -449,7 +409,6 @@ describe('what a person types in a hurry', () => {
       time: '19:00',
     })
   })
-
   test('a bare hour after a morning is in the morning', () => {
     expect(said(en('Run tomorrow morning at 7'))).toEqual({
       text: 'Run',
@@ -463,13 +422,11 @@ describe('what a person types in a hurry', () => {
     })
     expect(said(en('Run tonight at 8')).time).toBe('20:00')
   })
-
   test('next weekend from a Saturday is the one after', () => {
     const saturday = new Date(2026, 9, 10, 10, 0)
     expect(parseQuickAdd('Clean next weekend', ['en'], saturday).fields.due).toBe('2026-10-17')
   })
 })
-
 describe('the ambiguous cases stay words', () => {
   test.each([
     'Call Tom',
@@ -491,7 +448,6 @@ describe('the ambiguous cases stay words', () => {
   ])('%s', (text) => {
     expect(said(en(text))).toEqual({ text })
   })
-
   test.each([
     'Do the dishes',
     'So ein Tag',
@@ -505,27 +461,22 @@ describe('the ambiguous cases stay words', () => {
   ])('%s', (text) => {
     expect(said(de(text))).toEqual({ text })
   })
-
   test('but a short day after a word that asks for one is a day', () => {
     expect(said(en('Picnic on sun'))).toEqual({ text: 'Picnic', due: '2026-10-11' })
     expect(said(de('Abholen am Do'))).toEqual({ text: 'Abholen', due: '2026-10-08' })
   })
-
   test('6/10 is read the way the language writes dates', () => {
     expect(en('Pay 9/10').fields.due).toBe('2026-10-09')
     expect(us('Pay 10/9').fields.due).toBe('2026-10-09')
     expect(us('Pay 9/10').fields.due).toBe('2027-09-10')
   })
-
   test('English words German does not have are still English', () => {
     expect(said(en('Morgen planen'))).toEqual({ text: 'Morgen planen' })
   })
 })
-
 describe('on a Sunday in November', () => {
   const SUNDAY = new Date(2026, 10, 15, 10, 0)
   const on = (text: string, lang = 'en') => said(parseQuickAdd(text, [lang], SUNDAY))
-
   test.each([
     ['call mom at 7 tomorrow morning', 'en', 'call mom', '2026-11-16', '07:00'],
     ['call mom at 8 tonight', 'en', 'call mom', '2026-11-15', '20:00'],
@@ -535,7 +486,6 @@ describe('on a Sunday in November', () => {
   ])('a time said before its part of the day is in that part: %s', (text, lang, title, due, time) => {
     expect(on(text, lang)).toEqual({ text: title, due, time })
   })
-
   test.each([
     ['call friday morning', '2026-11-20', '09:00'],
     ['call monday evening', '2026-11-16', '19:00'],
@@ -545,7 +495,6 @@ describe('on a Sunday in November', () => {
   ])('a part of the day after a weekday is its time: %s', (text, due, time) => {
     expect(on(text)).toEqual({ text: 'call', due, time })
   })
-
   test.each([
     ['Pay every 15th of the month', 'en', 'every month on the 15th', '2026-11-15', undefined],
     ['Pay jeden 1. des Monats', 'de', 'every month on the 1st', '2026-12-01', undefined],
@@ -556,7 +505,6 @@ describe('on a Sunday in November', () => {
   ])('the words of a repeat leave the title: %s', (text, lang, recurrence, due, time) => {
     expect(on(text, lang)).toEqual({ text: 'Pay', recurrence, due, ...(time ? { time } : {}) })
   })
-
   test.each([
     ['Team sync every monday morning', 'en', 'Team sync', '09:00'],
     ['bins every tuesday evening', 'en', 'bins', '19:00'],
@@ -566,7 +514,6 @@ describe('on a Sunday in November', () => {
     expect(on(text, lang)).toMatchObject({ text: title, time })
     expect(on(text, lang).recurrence).toBeDefined()
   })
-
   test('bis and a day after a repeat is still its end', () => {
     expect(on('Sport jeden Tag bis morgen', 'de')).toMatchObject({
       text: 'Sport',

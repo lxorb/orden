@@ -5,14 +5,11 @@
   import SwitchRow from './SwitchRow.svelte'
 
   const { item, content }: { item: Item; content: Alias } = $props()
-
   let stats = $state.raw<AliasStats | null>(null)
   let busy = $state(false)
   let wrong = $state<string | null>(null)
-
   const role = $derived(pass.vaults.find((one) => one.id === item.vault)?.role ?? 'viewer')
   const editable = $derived(item.trashed === null && atLeast(role, 'editor'))
-
   $effect(() => {
     const remote = content.remoteId
     stats = null
@@ -27,7 +24,6 @@
       current = false
     }
   })
-
   async function switched(on: boolean) {
     busy = true
     wrong = null
@@ -69,7 +65,6 @@
   .pass-card > :global(* + *) {
     border-top: 1px solid var(--line);
   }
-
   .line {
     display: flex;
     align-items: center;
@@ -78,17 +73,14 @@
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-row);
   }
-
   .label,
   .when {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .label {
     flex: 1;
   }
-
   .value {
     min-width: 0;
     overflow: hidden;
@@ -96,7 +88,6 @@
     white-space: nowrap;
     color: var(--text);
   }
-
   .stats {
     display: flex;
     flex-wrap: wrap;
@@ -106,12 +97,10 @@
     font-size: var(--text-sm);
     color: var(--muted-strong);
   }
-
   .stats strong {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .wrong {
     padding: var(--space-2) var(--space-3);
   }

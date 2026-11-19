@@ -5,7 +5,6 @@ import { keptAway, NOT_HERE } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -13,7 +12,6 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 describe('the module stands on its own', () => {
   test('reaches no app module but the platform', () => {
     const reached = sources(SRC).flatMap((file) =>
@@ -22,7 +20,6 @@ describe('the module stands on its own', () => {
     expect([...new Set(reached)]).toEqual(['platform'])
   })
 })
-
 describe('the notes kept away from this device', () => {
   test('a note let go of is away until it is brought back, once', async () => {
     const fetched: string[] = []
@@ -37,7 +34,6 @@ describe('the notes kept away from this device', () => {
     expect(fetched).toEqual(['/space/a.md'])
     keptAway.clear()
   })
-
   test('nothing is away once the list is cleared, and saying so has words', () => {
     keptAway.went('/space/b.md')
     keptAway.clear()

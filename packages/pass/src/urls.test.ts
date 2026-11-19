@@ -3,7 +3,6 @@ import type { MatchRule } from './types'
 import { hostOf, isSecurePage, matches, normalizeUrl, rank, siteOf } from './urls'
 
 const site = (url: string, match: MatchRule = 'domain') => ({ url, match })
-
 describe('normalizeUrl', () => {
   it('adds https and keeps only web addresses', () => {
     expect(normalizeUrl('example.com')).toBe('https://example.com/')
@@ -13,7 +12,6 @@ describe('normalizeUrl', () => {
       expect(normalizeUrl(bad)).toBeNull()
   })
 })
-
 describe('hostOf and siteOf', () => {
   it('finds the registrable domain', () => {
     expect(hostOf('https://a.b.example.com/x')).toBe('a.b.example.com')
@@ -29,7 +27,6 @@ describe('hostOf and siteOf', () => {
     expect(siteOf('nonsense://')).toBeNull()
   })
 })
-
 describe('matches', () => {
   it('matches the site and its subdomains by default', () => {
     expect(matches(site('https://example.com'), 'https://login.example.com/a')).toBe(true)
@@ -37,35 +34,29 @@ describe('matches', () => {
     expect(matches(site('https://example.com'), 'https://example.com.evil.com')).toBe(false)
     expect(matches(site('https://example.com'), 'https://notexample.com')).toBe(false)
   })
-
   it('keeps sites under a public suffix apart', () => {
     expect(matches(site('https://a.co.uk'), 'https://b.co.uk')).toBe(false)
     expect(matches(site('https://www.bbc.co.uk'), 'https://account.bbc.co.uk')).toBe(true)
     expect(matches(site('https://me.github.io'), 'https://you.github.io')).toBe(false)
     expect(matches(site('https://me.github.io'), 'https://me.github.io/x')).toBe(true)
   })
-
   it('matches addresses by IP exactly', () => {
     expect(matches(site('http://192.168.1.1'), 'http://192.168.1.1/admin')).toBe(true)
     expect(matches(site('http://192.168.1.1'), 'http://192.168.1.2/')).toBe(false)
     expect(matches(site('http://[::1]'), 'http://[::1]/')).toBe(true)
   })
-
   it('needs the same port', () => {
     expect(matches(site('localhost:3000'), 'https://localhost:3000/x')).toBe(true)
     expect(matches(site('http://localhost:3000'), 'http://localhost:4000/x')).toBe(false)
     expect(matches(site('https://example.com:8443'), 'https://example.com')).toBe(false)
   })
-
   it('never offers an https login on an http page', () => {
     expect(matches(site('https://example.com'), 'http://example.com')).toBe(false)
     expect(matches(site('http://example.com'), 'https://example.com')).toBe(true)
   })
-
   it('reads internationalised names', () => {
     expect(matches(site('https://bücher.de'), 'https://www.xn--bcher-kva.de/')).toBe(true)
   })
-
   it('follows the host, exact, prefix and never rules', () => {
     expect(matches(site('https://a.example.com', 'host'), 'https://a.example.com/x')).toBe(true)
     expect(matches(site('https://a.example.com', 'host'), 'https://b.example.com')).toBe(false)
@@ -75,13 +66,11 @@ describe('matches', () => {
     expect(matches(site('https://e.com/app', 'prefix'), 'https://e.com/other')).toBe(false)
     expect(matches(site('https://e.com', 'never'), 'https://e.com')).toBe(false)
   })
-
   it('refuses addresses it cannot read', () => {
     expect(matches(site(''), 'https://e.com')).toBe(false)
     expect(matches(site('https://e.com'), 'about:blank')).toBe(false)
   })
 })
-
 describe('rank', () => {
   it('ranks the closer rule higher', () => {
     const page = 'https://a.example.com/login'
@@ -94,7 +83,6 @@ describe('rank', () => {
     expect(rank(site('https://a.example.com', 'never'), page)).toBe(0)
   })
 })
-
 describe('isSecurePage', () => {
   it('trusts https and the machine itself', () => {
     expect(isSecurePage('https://e.com')).toBe(true)

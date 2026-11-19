@@ -3,11 +3,9 @@ import { nameKey } from '../../src/tree'
 import type { AccountView, Classification, EntryView, View } from './adapters'
 
 const MARKER = /mk\d+z/g
-
 export function markersIn(text: string): string[] {
   return text.match(MARKER) ?? []
 }
-
 export interface Ledger {
   typed: Set<string>
   retired: Set<string>
@@ -17,7 +15,6 @@ export interface Ledger {
   restored: Map<string, number>
   deleted: Map<string, number>
 }
-
 export function ledger(initial: Iterable<string>): Ledger {
   return {
     typed: new Set(),
@@ -29,7 +26,6 @@ export function ledger(initial: Iterable<string>): Ledger {
     deleted: new Map(),
   }
 }
-
 function sortedEntries(entries: readonly EntryView[]): string {
   return JSON.stringify(
     [...entries]
@@ -37,17 +33,14 @@ function sortedEntries(entries: readonly EntryView[]): string {
       .map((entry) => [entry.id, entry.kind, entry.parent, entry.name, entry.pos ?? null]),
   )
 }
-
 function sortedTexts(texts: Record<string, string>): string {
   return JSON.stringify(Object.entries(texts).sort(([a], [b]) => (a < b ? -1 : 1)))
 }
-
 export function sameView(one: View, other: View): boolean {
   return (
     sortedEntries(one.entries) === sortedEntries(other.entries) && sortedTexts(one.texts) === sortedTexts(other.texts)
   )
 }
-
 export function judge(
   book: Ledger,
   account: AccountView,
@@ -55,7 +48,6 @@ export function judge(
   classifications: readonly Classification[],
 ): string[] {
   const failures: string[] = []
-
   for (const device of devices) {
     if (sortedEntries(device.entries) !== sortedEntries(account.entries)) {
       failures.push(`${device.id} holds another tree than the account`)
@@ -64,7 +56,6 @@ export function judge(
       if ((device.texts[id] ?? '') !== text) failures.push(`${device.id} reads ${id} differently`)
     }
   }
-
   const live = new Map(account.entries.map((entry) => [entry.id, entry]))
   const names = new Set<string>()
   for (const entry of account.entries) {
@@ -76,7 +67,6 @@ export function judge(
     }
     if (!book.made.has(entry.id)) failures.push(`${entry.id} (${entry.name}) was made by nobody`)
   }
-
   for (const entry of account.entries) {
     const above = new Set<string>([entry.id])
     for (let at = entry.parent; at !== null; at = live.get(at)?.parent ?? null) {
@@ -87,7 +77,6 @@ export function judge(
       above.add(at)
     }
   }
-
   const holder = new Map<string, string>()
   for (const [id, text] of Object.entries(account.texts)) {
     if (!live.has(id) || book.copies.has(id)) continue
@@ -99,21 +88,18 @@ export function judge(
       holder.set(marker, id)
     }
   }
-
   for (const [id, at] of book.restored) {
     const again = book.deleted.get(id)
     if (!live.has(id) && (again === undefined || again < at)) {
       failures.push(`${id} was restored and is not there`)
     }
   }
-
   const everywhere = [...Object.values(account.texts), ...account.versions].join('\n')
   const kept = new Set(markersIn(everywhere))
   for (const marker of book.typed) {
     if (book.retired.has(marker) || book.lost.has(marker) || kept.has(marker)) continue
     failures.push(`${marker} was typed and is in no note and no version`)
   }
-
   for (const [id, text] of Object.entries(account.texts)) {
     const seen = new Set<string>()
     for (const marker of markersIn(text)) {
@@ -121,13 +107,11 @@ export function judge(
       seen.add(marker)
     }
   }
-
   for (const one of classifications) {
     const verdict = diverge(one.base, one.local, one.remote, one.times, one.merged).verdict
     if ((verdict === 'diverged') !== one.held) {
       failures.push(`${one.id}: diverge says ${verdict} and the device ${one.held ? 'held' : 'did not hold'} it`)
     }
   }
-
   return failures
 }

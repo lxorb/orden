@@ -1,27 +1,18 @@
 export const appSocketPath = (app: string): string => `/v2/apps/${encodeURIComponent(app)}/socket`
-
 export const UNKNOWN_APP = 'no such application on this account'
-
 export const HOST_PROTOCOL = 'orden.role.host'
-
 export const HOST_PROTOCOLS: readonly string[] = ['orden.role.host', 'nib.role.host']
-
 export const MOST_SIGNAL = 64 * 1024
-
 export interface View {
   width: number
   height: number
   dpr: number
   hz: number
 }
-
 export type AppState = 'stopped' | 'starting' | 'running' | 'exited'
-
 const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exited']
-
 export type NotStarted =
   'isolation' | 'display' | 'permission' | 'refused' | 'missing' | 'packaged' | 'handed' | 'failed'
-
 export const NOT_STARTED: readonly NotStarted[] = [
   'isolation',
   'display',
@@ -32,14 +23,12 @@ export const NOT_STARTED: readonly NotStarted[] = [
   'handed',
   'failed',
 ]
-
 export interface StateFrame {
   t: 'state'
   state: AppState
   code?: number | null
   why?: NotStarted
 }
-
 export type ViewerFrame =
   | { t: 'hello'; hold?: true; view?: View }
   | { t: 'take' }
@@ -47,9 +36,7 @@ export type ViewerFrame =
   | { t: 'signal'; data: string }
   | { t: 'view'; view: View }
   | { t: 'run'; what: 'start' | 'stop' | 'restart' }
-
 export type HostFrame = { t: 'host' } | { t: 'signal'; data: string } | StateFrame
-
 export type RelayToViewer =
   | { t: 'held'; by: string; since: number; taken: boolean }
   | { t: 'hold' }
@@ -57,18 +44,14 @@ export type RelayToViewer =
   | { t: 'signal'; data: string }
   | StateFrame
   | { t: 'refused'; error: 'gone' | 'rate' | 'large' }
-
 export type RelayToHost =
   | { t: 'viewer'; device: string | null; name: string }
   | { t: 'signal'; data: string }
   | { t: 'view'; view: View }
   | { t: 'run'; what: 'start' | 'stop' | 'restart' }
-
 type Fields = Record<string, unknown>
-
 const isRecord = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 function parsed(raw: string): unknown {
   try {
     return JSON.parse(raw)
@@ -76,26 +59,21 @@ function parsed(raw: string): unknown {
     return undefined
   }
 }
-
 const isSize = (value: unknown, most: number): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= most
-
 export function viewOf(value: unknown): View | null {
   if (!isRecord(value)) return null
   const { width, height, dpr, hz } = value
   if (!isSize(width, 16_384) || !isSize(height, 16_384) || !isSize(dpr, 8) || !isSize(hz, 500)) return null
   return { width, height, dpr, hz }
 }
-
 function signalOf(value: Fields): { t: 'signal'; data: string } | null {
   return typeof value.data === 'string' && value.data.length <= MOST_SIGNAL ? { t: 'signal', data: value.data } : null
 }
-
 function runOf(value: Fields): { t: 'run'; what: 'start' | 'stop' | 'restart' } | null {
   const { what } = value
   return what === 'start' || what === 'stop' || what === 'restart' ? { t: 'run', what } : null
 }
-
 function stateOf(value: Fields): StateFrame | null {
   const { state, code, why } = value
   if (!APP_STATES.some((one) => one === state)) return null
@@ -109,7 +87,6 @@ function stateOf(value: Fields): StateFrame | null {
     ...(reason ? { why: reason } : {}),
   }
 }
-
 export function viewerFrameOf(raw: string): ViewerFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -138,7 +115,6 @@ export function viewerFrameOf(raw: string): ViewerFrame | null {
       return null
   }
 }
-
 export function hostFrameOf(raw: string): HostFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -153,7 +129,6 @@ export function hostFrameOf(raw: string): HostFrame | null {
       return null
   }
 }
-
 export function toViewerOf(raw: string): RelayToViewer | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -180,7 +155,6 @@ export function toViewerOf(raw: string): RelayToViewer | null {
       return null
   }
 }
-
 export function toHostOf(raw: string): RelayToHost | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -202,23 +176,17 @@ export function toHostOf(raw: string): RelayToHost | null {
       return null
   }
 }
-
 export const APP_EXTENSION = '.application'
-
 export type AppRun =
   { kind: 'installed'; id: string; name: string } | { kind: 'path'; path: string; args: string[]; cwd: string | null }
-
 export interface AppFile {
   v: 1
   host: string
   run: AppRun
 }
-
 const LONGEST = 4096
-
 const isText = (value: unknown, most = LONGEST): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= most
-
 function runOfFile(value: unknown): AppRun | null {
   if (!isRecord(value)) return null
   if (value.kind === 'installed') {
@@ -231,14 +199,12 @@ function runOfFile(value: unknown): AppRun | null {
   if (!(cwd === null || isText(cwd))) return null
   return { kind: 'path', path: value.path, args, cwd }
 }
-
 export function appFileOf(text: string): AppFile | null {
   const value = parsed(text.replace(/^\uFEFF/, ''))
   if (!isRecord(value) || value.v !== 1 || !isText(value.host, 200)) return null
   const run = runOfFile(value.run)
   return run ? { v: 1, host: value.host, run } : null
 }
-
 export function appFileText(app: AppFile): string {
   const run =
     app.run.kind === 'installed'
@@ -246,26 +212,21 @@ export function appFileText(app: AppFile): string {
       : { kind: 'path', path: app.run.path, args: app.run.args, cwd: app.run.cwd }
   return `${JSON.stringify({ v: 1, host: app.host, run })}\n`
 }
-
 export interface Installed {
   id: string
   name: string
   icon?: string
 }
-
 export const MOST_INSTALLED = 2000
 export const MOST_ICON = 48 * 1024
 export const MOST_CATALOGUE = 1_900_000
-
 const ICON = /^data:image\/(png|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/
-
 export function installedOf(value: unknown): Installed | null {
   if (!isRecord(value) || !isText(value.id, 512) || !isText(value.name, 200)) return null
   const { icon } = value
   const kept = typeof icon === 'string' && icon.length <= MOST_ICON && ICON.test(icon)
   return { id: value.id, name: value.name, ...(kept ? { icon } : {}) }
 }
-
 export function catalogueOf(value: unknown): Installed[] | null {
   if (!Array.isArray(value)) return null
   const seen = new Set<string>()
@@ -279,7 +240,6 @@ export function catalogueOf(value: unknown): Installed[] | null {
   }
   return apps
 }
-
 export function fitCatalogue(apps: readonly Installed[], most = MOST_CATALOGUE): Installed[] {
   const fitted = [...apps]
   let length = JSON.stringify({ apps: fitted }).length
@@ -291,25 +251,17 @@ export function fitCatalogue(apps: readonly Installed[], most = MOST_CATALOGUE):
   }
   return fitted
 }
-
 export const CATALOGUE_PATH = '/v2/apps/catalogue'
-
 export type NoPicture = 'encoder' | 'offer' | 'network' | 'stopped'
-
 const NO_PICTURE: readonly NoPicture[] = ['encoder', 'offer', 'network', 'stopped']
-
 export interface CandidateLine {
   candidate: string
   sdpMid?: string | null
   sdpMLineIndex?: number | null
 }
-
 export type ToHost = { offer: string } | { candidate: CandidateLine } | { bye: true }
-
 export const toHostText = (said: ToHost): string => JSON.stringify(said)
-
 export type FromHost = { answer: string } | { cannot: NoPicture | null }
-
 export function fromHostOf(data: string): FromHost | null {
   const value = parsed(data)
   if (!isRecord(value)) return null
@@ -317,7 +269,6 @@ export function fromHostOf(data: string): FromHost | null {
   if (typeof value.cannot === 'string') return { cannot: NO_PICTURE.find((one) => one === value.cannot) ?? null }
   return null
 }
-
 export type InputEvent =
   | { t: 'move'; x: number; y: number }
   | { t: 'button'; button: number; down: boolean }
@@ -327,15 +278,10 @@ export type InputEvent =
   | { t: 'clipboard'; text: string }
   | { t: 'share'; clipboard: boolean }
   | { t: 'ping'; at: number }
-
 export const inputText = (event: InputEvent): string => JSON.stringify(event)
-
 export const MOST_POINTER = 256 * 1024
-
 export const MOST_CLIPBOARD = 200 * 1024
-
 export type FromPicture = PointerShape | { t: 'clipboard'; text: string } | Pong
-
 export interface Pong {
   t: 'pong'
   at: number
@@ -345,29 +291,22 @@ export interface Pong {
   hardware: boolean
   usage: Usage | null
 }
-
 export interface Usage {
   cpu: number
   memory: number
   gpu?: number
 }
-
 export function usageOf(value: unknown): Usage | null {
   if (!isRecord(value)) return null
   const { cpu, memory, gpu } = value
   if (!isTime(cpu) || !isTime(memory)) return null
   return { cpu, memory, ...(isTime(gpu) ? { gpu } : {}) }
 }
-
 const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
-
 export type PointerShape = { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
-
 const POINTER_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
-
 const isSpot = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 1024
-
 export function fromPictureOf(data: unknown): FromPicture | null {
   if (typeof data !== 'string' || data.length > MOST_POINTER + 1024) return null
   const value = parsed(data)
@@ -396,19 +335,14 @@ export function fromPictureOf(data: unknown): FromPicture | null {
   if (typeof png !== 'string' || png.length > MOST_POINTER || !POINTER_PNG.test(png)) return null
   return isSpot(x) && isSpot(y) ? { t: 'pointer', png, x, y } : null
 }
-
 export const ICE_PATH = '/v2/apps/ice'
-
 export interface IceServer {
   urls: string[]
   username?: string
   credential?: string
 }
-
 export const FALLBACK_ICE: readonly IceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478'] }]
-
 const ICE_URL = /^(stun|stuns|turn|turns):[^\s]{1,250}$/
-
 export function iceServersOf(value: unknown): IceServer[] {
   const list = Array.isArray(value) ? value : isRecord(value) ? [value] : []
   const servers: IceServer[] = []

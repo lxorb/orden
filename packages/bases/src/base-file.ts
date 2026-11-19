@@ -15,18 +15,13 @@ import type {
 } from './types'
 
 type Plain = Record<string, unknown>
-
 const scalar = (value: unknown): string =>
   typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : ''
-
 const isPlain = (value: unknown): value is Plain => value !== null && typeof value === 'object' && !Array.isArray(value)
-
 const stringsOf = (value: unknown): Record<string, string> =>
   isPlain(value) ? Object.fromEntries(Object.entries(value).map(([key, one]) => [key, scalar(one)])) : {}
-
 const rest = (value: Plain, known: readonly string[]): Plain =>
   Object.fromEntries(Object.entries(value).filter(([key]) => !known.includes(key)))
-
 function readSort(raw: unknown): Sort | null {
   if (typeof raw === 'string') return { property: raw, direction: 'ASC' }
   if (!isPlain(raw) || typeof raw.property !== 'string') return null
@@ -35,9 +30,7 @@ function readSort(raw: unknown): Sort | null {
     direction: String(raw.direction).toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
   }
 }
-
 const ROW_KINDS: readonly RowKinds[] = ['notes', 'tasks', 'both']
-
 function readOptions(raw: unknown): SelectOption[] | undefined {
   if (!Array.isArray(raw)) return undefined
   return raw.flatMap((one): SelectOption[] => {
@@ -51,7 +44,6 @@ function readOptions(raw: unknown): SelectOption[] | undefined {
     return [option]
   })
 }
-
 const ORDEN_VIEW_KEYS = [
   'rows',
   'subGroupBy',
@@ -73,9 +65,7 @@ const ORDEN_VIEW_KEYS = [
   'hideEmpty',
   'colourColumns',
 ]
-
 const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
-
 function readOrdenView(raw: unknown): OrdenView {
   const orden: OrdenView = { kept: {} }
   if (!isPlain(raw)) return orden
@@ -106,9 +96,7 @@ function readOrdenView(raw: unknown): OrdenView {
   orden.kept = rest(raw, ORDEN_VIEW_KEYS)
   return orden
 }
-
 const VIEW_KEYS = ['type', 'name', 'filters', 'order', 'sort', 'groupBy', 'limit', 'summaries', 'orden', 'nib']
-
 function readView(raw: unknown, at: number): View {
   const plain = isPlain(raw) ? raw : {}
   const view: View = {
@@ -129,7 +117,6 @@ function readView(raw: unknown, at: number): View {
   else if (plain.limit !== undefined) view.options.limit = plain.limit
   return view
 }
-
 function readOrdenProperty(raw: unknown): OrdenProperty {
   const plain = isPlain(raw) ? raw : {}
   const property: OrdenProperty = { kept: rest(plain, ['options', 'format', 'one']) }
@@ -139,7 +126,6 @@ function readOrdenProperty(raw: unknown): OrdenProperty {
   if (typeof plain.one === 'boolean') property.one = plain.one
   return property
 }
-
 function readOrdenBase(raw: unknown): OrdenBase {
   const plain = isPlain(raw) ? raw : {}
   const orden: OrdenBase = {
@@ -160,20 +146,16 @@ function readOrdenBase(raw: unknown): OrdenBase {
   if (typeof plain.locked === 'boolean') orden.locked = plain.locked
   return orden
 }
-
 const BASE_KEYS = ['filters', 'formulas', 'properties', 'summaries', 'views', 'orden', 'nib']
-
 function documentOf(yaml: string): Document {
   const document = parseDocument(yaml)
   const [error] = document.errors
   if (error) throw new BasesError(error.message, error.pos[0])
   return document
 }
-
 export function readBase(yaml: string): Base {
   const read: unknown = yaml.trim() === '' ? {} : documentOf(yaml).toJS()
   const plain = isPlain(read) ? read : {}
-
   const base: Base = {
     formulas: stringsOf(plain.formulas),
     properties: isPlain(plain.properties)
@@ -196,7 +178,6 @@ export function readBase(yaml: string): Base {
   else if (plain.filters !== undefined) base.kept.filters = plain.filters
   return base
 }
-
 const present = (entries: [string, unknown][]): Plain =>
   Object.fromEntries(
     entries.filter(([, value]) => {
@@ -206,9 +187,7 @@ const present = (entries: [string, unknown][]): Plain =>
       return true
     }),
   )
-
 const sortPlain = (sort: Sort): Plain => ({ property: sort.property, direction: sort.direction })
-
 const ordenViewPlain = (orden: OrdenView): Plain =>
   present([
     ['rows', orden.rows],
@@ -232,7 +211,6 @@ const ordenViewPlain = (orden: OrdenView): Plain =>
     ['colourColumns', orden.colourColumns],
     ...Object.entries(orden.kept),
   ])
-
 const viewPlain = (view: View): Plain =>
   present([
     ['type', view.type],
@@ -246,10 +224,8 @@ const viewPlain = (view: View): Plain =>
     ...Object.entries(rest(view.options, ['filters', 'limit'])),
     ['orden', ordenViewPlain(view.orden)],
   ])
-
 const optionPlain = ({ kept, ...option }: SelectOption): Plain =>
   present([...Object.entries(option), ...Object.entries(kept ?? {})])
-
 const ordenBasePlain = (orden: OrdenBase): Plain =>
   present([
     ['template', orden.template],
@@ -278,7 +254,6 @@ const ordenBasePlain = (orden: OrdenBase): Plain =>
     ['locked', orden.locked],
     ...Object.entries(orden.kept),
   ])
-
 const basePlain = (base: Base): Plain =>
   present([
     ['filters', base.filters ?? base.kept.filters],
@@ -297,9 +272,7 @@ const basePlain = (base: Base): Plain =>
     ...Object.entries(rest(base.kept, ['filters'])),
     ['orden', ordenBasePlain(base.orden)],
   ])
-
 const keyText = (key: unknown): string => (isScalar(key) ? String(key.value) : String(key))
-
 function renamed(node: YAMLMap, value: Plain): void {
   if (!('orden' in value) || 'nib' in value) return
   if (node.items.some((item) => keyText(item.key) === 'orden')) return
@@ -308,7 +281,6 @@ function renamed(node: YAMLMap, value: Plain): void {
   if (isScalar(old.key)) old.key.value = 'orden'
   else old.key = 'orden'
 }
-
 function merged(document: Document, node: unknown, value: unknown): unknown {
   if (isPlain(value) && isMap(node)) {
     renamed(node, value)
@@ -333,9 +305,7 @@ function merged(document: Document, node: unknown, value: unknown): unknown {
   }
   return document.createNode(value)
 }
-
 const OUTPUT = { lineWidth: 0, singleQuote: true } as const
-
 export function writeBase(base: Base, before = ''): string {
   const plain = basePlain(base)
   let document: Document
@@ -344,13 +314,11 @@ export function writeBase(base: Base, before = ''): string {
   } catch {
     document = parseDocument('')
   }
-
   if (before.trim() !== '' && isMap(document.contents)) {
     if (JSON.stringify(basePlain(readBase(before))) === JSON.stringify(plain)) return before
     merged(document, document.contents, plain)
     return document.toString(OUTPUT)
   }
-
   document.contents = document.createNode(plain)
   return document.toString(OUTPUT)
 }

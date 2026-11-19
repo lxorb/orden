@@ -22,7 +22,6 @@ describe('tidying a document', () => {
     ['$$\n_a_ + __b__\n$$\n', '$$\n_a_ + __b__\n$$\n'],
     ['_a_ and $_b_$\n', '*a* and $_b_$\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toEqual(wanted))
-
   test.each([
     ['|a|bb|\n|-|-|\n|cccc|d|\n', ['| a    | bb  |', '| ---- | --- |', '| cccc | d   |', ''].join('\n')],
     ['```js\nconst  x   =  1\n*  not a list\n```\n', '```js\nconst  x   =  1\n*  not a list\n```\n'],
@@ -35,37 +34,31 @@ describe('tidying a document', () => {
     ['# Title\n\n- one\n- two\n\n*emphasis* here\n', '# Title\n\n- one\n- two\n\n*emphasis* here\n'],
     ['text\n\n    * not a list\n\n\n    _still code_\n', 'text\n\n    * not a list\n\n\n    _still code_\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toBe(wanted))
-
   test('leaves an HTML comment as written', () => {
     const source = '<!--\n* keep\n\n\n_x_\n-->\n'
     expect(reformat(source)).toBe(source)
   })
 })
-
 describe('code and blocks the parser keeps, wherever they sit', () => {
   test('leaves code in a quote or a callout as written', () => {
     const source = '> [!note]\n> ```py\n> x = __name__ + 1\n> * star\n> ```\n'
     expect(reformat(source)).toBe(source)
   })
-
   test('leaves code in a nested list item as written, blank lines and all', () => {
     const source = '- a\n  - b\n\n    ```py\n    * star\n    y = _x_ or __dunder__ \n\n\n    z\n    ```\n'
     expect(reformat(source)).toBe(source)
   })
-
   test.each([
     ['Text\n\n    | a | b |\n    |-|-|\n', 'Text\n\n    | a | b |\n    |-|-|\n'],
     ['- x\n\n  |a|b|\n  |-|-|\n', '- x\n\n  |a|b|\n  |-|-|\n'],
     ['|a|`b`|\n|-|-|\n', '| a   | `b` |\n| --- | --- |\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toBe(wanted))
-
   test('a pipe table in a comment, maths or an HTML block stays as written', () => {
     for (const source of ['<!--\n|a|b|\n|-|-|\n-->\n', '$$\n|a|b|\n|-|-|\n$$\n', '<div>\n|a|b|\n|-|-|\n</div>\n']) {
       expect(reformat(source)).toBe(source)
     }
   })
 })
-
 describe('what Format document must not touch', () => {
   test.each([
     '[[a _b_ c]]\n',
@@ -83,13 +76,11 @@ describe('what Format document must not touch', () => {
   ])('the target of %j', (source) => {
     expect(reformat(source)).toBe(source)
   })
-
   test.each([
     ['_a_ [[b]] _c_\n', '*a* [[b]] *c*\n'],
     ['[ _x_ ](a.md)\n', '[ *x* ](a.md)\n'],
     ['---\n\n_a_\n', '---\n\n*a*\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toEqual(wanted))
-
   test.each([
     '---\nPriorität: _hoch_\nlist:\n  * a\n---\n',
     '---\ndue date: a_b_ _c_\nx: * y\n---\n',
@@ -102,7 +93,6 @@ describe('what Format document must not touch', () => {
     expect(reformat(source)).toBe(source)
   })
 })
-
 describe('bullets that mean something', () => {
   test.each([
     ['+ x\n+ y\n', '+ x\n+ y\n'],
@@ -113,7 +103,6 @@ describe('bullets that mean something', () => {
     ['* a\n* b\n\nwords\n\n* c\n', '- a\n- b\n\nwords\n\n- c\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toEqual(wanted))
 })
-
 describe('what the parser calls front matter', () => {
   const kids = (source: string) => {
     const names: string[] = []
@@ -121,7 +110,6 @@ describe('what the parser calls front matter', () => {
       names.push(node.name)
     return names
   }
-
   test.each(['---\nPriorität: hoch\n---\nb\n', '---\ndue date: x\n---\nb\n', '---\nk: v\n---\nb\n'])(
     '%j is the same block the readers of a note take',
     (source) => {
@@ -129,13 +117,11 @@ describe('what the parser calls front matter', () => {
       expect(kids(source)).not.toContain('SetextHeading2')
     },
   )
-
   test('a leading rule nothing closes is a rule', () => {
     expect(kids('---\n\nwords\n')[0]).toBe('HorizontalRule')
     expect(kids('---\nk: v\n')[0]).not.toBe('FrontMatter')
   })
 })
-
 describe('words that open a note under a rule', () => {
   const kids = (source: string) => {
     const names: string[] = []
@@ -143,7 +129,6 @@ describe('words that open a note under a rule', () => {
       names.push(node.name)
     return names
   }
-
   test.each([
     '---\n\nMy essay intro.\n\n---\n\nSecond part.\n',
     '---\n# Part one\n\n- a\n\n---\n\n# Part two\n',
@@ -154,7 +139,6 @@ describe('words that open a note under a rule', () => {
   ])('%j stay on the page', (source) => {
     expect(kids(source)[0]).not.toBe('FrontMatter')
   })
-
   test.each([
     '---\n---\nb\n',
     '---\nPriorität: hoch\n---\n',
@@ -168,13 +152,11 @@ describe('words that open a note under a rule', () => {
   ])('%j is front matter', (source) => {
     expect(kids(source)[0]).toBe('FrontMatter')
   })
-
   test.each([
     ['---\n\n_a_\n\n---\n\nb\n', '---\n\n*a*\n\n---\n\nb\n'],
     ['---\nPriorität: _a_\n---\n', '---\nPriorität: _a_\n---\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toEqual(wanted))
 })
-
 describe('tidying a very long document', { timeout: 30_000 }, () => {
   test('keeps a table of more rows than a call can take as arguments', () => {
     const rows = Array.from({ length: 200_000 }, (_, at) => `| ${at} |`).join('\n')
@@ -183,7 +165,6 @@ describe('tidying a very long document', { timeout: 30_000 }, () => {
     expect(tidied.startsWith('---\ntitle: Long\n---')).toBe(true)
   })
 })
-
 describe('a block right under a table', () => {
   test('stays the block it is, with a pipe in it or not', () => {
     const table = '| a   | b   |\n| --- | --- |\n| 1   | 2   |'

@@ -60,7 +60,6 @@
     onmenu: (event: MouseEvent, message: Message) => void
     onfiles: (message: Message, index: number) => void
   } = $props()
-
   const name = $derived(nameOf(message.author, page.members, space))
   const files = $derived(sortFiles(message.files))
   const quoted = $derived(message.quote === undefined ? null : page.messages.find((one) => one.id === message.quote))
@@ -75,9 +74,7 @@
   )
   const big = $derived(!message.files.length && onlyEmoji(message.body))
   const linked = $derived(message.deleted ? null : cardTarget(message.body))
-
   const home = $derived(page.entry?.path ?? null)
-
   function words(
     node: HTMLElement,
     said: { body: string; edited: boolean; from: string | null; version: number; drawn: number },
@@ -100,7 +97,6 @@
     draw(said)
     return { update: draw, destroy: () => untip?.destroy() }
   }
-
   function follow(event: MouseEvent) {
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
@@ -114,12 +110,10 @@
     if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) followHref(href, event)
     else workspace.openRelative(decodeURIComponent(href.split('#')[0] ?? href), {}, home)
   }
-
   function profile(event: MouseEvent) {
     const id = accountOf(message.author)
     if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
   }
-
   const history = $derived(message.history.map((one) => `${timeOf(one.at)}  ${one.body}`).join('\n'))
 </script>
 
@@ -302,48 +296,39 @@
     line-height: 1.45;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .message.head {
     padding-top: var(--space-3);
   }
-
   @media (hover: hover) {
     .message:hover {
       background: var(--surface-hover);
     }
   }
-
   .message.lit {
     background: var(--surface-selected);
   }
-
   .message.flash {
     animation: landed 1.2s var(--ease-out);
   }
-
   @keyframes landed {
     from {
       background: var(--accent-soft);
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .message.flash {
       animation: none;
       background: var(--accent-soft);
     }
   }
-
   .message.pending .body {
     opacity: 0.6;
   }
-
   .gutter {
     display: flex;
     justify-content: center;
     padding-top: 2px;
   }
-
   .hover-time {
     visibility: hidden;
     color: var(--muted);
@@ -351,19 +336,16 @@
     line-height: 22px;
     font-variant-numeric: tabular-nums;
   }
-
   .message:hover .hover-time,
   .message.lit .hover-time {
     visibility: visible;
   }
-
   .meta {
     display: flex;
     align-items: baseline;
     gap: var(--space-2);
     min-width: 0;
   }
-
   .name {
     padding: 0;
     border: none;
@@ -373,36 +355,30 @@
     font-weight: var(--weight-strong);
     cursor: pointer;
   }
-
   @media (hover: hover) {
     .name:hover {
       text-decoration: underline;
     }
   }
-
   .meta time,
   .via {
     color: var(--muted);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .via {
     color: var(--accent);
   }
-
   .pinned {
     --glyph-size: 12px;
     align-self: center;
     color: var(--accent);
   }
-
   .pinned.corner {
     position: absolute;
     top: 6px;
     right: var(--space-4);
   }
-
   .agent {
     display: grid;
     place-items: center;
@@ -413,7 +389,6 @@
     color: var(--accent-ink);
     font-size: 8px;
   }
-
   .quoted {
     --glyph-size: 12px;
     display: flex;
@@ -431,35 +406,28 @@
     text-align: start;
     cursor: pointer;
   }
-
   .quoted span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .quoted strong {
     flex: none;
     color: var(--muted-strong);
     font-weight: var(--weight-strong);
   }
-
   .body {
     overflow-wrap: anywhere;
   }
-
   .body :global(:is(p, ul, ol, pre, blockquote, table, h1, h2, h3, h4, h5, h6)) {
     margin: 0;
   }
-
   .body :global(:is(p, ul, ol, pre, blockquote, table) + *) {
     margin-top: var(--space-2);
   }
-
   .body :global(:is(h1, h2, h3)) {
     font-size: var(--text-head);
   }
-
   .body :global(pre) {
     direction: ltr;
     padding: var(--space-2) var(--space-3);
@@ -468,7 +436,6 @@
     overflow-x: auto;
     font-size: var(--text-sm);
   }
-
   .body :global(.mention) {
     padding: 0 2px;
     border-radius: var(--radius-sm);
@@ -476,28 +443,23 @@
     color: var(--accent);
     font-weight: var(--weight-strong);
   }
-
   .body :global(.mention.is-me) {
     background: var(--accent);
     color: var(--accent-ink);
   }
-
   .body.big {
     font-size: 2.4em;
     line-height: 1.2;
   }
-
   .body :global(.edited),
   .deleted {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .deleted {
     margin: 0;
     font-style: italic;
   }
-
   .file {
     --glyph-size: 18px;
     display: flex;
@@ -512,7 +474,6 @@
     color: var(--text);
     text-decoration: none;
   }
-
   .file-name {
     flex: 1;
     min-width: 0;
@@ -520,12 +481,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .file-size {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .preview {
     display: flex;
     gap: var(--space-3);
@@ -538,7 +497,6 @@
     color: var(--text);
     text-decoration: none;
   }
-
   .preview-words {
     flex: 1;
     min-width: 0;
@@ -546,17 +504,14 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .preview .site {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .preview strong {
     color: var(--accent);
     font-weight: var(--weight-strong);
   }
-
   .preview .text {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -566,7 +521,6 @@
     color: var(--muted-strong);
     font-size: var(--text-sm);
   }
-
   .preview img {
     flex: none;
     width: 72px;
@@ -574,7 +528,6 @@
     border-radius: var(--radius-sm);
     object-fit: cover;
   }
-
   .replies {
     --glyph-size: 14px;
     display: inline-flex;
@@ -594,20 +547,17 @@
       border-color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .replies:hover {
       border-color: var(--line);
       background: var(--surface);
     }
   }
-
   .replies .last {
     color: var(--muted);
     font-weight: var(--weight-row);
     font-size: var(--text-xs);
   }
-
   .sending {
     --glyph-size: 11px;
     position: absolute;
@@ -616,13 +566,11 @@
     color: var(--muted);
     opacity: 0.7;
   }
-
   .refused {
     display: inline-flex;
     gap: var(--space-1);
     margin-top: var(--space-1);
   }
-
   .seen {
     display: flex;
     justify-content: flex-end;

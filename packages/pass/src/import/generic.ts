@@ -14,15 +14,11 @@ const ROLES = {
   created: 'created,creation time,date created,created at,timecreated',
   modified: 'modified,last modified,updated,updated at,date modified,last modified time',
 }
-
 type Role = keyof typeof ROLES
-
 const HIDDEN = /pass|secret|pin|cvv|cvc|security code|key|token/i
-
 function normalized(name: string): string {
   return name.trim().toLowerCase().replace(/[_]+/g, ' ').replace(/\s+/g, ' ')
 }
-
 export function columnsOf(header: readonly string[]): Partial<Record<Role, number>> {
   const columns: Partial<Record<Role, number>> = {}
   const names = header.map(normalized)
@@ -37,12 +33,10 @@ export function columnsOf(header: readonly string[]): Partial<Record<Role, numbe
   }
   return columns
 }
-
 export function csvLooksLike(header: readonly string[]): boolean {
   const columns = columnsOf(header)
   return columns.password !== undefined || (columns.title !== undefined && columns.note !== undefined)
 }
-
 export function parseCsv(text: string): Imported {
   const [head, ...rows] = csvRows(text)
   if (!head) return new Collector('Imported').result()

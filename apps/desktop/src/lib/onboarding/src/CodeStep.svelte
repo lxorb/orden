@@ -7,9 +7,7 @@
   const PROMPT = '~/orden'
   const TYPED = 'git pull'
   const ANSWERED = 'up to date'
-
   let picked = $state<Coding>(setup.answers.code)
-
   async function done() {
     if (picked === null) return
     const { modes } = await import('../../modes/src/api')
@@ -18,7 +16,6 @@
     setup.answer({ code: picked })
     setup.next('code')
   }
-
   function skip() {
     setup.answer({ code: null })
     setup.next('code')
@@ -56,7 +53,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
-
   .term {
     display: block;
     width: 100%;
@@ -71,15 +67,12 @@
     text-align: start;
     font-weight: 400;
   }
-
   .p {
     color: #7c6bf5;
   }
-
   .ok {
     color: #34c759;
   }
-
   .caret {
     display: inline-block;
     width: 7px;
@@ -88,13 +81,11 @@
     background: #dde2ea;
     animation: blink 1s steps(1) infinite;
   }
-
   @keyframes blink {
     50% {
       opacity: 0;
     }
   }
-
   .write {
     width: 100%;
     min-height: 96px;
@@ -106,20 +97,17 @@
     gap: 7px;
     justify-content: center;
   }
-
   .write i {
     display: block;
     height: 7px;
     border-radius: 4px;
     background: var(--surface-3);
   }
-
   .todo {
     display: flex;
     align-items: center;
     gap: 6px;
   }
-
   .todo b {
     width: 10px;
     height: 10px;

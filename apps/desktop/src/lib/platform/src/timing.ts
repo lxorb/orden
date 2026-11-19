@@ -1,11 +1,9 @@
 export const waited = (ms = 0): Promise<void> => new Promise((go) => setTimeout(go, ms))
-
 export interface Later {
   (): void
   cancel(): void
   flush(): void
 }
-
 function later(ask: (fire: () => void) => void, stop: () => void, waiting: () => boolean, run: () => void): Later {
   const fire = () => {
     stop()
@@ -18,7 +16,6 @@ function later(ask: (fire: () => void) => void, stop: () => void, waiting: () =>
     },
   })
 }
-
 export function afterQuiet(run: () => void, ms: number | (() => number), atMost = Number.POSITIVE_INFINITY): Later {
   let timer: ReturnType<typeof setTimeout> | undefined
   let since: number | undefined
@@ -35,7 +32,6 @@ export function afterQuiet(run: () => void, ms: number | (() => number), atMost 
   }
   return later(ask, stop, () => timer !== undefined, run)
 }
-
 export function onceAFrame(run: () => void): Later {
   let frame: number | undefined
   const stop = () => {
@@ -52,15 +48,10 @@ export function onceAFrame(run: () => void): Later {
   }
   return later(ask, stop, () => frame !== undefined, run)
 }
-
 export const ANSWERS_WITHIN = 120_000
-
 export const BYTES_WITHIN = 30 * 60_000
-
 export const LATE = 'the account did not answer in time'
-
 const NO_BODY: ReadonlySet<number> = new Set([101, 103, 204, 205, 304])
-
 export async function fetchInTime(
   input: string | Request,
   init: RequestInit = {},

@@ -7,14 +7,12 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { failed } = await import('./notices.svelte')
-
 async function fresh(files: Record<string, string>) {
   await workspace.writesSettled()
   d.reset()
@@ -28,7 +26,6 @@ async function fresh(files: Record<string, string>) {
   workspace.activeSpaceId = 'S'
   await workspace.loadTree()
 }
-
 async function spaceRenamed(to: string) {
   const space = workspace.spaces[0]!
   const from = space.root
@@ -37,7 +34,6 @@ async function spaceRenamed(to: string) {
   await workspace.fileMoved(from, to, 'space')
   await workspace.loadTree()
 }
-
 describe('undo after the space was renamed', () => {
   test('a delete comes back in the space, not in a new folder of the old name', async () => {
     await fresh({ '/s/x.md': 'words\n' })
@@ -47,7 +43,6 @@ describe('undo after the space was renamed', () => {
     expect(d.files.get('/t/x.md')).toBe('words\n')
     expect([...d.files.keys()]).toEqual(['/t/x.md'])
   })
-
   test('renamed away and back, a delete comes back at its own name', async () => {
     await fresh({ '/s/x.md': 'words\n' })
     await workspace.remove('/s/x.md', false)
@@ -56,7 +51,6 @@ describe('undo after the space was renamed', () => {
     await workspace.undoFileAction()
     expect([...d.files.keys()]).toEqual(['/s/x.md'])
   })
-
   test('a rename goes back, and nothing is left on top', async () => {
     await fresh({ '/s/x.md': 'words\n' })
     await workspace.rename('/s/x.md', 'y.md')
@@ -66,7 +60,6 @@ describe('undo after the space was renamed', () => {
     expect(workspace.undone.last).toBeUndefined()
     expect(failed.retry).toBe(null)
   })
-
   test('a step of a file moved in another window follows it', async () => {
     await fresh({ '/s/x.md': 'words\n' })
     await workspace.rename('/s/x.md', 'y.md')
@@ -82,7 +75,6 @@ describe('undo after the space was renamed', () => {
     await workspace.undoFileAction()
     expect([...d.files.keys()]).toEqual(['/s/x.md'])
   })
-
   test('a move of its own leaves the steps under it as they were', async () => {
     await fresh({ '/s/x.md': 'words\n' })
     await workspace.rename('/s/x.md', 'y.md')
@@ -92,7 +84,6 @@ describe('undo after the space was renamed', () => {
     expect([...d.files.keys()]).toEqual(['/s/x.md'])
   })
 })
-
 describe('an undo that will not go', () => {
   test('says so, and can be let go of', async () => {
     await fresh({ '/s/x.md': 'words\n', '/s/older.md': 'older\n' })
@@ -109,7 +100,6 @@ describe('an undo that will not go', () => {
     await workspace.undoFileAction()
     expect(d.files.has('/s/older.md')).toBe(true)
   })
-
   test('an empty note the account held comes back empty', async () => {
     await fresh({})
     workspace.undone.record({ kind: 'delete', path: '/s/e.md', content: '' })
@@ -118,7 +108,6 @@ describe('an undo that will not go', () => {
     expect(workspace.undone.last).toBeUndefined()
   })
 })
-
 describe('a move onto a name taken', () => {
   test('is said, and the rest of the selection goes', async () => {
     await fresh({ '/s/a/x.md': 'x from a', '/s/a/y.md': 'y', '/s/b/x.md': 'x from b' })
@@ -130,7 +119,6 @@ describe('a move onto a name taken', () => {
     expect(d.files.get('/s/b/y.md')).toBe('y')
   })
 })
-
 describe('a delete that leaves a nested note alone in its folder', () => {
   test('with the name above taken it stays nested, and the delete says it was done', async () => {
     await fresh({ '/s/A.md': 'outer\n', '/s/A/A.md': 'inner\n', '/s/A/B.md': 'b\n' })

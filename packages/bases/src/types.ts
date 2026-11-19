@@ -2,37 +2,30 @@ import type { TaskFields } from '@orden/markdown/task-line'
 
 export type { FieldName, Priority, Remind, TaskFields } from '@orden/markdown/task-line'
 export type { TaskChange } from '@orden/markdown/task-edits'
-
 export interface DateValue {
   kind: 'date'
   iso: string
   time?: string
   zone?: string
 }
-
 export interface DurationValue {
   kind: 'duration'
   ms: number
   months: number
 }
-
 export interface LinkValue {
   kind: 'link'
   target: string
   display?: string
   exact?: true
 }
-
 export type RenderedValue =
   { kind: 'image'; src: string } | { kind: 'icon'; name: string } | { kind: 'html'; html: string }
-
 export type Value =
   null | boolean | number | string | DateValue | DurationValue | LinkValue | RenderedValue | Value[] | ValueRecord
-
 export interface ValueRecord {
   [key: string]: Value
 }
-
 export interface FileInfo {
   name: string
   basename: string
@@ -47,7 +40,6 @@ export interface FileInfo {
   embeds: string[]
   shared?: boolean
 }
-
 export interface TaskRow extends TaskFields {
   section: string[]
   parent?: number
@@ -56,7 +48,6 @@ export interface TaskRow extends TaskFields {
   comments?: number
   dueReads?: 'deadline'
 }
-
 export interface Row {
   kind: 'note' | 'task'
   space: string
@@ -66,33 +57,27 @@ export interface Row {
   note: Record<string, Value>
   task?: TaskRow
 }
-
 export type Filter = string | { and: Filter[] } | { or: Filter[] } | { not: Filter[] }
-
 export interface Sort {
   property: string
   direction: 'ASC' | 'DESC'
 }
-
 export interface PropertyConfig {
   displayName?: string
   kept: Record<string, unknown>
 }
-
 export interface SelectOption {
   value: string
   group?: 'todo' | 'doing' | 'done'
   tone?: string
   kept?: Record<string, unknown>
 }
-
 export interface OrdenProperty {
   options?: SelectOption[]
   format?: string
   one?: boolean
   kept: Record<string, unknown>
 }
-
 export interface OrdenBase {
   template?: string
   id?: { property: string; prefix: string; kept?: Record<string, unknown> }
@@ -100,11 +85,8 @@ export interface OrdenBase {
   locked?: boolean
   kept: Record<string, unknown>
 }
-
 export type CardSize = 'small' | 'medium' | 'large'
-
 export type RowKinds = 'notes' | 'tasks' | 'both'
-
 export interface OrdenView {
   rows?: RowKinds
   subGroupBy?: Sort
@@ -127,7 +109,6 @@ export interface OrdenView {
   colourColumns?: boolean
   kept: Record<string, unknown>
 }
-
 export interface View {
   type: string
   name: string
@@ -140,7 +121,6 @@ export interface View {
   orden: OrdenView
   options: Record<string, unknown>
 }
-
 export interface Base {
   filters?: Filter
   formulas: Record<string, string>
@@ -151,7 +131,6 @@ export interface Base {
   kept: Record<string, unknown>
   guarded?: boolean
 }
-
 export interface Context {
   today: string
   now: string
@@ -164,14 +143,12 @@ export interface Context {
   search?: string
   random?: () => number
 }
-
 export interface Group {
   key: Value
   rows: Row[]
   summaries: Record<string, Value>
   sub?: Group[]
 }
-
 export interface Answer {
   groups: Group[]
   lanes?: Value[]

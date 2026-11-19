@@ -22,7 +22,6 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const sent: unknown[] = []
 const session = {
   holds: true,
@@ -44,11 +43,9 @@ vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   invoke: () => Promise.resolve({ status: 'ok', result: {} }),
 }))
-
 const { protection } = await import('../../protect/src/api')
 vi.spyOn(protection, 'agentsMay').mockImplementation((path) => !String(path).includes('/Locked/'))
 const { applicationTabs } = await import('./agent-verbs')
-
 const caller = callerOf({
   id: 'x',
   name: 'X',
@@ -58,12 +55,10 @@ const caller = callerOf({
 })
 const run = (args: Record<string, unknown>) =>
   applicationTabs({ verb: 'application_tabs', args, caller }).catch((error: unknown) => error)
-
 describe('an agent given the Work space', () => {
   test('lists only the open applications of Work', async () => {
     expect(await run({ op: 'list' })).toMatchObject({ result: { applications: [] } })
   })
-
   test('neither sees nor drives an application of another space', async () => {
     expect(await run({ op: 'picture', tab: 'b1' })).toMatchObject({ code: 'no_such_tab' })
     expect(await run({ op: 'input', tab: 'b1', events: [{ type: 'text', text: 'hi' }] })).toMatchObject({
@@ -71,7 +66,6 @@ describe('an agent given the Work space', () => {
     })
     expect(sent).toEqual([])
   })
-
   test('neither sees nor drives an application behind a lock shut to agents', async () => {
     expect(await run({ op: 'picture', tab: 'l1' })).toMatchObject({ code: 'protected' })
     expect(await run({ op: 'input', tab: 'l1', events: [{ type: 'key', key: 'Enter' }] })).toMatchObject({

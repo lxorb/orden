@@ -2,9 +2,7 @@ import json
 import re
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -14,20 +12,16 @@ SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 PATIENCE = 40
 CROSSING = 15
-
 OWNER = "owner-canvas@example.com"
 SPACE = "Boards"
 CANVAS = "board.canvas"
 BLANK = '{"orden":{"version":1},"nodes":[],"edges":[]}'
 PHONE = {"width": 390, "height": 844}
 V1 = "--v1" in sys.argv
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 def wait_for(page: Page, script: str, what: str, patience: float = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -36,7 +30,6 @@ def wait_for(page: Page, script: str, what: str, patience: float = PATIENCE):
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 def device(browser: Browser, label: str, at: str, token: str | None = None, phone: bool = False) -> Page:
     options: dict = {"viewport": PHONE if phone else {"width": 1180, "height": 760}}
     if phone:
@@ -49,12 +42,10 @@ def device(browser: Browser, label: str, at: str, token: str | None = None, phon
     page.goto(at, wait_until="domcontentloaded")
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app")
     return page
-
 SURFACE = """() => {
   const key = window.ordenApp.workspace.active?.note.key
   return key ? window.ordenApp.rooms.planes.get(key) ?? null : null
 }"""
-
 def in_its_room(page: Page, label: str) -> None:
     wait_for(
         page,
@@ -65,7 +56,6 @@ def in_its_room(page: Page, label: str) -> None:
         wait_for(page, f"() => !!({SURFACE})()?.shared", f"[{label}] the canvas in its room")
     except SystemExit as gave_up:
         failed(str(gave_up))
-
 def from_the_tree(page: Page, label: str) -> None:
     wait_for(
         page,
@@ -86,7 +76,6 @@ def from_the_tree(page: Page, label: str) -> None:
     )
     page.evaluate(f"async () => {{ await window.ordenApp.workspace.openCanvas({json.dumps(path)}) }}")
     in_its_room(page, label)
-
 def put_down(page: Page, label: str, x: int, y: int) -> str:
     return page.evaluate(
         """([label, x, y]) => {
@@ -99,7 +88,6 @@ def put_down(page: Page, label: str, x: int, y: int) -> str:
         % SURFACE,
         [label, x, y],
     )
-
 def seen(page: Page, card: str) -> dict:
     return page.evaluate(
         """(id) => {
@@ -110,7 +98,6 @@ def seen(page: Page, card: str) -> dict:
         % SURFACE,
         card,
     )
-
 def crosses(source: str, card: str, devices: dict[str, Page], drawn: bool = True) -> None:
     for label, page in devices.items():
         if label == source:
@@ -124,7 +111,6 @@ def crosses(source: str, card: str, devices: dict[str, Page], drawn: bool = True
             failed(f"what {source} put down never reached {label}")
         elif drawn and not found["drawn"]:
             failed(f"what {source} put down reached {label} and was not drawn")
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session(
@@ -143,10 +129,8 @@ def main() -> int:
             f"/v1/spaces/{space['id']}/notes", token=token, body={"path": CANVAS, "content": BLANK}
         )["note"]
         say(f"the owner, on sync v{1 if V1 else 2}, holds {SPACE}/{CANVAS}")
-
         desk = device(browser, "desk", ORIGIN, token)
         from_the_tree(desk, "desk")
-
         worker.request(
             f"/v1/spaces/{space['id']}/share/link?item={board['id']}",
             token=token,
@@ -158,25 +142,20 @@ def main() -> int:
         if not found:
             raise SystemExit(f"that is not a join link: {link}")
         joining = f"{ORIGIN}/join/{found.group(1)}"
-
         guest = device(browser, "guest", joining)
         wait_for(guest, "() => !!window.ordenApp.workspace.active?.note.shared", "[guest] the shared tab")
         in_its_room(guest, "guest")
-
         phone = device(browser, "phone", ORIGIN, token, phone=True)
         from_the_tree(phone, "phone")
-
         linked = device(browser, "linked", joining, token, phone=True)
         in_its_room(linked, "linked")
         if linked.evaluate("() => window.ordenApp.workspace.active?.note.shared"):
             failed("the owner's own link opened their canvas as somebody else's")
         say("four devices are on the plane: a desktop, a guest's browser and two phones")
-
         devices = {"desk": desk, "phone": phone, "guest": guest, "linked": linked}
         for turn, label in enumerate(("phone", "desk", "guest", "linked", "phone")):
             crosses(label, put_down(devices[label], label, -60, -120 + turn * 70), devices)
         say("a card put down anywhere is on every other plane, drawn")
-
         far = put_down(phone, "phone", 6000, 6000)
         crosses("phone", far, devices, drawn=False)
         desk.evaluate(f"() => {{ ({SURFACE})().camera = {{ x: 6080, y: 6030, scale: 1 }} }}")
@@ -186,10 +165,8 @@ def main() -> int:
             say("a card out of view is on the plane, and drawn once the desk looks at it")
         except SystemExit as gave_up:
             failed(str(gave_up))
-
         for label, page in devices.items():
             page.screenshot(path=str(SHOTS / f"{label}.png"))
-
     if wrong:
         print("\nFAILED", flush=True)
         for one in wrong:
@@ -197,5 +174,4 @@ def main() -> int:
         return 1
     print("\na shared canvas carries every card to every device, the guest's and the phones'", flush=True)
     return 0
-
 sys.exit(main())

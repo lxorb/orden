@@ -9,13 +9,11 @@ export function openHistory(from: Tab | null = workspace.active): void {
     workspace.activate(open.id)
     return
   }
-
   const blank = from?.kind === 'web' && from.path === null && !from.address && !pages.addressOf(from.id)
   if (from && blank) {
     pages.of(from.id).url = HISTORY
     workspace.webWalked(from, HISTORY)
     return
   }
-
   workspace.openPage(HISTORY, 'front', from?.id)
 }

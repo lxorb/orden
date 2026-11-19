@@ -11,7 +11,6 @@ export interface Ask {
   named?: (model: string) => void
   signal?: AbortSignal
 }
-
 export async function complete(ask: Ask): Promise<string> {
   if (!__EVEN_PLUGIN__ && isLocal(ask.provider.kind)) {
     const { askLocal } = await import('./local/ask')
@@ -36,17 +35,14 @@ export async function complete(ask: Ask): Promise<string> {
   if (!streaming || !response.body) return whole(await response.text(), provider)
   return await streamed(response.body, provider, ask.stream)
 }
-
 async function keyFor(provider: Provider): Promise<string> {
   if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return await readKey(provider)
   const { planToken } = await import('./chatgpt')
   return await planToken()
 }
-
 export function wasStopped(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
 }
-
 async function refusal(response: Response, provider: Provider): Promise<string> {
   const text = await response.text().catch(() => '')
   const body = sseJson(text)
@@ -57,13 +53,11 @@ async function refusal(response: Response, provider: Provider): Promise<string> 
   if (response.status === 401 || response.status === 403) return 'That key was refused.'
   return `The provider answered ${response.status}.`
 }
-
 async function planSaid(provider: Provider, status: number, body: unknown): Promise<string | null> {
   if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return null
   const { planRefusal } = await import('./chatgpt')
   return planRefusal(status, body)
 }
-
 function whole(text: string, provider: Provider): string {
   const body = sseJson(text)
   const said = troubleIn(body)
@@ -85,7 +79,6 @@ function whole(text: string, provider: Provider): string {
   const message = (choices[0] as { message?: { content?: unknown } } | undefined)?.message?.content
   return typeof message === 'string' ? message : ''
 }
-
 async function streamed(
   body: ReadableStream<Uint8Array>,
   provider: Provider,
@@ -120,7 +113,6 @@ async function streamed(
   }
   return answer
 }
-
 export async function listModels(provider: Provider, signal?: AbortSignal): Promise<string[]> {
   const apiKey = await keyFor(provider)
   if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')

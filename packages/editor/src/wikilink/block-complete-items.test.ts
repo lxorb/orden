@@ -12,7 +12,6 @@ import { type NoteIndex, noteIndex } from './notes'
 import { parsed } from '../../test/parsed'
 
 const GROCERIES = '# Groceries\n\n- milk\n- eggs\n- bread\n'
-
 async function pickBlock(
   label: string,
   read: (source: string, id: string) => string | null = (source, id) => sectionOf(source, { heading: null, block: id }),
@@ -60,7 +59,6 @@ async function pickBlock(
   if (picked.id === null) return null
   return read(source, picked.id)
 }
-
 describe('picking a list from the block completion', () => {
   test('links to a block that shows the item it was labelled with', async () => {
     const shown = await pickBlock('milk')

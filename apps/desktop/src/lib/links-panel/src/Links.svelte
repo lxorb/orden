@@ -22,54 +22,43 @@
     depth?: number
     onlist?: (() => void) | undefined
   } = $props()
-
   const NOTHING: NoteGraph = { nodes: [], edges: [] }
   const path = $derived(workspace.panelTab?.path ?? null)
   const root = $derived(workspace.activeSpace?.root ?? null)
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
-
   const chatLinks = held(() => surfaceLoad('chat-links') as Promise<{ default: Component<{ path: string }> }>)
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
   const attachments = $derived(workspace.graphSettings.here.attachments)
-
   const around = $derived.by(() => {
     const centre = workspace.panelNote
     if (centre === null) return NOTHING
-
     const left = workspace.leftOut.filter((one) => centre !== one && !centre.startsWith(`${one}/`))
     return neighbourhood(without(links.pictureOf(attachments), left), centre, depth)
   })
-
   const follows = (_value: unknown) => undefined
   let mentions = $state<Reference[]>([])
-
   $effect(() => {
     const note = path
     const space = root
     follows(links.version)
-
     if (!note || !space) {
       mentions = []
       return
     }
-
     let current = true
     void links.unlinked(note, space).then((found) => {
       if (current) mentions = found
     })
-
     return () => {
       current = false
     }
   })
-
   async function openAt(reference: Reference, press: MouseEvent) {
     if (!root) return
     const ask = tabAsk(press)
     await workspace.open(insideSpace(root, reference.path), howFor(ask))
     if (ask !== 'behind') ongoto?.(reference.line)
   }
-
   async function openTarget(link: Reference | Outgoing, press: MouseEvent) {
     if (!('to' in link) || !root) return
     if (link.to) await workspace.openEntry(insideSpace(root, link.to), howFor(tabAsk(press)))
@@ -137,7 +126,6 @@
     font-size: var(--text-row);
     color: var(--muted);
   }
-
   :global([data-touch]) .empty-text {
     font-size: var(--text-base);
   }

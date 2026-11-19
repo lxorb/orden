@@ -6,9 +6,7 @@ import { BASE } from '../../accounts/src/api'
 import { BEAT_EVERY, roomDelay } from '../../platform/src/api'
 
 const SILENT_BEATS = 3
-
 const OPEN_WITHIN = 10_000
-
 export interface Heard {
   events(events: Logged[]): void
   behind(seq: number): void
@@ -19,18 +17,15 @@ export interface Heard {
   state(open: boolean): void
   ended(): void
 }
-
 export interface Wire {
   send(text: string): void
   close(): void
 }
-
 export type Dial = (
   url: string,
   protocols: string[],
   on: { opened(): void; heard(text: string): void; closed(code: number): void },
 ) => Wire
-
 const dialWebSocket: Dial = (url, protocols, on) => {
   const socket = new WebSocket(url, protocols)
   socket.onopen = () => on.opened()
@@ -48,7 +43,6 @@ const dialWebSocket: Dial = (url, protocols, on) => {
     },
   }
 }
-
 export class ChatSocket {
   private wire: Wire | null = null
   private greeted = false
@@ -58,7 +52,6 @@ export class ChatSocket {
   private retry: ReturnType<typeof setTimeout> | undefined
   private opening: ReturnType<typeof setTimeout> | undefined
   private beat: ReturnType<typeof setInterval> | undefined
-
   constructor(
     private readonly chat: string,
     private readonly token: string,
@@ -69,25 +62,20 @@ export class ChatSocket {
   ) {
     this.connect()
   }
-
   get open(): boolean {
     return this.greeted
   }
-
   typing(parent?: string): boolean {
     return this.say(parent ? { t: 'typing', parent } : { t: 'typing' })
   }
-
   read(seq: number): boolean {
     return this.say({ t: 'read', seq })
   }
-
   close(): void {
     this.stopped = true
     clearTimeout(this.retry)
     this.drop()
   }
-
   private say(frame: ClientFrame): boolean {
     if (!this.greeted || !this.wire) return false
     try {
@@ -97,7 +85,6 @@ export class ChatSocket {
       return false
     }
   }
-
   private connect(): void {
     if (this.stopped) return
     const url = `${BASE.replace(/^http/, 'ws')}${socketPath(this.chat)}`
@@ -157,7 +144,6 @@ export class ChatSocket {
       this.again()
     }, OPEN_WITHIN)
   }
-
   private hear(said: string): void {
     const frame = serverFrameOf(said)
     if (!frame) return
@@ -185,7 +171,6 @@ export class ChatSocket {
         break
     }
   }
-
   private drop(): void {
     clearTimeout(this.opening)
     clearInterval(this.beat)
@@ -198,7 +183,6 @@ export class ChatSocket {
     }
     wire?.close()
   }
-
   private again(): void {
     if (this.stopped || this.retry) return
     this.tries += 1

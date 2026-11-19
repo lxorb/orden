@@ -11,13 +11,11 @@ import { type Clock, clockOf, dayAt, timeAt, whenAt } from './when'
 import { bare, type Word, wordsOf } from './words'
 
 export type ChipKind = 'when' | 'repeat' | 'priority' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
-
 export interface Chip {
   kind: ChipKind
   from: number
   to: number
 }
-
 export interface QuickFields {
   due?: string
   time?: string
@@ -29,20 +27,16 @@ export interface QuickFields {
   deadline?: string
   duration?: number
 }
-
 export interface QuickAdd {
   text: string
   fields: QuickFields
   chips: Chip[]
 }
-
 export interface QuickAddOptions {
   keep?: readonly { from: number; to: number }[]
   escaped?: readonly { from: number; to: number }[]
 }
-
 const GRAMMARS: Record<string, Grammar> = { en: EN, 'en-us': EN_US, de: DE }
-
 function grammarsFor(langs: readonly string[]): Grammar[] {
   const out: Grammar[] = []
   for (const lang of [...langs, 'en']) {
@@ -52,7 +46,6 @@ function grammarsFor(langs: readonly string[]): Grammar[] {
   }
   return out
 }
-
 interface Found {
   kind: ChipKind
   at: number
@@ -60,15 +53,12 @@ interface Found {
   slots?: readonly string[]
   apply(into: QuickAdd): void
 }
-
 const TAG = new RegExp(String.raw`^[#@%](${TAG_NAME})$`, 'u')
 const PERSON = /^\+([\p{L}][\p{L}\p{N}\-_.]*)$/u
 const PRIORITY = /^p([1-4])$/i
-
 function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const first = words[at]
   if (!first?.key.startsWith('!') || first.key.length < 2) return null
-
   const before = /^!(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)(?:m|min))?$/.exec(first.key)
   if (before && (before[1] ?? before[2] ?? before[3]) !== undefined) {
     const minutes = Number(before[1] ?? 0) * 1440 + Number(before[2] ?? 0) * 60 + Number(before[3] ?? 0)
@@ -79,7 +69,6 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
       apply: (into) => into.fields.remind.push({ before: minutes }),
     }
   }
-
   const shown = [{ ...first, raw: first.raw.slice(1), key: first.key.slice(1) }, ...words.slice(at + 1)]
   const when = whenAt(shown, 0, g, clock, true) ?? timeAt(shown, 0, g, true)
   if (!when) return null
@@ -95,14 +84,12 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
     },
   }
 }
-
 function deadlineAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const first = words[at]
   if (!first?.raw.startsWith('{')) return null
   let close = at
   while (close < words.length && !(words[close]?.raw.endsWith('}') ?? false)) close++
   if (close >= words.length || close - at > 5) return null
-
   const inner = words.slice(at, close + 1).map((word, index, all) => {
     let raw = word.raw
     if (index === 0) raw = raw.slice(1)
@@ -114,11 +101,9 @@ function deadlineAt(words: readonly Word[], at: number, g: Grammar, clock: Clock
   const date = day.day
   return { kind: 'deadline', at, end: close + 1, apply: (into) => (into.fields.deadline = date) }
 }
-
 function durationAt(words: readonly Word[], at: number, g: Grammar): Found | null {
   const lead = g.lasting.has(bare(words[at])) ? 1 : 0
   if (!lead && !g.bareDuration) return null
-
   let index = at + lead
   let minutes = 0
   let read = false
@@ -143,7 +128,6 @@ function durationAt(words: readonly Word[], at: number, g: Grammar): Found | nul
   if (!read || minutes <= 0 || minutes > 1440 || (!lead && index - at < 2)) return null
   return { kind: 'duration', at, end: index, apply: (into) => (into.fields.duration = minutes) }
 }
-
 function wordAt(words: readonly Word[], at: number): Found | null {
   const raw = words[at]?.raw ?? ''
   const key = words[at]?.key ?? ''
@@ -171,11 +155,9 @@ function wordAt(words: readonly Word[], at: number): Found | null {
   }
   return null
 }
-
 function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const marked = wordAt(words, at) ?? remindAt(words, at, g, clock) ?? deadlineAt(words, at, g, clock)
   if (marked) return marked
-
   const repeat = repeatAt(words, at, g, clock)
   if (repeat) {
     const text = ruleText(repeat.rule)
@@ -198,10 +180,8 @@ function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): 
       },
     }
   }
-
   const duration = durationAt(words, at, g)
   if (duration) return duration
-
   const when = whenAt(words, at, g, clock)
   if (!when) return null
   const { day, time } = when
@@ -224,23 +204,17 @@ function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): 
     },
   }
 }
-
 const ahead = (time: string, clock: Clock): boolean =>
   Number(time.slice(0, 2)) * 60 + Number(time.slice(3)) > clock.minutes
-
 const kept = (keep: readonly { from: number; to: number }[], from: number, to: number): boolean =>
   keep.some((span) => span.from < to && span.to > from)
-
 const slotsOf = (one: Found): readonly string[] => one.slots ?? [one.kind]
-
 const MANY = new Set<string>(['tag', 'remind'])
-
 function standing(found: readonly Found[]): Found[] {
   const last = new Map<string, Found>()
   for (const one of found) for (const slot of slotsOf(one)) last.set(slot, one)
   return found.filter((one) => MANY.has(one.kind) || slotsOf(one).some((slot) => last.get(slot) === one))
 }
-
 export function parseQuickAdd(
   text: string,
   langs: readonly string[],
@@ -252,7 +226,6 @@ export function parseQuickAdd(
   const clock = clockOf(now)
   const escaped = options.escaped ?? []
   const keep = [...(options.keep ?? []), ...escaped]
-
   const found: Found[] = []
   for (let at = 0; at < words.length;) {
     let best: Found | null = null
@@ -269,31 +242,26 @@ export function parseQuickAdd(
       at++
     }
   }
-
   const chosen = standing(found)
   const result: QuickAdd = { text: '', fields: { tags: [], remind: [] }, chips: [] }
   for (const one of chosen) if (one.kind !== 'repeat') one.apply(result)
   for (const one of chosen) if (one.kind === 'repeat') one.apply(result)
-
   const { time } = result.fields
   if (time && result.fields.due === undefined) {
     result.fields.due = ahead(time, clock) ? clock.today : addDays(clock.today, 1)
   }
-
   result.chips = chosen.map((one) => ({
     kind: one.kind,
     from: words[one.at]?.from ?? 0,
     to: words[one.end - 1]?.to ?? 0,
   }))
   result.text = wordsLeft(text, result.chips)
-
   const notTags = new Set(escapedTags(text, escaped))
   for (const tag of tagsIn(result.text)) {
     if (!notTags.has(tag) && !result.fields.tags.includes(tag)) result.fields.tags.push(tag)
   }
   return result
 }
-
 function escapedTags(text: string, escaped: readonly { from: number }[]): string[] {
   const out: string[] = []
   for (const { from } of escaped) {
@@ -302,9 +270,7 @@ function escapedTags(text: string, escaped: readonly { from: number }[]): string
   }
   return out
 }
-
 const ESCAPED_TAG = new RegExp(String.raw`^#(${TAG_NAME})`, 'u')
-
 function wordsLeft(text: string, chips: readonly Chip[]): string {
   let left = ''
   let at = 0

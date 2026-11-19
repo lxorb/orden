@@ -11,9 +11,7 @@ import { wikilinkCompletions } from './wikilink/complete'
 const PROSE_PAIRS = Prec.lowest(
   EditorState.languageData.of(() => [{ closeBrackets: { brackets: ['(', '[', '{', '"'] } }]),
 )
-
 const popupKeys = completionKeymap.filter((binding) => binding.key !== 'Ctrl-Space')
-
 export const completing = once((pairs: boolean): Extension => [
   autocompletion({
     override: [slashCompletions, emojiCompletions, snippetCompletions, wikilinkCompletions, tagCompletions],

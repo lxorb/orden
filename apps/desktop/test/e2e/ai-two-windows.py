@@ -2,35 +2,25 @@ import http.server
 import json
 import threading
 import time
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong = DRIVE.say, DRIVE.wrong
-
-
-
 class Model(http.server.BaseHTTPRequestHandler):
-
     held = threading.Lock()
     now = 0
     most = 0
-
     def log_message(self, format: str, *args: object) -> None:
         return
-
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self._cors()
         self.end_headers()
-
     def do_GET(self) -> None:  # noqa: N802
         raw = json.dumps({"data": [{"id": "fake-small", "name": "Fake Small", "context_length": 32000}]}).encode()
         self.send_response(200)
@@ -39,7 +29,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(raw)
-
     def do_POST(self) -> None:  # noqa: N802
         self.rfile.read(int(self.headers.get("Content-Length") or 0))
         with Model.held:
@@ -62,8 +51,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         finally:
             with Model.held:
                 Model.now -= 1
-
-
 SETUP = """
 async (base) => {
   const ai = window.ordenApp.ai
@@ -74,7 +61,6 @@ async (base) => {
   return made.id
 }
 """
-
 SEED = """async (provider) => {
   const chat = await window.ordenApp.aiChats()
   const { writeThread } = await import('/src/lib/ai-chat/src/chat/threads.ts')
@@ -86,14 +72,11 @@ SEED = """async (provider) => {
     usage: { input: 0, output: 0 }, created: now - 3000, updated: now - 1000 })
   return space
 }"""
-
 OPEN = """async () => { const chat = await window.ordenApp.aiChats(); await chat.openThread('twin', false); return chat.thread?.title }"""
 STORED = """async (space) => { const { readThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? { title: t.title, pinned: !!t.pinned, archived: !!t.archived } : null }"""
 STORED_TURNS = """async (space) => { const { readThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? t.turns.map((turn) => turn.role === 'you' ? 'you' : 'model:' + turn.parts.map((part) => part.text || '').join('')) : null }"""
 BUSY = """async () => (await window.ordenApp.aiChats()).running.length > 0"""
 HEADS = """async () => (await window.ordenApp.aiChats()).heads.map((one) => one.id)"""
-
-
 def drive(browser: Browser) -> None:
     a = DRIVE.page(browser, viewport={"width": 1200, "height": 800})
     DRIVE.open(a)
@@ -140,6 +123,4 @@ def drive(browser: Browser) -> None:
     if "twin" in b.evaluate(HEADS):
         wrong("a chat deleted in one window is still listed in the other")
     a.context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "two windows on one AI chat keep each other's changes"))

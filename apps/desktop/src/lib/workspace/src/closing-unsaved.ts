@@ -11,19 +11,15 @@ export function unsavedAmong(closing: readonly Tab[], every: readonly Tab[]): Ta
     return !every.some((other) => !going.has(other.id) && other.note === tab.note)
   })
 }
-
 type Unsaved = 'save' | 'discard' | 'keep'
-
 interface Closing {
   tabs: Tab[]
   save(tab: Tab): Promise<string | null>
 }
-
 export async function mayLose(ws: Closing, closing: readonly Tab[], again: () => void): Promise<boolean> {
   const unsaved = unsavedAmong(closing, ws.tabs)
   const answer = await askUnsaved(unsaved)
   if (answer !== 'save') return answer === 'discard'
-
   const [only] = unsaved
   if (only && unsaved.length === 1) {
     services().askPlace(only.id, again)
@@ -32,11 +28,9 @@ export async function mayLose(ws: Closing, closing: readonly Tab[], again: () =>
   const saved = await Promise.all(unsaved.map((tab) => ws.save(tab)))
   return saved.every((path) => path !== null)
 }
-
 async function askUnsaved(unsaved: readonly Tab[]): Promise<Unsaved> {
   const [only] = unsaved
   if (!only) return 'discard'
-
   const { prompt } = await import('../../ui-kit/src/api')
   const answer = await prompt.choose({
     title: unsaved.length === 1 ? `Save changes to ${only.shown}?` : 'Save changes to these tabs?',

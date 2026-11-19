@@ -4,7 +4,6 @@ const order: string[] = []
 const said: { kind: string; path: string; text: string }[] = []
 let alone = false
 let there = false
-
 vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string) => {
@@ -32,30 +31,25 @@ vi.mock('../../platform/src/windows', () => ({
     return answer
   },
 }))
-
 const { writeFile, writeIfAbsent } = await import('./api')
-
 afterEach(() => {
   order.length = 0
   said.length = 0
   alone = false
   there = false
 })
-
 describe('a file written', () => {
   test('in its turn, and said within it', async () => {
     await writeFile('/s/a.md', 'words')
     expect(order).toEqual(['turn /s/a.md', 'write_note', 'said', 'turn over /s/a.md', 'index /s/a.md'])
     expect(said).toEqual([{ kind: 'words', path: '/s/a.md', text: 'words' }])
   })
-
   test('says nothing to nobody', async () => {
     alone = true
     await writeFile('/s/a.md', 'words')
     expect(said).toEqual([])
     expect(order).toContain('write_note')
   })
-
   test('only if absent, looked for and written in one turn, and never over a note that is there', async () => {
     expect(await writeIfAbsent('/s/a.md', '')).toBe(true)
     expect(order).toEqual(['turn /s/a.md', 'path_exists', 'write_note', 'said', 'turn over /s/a.md', 'index /s/a.md'])

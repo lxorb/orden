@@ -13,7 +13,6 @@ const QUERIES = [
   'task-todo: task-done:(x) task:(y)',
   '[status] [status:draft] [pages:<200] [due:>2026-09-01] [pages:100..200] [gone:null]',
 ]
-
 describe('a query crossing to the account', () => {
   test('reads back as the query the field parsed, every shape of it', () => {
     for (const text of QUERIES) {
@@ -21,7 +20,6 @@ describe('a query crossing to the account', () => {
       expect(queryOf(JSON.parse(JSON.stringify(query)) as unknown), text).toEqual(query)
     }
   })
-
   test('is refused where it is not one', () => {
     expect(queryOf({ kind: 'nonsense' })).toBeNull()
     expect(queryOf({ kind: 'all', of: [{ kind: 'text', text: 1, fold: true }] })).toBeNull()
@@ -29,7 +27,6 @@ describe('a query crossing to the account', () => {
     for (let at = 0; at < 40; at += 1) deep = { kind: 'not', of: deep }
     expect(queryOf(deep)).toBeNull()
   })
-
   test('with its terms, limit and page', () => {
     const query = parseQuery('garden')
     expect(searchRequestOf({ query, terms: ['garden'], limit: 24, after: 'n1', skip: ['n2'] })).toEqual({
@@ -43,7 +40,6 @@ describe('a query crossing to the account', () => {
     expect(searchRequestOf({ query, terms: [], limit: 201 })).toBeNull()
   })
 })
-
 describe('an index answer', () => {
   test('reads back every kind of scan the index makes', () => {
     const stamp = { size: 1, mtime: 2, ctime: 3 }
@@ -59,7 +55,6 @@ describe('an index answer', () => {
     const items = scans.map((scan, at) => ({ id: `n${String(at)}`, docSeq: at, scan }))
     expect(indexAnswerOf(JSON.parse(JSON.stringify({ items })) as unknown)).toEqual(items)
   })
-
   test('leaves out an item that does not read, and keeps the rest', () => {
     const items = [
       { id: 'a', refused: 'gone' },
@@ -70,7 +65,6 @@ describe('an index answer', () => {
     expect(indexRequestOf({ ids: ['a'] })).toEqual({ ids: ['a'] })
     expect(indexRequestOf({ ids: [''] })).toBeNull()
   })
-
   test('and a search answer', () => {
     const hit = {
       id: 'a',

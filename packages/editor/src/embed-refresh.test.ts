@@ -13,15 +13,11 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const PLAN = { path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }
-
 function spaceWith(words: string, locked = false): NoteIndex {
   return {
     notes: [PLAN],
@@ -32,7 +28,6 @@ function spaceWith(words: string, locked = false): NoteIndex {
     render: (source) => Promise.resolve(`<p>${source}</p>`),
   }
 }
-
 function viewOf(index: NoteIndex) {
   const doc = 'Top\n\n![[Plan]]\n\nend'
   const state = parsed(
@@ -50,29 +45,23 @@ function viewOf(index: NoteIndex) {
   open.push(view)
   return view
 }
-
 const settle = () => new Promise((done) => setTimeout(done, 20))
-
 function embedText(view: EditorView): string {
   return view.dom.querySelector('.orden-embed-body')?.textContent ?? ''
 }
-
 describe('a note embed after the embedded note changes', () => {
   test('shows the embedded note as it is now', async () => {
     const view = viewOf(spaceWith('first words'))
     await settle()
     expect(embedText(view)).toBe('first words')
-
     setNoteIndex(view, spaceWith('second words'))
     await settle()
     expect(embedText(view)).toBe('second words')
   })
-
   test('stops showing the words once the embedded note is locked', async () => {
     const view = viewOf(spaceWith('the secret words'))
     await settle()
     expect(embedText(view)).toBe('the secret words')
-
     setNoteIndex(view, spaceWith('the secret words', true))
     await settle()
     expect(embedText(view)).not.toContain('secret')

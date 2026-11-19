@@ -7,9 +7,7 @@ import { OrdenWidget } from './widget'
 
 const STEP = 5
 const inside = (value: number): number => Math.min(100, Math.max(0, Math.round(value)))
-
 const shownCover = (view: EditorView): Cover | null => keptCover(view.state) ?? coverOf(view.state.doc.toString())
-
 function writePosition(view: EditorView, position: number) {
   const mover = view.state.facet(coverMover)
   if (keptCover(view.state) && mover) {
@@ -19,7 +17,6 @@ function writePosition(view: EditorView, position: number) {
   const source = view.state.doc.toString()
   const edit = frontMatterEdit(source, COVER_POSITION_KEY, String(position))
   if (!edit) return
-
   const keep = clearOfBlock(view, applied(source, edit))
   view.dispatch({
     changes: edit,
@@ -27,7 +24,6 @@ function writePosition(view: EditorView, position: number) {
     userEvent: 'input.cover.position',
   })
 }
-
 export class CoverWidget extends OrdenWidget {
   constructor(
     private readonly cover: Cover,
@@ -35,7 +31,6 @@ export class CoverWidget extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: CoverWidget) {
     return (
       other.address === this.address &&
@@ -43,11 +38,9 @@ export class CoverWidget extends OrdenWidget {
       other.cover.position === this.cover.position
     )
   }
-
   override get estimatedHeight() {
     return 230
   }
-
   override updateDOM(host: HTMLElement): boolean {
     const picture = host.querySelector('img')
     const handle = host.querySelector('.orden-cover-drag')
@@ -57,22 +50,18 @@ export class CoverWidget extends OrdenWidget {
     handle.setAttribute('aria-valuenow', String(this.cover.position))
     return true
   }
-
   toDOM(view: EditorView) {
     const host = document.createElement('div')
     host.className = 'orden-cover-block'
-
     const band = document.createElement('div')
     band.className = 'orden-cover'
     host.append(band)
-
     const picture = document.createElement('img')
     picture.src = this.address
     picture.alt = ''
     picture.draggable = false
     picture.style.objectPosition = `50% ${this.cover.position}%`
     band.append(picture)
-
     const handle = document.createElement('div')
     handle.className = 'orden-cover-drag'
     handle.tabIndex = 0
@@ -84,21 +73,17 @@ export class CoverWidget extends OrdenWidget {
     handle.setAttribute('aria-orientation', 'vertical')
     handle.setAttribute('aria-valuenow', String(this.cover.position))
     band.append(handle)
-
     let from = this.cover.position
     let at: number | null = null
-
     const show = (position: number) => {
       picture.style.objectPosition = `50% ${position}%`
       handle.setAttribute('aria-valuenow', String(position))
     }
-
     const moved = (event: PointerEvent) => {
       if (at === null) return
       const height = picture.clientHeight || 1
       show(inside(from + ((at - event.clientY) / height) * 100))
     }
-
     const lifted = (event: PointerEvent) => {
       if (at === null) return
       const height = picture.clientHeight || 1
@@ -108,7 +93,6 @@ export class CoverWidget extends OrdenWidget {
       if (landed !== from) writePosition(view, landed)
       from = landed
     }
-
     const pressed = (event: PointerEvent) => {
       if (view.state.readOnly || event.button !== 0) return
       event.preventDefault()
@@ -116,7 +100,6 @@ export class CoverWidget extends OrdenWidget {
       from = shownCover(view)?.position ?? COVER_MIDDLE
       handle.setPointerCapture(event.pointerId)
     }
-
     const keyed = (event: KeyboardEvent) => {
       const step = event.key === 'ArrowUp' ? STEP : event.key === 'ArrowDown' ? -STEP : 0
       if (step === 0 || view.state.readOnly) return
@@ -125,16 +108,13 @@ export class CoverWidget extends OrdenWidget {
       show(now)
       writePosition(view, now)
     }
-
     handle.addEventListener('pointerdown', pressed)
     handle.addEventListener('pointermove', moved)
     handle.addEventListener('pointerup', lifted)
     handle.addEventListener('pointercancel', lifted)
     handle.addEventListener('keydown', keyed)
-
     const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => view.requestMeasure()) : null
     resized?.observe(host)
-
     this.onDestroy(host, () => {
       resized?.disconnect()
       handle.removeEventListener('pointerdown', pressed)
@@ -143,10 +123,8 @@ export class CoverWidget extends OrdenWidget {
       handle.removeEventListener('pointercancel', lifted)
       handle.removeEventListener('keydown', keyed)
     })
-
     return host
   }
-
   override ignoreEvent() {
     return true
   }

@@ -6,7 +6,6 @@
   import { stretch } from './when'
 
   const { onsend, onclose }: { onsend: (poll: Poll) => void; onclose: () => void } = $props()
-
   const HOUR = 60 * 60 * 1000
   const ENDS = [
     { label: stretch(1, 'hour'), after: HOUR },
@@ -15,21 +14,17 @@
     { label: stretch(1, 'week'), after: 7 * 24 * HOUR },
     { label: 'Never', after: null },
   ] as const
-
   let question = $state('')
   const answers = $state<string[]>(['', ''])
   let several = $state(false)
   let ends = $state<number | null>(24 * HOUR)
-
   const filled = $derived(answers.map((one) => one.trim()).filter(Boolean))
   const ready = $derived(question.trim().length > 0 && filled.length >= FEWEST_ANSWERS)
-
   function typed(index: number, value: string) {
     answers[index] = value
     const last = answers.at(-1) ?? ''
     if (last.trim() && answers.length < MOST_ANSWERS) answers.push('')
   }
-
   function send() {
     if (!ready) return
     onsend({
@@ -90,7 +85,6 @@
     gap: var(--space-2);
     padding: var(--space-2) var(--space-4) var(--space-4);
   }
-
   .row {
     display: flex;
     align-items: center;
@@ -104,7 +98,6 @@
     font: inherit;
     text-align: start;
   }
-
   .send {
     align-self: flex-end;
     margin-top: var(--space-2);

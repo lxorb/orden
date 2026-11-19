@@ -12,24 +12,20 @@ vi.mock('./add', () => ({
     return Promise.resolve(made.path)
   },
 }))
-
 const BoardNew = (await import('./BoardNew.svelte')).default
 let target: HTMLElement
 let close: (() => void) | undefined
-
 beforeEach(() => {
   made.path = null
   made.titles = []
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   close?.()
   close = undefined
   target.remove()
 })
-
 function card() {
   const kit = { live: { base: readBase('views:\n  - type: kanban\n'), at: 0 }, file: null }
   const group = { key: 'open', rows: [] }
@@ -41,7 +37,6 @@ function card() {
   if (!field) throw new Error('no card to type in')
   return field
 }
-
 async function enter(field: HTMLInputElement, words: string) {
   field.value = words
   field.dispatchEvent(new Event('input', { bubbles: true }))
@@ -50,13 +45,11 @@ async function enter(field: HTMLInputElement, words: string) {
   await new Promise((done) => setTimeout(done, 0))
   flushSync()
 }
-
 test('keeps the title typed when the note was not made', async () => {
   const field = card()
   await enter(field, 'Fix the sync')
   expect(target.querySelector<HTMLInputElement>('input')?.value).toBe('Fix the sync')
 })
-
 test('and leaves a fresh card once it was', async () => {
   made.path = '/mine/Fix the sync.md'
   const field = card()

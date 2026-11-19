@@ -2,7 +2,6 @@ import { isRecord, isString, parsed } from '../../platform/src/api'
 
 const BUILTINS = ['todos'] as const
 export type Builtin = (typeof BUILTINS)[number]
-
 export interface ViewSpec {
   builtin?: Builtin
   space?: string
@@ -11,19 +10,14 @@ export interface ViewSpec {
   view?: string
   yaml?: string
 }
-
 const isBuiltin = (value: unknown): value is Builtin => BUILTINS.some((one) => one === value)
-
 const BUILTIN_NAMES: Record<Builtin, string> = {
   todos: 'Todos',
 }
-
 export const builtinName = (builtin: Builtin): string => BUILTIN_NAMES[builtin]
-
 export function readViewSpec(words: string): ViewSpec | null {
   const value = parsed(words)
   if (!isRecord(value)) return null
-
   const spec: ViewSpec = {}
   if (isBuiltin(value.builtin)) spec.builtin = value.builtin
   for (const key of ['space', 'path', 'tag', 'view', 'yaml'] as const) {
@@ -32,7 +26,6 @@ export function readViewSpec(words: string): ViewSpec | null {
   }
   return spec
 }
-
 export function writeViewSpec(spec: ViewSpec): string {
   const ordered: ViewSpec = {}
   if (spec.builtin) ordered.builtin = spec.builtin
@@ -43,7 +36,6 @@ export function writeViewSpec(spec: ViewSpec): string {
   if (spec.yaml !== undefined) ordered.yaml = spec.yaml
   return JSON.stringify(ordered)
 }
-
 export function sameView(a: ViewSpec, b: ViewSpec): boolean {
   return (
     a.builtin === b.builtin &&

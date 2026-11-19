@@ -13,20 +13,15 @@ import { readEvent } from './read'
 import { crate, type Source } from './source'
 
 const PAST = 20
-
 let running: Activity | null = null
-
 let unfollow: (() => void) | null = null
-
 export function started(source: Source = crate): Activity {
   if (running) return running
-
   const activity = new Activity(source)
   running = activity
   agentMarks.heard = true
   agentMarks.act = (tab, what) => void activity.act(tab, what)
   agentMarks.hide = () => source.hide().catch(() => false)
-
   unfollow = $effect.root(() => {
     $effect(() => {
       const worn = wornAt(activity.seen, activity.now, (agent) => activity.colourOf(agent))
@@ -39,16 +34,13 @@ export function started(source: Source = crate): Activity {
         agentMarks.on = worn
       })
     })
-
     $effect(() => {
       const now = activity.now
       const next = nextLapse(activity.seen, now)
       if (next === null) return
-
       const timer = setTimeout(() => (activity.now = Date.now()), next - now + PAST)
       return () => clearTimeout(timer)
     })
-
     $effect(() => {
       agentMarks.waiting = activity.questions.length
       agentMarks.takeovers = Object.fromEntries(
@@ -59,7 +51,6 @@ export function started(source: Source = crate): Activity {
         ),
       )
     })
-
     const connected = $derived(activity.seen.connected.length > 0)
     const key = $derived(connected ? shortcuts.keyFor('agents.stop') : null)
     $effect(() => {
@@ -78,7 +69,6 @@ export function started(source: Source = crate): Activity {
       }
       untrack(() => void source.shell(system, words).catch(() => undefined))
     })
-
     $effect(() => {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- handed on at once, never drawn
       const here = new Set(activity.seen.connected.filter((one) => !activity.stopped(one)))
@@ -88,7 +78,6 @@ export function started(source: Source = crate): Activity {
         if (marks.ok) marks.value.keepMarksOf(here)
       })
     })
-
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
     const told = new Set<string>()
     $effect(() => {
@@ -106,7 +95,6 @@ export function started(source: Source = crate): Activity {
         }
       })
     })
-
     const pairing = $derived(activity.seen.approvals.some((one) => one.category === 'pairing'))
     $effect(() => {
       if (!pairing) return
@@ -114,13 +102,10 @@ export function started(source: Source = crate): Activity {
       return () => void unmount(bubble, { outro: true })
     })
   })
-
   void activity.load().catch(() => undefined)
   return activity
 }
-
 const questionTag = (id: string) => `agent-question-${id}`
-
 export function ended(): void {
   unfollow?.()
   unfollow = null
@@ -133,7 +118,6 @@ export function ended(): void {
   agentMarks.act = null
   agentMarks.hide = null
 }
-
 export function start(source: Source = crate): (event: unknown) => void {
   const activity = started(source)
   return (payload) => {
@@ -141,11 +125,9 @@ export function start(source: Source = crate): (event: unknown) => void {
     if (event) activity.hear(event)
   }
 }
-
 export function stopAgents(): void {
   void running?.stop().catch(() => undefined)
 }
-
 export function wrote(agent: string, tabs: readonly string[]): void {
   started().wrote(agent, tabs)
 }

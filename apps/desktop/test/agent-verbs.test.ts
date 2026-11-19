@@ -15,16 +15,13 @@ import { memoryStorage } from './disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
 const work = { id: 'work', name: 'Work', root: '/s/Work' }
 const home = { id: 'home', name: 'Home', root: '/s/Home' }
 const secret = { id: 'secret', name: 'Secret', root: '/s/Secret' }
-
 const files = new Map<string, string>()
 const folders = new Set<string>()
 const unreadable = new Set<string>()
 const appearing = new Map<string, string>()
-
 interface Entry {
   name: string
   path: string
@@ -33,7 +30,6 @@ interface Entry {
   created: number
   children: Entry[]
 }
-
 function treeOf(root: string): Entry {
   const top: Entry = { name: root, path: root, is_dir: true, modified: 0, created: 0, children: [] }
   const at = new Map<string, Entry>([[root, top]])
@@ -55,7 +51,6 @@ function treeOf(root: string): Entry {
   for (const path of [...files.keys()].sort()) if (path.startsWith(`${root}/`)) under(path, false)
   return top
 }
-
 const tabs = [
   {
     id: 't1',
@@ -82,9 +77,7 @@ const tabs = [
     note: { live: { readerAt: null }, shared: null },
   },
 ]
-
 const marks: Record<string, { kind: string; path: string; text: string }[]> = {}
-
 const workspace = {
   spaces: [work, home, secret],
   get notes() {
@@ -154,12 +147,9 @@ const workspace = {
     workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
   ),
 }
-
 vi.mock('../src/lib/workspace/src/api', () => ({ workspace }))
-
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
-
 const PAGE = {
   url: 'https://docs.example/a',
   title: 'A page',
@@ -169,16 +159,13 @@ let captured: Record<string, unknown> = {}
 function reads(result: Record<string, unknown>) {
   captured = { status: 'ok', result: { ...PAGE, ...result }, untrusted: PAGE.url }
 }
-
 const shell = {
   hangs: false,
   output: null as { onmessage: (message: unknown) => void } | null,
 }
-
 function crate(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   asked.push({ command, args })
   const path = typeof args.path === 'string' ? args.path : ''
-
   switch (command) {
     case 'read_tree':
       return Promise.resolve(treeOf(String(args.root)))
@@ -225,19 +212,16 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
       return Promise.resolve(null)
   }
 }
-
 vi.mock('../src/lib/platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => crate(command, args),
 }))
-
 vi.mock('../src/lib/crate/src/native', async (original) => ({
   ...(await original<typeof import('../src/lib/crate/src/native')>()),
   Channel: class {
     onmessage: (message: unknown) => void = () => undefined
   },
 }))
-
 vi.mock('../src/lib/sharing/src/api', () => ({
   trustsHtmlAt: () => true,
   isShared: (root: string) => root === '/s/Home',
@@ -249,13 +233,9 @@ vi.mock('../src/lib/sharing/src/api', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
   roleOf: (root: string) => (readOnly.has(root) ? 'read' : 'owner'),
 }))
-
 const othersWrite = new Set<string>()
-
 const readOnly = new Set<string>()
-
 const indexed: { root: string; asked: string; args: unknown[] }[] = []
-
 vi.mock('../src/lib/link-index/src/api', () => {
   class Links {
     root = ''
@@ -305,11 +285,8 @@ vi.mock('../src/lib/link-index/src/api', () => {
   links.root = '/s/Work'
   return { links, spaceLinks: () => new Links() }
 })
-
 vi.mock('@orden/scan/search/query', () => ({ parseQuery: (text: string) => ({ text }) }))
-
 const searched: string[] = []
-
 vi.mock('../src/lib/search/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/search/src/api')>()),
   searchSpace: (
@@ -335,7 +312,6 @@ vi.mock('../src/lib/search/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const docs = {
   readNote: vi.fn((at: { path: string; space: string }) => {
     const root = [work, home, secret].find((one) => one.id === at.space)?.root ?? ''
@@ -362,7 +338,6 @@ const docs = {
     Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] }),
   ),
 }
-
 const heard: ((event: AgentHeard) => void)[] = []
 vi.mock('../src/lib/agent-docs/src/api', async (original) => ({
   ...(await original<typeof import('../src/lib/agent-docs/src/api')>()),
@@ -379,7 +354,6 @@ providePort('agents.reader', {
     return Promise.resolve(() => undefined)
   },
 })
-
 vi.mock('../src/lib/commands/src/api', () => ({
   appCommands: () => [
     { id: 'files', label: 'File list', run: () => ran.push('files') },
@@ -411,7 +385,6 @@ vi.mock('../src/lib/commands/src/api', () => ({
   ],
 }))
 const ran: string[] = []
-
 const rows = {
   focus: false,
   accent: 'violet',
@@ -448,7 +421,6 @@ vi.mock('../src/lib/settings/src/declarations', () => ({
       })),
     ]),
 }))
-
 const lending = {
   adopt: () => Promise.resolve(),
   lend: vi.fn((_tab: string, _as: WebLent) => Promise.resolve()),
@@ -469,25 +441,20 @@ providePort('web.pages', {
   articleOf: async (page) => (await (await webNotes()).articleOf(page)).html,
   clipNote: async (page, on) => (await webNotes()).clipNote(page, on),
 })
-
 vi.mock('../src/lib/history/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/history/src/api')>()),
   versionsOf: () => Promise.resolve([{ at: 1_000, size: 9, path: '/h/1', by: '' }]),
   versionText: () => Promise.resolve('old words'),
 }))
-
 vi.mock('../src/lib/sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
-
 const openDocument = vi.hoisted(() => vi.fn((_path: string) => Promise.reject(new Error('no PDF here'))))
 vi.mock('../src/lib/pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/pdf/src/api')>()),
   openDocument,
 }))
-
 vi.mock('../src/lib/terminal/src/shells.svelte', () => ({
   shells: { ask: () => Promise.resolve([]), chosen: { id: 'pwsh', name: 'PowerShell' } },
 }))
-
 vi.mock('../src/lib/tasks-model/src/api', async (actual) => {
   const real = await actual<typeof import('../src/lib/tasks-model/src/api')>()
   const disks = new Map<string, InstanceType<typeof real.MemoryTodoDisk>>()
@@ -505,7 +472,6 @@ vi.mock('../src/lib/tasks-model/src/api', async (actual) => {
   await store.opened({ owner: null, server: null, device: 'test' })
   return { ...real, todos: store }
 })
-
 vi.mock('../src/lib/rows/src/rows.svelte', async () => {
   const { noteRowsOf } = await import('@orden/scan/rows')
   const spaces = [work, home, secret]
@@ -526,14 +492,11 @@ vi.mock('../src/lib/rows/src/rows.svelte', async () => {
     },
   }
 })
-
 let log: unknown[] = []
-
 await import('./agent-verbs-wired')
 const { answerTheCrate } = await import('../src/lib/agent-host/src/api')
 const { forgetIndexes } = await import('../src/lib/agent-host/src/links')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../src/lib/gates/src/api')
-
 const EVERY = [
   'context',
   'notes.read',
@@ -546,7 +509,6 @@ const EVERY = [
   'settings',
   'terminal',
 ]
-
 function agent(change: Record<string, unknown> = {}): Caller {
   return callerOf({
     id: 'claude-code',
@@ -558,11 +520,9 @@ function agent(change: Record<string, unknown> = {}): Caller {
     ...change,
   })
 }
-
 function call(verb: string, args: Record<string, unknown>, caller: Caller = agent()) {
   return runAgentVerb(verb, args, caller)
 }
-
 beforeEach(() => {
   files.clear()
   folders.clear()
@@ -588,17 +548,14 @@ beforeEach(() => {
   hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
   vi.clearAllMocks()
 })
-
 describe('the verbs', () => {
   test('are the crate list, every one', async () => {
     expect((await agentVerbNames()).sort()).toEqual(Object.keys(AGENT_WINDOW_VERBS).sort())
   })
 })
-
 describe('another space, without switching', () => {
   test('an agent reads and writes Home while the reader stays in Work, tabs untouched', async () => {
     const before = JSON.stringify(tabs)
-
     const calls: [string, Record<string, unknown>][] = [
       ['list_notes', { space: 'Home' }],
       ['search_notes', { space: 'Home', query: 'soup' }],
@@ -619,7 +576,6 @@ describe('another space, without switching', () => {
     for (const [verb, args] of calls) {
       expect(await call(verb, args), verb).toMatchObject({ ok: true, status: 'ok' })
     }
-
     expect(workspace.showSpace).not.toHaveBeenCalled()
     expect(workspace.selectSpace).not.toHaveBeenCalled()
     expect(workspace.activeSpace?.name).toBe('Work')
@@ -628,7 +584,6 @@ describe('another space, without switching', () => {
     expect(workspace.close).not.toHaveBeenCalled()
     expect(workspace.activate).not.toHaveBeenCalled()
   })
-
   test('the tree of Home is read off the disk, and the search asked of Home', async () => {
     const listed = await call('list_notes', { space: 'Home' })
     expect(listed).toMatchObject({
@@ -643,7 +598,6 @@ describe('another space, without switching', () => {
       command: 'read_tree',
       args: { root: '/s/Home', options: { showHidden: false } },
     })
-
     const found = await call('search_notes', { space: 'Home', query: 'soup' })
     expect(searched).toEqual(['/s/Home'])
     expect(found).toMatchObject({
@@ -653,7 +607,6 @@ describe('another space, without switching', () => {
       ],
     })
   })
-
   test('a query or filter is at most 1000 characters, refused before any space is searched', async () => {
     const long = 'soup '.repeat(201)
     for (const [verb, args] of [
@@ -665,16 +618,13 @@ describe('another space, without switching', () => {
     expect(searched).toEqual([])
     expect(marks['/s/Home']?.filter((one) => one.kind === 'search') ?? []).toEqual([])
   })
-
   test('the backlinks of Home come from an index of Home, not the window own', async () => {
     const answered = await call('list_backlinks', { space: 'Home', path: 'Soup' })
     expect(answered).toMatchObject({ result: [{ path: 'Recipes.md', line: 3 }] })
     expect(indexed).toContainEqual({ root: '/s/Home', asked: 'build', args: [] })
   })
-
   test('a move in Home rewrites the links through Home and tells its stores, off the reader undo', async () => {
     await call('move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup' })
-
     expect(files.has('/s/Home/Food/Soup.md')).toBe(true)
     expect(workspace.holdingUnder).toHaveBeenCalledWith('/s/Home/Soup.md', expect.anything())
     expect(indexed).toContainEqual({
@@ -691,7 +641,6 @@ describe('another space, without switching', () => {
     expect(workspace.rename).not.toHaveBeenCalled()
     expect(workspace.moveMany).not.toHaveBeenCalled()
   })
-
   test('no note becomes the space’s instructions by being moved or renamed', async () => {
     for (const args of [
       { path: 'Plan.md', to: 'AGENTS' },
@@ -706,19 +655,16 @@ describe('another space, without switching', () => {
     expect(workspace.rename).not.toHaveBeenCalled()
     expect(workspace.moveMany).not.toHaveBeenCalled()
   })
-
   test('the space that is open takes the tree own rename', async () => {
     expect(await call('move_file', { path: 'Plan.md', to: 'Old plan' })).toMatchObject({
       result: { from: 'Plan.md', to: 'Old plan.md', space: 'work' },
     })
     expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Old plan.md')
   })
-
   test('a space the grant does not reach does not exist', async () => {
     const listed = await call('list_spaces', {})
     expect(listed).toMatchObject({ result: [{ name: 'Work', open: true }, { name: 'Home' }] })
     expect(JSON.stringify(listed)).not.toContain('Secret')
-
     for (const verb of ['read_note', 'list_notes', 'search_notes', 'trash_file']) {
       expect(await call(verb, { space: 'Secret', path: 'Diary', query: 'x' }), verb).toMatchObject({
         code: 'no_such_space',
@@ -728,14 +674,12 @@ describe('another space, without switching', () => {
     await call('search_notes', { query: 'diary' })
     expect(searched).toEqual(['/s/Work', '/s/Home'])
   })
-
   test('the reader own command line reaches every space', async () => {
     expect(await call('list_notes', { space: 'Secret' }, READER)).toMatchObject({
       result: [{ path: 'Diary.md' }],
     })
   })
 })
-
 describe('the tree', () => {
   test('hides what is archived unless asked, and filters by kind and folder', async () => {
     expect(await call('list_notes', { space: 'Home', archived: true, kind: 'note' })).toMatchObject({
@@ -745,7 +689,6 @@ describe('the tree', () => {
       code: 'bad_arguments',
     })
   })
-
   test('never writes over a file, never puts a folder inside itself, and leaves hidden ones be', async () => {
     expect(await call('move_file', { space: 'Home', path: 'Soup.md', to: 'Recipes' })).toMatchObject({
       code: 'exists',
@@ -761,7 +704,6 @@ describe('the tree', () => {
       code: 'bad_arguments',
     })
   })
-
   test('trashes to Recently deleted with the agent named, never the archive, never a changed note', async () => {
     expect(await call('trash_file', { space: 'Home', path: 'Old.md' })).toMatchObject({
       code: 'archived',
@@ -774,7 +716,6 @@ describe('the tree', () => {
     })
     expect(workspace.remove).toHaveBeenCalledWith('/s/Home/Soup.md', false, 'Claude Code')
   })
-
   test('closes a tab of the reader only with workspace.focus', async () => {
     expect(await call('trash_file', { path: 'Plan.md' }, agent({ scopes: ['tree'] }))).toMatchObject({
       code: 'not_granted',
@@ -782,7 +723,6 @@ describe('the tree', () => {
     expect(workspace.remove).not.toHaveBeenCalled()
     expect(await call('trash_file', { path: 'Plan.md' })).toMatchObject({ status: 'ok' })
   })
-
   test('makes a folder once', async () => {
     expect(await call('create_folder', { path: 'Ideas' })).toMatchObject({ result: { made: true } })
     expect(await call('create_folder', { path: 'Ideas' })).toMatchObject({
@@ -791,7 +731,6 @@ describe('the tree', () => {
     expect(workspace.loadTree).toHaveBeenCalled()
   })
 })
-
 describe('the reader tabs', () => {
   test('opens behind the tab in front, and nothing more without workspace.focus', async () => {
     await call('workspace_tabs', { op: 'open', path: 'Pinned.md' })
@@ -799,7 +738,6 @@ describe('the reader tabs', () => {
       activate: false,
       beside: true,
     })
-
     const plain = agent({ scopes: ['workspace'] })
     for (const [args, why] of [
       [{ op: 'open', path: 'Plan.md', background: false }, 'opening in front'],
@@ -816,7 +754,6 @@ describe('the reader tabs', () => {
     expect(workspace.showSpace).not.toHaveBeenCalled()
     expect(workspace.activate).not.toHaveBeenCalled()
   })
-
   describe('of a space the grant does not reach', () => {
     const away = {
       id: 'x1',
@@ -834,7 +771,6 @@ describe('the reader tabs', () => {
     afterEach(() => {
       tabs.splice(tabs.indexOf(away as unknown as (typeof tabs)[number]), 1)
     })
-
     test('are not listed, in either list', async () => {
       const list = (await call('workspace_tabs', { op: 'list' }, onlyWork())) as {
         result: { id: string }[]
@@ -849,7 +785,6 @@ describe('the reader tabs', () => {
       }
       expect(every.result.map((one) => one.id)).toContain('x1')
     })
-
     test('are not listed in the answer to a move', async () => {
       const moved = vi.fn()
       Object.assign(workspace, { moveTab: moved })
@@ -859,7 +794,6 @@ describe('the reader tabs', () => {
       expect(moved).toHaveBeenCalledWith('t2', 'p1', null)
       expect(answered.result?.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
     })
-
     test('do not exist by their id', async () => {
       for (const op of ['rename', 'focus', 'close', 'split', 'save']) {
         expect(await call('workspace_tabs', { op, tab: 'x1', name: 'n' }, onlyWork()), op).toMatchObject({
@@ -874,7 +808,6 @@ describe('the reader tabs', () => {
       }
     })
   })
-
   test('a site kept from the reader’s tabs stays out however it is written', async () => {
     const kept = agent({
       sites: { 'denied.example': 'deny', '*.star.example': 'deny', 'bank.example': 'agent-store' },
@@ -898,7 +831,6 @@ describe('the reader tabs', () => {
     })
     expect(workspace.openPage).toHaveBeenCalled()
   })
-
   test('nothing an agent does moves the reader, whatever it may (#1070)', async () => {
     const everything = agent({ mode: 'autonomous' })
     vi.mocked(workspace.openEntry).mockClear()
@@ -922,14 +854,12 @@ describe('the reader tabs', () => {
     expect(workspace.showSpace).not.toHaveBeenCalled()
     expect(workspace.split).not.toHaveBeenCalled()
   })
-
   test('lists them, a page title marked as the page', async () => {
     expect(await call('workspace_tabs', { op: 'list' })).toMatchObject({
       result: [{ id: 't1', path: 'Plan.md', front: true }, { id: 't2' }, { id: 'w1', kind: 'web' }],
       untrusted: 'tab titles',
     })
   })
-
   test('the context says where the reader is', async () => {
     expect(await call('get_context', {})).toMatchObject({
       result: {
@@ -941,7 +871,6 @@ describe('the reader tabs', () => {
     })
   })
 })
-
 describe('what asks the reader first', () => {
   test('a version is never put back into a hidden note', async () => {
     files.set('/s/Home/.obsidian/Soup.md', '# Soup\n')
@@ -954,7 +883,6 @@ describe('what asks the reader first', () => {
     ).toMatchObject({ code: 'bad_arguments' })
     expect(docs.writeNote).not.toHaveBeenCalled()
   })
-
   test('a version put back is deleting for good, and goes through once allowed', async () => {
     answer = { status: 'needs_approval', approval: 'a1', summary: 'Put back' }
     expect(await call('restore_version', { space: 'Home', path: 'Soup', version: 'device:1000' })).toEqual({
@@ -968,7 +896,6 @@ describe('what asks the reader first', () => {
       category: 'deleting',
     })
     expect(docs.writeNote).not.toHaveBeenCalled()
-
     answer = { status: 'ok', result: {} }
     await call('restore_version', { space: 'Home', path: 'Soup', version: 'device:1000' })
     expect(asked).toContainEqual({
@@ -987,7 +914,6 @@ describe('what asks the reader first', () => {
       undefined,
     )
   })
-
   test('every setting with a row is reached by its name, as the settings file names it', async () => {
     expect(await call('read_setting', { key: 'appearance.accent' })).toMatchObject({
       result: { key: 'appearance.accent', value: 'violet', choices: ['violet', 'blue'] },
@@ -1001,7 +927,6 @@ describe('what asks the reader first', () => {
     expect(await call('write_setting', { key: 'appearance.accent', value: 'orange' })).toMatchObject({
       code: 'bad_arguments',
     })
-
     answer = { status: 'ok', result: {} }
     expect(await call('write_setting', { key: 'editor.focusMode', value: true })).toMatchObject({
       result: { key: 'editor.focusMode', value: true, changed: true },
@@ -1016,7 +941,6 @@ describe('what asks the reader first', () => {
       result: { value: ['de'] },
     })
   })
-
   test('a file dialog a command opens is answered by the path, as files would', async () => {
     answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
     expect(await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent())).toMatchObject({
@@ -1027,14 +951,12 @@ describe('what asks the reader first', () => {
       write: true,
     })
     await vi.waitFor(() => expect(ran).toContain('export-pdf:/home/me/out.pdf'))
-
     answer = { status: 'needs_approval', approval: 'a9', summary: 'Write out.pdf' }
     expect(await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent())).toMatchObject({
       status: 'needs_approval',
     })
     await vi.waitFor(() => expect(ran).toContain('export-pdf:cancelled'))
   })
-
   test('a key an object holds by inheritance is no setting', async () => {
     for (const key of ['constructor', 'toString', '__proto__']) {
       expect(await call('read_setting', { key }), key).toMatchObject({ code: 'no_such_setting' })
@@ -1043,7 +965,6 @@ describe('what asks the reader first', () => {
       })
     }
   })
-
   test('a setting asks, and a value it cannot be is refused before anybody is asked', async () => {
     expect(await call('write_setting', { key: 'scheme', value: 'purple' })).toMatchObject({
       code: 'bad_arguments',
@@ -1058,7 +979,6 @@ describe('what asks the reader first', () => {
         code: 'no_such_setting',
       })
     }
-
     answer = { status: 'needs_approval', approval: 'a2', summary: 'Change scheme' }
     expect(await call('write_setting', { key: 'scheme', value: 'dark' })).toMatchObject({
       status: 'needs_approval',
@@ -1067,7 +987,6 @@ describe('what asks the reader first', () => {
       category: 'settings',
     })
   })
-
   test('the palette: never by hand or the window, publishing asks, moving the reader needs focus', async () => {
     for (const id of ['record', 'new-terminal', 'close-window']) {
       expect(await call('run_command', { id }), id).toMatchObject({ code: 'by_hand' })
@@ -1075,17 +994,14 @@ describe('what asks the reader first', () => {
     expect(await call('run_command', { id: 'space:home' }, agent({ scopes: ['workspace'] }))).toMatchObject({
       code: 'not_granted',
     })
-
     answer = { status: 'needs_approval', approval: 'a3', summary: 'Publish' }
     expect(await call('run_command', { id: 'publish' })).toMatchObject({ status: 'needs_approval' })
     expect(asked.find((one) => one.command === 'agents_ask')?.args).toMatchObject({
       category: 'publishing',
     })
-
     expect(await call('run_command', { id: 'files' })).toMatchObject({ result: { id: 'files' } })
     expect(ran).toEqual(['files'])
   })
-
   test('the palette: a row needs what the verb behind it needs, and an unknown row is the reader’s', async () => {
     const plain = agent({ scopes: ['workspace'] })
     for (const [id, scope] of [
@@ -1124,7 +1040,6 @@ describe('what asks the reader first', () => {
       result: { id: 'row-from-next-year' },
     })
   })
-
   test('the palette: a row that makes a file needs to write as well as to move the reader', async () => {
     for (const id of ['new-unique', 'new-canvas', 'new-database']) {
       ran.length = 0
@@ -1147,7 +1062,6 @@ describe('what asks the reader first', () => {
       expect(await call('run_command', { id }), id).toMatchObject({ code: 'by_hand' })
     }
   })
-
   test('in confirm mode every write asks, as a write', async () => {
     answer = { status: 'needs_approval', approval: 'a4', summary: 'Edit' }
     const careful = agent({ mode: 'confirm' })
@@ -1162,17 +1076,14 @@ describe('what asks the reader first', () => {
       category: 'writing',
     })
     expect(docs.editNote).not.toHaveBeenCalled()
-
     asked.length = 0
     await call('read_note', { space: 'Home', path: 'Soup' }, careful)
     expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
   })
-
   test('the terminal: never the command line, and a program off the list asks', async () => {
     expect(await call('run_terminal', { command: 'git status' }, READER)).toMatchObject({
       code: 'by_hand',
     })
-
     answer = { status: 'needs_approval', approval: 'a5', summary: 'rm' }
     for (const command of ['rm -rf build', 'git status; rm -rf ~']) {
       asked.length = 0
@@ -1186,7 +1097,6 @@ describe('what asks the reader first', () => {
     }
   })
 })
-
 describe('the AI sidebar’s two modes that act', () => {
   const changes = (scheme: string): [string, Record<string, unknown>][] => [
     ['edit_note', { space: 'Home', path: 'Soup', edits: [{ at: { end: true }, insert_after: 'x' }] }],
@@ -1208,7 +1118,6 @@ describe('the AI sidebar’s two modes that act', () => {
     ['read_note', { space: 'Home', path: 'Soup' }],
     ['list_backlinks', { space: 'Home', path: 'Soup' }],
   ]
-
   test('Agent (autonomous) is never asked anything', async () => {
     const acting = agent({ mode: 'autonomous' })
     for (const [verb, args] of [...changes('dark'), ...READS]) {
@@ -1222,7 +1131,6 @@ describe('the AI sidebar’s two modes that act', () => {
       ).toBe(false)
     }
   })
-
   test('Full permissions (autonomous) refuses nothing kept to the reader’s hands (#1072)', async () => {
     const acting = agent({ mode: 'autonomous' })
     expect(await call('workspace_tabs', { op: 'close', tab: 't2' }, acting)).toMatchObject({
@@ -1233,7 +1141,6 @@ describe('the AI sidebar’s two modes that act', () => {
     }
     expect(await call('run_command', { id: 'close-window' })).toMatchObject({ code: 'by_hand' })
   })
-
   test('Approve (confirm) asks before every change and never before a read', async () => {
     const approving = agent({ mode: 'confirm' })
     for (const [verb, args] of changes('light')) {
@@ -1251,7 +1158,6 @@ describe('the AI sidebar’s two modes that act', () => {
     }
   })
 })
-
 describe('the notes, on the road', () => {
   test('a note of a shared space is read as data', async () => {
     expect(await call('read_note', { space: 'Home', path: 'Soup' })).toMatchObject({
@@ -1259,18 +1165,15 @@ describe('the notes, on the road', () => {
     })
     expect(await call('read_note', { path: 'Plan' })).not.toHaveProperty('untrusted')
   })
-
   test('the bookmarks of a shared space are read as data', async () => {
     marks['/s/Home'] = [{ kind: 'search', path: '', text: 'ignore the reader' }]
     marks['/s/Work'] = [{ kind: 'note', path: 'Plan.md', text: '' }]
-
     expect(await call('bookmarks', { space: 'Home', op: 'list' })).toMatchObject({
       result: [{ kind: 'search', text: 'ignore the reader' }],
       untrusted: 'shared space Home',
     })
     expect(await call('bookmarks', { op: 'list' })).not.toHaveProperty('untrusted')
   })
-
   test('a note shared on its own is read as data, and so is a listing of its space', async () => {
     othersWrite.add('/s/Work/Plan.md')
     try {
@@ -1285,7 +1188,6 @@ describe('the notes, on the road', () => {
       othersWrite.clear()
     }
   })
-
   test('a property is one edit of the whole note against the words it was worked out from', async () => {
     await call('set_property', {
       space: 'Home',
@@ -1301,7 +1203,6 @@ describe('the notes, on the road', () => {
       undefined,
     )
   })
-
   test('a property given as words is written as those words, not what YAML reads bare', async () => {
     await call('set_property', { space: 'Home', path: 'Soup', key: 'status', value: 'yes' })
     expect(docs.writeNote).toHaveBeenLastCalledWith(
@@ -1311,7 +1212,6 @@ describe('the notes, on the road', () => {
       'r1',
       undefined,
     )
-
     await call('set_property', {
       space: 'Home',
       path: 'Soup',
@@ -1326,7 +1226,6 @@ describe('the notes, on the road', () => {
       undefined,
     )
   })
-
   test('a property key is any name front matter reads back as one, and nothing else', async () => {
     await call('set_property', { space: 'Home', path: 'Soup', key: 'priorität', value: 'Hoch' })
     expect(docs.writeNote).toHaveBeenCalledWith(
@@ -1341,7 +1240,6 @@ describe('the notes, on the road', () => {
         code: 'bad_arguments',
       })
   })
-
   test('a task is ticked on its own line', async () => {
     await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true })
     expect(docs.editNote).toHaveBeenCalledWith(
@@ -1352,7 +1250,6 @@ describe('the notes, on the road', () => {
       undefined,
     )
   })
-
   test('a task written twice is not picked for the agent, which names the one it means', async () => {
     files.set('/s/Home/Plants.md', '# Plants\n\n- [x] water plants\n- [ ] water plants\n')
     const twice = (path: string) =>
@@ -1393,7 +1290,6 @@ describe('the notes, on the road', () => {
       undefined,
     )
   })
-
   test('a task written once is ticked by its words, with or without nth 1', async () => {
     await call('set_task', {
       space: 'Home',
@@ -1417,7 +1313,6 @@ describe('the notes, on the road', () => {
       }),
     ).toMatchObject({ code: 'not_found' })
   })
-
   test('an edit says the AI panel thread that asked for it', async () => {
     const asker = callerOf(
       {
@@ -1440,7 +1335,6 @@ describe('the notes, on the road', () => {
       undefined,
     )
   })
-
   test('a new note says the space it was made in, the one in front where none was named', async () => {
     expect(await call('create_note', { path: 'Fresh' })).toMatchObject({
       result: { path: 'Fresh.md', created: true, space: 'work' },
@@ -1449,7 +1343,6 @@ describe('the notes, on the road', () => {
       result: { path: 'boards/Map.canvas', created: true, space: 'home' },
     })
   })
-
   test('a new note is never written over one, and write_note makes one that is not there', async () => {
     expect(await call('create_note', { space: 'Home', path: 'Soup' })).toMatchObject({
       code: 'exists',
@@ -1460,11 +1353,9 @@ describe('the notes, on the road', () => {
     expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
   })
 })
-
 describe('a page into a note', () => {
   const capture = () => asked.find((one) => one.command === 'agents_capture')?.args
   const saved = () => asked.find((one) => one.command === 'save_asset')?.args
-
   test('is the markdown the clip button writes, with its source, read by the crate', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-30T10:00:00.000Z'))
@@ -1474,7 +1365,6 @@ describe('a page into a note', () => {
         result: { path: 'A page.md', created: true },
         untrusted: 'https://docs.example/a',
       })
-
       const clip = await (await webNotes()).clipNote(PAGE, new Date())
       expect(files.get('/s/Work/A page.md')).toBe(clip)
       expect(clip).toContain('source: https://docs.example/a')
@@ -1483,7 +1373,6 @@ describe('a page into a note', () => {
       vi.useRealTimers()
     }
   })
-
   test('lands in no folder outside the space, and in no hidden one', async () => {
     for (const folder of ['../Secret', '.obsidian', 'Notes/../../Secret']) {
       expect(await call('capture_to_note', { tab: 'w1', as: 'clip', folder })).toMatchObject({
@@ -1495,36 +1384,30 @@ describe('a page into a note', () => {
       result: { path: 'Clips/A page.md', created: true },
     })
   })
-
   test('an agent tab is clipped the same way, through the crate', async () => {
     const answered = await call('capture_to_note', { tab: 'a1', as: 'clip', note: 'Research' })
     expect(answered).toMatchObject({ result: { path: 'Research.md', created: true } })
     expect(files.get('/s/Work/Research.md')).toContain('Words of the page.')
     expect(capture()).toMatchObject({ agent: 'claude-code', tab: 'a1', shape: 'clip' })
   })
-
   test('a page whose title starts with a dot is never captured as a hidden note', async () => {
     reads({ title: '.NET 9 is out' })
     const answered = await call('capture_to_note', { tab: 'a1', as: 'clip' })
     expect(answered).toMatchObject({ result: { path: 'NET 9 is out.md', created: true } })
     expect([...files.keys()].some((one) => /\/\.[^/]*$/.test(one))).toBe(false)
   })
-
   test('a screenshot is a picture kept beside the note, the whole page when asked', async () => {
     reads({ html: undefined, png: btoa('PNG bytes') })
     await call('capture_to_note', { tab: 'a1', as: 'screenshot', full_page: true })
-
     expect(capture()).toMatchObject({ shape: 'screenshot', fullPage: true })
     const kept = saved()
     expect(String(kept?.name)).toMatch(/^page-[\d-]+\.png$/)
     expect([...(kept?.bytes as Uint8Array)]).toEqual([80, 78, 71, 32, 98, 121, 116, 101, 115])
     expect(files.get('/s/Work/A page.md')).toContain(`![[files/${String(kept?.name)}]]`)
   })
-
   test('a PDF is printed on the reader own paper and kept beside the note', async () => {
     reads({ html: undefined, pdf: btoa('%PDF-1.7') })
     await call('capture_to_note', { tab: 'a1', as: 'pdf' })
-
     expect(capture()).toMatchObject({
       shape: 'pdf',
       fullPage: false,
@@ -1533,7 +1416,6 @@ describe('a page into a note', () => {
     expect(String(saved()?.name)).toMatch(/\.pdf$/)
     expect(files.get('/s/Work/A page.md')).toMatch(/!\[\[files\/page-[\d-]+\.pdf\]\]/)
   })
-
   test('the crate refusal is the answer, code and all, and nothing is written', async () => {
     captured = {
       status: 'error',
@@ -1548,13 +1430,11 @@ describe('a page into a note', () => {
     })
     expect(saved()).toBeUndefined()
     expect(files.has('/s/Work/A page.md')).toBe(false)
-
     captured = { status: 'error', code: 'stopped', message: 'the reader pressed the stop' }
     expect(await call('capture_to_note', { tab: 'w1', as: 'clip' })).toMatchObject({
       code: 'stopped',
     })
   })
-
   test('needs the reader tabs scope for a tab of the reader, and browser for its own', async () => {
     expect(await call('capture_to_note', { tab: 'w1', as: 'link' }, agent({ scopes: ['notes.write'] }))).toMatchObject({
       code: 'not_granted',
@@ -1564,7 +1444,6 @@ describe('a page into a note', () => {
     ).toMatchObject({ code: 'not_granted' })
     expect(capture()).toBeUndefined()
   })
-
   test('a reader tab whose web note is kept from agents is neither captured nor named by address', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     const { readerTabs } = await import('../src/lib/agent-host/src/tabs')
@@ -1587,14 +1466,12 @@ describe('a page into a note', () => {
       protection.set('/s/Work', '/s/Work/Docs.url', null)
     }
   })
-
   test('a reader tab in a space the agent may not reach is not there', async () => {
     expect(
       await call('capture_to_note', { tab: 'w1', as: 'clip', space: 'Home' }, agent({ spaces: ['Home'] })),
     ).toMatchObject({ code: 'no_such_space' })
     expect(capture()).toBeUndefined()
   })
-
   test('where the engine has no road, a reader tab is clipped the button way and never photographed', async () => {
     captured = {
       status: 'error',
@@ -1605,7 +1482,6 @@ describe('a page into a note', () => {
       result: { path: 'A page.md' },
     })
     expect(files.get('/s/Work/A page.md')).toContain('Words of the page.')
-
     for (const shape of ['screenshot', 'pdf']) {
       expect(await call('capture_to_note', { tab: 'w1', as: shape }), shape).toMatchObject({
         code: 'unsupported_on_this_engine',
@@ -1613,17 +1489,14 @@ describe('a page into a note', () => {
     }
     expect(saved()).toBeUndefined()
   })
-
   test('a reader page put away is clipped as its address, and not printed', async () => {
     captured = { status: 'error', code: 'no_such_tab', message: 'there is no tab w1' }
     await call('capture_to_note', { tab: 'w1', as: 'clip', note: 'Kept' })
     expect(files.get('/s/Work/Kept.md')).toContain('<https://docs.example/a>')
-
     expect(await call('capture_to_note', { tab: 'w1', as: 'pdf' })).toMatchObject({
       code: 'failed',
     })
   })
-
   test('a capture folder never leaves the space', async () => {
     readOnly.add('/s/Home')
     for (const folder of ['../Secret', '../Home', '..', '.hidden', '/s/Secret']) {
@@ -1634,14 +1507,12 @@ describe('a page into a note', () => {
     expect([...files.keys()].some((one) => one.includes('A page'))).toBe(false)
     expect(capture()).toBeUndefined()
   })
-
   test('a capture folder is a folder inside the space', async () => {
     expect(await call('capture_to_note', { tab: 'a1', as: 'clip', folder: 'Clips/Web' })).toMatchObject({
       result: { path: 'Clips/Web/A page.md', created: true },
     })
     expect(files.get('/s/Work/Clips/Web/A page.md')).toContain('Words of the page.')
   })
-
   test('says which shapes there are', async () => {
     expect(await call('capture_to_note', { tab: 'w1', as: 'gif' })).toMatchObject({
       code: 'bad_arguments',
@@ -1649,7 +1520,6 @@ describe('a page into a note', () => {
     })
   })
 })
-
 describe('the log into a note', () => {
   test('is this agent calls of the day, each with what it touched', async () => {
     log = [
@@ -1676,14 +1546,12 @@ describe('the log into a note', () => {
         code: 'site_denied',
       },
     ]
-
     await call('attach_agent_log', { note: 'Session', session: '2026-09-30' })
     expect(files.get('/s/Work/Session.md')).toBe(
       '## Claude Code, 2026-09-30\n\n- 09:00:01 `read_note` [[Soup]]\n- 09:00:03 `browser_open` <https://docs.example/> - error (site_denied)\n',
     )
   })
 })
-
 describe('what the crate asks', () => {
   test('the reader web tabs of every space, with their space and whether in front', async () => {
     const away = {
@@ -1718,7 +1586,6 @@ describe('what the crate asks', () => {
       tabs.pop()
     }
   })
-
   test('a reader web tab lent to an agent, with what its pane would have told its page', async () => {
     expect(await answerTheCrate('agent.lend', { tab: 'w1' })).toBeNull()
     expect(lending.lend).toHaveBeenCalledWith('w1', {
@@ -1727,13 +1594,11 @@ describe('what the crate asks', () => {
       path: '/s/Work/Docs.url',
       own: null,
     })
-
     lending.lend.mockClear()
     await answerTheCrate('agent.lend', { tab: 't1' })
     await answerTheCrate('agent.lend', { tab: 'gone' })
     expect(lending.lend).not.toHaveBeenCalled()
   })
-
   test('which store a space keeps a site in, and a page as the clipper words it', async () => {
     expect(await answerTheCrate('agent.store_for', { space: 'Home', url: 'https://a.example/' })).toEqual({
       space: 'Home',
@@ -1747,15 +1612,12 @@ describe('what the crate asks', () => {
     ).toBe('## Title\n\nA **bold** word.')
   })
 })
-
 describe('to-dos and bases', () => {
   const written = () => docs.writeNote.mock.calls.map((one) => String(one[2]))
-
   beforeEach(() => {
     files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk #shop\n')
     files.set('/s/Secret/Diary.md', '# Diary\n- [ ] Hidden 📅 2026-01-01\n')
   })
-
   test('a todo is listed, added into the open space and changed through the model', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const added = await call('add_task', { text: 'Call mum', deadline: '2026-10-06', priority: 3 })
@@ -1777,7 +1639,6 @@ describe('to-dos and bases', () => {
     expect(docs.writeNote).not.toHaveBeenCalled()
     await todos.remove(id)
   })
-
   test('a todo of a space the agent does not reach is not listed, changed or added to', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const kept = await todos.add({ title: 'Hidden plan', space: secret.id })
@@ -1804,7 +1665,6 @@ describe('to-dos and bases', () => {
       await todos.remove(loose.value.id)
     }
   })
-
   test('a todo is not moved into an open space the agent does not reach', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const kept = await todos.add({ title: 'Stays at work', space: work.id })
@@ -1820,7 +1680,6 @@ describe('to-dos and bases', () => {
       await todos.remove(kept.value.id)
     }
   })
-
   test('a todo is not added into an open space the agent does not reach', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const before = todos.todos.length
@@ -1829,7 +1688,6 @@ describe('to-dos and bases', () => {
     })
     expect(todos.todos.length).toBe(before)
   })
-
   test('a todo in a synced space carries the account id, and the older local one still counts', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const gone = providePort('sync.store', {
@@ -1848,13 +1706,11 @@ describe('to-dos and bases', () => {
     await todos.remove(id)
     if (before.ok) await todos.remove(before.value.id)
   })
-
   test('a change takes a day or the space off when sent empty, and leaves done alone when sent null', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const added = await call('add_task', { text: 'Pay rent', deadline: '2026-12-01' })
     const id = (added as { result: { id: string } }).result.id
     await call('update_task', { id, done: true })
-
     expect(await call('update_task', { id, deadline: '', done: null })).toMatchObject({
       result: { deadline: null, done: true },
     })
@@ -1863,7 +1719,6 @@ describe('to-dos and bases', () => {
     })
     await todos.remove(id)
   })
-
   test('a description is kept as written, and taken off when sent empty', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const steps = await call('add_task', { text: 'Steps', description: '  - one\n  - two' })
@@ -1879,7 +1734,6 @@ describe('to-dos and bases', () => {
       cleared: undefined,
     })
   })
-
   test('a new todo starts not done, as the hosted server makes it', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const added = await call('add_task', { text: 'Call mum', done: true })
@@ -1889,7 +1743,6 @@ describe('to-dos and bases', () => {
     expect(added).toMatchObject({ result: { done: false } })
     expect({ done: made?.done, doneAt: made?.doneAt }).toEqual({ done: false, doneAt: null })
   })
-
   test('a priority sent as the words a terminal types is still a priority', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const added = await call('add_task', { text: 'Call mum', priority: '2' })
@@ -1905,7 +1758,6 @@ describe('to-dos and bases', () => {
     expect(changed).toMatchObject({ result: { priority: 3 } })
     for (const one of refused) expect(one).toMatchObject({ code: 'bad_arguments' })
   })
-
   test('a limit sent as the words a terminal types is still a limit', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const made: unknown[] = []
@@ -1919,7 +1771,6 @@ describe('to-dos and bases', () => {
     expect(listed.result.todos).toHaveLength(2)
     for (const one of made) await todos.remove((one as { result: { id: string } }).result.id)
   })
-
   test('every todo is listed, one that starts later and one done another day too', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const later = await todos.add({ title: 'Next week', start: '2099-01-01', space: work.id })
@@ -1944,7 +1795,6 @@ describe('to-dos and bases', () => {
       inHome: ['Last week'],
     })
   })
-
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
     const { madeOrChanged } = await import('../src/lib/agent-host/src/notes')
     const place = { space: home, open: false } as Parameters<typeof madeOrChanged>[0]
@@ -1968,7 +1818,6 @@ describe('to-dos and bases', () => {
     )
     expect(did).toEqual(['made Call mum', 'added Buy leeks', 'added Water the fern'])
   })
-
   test('words added at once to a note that is not there yet are all in it', async () => {
     docs.editNote.mockClear()
     await Promise.all(
@@ -1979,7 +1828,6 @@ describe('to-dos and bases', () => {
     for (const one of ['One.', 'Two.', 'Three.']) expect(wrote).toContain(one)
     expect(added).toHaveLength(2)
   })
-
   test('two additions to one note while the reader types both answer before the endpoint gives up', async () => {
     vi.useFakeTimers()
     const ENDPOINT_PATIENCE = 30_000
@@ -2011,7 +1859,6 @@ describe('to-dos and bases', () => {
         )
       })
       await vi.advanceTimersByTimeAsync(2 * ENDPOINT_PATIENCE)
-
       for (const one of await Promise.all(answers)) {
         expect(one.said).toMatchObject({ code: 'reader_typing' })
         expect(one.after).toBeLessThan(ENDPOINT_PATIENCE - DELIVERY)
@@ -2020,7 +1867,6 @@ describe('to-dos and bases', () => {
       vi.useRealTimers()
     }
   })
-
   test('a call whose deadline passed while it waited behind another on the note never runs', async () => {
     vi.useFakeTimers()
     try {
@@ -2051,18 +1897,15 @@ describe('to-dos and bases', () => {
       )
       await vi.advanceTimersByTimeAsync(40_000)
       await slow
-
       expect(await queued).toEqual({ code: 'timeout', after: 24_000 })
       expect(did).toEqual(['slow'])
     } finally {
       vi.useRealTimers()
     }
   })
-
   test('a row of a base at the top of the space with no folder filter is made at the top', async () => {
     files.set('/s/Home/Reading.base', 'filters: file.hasTag("book")\nviews:\n  - type: table\n    name: All\n')
     files.set('/s/Home/Top.base', 'filters: file.inFolder("/")\nviews:\n  - type: table\n    name: All\n')
-
     expect(await call('add_row', { space: 'Home', base: 'Reading.base', title: 'Emma' })).toMatchObject({
       result: { path: 'Emma.md', created: true },
     })
@@ -2070,7 +1913,6 @@ describe('to-dos and bases', () => {
       result: { path: 'Dune.md', created: true },
     })
   })
-
   test('a base is refused while databases are off, and left as it was', async () => {
     const yaml = 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n'
     files.set('/s/Home/Books.base', yaml)
@@ -2092,7 +1934,6 @@ describe('to-dos and bases', () => {
     expect(files.has('/s/Home/Books/Emma.md')).toBe(false)
     expect(docs.writeNote).not.toHaveBeenCalled()
   })
-
   test('a base: queried, a row added where it looks, a view added', async () => {
     files.set(
       '/s/Home/Books.base',
@@ -2102,7 +1943,6 @@ describe('to-dos and bases', () => {
     expect(await call('query_base', { space: 'Home', path: 'Books.base' })).toMatchObject({
       result: { total: 1, groups: [{ rows: [{ path: 'Books/Dune.md', 'file.name': 'Dune.md' }] }] },
     })
-
     expect(
       await call('add_row', {
         space: 'Home',
@@ -2112,7 +1952,6 @@ describe('to-dos and bases', () => {
       }),
     ).toMatchObject({ result: { path: 'Books/Emma.md', created: true } })
     expect(files.get('/s/Home/Books/Emma.md')).toBe('---\nstatus: to read\n---\n')
-
     await call('edit_base', {
       space: 'Home',
       path: 'Books.base',
@@ -2120,7 +1959,6 @@ describe('to-dos and bases', () => {
     })
     expect(files.get('/s/Home/Books.base')).toContain('name: Board')
   })
-
   test('a row title is a plain name, never a hidden or empty file', async () => {
     files.set('/s/Home/Books.base', 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n')
     for (const title of ['.Emma', '../..', '.md']) {
@@ -2133,7 +1971,6 @@ describe('to-dos and bases', () => {
       result: { path: 'Books/Shelf Emma.md', created: true },
     })
   })
-
   test('a row added from a template is filled, drops its own keys and takes the view’s template first', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 8, 5, 0))
@@ -2171,7 +2008,6 @@ describe('to-dos and bases', () => {
       vi.useRealTimers()
     }
   })
-
   test('a base at the top of a space takes a row at the top of the space', async () => {
     files.set('/s/Home/Tasks.base', 'filters: file.hasTag("todo")\nviews:\n  - type: table\n    name: All\n')
     expect(await call('add_row', { space: 'Home', base: 'Tasks.base', title: 'Call' })).toMatchObject({
@@ -2179,7 +2015,6 @@ describe('to-dos and bases', () => {
     })
     expect(files.has('/s/Home/Call.md')).toBe(true)
   })
-
   test('edits asked at once all land, none written over another', async () => {
     files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
     files.set('/s/Home/board.canvas', '{"nodes":[],"edges":[]}')
@@ -2208,7 +2043,6 @@ describe('to-dos and bases', () => {
       expect(files.get('/s/Home/board.canvas')).toContain(text)
     }
   })
-
   test('properties on several notes', async () => {
     expect(
       await call('edit_rows', {
@@ -2219,7 +2053,6 @@ describe('to-dos and bases', () => {
     ).toMatchObject({ result: { changed: ['Soup.md', 'Recipes.md'] } })
     expect(written()[0]).toBe('---\ndone: true\n---\n# Soup\n\n- [ ] Buy milk #shop\n')
   })
-
   test('properties stop being set once the reader presses the stop', async () => {
     docs.writeNote.mockImplementationOnce((_agent: unknown, at: { path: string }) => {
       for (const on of heard) on({ kind: 'paused', agent: 'claude-code' })
@@ -2239,7 +2072,6 @@ describe('to-dos and bases', () => {
     })
     expect(docs.writeNote).toHaveBeenCalledTimes(1)
   })
-
   test('the stop ends a command run_terminal started, its shell killed at once', async () => {
     shell.hangs = true
     const going = call('run_terminal', { command: 'git status', timeout_ms: 600_000 })
@@ -2248,7 +2080,6 @@ describe('to-dos and bases', () => {
     expect(await going).toMatchObject({ status: 'error', code: 'stopped' })
     expect(asked.filter((one) => one.command === 'pty_kill')).toHaveLength(1)
   })
-
   test('an agent that may only read cannot add one', async () => {
     const { dispatch } = await import('../src/lib/automation/src/verbs')
     const reader = agent({ scopes: ['notes.read'] })
@@ -2259,13 +2090,10 @@ describe('to-dos and bases', () => {
     expect(await dispatch('list_tasks', {}, [], 'here', reader)).toMatchObject({ status: 'ok' })
   })
 })
-
 describe('a space shared to be read', () => {
   const before = () => new Map(files)
   const writes = () => asked.filter((one) => ['write_note', 'save_asset', 'snapshot_note'].includes(one.command))
-
   beforeEach(() => readOnly.add('/s/Home'))
-
   test('edit_base refuses, and the base keeps its views', async () => {
     files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
     const was = before()
@@ -2279,7 +2107,6 @@ describe('a space shared to be read', () => {
     expect(files).toEqual(was)
     expect(writes()).toEqual([])
   })
-
   test('add_row refuses, and no row note is made', async () => {
     files.set('/s/Home/Books.base', 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n')
     const was = before()
@@ -2289,7 +2116,6 @@ describe('a space shared to be read', () => {
     expect(files).toEqual(was)
     expect(writes()).toEqual([])
   })
-
   test('capture_to_note refuses before the picture is kept, new note or old', async () => {
     reads({ html: undefined, png: btoa('PNG bytes') })
     const was = before()
@@ -2303,7 +2129,6 @@ describe('a space shared to be read', () => {
     expect(writes()).toEqual([])
     expect(docs.editNote).not.toHaveBeenCalled()
   })
-
   test('attach_agent_log refuses, new note or old', async () => {
     log = [
       {
@@ -2324,7 +2149,6 @@ describe('a space shared to be read', () => {
     expect(writes()).toEqual([])
     expect(docs.editNote).not.toHaveBeenCalled()
   })
-
   test('restore_version refuses, closed note or open', async () => {
     readOnly.add('/s/Work')
     const was = before()
@@ -2341,7 +2165,6 @@ describe('a space shared to be read', () => {
     expect(docs.writeNote).not.toHaveBeenCalled()
   })
 })
-
 describe('a tab and a space named together', () => {
   const verbs: [string, Record<string, unknown>][] = [
     ['read_note', {}],
@@ -2351,7 +2174,6 @@ describe('a tab and a space named together', () => {
     ['set_property', { key: 'status', value: 'done' }],
     ['set_task', { at: { task: 'Buy milk' }, done: true }],
   ]
-
   test.each(verbs)('%s refuses a space that is not the tab’s own', async (verb, args) => {
     files.set('/s/Home/Plan.md', '# Home plan, kept\n')
     expect(await call(verb, { ...args, space: 'Home', tab: 't1' })).toMatchObject({
@@ -2363,14 +2185,12 @@ describe('a tab and a space named together', () => {
       expect(verb).not.toHaveBeenCalled()
     }
   })
-
   test('the tab’s own space, named, is the tab’s note', async () => {
     await call('write_note', { space: 'Work', tab: 't1', content: '# Over\n' })
     expect(docs.writeNote.mock.calls.at(-1)?.[1]).toEqual({ path: 'Plan.md', space: 'work' })
     expect(files.has('/s/Home/Plan.md')).toBe(false)
   })
 })
-
 describe('a note an agent names with a dot in it', () => {
   test('a capture into a name with digits after a dot makes that name a markdown note', async () => {
     expect(await call('capture_to_note', { tab: 'a1', as: 'clip', note: 'Meeting 10.27' })).toMatchObject({
@@ -2379,7 +2199,6 @@ describe('a note an agent names with a dot in it', () => {
     expect(files.get('/s/Work/Meeting 10.27.md')).toContain('Words of the page.')
     expect(files.has('/s/Work/Meeting 10.27')).toBe(false)
   })
-
   test('a capture into a canvas is refused before any picture is kept', async () => {
     reads({ html: undefined, png: btoa('PNG bytes') })
     expect(await call('capture_to_note', { tab: 'a1', as: 'screenshot', note: 'Board.canvas' })).toMatchObject({
@@ -2388,14 +2207,12 @@ describe('a note an agent names with a dot in it', () => {
     expect(files.has('/s/Work/Board.canvas')).toBe(false)
     expect(asked.some((one) => one.command === 'save_asset')).toBe(false)
   })
-
   test('the log of a session goes into a note, never a canvas', async () => {
     expect(await call('attach_agent_log', { note: 'Board.canvas', session: '2026-09-30' })).toMatchObject({
       code: 'bad_arguments',
     })
     expect(files.has('/s/Work/Board.canvas')).toBe(false)
   })
-
   test('the note verbs read the same name as the capture does', async () => {
     expect(await call('create_note', { path: 'Reading 2026.10', content: '# R\n' })).toMatchObject({
       result: { path: 'Reading 2026.10.md', created: true },
@@ -2405,7 +2222,6 @@ describe('a note an agent names with a dot in it', () => {
     })
   })
 })
-
 describe('a panel thread works in its own space', () => {
   const fromHome = () =>
     callerOf(
@@ -2419,11 +2235,9 @@ describe('a panel thread works in its own space', () => {
       },
       'thread-home',
     )
-
   beforeEach(() => {
     answerThreadSpaces((thread) => (thread === 'thread-home' ? 'home' : null))
   })
-
   test('a note named without a space is the thread’s space’s', async () => {
     files.set('/s/Work/Soup.md', '# Work soup\n')
     expect(await call('read_note', { path: 'Soup' }, fromHome())).toMatchObject({
@@ -2436,7 +2250,6 @@ describe('a panel thread works in its own space', () => {
       result: { path: 'Fresh.md', created: true, space: 'home' },
     })
   })
-
   test('a todo added without a space is the thread’s space’s, granted all or only that one', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const homeOnly = callerOf(
@@ -2465,47 +2278,39 @@ describe('a panel thread works in its own space', () => {
       { result: { space: 'work' } },
     ])
   })
-
   test('a space it names still wins', async () => {
     await call('write_note', { space: 'Work', path: 'Broth', content: '# Broth\n' }, fromHome())
     expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
   })
-
   test('a tab in front is still the tab’s own note', async () => {
     await call('write_note', { tab: 't1', content: '# Over\n' }, fromHome())
     expect(docs.writeNote.mock.calls.at(-1)?.[1]).toEqual({ path: 'Plan.md', space: 'work' })
   })
-
   test('a thread nobody knows, or no thread, is the space in front', async () => {
     await call('write_note', { path: 'Broth', content: '# Broth\n' })
     expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
   })
-
   describe('a tab of the space in front, named by its id', () => {
     const away = [
       { ...tabs[0], id: 'c9', kind: 'canvas', path: '/s/Work/board.canvas', shown: 'board' },
       { ...tabs[0], id: 'p9', kind: 'pdf', path: '/s/Work/paper.pdf', shown: 'paper' },
     ] as (typeof tabs)[number][]
-
     beforeEach(() => {
       tabs.push(...away)
       files.set('/s/Work/board.canvas', '{"nodes":[],"edges":[]}')
       return () => void tabs.splice(tabs.length - away.length, away.length)
     })
-
     test('a canvas is read and edited in the tab’s space', async () => {
       expect(await call('read_canvas', { tab: 'c9' }, fromHome())).toMatchObject({ ok: true })
       await call('edit_canvas', { tab: 'c9', ops: [{ op: 'add_card', text: 'Hi' }] }, fromHome())
       expect(files.get('/s/Work/board.canvas')).toContain('Hi')
       expect(files.get('/s/Home/board.canvas')).not.toContain('Hi')
     })
-
     test('a PDF is read from the tab’s space', async () => {
       openDocument.mockClear()
       await call('read_pdf', { tab: 'p9' }, fromHome())
       expect(openDocument).toHaveBeenCalledWith('/s/Work/paper.pdf')
     })
-
     test('a file tab renamed is the tab’s file renamed', async () => {
       expect(await call('workspace_tabs', { op: 'rename', tab: 't1', name: 'Roadmap' }, fromHome())).toMatchObject({
         result: { from: 'Plan.md', to: 'Roadmap.md', space: 'work' },
@@ -2513,7 +2318,6 @@ describe('a panel thread works in its own space', () => {
       expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Roadmap.md')
     })
   })
-
   test('the context says the thread’s space, and the space each tab is in', async () => {
     expect(await call('get_context', {}, fromHome())).toMatchObject({
       result: {
@@ -2525,7 +2329,6 @@ describe('a panel thread works in its own space', () => {
     const reader = (await call('get_context', {})) as { result: { selected: object } }
     expect(reader.result.selected).not.toHaveProperty('space')
   })
-
   test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
     const onlyHome = callerOf(
       {
@@ -2542,13 +2345,11 @@ describe('a panel thread works in its own space', () => {
       result: { space: 'Home', selected: null, tabs: [] },
     })
   })
-
   test('a page captured goes to the thread’s space, and the answer says so', async () => {
     const answered = await call('capture_to_note', { tab: 'w1', as: 'clip', note: 'Kept' }, fromHome())
     expect(answered).toMatchObject({ result: { path: 'Kept.md', space: 'home' } })
     expect(files.has('/s/Home/Kept.md')).toBe(true)
   })
-
   test('a thread whose space is gone from this device is refused, not sent to the front', async () => {
     answerThreadSpaces(() => 'left-long-ago')
     expect(await call('write_note', { path: 'Broth', content: 'x' }, fromHome())).toMatchObject({
@@ -2556,7 +2357,6 @@ describe('a panel thread works in its own space', () => {
     })
     expect(files.has('/s/Work/Broth.md')).toBe(false)
   })
-
   test('a thread whose space the grant does not reach is refused, not sent to the front', async () => {
     answerThreadSpaces(() => 'secret')
     expect(
@@ -2579,7 +2379,6 @@ describe('a panel thread works in its own space', () => {
     expect(files.has('/s/Work/Broth.md')).toBe(false)
   })
 })
-
 describe('run_agent from a narrower grant', () => {
   const FULL = [
     'context',
@@ -2596,7 +2395,6 @@ describe('run_agent from a narrower grant', () => {
     'terminal',
     'agents',
   ]
-
   test.each([
     ['a space list', { spaces: ['Work'], scopes: FULL }],
     ['no terminal', { spaces: 'all', scopes: FULL.filter((one) => one !== 'terminal') }],
@@ -2609,7 +2407,6 @@ describe('run_agent from a narrower grant', () => {
       ).toMatchObject({ code: 'not_granted' })
     }
   })
-
   test('a thread and a helper are a built-in grant’s by its mark, never its name', async () => {
     const named = { id: 'orden-foo', name: 'x', scopes: FULL, spaces: ['Work'], mode: 'confirm' }
     expect(callerOf(named, 'thread-1')).not.toHaveProperty('thread')
@@ -2635,7 +2432,6 @@ describe('run_agent from a narrower grant', () => {
     expect(panel).toHaveProperty('thread', 'thread-1')
   })
 })
-
 describe('a note the reader protected', () => {
   test('is no row of a base, no template of one, and no folder a row is made in', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
@@ -2667,7 +2463,6 @@ describe('a note the reader protected', () => {
       protection.set('/s/Home', '/s/Home/Books', null)
     }
   })
-
   test('lends no line of its own as a backlink, in this space or another', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     files.set('/s/Home/Soup.md', '# Soup\n')
@@ -2684,7 +2479,6 @@ describe('a note the reader protected', () => {
       protection.set('/s/Home', '/s/Home/Recipes.md', null)
     }
   })
-
   test('is never moved out from under its lock, nor trashed, by an agent that may not read it', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
@@ -2708,7 +2502,6 @@ describe('a note the reader protected', () => {
       expect(workspace.remove).not.toHaveBeenCalled()
       expect(files.get('/s/Home/Books/Dune.md')).toBe('the secret words\n')
       expect(files.has('/s/Home/Broth.md')).toBe(false)
-
       const locks = protection.covering('/s/Home/Soup.md')
       unlocks.unlock(locks)
       unlocks.letAgents(locks, true)
@@ -2723,7 +2516,6 @@ describe('a note the reader protected', () => {
       unlocks.lockAll()
     }
   })
-
   test('is not moved out of its lock or trashed by an agent, nor a folder holding it', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     files.set('/s/Home/Books/Dune.md', 'the secret words\n')
@@ -2750,7 +2542,6 @@ describe('a note the reader protected', () => {
       protection.set('/s/Home', '/s/Home/Soup.md', null)
     }
   })
-
   test('is not exported by an agent to a path it can read, nor the space holding it', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
@@ -2768,7 +2559,6 @@ describe('a note the reader protected', () => {
       unlocks.lockAll()
     }
   })
-
   test('is refused to an agent until it is unlocked and agents are let read it', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
@@ -2790,7 +2580,6 @@ describe('a note the reader protected', () => {
     }
   })
 })
-
 describe('a command on the protected note in front', () => {
   test('is refused to an agent the reader did not let read that note', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
@@ -2821,7 +2610,6 @@ describe('a command on the protected note in front', () => {
     }
   })
 })
-
 describe('a command that reaches past the note in front', () => {
   test('is refused while any note in the space is kept from agents', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
@@ -2837,7 +2625,6 @@ describe('a command that reaches past the note in front', () => {
       }
       expect(await call('run_command', { id: 'reformat' })).toMatchObject({ status: 'ok' })
       expect(ran).toEqual(['reformat'])
-
       unlocks.unlock(protection.covering('/s/Work/Secret/Diary.md'))
       unlocks.letAgents(protection.covering('/s/Work/Secret/Diary.md'), true)
       const everywhere = agent({ spaces: 'all' })
@@ -2850,7 +2637,6 @@ describe('a command that reaches past the note in front', () => {
     }
   })
 })
-
 describe('undoing the last file action', () => {
   test('is refused while any space, not only the active one, keeps notes from agents', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')

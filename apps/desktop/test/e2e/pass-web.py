@@ -1,7 +1,5 @@
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -9,18 +7,14 @@ DRIVE = Drive(__file__, served=False)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 PATIENCE = 60
 STRETCH = 180
-
 PASS_HOST = "pass.orden.so"
 READER = "pass-web@example.com"
 PASSWORD = "tulip ladder seven"
 TITLE = "Bank of Tests"
 SECRET = "hunter2-Very-Secret"
-
 SIDE = ".pass .side"
 CORNER = ".pass .side [data-region=foot]"
 DIALOG = "[role=dialog]"
-
-
 def wait_for(page: Page, expression: str, what: str, patience: float = PATIENCE) -> object:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -30,12 +24,8 @@ def wait_for(page: Page, expression: str, what: str, patience: float = PATIENCE)
         page.wait_for_timeout(100)
     shot(page, "gave-up")
     raise SystemExit(f"gave up waiting for {what}")
-
-
 def has_text(selector: str, text: str) -> str:
     return f"[...document.querySelectorAll({selector!r})].some((one) => one.textContent.includes({text!r}))"
-
-
 WEAR_A_FACE = """async () => {
   const token = localStorage.getItem('orden:session')
   const made = async (size) => {
@@ -69,21 +59,16 @@ WEAR_A_FACE = """async () => {
   if (!worn.ok) throw new Error('the face was refused: ' + worn.status)
   return s
 }"""
-
 BROKEN = (
     "[...document.querySelectorAll('img')].filter("
     "(img) => img.complete && img.naturalWidth === 0 && img.getClientRects().length > 0"
     ").map((img) => img.getAttribute('src'))"
 )
-
-
 def wore_a_face(page: Page) -> str:
     small = page.evaluate(WEAR_A_FACE)
     page.reload(wait_until="domcontentloaded")
     say(f"the reader wears a face, {small[:12]}…")
     return small
-
-
 def face_in_corner(page: Page, small: str) -> None:
     wait_for(
         page,
@@ -96,8 +81,6 @@ def face_in_corner(page: Page, small: str) -> None:
         wrong(f"Pass shows a broken picture: {broken}")
     page.locator(CORNER).screenshot(path=str(DRIVE.shots / "02-face.png"))
     say("the corner wears the reader's face, and nothing on the page is a broken picture")
-
-
 def face_gone(page: Page) -> None:
     page.route("**/i/*", lambda route: route.fulfill(status=404, body="Not found"))
     page.reload(wait_until="domcontentloaded")
@@ -117,8 +100,6 @@ def face_gone(page: Page) -> None:
     page.locator(CORNER).screenshot(path=str(DRIVE.shots / "02-face-gone.png"))
     page.unroute("**/i/*")
     say("a face that fails to load leaves the initial in the corner, never a broken picture")
-
-
 def named_as_pass(page: Page) -> None:
     title = page.title()
     if title != "Orden Pass":
@@ -141,15 +122,12 @@ def named_as_pass(page: Page) -> None:
         wrong(f"the tab icon is {icon!r}")
     wait_for(page, has_text(".gate h2", "Orden Pass"), "the sign-in screen called Orden Pass")
     say("named Orden Pass, with its own manifest and icons")
-
-
 SETUP_SEEN = """(() => {
   const look = () => {
     if (document.body?.innerText.includes('Set up Pass')) window.__setupSeen = true
   }
   new MutationObserver(look).observe(document, { subtree: true, childList: true, characterData: true })
 })()"""
-
 TAB = """(scheme) => {
   const strip = document.createElement('div')
   const ground = scheme === 'dark' ? '#202124' : '#dee1e6'
@@ -177,8 +155,6 @@ TAB = """(scheme) => {
     else image.onload = () => done(box())
   })
 }"""
-
-
 def looks_in(browser: Browser, worker: harness.Worker, scheme: str) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce", color_scheme=scheme)
     page = context.new_page()
@@ -213,20 +189,16 @@ def looks_in(browser: Browser, worker: harness.Worker, scheme: str) -> None:
         wrong(f"the tab icon's corner and middle are {corners} opaque in {scheme}")
     context.close()
     say(f"Orden Pass on the sign-in screen and a rounded tab icon in {scheme}")
-
-
 def slow_vault(browser: Browser, worker: harness.Worker) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
     context.add_init_script(SETUP_SEEN)
     held: list = []
     released = []
-
     def hold(route) -> None:
         if released:
             route.continue_()
         else:
             held.append(route)
-
     context.route("**/v2/pass/**", hold)
     page = context.new_page()
     page.set_default_timeout(30000)
@@ -248,8 +220,6 @@ def slow_vault(browser: Browser, worker: harness.Worker) -> None:
     shot(page, "10-slow-locked")
     context.close()
     say("a slow vault waits, then shows the lock, never setup")
-
-
 def signed_in(page: Page, worker: harness.Worker, name: str = "01-sign-in") -> None:
     wait_for(page, f"document.querySelector('{DIALOG} input[type=email]')", "the sign-in sheet")
     if page.locator(".pass").count():
@@ -263,8 +233,6 @@ def signed_in(page: Page, worker: harness.Worker, name: str = "01-sign-in") -> N
     page.locator(f"{DIALOG} input[inputmode=numeric]").first.fill(found.group(1) + found.group(2))
     wait_for(page, "document.querySelector('.pass')", "Pass after signing in")
     say("signed in with the code from the mail")
-
-
 def set_up(page: Page) -> None:
     wait_for(page, has_text(".pass", "Set up Pass"), "the setup screen", STRETCH)
     fields = page.locator(".pass input[type=password]")
@@ -275,8 +243,6 @@ def set_up(page: Page) -> None:
     page.get_by_role("button", name="I saved it", exact=True).click()
     wait_for(page, f"document.querySelector({SIDE!r})", "the three columns")
     say("Pass set up")
-
-
 def corner(page: Page) -> None:
     wait_for(page, f"document.querySelector({CORNER!r})", "the account corner")
     titles = page.evaluate(
@@ -293,7 +259,6 @@ def corner(page: Page) -> None:
         wrong(f"the corner names the reader {who!r}")
     if page.locator(f"{SIDE} .foot button").filter(has_text="Settings").count():
         wrong("the side still has its own Settings row next to the corner")
-
     page.locator(f"{CORNER} .who").click()
     wait_for(page, "document.querySelector('[role=menu]')", "the account menu")
     items = page.evaluate("() => [...document.querySelectorAll('[role=menuitem]')].map((one) => one.textContent.trim())")
@@ -302,13 +267,10 @@ def corner(page: Page) -> None:
     shot(page, "02-account-menu")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=menu]')", "the menu to close")
-
     page.locator(f"{CORNER} button[aria-label=Settings]").click()
     wait_for(page, "document.querySelector('.pass main.is-wide')", "Pass settings")
     page.locator(f"{SIDE} button").filter(has_text="All items").click()
     say("the corner names the reader, has no theme switch, opens the menu and Pass settings")
-
-
 def made_login(page: Page) -> None:
     page.locator(f"{SIDE} .new").click()
     page.get_by_role("menuitem", name="Login", exact=True).click()
@@ -318,8 +280,6 @@ def made_login(page: Page) -> None:
     wait_for(page, has_text(".pass main h2", TITLE), "the new login shown")
     shot(page, "03-item")
     say("a login made")
-
-
 def locked_and_opened(page: Page) -> None:
     page.locator(f"{SIDE} .foot button").filter(has_text="Lock").click()
     wait_for(page, has_text(".pass", "Pass is locked"), "the lock")
@@ -331,8 +291,6 @@ def locked_and_opened(page: Page) -> None:
     wait_for(page, f"document.querySelector({SIDE!r})", "Pass open again", STRETCH)
     wait_for(page, has_text(".pass [data-item]", TITLE), "the login after unlocking")
     say("locked and opened again")
-
-
 def came_back(page: Page) -> None:
     page.reload(wait_until="domcontentloaded")
     wait_for(page, has_text(".pass", "Pass is locked"), "Pass locked after a reload", STRETCH)
@@ -342,8 +300,6 @@ def came_back(page: Page) -> None:
     page.get_by_role("button", name="Unlock", exact=True).click()
     wait_for(page, has_text(".pass [data-item]", TITLE), "the login after the reload", STRETCH)
     say("still signed in after a reload")
-
-
 def offered_a_reload(page: Page) -> None:
     lost = harness.lose(page, "**/assets/FeedbackSheet-*.js")
     page.locator(f"{CORNER} button[aria-label='Send feedback']").click()
@@ -351,8 +307,6 @@ def offered_a_reload(page: Page) -> None:
     lost.found()
     shot(page, "05-reload-offered")
     say("a piece of the page that failed to load offers a reload")
-
-
 def on_a_phone(page: Page) -> None:
     page.set_viewport_size({"width": 390, "height": 760})
     wait_for(page, "document.querySelector(\".pass[data-columns='1']\")", "one column")
@@ -372,8 +326,6 @@ def on_a_phone(page: Page) -> None:
     page.locator(f"{SIDE} button").filter(has_text="All items").click()
     wait_for(page, has_text(".pass [data-item]", TITLE), "the list again on a phone")
     say("usable on a phone")
-
-
 def signed_out(page: Page) -> None:
     page.set_viewport_size({"width": 1280, "height": 820})
     wait_for(page, f"document.querySelector({CORNER!r})", "the corner again")
@@ -382,8 +334,6 @@ def signed_out(page: Page) -> None:
     wait_for(page, f"document.querySelector('{DIALOG} input[type=email]') && !document.querySelector('.pass')", "the sign-in sheet after signing out")
     shot(page, "07-signed-out")
     say("signed out, asked to sign in again")
-
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
@@ -413,6 +363,4 @@ def main() -> int:
         signed_out(page)
         slow_vault(browser, worker)
     return DRIVE.verdict("Orden Pass on its own name, light and dark, a rounded tab icon: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone, a slow vault never offers setup")
-
-
 raise SystemExit(main())

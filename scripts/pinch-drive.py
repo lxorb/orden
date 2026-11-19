@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -31,20 +30,16 @@ const tell = () => fetch('/said', {
 }).catch(() => {})
 setInterval(tell, 150)
 </script>"""
-
 SAID: dict[str, Any] = {}
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
     def do_POST(self) -> None:  # noqa: N802 - the standard library's name
         size = int(self.headers.get("content-length") or 0)
         try:
@@ -54,11 +49,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             pass
         self.send_response(204)
         self.end_headers()
-
 def settled(seconds: float = 2.0) -> dict[str, Any]:
     time.sleep(seconds)
     return dict(SAID)
-
 def waited(test: Any, seconds: float = 10.0) -> dict[str, Any]:
     until = time.monotonic() + seconds
     while time.monotonic() < until:
@@ -67,19 +60,16 @@ def waited(test: Any, seconds: float = 10.0) -> dict[str, Any]:
             return now
         time.sleep(0.2)
     return dict(SAID)
-
 INNER = (
     "const i = window.__TAURI_INTERNALS__;"
     "const at = await i.invoke('plugin:window|inner_position', { label: 'main' });"
     "const scale = await i.invoke('plugin:window|scale_factor', { label: 'main' });"
     "return { x: at.x, y: at.y, scale, ratio: devicePixelRatio }"
 )
-
 PANE = (
     "(() => { const all = orden.pages.each().map(([, one]) => one.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
-
 def middle_of_the_page(app: App) -> tuple[float, float]:
     pane = None
     until = time.monotonic() + 30
@@ -94,18 +84,15 @@ def middle_of_the_page(app: App) -> tuple[float, float]:
     if sys.platform == "darwin":
         return inner["x"] / inner["scale"] + across, inner["y"] / inner["scale"] + down
     return inner["x"] + across * inner["ratio"], inner["y"] + down * inner["ratio"]
-
 class Windows:
     def __init__(self) -> None:
         import ctypes
         from ctypes import wintypes
-
         self.ctypes, self.wintypes = ctypes, wintypes
         self.user32 = ctypes.WinDLL("user32", use_last_error=True)
         self.user32.WindowFromPoint.argtypes = [wintypes.POINT]
         self.user32.WindowFromPoint.restype = wintypes.HWND
         self.user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
-
     def pinch(self, at: tuple[float, float]) -> None:
         x, y = round(at[0]), round(at[1])
         self.user32.SetCursorPos(x, y)
@@ -118,7 +105,6 @@ class Windows:
         for _ in range(6):
             self.user32.PostMessageW(under, 0x020A, (120 << 16) | 0x0008, point)
             time.sleep(0.05)
-
     def ctrl_wheel(self, at: tuple[float, float]) -> None:
         self.user32.SetCursorPos(round(at[0]), round(at[1]))
         time.sleep(0.3)
@@ -127,11 +113,9 @@ class Windows:
         self.user32.mouse_event(0x0800, 0, 0, 120, 0)
         time.sleep(0.3)
         self.user32.keybd_event(0x11, 0, 0x0002, 0)
-
 class Linux:
     def __init__(self) -> None:
         from evdev import AbsInfo, UInput, ecodes
-
         self.e = ecodes
         wide, tall = AbsInfo(0, 0, 4000, 0, 0, 40), AbsInfo(0, 0, 2500, 0, 0, 40)
         self.pad = UInput(
@@ -152,7 +136,6 @@ class Linux:
             input_props=[ecodes.INPUT_PROP_POINTER, ecodes.INPUT_PROP_BUTTONPAD],
         )
         time.sleep(2)
-
     def fingers(self, at: list[tuple[int, int] | None]) -> None:
         e, pad = self.e, self.pad
         for slot, where in enumerate(at):
@@ -172,10 +155,8 @@ class Linux:
             pad.write(e.EV_ABS, e.ABS_Y, first[1])
         pad.syn()
         time.sleep(0.012)
-
     def pinch(self, at: tuple[float, float]) -> None:
         from Xlib import display
-
         shown = display.Display()
         shown.screen().root.warp_pointer(round(at[0]), round(at[1]))
         shown.sync()
@@ -184,7 +165,6 @@ class Linux:
             apart = 300 + step * 15
             self.fingers([(2000 - apart, 1250), (2000 + apart, 1250)])
         self.fingers([None, None])
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -192,7 +172,6 @@ def main() -> int:
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
-
     if sys.platform == "darwin":
         print("a Mac's trackpad magnify cannot be made from outside the app on this machine; not driven")
         return 0
@@ -200,7 +179,6 @@ def main() -> int:
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/pinch"
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -222,7 +200,6 @@ def main() -> int:
         before = settled()
         at = middle_of_the_page(app)
         print(f"before: {before}; the fingers at {at}", flush=True)
-
         engine.pinch(at)
         after = waited(lambda now: now["scale"] > 1.05 or now["seen"] < before["seen"] * 0.95)
         after = settled(1.0) or after
@@ -237,7 +214,6 @@ def main() -> int:
             wrong.append(f"a pinch was kept as the site's zoom: {kept!r}")
         if after.get("wheels", 0) <= before.get("wheels", 0):
             wrong.append(f"the page never heard the pinch as Ctrl and the wheel: {after}")
-
         if isinstance(engine, Windows):
             engine.ctrl_wheel(at)
             zoomed = waited(lambda now: now["ratio"] > before["ratio"] * 1.05)
@@ -248,10 +224,8 @@ def main() -> int:
         ended(process)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

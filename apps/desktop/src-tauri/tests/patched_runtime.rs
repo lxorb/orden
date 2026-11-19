@@ -4,13 +4,11 @@ use std::path::{Path, PathBuf};
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("linux/tauri-runtime-cef")
 }
-
 fn read(path: &Path) -> String {
     fs::read_to_string(path)
         .unwrap_or_else(|error| panic!("{} is not there: {error}", path.display()))
         .replace("\r\n", "\n")
 }
-
 fn linux_sources() -> Vec<(PathBuf, String)> {
     let folder = root().join("src/platform/linux");
     let mut found: Vec<(PathBuf, String)> = fs::read_dir(&folder)
@@ -31,7 +29,6 @@ fn linux_sources() -> Vec<(PathBuf, String)> {
     found.sort();
     found
 }
-
 #[test]
 fn no_x_window_asked_for_is_asserted_expected_or_unwrapped() {
     let sources = linux_sources();
@@ -58,7 +55,6 @@ fn no_x_window_asked_for_is_asserted_expected_or_unwrapped() {
         }
     }
 }
-
 #[test]
 fn the_browsers_window_is_read_through_one_place() {
     let webview = read(&root().join("src/platform/linux/webview.rs"));
@@ -66,14 +62,12 @@ fn the_browsers_window_is_read_through_one_place() {
     assert_eq!(code.matches("self.host.window_handle()").count(), 1);
     assert!(code.contains("fn xid(&self) -> Option<xlib::Window>"));
 }
-
 #[test]
 fn linux_builds_the_patched_copy_at_the_pinned_version() {
     let app = Path::new(env!("CARGO_MANIFEST_DIR"));
     let linux = read(&app.join("linux/Cargo.toml"));
     assert!(linux.contains("\n[patch.crates-io]\n"));
     assert!(linux.contains("\ntauri-runtime-cef = { path = \"linux/tauri-runtime-cef\" }\n"));
-
     let pinned = linux
         .lines()
         .find_map(|line| {
@@ -87,7 +81,6 @@ fn linux_builds_the_patched_copy_at_the_pinned_version() {
         "the copy is not tauri-runtime-cef {pinned}: move it with the pin"
     );
 }
-
 #[test]
 fn every_window_is_orden_s_and_none_chromium_s() {
     let runtime = read(&root().join("src/runtime.rs"));
@@ -99,7 +92,6 @@ fn every_window_is_orden_s_and_none_chromium_s() {
         .find("event_loop_builder\n      .build()")
         .expect("the runtime builds its event loop");
     assert!(named < built, "the windows are named after GTK starts");
-
     let class = read(&root().join("src/platform/linux/class.rs"));
     assert!(class.contains("gtk::glib::set_prgname("));
     assert!(class.contains("\"CHROME_DESKTOP\""));
@@ -111,7 +103,6 @@ fn every_window_is_orden_s_and_none_chromium_s() {
     let unhosted = read(&root().join("src/cef_impl/client/unhosted.rs"));
     assert!(unhosted.contains("host.close_browser(1);"));
 }
-
 #[test]
 fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
     let process = read(&root().join("src/cef_impl/client/process.rs"));
@@ -143,7 +134,6 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
     let engine = read(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/engine.rs"));
     assert!(engine.contains(".on_unhosted_tab(orden_extensions::extensions::tabs::opened)"));
 }
-
 #[test]
 fn the_eval_observer_never_lets_go_of_its_own_registration_from_inside_its_callback() {
     let source = read(&root().join("src/webview.rs"));

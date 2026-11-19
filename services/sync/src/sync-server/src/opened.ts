@@ -1,19 +1,13 @@
 import type { Env } from './types'
 
 const OPEN_FOR = 24 * 60 * 60 * 1000
-
 const ASKED_AT_ONCE = 10
-
 export const OPEN_HEADER = 'x-orden-open'
-
 export const WRITTEN_HEADER = 'x-orden-written'
-
 interface OpenAnswer {
   open: boolean
 }
-
 type Table = { name: 'room_sockets'; key: 'note_id' } | { name: 'chat_sockets'; key: 'chat_id' }
-
 export async function sweepOpened(
   env: Env,
   table: Table,
@@ -26,7 +20,6 @@ export async function sweepOpened(
   )
     .bind(before, ASKED_AT_ONCE)
     .all<{ id: string; who: string }>()
-
   await Promise.all(
     results.map(async ({ id, who }) => {
       const open = await stillOpen(id, who).catch(() => null)
@@ -41,11 +34,9 @@ export async function sweepOpened(
     }),
   )
 }
-
 export function openAnswer(open: boolean): Response {
   return Response.json({ open } satisfies OpenAnswer)
 }
-
 export async function openIn(answer: Response | null): Promise<boolean | null> {
   if (!answer?.ok) return null
   const body: unknown = await answer.json().catch(() => null)

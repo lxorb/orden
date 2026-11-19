@@ -1,19 +1,15 @@
 import base64
 import os
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PAGES = int(os.environ.get("ORDEN_SCROLL_PAGES", "120"))
 LINES = 70
 FRAMES = int(os.environ.get("ORDEN_SCROLL_FRAMES", "360"))
 RATIO = 12.0
 THROTTLE = float(os.environ.get("ORDEN_SCROLL_THROTTLE", "4"))
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -33,7 +29,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 SCROLL = """
 async ([frames, step]) => {
   const host = document.querySelector('.pages')
@@ -73,11 +68,8 @@ async ([frames, step]) => {
   }
 }
 """
-
 HIDDEN = "() => { const style = document.createElement('style'); style.id = 'no-words'; style.textContent = '.pages .sheet .words { display: none !important }'; document.head.append(style) }"
 SHOWN = "() => document.getElementById('no-words')?.remove()"
-
-
 def paper() -> bytes:
     w, h = 595, 842
     words = "the kestrel hangs above the field while the river turns slowly under a grey and patient sky"
@@ -107,8 +99,6 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=1)
     page = context.new_page()
@@ -125,18 +115,15 @@ def drive(browser: Browser) -> None:
     if not os.environ.get("ORDEN_SCROLL_BEFORE"):
         wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 60", "the first page's words", 30)
     page.wait_for_timeout(1500)
-
     cdp = context.new_cdp_session(page)
     if cdp:
         cdp.send("Performance.enable")
         cdp.send("Emulation.setCPUThrottlingRate", {"rate": THROTTLE})
-
     def busy() -> float:
         if not cdp:
             return 0.0
         metrics = {one["name"]: one["value"] for one in cdp.send("Performance.getMetrics")["metrics"]}
         return metrics.get("TaskDuration", 0.0) * 1000
-
     runs = []
     for label, hide, step in (("words", False, 40), ("no words", True, 40), ("words", False, -40), ("no words", True, -40)):
         page.evaluate(HIDDEN if hide else SHOWN)
@@ -147,7 +134,6 @@ def drive(browser: Browser) -> None:
         say(f"{label}, {step:+d}px a frame: busy {got['busy']:.1f} ms a frame, mean gap {got['mean']:.1f} ms, p95 {got['p95']:.1f} ms, {got['long']} frames over 50 ms, moved {got['moved']:.0f}, {got['built']} word nodes added")
         runs.append((label, got))
     page.evaluate(SHOWN)
-
     built = [got["built"] for _, got in runs]
     if any(built):
         wrong(f"words were laid out for pages while they scrolled past: {built} nodes")
@@ -161,6 +147,4 @@ def drive(browser: Browser) -> None:
     if mean_on > mean_off * RATIO:
         wrong(f"a frame of scrolling takes {mean_on:.1f} ms with a PDF's words and {mean_off:.1f} ms without them")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a long PDF in a page note scrolls as smoothly with its words as without them"))

@@ -4,7 +4,6 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
 const script = readFileSync(join(import.meta.dirname, '../src-tauri/crates/web/src/page_drag.js'), 'utf8')
-
 function page(html = '') {
   const dom = new JSDOM(
     `<div id="row" draggable="true"><span id="inner"></span>row</div><div id="folder">folder</div><div id="other" draggable="true">other</div><input id="field"><div id="note" contenteditable="true"></div>${html}`,
@@ -12,7 +11,6 @@ function page(html = '') {
   )
   const inside = dom.window as unknown as Window & typeof globalThis
   const { document } = inside
-
   class Transfer {
     kept = new Map<string, string>()
     get types() {
@@ -41,7 +39,6 @@ function page(html = '') {
     }
   }
   Object.assign(inside, { DragEvent: Drag, PointerEvent: Pointer, DataTransfer: Transfer })
-
   let under: Element | null = null
   document.elementFromPoint = () => under
   let atRest: (() => void) | null = null
@@ -52,9 +49,7 @@ function page(html = '') {
   inside.clearInterval = () => {
     atRest = null
   }
-
   inside.eval(script.replaceAll('!event.isTrusted', '!event.native'))
-
   const heard: string[] = []
   for (const type of ['dragstart', 'dragenter', 'dragover', 'dragleave', 'drop', 'dragend']) {
     inside.addEventListener(type, (event) => {
@@ -68,7 +63,6 @@ function page(html = '') {
       ;(event as unknown as { dataTransfer: { dropEffect: string } }).dataTransfer.dropEffect = 'move'
     })
   }
-
   const pointer = (type: string, init: MouseEventInit & { pointerId?: number } = {}) => {
     const event = new Pointer(type, {
       bubbles: true,
@@ -121,7 +115,6 @@ function page(html = '') {
     count: (name: string) => heard.filter((one) => one.startsWith(`${name} `)).length,
   }
 }
-
 describe('a drag let go', () => {
   test('lands on what took it, once, and swallows the click', () => {
     const it = page()
@@ -133,7 +126,6 @@ describe('a drag let go', () => {
     expect(it.heard.at(-1)).toBe('dragend row')
     expect(it.live()).toBe(false)
   })
-
   test('on a row that did not take it lands nowhere', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -143,7 +135,6 @@ describe('a drag let go', () => {
     expect(it.heard.at(-1)).toBe('dragend row')
   })
 })
-
 describe('a drag that has lost its pointer never lands', () => {
   test('the window losing the focus ends it', () => {
     const it = page()
@@ -159,7 +150,6 @@ describe('a drag that has lost its pointer never lands', () => {
     it.pointer('pointerup', { clientX: 20, clientY: 20 })
     expect(it.count('drop')).toBe(0)
   })
-
   test('a focus moving inside the page does not', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -167,7 +157,6 @@ describe('a drag that has lost its pointer never lands', () => {
     it.byId('field').dispatchEvent(new it.inside.FocusEvent('blur'))
     expect(it.live()).toBe(true)
   })
-
   test('the page being hidden ends it', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -177,7 +166,6 @@ describe('a drag that has lost its pointer never lands', () => {
     expect(it.live()).toBe(false)
     expect(it.count('drop')).toBe(0)
   })
-
   test('a new press ends it, and is the page’s own', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -187,7 +175,6 @@ describe('a drag that has lost its pointer never lands', () => {
     expect(it.count('drop')).toBe(0)
     expect(press.defaultPrevented).toBe(false)
   })
-
   test('a release somewhere the drag never was does not land', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -196,7 +183,6 @@ describe('a drag that has lost its pointer never lands', () => {
     expect(it.count('drop')).toBe(0)
     expect(it.live()).toBe(false)
   })
-
   test('a release with the left button still down does not land or end it', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -205,7 +191,6 @@ describe('a drag that has lost its pointer never lands', () => {
     expect(it.count('drop')).toBe(0)
     expect(it.live()).toBe(true)
   })
-
   test('a release of another button with none down does not land', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -214,7 +199,6 @@ describe('a drag that has lost its pointer never lands', () => {
     expect(it.count('drop')).toBe(0)
     expect(it.live()).toBe(false)
   })
-
   test('a move with the left button no longer down ends it', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -224,7 +208,6 @@ describe('a drag that has lost its pointer never lands', () => {
     expect(it.count('drop')).toBe(0)
   })
 })
-
 describe('a drag starting while another is live', () => {
   test('ends the old one and takes the new from the engine', () => {
     const it = page()
@@ -238,10 +221,8 @@ describe('a drag starting while another is live', () => {
     expect(it.live()).toBe(true)
   })
 })
-
 describe('words dragged', () => {
   const WORDS = { 'text/plain': 'some words' }
-
   test('over a field are refused, as nothing would put them in', () => {
     const it = page()
     it.start('row', 'copyMove', WORDS)
@@ -249,7 +230,6 @@ describe('words dragged', () => {
     it.pointer('pointerup', { clientX: 20, clientY: 20 })
     expect(it.count('drop')).toBe(0)
   })
-
   test('over a note land, for the editor to take', () => {
     const it = page()
     it.start('row', 'copyMove', WORDS)
@@ -258,7 +238,6 @@ describe('words dragged', () => {
     expect(it.heard).toContain('drop note')
   })
 })
-
 describe('around the drag', () => {
   test('a press held on the row is cancelled by its own id', () => {
     const it = page()
@@ -270,7 +249,6 @@ describe('around the drag', () => {
     it.start('row', 'copyMove')
     expect(said).toEqual([7])
   })
-
   test('another button’s press and menu go nowhere', () => {
     const it = page()
     it.start('row', 'copyMove')
@@ -284,7 +262,6 @@ describe('around the drag', () => {
       expect(heard).toEqual([])
     }
   })
-
   test('what is carried has no ids, frames or players of its own', () => {
     const it = page(
       '<div id="rich" draggable="true"><span id="deep">x</span><iframe id="f"></iframe><video id="v"></video></div>',

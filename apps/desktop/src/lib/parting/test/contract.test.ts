@@ -5,7 +5,6 @@ import { anythingRuns, owes, owesAtTheEnd, owesLast, runs, settleUp, stillWritin
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -13,7 +12,6 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 describe('the module stands on its own', () => {
   test('imports nothing at all, so every module that owes a write can reach it', () => {
     const imports = sources(SRC).flatMap((file) => [
@@ -22,7 +20,6 @@ describe('the module stands on its own', () => {
     expect(imports.map((found) => found[1])).toEqual([])
   })
 })
-
 describe('what is owed before the app goes', () => {
   test('is written in order: what is owed, then what goes last, then the end', () => {
     const order: string[] = []
@@ -32,7 +29,6 @@ describe('what is owed before the app goes', () => {
     settleUp()
     expect(order).toEqual(['owed', 'last', 'end'])
   })
-
   test('a write underway is waited for, and a failed one does not hold anything up', async () => {
     let finish: () => void = () => undefined
     writing(new Promise<void>((resolve) => (finish = resolve)))
@@ -43,7 +39,6 @@ describe('what is owed before the app goes', () => {
     await done
     expect(stillWriting()).toBe(false)
   })
-
   test('something still running is told', () => {
     let busy = false
     runs(() => busy)

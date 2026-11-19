@@ -5,7 +5,6 @@ let refuse = false
 const builds: (string | null)[] = []
 const lists: Promise<unknown[]>[] = []
 const installs: Promise<unknown>[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -27,10 +26,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return refuse ? Promise.reject(new Error('no')) : Promise.resolve(undefined)
   },
 }))
-
 const { UPDATE_EVERY, extensions, pinnedOf, readExtension, updateDue } = await import('./extensions.svelte')
 const { ASK_AGAIN, NOT_ANSWERING } = await import('./answering')
-
 function row(fields: Record<string, unknown>): Record<string, unknown> {
   return {
     id: 'ddkjiahejlhfcafbddmgiahcphecmpfh',
@@ -48,14 +45,12 @@ function row(fields: Record<string, unknown>): Record<string, unknown> {
     ...fields,
   }
 }
-
 test('a row is read whole, and anything that is not one is nothing', () => {
   const one = readExtension(row({}))
   expect(one?.name).toBe('uBlock Origin Lite')
   expect(one?.popup).toBe('popup.html')
   expect(one?.options).toBeNull()
   expect(one?.permissions).toEqual(['storage', '<all_urls>'])
-
   expect(readExtension(null)).toBeNull()
   expect(readExtension({ id: 3 })).toBeNull()
   expect(readExtension(row({ name: '' }))?.name).toBe('ddkjiahejlhfcafbddmgiahcphecmpfh')
@@ -64,7 +59,6 @@ test('a row is read whole, and anything that is not one is nothing', () => {
     permissions: ['tabs'],
   })
 })
-
 test('a Firefox add-on’s row says its slug, what of it does not run, and that it waits', () => {
   expect(readExtension(row({}))).toMatchObject({ addon: null, gaps: null, pending: false })
   expect(
@@ -87,7 +81,6 @@ test('a Firefox add-on’s row says its slug, what of it does not run, and that 
     gaps: null,
   })
 })
-
 test('a Firefox add-on that does not run whole waits for the reader, and is installed only when asked again', async () => {
   const link = 'https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/'
   asked.length = 0
@@ -104,7 +97,6 @@ test('a Firefox add-on that does not run whole waits for the reader, and is inst
     { link, anyway: true },
   ])
 })
-
 test('the bar shows what is on, has a button and is pinned, and runs already', () => {
   const list = [
     row({ id: 'on' }),
@@ -115,7 +107,6 @@ test('the bar shows what is on, has a button and is pinned, and runs already', (
   ].map((one) => readExtension(one))
   expect(pinnedOf(list.filter((one) => one !== null)).map((one) => one.id)).toEqual(['on'])
 })
-
 test('the stores are asked once in a while, and again after a clock went back', () => {
   const now = 1_800_000_000_000
   expect(updateDue(null, now)).toBe(true)
@@ -123,11 +114,9 @@ test('the stores are asked once in a while, and again after a clock went back', 
   expect(updateDue(now - UPDATE_EVERY, now)).toBe(true)
   expect(updateDue(now + 1000, now)).toBe(true)
 })
-
 test('a switch moves at once, and comes back when the crate refuses it', async () => {
   await extensions.load()
   expect(extensions.list[0]?.enabled).toBe(true)
-
   refuse = true
   const turning = extensions.enable('a', false)
   expect(extensions.list[0]?.enabled).toBe(false)
@@ -137,7 +126,6 @@ test('a switch moves at once, and comes back when the crate refuses it', async (
   refuse = false
   expect(asked.some((one) => one.command === 'extensions_set')).toBe(true)
 })
-
 test('one popup at a time, and pressing its button again closes it', () => {
   extensions.open('a', 't1', null)
   expect(extensions.popped).toEqual({ id: 'a', tab: 't1', store: null })
@@ -146,13 +134,10 @@ test('one popup at a time, and pressing its button again closes it', () => {
   extensions.open('b', 't1', 'space_1')
   expect(extensions.popped).toBeNull()
 })
-
 const RECT = { x: 10, y: 20, width: 25, height: 25 }
-
 function built(): number {
   return asked.filter((one) => one.command === 'extension_popup_open').length
 }
-
 test('a popup waits on a busy browser, asking again each second until it is built', async () => {
   vi.useFakeTimers()
   try {
@@ -173,7 +158,6 @@ test('a popup waits on a busy browser, asking again each second until it is buil
     extensions.close()
   }
 })
-
 test('a popup that cannot be opened closes and says why on its button, and the app goes on', async () => {
   await extensions.load()
   builds.push('that popup could not be opened: no')
@@ -183,7 +167,6 @@ test('a popup that cannot be opened closes and says why on its button, and the a
   await extensions.build(popped, () => RECT)
   expect(extensions.popped).toBeNull()
   expect(extensions.list[0]?.problem).toBe('that popup could not be opened: no')
-
   extensions.open('a', 't1', null)
   const again = extensions.popped
   if (!again) throw new Error('no popup')
@@ -191,7 +174,6 @@ test('a popup that cannot be opened closes and says why on its button, and the a
   expect(extensions.list[0]?.problem).toBeNull()
   extensions.close()
 })
-
 test('a popup closed while its browser was busy is never built, and one closed while it was being built goes', async () => {
   vi.useFakeTimers()
   try {
@@ -210,7 +192,6 @@ test('a popup closed while its browser was busy is never built, and one closed w
   } finally {
     vi.useRealTimers()
   }
-
   asked.length = 0
   extensions.open('a', 't1', null)
   const late = extensions.popped
@@ -220,13 +201,11 @@ test('a popup closed while its browser was busy is never built, and one closed w
   await building
   expect(asked.map((one) => one.command)).toEqual(['extension_popup_open', 'extension_popup_close'])
 })
-
 function later<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
   let resolve: (value: T) => void = () => undefined
   const promise = new Promise<T>((done) => (resolve = done))
   return { promise, resolve }
 }
-
 test('an older answer to the list never overwrites a newer one', async () => {
   const first = later<unknown[]>()
   const second = later<unknown[]>()
@@ -239,7 +218,6 @@ test('an older answer to the list never overwrites a newer one', async () => {
   await older
   expect(extensions.list.map((one) => one.id)).toEqual(['new'])
 })
-
 test('a list asked before a switch moved does not move it back, and is asked again after', async () => {
   const before = later<unknown[]>()
   lists.push(before.promise)
@@ -253,7 +231,6 @@ test('a list asked before a switch moved does not move it back, and is asked aga
   expect(extensions.list[0]?.pinned).toBe(false)
   expect(lists).toHaveLength(0)
 })
-
 test('two installs at once each say they are installing until their own is done', async () => {
   const one = later<unknown>()
   const two = later<unknown>()

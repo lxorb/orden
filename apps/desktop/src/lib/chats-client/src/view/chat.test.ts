@@ -4,7 +4,6 @@ import { bigChat, LUCILE, seeded } from './seed'
 import { useStore } from './source.svelte'
 
 afterEach(() => vi.useRealTimers())
-
 describe('a chat open in a tab', () => {
   test('opens at the New line, with the messages after it unread', () => {
     const { store, thesis } = seeded()
@@ -17,7 +16,6 @@ describe('a chat open in a tab', () => {
     expect(after.some((item) => item.kind === 'message' && item.message.author === LUCILE)).toBe(true)
     page.close()
   })
-
   test('a post is drawn from the outbox at once and takes its place when placed', async () => {
     vi.useFakeTimers()
     const { store, general } = seeded()
@@ -32,7 +30,6 @@ describe('a chat open in a tab', () => {
     expect(last?.kind === 'message' && last.message.body).toBe('hello **team**')
     page.close()
   })
-
   test('a quote goes with the next post and leaves the composer', async () => {
     vi.useFakeTimers()
     const { store, general } = seeded()
@@ -47,7 +44,6 @@ describe('a chat open in a tab', () => {
     expect(page.messages.at(-1)?.quote).toBe(first.id)
     page.close()
   })
-
   test('a reaction goes on and comes off; a delete stands', async () => {
     const { store, general } = seeded()
     useStore(store)
@@ -65,7 +61,6 @@ describe('a chat open in a tab', () => {
     expect(page.messages[0]?.deleted).toBe(true)
     page.close()
   })
-
   test('↑ edits the reader’s own last message', () => {
     const { store, thesis } = seeded()
     useStore(store)
@@ -74,13 +69,11 @@ describe('a chat open in a tab', () => {
     page.close()
   })
 })
-
 describe('a chat of 100,000 messages', () => {
   let made: ReturnType<typeof bigChat>
   beforeAll(() => {
     made = bigChat(100_000)
   }, 60_000)
-
   test('opens with a window, holds at most a thousand, and pages back to the start', async () => {
     useStore(made.store)
     const page = new ChatPage(made.chat)

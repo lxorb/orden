@@ -18,7 +18,6 @@ export function cpuMicros(read: (file: string) => string = (file) => readFileSyn
     return null
   }
 }
-
 export function netBytes(read: (file: string) => string = (file) => readFileSync(file, 'utf8')): number | null {
   try {
     let total = 0
@@ -33,7 +32,6 @@ export function netBytes(read: (file: string) => string = (file) => readFileSync
     return null
   }
 }
-
 export function homeSize(home: string): Promise<number | null> {
   return new Promise((resolve) => {
     execFile('nice', ['-n', '19', 'du', '-sxB1', home], { timeout: 10 * 60_000 }, (_error, stdout) => {
@@ -42,7 +40,6 @@ export function homeSize(home: string): Promise<number | null> {
     })
   })
 }
-
 export function diskOf(path: string, statfs = statfsSync): Disk | null {
   try {
     const stats = statfs(path)
@@ -53,20 +50,17 @@ export function diskOf(path: string, statfs = statfsSync): Disk | null {
     return null
   }
 }
-
 export class Meter {
   private cpu: number | null
   private net: number | null
   private at: number
   private readonly cores: number
-
   constructor(now: number, cores = availableParallelism()) {
     this.cpu = cpuMicros()
     this.net = netBytes()
     this.at = now
     this.cores = Math.max(1, cores)
   }
-
   since(now: number): { cpu: number; net: number } {
     const cpu = cpuMicros()
     const net = netBytes()

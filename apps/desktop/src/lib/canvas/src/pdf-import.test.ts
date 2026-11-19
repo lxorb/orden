@@ -8,9 +8,7 @@ const world = vi.hoisted(() => ({
   full: 0,
   sizes: [] as { width: number; height: number }[],
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const paper = {
   createElement: () => {
     const sheet = { width: 0, height: 0 }
@@ -21,7 +19,6 @@ const paper = {
     })
   },
 }
-
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: { choose: () => Promise.resolve('all') },
 }))
@@ -64,13 +61,11 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
       }),
     }),
 }))
-
 const { run } = await import('./actions')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas } = await import('@orden/markdown/canvas')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { workspace } = await import('../../workspace/src/api')
-
 function board() {
   const note = new NoteDoc(
     {
@@ -84,7 +79,6 @@ function board() {
   )
   return new CanvasStore(new Tab(note, 'pane'))
 }
-
 beforeEach(() => {
   world.meanwhile = null
   world.stored = 0
@@ -94,7 +88,6 @@ beforeEach(() => {
   workspace.spaces = [{ id: 'local', name: 'space', root: '/space' }]
   workspace.activeSpaceId = 'local'
 })
-
 test('a card drawn while the pages render is kept, beside every page', async () => {
   const store = board()
   world.meanwhile = () => {
@@ -106,7 +99,6 @@ test('a card drawn while the pages render is kept, beside every page', async () 
       ],
     })
   }
-
   const pdf = new File([new Uint8Array([37, 80, 68, 70])], 'Lecture.pdf', {
     type: 'application/pdf',
   })
@@ -117,13 +109,11 @@ test('a card drawn while the pages render is kept, beside every page', async () 
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
   }
-
   const ids = store.canvas.nodes.map((node) => node.id)
   expect(ids).toContain('mine')
   expect(store.canvas.nodes.filter((node) => node.type === 'file')).toHaveLength(2)
   expect(store.canvas.gone).not.toHaveProperty('mine')
 })
-
 async function dropped(store: ReturnType<typeof board>) {
   const pdf = new File([new Uint8Array([37, 80, 68, 70])], 'Lecture.pdf', {
     type: 'application/pdf',
@@ -136,31 +126,25 @@ async function dropped(store: ReturnType<typeof board>) {
     vi.stubGlobal('localStorage', memoryStorage())
   }
 }
-
 test('a long strip of a page is drawn within what a canvas can hold', async () => {
   world.pages = 3
   await dropped(board())
-
   expect(world.sizes).toHaveLength(3)
   for (const size of world.sizes) {
     expect(size.height).toBeGreaterThan(0)
     expect(size.height).toBeLessThanOrEqual(16384)
   }
 })
-
 test('pages stored before the space runs out are placed, and the reader is told', async () => {
   const { busy } = await import('../../ui-kit/src/api')
   world.pages = 5
   world.full = 2
   const store = board()
-
   await dropped(store)
-
   expect(store.canvas.nodes.filter((node) => node.type === 'file')).toHaveLength(2)
   expect(busy.trouble).toMatch(/out of space/)
   expect(busy.active).toBe(false)
 })
-
 test('files dropped together are laid one below another, none over the last, and all picked', async () => {
   const store = board()
   const picture = (name: string) => new File(['png'], name, { type: 'image/png' })
@@ -174,7 +158,6 @@ test('files dropped together are laid one below another, none over the last, and
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
   }
-
   const cards = store.canvas.nodes.filter((node) => node.type === 'file')
   expect(cards).toHaveLength(4)
   const tops = [...cards].sort((one, other) => one.y - other.y)
@@ -184,26 +167,22 @@ test('files dropped together are laid one below another, none over the last, and
   }
   expect([...store.picked].sort()).toEqual(cards.map((card) => card.id).sort())
 })
-
 test('a picture that finds the space full says so instead of vanishing', async () => {
   const { busy } = await import('../../ui-kit/src/api')
   busy.clear()
   world.full = 1
   world.stored = 1
   const store = board()
-
   const made = await run.dropImage(
     store,
     new File(['png'], 'a.png', { type: 'image/png' }),
     { x: 0, y: 0 },
     '/space/Board.canvas',
   )
-
   expect(made).toEqual([])
   expect(store.canvas.nodes).toHaveLength(0)
   expect(busy.trouble).toMatch(/out of space/)
 })
-
 test('a picture added to a canvas keeps its own shape instead of being cut to a landscape card', async () => {
   const store = board()
   vi.stubGlobal('createImageBitmap', () => Promise.resolve({ width: 1080, height: 2400, close: () => undefined }))
@@ -218,12 +197,10 @@ test('a picture added to a canvas keeps its own shape instead of being cut to a 
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
   }
-
   const [card] = store.canvas.nodes
   expect(card?.height).toBe(320)
   expect(card?.width).toBe(144)
 })
-
 test('a tiny picture is drawn big enough to take hold of', async () => {
   const store = board()
   vi.stubGlobal('createImageBitmap', () => Promise.resolve({ width: 16, height: 8, close: () => undefined }))
@@ -238,12 +215,10 @@ test('a tiny picture is drawn big enough to take hold of', async () => {
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
   }
-
   const [card] = store.canvas.nodes
   expect(card?.width).toBe(80)
   expect(card?.height).toBe(40)
 })
-
 test('a picture dragged in from the files keeps its shape, and what comes after it lies below', async () => {
   const store = board()
   vi.stubGlobal('createImageBitmap', () => Promise.resolve({ width: 1080, height: 2400, close: () => undefined }))
@@ -253,16 +228,13 @@ test('a picture dragged in from the files keeps its shape, and what comes after 
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
   }
-
   const [shot, note] = store.canvas.nodes
   expect(shot).toMatchObject({ file: 'shots/phone.png', width: 144, height: 320 })
   expect(note).toMatchObject({ file: 'Ideas.md' })
   expect(note?.y ?? 0).toBeGreaterThanOrEqual((shot?.y ?? 0) + (shot?.height ?? 0))
 })
-
 test('a PDF dragged in from the files takes the shape of its first page', async () => {
   const store = board()
   await run.dropPaths(store, ['/space/Reading.pdf'], { x: 0, y: 0 })
-
   expect(store.canvas.nodes[0]).toMatchObject({ file: 'Reading.pdf', width: 240, height: 320 })
 })

@@ -1,13 +1,10 @@
 import os
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 N = int(os.environ.get("CHATS", "1000"))
-
 SETUP = """
 async () => {
   const ai = window.ordenApp.ai
@@ -17,7 +14,6 @@ async () => {
   ai.setDefault(made.id)
 }
 """
-
 SEED = """async (n) => {
   const chat = await window.ordenApp.aiChats()
   const now = Date.now()
@@ -28,14 +24,12 @@ SEED = """async (n) => {
     space: 'any', answered: now - 1, seen: now,
   }))
 }"""
-
 TIMED = """async ([selector, act]) => {
   const t0 = performance.now()
   if (act === 'click') document.querySelector(selector).click()
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
   return performance.now() - t0
 }"""
-
 BUMP = """async () => {
   const chat = await window.ordenApp.aiChats()
   const t0 = performance.now()
@@ -45,18 +39,15 @@ BUMP = """async () => {
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
   return performance.now() - t0
 }"""
-
 LIT = """() => { const l = document.querySelector('.threads .row.lit'); if (!l) return null;
   const b = l.getBoundingClientRect(), box = document.querySelector('.threads .list').getBoundingClientRect();
   return { title: l.querySelector('.title').textContent, inside: b.top >= box.top - 1 && b.bottom <= box.bottom + 1 } }"""
-
 HOLE = """() => { const box = document.querySelector('.threads .list').getBoundingClientRect()
   for (let y = box.top + 40; y < box.bottom - 10; y += 14) {
     const at = document.elementFromPoint(box.left + 60, y)
     if (!at || !at.closest('.item')) return { y, at: at && at.className }
   }
   return null }"""
-
 TALKHOLE = """() => { const box = document.querySelector('.talk').getBoundingClientRect()
   const hits = []
   for (let y = box.top + 20; y < box.bottom - 30; y += 14) {
@@ -64,7 +55,6 @@ TALKHOLE = """() => { const box = document.querySelector('.talk').getBoundingCli
     if (!at || !at.closest('.item')) hits.push(y)
   }
   return hits.length }"""
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -146,5 +136,4 @@ def drive(browser: Browser) -> None:
     lit = page.evaluate(LIT)
     say(f"{N} chats: after the search, lit {lit}")
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "a thousand chats draw only the rows in sight, keep the focus and follow the keys"))

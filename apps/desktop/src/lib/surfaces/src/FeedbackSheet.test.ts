@@ -3,7 +3,6 @@ import { render } from 'svelte/server'
 
 const { feedback } = await import('../../feedback/src/api')
 const FeedbackSheet = (await import('./FeedbackSheet.svelte')).default
-
 describe('the sheet', () => {
   test('asks for the words and offers pictures until a report is received', () => {
     feedback.show()
@@ -13,7 +12,6 @@ describe('the sheet', () => {
     expect(html).not.toContain('type="file"')
     expect(html).not.toContain('Report received')
   })
-
   test('confirms a received report and links its page', () => {
     feedback.show()
     feedback.received = { url: 'https://orden.so/v1/feedback/r1/key' }

@@ -1,13 +1,10 @@
 import io
-
 from PIL import Image, ImageChops, ImageStat
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -17,7 +14,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 400))
 }
 """
-
 CLOCK = """
 () => {
   let now = performance.now()
@@ -34,7 +30,6 @@ CLOCK = """
   }
 }
 """
-
 WEB_DRAWN = """
 () => {
   if (!document.querySelector('.canvas')) return null
@@ -67,13 +62,10 @@ WEB_DRAWN = """
   return drawn
 }
 """
-
 def small(png: bytes) -> Image.Image:
     return Image.open(io.BytesIO(png)).convert("L").resize((160, 100))
-
 def apart(one: Image.Image, other: Image.Image) -> float:
     return ImageStat.Stat(ImageChops.difference(one, other)).mean[0]
-
 def filmed(page, label: str, act, each=None) -> None:
     frames = [small(page.screenshot())]
     act()
@@ -94,7 +86,6 @@ def filmed(page, label: str, act, each=None) -> None:
         across = apart(frames[i - 1], frames[i + 1])
         if min(before, after) > 3 and across < min(before, after) / 2:
             wrong(f"[{label}] frame {i} flashes: {before:.1f} and {after:.1f} from its neighbours, {across:.1f} between them")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800})
     DRIVE.open(page)
@@ -108,25 +99,20 @@ def drive(browser: Browser) -> None:
     wait_for(page, "!document.querySelector('.canvas')", "the overview gone")
     page.wait_for_timeout(400)
     page.evaluate(CLOCK)
-
     def opening() -> None:
         page.keyboard.press("Alt")
         page.keyboard.press("Alt")
-
     filmed(page, "in", opening)
     shot(page, "out")
     page.mouse.move(640, 450)
-
     def notch(index: int) -> None:
         if index % 6 == 0:
             page.mouse.wheel(0, -120 if index < 36 else 120)
         if index % 18 == 17:
             page.wait_for_timeout(300)
-
     filmed(page, "zoom", lambda: None, notch)
     shot(page, "zoomed")
     filmed(page, "home", lambda: page.keyboard.press("Escape"))
     shot(page, "home")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "the overview's frames: none flashes, a web tab drawn once"))

@@ -7,7 +7,6 @@ const world = vi.hoisted(() => ({
   asked: [] as { title: string; detail: string | undefined }[],
   list: [] as { path: string | null; name: string | null; lastSeq: number }[],
 }))
-
 vi.mock('../../ui-kit/src/api', () => ({
   prompt: {
     confirm: (options: { title: string; detail?: string }) => {
@@ -23,9 +22,7 @@ vi.mock('./store.svelte', () => ({
     },
   },
 }))
-
 const { mayDelete } = await import('./deleting')
-
 beforeEach(() => {
   world.answer = false
   world.asked = []
@@ -35,13 +32,11 @@ beforeEach(() => {
     { path: '/space/Trip.chat', name: 'Trip', lastSeq: 3 },
   ]
 })
-
 describe('deleting a chat', () => {
   test('with no messages goes without a word', async () => {
     expect(await mayDelete(['/space/Quiet.chat', '/space/Notes.md'])).toBe(true)
     expect(world.asked).toEqual([])
   })
-
   test('with messages asks first, by its name, and Cancel keeps it', async () => {
     expect(await mayDelete(['/space/Plans.chat'])).toBe(false)
     expect(world.asked.map((one) => one.title)).toEqual(['Delete Plans?'])
@@ -49,14 +44,12 @@ describe('deleting a chat', () => {
     world.answer = true
     expect(await mayDelete(['/space/Plans.chat'])).toBe(true)
   })
-
   test('asks once for every chat with messages a gesture deletes', async () => {
     world.answer = true
     expect(await mayDelete(['/space/Plans.chat', '/space/Trip.chat', '/space/Quiet.chat'])).toBe(true)
     expect(world.asked.map((one) => one.title)).toEqual(['Delete 2 chats with messages?'])
   })
 })
-
 test('every way the sidebar deletes asks through it', () => {
   const read = (path: string) => readFileSync(join(import.meta.dirname, path), 'utf8')
   const menu = read('../../row-menu/src/row-menu.ts')

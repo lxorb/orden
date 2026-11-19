@@ -14,7 +14,6 @@ export interface ItemDb {
   at: number
   deleted_at: number | null
 }
-
 export interface VaultDb {
   id: string
   rev: number
@@ -30,7 +29,6 @@ export interface VaultDb {
   handovers: string
   accepted: string | null
 }
-
 export interface VersionDb {
   rev: number
   key: string
@@ -38,7 +36,6 @@ export interface VersionDb {
   key_version: number
   at: number
 }
-
 export interface LinkDb {
   id: string
   vault_id: string
@@ -48,17 +45,13 @@ export interface LinkDb {
   views: number
   created_at: number
 }
-
 export const ITEM_COLUMNS = 'vault_id, id, rev, key, body, key_version, at, deleted_at'
-
 export const VAULT_SELECT = `select v.id, v.rev, v.meta, v.key_version, v.deleted_at, v.owner_id,
        m.role, m.state, m.key, v.key_proof, v.handovers, m.accepted,
        (select count(*) from pass_members o where o.vault_id = v.id and o.state <> 'removed')
          as members
   from pass_members m join pass_vaults v on v.id = m.vault_id`
-
 export const LINK_COLUMNS = 'id, vault_id, item_id, expires_at, max_views, views, created_at'
-
 export function itemRowOf(row: ItemDb): ItemRow {
   return {
     vault: row.vault_id,
@@ -71,7 +64,6 @@ export function itemRowOf(row: ItemDb): ItemRow {
     deleted: row.deleted_at !== null,
   }
 }
-
 export function vaultRowOf(row: VaultDb, user: string): VaultRow {
   const gone = row.deleted_at !== null || row.state === 'removed'
   return {
@@ -89,11 +81,9 @@ export function vaultRowOf(row: VaultDb, user: string): VaultRow {
     accepted: gone ? null : acceptedIn(objectIn(row.accepted)),
   }
 }
-
 export function versionOf(row: VersionDb): Version {
   return { rev: row.rev, key: row.key, body: row.body, keyVersion: row.key_version, at: row.at }
 }
-
 export function linkRowOf(row: LinkDb): LinkRow {
   return {
     id: row.id,
@@ -105,7 +95,6 @@ export function linkRowOf(row: LinkDb): LinkRow {
     created: row.created_at,
   }
 }
-
 export function keyringRowOf(row: { keyring: string; rev: number }): KeyringRow | null {
   const keyring = keyringIn(objectIn(row.keyring))
   return keyring === null ? null : { keyring, rev: row.rev }

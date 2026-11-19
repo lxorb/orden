@@ -2,7 +2,6 @@
   import type { MentionKind } from './chat-parts'
 
   const { kind }: { kind: MentionKind } = $props()
-
   const PATHS: Record<MentionKind, string> = {
     note: 'M7.5 1.8H3.6a1 1 0 0 0-1 1v7.4a1 1 0 0 0 1 1h5.8a1 1 0 0 0 1-1V4.7zM7.5 1.8v2.9h2.9',
     folder: 'M1.8 3.4a1 1 0 0 1 1-1h2.4l1.2 1.3h3.8a1 1 0 0 1 1 1v4.9a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1z',

@@ -13,7 +13,6 @@ test('only the tabs whose look another shares wear a letter', () => {
   ]
   expect([...twins(tabs)].sort()).toEqual(['a', 'b', 'e', 'f'])
 })
-
 test('a letter is the first letter or digit of the name, as a capital', () => {
   expect(initialOf('plan')).toBe('P')
   expect(initialOf('🚀 launch')).toBe('L')
@@ -21,7 +20,6 @@ test('a letter is the first letter or digit of the name, as a capital', () => {
   expect(initialOf('2026 goals')).toBe('2')
   expect(initialOf('✨')).toBe('✨')
 })
-
 test('a site looks like its host', () => {
   expect(siteLook('https://github.com/lxorb/orden')).toBe('web:github.com')
   expect(siteLook('not an address')).toBeNull()

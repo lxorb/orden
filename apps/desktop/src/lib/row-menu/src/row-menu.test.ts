@@ -3,24 +3,19 @@ import { memoryStorage } from '../../../../test/disk'
 import { providePort } from '@orden/contracts'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const shareable = { yes: false }
-
 const writable = { yes: true }
-
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/api')>()),
   canShareItem: () => shareable.yes,
   canWriteAt: () => writable.yes,
   shareThisFile: () => undefined,
 }))
-
 providePort('archive', {
   archive: () => Promise.resolve(),
   unarchive: () => Promise.resolve(),
   show: () => Promise.resolve(),
 })
-
 const { bookmarkAll } = await import('./api')
 const { rowMenu } = await import('./row-menu')
 const { workspace } = await import('../../workspace/src/api')
@@ -28,7 +23,6 @@ const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { hiddenKinds } = await import('../../gates/src/api')
 const { PROTECTION_WORD } = await import('../../sharing/src/protect/gate')
 type Entry = import('../../workspace/src/api').Entry
-
 const entry = (path: string, is_dir: boolean, children: Entry[] = []): Entry => ({
   name: path.split('/').pop() ?? path,
   path,
@@ -39,21 +33,17 @@ const entry = (path: string, is_dir: boolean, children: Entry[] = []): Entry => 
 })
 const note = (path: string) => entry(path, false)
 const folder = (path: string, children: Entry[] = []) => entry(path, true, children)
-
 const PAPER = ['Rename', 'Choose an icon', 'Archive', 'Protect', 'Duplicate', 'Delete']
 const NOTE = ['New note inside', ...PAPER.slice(0, 2), 'Set cover', ...PAPER.slice(2)]
 const shared = (rows: string[]) => [...rows.slice(0, -2), 'Share', ...rows.slice(-2)]
-
 const nested = folder('/s/A', [note('/s/A/A.md'), note('/s/A/B.md')])
 const plain = folder('/s/Projects', [note('/s/Projects/plan.md')])
 const loose = note('/s/loose.md')
 const paper = note('/s/paper.pdf')
 const tree = folder('/s', [nested, plain, loose, paper])
-
 function labels(entry: Entry): string[] {
   return rowMenu(entry).flatMap((one) => (one === null ? [] : [one.label]))
 }
-
 beforeEach(() => {
   hiddenKinds.hidden = [PROTECTION_WORD]
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/s' }]
@@ -64,10 +54,8 @@ beforeEach(() => {
   writable.yes = true
   workspace.archive.forget('/s')
 })
-
 describe('every row', () => {
   const rows = [nested, plain, loose, paper]
-
   test('offers no folder, anywhere, under any name', () => {
     for (const entry of rows) {
       for (const label of labels(entry)) {
@@ -75,20 +63,16 @@ describe('every row', () => {
       }
     }
   })
-
   test('opens, renames and deletes, in that order', () => {
     for (const entry of rows) {
       const said = labels(entry)
-
       expect(said, entry.path).not.toContain('Open')
       expect(said, entry.path).toContain('Rename')
       expect(said.at(-1), entry.path).toBe('Delete')
     }
   })
-
   test('moves on a touch screen only', () => {
     for (const entry of rows) expect(labels(entry), entry.path).not.toContain('Move')
-
     viewport.device = 'phone'
     try {
       for (const entry of rows) expect(labels(entry), entry.path).toContain('Move')
@@ -100,13 +84,11 @@ describe('every row', () => {
     }
   })
 })
-
 describe('a note', () => {
   test('can hold a note, and can be copied', () => {
     expect(labels(loose)).toEqual(NOTE)
   })
 })
-
 describe('a note, with chats to send it to', () => {
   test('offers no Send to chat', async () => {
     const { account } = await import('../../accounts/src/account.svelte')
@@ -114,7 +96,6 @@ describe('a note, with chats to send it to', () => {
     expect(labels(loose)).not.toContain('Send to chat')
   })
 })
-
 describe('new note inside', () => {
   test('offers every kind, each made in the row', async () => {
     const row = rowMenu(plain).find((one) => one?.label === 'New note inside')
@@ -125,7 +106,6 @@ describe('new note inside', () => {
       'New page note',
       'New web note',
     ])
-
     const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map((name) =>
       vi.spyOn(workspace, name).mockResolvedValue(undefined),
     )
@@ -135,42 +115,34 @@ describe('new note inside', () => {
     })
   })
 })
-
 describe('a note that holds notes', () => {
   test('is the same menu', () => {
     expect(labels(nested)).toEqual(labels(loose))
   })
 })
-
 describe('a folder nobody has written a note in', () => {
   test('offers exactly what a note offers, less the cover and the side', () => {
     expect(labels(plain)).toEqual(labels(nested).filter((one) => one !== 'Set cover'))
   })
 })
-
 describe('a chat', () => {
   test('can wear an icon, and nothing else a note looks like', () => {
     const said = labels(note('/s/Team.chat'))
-
     expect(said).toContain('Choose an icon')
     expect(said).not.toContain('Set cover')
     expect(said).not.toContain('New note inside')
   })
 })
-
 describe('a paper', () => {
   test('holds nothing, wears an icon and duplicates as a paper', () => {
     expect(labels(paper)).toEqual(PAPER)
   })
 })
-
 describe('a file with nowhere of its own to write an icon', () => {
   const kinds = ['/s/paper.pdf', '/s/photo.png', '/s/Mail.application', '/s/Table.base', '/s/Old.webloc']
-
   test('still offers the picker, every kind of it', () => {
     for (const path of kinds) expect(labels(note(path)), path).toContain('Choose an icon')
   })
-
   test('wears the icon from the space, and puts it down again', async () => {
     const { iconChoice } = await import('../../icon-picker/src/api')
     const { chosenIcon } = await import('../../marks/src/api')
@@ -179,7 +151,6 @@ describe('a file with nowhere of its own to write an icon', () => {
       rowMenu(note(path))
         .find((one) => one?.label === label)
         ?.run()
-
     for (const path of kinds) {
       press(path, 'Choose an icon')
       const asked = iconChoice.target
@@ -187,7 +158,6 @@ describe('a file with nowhere of its own to write an icon', () => {
       if (asked) wear(asked, 'rocket', null)
       iconChoice.close()
       expect(chosenIcon(path), path).toBe('rocket')
-
       expect(labels(note(path)), path).not.toContain('Remove icon')
       press(path, 'Choose an icon')
       const again = iconChoice.target
@@ -197,25 +167,20 @@ describe('a file with nowhere of its own to write an icon', () => {
     }
   })
 })
-
 describe('a file the account has a copy of', () => {
   test('says who else may have it, beside what the space says about it', () => {
     shareable.yes = true
-
     expect(labels(loose)).toEqual(shared(NOTE))
     expect(labels(nested)).toEqual(shared(NOTE))
     expect(labels(paper)).toEqual(shared(PAPER))
   })
 })
-
 describe('a row that is part of a selection of several', () => {
   test('stands for the lot, and offers only what makes sense for a lot', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
-
     expect(labels(loose)).toEqual(['Open all', 'Archive', 'Delete 2 items'])
   })
-
   test('and a tab menu bookmarks the lot, or takes the lot out once all are in', () => {
     const paths = ['/s/loose.md', '/s/A']
     const press = (label: string) =>
@@ -223,20 +188,16 @@ describe('a row that is part of a selection of several', () => {
         .find((one) => one?.label === label)
         ?.run()
     press('Add to Essentials')
-
     expect(workspace.bookmarks.list.map((one) => one.path)).toEqual(['loose.md', 'A/A.md'])
     expect(bookmarkAll(paths).map((one) => one?.label)).toEqual(['Remove from Essentials'])
-
     press('Remove from Essentials')
     expect(workspace.bookmarks.list).toEqual([])
   })
-
   test('while a selection of one is an ordinary row', () => {
     workspace.select('/s/loose.md')
     expect(labels(loose)).not.toContain('Open all')
   })
 })
-
 describe('a space shared to be read', () => {
   const WRITING = [
     'New note inside',
@@ -250,7 +211,6 @@ describe('a space shared to be read', () => {
     'Duplicate',
     'Delete',
   ]
-
   test('a row offers to open it and nothing that writes', () => {
     writable.yes = false
     viewport.device = 'phone'
@@ -264,55 +224,42 @@ describe('a space shared to be read', () => {
       viewport.device = 'desktop'
     }
   })
-
   test('nor does a selection of several', () => {
     writable.yes = false
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
-
     expect(labels(loose)).toEqual(['Open all'])
   })
 })
-
 describe('the archive', () => {
   test('is offered on every row, and not in a space shared to be read', () => {
     for (const entry of [nested, plain, loose, paper]) expect(labels(entry)).toContain('Archive')
-
     writable.yes = false
     expect(labels(loose)).not.toContain('Archive')
   })
-
   test('and a folder holding something archived is not deleted from its menu', async () => {
     await workspace.archive.change('/s', ['Projects/plan.md'], [])
-
     expect(workspace.keepsArchived('/s/Projects')).toBe(true)
     expect(workspace.keepsArchived('/s/loose.md')).toBe(false)
   })
-
   test('and a selection counts only the rows that can go', async () => {
     await workspace.archive.change('/s', ['Projects/plan.md'], [])
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/Projects')
-
     expect(labels(loose)).toContain('Delete 1 item')
   })
 })
-
 describe('another sync tool’s copy', () => {
   const clash = note('/s/loose (# Name clash 2026-10-05 a1b2c3C #).md')
   const orphan = note('/s/gone (# Name clash 2026-10-05 a1b2c3C #).md')
-
   beforeEach(() => {
     workspace.tree = folder('/s', [nested, plain, loose, paper, clash, orphan])
   })
-
   test('offers to compare it with the note it was made of, after the ways to open it', () => {
     const said = labels(clash)
-
     expect(said[0]).toBe('Compare with original')
     expect(said.at(-1)).toBe('Delete')
   })
-
   test('and opens the note with the copy to its side', async () => {
     const opened: string[] = []
     const openRow = vi.spyOn(workspace, 'openRow').mockImplementation((path) => {
@@ -323,36 +270,29 @@ describe('another sync tool’s copy', () => {
       opened.push(`aside ${path}`)
       return Promise.resolve()
     })
-
     rowMenu(clash)
       .find((one) => one?.label === 'Compare with original')
       ?.run()
     await vi.waitFor(() => expect(opened).toHaveLength(2))
-
     expect(opened).toEqual(['here /s/loose.md', `aside ${clash.path}`])
     openRow.mockRestore()
     openAside.mockRestore()
   })
-
   test('is the plain menu once the note it was made of has gone', () => {
     expect(labels(orphan)).toEqual(labels(loose))
   })
 })
-
 describe('search', () => {
   test('is never left out from a row', () => {
     for (const entry of [nested, plain, loose, paper]) {
       expect(labels(entry)).not.toContain('Search here again')
     }
   })
-
   test('but a row left out before can be searched again, and only that row', () => {
     workspace.excluded.toggle(plain.path)
     const inside = plain.children[0]
-
     expect(labels(plain)).toContain('Search here again')
     expect(inside && labels(inside)).not.toContain('Search here again')
-
     rowMenu(plain)
       .find((one) => one?.label === 'Search here again')
       ?.run()
@@ -360,11 +300,9 @@ describe('search', () => {
     expect(labels(plain)).not.toContain('Search here again')
   })
 })
-
 describe('the undo', () => {
   test('is not in a row’s menu, nor a selection’s', () => {
     const undo = vi.spyOn(workspace, 'undoLabel', 'get').mockReturnValue('Undo deleting plan')
-
     expect(labels(loose).at(-1)).toBe('Delete')
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')

@@ -18,7 +18,6 @@ import { type Panel, PANELS } from './panels'
 import { builtinName, isTabKind, readViewSpec } from '../../tab-kinds/src/api'
 
 const VERSION = 2
-
 export interface Draft {
   kind: TabKind
   path: string | null
@@ -40,7 +39,6 @@ export interface Draft {
   behind?: string | undefined
   space?: string | undefined
 }
-
 export interface PaneDraft {
   id: string
   tabs: Draft[]
@@ -49,17 +47,14 @@ export interface PaneDraft {
   linked: boolean
   stacked?: boolean
 }
-
 export type FrameDraft =
   | { kind: 'pane'; pane: PaneDraft }
   | { kind: 'split'; id: string; along: Along; fraction: number; sides: [FrameDraft, FrameDraft] }
-
 export interface Layout {
   frame: FrameDraft
   focused: string
   panel: Panel | null
 }
-
 export interface Position {
   cursor: number
   scroll: number
@@ -67,7 +62,6 @@ export interface Position {
   folds?: readonly FoldLines[] | undefined
   at: number
 }
-
 export interface ClosedTab {
   draft: Draft
   paneId: string
@@ -75,7 +69,6 @@ export interface ClosedTab {
   batch?: number
   trashed?: string | undefined
 }
-
 export interface Session {
   spaces: WorkspaceSpace[]
   activeSpace: string | null
@@ -93,49 +86,38 @@ export interface Session {
   known?: Panel[]
   sets?: unknown
 }
-
 export function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
-
 function tabKind(value: unknown, path: unknown): TabKind {
   const said = isTabKind(value) ? value : 'note'
   if (typeof path !== 'string') return said
-
   if (isWebTarget(path)) return 'web'
   if (isBaseTarget(path)) return 'view'
   if (isChatTarget(path)) return 'channel'
-
   if (isPagesTarget(path)) return 'pages'
   if (roomKind(path) === 'plane') return 'canvas'
   return said === 'canvas' || said === 'pages' ? 'note' : said
 }
-
 function isSpace(value: unknown): value is WorkspaceSpace {
   return isRecord(value) && isString(value.id) && isString(value.name) && isString(value.root)
 }
-
 function readFolds(value: unknown): readonly FoldLines[] | null {
   if (!Array.isArray(value)) return null
-
   const out = value.filter(
     (one): one is FoldLines =>
       Array.isArray(one) && one.length === 2 && one.every(Number.isInteger) && one[0] >= 1 && one[1] > one[0],
   )
   return out.length ? out : null
 }
-
 export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value) || isRetiredTab(value)) return null
-
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
   const { folds, page, zoom, address, space, source, apart, behind, base } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
-
   const shut = readFolds(folds)
   const builtin = path === null && tabKind(kind, path) === 'view' ? readViewSpec(doc)?.builtin : undefined
-
   return {
     kind: tabKind(kind, path),
     path,
@@ -158,15 +140,12 @@ export function readDraft(value: unknown): Draft | null {
     ...(path === null && isString(behind) ? { behind } : {}),
   }
 }
-
 function readDrafts(value: unknown): Draft[] {
   if (!Array.isArray(value)) return []
   return value.map(readDraft).filter((draft): draft is Draft => draft !== null)
 }
-
 function readPane(value: unknown): PaneDraft | null {
   if (!isRecord(value) || !isString(value.id)) return null
-
   return {
     id: value.id,
     tabs: readDrafts(value.tabs),
@@ -176,49 +155,36 @@ function readPane(value: unknown): PaneDraft | null {
     stacked: value.stacked === true,
   }
 }
-
 const ALONG: readonly Along[] = ['row', 'column']
-
 function readFrame(value: unknown): FrameDraft | null {
   if (!isRecord(value)) return null
-
   if (value.kind === 'split') {
     const sides = Array.isArray(value.sides) ? value.sides.map(readFrame) : []
     const [first, second] = sides
     if (!first || !second) return first ?? second ?? null
-
     const along = ALONG.find((one) => one === value.along) ?? 'row'
     const fraction = isNumber(value.fraction) ? value.fraction : 0.5
     const id = isString(value.id) ? value.id : identifier()
-
     return { kind: 'split', id, along, fraction, sides: [first, second] }
   }
-
   const pane = readPane(value.pane)
   return pane ? { kind: 'pane', pane } : null
 }
-
 export function readLayout(value: unknown): Layout | null {
   if (!isRecord(value)) return null
-
   const frame = readFrame(value.frame)
   if (!frame) return null
-
   return {
     frame,
     focused: isString(value.focused) ? value.focused : '',
     panel: isPanel(value.panel) ? value.panel : null,
   }
 }
-
 export function readPosition(value: unknown): Position | null {
   if (!isRecord(value)) return null
-
   const { cursor, scroll, anchor, folds, at } = value
   if (!isNumber(cursor) || !isNumber(scroll)) return null
-
   const kept = readFolds(folds)
-
   return {
     cursor,
     scroll,
@@ -227,7 +193,6 @@ export function readPosition(value: unknown): Position | null {
     ...(kept ? { folds: kept } : {}),
   }
 }
-
 function readPositions(value: unknown): Record<string, Position> {
   if (!isRecord(value)) return {}
   return Object.fromEntries(
@@ -237,13 +202,10 @@ function readPositions(value: unknown): Record<string, Position> {
     }),
   )
 }
-
 export function readClosed(value: unknown): ClosedTab | null {
   if (!isRecord(value)) return null
-
   const draft = readDraft(value.draft)
   if (!draft) return null
-
   return {
     draft,
     paneId: isString(value.paneId) ? value.paneId : '',
@@ -252,16 +214,13 @@ export function readClosed(value: unknown): ClosedTab | null {
     ...(isString(value.trashed) ? { trashed: value.trashed } : {}),
   }
 }
-
 export function arrangementIn(state: Session): Layout | null {
   if (state.layout) return state.layout
-
   const paths = state.openPaths ?? []
   const tabs = state.tabs?.length
     ? state.tabs
     : paths.flatMap((path) => readDraft({ path, name: nameOf(path), doc: '' }) ?? [])
   if (!tabs.length) return null
-
   const id = identifier()
   const active = state.tabs?.length
     ? (state.active ?? 0)
@@ -275,7 +234,6 @@ export function arrangementIn(state: Session): Layout | null {
     panel: state.panel,
   }
 }
-
 export function arrivingWith(read: Layout, now: Layout): Layout {
   const panes = panesOf(read.frame)
   const held = panes.flatMap((one) => one.tabs)
@@ -288,14 +246,11 @@ export function arrivingWith(read: Layout, now: Layout): Layout {
     : read.frame
   return { ...read, panel: now.panel, frame }
 }
-
 export function readSession(value: unknown): Session | null {
   if (!isRecord(value)) return null
-
   const layout = readLayout(value.layout)
   const drafts = Array.isArray(value.tabs) ? readDrafts(value.tabs) : null
   const openPaths = stringList(value.openPaths)
-
   return {
     spaces: Array.isArray(value.spaces) ? value.spaces.filter(isSpace) : [],
     activeSpace: isString(value.activeSpace) ? value.activeSpace : null,
@@ -316,12 +271,10 @@ export function readSession(value: unknown): Session | null {
       : [],
   }
 }
-
 export function panesOf(frame: FrameDraft): PaneDraft[] {
   if (frame.kind === 'pane') return [frame.pane]
   return [...panesOf(frame.sides[0]), ...panesOf(frame.sides[1])]
 }
-
 export function frameOf(draft: FrameDraft, showing: (pane: PaneDraft) => string | null): Frame {
   if (draft.kind === 'pane') {
     const one = pane(draft.pane.id, showing(draft.pane))
@@ -329,7 +282,6 @@ export function frameOf(draft: FrameDraft, showing: (pane: PaneDraft) => string 
     one.stacked = draft.pane.stacked === true
     return one
   }
-
   return {
     kind: 'split',
     id: draft.id,
@@ -338,7 +290,6 @@ export function frameOf(draft: FrameDraft, showing: (pane: PaneDraft) => string 
     sides: [frameOf(draft.sides[0], showing), frameOf(draft.sides[1], showing)],
   }
 }
-
 export function frameDraft(
   frame: Frame,
   strip: (pane: { id: string; activeTabId: string | null }) => {
@@ -361,7 +312,6 @@ export function frameDraft(
       },
     }
   }
-
   return {
     kind: 'split',
     id: frame.id,
@@ -370,41 +320,31 @@ export function frameDraft(
     sides: [frameDraft(frame.sides[0], strip), frameDraft(frame.sides[1], strip)],
   }
 }
-
 function eachPane(frame: FrameDraft, change: (pane: PaneDraft) => PaneDraft): FrameDraft {
   return frame.kind === 'split'
     ? { ...frame, sides: [eachPane(frame.sides[0], change), eachPane(frame.sides[1], change)] }
     : { kind: 'pane', pane: change(frame.pane) }
 }
-
 const eachTab = (layout: Layout, change: (draft: Draft) => Draft): Layout => ({
   ...layout,
   frame: eachPane(layout.frame, (pane) => ({ ...pane, tabs: pane.tabs.map(change) })),
 })
-
 const unbased = ({ base: _base, ...draft }: Draft): Draft => draft
-
 export const withoutText = (layout: Layout): Layout =>
   eachTab(layout, (draft) => (draft.path && draft.doc ? { ...unbased(draft), doc: '', dirty: false } : draft))
-
 const withoutBases = (layout: Layout): Layout | null =>
   panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined))
     ? eachTab(layout, unbased)
     : null
-
 export function writeSession(key: string, state: Session): boolean {
   if (put(key, state)) return true
-
   const shorter: Session = { ...state, closed: [] }
   if (put(key, shorter)) return true
-
   const unmerged = state.layout ? withoutBases(state.layout) : null
   if (unmerged && put(key, { ...shorter, layout: unmerged })) return true
-
   const lean = state.layout ? withoutText(state.layout) : undefined
   return put(key, { ...shorter, ...(lean ? { layout: lean } : {}) })
 }
-
 function put(key: string, state: Session): boolean {
   return keepJson(key, { version: VERSION, ...state })
 }

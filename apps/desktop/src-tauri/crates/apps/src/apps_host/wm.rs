@@ -30,7 +30,6 @@ x11rb::atom_manager! {
         UTF8_STRING,
     }
 }
-
 pub struct Desk {
     connection: Arc<RustConnection>,
     root: Window,
@@ -39,7 +38,6 @@ pub struct Desk {
     serial: AtomicU32,
     clipboard: Arc<Clipboard>,
 }
-
 impl Desk {
     pub fn open(display: &str, dpr: f64) -> Result<Desk, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
@@ -116,19 +114,15 @@ impl Desk {
         std::thread::spawn(move || manage(&managing, root, atoms, &clipboard));
         Ok(desk)
     }
-
     pub fn clipboard(&self) -> &Arc<Clipboard> {
         &self.clipboard
     }
-
     pub fn connection(&self) -> &RustConnection {
         &self.connection
     }
-
     pub fn root(&self) -> Window {
         self.root
     }
-
     pub fn scale(&self, dpr: f64) {
         let serial = self.serial.fetch_add(1, Ordering::SeqCst) + 1;
         let x = &self.connection;
@@ -150,14 +144,12 @@ impl Desk {
         let _ = x.flush();
     }
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn gtk_scale(dpr: f64) -> (u32, f64) {
     let dpr = super::display::ratio(dpr);
     let scale = (dpr.floor() as u32).max(1);
     (scale, 96.0 * dpr / f64::from(scale))
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub fn settings(dpr: f64, serial: u32) -> Vec<u8> {
     let (scale, unscaled) = gtk_scale(dpr);
@@ -181,13 +173,11 @@ pub fn settings(dpr: f64, serial: u32) -> Vec<u8> {
     }
     out
 }
-
 #[derive(Clone, Copy, Debug)]
 struct Managed {
     window: Window,
     fills: bool,
 }
-
 fn manage(x: &RustConnection, root: Window, atoms: Atoms, clipboard: &Clipboard) {
     let Some(at) = x.get_geometry(root).ok().and_then(|one| one.reply().ok()) else {
         return;
@@ -264,7 +254,6 @@ fn manage(x: &RustConnection, root: Window, atoms: Atoms, clipboard: &Clipboard)
         let _ = x.flush();
     }
 }
-
 fn forget(x: &RustConnection, atoms: &Atoms, managed: &mut Vec<Managed>, window: Window) {
     let was = managed.len();
     managed.retain(|one| one.window != window);
@@ -274,7 +263,6 @@ fn forget(x: &RustConnection, atoms: &Atoms, managed: &mut Vec<Managed>, window:
         }
     }
 }
-
 fn fills(x: &RustConnection, atoms: &Atoms, window: Window, screen: (u16, u16)) -> bool {
     let transient = x
         .get_property(
@@ -314,13 +302,11 @@ fn fills(x: &RustConnection, atoms: &Atoms, window: Window, screen: (u16, u16)) 
     let most = hints.and_then(|hints| hints.max_size);
     may_fill(most, screen)
 }
-
 fn may_fill(most: Option<(i32, i32)>, screen: (u16, u16)) -> bool {
     most.is_none_or(|(wide, high)| {
         (wide <= 0 || wide >= i32::from(screen.0)) && (high <= 0 || high >= i32::from(screen.1))
     })
 }
-
 pub fn placed(fills: bool, size: (u16, u16), screen: (u16, u16)) -> (i16, i16, u16, u16) {
     if fills {
         return (0, 0, screen.0.max(1), screen.1.max(1));
@@ -331,7 +317,6 @@ pub fn placed(fills: bool, size: (u16, u16), screen: (u16, u16)) -> (i16, i16, u
     let top = i16::try_from((screen.1 - high) / 2).unwrap_or(0);
     (left, top, wide, high)
 }
-
 fn place(x: &RustConnection, window: Window, fills: bool, screen: (u16, u16)) {
     let size = x
         .get_geometry(window)
@@ -349,7 +334,6 @@ fn place(x: &RustConnection, window: Window, fills: bool, screen: (u16, u16)) {
             .border_width(0),
     );
 }
-
 fn tell_where(x: &RustConnection, window: Window, screen: (u16, u16)) {
     let event = ConfigureNotifyEvent {
         response_type: CONFIGURE_NOTIFY_EVENT,
@@ -366,7 +350,6 @@ fn tell_where(x: &RustConnection, window: Window, screen: (u16, u16)) {
     };
     let _ = x.send_event(false, window, EventMask::STRUCTURE_NOTIFY, event);
 }
-
 fn focus(x: &RustConnection, atoms: &Atoms, window: Window) {
     let _ = x.configure_window(
         window,
@@ -405,7 +388,6 @@ fn focus(x: &RustConnection, atoms: &Atoms, window: Window) {
         );
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -416,7 +398,6 @@ mod tests {
         assert_eq!(placed(false, (300, 200), (1280, 800)), (490, 300, 300, 200));
         assert_eq!(placed(false, (3000, 200), (1280, 800)), (0, 300, 1280, 200));
     }
-
     #[test]
     fn lets_a_window_fill_the_screen_unless_its_hints_hold_it_smaller() {
         assert!(may_fill(None, (1280, 800)));
@@ -425,7 +406,6 @@ mod tests {
         assert!(!may_fill(Some((400, 300)), (1280, 800)));
         assert!(!may_fill(Some((4096, 300)), (1280, 800)));
     }
-
     #[test]
     fn says_the_ratio_as_a_desktop_says_it_to_gtk() {
         assert_eq!(gtk_scale(1.0), (1, 96.0));
@@ -445,7 +425,6 @@ mod tests {
         let end = bytes.len();
         assert_eq!(&bytes[end - 4..], &(192 * 1024_i32).to_ne_bytes());
     }
-
     #[test]
     #[allow(clippy::too_many_lines)]
     fn fills_the_screen_with_the_main_window_and_follows_it() {
@@ -499,7 +478,6 @@ mod tests {
                 geometry(window)
             };
             let focused = || x.get_input_focus().unwrap().reply().unwrap().focus;
-
             let main = open(300, 200, None);
             assert_eq!(settle(main, (0, 0, 800, 600)), (0, 0, 800, 600));
             assert_eq!(focused(), main);
@@ -508,15 +486,12 @@ mod tests {
             x.flush().unwrap();
             std::thread::sleep(std::time::Duration::from_millis(100));
             assert_eq!(geometry(main), (0, 0, 800, 600));
-
             let dialog = open(200, 100, Some(main));
             assert_eq!(settle(dialog, (300, 250, 200, 100)), (300, 250, 200, 100));
             assert_eq!(focused(), dialog);
-
             display.fit(1024, 768, 1.0).unwrap();
             assert_eq!(settle(main, (0, 0, 1024, 768)), (0, 0, 1024, 768));
             assert_eq!(settle(dialog, (412, 334, 200, 100)), (412, 334, 200, 100));
-
             x.destroy_window(dialog).unwrap();
             x.flush().unwrap();
             let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
@@ -524,7 +499,6 @@ mod tests {
                 std::thread::sleep(std::time::Duration::from_millis(10));
             }
             assert_eq!(focused(), main);
-
             let owner = x
                 .get_selection_owner(atoms._XSETTINGS_S0)
                 .unwrap()

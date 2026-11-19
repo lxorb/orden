@@ -1,15 +1,11 @@
 import json
 import re
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PATIENCE = 40
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -23,7 +19,6 @@ async () => {
   return root
 }
 """
-
 FILES = """
 () => {
   const ws = window.ordenApp.workspace
@@ -35,15 +30,11 @@ FILES = """
   return walk(ws.tree).sort()
 }
 """
-
 START = ["Plan.md", "Read me.md", "Work/", "Work/Goal.md", "Work/Ideas.md"]
-
 def but(*gone: str, also: tuple[str, ...] = ()) -> list[str]:
     return [one for one in START if one not in gone] + list(also)
-
 def files(page: Page) -> list[str]:
     return page.evaluate(FILES)
-
 def until(page: Page, want: list[str], what: str) -> bool:
     want = sorted(want)
     try:
@@ -52,15 +43,12 @@ def until(page: Page, want: list[str], what: str) -> bool:
     except BaseException:
         wrong(f"{what}: the tree holds {files(page)}, not {want}")
         return False
-
 def row(page: Page, at: str):
     return page.locator(f"aside .row[data-path$='/{at}']").first
-
 def entry(page: Page, label: str) -> None:
     item = page.locator(".menu .orden-row", has_text=re.compile(rf"^\s*{re.escape(label)}\s*$")).first
     item.wait_for(state="visible", timeout=PATIENCE * 1000)
     item.click()
-
 def keys(page: Page, chord: str, what: str) -> None:
     held = page.evaluate(
         "() => { const el = document.activeElement; return el ? el.tagName.toLowerCase()"
@@ -68,22 +56,17 @@ def keys(page: Page, chord: str, what: str) -> None:
     )
     say(f"{what}: {chord} with the keyboard on {held}")
     page.keyboard.press(chord)
-
 MARK = "() => { window.__undoMark = window.ordenApp.workspace.undone.last }"
 MOVED = "() => window.ordenApp.workspace.undone.last !== window.__undoMark"
-
 def marked(page: Page) -> None:
     page.evaluate(MARK)
-
 def recorded(page: Page, what: str) -> None:
     wait_for(page, MOVED, f"{what} on the undo stack", PATIENCE)
-
 def step(page: Page, chord: str, want: list[str], what: str) -> None:
     marked(page)
     keys(page, chord, what)
     until(page, want, what)
     recorded(page, what)
-
 def back_and_forth(page: Page, before: list[str], after: list[str], what: str) -> None:
     recorded(page, what)
     step(page, "Control+z", before, f"{what}, undone")
@@ -91,7 +74,6 @@ def back_and_forth(page: Page, before: list[str], after: list[str], what: str) -
     step(page, "Control+z", before, f"{what}, undone again")
     step(page, "Control+y", after, f"{what}, done again with Ctrl+Y")
     step(page, "Control+z", before, f"{what}, undone at last")
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
@@ -104,7 +86,6 @@ def drive(browser: Browser) -> None:
         say(f"the space is {page.evaluate(SEED)}")
         until(page, START, "the seeded space")
         wait_for(page, "() => !!document.querySelector('aside .row')", "the file list")
-
         marked(page)
         row(page, "Work/Goal.md").click(button="right")
         entry(page, "Delete")
@@ -120,7 +101,6 @@ def drive(browser: Browser) -> None:
             }"""
         )
         say(f"the note back is {words}")
-
         marked(page)
         row(page, "Work").click(button="right")
         entry(page, "Delete")
@@ -128,7 +108,6 @@ def drive(browser: Browser) -> None:
         folder = but("Work/", "Work/Goal.md", "Work/Ideas.md")
         until(page, folder, "a folder deleted")
         back_and_forth(page, START, folder, "a folder deleted")
-
         marked(page)
         row(page, "Plan.md").click(button="right")
         entry(page, "Rename")
@@ -139,7 +118,6 @@ def drive(browser: Browser) -> None:
         renamed = but("Plan.md", also=("Roadmap.md",))
         until(page, renamed, "a note renamed")
         back_and_forth(page, START, renamed, "a note renamed")
-
         marked(page)
         row(page, "Plan.md").click()
         wait_for(page, "() => !!window.ordenApp.workspace.active?.path?.endsWith('/Plan.md')", "Plan open")
@@ -157,7 +135,6 @@ def drive(browser: Browser) -> None:
         moved = but("Plan.md", also=("Work/Plan.md",))
         until(page, moved, "a note moved")
         back_and_forth(page, START, moved, "a note moved")
-
         marked(page)
         row(page, "Plan.md").click()
         page.evaluate("() => window.ordenApp.workspace.device.expand(window.ordenApp.workspace.activeSpace.root.replace(/\\/$/, '') + '/Work')")
@@ -168,7 +145,6 @@ def drive(browser: Browser) -> None:
         until(page, two, "two deleted at once")
         recorded(page, "two deleted at once")
         step(page, "Control+z", START, "two deleted at once, undone with one press")
-
         marked(page)
         page.locator("aside .rest").click(button="right", position={"x": 20, "y": 8})
         entry(page, "New note")
@@ -181,7 +157,6 @@ def drive(browser: Browser) -> None:
         until(page, made, "a note made")
         page.wait_for_timeout(300)
         back_and_forth(page, START, made, "a note made")
-
         row(page, "Plan.md").click()
         editor = page.locator(".cm-content").first
         editor.wait_for(state="visible", timeout=PATIENCE * 1000)
@@ -210,5 +185,4 @@ def drive(browser: Browser) -> None:
         DRIVE.shot(page, "tree-undo")
     finally:
         context.close()
-
 raise SystemExit(DRIVE.run(drive, "the file list's undo and redo take back and do again what was done in it"))

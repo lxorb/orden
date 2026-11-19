@@ -1,17 +1,14 @@
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 SHOTS = DRIVE.shots
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -21,7 +18,6 @@ async () => {
   return ws.files.length
 }
 """
-
 STATE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -32,14 +28,12 @@ STATE = """
   }
 }
 """
-
 DOTTED = """
 () => {
   const id = window.ordenApp.workspace.active?.id
   return !!document.querySelector(`[data-tab="${id}"] .orden-unsaved`)
 }
 """
-
 LINE = """
 () => {
   const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
@@ -48,14 +42,12 @@ LINE = """
   return line.text.slice(0, 40)
 }
 """
-
 FIELD = """
 () => {
   const input = document.querySelector('.palette input')
   return input ? { value: input.value, caret: input.selectionStart } : null
 }
 """
-
 NEW_TAB = """
 () => {
   const ws = window.ordenApp.workspace
@@ -74,7 +66,6 @@ NEW_TAB = """
   }
 }
 """
-
 CALLED = """
 () => {
   const id = window.ordenApp.workspace.active?.id
@@ -82,7 +73,6 @@ CALLED = """
   return { label, title: document.title.split(' - ')[0] }
 }
 """
-
 HERE = """
 () => {
   const buttons = [...document.querySelectorAll('[data-new-here] button')]
@@ -105,17 +95,14 @@ HERE = """
   }
 }
 """
-
 def settles(page, condition: str, patience: int = 2000) -> bool:
     try:
         page.wait_for_function(condition, timeout=patience)
     except PlaywrightTimeout:
         return False
     return True
-
 def palette(page) -> None:
     say("--- Ctrl+Shift+P ---")
-
     page.keyboard.press("Control+Shift+KeyP")
     page.wait_for_timeout(300)
     field = page.evaluate(FIELD)
@@ -124,7 +111,6 @@ def palette(page) -> None:
     else:
         say("from a note            -> '>' with the caret after it")
     page.screenshot(path=str(SHOTS / "commands.png"))
-
     page.keyboard.type("fold")
     page.wait_for_timeout(200)
     page.keyboard.press("Control+Shift+KeyP")
@@ -134,18 +120,15 @@ def palette(page) -> None:
         wrong(f"a second press did not put the mark in front, once: {field}")
     else:
         say("pressed again          -> '>fold', the caret at the end")
-
     page.keyboard.press("Escape")
     if not settles(page, f"() => ({FIELD})() === null"):
         wrong("Escape did not close the palette")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     row = page.locator(".orden-row").first
     if row.count():
         row.click()
         page.wait_for_timeout(250)
-
     page.keyboard.press("Control+Shift+KeyP")
     page.wait_for_timeout(300)
     field = page.evaluate(FIELD)
@@ -156,10 +139,8 @@ def palette(page) -> None:
     page.keyboard.press("Escape")
     if not settles(page, f"() => ({FIELD})() === null"):
         wrong("Escape did not close the palette over the file list")
-
 def heading_key(page) -> None:
     say("--- the heading key undoes itself ---")
-
     page.evaluate(
         """() => {
           const view = window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)
@@ -169,21 +150,18 @@ def heading_key(page) -> None:
     )
     page.wait_for_timeout(250)
     heading = page.evaluate(LINE)
-
     page.keyboard.press("Control+Digit1")
     page.wait_for_timeout(300)
     if page.evaluate(LINE).startswith("#"):
         wrong(f"Ctrl+1 on a first-level heading did not make it prose: {page.evaluate(LINE)!r}")
     else:
         say(f"Control+1              -> {page.evaluate(LINE)!r}")
-
     page.keyboard.press("Control+Digit1")
     page.wait_for_timeout(300)
     if page.evaluate(LINE) != heading:
         wrong(f"Ctrl+1 did not make it a heading again: {page.evaluate(LINE)!r}")
     else:
         say(f"Control+1 again        -> {page.evaluate(LINE)!r}")
-
 LINES = [
     ["New note", "New canvas", "New page note"],
     ["New AI chat"],
@@ -191,10 +169,8 @@ LINES = [
     ["New web note"],
     ["New application", "Pass"],
 ]
-
 def chooser(page) -> None:
     say("--- Ctrl+T ---")
-
     before = len(page.evaluate(STATE)["tabs"])
     page.keyboard.press("Control+KeyT")
     if not settles(page, f"() => ({NEW_TAB})().lines.length > 0"):
@@ -222,7 +198,6 @@ def chooser(page) -> None:
     else:
         say("its name               -> New tab, in the strip and on the window")
     page.screenshot(path=str(SHOTS / "new-tab.png"))
-
     page.keyboard.press("KeyC")
     page.wait_for_timeout(300)
     new = page.evaluate(NEW_TAB)
@@ -231,7 +206,6 @@ def chooser(page) -> None:
     else:
         say("C in the field         -> the address's, nothing made")
     page.keyboard.press("Backspace")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     page.keyboard.press("KeyC")
@@ -242,7 +216,6 @@ def chooser(page) -> None:
         wrong(f"the plane did not take the new tab's place: {state['tabs']}")
     else:
         say("Escape, C              -> a plane, where the new tab was")
-
     say("--- the plus ---")
     before = len(page.evaluate(STATE)["tabs"])
     page.locator(".strip button.new").first.click()
@@ -255,7 +228,6 @@ def chooser(page) -> None:
         wrong(f"the plus did not make a new tab: {page.evaluate(STATE)['active']}")
     else:
         say("the plus               -> a new tab, no menu")
-
     page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
     settles(page, f"() => window.ordenApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
     state = page.evaluate(STATE)
@@ -270,10 +242,8 @@ def chooser(page) -> None:
         say(f"New web note pressed   -> {address}, in its place")
     page.keyboard.press("Control+KeyW")
     page.wait_for_timeout(300)
-
 def unsaved(page) -> None:
     say("--- a tab of each kind, and nothing on disk ---")
-
     files = page.evaluate(STATE)["files"]
     for kind, row in (
         ("canvas", "New canvas"),
@@ -283,7 +253,6 @@ def unsaved(page) -> None:
         page.keyboard.press("Control+KeyT")
         page.locator(f'[data-new-here] .kind:has-text("{row}")').first.click()
         page.wait_for_timeout(800)
-
         state = page.evaluate(STATE)
         if state["active"] != {"kind": kind, "path": None}:
             wrong(f"{row} did not open an unsaved {kind}: {state['active']}")
@@ -291,13 +260,10 @@ def unsaved(page) -> None:
             say(f"{row:<22} -> a {kind} tab, path null")
         if state["files"] != files:
             wrong(f"{row} wrote something into the space: {state['files']}")
-
     say(f"the strip              -> {[one['shown'] for one in page.evaluate(STATE)['tabs']]}")
     page.screenshot(path=str(SHOTS / "unsaved-tabs.png"))
-
 def saving(page) -> None:
     say("--- saving: a place for a new tab, Ctrl+S, a web tab ---")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -316,13 +282,11 @@ def saving(page) -> None:
         wrong("Ctrl+S on an untouched plane wrote a file before it was answered")
     else:
         say("Control+S on a plane   -> asked where, nothing written")
-
     page.evaluate("() => window.ordenApp.workspace.openBlank()")
     page.wait_for_timeout(400)
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.type("Plan for Monday")
     page.wait_for_timeout(1200)
-
     state = page.evaluate(STATE)
     if (state["active"] or {}).get("path") is not None or "Plan for Monday.md" in state["files"]:
         wrong(f"typing into a new tab made it a file: {state['active']}")
@@ -331,7 +295,6 @@ def saving(page) -> None:
     else:
         say("typed into a new tab   -> still a tab, with its dot")
     page.screenshot(path=str(SHOTS / "typed-new-tab.png"))
-
     page.keyboard.press("Control+KeyS")
     DRIVE.wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] input')", "the layer")
     offered = page.locator('[role="dialog"] input').first.input_value()
@@ -343,14 +306,12 @@ def saving(page) -> None:
         "the note saved",
     )
     say(f"Control+S, Enter       -> {offered!r} saved as Plan for Monday.md")
-
     page.keyboard.press("Control+KeyS")
     page.wait_for_timeout(500)
     if page.locator('[role="dialog"] input').count():
         wrong("Ctrl+S on a note with a file asked something")
     else:
         say("Control+S on a note    -> nothing asked")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -370,10 +331,8 @@ def saving(page) -> None:
         "the web tab saved",
     )
     say(f"Control+S on a web tab -> {page.evaluate(STATE)['active']['path']}")
-
 def nothing_open(page) -> None:
     say("--- nothing open ---")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -381,13 +340,11 @@ def nothing_open(page) -> None:
         }"""
     )
     page.wait_for_timeout(800)
-
     state = page.evaluate(STATE)
     if state["tabs"]:
         wrong(f"closing every tab left something open: {state['tabs']}")
     else:
         say("every tab closed       -> nothing open, and nothing made")
-
     settles(page, "() => !!document.activeElement?.closest('[data-new-here]')")
     here = page.evaluate(HERE)
     if here["buttons"] != [one for line in LINES for one in line]:
@@ -398,7 +355,6 @@ def nothing_open(page) -> None:
         wrong(f"the keyboard did not land on the first button: {here['on']!r}")
     else:
         say("the keyboard           -> on New note, the first")
-
     marks = here["marks"]
     say(f"the marks              -> {marks}")
     if any(one is None for one in marks):
@@ -410,9 +366,7 @@ def nothing_open(page) -> None:
             wrong(f"the marks do not fill the same height of their grid: {sorted(sizes)}")
         else:
             say(f"one height             -> {sizes.pop()} of 24")
-
     page.screenshot(path=str(SHOTS / "nothing-open.png"))
-
     page.keyboard.press("ArrowLeft")
     page.wait_for_timeout(250)
     if page.evaluate(HERE)["on"] != "Pass":
@@ -425,7 +379,6 @@ def nothing_open(page) -> None:
     page.wait_for_timeout(250)
     if page.evaluate(HERE)["on"] != "New page note":
         wrong("the arrows do not walk the buttons across the lines")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(900)
     state = page.evaluate(STATE)
@@ -433,12 +386,9 @@ def nothing_open(page) -> None:
         wrong(f"pressing the button did not make a page note: {state['active']}")
     else:
         say("Enter                  -> an unsaved page note")
-
     held_over_the_buttons(page)
-
 def held_over_the_buttons(page) -> None:
     say("--- Ctrl+T over an empty pane ---")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -446,13 +396,11 @@ def held_over_the_buttons(page) -> None:
         }"""
     )
     page.wait_for_timeout(800)
-
     page.keyboard.press("KeyP")
     if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'pages'"):
         wrong(f"P over an empty pane made no page note: {page.evaluate(STATE)['active']}")
     else:
         say("P                      -> a page note")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -466,12 +414,10 @@ def held_over_the_buttons(page) -> None:
     else:
         say("Control+T              -> a new tab, as anywhere")
     page.screenshot(path=str(SHOTS / "over-nothing-open.png"))
-
 GROUPS = """() => [...document.querySelectorAll('.here[role=group] .kind')].map((one) => ({
   name: one.querySelector('.orden-row-label')?.textContent.trim(),
   group: one.getAttribute('data-group'),
 }))"""
-
 def grouped(page) -> None:
     say("--- a small window ---")
     page.set_viewport_size({"width": 820, "height": 520})
@@ -496,10 +442,8 @@ def grouped(page) -> None:
         wrong("a large window again still shows the groups")
     else:
         say("a large window again   -> every kind")
-
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
-
     context = browser.new_context(
         viewport={"width": 1440, "height": 900},
         user_agent=DESKTOP_AGENT,
@@ -511,12 +455,10 @@ def drive(browser) -> None:
     page.on("pageerror", lambda error: say(f"page error: {error}"))
     DRIVE.open(page)
     page.wait_for_timeout(800)
-
     say(f"{page.evaluate(SEED)} file(s) in the space")
     page.wait_for_timeout(500)
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
-
     palette(page)
     heading_key(page)
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
@@ -525,14 +467,10 @@ def drive(browser) -> None:
     saving(page)
     nothing_open(page)
     grouped(page)
-
     page.screenshot(path=str(SHOTS / "after.png"))
     context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
-
     return DRIVE.verdict("everything the drive checked was right")
-
 raise SystemExit(main())

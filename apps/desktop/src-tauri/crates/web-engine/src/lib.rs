@@ -1,5 +1,4 @@
 pub const MODULE: &str = "web-engine";
-
 mod engine;
 pub mod host;
 pub mod policy;

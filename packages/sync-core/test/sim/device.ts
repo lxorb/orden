@@ -28,9 +28,7 @@ import { Random } from './random'
 
 const LOCAL = 'local'
 const REMOTE = 'remote'
-
 const DOCUMENTS = new Set(['note', 'canvas', 'pages'])
-
 interface StoredDoc {
   confirmed: Uint8Array
   seq: number
@@ -41,12 +39,10 @@ interface StoredDoc {
   started?: string
   flight?: { push: string; count: number }
 }
-
 interface HeldNote extends Held {
   update: Uint8Array | null
   seq: number
 }
-
 interface Store {
   cursor: number
   entries: Map<string, TreeEntry>
@@ -63,14 +59,12 @@ interface Store {
   trash: Map<string, Trashed>
   restoring: Map<string, Trashed>
 }
-
 interface Trashed {
   kind: TreeEntry['kind']
   parent: string | null
   name: string
   text: string
 }
-
 function textOf(...updates: Uint8Array[]): string {
   const doc = new Y.Doc()
   for (const update of updates) Y.applyUpdateV2(doc, update)
@@ -78,29 +72,24 @@ function textOf(...updates: Uint8Array[]): string {
   doc.destroy()
   return text
 }
-
 function vectorOf(update: Uint8Array): Uint8Array {
   return Y.encodeStateVectorFromUpdateV2(update)
 }
-
 function spot(text: string, fraction: number): number {
   let at = Math.max(0, Math.min(text.length, Math.floor(fraction * text.length)))
   while (at < text.length && !/\s/.test(text.charAt(at))) at++
   return at
 }
-
 function withWords(text: string, fraction: number, words: string): string {
   if (!text) return words
   const at = spot(text, fraction)
   return `${text.slice(0, at)} ${words}${text.slice(at)}`
 }
-
 function withoutWords(text: string, fraction: number, length: number): string {
   const from = spot(text, fraction)
   const to = spot(text, Math.min(1, (from + length) / Math.max(1, text.length)))
   return text.slice(0, from) + text.slice(Math.max(from, to))
 }
-
 export class ReferenceDevice implements DeviceAdapter {
   private store: Store
   private live = new Map<string, Y.Doc>()
@@ -109,7 +98,6 @@ export class ReferenceDevice implements DeviceAdapter {
   private life = 0
   private passing = false
   running = true
-
   constructor(
     readonly id: string,
     private readonly clock: Clock,
@@ -160,15 +148,12 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     this.build()
   }
-
   private now(): number {
     return this.clock.now + this.skew
   }
-
   private freshClient(): number {
     return this.random.int(2 ** 31) + 1
   }
-
   private open(id: string, stored: StoredDoc): Y.Doc {
     const doc = new Y.Doc()
     doc.clientID = stored.client
@@ -183,19 +168,16 @@ export class ReferenceDevice implements DeviceAdapter {
     this.live.set(id, doc)
     return doc
   }
-
   private build() {
     for (const doc of this.live.values()) doc.destroy()
     this.live = new Map()
     this.unsaved = new Map()
     for (const [id, stored] of this.store.docs) this.open(id, stored)
   }
-
   private textNow(id: string): string | null {
     const doc = this.live.get(id)
     return doc ? doc.getText(TEXT).toJSON() : null
   }
-
   private edit(id: string, to: string): boolean {
     const doc = this.live.get(id)
     const stored = this.store.docs.get(id)
@@ -206,7 +188,6 @@ export class ReferenceDevice implements DeviceAdapter {
     stored.at = this.now()
     return true
   }
-
   private save() {
     for (const [id, updates] of this.unsaved) {
       const stored = this.store.docs.get(id)
@@ -216,11 +197,9 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     this.unsaved = new Map()
   }
-
   private hasPending(id: string): boolean {
     return (this.store.docs.get(id)?.pending.length ?? 0) > 0 || (this.unsaved.get(id)?.length ?? 0) > 0
   }
-
   private drop(id: string) {
     this.live.get(id)?.destroy()
     this.live.delete(id)
@@ -228,14 +207,12 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.docs.delete(id)
     this.store.written.delete(id)
   }
-
   private restore(id: string) {
     const kept = this.store.trash.get(id)
     this.store.trash.delete(id)
     if (kept) this.store.restoring.set(id, kept)
     this.queue({ op: this.nextOp(), t: 'restore', id, seen: this.store.cursor })
   }
-
   private remade(id: string, kept: Trashed) {
     const shown = this.shown().entries
     const parent = kept.parent !== null && shown.get(kept.parent)?.deleted === false ? kept.parent : null
@@ -252,7 +229,6 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     this.made(parent, kept.name, kept.text, undefined, id)
   }
-
   private made(parent: string | null, name: string, text: string, started?: string, again?: string): string {
     if (again === undefined) this.store.made += 1
     const id = again ?? `${this.id}-${String(this.store.made)}`
@@ -268,7 +244,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.docs.set(id, stored)
     const doc = this.open(id, stored)
     doc.transact(() => doc.getText(TEXT).insert(0, text), LOCAL)
-
     const op: Op = {
       op: again === undefined ? `${id}.c` : this.nextOp(),
       t: 'create',
@@ -282,51 +257,41 @@ export class ReferenceDevice implements DeviceAdapter {
     this.queue(op)
     return id
   }
-
   private opCount = 0
-
   private queue(op: Op) {
     this.store.outbox.push({ op, sent: false })
   }
-
   private nextOp(): string {
     this.opCount += 1
     return `${this.id}.${String(this.life)}.${String(this.opCount)}.${String(this.store.made)}`
   }
-
   private shown(): TreeState {
     const state = treeState(structuredClone([...this.store.entries.values()]), this.store.cursor)
     for (const { op } of this.store.outbox) applyOp(state, op, { role: 'owner', device: this.id })
     return state
   }
-
   private liveEntries(kind: 'note' | 'folder' | 'any'): TreeEntry[] {
     return [...this.shown().entries.values()]
       .filter((entry) => !entry.deleted)
       .filter((entry) => kind === 'any' || (kind === 'folder' ? entry.kind === 'folder' : DOCUMENTS.has(entry.kind)))
       .sort((a, b) => (a.id < b.id ? -1 : 1))
   }
-
   private chosen(list: readonly TreeEntry[], pick: Pick): TreeEntry | undefined {
     return list[Math.min(list.length - 1, Math.floor(pick * list.length))]
   }
-
   private writable(pick: Pick): string | null {
     const notes = this.liveEntries('note').filter((entry) => this.live.has(entry.id) && !this.store.held.has(entry.id))
     return this.chosen(notes, pick)?.id ?? null
   }
-
   private folderFor(pick: Pick | null): string | null {
     if (pick === null) return null
     return this.chosen(this.liveEntries('folder'), pick)?.id ?? null
   }
-
   async act(action: Action): Promise<void> {
     if (!this.running) return
     this.perform(action)
     return Promise.resolve()
   }
-
   private perform(action: Action) {
     switch (action.t) {
       case 'type': {
@@ -399,7 +364,6 @@ export class ReferenceDevice implements DeviceAdapter {
         const inside = (id: string | null): boolean =>
           id !== null && (id === target.id || inside(shown.entries.get(id)?.parent ?? null))
         const gone = [...shown.entries.values()].filter((entry) => !entry.deleted && inside(entry.id))
-
         let seen = this.store.cursor
         for (const entry of gone) {
           const pulled = this.store.docs.get(entry.id)?.pulledTo ?? 0
@@ -407,7 +371,6 @@ export class ReferenceDevice implements DeviceAdapter {
           if (pulled < newest) seen = Math.min(seen, pulled)
         }
         this.queue({ op: this.nextOp(), t: 'delete', id: target.id, seen })
-
         for (const entry of gone) {
           this.store.trash.set(entry.id, {
             kind: entry.kind,
@@ -456,20 +419,17 @@ export class ReferenceDevice implements DeviceAdapter {
         return
     }
   }
-
   private foreign(action: Extract<Action, { t: 'edit-file' }>) {
     const id = this.writable(action.note)
     if (!id) return
     const ours = this.textNow(id) ?? ''
     const ancestor = this.store.written.get(id) ?? ours
     const file = withoutWords(withWords(ancestor, action.at, action.words), 1 - action.at, action.cut)
-
     if (ours === ancestor) {
       this.edit(id, file)
       this.save()
       return
     }
-
     const times = { local: this.now(), remote: this.store.docs.get(id)?.at ?? 0 }
     const verdict = diverge(ancestor, file, ours, times)
     this.log.push({
@@ -488,11 +448,9 @@ export class ReferenceDevice implements DeviceAdapter {
     this.edit(id, verdict.resolution)
     this.save()
   }
-
   private hold(note: HeldNote) {
     this.store.held.set(note.id, note)
   }
-
   private keepLosers(
     id: string,
     verdict: { overlaps: Divergence['overlaps']; settled: Divergence['settled'] },
@@ -507,7 +465,6 @@ export class ReferenceDevice implements DeviceAdapter {
       this.store.keeps.push({ id, text: remote, device: this.id })
     }
   }
-
   async pass(link: Link): Promise<void> {
     if (!this.running || this.passing) return
     this.passing = true
@@ -525,7 +482,6 @@ export class ReferenceDevice implements DeviceAdapter {
       if (this.life === life) this.passing = false
     }
   }
-
   private async sendKeeps(link: Link, alive: () => boolean): Promise<boolean> {
     while (this.store.keeps.length) {
       const keep = this.store.keeps[0]
@@ -536,27 +492,22 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     return true
   }
-
   private async sendOps(link: Link, alive: () => boolean): Promise<boolean> {
     if (!this.store.outbox.length) return true
-
     const sent = this.store.outbox.filter((one) => one.sent)
     const waiting = coalesce(this.store.outbox.filter((one) => !one.sent).map((one) => one.op))
     this.store.outbox = [...sent, ...waiting.map((op) => ({ op, sent: false }))]
-
     const batch = this.store.outbox.slice(0, OPS_BATCH)
     for (const one of batch) one.sent = true
     const reply = await link('ops', frame({ ops: batch.map((one) => ({ ...one.op })) }))
     if (!alive() || reply === null) return false
     const answer = opsResponseOf(unframe(reply))
     if (!answer) throw new Error(`${this.id}: ops answer unreadable`)
-
     for (const result of answer.results) {
       const index = this.store.outbox.findIndex((one) => one.op.op === result.op)
       const one = this.store.outbox[index]
       if (!one) continue
       this.store.outbox.splice(index, 1)
-
       if ('merged' in result && one.op.t === 'create') {
         this.store.merging.set(one.op.id, { into: result.merged, create: one.op })
       } else if ('ok' in result && (one.op.t === 'create' || one.op.t === 'mkdir')) {
@@ -573,7 +524,6 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     return true
   }
-
   private answered(op: Op, result: OpResult) {
     if (!('ok' in result)) return
     const had = this.store.entries.get(op.id)
@@ -604,14 +554,12 @@ export class ReferenceDevice implements DeviceAdapter {
     else entry.pos = pos
     this.store.entries.set(op.id, entry)
   }
-
   private async readFeed(link: Link, alive: () => boolean): Promise<boolean> {
     for (;;) {
       const reply = await link('feed', frame({ since: this.store.cursor }))
       if (!alive() || reply === null) return false
       const page = feedPageOf(unframe(reply))
       if (!page) throw new Error(`${this.id}: feed unreadable`)
-
       for (const item of page.items) {
         const had = this.store.entries.get(item.id)
         if (had && had.seq >= item.seq) continue
@@ -626,17 +574,14 @@ export class ReferenceDevice implements DeviceAdapter {
           ...(item.pos === undefined ? {} : { pos: item.pos }),
         })
         this.store.known.add(item.id)
-
         if (item.deleted && !this.hasPending(item.id) && !this.store.held.has(item.id)) {
           this.drop(item.id)
         }
       }
-
       this.store.cursor = Math.max(this.store.cursor, page.cursor)
       if (!page.more) return true
     }
   }
-
   private async pullDocs(link: Link, alive: () => boolean): Promise<boolean> {
     const wanted = [...this.store.entries.values()].filter((entry) => {
       if (entry.deleted || !DOCUMENTS.has(entry.kind) || this.store.held.has(entry.id)) return false
@@ -645,7 +590,6 @@ export class ReferenceDevice implements DeviceAdapter {
       return !stored || entry.docSeq > stored.pulledTo
     })
     if (!wanted.length) return true
-
     const batch = wanted.slice(0, PULL_BATCH)
     const asked = new Map(batch.map((entry) => [entry.id, entry.docSeq]))
     const from = new Map(batch.map((entry) => [entry.id, this.store.docs.get(entry.id)]))
@@ -665,12 +609,10 @@ export class ReferenceDevice implements DeviceAdapter {
     if (!alive() || reply === null) return false
     const answer = pullResponseOf(unframe(reply))
     if (!answer) throw new Error(`${this.id}: pull answer unreadable`)
-
     for (const doc of answer.docs) {
       if (!('update' in doc)) continue
       if (this.hasPending(doc.id) || this.store.held.has(doc.id)) continue
       if (this.store.docs.get(doc.id) !== from.get(doc.id)) continue
-
       let stored = this.store.docs.get(doc.id)
       if (!stored) {
         stored = {
@@ -694,7 +636,6 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     return true
   }
-
   private mergeDays() {
     for (const [mine, { into, create }] of [...this.store.merging]) {
       const stored = this.store.docs.get(mine)
@@ -712,7 +653,6 @@ export class ReferenceDevice implements DeviceAdapter {
       }
       const theirs = this.textNow(into)
       if (theirs === null || this.hasPending(into) || this.store.held.has(into)) continue
-
       const base = stored.started ?? ''
       const times: Times = { local: stored.at, remote: this.store.docs.get(into)?.at ?? 0 }
       const verdict = diverge(base, words, theirs, times)
@@ -735,13 +675,11 @@ export class ReferenceDevice implements DeviceAdapter {
       this.drop(mine)
     }
   }
-
   private async pushDocs(link: Link, alive: () => boolean): Promise<boolean> {
     const ready = [...this.store.docs.entries()].filter(
       ([id, stored]) => stored.pending.length && this.store.known.has(id) && !this.store.held.has(id),
     )
     if (!ready.length) return true
-
     const batch = ready.slice(0, PUSH_BATCH).map(([id, stored]) => {
       if (!stored.flight) {
         this.store.pushes += 1
@@ -769,12 +707,10 @@ export class ReferenceDevice implements DeviceAdapter {
     if (!alive() || reply === null) return false
     const answer = pushResponseOf(unframe(reply))
     if (!answer) throw new Error(`${this.id}: push answer unreadable`)
-
     for (const doc of answer.docs) {
       const sent = batch.find((one) => one.id === doc.id)
       const stored = this.store.docs.get(doc.id)
       if (!sent || !stored || stored.flight?.push !== sent.flight.push) continue
-
       if ('ok' in doc) {
         const count = sent.flight.count
         stored.confirmed = Y.mergeUpdatesV2([stored.confirmed, ...stored.pending.slice(0, count)])
@@ -788,11 +724,9 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     return true
   }
-
   private moved(id: string, stored: StoredDoc, update: Uint8Array, seq: number, at: number) {
     const live = this.live.get(id)
     if (!live) return
-
     const base = textOf(stored.confirmed)
     const local = live.getText(TEXT).toJSON()
     const remote = textOf(stored.confirmed, update)
@@ -804,7 +738,6 @@ export class ReferenceDevice implements DeviceAdapter {
       this.hold({ id, base, local, remote, times, update, seq })
       return
     }
-
     Y.applyUpdateV2(live, update, REMOTE)
     stored.confirmed = Y.mergeUpdatesV2([stored.confirmed, update])
     stored.seq = seq
@@ -812,7 +745,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.edit(id, verdict.resolution)
     this.save()
   }
-
   held(): readonly Held[] {
     return [...this.store.held.values()].map(({ id, base, local, remote, times }) => ({
       id,
@@ -822,13 +754,11 @@ export class ReferenceDevice implements DeviceAdapter {
       times,
     }))
   }
-
   async answer(id: string, choice: Answer): Promise<void> {
     const note = this.store.held.get(id)
     const stored = this.store.docs.get(id)
     if (!note || !stored || !this.running) return
     this.store.held.delete(id)
-
     if (note.update) {
       if (choice === 'mine') {
         const live = this.live.get(id)
@@ -855,7 +785,6 @@ export class ReferenceDevice implements DeviceAdapter {
     } else if (choice === 'theirs') {
       this.store.keeps.push({ id, text: note.local, device: this.id })
     }
-
     if (choice === 'both') {
       const entry = this.shown().entries.get(id)
       const name = entry?.name ?? 'Note.md'
@@ -866,7 +795,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.save()
     return Promise.resolve()
   }
-
   async quit(): Promise<void> {
     this.save()
     this.store.clean = true
@@ -875,7 +803,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.passing = false
     return Promise.resolve()
   }
-
   async crash(): Promise<void> {
     this.store.clean = false
     this.running = false
@@ -886,7 +813,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.unsaved = new Map()
     return Promise.resolve()
   }
-
   async launch(): Promise<void> {
     if (this.running) return
     if (!this.store.clean) for (const stored of this.store.docs.values()) stored.client = this.freshClient()
@@ -895,7 +821,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.build()
     return Promise.resolve()
   }
-
   async view(): Promise<View> {
     const entries = this.liveEntries('any').map(({ id, kind, parent, name, pos }) => ({
       id,
@@ -913,13 +838,11 @@ export class ReferenceDevice implements DeviceAdapter {
     }
     return Promise.resolve({ entries, texts })
   }
-
   classified(): Classification[] {
     const out = this.log
     this.log = []
     return out
   }
-
   settled(): boolean {
     return (
       !this.store.outbox.length &&
@@ -929,7 +852,6 @@ export class ReferenceDevice implements DeviceAdapter {
       [...this.store.docs.keys()].every((id) => !this.hasPending(id))
     )
   }
-
   get cursor(): number {
     return this.store.cursor
   }

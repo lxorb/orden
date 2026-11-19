@@ -3,14 +3,11 @@ import { CALM, failedSeeds, type Options, roads, simulate } from '@orden/sync-co
 import { WorkerAccount } from './sync2-account'
 
 let made: WorkerAccount[] = []
-
 function closeAll() {
   for (const one of made) one.close()
   made = []
 }
-
 afterEach(closeAll)
-
 const worker = (options: Options) =>
   simulate({
     ...options,
@@ -20,11 +17,9 @@ const worker = (options: Options) =>
       return account
     },
   })
-
 describe('the Worker as the simulator’s account', () => {
   roads((script) => worker({ seed: 7, devices: 2, faults: CALM, script }), false)
 })
-
 test.each([
   ['random walks hold every check', 25, {}],
   ['rows arranged at random end in the same place everywhere', 10, { devices: 4, steps: 60, mix: 'order' }],

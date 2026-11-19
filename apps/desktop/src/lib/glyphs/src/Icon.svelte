@@ -13,17 +13,13 @@
     tint?: string | null
     fallback?: IconNode | null
   } = $props()
-
   const drawing = $derived(iconLibrary.drawing(icon))
   let broken = $state<string | null>(null)
   const wanted = $derived(iconLibrary.setFor(icon))
-
   $effect(() => {
     if (wanted !== null) iconLibrary.load(wanted)
   })
-
   const stroked = $derived(drawing?.kind === 'stroked' ? drawing.icon : (fallback ?? null))
-
   const painted = $derived(readTint(tint))
   const colour = $derived(
     painted && drawing && drawing.kind !== 'emoji' && takesTint(icon) ? accentColour(painted, theme.current) : null,
@@ -58,16 +54,13 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .drawn {
     fill: currentColor;
     stroke: none;
   }
-
   .picture {
     object-fit: contain;
   }
-
   .emoji {
     display: flex;
     align-items: center;

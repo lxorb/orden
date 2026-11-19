@@ -6,7 +6,6 @@ const world = vi.hoisted(() => ({
   hits: [] as { name: string; text: string }[],
   queries: [] as unknown[],
 }))
-
 vi.mock('../../ai-providers/src/api', () => ({
   ai: { providerFor: (feature: string) => (feature === 'ask' ? world.chosen : null) },
   complete: (ask: { provider: { id: string }; model: string; messages: { role: string; content: string }[] }) => {
@@ -30,16 +29,13 @@ vi.mock('../../search/src/api', () => ({
 vi.mock('../../workspace/src/api', () => ({
   workspace: { activeSpace: { root: '/space' }, leftOutOf: () => [] },
 }))
-
 const { answerOf, NOT_SET } = await import('./asking')
-
 beforeEach(() => {
   world.chosen = null
   world.asked = []
   world.hits = []
   world.queries = []
 })
-
 describe('a question on the glasses', () => {
   for (const kind of ['claude', 'openai', 'gemini', 'compatible']) {
     test(`asks the default account, here ${kind}`, async () => {
@@ -52,7 +48,6 @@ describe('a question on the glasses', () => {
       expect(world.asked[0]?.messages.at(-1)?.content).toContain('Trip.md: The train leaves at 9:40')
     })
   }
-
   test('says AI is not set up when there is no default account, and asks nobody', async () => {
     expect(await answerOf('When does the train leave?')).toBe(NOT_SET)
     expect(world.asked).toEqual([])

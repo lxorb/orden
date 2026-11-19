@@ -5,25 +5,20 @@ import { LINK_GONE, NO_SUCH_LINK } from './refusals'
 
 const AN_HOUR = 60 * 60 * 1000
 const OPENS_FROM_ONE_MACHINE = 300
-
 const PRIVATE = {
   'cache-control': 'no-store',
   'referrer-policy': 'no-referrer',
   'x-robots-tag': 'noindex',
 } as const
-
 export const openLink = new Hono<{ Bindings: Env }>()
-
 function answer(context: Context<{ Bindings: Env }>, body: object, status: 200 | 404 | 410 | 429) {
   return context.json(body, status, PRIVATE)
 }
-
 openLink.get('/:id', async (context) => {
   const machine = machineOf(context.req)
   if (machine && !(await within(context.env, 'pass-link', machine, OPENS_FROM_ONE_MACHINE, AN_HOUR))) {
     return answer(context, { error: TRY_IN_AN_HOUR }, 429)
   }
-
   const id = context.req.param('id')
   const db = context.env.DB
   const opened = await db
@@ -35,16 +30,13 @@ openLink.get('/:id', async (context) => {
     )
     .bind(id, now())
     .first<{ body: string; expires_at: number; max_views: number | null; views: number }>()
-
   if (!opened) {
     const there = await db.prepare('select 1 as one from pass_links where id = ?').bind(id).first()
     return there ? answer(context, { error: LINK_GONE }, 410) : answer(context, { error: NO_SUCH_LINK }, 404)
   }
-
   if (opened.max_views !== null && opened.views >= opened.max_views) {
     await db.prepare(`update pass_links set body = '' where id = ?`).bind(id).run()
   }
-
   const read: LinkOpened = {
     body: opened.body,
     expires: opened.expires_at,

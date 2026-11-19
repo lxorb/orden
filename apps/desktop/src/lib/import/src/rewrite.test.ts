@@ -12,7 +12,6 @@ test('a wikilink to a name holding a dollar sign keeps the name it was written w
   )
   expect(out).toBe('See [[/Inbox/Projects/$$ Plan]] and [[/Inbox/Projects/A$&B]].')
 })
-
 test('a path written into a link reads back as the same path, blanks and marks and all', () => {
   for (const name of [
     'a\u00a0b.pdf',
@@ -32,7 +31,6 @@ test('a path written into a link reads back as the same path, blanks and marks a
   }
   expect(encodeTarget('Café.md')).toBe('Café.md')
 })
-
 test('links are found as the app finds them: over two lines, in a definition, never in maths', () => {
   const out = linksFollowed(
     'A [two\nlines](Old.md) and $[x](Old.md)$.\n\n[d]: Old.md "Old"\n',

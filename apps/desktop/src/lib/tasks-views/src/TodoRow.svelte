@@ -16,7 +16,6 @@
     ontoggle: (done: boolean) => void
     onopen: () => void
   } = $props()
-
   const late = $derived(!todo.done && todo.deadline !== null && todo.deadline < today)
   const subtasksDone = $derived(todo.subtasks.filter((one) => one.done).length)
 </script>
@@ -62,16 +61,13 @@
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-row);
   }
-
   .row.open {
     background: var(--surface-selected);
   }
-
   .tick {
     flex: none;
     margin-top: 0.3em;
   }
-
   .body {
     display: flex;
     flex: 1;
@@ -85,19 +81,16 @@
     font: inherit;
     text-align: start;
   }
-
   .done .title {
     color: var(--muted);
     text-decoration: line-through;
   }
-
   .title {
     display: flex;
     gap: var(--space-1);
     align-items: center;
     overflow-wrap: anywhere;
   }
-
   .priority {
     flex: none;
     width: 0.5em;
@@ -105,15 +98,12 @@
     border-radius: 50%;
     background: var(--muted);
   }
-
   .priority.p2 {
     background: var(--accent);
   }
-
   .priority.p3 {
     background: var(--danger);
   }
-
   .meta {
     display: flex;
     flex-wrap: wrap;
@@ -121,11 +111,9 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .late {
     color: var(--danger);
   }
-
   .label {
     padding: 0 var(--space-1);
     border-radius: var(--radius-sm);

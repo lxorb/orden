@@ -7,7 +7,6 @@ import { highlightSelection, setHighlightColour, toggleHighlight } from './highl
 const PLAIN = highlightTone(null)
 const RED = highlightTone(1)
 const GREEN = highlightTone(4)
-
 function run(command: StateCommand, marked: string): string {
   const doc = marked.replace(/[[\]]/g, '')
   const state = EditorState.create({
@@ -15,12 +14,10 @@ function run(command: StateCommand, marked: string): string {
     selection: EditorSelection.range(marked.indexOf('['), marked.indexOf(']') - 1),
     extensions: [markdown({ base: markdownLanguage })],
   })
-
   let next = state
   command({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
   return next.doc.toString()
 }
-
 describe('highlighting the selection', () => {
   test.each([
     [toggleHighlight(RED), 'be ==🔴 careful== here', 'be [careful] here'],
@@ -33,7 +30,6 @@ describe('highlighting the selection', () => {
     [toggleHighlight(RED), 'be ==🔴 careful== here', 'be [==careful==] here'],
   ])('%j', (input, wanted, extra) => expect(run(input, extra)).toEqual(wanted))
 })
-
 describe('the colour that sticks', () => {
   test('is what the shortcut and the bar’s own button write', () => {
     setHighlightColour(GREEN)
@@ -43,7 +39,6 @@ describe('the colour that sticks', () => {
       setHighlightColour(PLAIN)
     }
   })
-
   test('is the plain highlight until somebody chooses one', () => {
     expect(run(highlightSelection, 'be [careful] here')).toBe('be ==careful== here')
   })

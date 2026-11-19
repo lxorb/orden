@@ -8,7 +8,6 @@ describe('a key from any app, handed to the system', () => {
     expect(accelerator('Mod-Alt-1', 'linux')).toBe('Control+Alt+Digit1')
     expect(accelerator('Mod-Alt-F4', 'win')).toBe('Control+Alt+F4')
   })
-
   test("quick add's keys", () => {
     expect(accelerator('Ctrl-Alt-Space', 'win')).toBe('Control+Alt+Space')
     expect(accelerator('Mod-Shift-a', 'win')).toBe('Control+Shift+A')
@@ -16,7 +15,6 @@ describe('a key from any app, handed to the system', () => {
     expect(accelerator('Ctrl-Alt--', 'win')).toBe('Control+Alt+Minus')
     expect(accelerator('F9', 'win')).toBe('F9')
   })
-
   test('the keys above the arrows that every keyboard names', () => {
     expect(accelerator('Ctrl-Insert', 'win')).toBe('Control+Insert')
     expect(accelerator('Ctrl-Alt-Pause', 'linux')).toBe('Control+Alt+Pause')
@@ -24,7 +22,6 @@ describe('a key from any app, handed to the system', () => {
     expect(accelerator('Ctrl-PrintScreen', 'win')).toBe('Control+PrintScreen')
     expect(accelerator('Insert', 'win')).toBeNull()
   })
-
   test('is refused where it would take a key from every app', () => {
     expect(accelerator('Shift-k', 'win')).toBeNull()
     expect(accelerator('k', 'win')).toBeNull()
@@ -32,7 +29,6 @@ describe('a key from any app, handed to the system', () => {
     expect(accelerator(null, 'win')).toBeNull()
     expect(accelerator('Shift Shift', 'win')).toBeNull()
   })
-
   test('is never the Windows or Super key outside a Mac, which the desktop keeps', () => {
     expect(accelerator('Meta-Space', 'linux')).toBeNull()
     expect(accelerator('Alt-Meta-q', 'win')).toBeNull()

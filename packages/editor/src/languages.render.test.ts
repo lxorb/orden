@@ -18,23 +18,19 @@ const highlighter = tagHighlighter([
   { tag: tags.inserted, class: 'inserted' },
   { tag: tags.deleted, class: 'deleted' },
 ])
-
 async function colouring(word: string, code: string) {
   const languages = await fenceLanguages()
   const description = LanguageDescription.matchLanguageName(languages, word, true)
   await description?.load()
-
   const document = `Before.\n\n\`\`\`${word}\n${code}\n\`\`\`\n\nAfter.\n`
   const parser = markdown({
     base: markdownLanguage,
     codeLanguages: languages,
     extensions: ordenMarkdownExtensions,
   }).language.parser
-
   const from = document.indexOf(code)
   const groups = new Set<string>()
   let coloured = 0
-
   highlightTree(
     parser.parse(document),
     highlighter,
@@ -46,10 +42,8 @@ async function colouring(word: string, code: string) {
     from,
     from + code.length,
   )
-
   return { groups: [...groups].sort(), share: coloured / code.length }
 }
-
 const fences: [string, string, string[]][] = [
   ['py', 'def greet(name):\n    # hello\n    return f"hi {name}"', ['comment', 'keyword', 'string']],
   ['rs', 'fn main() {\n    let n: u32 = 3; // three\n}', ['comment', 'keyword', 'number']],
@@ -73,20 +67,16 @@ const fences: [string, string, string[]][] = [
   ['ini', '[server]\nhost = localhost\nport = 8080', ['property']],
   ['diff', '--- a/file\n+++ b/file\n@@ -1 +1 @@\n-old line\n+new line', ['deleted', 'inserted']],
 ]
-
 describe('a fence, coloured the way the editor colours it', () => {
   for (const [word, code, wanted] of fences) {
     test(`\`\`\`${word}`, async () => {
       const { groups, share } = await colouring(word, code)
-
       for (const group of wanted) expect(groups, `${word}: ${groups.join()}`).toContain(group)
       expect(share, `${word} coloured share`).toBeGreaterThan(0.1)
     })
   }
-
   test('a fence in a language nobody knows is left plain', async () => {
     const { groups, share } = await colouring('no-such-language', 'a b c\n"d"')
-
     expect(groups).toEqual([])
     expect(share).toBe(0)
   })

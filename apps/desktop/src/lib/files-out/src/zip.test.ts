@@ -15,7 +15,6 @@ function methods(zip: Uint8Array): Record<string, number> {
   }
   return found
 }
-
 test('what is packed already is stored as it is, and words are squeezed', async () => {
   const picture = new Uint8Array(4096).map((_, at) => at % 7)
   const zip = await zipOf([
@@ -24,7 +23,6 @@ test('what is packed already is stored as it is, and words are squeezed', async 
     { path: 'a/three.md', body: 'words '.repeat(500) },
     { path: 'a/four.png', body: picture, stored: false },
   ])
-
   expect(methods(zip)).toMatchObject({
     'a/one.png': 0,
     'a/two.JPG': 0,

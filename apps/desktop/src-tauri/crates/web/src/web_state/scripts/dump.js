@@ -1,8 +1,6 @@
 globalThis.ordenDump = async function ordenDump(op, argsJson) {
   const args = JSON.parse(argsJson)
-
   class Unmovable extends Error {}
-
   const VIEWS = [
     'Int8Array',
     'Uint8Array',
@@ -17,7 +15,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
     'BigInt64Array',
     'BigUint64Array',
   ].filter((name) => typeof globalThis[name] === 'function')
-
   function base64(bytes) {
     let text = ''
     for (let at = 0; at < bytes.length; at += 0x8000) {
@@ -25,11 +22,9 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
     }
     return btoa(text)
   }
-
   function kind(value) {
     return Object.prototype.toString.call(value).slice(8, -1)
   }
-
   function algorithmOf(algorithm) {
     const out = {}
     for (const [key, value] of Object.entries(algorithm)) {
@@ -39,12 +34,10 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
     }
     return out
   }
-
   function encoder() {
     const seen = new Map()
     const later = []
     const counted = { size: 0 }
-
     function number(value) {
       if (Object.is(value, -0)) return ['n', '-0']
       if (Number.isNaN(value)) return ['n', 'NaN']
@@ -53,25 +46,21 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
       counted.size += 8
       return value
     }
-
     function pairs(entries) {
       const out = []
       for (const [key, value] of entries) out.push(encode(key), encode(value))
       return out
     }
-
     function bytesOf(buffer, offset, length) {
       counted.size += Math.ceil((length * 4) / 3)
       return base64(new Uint8Array(buffer, offset, length))
     }
-
     function later64(node, read) {
       later.push(async () => {
         node[node.length - 1] = base64(new Uint8Array(await read()))
       })
       return node
     }
-
     function encode(value) {
       switch (typeof value) {
         case 'string':
@@ -92,12 +81,10 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
           throw new Unmovable(`a ${typeof value} cannot be stored`)
       }
       if (value === null) return null
-
       const known = seen.get(value)
       if (known !== undefined) return ['#', known]
       seen.set(value, seen.size)
       counted.size += 4
-
       const tag = kind(value)
       switch (tag) {
         case 'Object':
@@ -163,7 +150,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
           throw new Unmovable(`a ${tag} cannot be carried`)
       }
     }
-
     return {
       root(value) {
         seen.clear()
@@ -175,7 +161,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
       },
     }
   }
-
   function stored(storage) {
     try {
       const out = []
@@ -188,7 +173,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
       return null
     }
   }
-
   async function listed(asked) {
     let databases = []
     try {
@@ -205,7 +189,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
       databases,
     }
   }
-
   function opened(name) {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(name)
@@ -219,7 +202,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
       request.onblocked = () => reject(new Error(`${name} is held open elsewhere`))
     })
   }
-
   function walked(store, each) {
     return new Promise((resolve, reject) => {
       const request = store.openCursor()
@@ -240,17 +222,14 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
       }
     })
   }
-
   async function dumped(name, most) {
     const db = await opened(name)
     if (!db) return { skip: 'gone', size: 0 }
-
     const kept = encoder()
     const names = [...db.objectStoreNames]
     const stores = []
     let skip = null
     let size = 0
-
     function each(records, key, value) {
       if (skip === 'unmovable') return
       try {
@@ -272,7 +251,6 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
         skip = 'unmovable'
       }
     }
-
     try {
       const transaction = names.length ? db.transaction(names, 'readonly') : null
       await Promise.all(
@@ -301,11 +279,9 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
     } finally {
       db.close()
     }
-
     if (skip) return { skip, size }
     return { size, db: { name, version: db.version, stores } }
   }
-
   if (op === 'list') return JSON.stringify(await listed(args))
   if (op === 'database') return JSON.stringify(await dumped(args.name, args.most ?? Infinity))
   throw new Error(`there is no dump called ${op}`)

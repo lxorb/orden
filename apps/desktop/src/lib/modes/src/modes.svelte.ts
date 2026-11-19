@@ -66,50 +66,35 @@ const STALE = [
   'undatedInToday',
 ]
 const OWED_KEY = 'orden:modes-owed'
-
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
-
 export const INTERFACE_ZOOMS = [0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
-
 export const KEEP_MONTH = 30
 export const KEEP_YEAR = 365
 export const KEEP_VERSIONS: readonly number[] = [KEEP_MONTH, KEEP_YEAR]
-
 export const REMIND_BEFORE: readonly number[] = [0, 5, 15, 30, 60, -1]
-
 const ROLLBACK_STEPS: readonly number[] = [1, 7, 30, 90, 180, 365]
-
 export function rollbackSteps(keep: number): number[] {
   return ROLLBACK_STEPS.filter((one) => one <= keep)
 }
-
 export const WIDTHS = [32, 38, 42, 50, 60, 80] as const
-
 export const LIGATURE_SCOPES: readonly LigatureScope[] = ['off', 'code', 'all']
-
 export function ligatureScope(value: unknown): LigatureScope | null {
   if (typeof value === 'boolean') return value ? 'all' : 'off'
   return LIGATURE_SCOPES.find((one) => one === value) ?? null
 }
-
 export const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6] as const
 export type GlassesBreak = (typeof GLASSES_BREAKS)[number]
-
 export function glassesBreak(value: unknown): GlassesBreak | null {
   const wanted = typeof value === 'string' ? Number(value) : value
   return GLASSES_BREAKS.find((one) => one === wanted) ?? null
 }
-
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
-
 export const FRAMES = ['orden', 'system'] as const
 export type Frame = (typeof FRAMES)[number]
-
 export function frameChoice(value: unknown): Frame | null {
   if (value === 'nib') return 'orden'
   return FRAMES.find((one) => one === value) ?? null
 }
-
 interface Saved {
   source: boolean
   readOnly: boolean
@@ -156,68 +141,52 @@ interface Saved {
   hardBreaks: boolean
   linkFormat: LinkFormat
 }
-
 export const VIM_WORDS: Record<VimMode, string> = {
   normal: 'NORMAL',
   insert: 'INSERT',
   visual: 'VISUAL',
   replace: 'REPLACE',
 }
-
 function clamp(value: number, steps: readonly number[]): number {
   return steps.reduce((best, one) => (Math.abs(one - value) < Math.abs(best - value) ? one : best))
 }
-
 function step(steps: readonly number[], current: number, direction: number, fallback: number) {
   if (!Number.isFinite(current)) return fallback
   if (direction > 0) return steps.find((one) => one > current) ?? current
   if (direction < 0) return [...steps].reverse().find((one) => one < current) ?? current
   return current
 }
-
 export type FontPlace = 'ui' | 'content' | 'mono'
-
 export const FONT_PLACES: readonly FontPlace[] = ['ui', 'content', 'mono']
-
 export function familyName(value: unknown): string {
   if (!isString(value)) return ''
   const name = value.trim().replace(/\s+/g, ' ')
   return /^[\p{L}\p{N}][\p{L}\p{N} ._&+-]{0,63}$/u.test(name) ? name : ''
 }
-
 function text(value: unknown, fallback: string): string {
   return isString(value) && value ? value : fallback
 }
-
 function measure(value: unknown, fallback: number): number {
   return isNumber(value) && value !== 0 ? value : fallback
 }
-
 function marksOf(value: unknown): Marks {
   if (!isRecord(value)) return { ...MARKS }
-
   const out = { ...MARKS }
   for (const name of Object.keys(MARKS) as (keyof Marks)[]) {
     const found = value[name]
     if (typeof found === 'boolean') out[name] = found
   }
-
   return out
 }
-
 const LONGEST_PHRASE = 60
-
 function wordsOf(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {}
-
   const out: Record<string, string> = {}
   for (const [id, phrase] of Object.entries(value)) {
     if (isString(phrase) && phrase.trim() && phrase.length <= LONGEST_PHRASE) out[id] = phrase.trim()
   }
-
   return out
 }
-
 export const DEFAULTS = {
   opensInSource: false,
   readOnly: false,
@@ -261,28 +230,22 @@ export const DEFAULTS = {
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
 }
-
 function on(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
-
 function keepingOf(value: unknown): number | undefined {
   return isNumber(value) && KEEP_VERSIONS.includes(value) ? value : undefined
 }
-
 function remindingOf(value: unknown): number | undefined {
   return isNumber(value) && REMIND_BEFORE.includes(value) ? value : undefined
 }
-
 function toneOf(value: unknown): number | null | undefined {
   return isNumber(value) || value === null ? highlightTone(value).tone : undefined
 }
-
 interface Shown {
   tab: { source: boolean }
   kept: () => void
 }
-
 class Modes {
   opensInSource = $state(DEFAULTS.opensInSource)
   readOnly = $state(DEFAULTS.readOnly)
@@ -305,7 +268,6 @@ class Modes {
   spellcheck = $state(DEFAULTS.spellcheck)
   spellLanguages = $state<string[]>([])
   alwaysOnTop = $state(DEFAULTS.alwaysOnTop)
-
   frame = $state<Frame>(DEFAULTS.frame)
   hand = $state(DEFAULTS.hand)
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
@@ -322,25 +284,15 @@ class Modes {
   vim = $state(DEFAULTS.vim)
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
   attachments = $state<AttachmentFolder>(DEFAULTS.attachments)
-
   pagesPaper = $state<Paper>(DEFAULTS.pagesPaper)
-
   conflicts = $state<ConflictRule>(DEFAULTS.conflicts)
-
   keepVersions = $state<number>(DEFAULTS.keepVersions)
-
   remindBefore = $state<number>(DEFAULTS.remindBefore)
-
   canvasTurns = $state(DEFAULTS.canvasTurns)
-
   canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
-
   highlightTone = $state<number | null>(DEFAULTS.highlightTone)
-
   hardBreaks = $state(DEFAULTS.hardBreaks)
-
   linkFormat = $state<LinkFormat>(DEFAULTS.linkFormat)
-
   constructor() {
     onVimMode((view, mode) => {
       if (mode) this.vimModes.set(view, mode)
@@ -351,7 +303,6 @@ class Modes {
       this.applyAlwaysOnTop()
     })
   }
-
   restore() {
     const saved = stored(STORAGE_KEY)
     const stale = isRecord(saved) && STALE.some((name) => name in saved)
@@ -399,7 +350,6 @@ class Modes {
     setHighlightColour(this.highlight)
     this.applyZoom()
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
-
     this.applyFrame()
     this.applyHand()
     this.applyFonts()
@@ -407,24 +357,19 @@ class Modes {
       const chosen = this.spellLanguages
       void import('../../spelling/src/api').then((one) => one.tellEngine(one.inForceNow(chosen)))
     }
-
     this.written = isRecord(saved) ? saved : fieldsOf(this.state())
     if (stale) this.persist()
     for (const view of this.views) this.apply(view)
   }
-
   private written: Record<string, unknown> | null = null
-
   toggleAlwaysOnTop() {
     this.alwaysOnTop = !this.alwaysOnTop
     this.applyAlwaysOnTop()
     this.persist()
   }
-
   async askInterfaceZoom() {
     this.interfaceZoom = await invoke<number>('interface_zoom_chosen')
   }
-
   async setInterfaceZoom(factor: number) {
     await invoke('interface_zoom_choose', { factor })
       .then(() => {
@@ -432,47 +377,36 @@ class Modes {
       })
       .catch(() => undefined)
   }
-
   setFrame(value: string) {
     const wanted = frameChoice(value)
     if (!wanted || wanted === this.frame) return
-
     this.frame = wanted
     this.applyFrame()
     this.persist()
   }
-
   private applyFrame() {
     document.documentElement.dataset.frame = this.frame
-
     if (!isDesktop) return
     void invoke('set_frame', { system: this.frame === 'system' }).catch(() => undefined)
   }
-
   private applyAlwaysOnTop() {
     void currentWindow()
       .then((window) => window.setAlwaysOnTop(this.alwaysOnTop))
       .catch(() => undefined)
   }
-
   private readonly views = new Set<EditorView>()
-
   private readonly shown = new WeakMap<EditorView, Shown>()
-
   shows(view: EditorView, tab: Shown['tab'], kept: () => void) {
     this.shown.set(view, { tab, kept })
   }
-
   sourceIn(view: EditorView | undefined): boolean {
     const tab = view ? this.shown.get(view)?.tab : undefined
     return !!tab?.source && !this.readOnly
   }
-
   private each(view: EditorView | undefined, apply: (one: EditorView) => void) {
     if (view) apply(view)
     for (const one of this.views) if (one !== view) apply(one)
   }
-
   get settings(): ModeSettings {
     return {
       source: this.opensInSource && !this.readOnly,
@@ -494,29 +428,23 @@ class Modes {
       vim: this.vim,
     }
   }
-
   settingsFor(tab: Shown['tab']): ModeSettings {
     return { ...this.settings, source: tab.source && !this.readOnly }
   }
-
   apply(view: EditorView) {
     this.views.add(view)
-
     const tab = this.shown.get(view)?.tab
     view.dispatch({ effects: modeEffects(tab ? this.settingsFor(tab) : this.settings) })
     setMeasure(view, this.width)
     setLineHeight(view, this.lineHeight)
   }
-
   forget(view: EditorView) {
     this.views.delete(view)
     this.vimModes.delete(view)
   }
-
   toggleSource(view?: EditorView) {
     const shown = view ? this.shown.get(view) : undefined
     if (!view || !shown) return
-
     const on = !this.sourceIn(view)
     shown.tab.source = on
     shown.kept()
@@ -524,22 +452,18 @@ class Modes {
       setSourceMode(view, on)
       return
     }
-
     this.lock(false, view)
     this.persist()
   }
-
   toggleOpensInSource() {
     this.opensInSource = !this.opensInSource
     opening.source = this.opensInSource
     this.persist()
   }
-
   toggleReadOnly(view?: EditorView) {
     this.lock(!this.readOnly, view)
     this.persist()
   }
-
   private lock(on: boolean, view?: EditorView) {
     this.readOnly = on
     this.each(view, (one) => {
@@ -547,28 +471,23 @@ class Modes {
       if (!on && this.shown.get(one)?.tab.source) setSourceMode(one, true)
     })
   }
-
   toggleFocus(view?: EditorView) {
     this.flip('focus', setFocusMode, view)
   }
-
   toggleQuietMarks(view?: EditorView) {
     this.quietMarks = !this.quietMarks
     this.each(view, (one) => setQuietMarks(one, this.quietMarks))
     this.persist()
     this.share({ quietMarks: this.quietMarks })
   }
-
   toggleSilent() {
     this.silent = !this.silent
     this.persist()
     this.share({ silent: this.silent })
   }
-
   get coder(): boolean {
     return this.developer !== false
   }
-
   setDeveloper(on: boolean) {
     const first = this.developer === null
     this.developer = on
@@ -576,20 +495,17 @@ class Modes {
     this.persist()
     this.share({ developer: on })
   }
-
   toggleHand() {
     this.hand = !this.hand
     this.applyHand()
     this.persist()
   }
-
   setFont(place: FontPlace, family: string) {
     this.fonts = { ...this.fonts, [place]: familyName(family) }
     this.applyFonts()
     this.each(undefined, (one) => one.requestMeasure())
     this.persist()
   }
-
   private applyFonts() {
     const root = document.documentElement.style
     for (const place of FONT_PLACES) {
@@ -597,180 +513,138 @@ class Modes {
       root.setProperty(`--font-${place}-chosen`, family ? `"${family}",` : '')
     }
   }
-
   private applyHand() {
     if (this.hand) document.documentElement.dataset.pointer = 'hand'
     else delete document.documentElement.dataset.pointer
   }
-
   toggleTypewriter(view?: EditorView) {
     this.flip('typewriter', setTypewriterMode, view)
   }
-
   togglePunctuation(view?: EditorView) {
     this.flip('punctuation', setSmartPunctuation, view)
   }
-
   toggleNumbers(view?: EditorView) {
     this.flip('numbers', setHeadingNumbers, view)
   }
-
   toggleLineNumbers(view?: EditorView) {
     this.flip('lineNumbers', setCodeLineNumbers, view)
   }
-
   setCodeTheme(id: string, view?: EditorView) {
     this.codeTheme = id
     this.each(view, (one) => setCodeTheme(one, id))
     this.persist()
   }
-
   toggleSpellcheck(view?: EditorView) {
     this.flip('spellcheck', (one, on) => setSpellcheck(one, on, this.dictionary), view)
   }
-
   private get dictionary(): string | undefined {
     return this.spellLanguages.length === 1 ? this.spellLanguages[0] : undefined
   }
-
   setSpellLanguages(chosen: string[], view?: EditorView) {
     this.spellLanguages = chosen
     this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
     this.persist()
   }
-
   setLigatures(scope: string, view?: EditorView) {
     this.take('ligatures', ligatureScope(scope) ?? undefined, true, (wanted) =>
       this.each(view, (one) => setLigatures(one, wanted)),
     )
   }
-
   setHighlightTone(tone: number | null) {
     this.take('highlightTone', highlightTone(tone).tone, true, () => setHighlightColour(this.highlight))
   }
-
   get highlight(): HighlightColour {
     return highlightTone(this.highlightTone)
   }
-
   toggleHardBreaks() {
     this.hardBreaks = !this.hardBreaks
     setHardBreaks(this.hardBreaks)
     this.persist()
     this.share({ hardBreaks: this.hardBreaks })
   }
-
   setLinkFormat(format: string) {
     this.take('linkFormat', isLinkFormat(format) ? format : undefined, true, setLinkWriting)
   }
-
   setGlassesBreak(level: string) {
     this.take('glassesBreak', glassesBreak(level) ?? undefined)
   }
-
   setGlassesLineNumbers(on: boolean) {
     this.take('glassesLineNumbers', on)
   }
-
   setGlassesVoice(on: boolean) {
     this.take('glassesVoice', on)
   }
-
   setGlassesCompaction(level: string) {
     this.take('glassesCompaction', isCompaction(level) ? level : undefined)
   }
-
   setGlassesMark(name: keyof Marks, on: boolean) {
     if (this.glassesMarks[name] === on) return
-
     this.glassesMarks = { ...this.glassesMarks, [name]: on }
     this.persist()
     this.share({ glassesMarks: { ...this.glassesMarks } })
   }
-
   setGlassesWord(id: string, phrase: string) {
     const wanted = phrase.trim().toLowerCase().slice(0, LONGEST_PHRASE).trim()
     const words = Object.fromEntries(Object.entries(this.glassesWords).filter(([one]) => one !== id))
     if (wanted) words[id] = wanted
-
     this.glassesWords = words
     this.persist()
     this.share({ glassesWords: words })
   }
-
   private toldOfGlasses = false
-
   sawGlasses() {
     if (this.toldOfGlasses) return
-
     this.toldOfGlasses = true
     if (!this.glassesSeen) {
       this.glassesSeen = true
       this.persist()
     }
-
     this.share({ glassesSeen: true })
   }
-
   toggleVim(view?: EditorView) {
     this.setVimKeys(!this.vim, view)
   }
-
   setVimKeys(on: boolean, view?: EditorView) {
     this.take('vim', on, true, () => this.each(view, (one) => setVim(one, on)))
   }
-
   vimModeOf(view: EditorView | undefined): VimMode | null {
     return (view && this.vimModes.get(view)) ?? null
   }
-
   setAttachments(value: string) {
     if (!isAttachmentFolder(value)) return
-
     this.attachments = value
     this.persist()
     this.share({ attachments: value })
   }
-
   setPagesPaper(value: string) {
     if (!isPaper(value)) return
-
     this.pagesPaper = value
     this.persist()
   }
-
   setConflicts(value: string) {
     const rule = conflictRule(value)
     if (!rule) return
-
     this.conflicts = rule
     this.persist()
     this.share({ conflicts: rule })
   }
-
   setKeepVersions(days: number) {
     this.take('keepVersions', keepingOf(days))
   }
-
   setRemindBefore(minutes: number) {
     this.take('remindBefore', remindingOf(minutes))
   }
-
   setCanvasTurns(on: boolean) {
     this.take('canvasTurns', on)
   }
-
   setCanvasTurnSnaps(on: boolean) {
     this.take('canvasTurnSnaps', on)
   }
-
   async adopt(token: string): Promise<AccountSettings | null> {
     const asked = this.owed.sends
     const session = this.owed.session
-
     await this.owed.settle(token)
     if (this.owed.session !== session) return null
-
     let remote: AccountSettings
     try {
       const answer = await api.settings(token)
@@ -780,9 +654,7 @@ class Modes {
     } catch {
       return null
     }
-
     const unheard = this.owed.sends === asked && !this.owed.standing
-
     if (unheard) {
       const flag = (value: unknown) => (typeof value === 'boolean' ? value : undefined)
       this.take('ligatures', ligatureScope(remote.ligatures) ?? undefined, false, (scope) =>
@@ -805,12 +677,9 @@ class Modes {
       this.take('linkFormat', isLinkFormat(remote.linkFormat) ? remote.linkFormat : undefined, false, setLinkWriting)
       this.adoptGlasses(remote)
     }
-
     this.tellOfMobile(token, remote)
-
     return remote
   }
-
   private tellOfMobile(token: string, remote: AccountSettings): void {
     if (remote.mobileSeen === true) {
       if (!this.mobileSeen) {
@@ -820,27 +689,22 @@ class Modes {
       return
     }
     if (!viewport.touch) return
-
     this.mobileSeen = true
     this.persist()
     void api.saveSettings(token, { mobileSeen: true }).catch(() => undefined)
   }
-
   private adoptGlasses(remote: AccountSettings): void {
     let moved = false
     const took = <T>(value: T | undefined, take: (one: T) => void) => {
       if (value === undefined) return
-
       take(value)
       moved = true
     }
-
     const level = glassesBreak(remote.glassesBreak)
     if (level !== null && level !== this.glassesBreak) {
       this.glassesBreak = level
       moved = true
     }
-
     if (typeof remote.glassesLineNumbers === 'boolean') {
       took(remote.glassesLineNumbers, (on) => (this.glassesLineNumbers = on))
     }
@@ -860,16 +724,12 @@ class Modes {
       took(true, (seen) => (this.glassesSeen = seen))
       this.toldOfGlasses = true
     }
-
     if (moved) this.persist()
   }
-
   private readonly owed = new AccountOwed(OWED_KEY)
-
   private share(patch: AccountSettings) {
     this.owed.send(patch)
   }
-
   private take<K extends keyof typeof DEFAULTS | 'developer'>(
     key: K,
     value: Modes[K] | undefined,
@@ -877,13 +737,11 @@ class Modes {
     then?: (one: Modes[K]) => void,
   ) {
     if (value === undefined || value === this[key]) return
-
     Object.assign(this, { [key]: value })
     then?.(value)
     this.persist()
     if (shared) this.share({ [key]: value })
   }
-
   private flip(
     key:
       | 'focus'
@@ -903,23 +761,18 @@ class Modes {
     this.each(view, (one) => set(one, this[key]))
     this.persist()
   }
-
   toggleCloseBrackets(view?: EditorView) {
     this.flip('closeBrackets', setCloseBrackets, view)
   }
-
   toggleStrict(view?: EditorView) {
     this.flip('strict', setStrictMode, view)
   }
-
   toggleEquationNumbers(view?: EditorView) {
     this.flip('equationNumbers', setEquationNumbers, view)
   }
-
   toggleRightToLeft(view?: EditorView) {
     this.flip('rtl', setRightToLeft, view)
   }
-
   setZoom(value: number) {
     const nearest = clamp(value, ZOOM_STEPS)
     this.zoom =
@@ -929,48 +782,40 @@ class Modes {
     this.applyZoom()
     this.persist()
   }
-
   setWidth(value: number, view?: EditorView) {
     this.width = Math.round(value)
     this.each(view, (one) => setMeasure(one, this.width))
     this.persist()
   }
-
   setLineSpacing(value: number, view?: EditorView) {
     this.lineHeight = Math.round(value * 100) / 100
     this.each(view, (one) => setLineHeight(one, this.lineHeight))
     this.persist()
   }
-
   stepWidth(direction: number, view?: EditorView) {
     this.width = step(WIDTHS, this.width, direction, DEFAULTS.width)
     this.each(view, (one) => setMeasure(one, this.width))
     this.persist()
   }
-
   stepLineHeight(direction: number, view?: EditorView) {
     this.lineHeight = step(LINE_HEIGHTS, this.lineHeight, direction, DEFAULTS.lineHeight)
     this.each(view, (one) => setLineHeight(one, this.lineHeight))
     this.persist()
   }
-
   stepZoom(direction: number) {
     this.zoom = step(ZOOM_STEPS, this.zoom, direction, DEFAULTS.zoom)
     this.applyZoom()
     this.persist()
   }
-
   resetZoom() {
     this.zoom = 1
     this.applyZoom()
     this.persist()
   }
-
   private applyZoom() {
     document.documentElement.style.setProperty('--zoom', String(this.zoom))
     for (const one of this.views) remeasure(one)
   }
-
   private persist() {
     const fields = fieldsOf(this.state())
     const seen = this.written
@@ -991,7 +836,6 @@ class Modes {
     }
     keepJson(STORAGE_KEY, merged)
   }
-
   private state(): Saved {
     return {
       source: this.opensInSource,
@@ -1041,9 +885,7 @@ class Modes {
     }
   }
 }
-
 function fieldsOf(state: Saved): Record<string, unknown> {
   return JSON.parse(JSON.stringify(state)) as Record<string, unknown>
 }
-
 export const modes = new Modes()

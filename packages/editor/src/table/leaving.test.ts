@@ -8,7 +8,6 @@ import { noRects } from '../../test/views'
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
 const errors: unknown[] = []
 const open: EditorView[] = []
-
 beforeAll(() => {
   noRects()
   window.addEventListener('error', (event) => errors.push(event.error))
@@ -19,12 +18,10 @@ beforeAll(() => {
     return child
   }
 })
-
 afterEach(() => {
   errors.length = 0
   for (const view of open.splice(0)) view.destroy()
 })
-
 function typedCell(): EditorView {
   const view = createEditor({
     parent: document.body,
@@ -41,7 +38,6 @@ function typedCell(): EditorView {
   cell.dispatchEvent(new InputEvent('input', { bubbles: true }))
   return view
 }
-
 test('a table taken away with a cell mid-edit throws nothing and writes nothing', () => {
   const view = typedCell()
   const asked = vi.spyOn(view, 'posAtDOM')
@@ -51,7 +47,6 @@ test('a table taken away with a cell mid-edit throws nothing and writes nothing'
   expect(errors).toEqual([])
   expect(view.state.doc.toString()).toBe('words\n\n\n\nend')
 })
-
 test('a table replaced by other words with a cell mid-edit keeps those words', () => {
   const view = typedCell()
   const asked = vi.spyOn(view, 'posAtDOM')

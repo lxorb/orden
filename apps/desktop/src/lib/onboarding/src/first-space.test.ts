@@ -6,9 +6,7 @@ const notes = new Map<string, string>()
 let reading: (() => void) | null = null
 let writing: (() => void) | null = null
 const made: { name: string; path: string }[] = []
-
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -49,18 +47,14 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
 vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../../workspace/src/api')
 const { firstSpace } = await import('./first-space.svelte')
 const { insideFolder, pickedFolder } = await import('../../import/src/sources')
 const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('@orden/contracts')
 const { AGENTS_NAME } = await import('../../platform/src/api')
 const { AGENTS_SEED, isUntouchedAgents } = await import('../../agents-seed/src/api')
-
 const FRESH = {
   native: true,
   plugin: false,
@@ -71,7 +65,6 @@ const FRESH = {
   invited: false,
   tabs: 0,
 }
-
 beforeEach(() => {
   notes.clear()
   made.length = 0
@@ -81,27 +74,21 @@ beforeEach(() => {
   workspace.tree = null
   workspace.tabs = []
 })
-
 describe('a fresh start', () => {
   const welcome = `/spaces/${WELCOME_SPACE}/${WELCOME_NAME}`
-
   test('makes the first space and opens it on the welcome note', async () => {
     await firstSpace.start(FRESH)
-
     expect(workspace.spaces.map((one) => one.name)).toEqual([WELCOME_SPACE])
     expect(notes.get(welcome)).toBe(WELCOME)
     expect(workspace.active?.path).toBe(welcome)
   })
-
   test('leaves a page the app was opened with in front, the note behind it', async () => {
     const starting = firstSpace.start(FRESH)
     const page = workspace.openPage('https://example.com/', 'front')
     await starting
-
     expect(workspace.active?.id).toBe(page)
     expect(workspace.tabs.map((one) => one.path)).toContain(welcome)
   })
-
   test('leaves a page opened while the welcome note is read in front', async () => {
     let page: string | null = null
     reading = () => {
@@ -109,47 +96,34 @@ describe('a fresh start', () => {
       page = workspace.openPage('https://example.com/', 'front')
     }
     await firstSpace.start(FRESH)
-
     expect(page).not.toBeNull()
     expect(workspace.active?.id).toBe(page)
     expect(workspace.tabs.map((one) => one.path)).toContain(welcome)
   })
-
   test('asks nothing, and makes one space however often it is asked at once', async () => {
     await Promise.all([firstSpace.start(FRESH), firstSpace.start(FRESH)])
-
     expect(made).toHaveLength(1)
   })
-
   test('makes nothing where the moment is not a fresh start', async () => {
     await firstSpace.start({ ...FRESH, signedIn: true })
-
     expect(made).toEqual([])
   })
-
   test('makes nothing once there is a space', async () => {
     await firstSpace.start(FRESH)
     await firstSpace.start(FRESH)
-
     expect(made).toHaveLength(1)
   })
-
   test('on a device introduced before, a space and no welcome note', async () => {
     localStorage.setItem('orden:seeded', 'yes')
-
     await firstSpace.start(FRESH)
-
     expect(workspace.spaces).toHaveLength(1)
     expect(notes.has(welcome)).toBe(false)
   })
-
   test('and the space gets its AGENTS.md', async () => {
     await firstSpace.start(FRESH)
-
     expect(notes.get(`/spaces/${WELCOME_SPACE}/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
   })
 })
-
 describe('the AGENTS.md, untouched', () => {
   test('is not writing, but one word in it is', () => {
     expect(isUntouchedAgents(`/spaces/Journal/${AGENTS_NAME}`, AGENTS_SEED)).toBe(true)
@@ -157,13 +131,11 @@ describe('the AGENTS.md, untouched', () => {
     expect(isUntouchedAgents(`/spaces/Journal/Other.md`, AGENTS_SEED)).toBe(false)
   })
 })
-
 describe('the welcome note, untouched', () => {
   test('is not writing, so it never travels', () => {
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, WELCOME)).toBe(true)
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${WELCOME}mine\n`)).toBe(false)
   })
-
   test.each([
     ['Nib', true],
     ['Orden', false],
@@ -192,91 +164,73 @@ describe('the welcome note, untouched', () => {
       '| Synced notes | your account |',
       '',
     ].join('\n')
-
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
-
   test('names bases and boards now, rather than to-dos or markdown and nothing else', () => {
     expect(WELCOME).toContain('- Every note is a Markdown file you own, with bases and boards right inside\n')
     expect(WELCOME).not.toContain('to-dos')
     expect(WELCOME).not.toContain('nothing else')
   })
-
   test('nor the one that promised to-dos inside notes', () => {
     const earlier = WELCOME.replace('with bases and boards', 'with to-dos, bases and boards')
     expect(earlier).not.toBe(WELCOME)
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
-
   test('nor the one that linked to Import', () => {
     const linked = `${WELCOME}\n[Import from Obsidian or Notion](orden://settings/import)\n`
-
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${linked}mine\n`)).toBe(false)
   })
-
   test('nor the one seeded before the rename, whose link said nib://', () => {
     const linked = `${WELCOME}\n[Import from Obsidian or Notion](nib://settings/import)\n`
-
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
   })
-
   test('suggests no import', () => {
     expect(WELCOME).not.toMatch(/import/i)
   })
-
   test('says nothing about which build it is in', () => {
     expect(WELCOME).not.toMatch(/browser/i)
   })
-
   test('says the name the app goes by', () => {
     expect(WELCOME.split('\n')[0]).toBe('# Welcome to Orden')
   })
 })
-
 describe('a folder brought in as a space', () => {
   const picked = (path: string) => ({
     name: path.split('/').at(-1) ?? path,
     webkitRelativePath: path,
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
   })
-
   test('is named after the folder', () => {
     expect(pickedFolder([picked('Vault/Plan.md'), picked('Vault/a/b.md')])).toBe('Vault')
     expect(pickedFolder([])).toBeNull()
   })
-
   test('holds what was inside it rather than a folder of the same name', () => {
     expect(
       insideFolder([picked('Vault/Plan.md'), picked('Vault/a/b.md')]).map((one) => one.webkitRelativePath),
     ).toEqual(['Plan.md', 'a/b.md'])
   })
 })
-
 const { seedSpaceRoot } = await import('../../seeded/src/api')
 const { untouchedSeedSpace } = await import('../../space-pairing/src/seed-space')
 const { madeSpace } = await import('../../spaces/src/api')
 const { invoke } = await import('../../platform/src/tauri')
-
 describe('the space a fresh start made', () => {
   const read = {
     tree: (root: string) => invoke<Listed>('read_tree', { root }),
     note: (path: string) => invoke<string>('read_note', { path }),
   }
   const roots = () => workspace.spaces.map((one) => one.root)
-
   test('is the default space, and untouched until the reader writes in it', async () => {
     await firstSpace.start(FRESH)
     const root = `/spaces/${WELCOME_SPACE}`
     expect(seedSpaceRoot()).toBe(root)
     expect(await untouchedSeedSpace(seedSpaceRoot(), roots(), read)).toBe(root)
-
     notes.set(`${root}/${WELCOME_NAME}`, `${WELCOME}\nmine\n`)
     expect(await untouchedSeedSpace(seedSpaceRoot(), roots(), read)).toBeNull()
   })
-
   test('is known as the seed before anything is written in it, for a pairing pass meanwhile', async () => {
     const seeds: (string | null)[] = []
     writing = () => void seeds.push(seedSpaceRoot())
@@ -284,7 +238,6 @@ describe('the space a fresh start made', () => {
     writing = null
     expect(seeds[0]).toBe(`/spaces/${WELCOME_SPACE}`)
   })
-
   test('and a space the reader makes is never it', async () => {
     await madeSpace(WELCOME_SPACE)
     expect(seedSpaceRoot()).toBeNull()

@@ -7,19 +7,14 @@
   import { crashReports } from './choice.svelte'
 
   crashReports.ask()
-
   let sending = $state(crashReports.on)
-
   let helping = $state(usageChoice.helping)
-
   const words = $derived('Send crash reports to help improve Orden')
-
   const go = () => {
     if (!crashReports.asking) return
     if (helping !== usageChoice.helping) usageChoice.setHelping(helping)
     crashReports.answer(sending)
   }
-
   $effect(() => (crashReports.asking ? overlays.show(go) : undefined))
 </script>
 
@@ -50,7 +45,6 @@
 <style>
   .sheet {
     --screen-width: var(--screen-ask);
-
     z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
@@ -58,7 +52,6 @@
     gap: var(--space-4);
     padding: var(--space-5);
   }
-
   .tick {
     display: flex;
     align-items: flex-start;
@@ -69,12 +62,10 @@
     text-wrap: balance;
     color: var(--text-strong);
   }
-
   .tick input {
     flex: none;
     margin: 0.2em 0 0;
   }
-
   button {
     align-self: flex-end;
   }

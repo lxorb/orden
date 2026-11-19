@@ -3,7 +3,6 @@ import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 
 type Told = (found: { hits: Hit[]; loose: FuzzyHit[] }) => void
-
 const guess = (path: string, score: number): FuzzyHit => ({
   path,
   name: path,
@@ -13,7 +12,6 @@ const guess = (path: string, score: number): FuzzyHit => ({
   score,
 })
 const hit = (path: string): Hit => ({ path, name: path, line: 1, text: 'tulip', ranges: [] })
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isNative: false,
@@ -49,10 +47,8 @@ vi.mock('../../away/src/api', () => ({
     },
   },
 }))
-
 await import('../../workspace/src/api')
 const { searchSpace } = await import('./space')
-
 test('a search in a browser that keeps some notes away shows the best guesses of all the notes together, no more of them than of its own', async () => {
   const hits: string[] = []
   const loose: string[] = []

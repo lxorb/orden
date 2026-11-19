@@ -54,11 +54,8 @@ const LINE_CLASS: Record<string, string> = {
   DefinitionDetail: 'orden-definition',
   AbbrevDef: 'orden-abbrev',
 }
-
 for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `orden-h${level}`
-
 const LINKED = new Set(['Link', 'Image', 'Wikilink'])
-
 class Decorator {
   private readonly marks: Range<Decoration>[] = []
   private readonly hidden: Range<Decoration>[] = []
@@ -66,9 +63,7 @@ class Decorator {
   private readonly lineAttrs = new Map<number, Record<string, string>>()
   private readonly claimed: { from: number; to: number }[] = []
   private readonly unlinked = new Set<number>()
-
   constructor(private readonly state: EditorState) {}
-
   build(ranges: readonly { from: number; to: number }[]) {
     const visited = new Map<string, boolean>()
     for (const { from, to } of ranges) {
@@ -86,39 +81,32 @@ class Decorator {
         },
       })
     }
-
     for (const { from, to } of ranges) this.blockNames(from, to)
-
     const lines: Range<Decoration>[] = []
     for (const [pos, classes] of this.lineClasses) {
       const attributes = this.lineAttrs.get(pos)
       const className = [...classes].join(' ')
       lines.push(Decoration.line(attributes ? { class: className, attributes } : { class: className }).range(pos))
     }
-
     const doc = this.state.doc
     const oneLine = (range: Range<Decoration>) => doc.lineAt(range.from).number === doc.lineAt(range.to).number
     const hidden = this.hidden.filter(oneLine)
     const faded = this.hidden
       .filter((range) => range.value === hide && !oneLine(range))
       .map((range) => meta.range(range.from, range.to))
-
     return {
       decorations: Decoration.set([...lines, ...this.marks, ...faded, ...hidden], true),
       atomic: Decoration.set(hidden, true),
     }
   }
-
   private visit(node: SyntaxNode): boolean {
     const name = node.name
-
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
       if (HEADING_LEVEL[name] && !this.spaced(node.firstChild)) return false
       this.markLines(node, lineClass, false, this.headingNumber(node))
       return name !== 'FrontMatter'
     }
-
     switch (name) {
       case 'Blockquote':
         this.blockquote(node)
@@ -218,31 +206,26 @@ class Decorator {
         return true
     }
   }
-
   private inLinkWords(url: SyntaxNode): boolean {
     const link = url.parent
     if (link?.name !== 'Link' && link?.name !== 'Image') return false
     return !this.unlinked.has(link.from)
   }
-
   private link(node: SyntaxNode) {
     const brackets = linkBrackets(node)
     if (!brackets) return
     const { open, close } = brackets
-
     const note = noteLinkOfNode(this.state, node)
     if (note) {
       this.noteLink(note, open.to, close.from)
       return
     }
-
     const url = linkAddress(node)
     if (url || node.getChildren('LinkMark').length > 2) {
       const target = url ? linkDestination(this.state.doc.sliceString(url.from, url.to)) : ''
       this.linkText(open.to, close.from, target)
       return
     }
-
     const reference = referenceOf(this.state, node)
     if (!reference) return
     if (reference.target === undefined) {
@@ -253,13 +236,10 @@ class Decorator {
     if (label) this.conceal(label.from, label.to, overlaps(this.state, node.from, node.to))
     this.linkText(open.to, close.from, target)
   }
-
   private wikilink(node: SyntaxNode): boolean {
     const link = wikilinkOfNode(this.state, node)
     if (!link) return true
-
     const shown = overlaps(this.state, node.from, node.to)
-
     if (link.embed && !shown) {
       const kind = embedKind(link.target)
       if (kind === 'image') {
@@ -273,21 +253,16 @@ class Decorator {
       const block = embedOfBlock(this.state, node.from, node.to)
       if (block && !drawnAsLink(this.state, block)) return false
     }
-
     const open = node.firstChild
     const close = open?.nextSibling
     if (!open || !close) return true
-
     this.conceal(open.from, open.to, shown)
     this.conceal(close.from, close.to, shown)
     this.noteLink(link, open.to, close.from)
-
     return false
   }
-
   private noteLink(link: LinkSpan, from: number, to: number) {
     if (from >= to) return
-
     const index = this.state.facet(noteIndex)
     const missing = !resolves(index, link, link.kind)
     const archived = !missing && archivedLink(index, link, link.kind)
@@ -298,10 +273,8 @@ class Decorator {
       }).range(from, to),
     )
   }
-
   private tag(node: SyntaxNode) {
     if (enclosingNamed(node, LINKED)) return
-
     const said = {
       'data-tag': this.state.doc.sliceString(node.from + 1, node.to),
       spellcheck: 'false',
@@ -314,7 +287,6 @@ class Decorator {
       }).range(node.from, node.to),
     )
   }
-
   private linkText(from: number, to: number, target: string) {
     if (from >= to) return
     const href = hrefOf(target)
@@ -323,58 +295,45 @@ class Decorator {
       : { class: 'orden-link' }
     this.marks.push(Decoration.mark(spec).range(from, to))
   }
-
   private static readonly VERBATIM = ['orden-code', 'orden-frontmatter', 'orden-math-source']
-
   private blockNames(from: number, to: number) {
     const doc = this.state.doc
-
     for (const line of linesBetween(doc, from, to)) {
       const classes = this.lineClasses.get(line.from)
       if (classes && Decorator.VERBATIM.some((one) => classes.has(one))) continue
-
       const id = blockIdOf(line.text)
       if (!id) continue
-
       const end = line.from + line.text.trimEnd().length
       const caret = end - id.length - 1
       const before = doc.sliceString(caret - 1, caret)
       const start = before === ' ' || before === '\t' ? caret - 1 : caret
-
       this.conceal(start, end, lineRevealed(this.state, line.from))
     }
   }
-
   private isClaimed(from: number, to: number): boolean {
     return this.claimed.some((range) => from >= range.from && to <= range.to)
   }
-
   private conceal(from: number, to: number, show: boolean) {
     if (from >= to || this.isClaimed(from, to)) return
     if (show) this.marks.push(meta.range(from, to))
     else this.hidden.push(hide.range(from, to))
   }
-
   private highlight(node: SyntaxNode) {
     const open = node.firstChild
     const close = node.lastChild
     if (!open || !close || open.name !== 'HighlightMark' || close.name !== 'HighlightMark') return
-
     const inner = this.state.doc.sliceString(open.to, close.from)
     const { colour, from } = readHighlight(inner)
     this.marks.push(Decoration.mark({ class: `orden-highlight ${colour.className}`.trim() }).range(node.from, node.to))
     if (colour.className === '') return
-
     this.conceal(open.to, open.to + from, overlaps(this.state, node.from, node.to))
   }
-
   private commentEnd(node: SyntaxNode): number {
     if (node.name !== 'CommentBlock') return node.to
     const text = this.state.doc.sliceString(node.from, node.to)
     const closed = text.indexOf('-->')
     return closed < 0 ? node.to : node.from + closed + 3
   }
-
   private iframeEnd(node: SyntaxNode): number {
     const text = this.state.doc.sliceString(node.from, node.to)
     const closed = /<\/iframe\s*>/i.exec(text)
@@ -382,54 +341,42 @@ class Decorator {
     const tag = /^<iframe\b[^>]*>/i.exec(text)
     return tag ? node.from + tag[0].length : node.to
   }
-
   private inlineWidget(node: { from: number; to: number }, widget: WidgetType, show: boolean) {
     if (show || node.from >= node.to || this.isClaimed(node.from, node.to)) return
     this.hidden.push(Decoration.replace({ widget }).range(node.from, node.to))
   }
-
   private blockquote(node: SyntaxNode) {
     this.markLines(node, 'orden-quote')
-
     const first = this.state.doc.lineAt(node.from)
     const opened = first.text.indexOf('[!')
     const found = opened < 0 ? null : calloutOf(first.text.slice(opened))
     if (!found) return
-
     this.markLines(node, 'orden-callout')
     if (found.look) this.markLines(node, `orden-callout-${found.look}`)
     this.markLines(node, '', false, { 'data-callout': found.type })
-
     const from = first.from + opened
     const to = first.from + first.text.indexOf(']', opened) + 1 + (found.foldable ? 1 : 0)
-
     this.claimed.push({ from, to })
-
     if (lineRevealed(this.state, first.from)) this.marks.push(meta.range(from, to))
     else {
       const widget = new CalloutWidget(found.type, found.look, found.title ? '' : found.label)
       this.hidden.push(Decoration.replace({ widget }).range(from, to))
     }
   }
-
   private fence(node: SyntaxNode): boolean {
     const language = fenceLanguage(this.state, node)
-
     const drawn =
       RENDERED_LANGUAGES.has(language) && (language !== 'chart' || readChart(fenceCode(this.state, node)) !== null)
     if (drawn && !overlaps(this.state, node.from, node.to)) return false
-
     this.markLines(node, 'orden-code')
     const doc = this.state.doc
     const open = doc.lineAt(node.from)
     this.addLineClass(open.from, 'orden-code-open')
     this.addLineClass(doc.lineAt(node.to).from, 'orden-code-close')
     this.numberLines(node.from, node.to, true)
-
     const info = node.getChild('CodeInfo')
     const mark = node.firstChild
     const infoFrom = info ? info.from : (mark?.to ?? open.to)
-
     this.marks.push(
       Decoration.widget({
         widget: new FenceHeaderWidget(
@@ -445,15 +392,12 @@ class Decorator {
     )
     return true
   }
-
   private inlineMath(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) return true
-
     const tex = this.state.doc.sliceString(node.from + 1, node.to - 1)
     this.inlineWidget(node, new MathWidget(tex, false, undefined, equationsOf(this.state).labels), false)
     return false
   }
-
   private blockMath(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) {
       this.markLines(node, 'orden-math-source')
@@ -461,38 +405,29 @@ class Decorator {
     }
     return false
   }
-
   private listMark(node: SyntaxNode) {
     if (node.parent?.getChild('Task') || !this.spaced(node)) return
-
     const ordered = /\d/.test(this.state.doc.sliceString(node.from, node.to))
     if (ordered) {
       this.marks.push(Decoration.mark({ class: 'orden-ordered-mark' }).range(node.from, node.to))
       return
     }
-
     this.inlineWidget(node, new BulletWidget(this.depth(node)), false)
   }
-
   private taskMarker(node: SyntaxNode) {
     const checked = /x/i.test(this.state.doc.sliceString(node.from, node.to))
-
     const listMark = node.parent?.parent?.getChild('ListMark')
     if (listMark) this.conceal(listMark.from, this.eatSpace(listMark.to), false)
-
     this.hidden.push(
       Decoration.replace({ widget: new CheckboxWidget(checked, node.from, node.to) }).range(node.from, node.to),
     )
-
     if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'orden-task-done')
     this.taskFields(this.state.doc.lineAt(node.from))
   }
-
   private taskFields(line: Line) {
     const index = this.state.facet(noteIndex)
     const drawn = chipsFor(line.text)?.taskDrawing(line.text, index.dueReads ?? 'start')
     if (!drawn || !chips) return
-
     const shown = lineRevealed(this.state, line.from)
     for (const span of drawn.hide) this.conceal(line.from + span.from, line.from + span.to, shown)
     if (shown || !drawn.chips.length) return
@@ -503,7 +438,6 @@ class Decorator {
       }).range(line.to),
     )
   }
-
   private commentFields(line: Line) {
     if (!line.text.includes('::')) return
     const drawn = chipsFor(line.text)?.commentDrawing(line.text)
@@ -513,26 +447,20 @@ class Decorator {
     if (shown) return
     this.marks.push(Decoration.widget({ widget: new chips.CommentChipsWidget(drawn.chips), side: 1 }).range(line.to))
   }
-
   private image(node: SyntaxNode): boolean {
     if (imageRevealed(this.state, node.from, node.to)) return true
-
     const image = imageOfNode(this.state, node)
     if (!image) return !!linkAddress(node)
-
     const card = webCard(image.src)
     if (card) {
       this.inlineWidget(node, new WebEmbedWidget(card), false)
       return false
     }
-
     this.inlineWidget(node, new ImageWidget(image, this.state.facet(imageResolver)(image.src)), false)
     return false
   }
-
   private underline(node: SyntaxNode): boolean {
     if (!/^<u\s*>$/i.test(this.state.doc.sliceString(node.from, node.to))) return false
-
     let depth = 0
     for (let next = node.nextSibling; next; next = next.nextSibling) {
       if (next.name !== 'HTMLTag') continue
@@ -543,7 +471,6 @@ class Decorator {
         depth--
         continue
       }
-
       const shown = overlaps(this.state, node.from, next.to)
       this.conceal(node.from, node.to, shown)
       this.conceal(next.from, next.to, shown)
@@ -553,24 +480,19 @@ class Decorator {
     }
     return false
   }
-
   private htmlImage(node: SyntaxNode): boolean {
     if (this.isClaimed(node.from, node.to)) return true
     if (node.name === 'HTMLTag' && this.underline(node)) return true
-
     const tag = this.state.doc.sliceString(node.from, node.to)
-
     if (/page-break-(after|before)\s*:\s*always/i.test(tag)) {
       if (overlaps(this.state, node.from, node.to)) return true
       this.inlineWidget(node, new PageBreakWidget(), false)
       return false
     }
-
     const framed = iframeCard(tag)
     if (framed) {
       const closer = node.name === 'HTMLTag' ? this.closingIframe(node) : null
       if (overlaps(this.state, node.from, closer?.to ?? node.to)) return true
-
       const end = node.name === 'HTMLBlock' ? this.iframeEnd(node) : node.to
       this.inlineWidget({ from: node.from, to: end }, new WebEmbedWidget(framed), false)
       if (closer) {
@@ -579,10 +501,8 @@ class Decorator {
       }
       return false
     }
-
     return this.image(node)
   }
-
   private closingIframe(node: SyntaxNode): SyntaxNode | null {
     for (let next = node.nextSibling; next; next = next.nextSibling) {
       if (next.name !== 'HTMLTag') continue
@@ -591,26 +511,20 @@ class Decorator {
     }
     return null
   }
-
   private emoji(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) return true
-
     const shortcode = this.state.doc.sliceString(node.from + 1, node.to - 1)
     const character = emojiFor(shortcode)
     if (!character) return true
-
     this.inlineWidget(node, new EmojiWidget(character), false)
     return false
   }
-
   private tableDelimiter(node: SyntaxNode) {
     this.marks.push(Decoration.mark({ class: 'orden-table-pipe' }).range(node.from, node.to))
   }
-
   private spaced(mark: SyntaxNode | null): boolean {
     return !!mark && /[ \t]/.test(this.state.doc.sliceString(mark.to, mark.to + 1))
   }
-
   private eatSpace(pos: number): number {
     const doc = this.state.doc
     const line = doc.lineAt(pos)
@@ -618,25 +532,21 @@ class Decorator {
     while (end < line.to && doc.sliceString(end, end + 1) === ' ') end++
     return end
   }
-
   private depth(node: SyntaxNode): number {
     let depth = 0
     for (let parent = node.parent; parent; parent = parent.parent) if (parent.name === 'BulletList') depth++
     return Math.max(depth - 1, 0)
   }
-
   private addLineClass(pos: number, className: string) {
     const classes = this.lineClasses.get(pos) ?? new Set<string>()
     classes.add(className)
     this.lineClasses.set(pos, classes)
   }
-
   private addLineAttrs(pos: number, attrs: Record<string, string>) {
     const carried = this.lineAttrs.get(pos)
     if (carried) Object.assign(carried, attrs)
     else this.lineAttrs.set(pos, { ...attrs })
   }
-
   private numberLines(from: number, to: number, fenced: boolean) {
     const doc = this.state.doc
     const opening = doc.lineAt(from).number
@@ -644,7 +554,6 @@ class Decorator {
     const first = fenced ? opening + 1 : opening
     const last = fenced ? closing - 1 : closing
     const digits = String(Math.max(last - first + 1, 1)).length
-
     for (let number = opening; number <= closing; number++) {
       const line = doc.line(number)
       this.addLineAttrs(line.from, { style: `--code-digits:${digits}` })
@@ -652,40 +561,32 @@ class Decorator {
       this.addLineAttrs(line.from, { 'data-code-number': String(number - first + 1) })
     }
   }
-
   private headingNumber(node: SyntaxNode): Record<string, string> | undefined {
     const number = headingNumbersOf(this.state).get(node.from)
     return number === undefined ? undefined : { 'data-heading-number': number }
   }
-
   private markLines(node: SyntaxNode, className: string, firstOnly = false, attrs?: Record<string, string>) {
     const doc = this.state.doc
     const last = firstOnly ? node.from : Math.min(node.to, doc.length)
-
     for (const line of linesBetween(doc, node.from, last)) {
       if (className) this.addLineClass(line.from, className)
       if (attrs) this.addLineAttrs(line.from, attrs)
     }
   }
 }
-
 let chips: typeof import('./task-chips') | null = null
 const chipsLanded = new Set<() => void>()
 const fetchChips = door(async () => {
   chips = await import('./task-chips')
   for (const landed of [...chipsLanded]) landed()
 })
-
 export const loadTaskChips: () => Promise<void> = fetchChips
-
 const FIELD = /[📅📆🗓⏳⌛🛫➕✅❌🔺⏫🔼🔽⏬🔁🏁🆔⛔]|::/u
-
 function chipsFor(line: string): typeof chips {
   if (!FIELD.test(line)) return null
   if (!chips) void fetchChips()
   return chips
 }
-
 function* linesBetween(doc: Text, from: number, to: number): Generator<Line> {
   for (let pos = from; pos <= to;) {
     const line = doc.lineAt(pos)
@@ -694,24 +595,20 @@ function* linesBetween(doc: Text, from: number, to: number): Generator<Line> {
     pos = line.to + 1
   }
 }
-
 export function buildDecorations(
   state: EditorState,
   ranges: readonly { from: number; to: number }[] = [{ from: 0, to: state.doc.length }],
 ) {
   return new Decorator(state).build(ranges)
 }
-
 const enginesLanded = StateEffect.define()
 const COMPOSITION_SETTLES = 50
-
 export const livePreviewDecorations = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
     atomic: DecorationSet
     private behind = false
     private readonly stopWaiting: () => void
-
     constructor(view: EditorView) {
       const built = buildDecorations(view.state, view.visibleRanges)
       this.decorations = built.decorations
@@ -724,16 +621,13 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         chipsLanded.delete(landed)
       }
     }
-
     destroy() {
       this.behind = false
       this.stopWaiting()
     }
-
     update(update: ViewUpdate) {
       const held = update.state.field(dragging, false)
       const released = update.startState.field(dragging, false) && !held
-
       const settled = update.selectionSet && !held
       const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
       const asked = asksMoved(update.startState, update.state)
@@ -759,7 +653,6 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         this.rebuild(update)
       }
     }
-
     private rebuild(update: ViewUpdate) {
       if (update.view.compositionStarted) {
         this.decorations = this.decorations.map(update.changes)
@@ -767,13 +660,11 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         this.behind = true
         return
       }
-
       const built = buildDecorations(update.view.state, update.view.visibleRanges)
       this.decorations = built.decorations
       this.atomic = built.atomic
       this.behind = false
     }
-
     catchUp(view: EditorView) {
       if (this.behind && !view.compositionStarted) view.dispatch({})
     }

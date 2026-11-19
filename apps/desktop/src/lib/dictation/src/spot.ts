@@ -1,12 +1,10 @@
 export type Field = HTMLTextAreaElement | HTMLInputElement
-
 export function spacedIn(before: string, words: string, after: string): string {
   if (!words) return ''
   const left = before && !/\s$/.test(before) ? ' ' : ''
   const right = after && !/^[\s.,;:!?)\]}]/.test(after) ? ' ' : ''
   return `${left}${words}${right}`
 }
-
 function changed(was: string, now: string): { from: number; was: number; now: number } {
   let from = 0
   const most = Math.min(was.length, now.length)
@@ -15,7 +13,6 @@ function changed(was: string, now: string): { from: number; was: number; now: nu
   while (end < most - from && was[was.length - 1 - end] === now[now.length - 1 - end]) end++
   return { from, was: was.length - end, now: now.length - end }
 }
-
 export class Spot {
   from: number
   to: number
@@ -23,7 +20,6 @@ export class Spot {
   private written: string
   private writing = false
   private readonly mark: Mark
-
   constructor(
     private readonly field: Field,
     private readonly broken: () => void,
@@ -36,11 +32,9 @@ export class Spot {
     this.mark = new Mark(field)
     field.addEventListener('input', this.typed)
   }
-
   before(): string {
     return this.field.value.slice(0, this.from)
   }
-
   show(words: string, live: boolean): void {
     const value = this.field.value
     const before = value.slice(0, this.from)
@@ -49,16 +43,13 @@ export class Spot {
     const caret = this.field.selectionStart ?? value.length
     const end = this.to
     const shift = put.length - (end - this.from)
-
     this.write(before + put + after)
     this.to = this.from + put.length
     const at = caret >= this.from && caret <= end ? this.to : caret > end ? caret + shift : caret
     this.field.setSelectionRange(at, at)
-
     if (live && put.trim()) this.mark.show(this.field.value, this.from, this.to)
     else this.mark.hide()
   }
-
   restore(): void {
     this.mark.hide()
     const value = this.field.value
@@ -66,12 +57,10 @@ export class Spot {
     this.to = this.from + this.original.length
     this.field.setSelectionRange(this.to, this.to)
   }
-
   release(): void {
     this.mark.hide()
     this.field.removeEventListener('input', this.typed)
   }
-
   private write(value: string): void {
     if (value === this.field.value) return
     this.writing = true
@@ -80,7 +69,6 @@ export class Spot {
     this.field.dispatchEvent(new Event('input', { bubbles: true }))
     this.writing = false
   }
-
   private readonly typed = () => {
     if (this.writing) return
     const now = this.field.value
@@ -97,13 +85,10 @@ export class Spot {
     if (this.mark.shown) this.mark.show(now, this.from, this.to)
   }
 }
-
 class Mark {
   private layer: HTMLDivElement | null = null
   shown = false
-
   constructor(private readonly field: Field) {}
-
   show(value: string, from: number, to: number): void {
     const layer = this.layer ?? this.made()
     if (!layer) return
@@ -118,14 +103,12 @@ class Mark {
     layer.scrollTop = this.field.scrollTop
     layer.scrollLeft = this.field.scrollLeft
   }
-
   hide(): void {
     this.shown = false
     this.layer?.remove()
     this.layer = null
     this.field.removeEventListener('scroll', this.scrolled)
   }
-
   private made(): HTMLDivElement | null {
     const parent = this.field.offsetParent
     if (!(parent instanceof HTMLElement)) return null
@@ -137,7 +120,6 @@ class Mark {
     this.layer = layer
     return layer
   }
-
   private place(layer: HTMLDivElement): void {
     const field = this.field
     const style = getComputedStyle(field)
@@ -157,7 +139,6 @@ class Mark {
       'pointer-events:none;margin:0;z-index:1;' +
       (area ? 'white-space:pre-wrap;overflow-wrap:break-word;' : 'white-space:pre;')
   }
-
   private readonly scrolled = () => {
     if (!this.layer) return
     this.layer.scrollTop = this.field.scrollTop

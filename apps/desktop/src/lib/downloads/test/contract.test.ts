@@ -4,7 +4,6 @@ import { cornerOf, flightMs, framesOf, landing, PRESS_LASTS, startOf } from '../
 describe('where a download flies from and to', () => {
   const area = { x: 0, y: 0, width: 1000, height: 600 }
   const press = { target: null, x: 40, y: 50, at: 1_000 }
-
   test('from the element that made it, else the page point, else a recent press, else the middle', () => {
     const element = { x: 100, y: 100, width: 20, height: 10 }
     const base = { element: null, page: null, press: null, pressed: null, now: 1_000, area }
@@ -13,7 +12,6 @@ describe('where a download flies from and to', () => {
     expect(startOf({ ...base, press })).toEqual({ x: 40, y: 50 })
     expect(startOf({ ...base, press, now: 1_000 + PRESS_LASTS + 1 })).toEqual({ x: 500, y: 300 })
   })
-
   test("to its own tab's downloads, else the focused one, else the first, else the corner", () => {
     const box = { x: 0, y: 0, width: 1, height: 1 }
     const glyphs = [
@@ -25,7 +23,6 @@ describe('where a download flies from and to', () => {
     expect(landing([], null)).toBeNull()
     expect(cornerOf({ width: 800, height: 600 })).toEqual({ x: 768, y: 32 })
   })
-
   test('a flight takes longer the farther it goes, starts unseen and ends where it lands', () => {
     const from = { x: 0, y: 0 }
     expect(flightMs(from, { x: 0, y: 0 })).toBe(400)

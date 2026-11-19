@@ -7,7 +7,6 @@ export interface Ending {
   stopped: boolean
   err: string
 }
-
 export function limitSentence(plan: string, limit: Limit): string {
   if (limit.until !== null) {
     return `Your ${plan} plan is at its limit until ${when(limit.until, 'medium')}.`
@@ -17,7 +16,6 @@ export function limitSentence(plan: string, limit: Limit): string {
   }
   return `Your ${plan} plan is at its limit for now.`
 }
-
 export function troubleOf(name: string, plan: string, heard: Heard, ended: Ending, answered: boolean): string | null {
   if (heard.limit?.state === 'reached') return limitSentence(plan, heard.limit)
   if (heard.signedOut) return `Sign in to ${name} first.`

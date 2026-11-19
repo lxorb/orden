@@ -6,27 +6,21 @@ import { account, invoke, isDesktop, platform, remote } from './ports'
 import { BEAT, DEVICE, readHubFrame, type FromDevice, type FromHub, type HubFrame, type HubType } from './hub-frames'
 
 export type HubState = 'off' | 'connecting' | 'open'
-
 const OPEN_WITHIN = 10_000
-
 const SILENT_BEATS = 3
-
 export interface HubSocket {
   readonly open: boolean
   send(text: string): void
   close(): void
 }
-
 export interface SocketEvents {
   opened(): void
   heard(text: string): void
   closed(code: number): void
 }
-
 export interface HubChannel {
   post(message: unknown): void
 }
-
 export interface HubWorld {
   socket(url: string, protocols: string[], events: SocketEvents): HubSocket
   device(): Promise<string>
@@ -35,20 +29,16 @@ export interface HubWorld {
   elect(lead: () => void): void
   every(ms: number, tick: () => void): () => void
 }
-
 type Relayed =
   | { k: 'frame'; frame: FromHub }
   | { k: 'state'; state: HubState }
   | { k: 'opened' }
   | { k: 'send'; frame: FromDevice }
   | { k: 'ask' }
-
 type Listener = (frame: FromHub) => void
-
 export class Hub {
   state = $state<HubState>('off')
   device: string | null = null
-
   private token: string | null = null
   private socket: HubSocket | null = null
   private tries = 0
@@ -63,9 +53,7 @@ export class Hub {
   private readonly listeners = new Map<HubType, Set<Listener>>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly openers = new Set<() => void>()
-
   constructor(private readonly world: HubWorld) {}
-
   start(): () => void {
     const back = () => this.back()
     if (typeof window !== 'undefined') window.addEventListener('online', back)
@@ -80,7 +68,6 @@ export class Hub {
       stop()
     }
   }
-
   back(): void {
     if (!this.retry) return
     clearTimeout(this.retry)
@@ -88,12 +75,10 @@ export class Hub {
     this.tries = 0
     this.connect()
   }
-
   follow(token: string | null): void {
     if (token === this.token) return
     this.token = token
     this.join()
-
     if (!this.leading) {
       this.elect()
       return
@@ -101,7 +86,6 @@ export class Hub {
     this.drop()
     if (token) this.connect()
   }
-
   on<T extends HubType>(type: T, listener: (frame: HubFrame<T>) => void): () => void {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
     const all = this.listeners.get(type) ?? new Set<Listener>()
@@ -110,16 +94,13 @@ export class Hub {
     all.add(one)
     return () => all.delete(one)
   }
-
   opened(run: () => void): () => void {
     this.openers.add(run)
     return () => this.openers.delete(run)
   }
-
   get leads(): boolean {
     return this.leading
   }
-
   send(frame: FromDevice): boolean {
     if (this.state !== 'open') return false
     if (!this.leading) {
@@ -128,14 +109,12 @@ export class Hub {
     }
     return this.write(JSON.stringify(frame))
   }
-
   private join(): void {
     if (this.channel) return
     this.channel = this.world.channel((message) => {
       this.relayed(message as Relayed)
     })
   }
-
   private elect(): void {
     if (this.electing) return
     this.electing = true
@@ -145,14 +124,12 @@ export class Hub {
     })
     this.channel?.post({ k: 'ask' } satisfies Relayed)
   }
-
   private relayed(said: Relayed): void {
     if (this.leading) {
       if (said.k === 'send' && this.state === 'open') this.write(JSON.stringify(said.frame))
       if (said.k === 'ask') this.channel?.post({ k: 'state', state: this.state } satisfies Relayed)
       return
     }
-
     if (said.k === 'frame') this.hear(said.frame)
     else if (said.k === 'state') this.state = said.state
     else if (said.k === 'opened') {
@@ -160,12 +137,10 @@ export class Hub {
       this.announce()
     }
   }
-
   private connect(): void {
     const token = this.token
     if (!token || this.socket) return
     this.setState('connecting')
-
     void this.world.device().then(
       (device) => {
         if (this.token !== token || this.socket) return
@@ -177,7 +152,6 @@ export class Hub {
       },
     )
   }
-
   private open(token: string, device: string): void {
     const url = `${remote().base.replace(/^http/, 'ws')}/v2/hub`
     let socket: HubSocket | null = null
@@ -218,7 +192,6 @@ export class Hub {
       }
     }, OPEN_WITHIN)
   }
-
   private beat(socket: HubSocket | null): void {
     if (!socket || this.socket !== socket) return
     this.quiet += 1
@@ -230,7 +203,6 @@ export class Hub {
     this.tries = 0
     this.write(BEAT)
   }
-
   private lost(socket: HubSocket | null): void {
     clearTimeout(this.opening)
     this.opening = undefined
@@ -240,11 +212,9 @@ export class Hub {
     socket?.close()
     this.setState('off')
   }
-
   private async hello(): Promise<void> {
     const device = this.device
     if (!device) return
-
     const name = await this.world.name().catch(() => '')
     const sent = this.write(
       JSON.stringify({
@@ -256,20 +226,16 @@ export class Hub {
       } satisfies FromDevice),
     )
     if (!sent) return
-
     this.setState('open')
     this.channel?.post({ k: 'opened' } satisfies Relayed)
     this.announce()
   }
-
   private announce(): void {
     for (const run of this.openers) run()
   }
-
   private hear(frame: FromHub): void {
     for (const listener of this.listeners.get(frame.t) ?? []) listener(frame)
   }
-
   private write(text: string): boolean {
     const socket = this.socket
     if (!socket?.open) return false
@@ -280,12 +246,10 @@ export class Hub {
       return false
     }
   }
-
   private setState(state: HubState): void {
     this.state = state
     this.channel?.post({ k: 'state', state } satisfies Relayed)
   }
-
   private shut(): void {
     const token = this.token
     void account()
@@ -294,7 +258,6 @@ export class Hub {
         if (token && this.token === token && account().token === token) this.again()
       })
   }
-
   private again(): void {
     if (!this.token || this.retry) return
     this.tries++
@@ -303,7 +266,6 @@ export class Hub {
       this.connect()
     }, roomDelay(this.tries))
   }
-
   private drop(): void {
     clearTimeout(this.retry)
     this.retry = undefined
@@ -311,7 +273,6 @@ export class Hub {
     this.lost(this.socket)
   }
 }
-
 export async function deviceId(): Promise<string> {
   const user = account().user
   if (user && !__EVEN_PLUGIN__) {
@@ -322,7 +283,6 @@ export async function deviceId(): Promise<string> {
   }
   return madeDeviceId(null)
 }
-
 async function deviceName(): Promise<string> {
   if (isDesktop()) {
     const named = await invoke<unknown>('device_name').catch(() => null)
@@ -331,7 +291,6 @@ async function deviceName(): Promise<string> {
   const { deviceName: platformName } = await import('../../collab/src/api')
   return platformName('Browser')
 }
-
 function ticking(ms: number, tick: () => void): () => void {
   if (typeof Worker === 'function' && typeof URL.createObjectURL === 'function') {
     try {
@@ -348,7 +307,6 @@ function ticking(ms: number, tick: () => void): () => void {
   const timer = setInterval(tick, ms)
   return () => clearInterval(timer)
 }
-
 const nativeWorld: HubWorld = {
   socket: (url, protocols, events) => {
     const socket = new WebSocket(url, protocols)
@@ -394,5 +352,4 @@ const nativeWorld: HubWorld = {
     }),
   every: ticking,
 }
-
 export const hub = new Hub(nativeWorld)

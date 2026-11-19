@@ -6,23 +6,19 @@ import { scanNote, scanShortcut } from './scan-note'
 describe('reading a note for the index', () => {
   test('finds its headings, its blocks and its links', () => {
     const note = scanNote('ideas/Plan.md', '# Plan\n\nSee [[Other]] and [x](../notes/Third.md). ^abc123\n\n## Later\n')
-
     expect(note.name).toBe('Plan')
     expect(note.headings).toEqual(['Plan', 'Later'])
     expect(note.blocks).toEqual(['abc123'])
     expect(note.links.map((link) => link.target)).toEqual(['Other', '../notes/Third.md'])
   })
-
   test('says when it holds a database, as the Rust scan does, and only then', () => {
     const holds = (body: string) => scanNote('Dash.md', body).bases === true
-
     expect(holds('# Dash\n\n```base\nviews: []\n```\n')).toBe(true)
     expect(holds('> ~~~~ base\n> views: []\n> ~~~~\n')).toBe(true)
     expect(holds('# Dash\n\n```baseball\n```\n')).toBe(false)
     expect(holds('# Dash\n\nbase\n')).toBe(false)
     expect('bases' in scanNote('Plain.md', '# Plain\n')).toBe(false)
   })
-
   test('counts definitions, pictures in a label and labels over two lines, and nothing in HTML or maths, as the Rust scan does', () => {
     const links = scanNote(
       'Note.md',
@@ -50,7 +46,6 @@ Inline $[hidden](Hidden4.md)$ maths and a comment <!-- [hidden](Hidden5.md) --> 
 Costs $5 and [six](Six.md) $10.
 `,
     ).links
-
     expect(links.map((one) => one.target)).toEqual([
       'One.md',
       'Two.md',
@@ -63,10 +58,8 @@ Costs $5 and [six](Six.md) $10.
     expect(links.find((one) => one.target === 'Three.md')?.line).toBe(2)
     expect(links.find((one) => one.target === 'Four.md')?.alias).toBe('four')
   })
-
   test('reads the other names the note gives itself, whichever way they are written', () => {
     const aliases = (body: string) => scanNote('Plan.md', body).aliases
-
     expect(aliases('---\naliases: [Roadmap, The plan]\n---\n')).toEqual(['Roadmap', 'The plan'])
     expect(aliases('---\naliases:\n  - Roadmap\n  - The plan\n---\n')).toEqual(['Roadmap', 'The plan'])
     expect(aliases('---\naliases:\n- Roadmap\n---\n')).toEqual(['Roadmap'])
@@ -74,19 +67,16 @@ Costs $5 and [six](Six.md) $10.
     expect(aliases('---\naliases: Roadmap\n---\n')).toEqual(['Roadmap'])
     expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
   })
-
   test('reads the front matter tags of a note written with CRLF endings', () => {
     expect(scanNote('N.md', '---\r\ntags: [work]\r\n---\r\nx\r\n').tags).toEqual(['work'])
     expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #orden\r\n').tags).toEqual(['work', 'orden'])
   })
-
   test('gives a note that names none an empty list rather than nothing at all', () => {
     expect(scanNote('Plan.md', '# Plan\n').aliases).toEqual([])
     expect(scanNote('Plan.md', '---\ntitle: Plan\n---\n').aliases).toEqual([])
     expect(scanNote('Plan.md', '---\nexport:\n  aliases: [One]\n---\n').aliases).toEqual([])
   })
 })
-
 describe('reading a canvas for the index', () => {
   const canvas = JSON.stringify({
     nodes: [
@@ -107,61 +97,47 @@ describe('reading a canvas for the index', () => {
     ],
     edges: [],
   })
-
   test('keeps its whole name, the way a link has to write it', () => {
     expect(scanCanvas('boards/Board.canvas', canvas).name).toBe('Board.canvas')
   })
-
   test('reads each file node as one link out of it', () => {
     const links = scanCanvas('Board.canvas', canvas).links
-
     expect(links.map((link) => link.target)).toEqual(['/ideas/Plan.md', '/Notes.md', '/x.md'])
     expect(links.every((link) => link.kind === 'wikilink')).toBe(true)
   })
-
   test('reads a subpath as the heading or the block it names', () => {
     const links = scanCanvas('Board.canvas', canvas).links
-
     expect(links[0]).toMatchObject({ heading: null, block: null })
     expect(links[1]).toMatchObject({ heading: 'Later', block: null })
     expect(links[2]).toMatchObject({ heading: null, block: 'abc123' })
   })
-
   test('has no headings and no blocks of its own', () => {
     const read = scanCanvas('Board.canvas', canvas)
-
     expect(read.headings).toEqual([])
     expect(read.blocks).toEqual([])
   })
-
   test('is an empty reading of a file that is not a canvas at all', () => {
     const read = scanCanvas('Board.canvas', 'not json')
-
     expect(read.links).toEqual([])
     expect(read.path).toBe('Board.canvas')
   })
-
   test('wears what its own file says, under the key that carries the ink', () => {
     const marked = JSON.stringify({ nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } })
     expect(scanCanvas('Board.canvas', marked).icon).toBe('rocket')
   })
-
   test('and an emoji a vault brought in from Iconize, as written', () => {
     const marked = JSON.stringify({ nodes: [], edges: [], orden: { icon: '🚀' } })
     expect(scanCanvas('Board.canvas', marked).icon).toBe('🚀')
   })
-
   test('nothing where it says nothing, or says something that is not a name', () => {
     expect(scanCanvas('Board.canvas', canvas).icon).toBeNull()
     expect(scanCanvas('Board.canvas', '{"orden":{"icon":"  "}}').icon).toBeNull()
     expect(scanCanvas('Board.canvas', '{"orden":{"icon":7}}').icon).toBeNull()
     expect(scanCanvas('Board.canvas', 'not json').icon).toBeNull()
   })
-
   test('and never an alias', () => {
     expect(scanCanvas('Board.canvas', '{"orden":{"icon":"rocket"}}').aliases).toEqual([])
   })
-
   test('reads the cards and the icon of a plane without reading its ink', () => {
     const ink = Array.from({ length: 10_000 }, (_, one) => ({
       id: `s${one}`,
@@ -187,41 +163,32 @@ describe('reading a canvas for the index', () => {
       edges: [],
       orden: { version: 1, icon: 'rocket', iconColor: 'violet', ink },
     })
-
     const parse = vi.spyOn(JSON, 'parse')
     const read = scanCanvas('Board.canvas', plane)
     const parsed = parse.mock.calls.reduce((sum, [text]) => sum + text.length, 0)
     parse.mockRestore()
-
     expect(parsed).toBeLessThan(plane.length / 1000)
-
     const whole = readCanvas(plane)
     expect(read.icon).toBe(whole.icon)
     expect(read.iconColor).toBe(whole.iconColor)
     expect(read.links.map((link) => [link.target, link.heading])).toEqual([['/Plan.md', 'Later']])
   })
-
   test('stops at the icon of a plane in the order this app writes one', () => {
     const cards = '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
     const orden = '"orden":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
     const read = scanCanvas('Board.canvas', `{${cards},"edges":[],${orden}`)
-
     expect(read.icon).toBe('rocket')
     expect(read.iconColor).toBe('violet')
     expect(read.links.map((link) => link.target)).toEqual(['/Plan.md'])
   })
-
   test('and walks the whole of one in any other order', () => {
     const plane = JSON.stringify({ orden: { ink: [[1]], version: 1, icon: 'rocket' }, nodes: [] })
-
     expect(scanCanvas('Board.canvas', plane).icon).toBe('rocket')
     expect(scanCanvas('Board.canvas', plane.replace('[[1]]', '[[1]')).icon).toBeNull()
   })
 })
-
 describe('reading a website for the index', () => {
   const url = '[InternetShortcut]\nURL=https://svelte.dev/docs\nOrden-Icon=https://svelte.dev/favicon.png\n'
-
   test('carries the favicon out of its Orden-Icon key', () => {
     const site = scanShortcut('Reading/Svelte docs.url', url)
     expect(site.name).toBe('Svelte docs.url')
@@ -231,13 +198,11 @@ describe('reading a website for the index', () => {
     expect(site.icon).toBeNull()
     expect(site.links).toEqual([])
   })
-
   test('and the plain globe where there is no mark yet', () => {
     const bare = scanShortcut('A.url', '[InternetShortcut]\nURL=https://a.example/\n')
     expect(bare.favicon).toBeNull()
     expect(scanShortcut('A.webloc', '<plist><dict></dict></plist>').favicon).toBeNull()
   })
-
   test('and where a .webloc points, and nothing for a note or a canvas', () => {
     const webloc = '<plist><dict><key>URL</key><string>https://a.example/?x=1&amp;y=2</string>'
     expect(scanShortcut('A.webloc', `${webloc}</dict></plist>`).address).toBe('https://a.example/?x=1&y=2')

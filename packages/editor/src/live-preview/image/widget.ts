@@ -9,12 +9,10 @@ import { selectedImage, selectionOver } from './selection'
 
 const NATURAL = new Map<string, { width: number; height: number }>()
 const DRAG_START = 3
-
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
   if (spec.zoom !== 100) return natural ? `${Math.round((natural * spec.zoom) / 100)}px` : `${spec.zoom}%`
   return spec.width ? `${spec.width}px` : ''
 }
-
 function showSize(target: HTMLElement, zoom: number, natural: number | undefined): void {
   const parts = natural ? [`${zoom}%`, `${Math.round((natural * zoom) / 100)}px`] : [`${zoom}%`]
   target.replaceChildren(
@@ -25,7 +23,6 @@ function showSize(target: HTMLElement, zoom: number, natural: number | undefined
     }),
   )
 }
-
 function icon(paths: string[]): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   svg.setAttribute('viewBox', '0 0 14 14')
@@ -36,7 +33,6 @@ function icon(paths: string[]): SVGSVGElement {
   }
   return svg
 }
-
 const ICONS = {
   open: ['M6 2.5H2.5V6', 'M8 2.5h3.5V6', 'M6 11.5H2.5V8', 'M8 11.5h3.5V8'],
   link: ['M5.5 8.5l3-3', 'M6.5 4.5l1-1a2.1 2.1 0 013 3l-1 1', 'M7.5 9.5l-1 1a2.1 2.1 0 01-3-3l1-1'],
@@ -45,7 +41,6 @@ const ICONS = {
   trash: ['M2.5 4h9', 'M5.5 4V2.5h3V4', 'M4 4l.5 7.5h5L10 4'],
   missing: ['M2 3.5h10v7H2z', 'M4 9l2.5-3 2 2 1.5-1.5L11.5 9', 'M4.5 5.5h.01'],
 }
-
 export interface Parts {
   frame: HTMLElement
   box: HTMLElement
@@ -56,43 +51,35 @@ export interface Parts {
   badge: HTMLElement
   tools: HTMLElement
 }
-
 const PARTS = new WeakMap<HTMLElement, Parts>()
 export const partsOf = (frame: HTMLElement): Parts | null => PARTS.get(frame) ?? null
-
 export function imageOfFrame(view: EditorView, frame: HTMLElement): ImageSpan | null {
   if (!view.contentDOM.contains(frame)) return null
   return imageAt(view.state, view.posAtDOM(frame))
 }
-
 function select(view: EditorView, image: ImageSpan, extend = false) {
   const current = view.state.selection.main
   const selection = extend
     ? EditorSelection.range(current.anchor, current.anchor <= image.from ? image.to : image.from)
     : selectionOver(image)
-
   view.dispatch({ selection, userEvent: 'select.image' })
   view.focus()
 }
-
 function rewritten(state: EditorState, image: ImageSpan, next: ImageSpec, userEvent: string): TransactionSpec {
   const written = image.tag ?? image
   const original = state.doc.sliceString(written.from, written.to)
   const insert = /^<img\b/i.test(original) ? retag(original, next) : imageMarkup(next, image.tag !== undefined)
   const wasSelected = selectedImage(state)?.from === image.from
   const changes = state.changes({ from: written.from, to: written.to, insert })
-
   return {
     changes,
     selection: wasSelected ? EditorSelection.range(image.from, changes.mapPos(image.to, 1)) : undefined,
     userEvent,
   }
 }
-
 function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
   view.dispatch(rewritten(view.state, image, next, userEvent))
 }
-
 function remove(view: EditorView, image: ImageSpan) {
   view.focus()
   view.dispatch({
@@ -101,7 +88,6 @@ function remove(view: EditorView, image: ImageSpan) {
     userEvent: 'delete.image',
   })
 }
-
 export class ImageWidget extends OrdenWidget {
   constructor(
     readonly spec: ImageSpec,
@@ -109,7 +95,6 @@ export class ImageWidget extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: ImageWidget) {
     const a = this.spec
     const b = other.spec
@@ -122,28 +107,23 @@ export class ImageWidget extends OrdenWidget {
       a.width === b.width
     )
   }
-
   toDOM(view: EditorView) {
     const frame = document.createElement('span')
     frame.className = 'orden-image-frame is-loading'
     frame.contentEditable = 'false'
-
     const box = document.createElement('span')
     box.className = 'orden-image-box'
     frame.append(box)
-
     const image = document.createElement('img')
     image.className = 'orden-image'
     image.draggable = false
     box.append(image)
-
     const missing = document.createElement('span')
     missing.className = 'orden-image-missing'
     missing.title = 'Image not found'
     const path = document.createElement('span')
     missing.append(icon(ICONS.missing), path)
     box.append(missing)
-
     for (const corner of ['nw', 'ne', 'sw', 'se']) {
       const handle = document.createElement('span')
       handle.className = 'orden-image-handle'
@@ -152,14 +132,11 @@ export class ImageWidget extends OrdenWidget {
       handle.addEventListener('pointerdown', (event) => this.startResize(event, view, frame, handle))
       box.append(handle)
     }
-
     const badge = document.createElement('span')
     badge.className = 'orden-image-badge'
     box.append(badge)
-
     const toolbar = this.toolbar(view, frame)
     box.append(toolbar.tools)
-
     PARTS.set(frame, {
       frame,
       box,
@@ -170,7 +147,6 @@ export class ImageWidget extends OrdenWidget {
       badge,
       tools: toolbar.tools,
     })
-
     const src = this.address
     frame.dataset.src = src
     const known = NATURAL.get(src)
@@ -179,7 +155,6 @@ export class ImageWidget extends OrdenWidget {
       image.height = known.height
       frame.classList.remove('is-loading')
     }
-
     image.addEventListener('load', () => {
       NATURAL.set(src, { width: image.naturalWidth, height: image.naturalHeight })
       if (!known) frame.classList.add('is-fresh')
@@ -190,7 +165,6 @@ export class ImageWidget extends OrdenWidget {
       frame.classList.remove('is-loading')
       frame.classList.add('is-broken')
     })
-
     frame.addEventListener('pointerdown', (event) => {
       if (event.button !== 0 || this.inToolbar(event)) return
       event.preventDefault()
@@ -207,28 +181,22 @@ export class ImageWidget extends OrdenWidget {
       const current = imageOfFrame(view, frame)
       if (current) openLightbox(view, image.src, current.alt)
     })
-
     this.sync(frame, this.spec)
     image.src = src
     return frame
   }
-
   override updateDOM(frame: HTMLElement): boolean {
     if (frame.dataset.src !== this.address) return false
     return this.sync(frame, this.spec)
   }
-
   private sync(frame: HTMLElement, image: ImageSpec): boolean {
     const parts = partsOf(frame)
     if (!parts) return false
-
     const natural = NATURAL.get(frame.dataset.src ?? '')?.width
-
     parts.image.alt = image.alt
     parts.image.title = image.title
     parts.image.style.width = displayWidth(image, natural)
     parts.missing.textContent = image.src
-
     if (document.activeElement !== parts.alt) parts.alt.value = image.alt
     showSize(parts.size, image.zoom, natural)
     const plain = image.zoom === 100 && !image.width
@@ -236,26 +204,22 @@ export class ImageWidget extends OrdenWidget {
     parts.size.title = plain ? '' : 'Reset size'
     return true
   }
-
   private inToolbar(event: Event): boolean {
     const target = event.target
     return target instanceof Element && target.closest('.orden-image-tools') !== null
   }
-
   private toolbar(
     view: EditorView,
     frame: HTMLElement,
   ): { tools: HTMLElement; alt: HTMLInputElement; size: HTMLButtonElement } {
     const tools = document.createElement('span')
     tools.className = 'orden-image-tools'
-
     const alt = document.createElement('input')
     alt.className = 'orden-image-alt'
     alt.type = 'text'
     alt.placeholder = 'Describe the image'
     alt.spellcheck = false
     alt.setAttribute('aria-label', 'Describe the image')
-
     let held: {
       image: ImageSpan
       text: string
@@ -275,14 +239,12 @@ export class ImageWidget extends OrdenWidget {
         }
         return
       }
-
       landing((state) => {
         const current = (state === view.state ? imageOfFrame(view, frame) : null) ?? stillThere(state)
         if (!current || next === current.alt) return null
         return rewritten(state, current, { ...current, alt: next }, 'input.image.alt')
       })
     }
-
     alt.addEventListener('keydown', (event) => {
       event.stopPropagation()
       if (event.key === 'Enter') {
@@ -302,11 +264,9 @@ export class ImageWidget extends OrdenWidget {
     this.onDestroy(frame, () => queueMicrotask(commitAlt))
     alt.addEventListener('pointerdown', (event) => event.stopPropagation())
     tools.append(alt)
-
     const separator = document.createElement('span')
     separator.className = 'orden-image-tools-gap'
     tools.append(separator)
-
     const button = (className: string, title: string, content: Node | string, action: (image: ImageSpan) => void) => {
       const control = document.createElement('button')
       control.type = 'button'
@@ -327,17 +287,14 @@ export class ImageWidget extends OrdenWidget {
       tools.append(control)
       return control
     }
-
     const size = button('orden-image-size', '', '', (image) => {
       if (image.zoom !== 100 || image.width) rewrite(view, image, withZoom(image, 100), 'input.image.resize')
       view.focus()
     })
-
     button('orden-image-open', 'Open image', icon(ICONS.open), (image) => {
       const picture = partsOf(frame)?.image
       if (picture && !frame.classList.contains('is-broken')) openLightbox(view, picture.src, image.alt)
     })
-
     const copy = button('orden-image-copy', 'Copy link', icon(ICONS.link), (image) => {
       navigator.clipboard
         .writeText(image.src)
@@ -353,7 +310,6 @@ export class ImageWidget extends OrdenWidget {
         })
         .catch(() => undefined)
     })
-
     button('orden-image-source', 'Edit markdown', icon(ICONS.source), (image) => {
       view.focus()
       view.dispatch({
@@ -362,39 +318,30 @@ export class ImageWidget extends OrdenWidget {
         userEvent: 'select',
       })
     })
-
     button('orden-image-delete', 'Delete image', icon(ICONS.trash), (image) => remove(view, image))
-
     return { tools, alt, size }
   }
-
   private startResize(event: PointerEvent, view: EditorView, frame: HTMLElement, handle: HTMLElement) {
     if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
-
     const image = imageOfFrame(view, frame)
     const parts = partsOf(frame)
     if (!image || !parts) return
-
     const remembered = NATURAL.get(frame.dataset.src ?? '')?.width ?? 0
     const natural = remembered > 0 ? remembered : parts.image.naturalWidth
     if (!natural) return
-
     if (selectedImage(view.state)?.from !== image.from) select(view, image)
-
     const startX = event.clientX
     const startWidth = parts.image.getBoundingClientRect().width
     const lineWidth = frame.closest('.cm-line')?.getBoundingClientRect().width ?? natural
     const sign = handle.dataset.corner?.endsWith('e') ? 1 : -1
     let zoom = image.zoom
     let dragged = false
-
     frame.classList.add('is-resizing')
     frame.dataset.corner = handle.dataset.corner
     showSize(parts.badge, zoom, natural)
     captured(handle, event.pointerId)
-
     const move = (moved: PointerEvent) => {
       if (!dragged && Math.abs(moved.clientX - startX) < DRAG_START) return
       dragged = true
@@ -403,7 +350,6 @@ export class ImageWidget extends OrdenWidget {
       showSize(parts.badge, zoom, natural)
       showSize(parts.size, zoom, natural)
     }
-
     const finish = () => {
       handle.removeEventListener('pointermove', move)
       handle.removeEventListener('pointerup', finish)
@@ -411,7 +357,6 @@ export class ImageWidget extends OrdenWidget {
       if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId)
       frame.classList.remove('is-resizing')
       delete frame.dataset.corner
-
       const current = imageOfFrame(view, frame)
       if (!current) return
       if (!dragged || (zoom === current.zoom && !current.width)) {
@@ -420,17 +365,14 @@ export class ImageWidget extends OrdenWidget {
       }
       rewrite(view, current, withZoom(current, zoom), 'input.image.resize')
     }
-
     handle.addEventListener('pointermove', move)
     handle.addEventListener('pointerup', finish)
     handle.addEventListener('pointercancel', finish)
   }
-
   override ignoreEvent() {
     return true
   }
 }
-
 function captured(handle: HTMLElement, pointer: number): boolean {
   try {
     handle.setPointerCapture(pointer)

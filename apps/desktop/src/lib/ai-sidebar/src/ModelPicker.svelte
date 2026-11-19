@@ -20,7 +20,6 @@
   let query = $state('')
   let lit = $state(0)
   let field = $state<HTMLElement>()
-
   const shown = $derived.by(() => {
     const want = query.trim().toLowerCase()
     const all = list.length ? list : model ? [model] : []
@@ -28,13 +27,11 @@
       ? all.filter((one) => one.name.toLowerCase().includes(want) || one.id.toLowerCase().includes(want))
       : all
   })
-
   const label = $derived.by((): string[] => {
     if (!head) return []
     const name = [model?.name, head.model, provider?.name].find(Boolean) ?? ''
     return head.effort === 'auto' ? [name] : [name, effortWord(head.effort)]
   })
-
   $effect(() => {
     if (!open) return
     untrack(() => {
@@ -47,12 +44,10 @@
     })
     requestAnimationFrame(() => field?.focus())
   })
-
   function pick(id: string | undefined) {
     if (provider && id !== undefined) void chat.chooseModel(provider.id, id)
     close()
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
@@ -67,7 +62,6 @@
       close()
     }
   }
-
   function close() {
     chat.popover = null
     chat.focus()
@@ -173,7 +167,6 @@
     position: static;
     min-width: 0;
   }
-
   .chip {
     display: inline-flex;
     align-items: center;
@@ -193,13 +186,11 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .chip span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .chip svg {
     flex: none;
     width: 11px;
@@ -210,19 +201,16 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   @media (hover: hover) {
     .chip:hover:not(:disabled) {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   .chip.on {
     background: var(--surface-hover);
     color: var(--text-strong);
   }
-
   .pop {
     position: absolute;
     inset-inline-end: var(--space-1);
@@ -237,43 +225,36 @@
     padding: var(--space-1);
     outline: none;
   }
-
   .providers {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
     padding: var(--space-1) var(--space-1) 0;
   }
-
   .provider {
     --mark: var(--icon-sm);
     display: inline-flex;
     align-items: center;
     gap: 6px;
   }
-
   .catch {
     position: absolute;
     outline: none;
   }
-
   .models {
     display: flex;
     flex-direction: column;
     max-height: 15rem;
     overflow-y: auto;
   }
-
   .model {
     color: var(--text);
     white-space: nowrap;
   }
-
   .model.lit {
     background: var(--surface-hover);
     color: var(--item-hover-text-color);
   }
-
   .window {
     flex: none;
     margin-inline-start: var(--space-3);
@@ -281,7 +262,6 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .tick {
     flex: none;
     width: 1em;
@@ -290,7 +270,6 @@
     font-size: var(--text-sm);
     text-align: end;
   }
-
   .line {
     display: flex;
     align-items: center;
@@ -304,28 +283,23 @@
     font-size: var(--text-sm);
     cursor: default;
   }
-
   .what {
     flex: none;
     min-width: 3.5rem;
     color: var(--muted);
     text-align: start;
   }
-
   .fast {
     justify-content: space-between;
   }
-
   .effort {
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
   }
-
   .levels {
     grid-auto-flow: row;
   }
-
   .levels button {
     min-width: 0;
     padding: 3px 2px;
@@ -339,7 +313,6 @@
     font-size: var(--text-xs);
     cursor: default;
   }
-
   .levels button.on {
     color: var(--text-strong);
   }

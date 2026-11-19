@@ -10,27 +10,22 @@ import { workspace } from './workspace.svelte'
 
 export async function setCover(path: string, src: string | null): Promise<void> {
   workspace.itemMeta.set(path, { [COVER_KEY]: src, [COVER_POSITION_KEY]: null })
-
   const before = await workspace.noteText(path)
   if (before === null) return
-
   const edit = frontMatterEdits(before, [
     [COVER_KEY, null],
     [COVER_POSITION_KEY, null],
   ])
   if (!edit) return
-
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
     sayNotice(message(error, 'That cover could not be written.'))
   }
 }
-
 export async function chooseCover(path: string): Promise<void> {
   const [file] = await chooseFiles({ accept: PICTURES })
   if (!file) return
-
   try {
     const src = await busy.run('Storing the image', () => storeImage(file, path))
     void usage.refresh()
@@ -40,7 +35,6 @@ export async function chooseCover(path: string): Promise<void> {
     sayNotice(message(error, 'That image does not fit in your storage.'))
   }
 }
-
 export function removeCover(path: string): Promise<void> {
   return setCover(path, null)
 }

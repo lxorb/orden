@@ -27,7 +27,6 @@ providePort('sync.host', {
   invoke: (command, args) => invoke(command, args),
   joinPath: (dir, relative) => joinPath(dir, relative),
 })
-
 providePort('sync.storage', {
   text: (name) => storedText(name),
   json: (key) => stored(key),
@@ -35,9 +34,7 @@ providePort('sync.storage', {
   keepJson: (key, value) => keepJson(key, value),
   forget: (name) => forget(name),
 })
-
 providePort('sync.clock', { now: () => Date.now(), waited: (ms) => waited(ms) })
-
 providePort('sync.account', {
   get token() {
     return account.token
@@ -57,7 +54,6 @@ providePort('sync.account', {
   forgetWithSession: (clear) => account.forgetWithSession(clear),
   askBeforeLeaving: (ask) => account.askBeforeLeaving(ask),
 })
-
 providePort('sync.api', {
   get base() {
     return BASE
@@ -74,7 +70,6 @@ providePort('sync.api', {
   statusOf: (error) => (error instanceof ApiError ? error.status : null),
   saidByServer: (error) => fromServer(error),
 })
-
 providePort('sync.pairing', {
   pairSpaces: async (token, pairing) => (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
 })

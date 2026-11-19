@@ -1,11 +1,7 @@
 const ANSWERS_WITHIN = 2_000
-
 const OR_ALMOST = 100
-
 export const locksHere = () => (globalThis.navigator as Navigator | undefined)?.locks
-
 const probed = new WeakMap<LockManager, Promise<boolean>>()
-
 export function locksWork(locks: LockManager | undefined = locksHere()): Promise<boolean> {
   if (!locks) return Promise.resolve(false)
   let answer = probed.get(locks)
@@ -36,9 +32,7 @@ export function locksWork(locks: LockManager | undefined = locksHere()): Promise
   }
   return answer
 }
-
 export type Held = 'held' | 'taken' | 'broken'
-
 export async function inTurn<T>(name: () => string, run: () => Promise<T>, patience: number): Promise<T> {
   const locks = locksHere()
   if (!locks || !(await locksWork(locks))) return run()
@@ -58,7 +52,6 @@ export async function inTurn<T>(name: () => string, run: () => Promise<T>, patie
     }
   })
 }
-
 export function ifFree(locks: LockManager, name: string, work: () => Promise<unknown>): Promise<Held> {
   return new Promise((resolve) => {
     let answered = false
@@ -85,7 +78,6 @@ export function ifFree(locks: LockManager, name: string, work: () => Promise<unk
     }
   })
 }
-
 export function heldForLife(name: string, run: () => Promise<unknown>, signal?: AbortSignal): void {
   let started = false
   const go = () => {
@@ -117,7 +109,6 @@ export function heldForLife(name: string, run: () => Promise<unknown>, signal?: 
     }
   })()
 }
-
 export async function holdIfFree(name: string): Promise<(() => void) | null> {
   const locks = locksHere()
   if (!locks || !(await locksWork(locks))) return () => undefined

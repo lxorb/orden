@@ -17,17 +17,13 @@
     onadd: (word: string) => void
     onremove: (word: string) => void
   } = $props()
-
   let refused = $state(false)
-
   async function add(field: HTMLInputElement) {
     const typed = field.value
     if (!typed.trim()) return
-
     const word = await parse(typed)
     refused = word === null
     if (word === null) return
-
     onadd(word)
     field.value = ''
   }
@@ -65,13 +61,11 @@
     gap: var(--space-2);
     padding-block: var(--space-1);
   }
-
   .list {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
   }
-
   .words > .add {
     inline-size: auto;
   }

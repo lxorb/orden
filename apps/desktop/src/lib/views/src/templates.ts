@@ -9,7 +9,6 @@ import { writeFile } from '../../file-writes/src/api'
 import { nowHere } from './days'
 
 const folders = new Map<string, Promise<string>>()
-
 export function templatesFolder(root: string): Promise<string> {
   let found = folders.get(root)
   if (!found) {
@@ -24,7 +23,6 @@ export function templatesFolder(root: string): Promise<string> {
   }
   return found
 }
-
 export async function templates(): Promise<Entry[]> {
   const root = workspace.activeSpace?.root
   if (root === undefined) return []
@@ -33,7 +31,6 @@ export async function templates(): Promise<Entry[]> {
     .filter((one) => /\.md$/i.test(one.name) && within(folder, one.path, root) !== null && !protection.locked(one.path))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
-
 export function templatePath(link: string, space = workspace.activeSpace): string | null {
   if (!space) return null
   const root = space.root
@@ -55,7 +52,6 @@ export function templatePath(link: string, space = workspace.activeSpace): strin
   const found = byPath ?? byName
   return found ? insideSpace(root, found.relative) : null
 }
-
 export async function templateWords(path: string, title: string): Promise<string> {
   if (protection.locked(path)) return ''
   const text = await workspace.noteText(path).catch(() => null)
@@ -63,7 +59,6 @@ export async function templateWords(path: string, title: string): Promise<string
   const now = nowHere()
   return withoutTemplateKeys(fillTemplate(text, { title, today: now.slice(0, 10), time: now.slice(11, 16) }))
 }
-
 export async function pickTemplate(): Promise<void> {
   const space = workspace.activeSpace
   if (!space) return

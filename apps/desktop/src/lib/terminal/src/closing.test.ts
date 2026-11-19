@@ -8,7 +8,6 @@ const world = vi.hoisted(() => ({
   asked: [] as { title: string; options: string[] }[],
   ended: [] as string[],
 }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
@@ -28,19 +27,14 @@ vi.mock('./online/calls', () => ({
     return Promise.resolve()
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../../workspace/src/api')
 const { serveWorkspace } = await import('../../workspace/src/services')
 serveWorkspace({ mayEnd: (await import('./closing')).mayEnd })
-
 function online(session: string, name = 'Terminal') {
   return workspace.openUnsaved('terminal', JSON.stringify({ v: 1, machine: 'machine-1', session }), name)
 }
-
 const open = (id: string) => workspace.tabs.some((one) => one.id === id)
-
 beforeEach(() => {
   workspace.panes.collapse()
   workspace.tabs = []
@@ -48,7 +42,6 @@ beforeEach(() => {
   world.asked = []
   world.ended = []
 })
-
 describe('an online terminal saved nowhere, closed', () => {
   test('asks once whether to end its session, Keep running the safe answer', async () => {
     const tab = online('s-1', 'Build')
@@ -58,7 +51,6 @@ describe('an online terminal saved nowhere, closed', () => {
     expect(open(tab.id)).toBe(false)
     expect(world.ended).toEqual([])
   })
-
   test('ends its session on the machine when End is the answer', async () => {
     const tab = online('s-2')
     world.answer = 'end'
@@ -66,7 +58,6 @@ describe('an online terminal saved nowhere, closed', () => {
     expect(open(tab.id)).toBe(false)
     await vi.waitFor(() => expect(world.ended).toEqual(['s-2']))
   })
-
   test('stays open, its session too, when the question is let go of', async () => {
     const tab = online('s-3')
     world.answer = null
@@ -77,7 +68,6 @@ describe('an online terminal saved nowhere, closed', () => {
     expect(open(tab.id)).toBe(true)
     expect(world.ended).toEqual([])
   })
-
   test('is one question for every one a gesture closes', async () => {
     const one = online('s-4')
     const two = online('s-5')
@@ -87,7 +77,6 @@ describe('an online terminal saved nowhere, closed', () => {
     expect(world.asked[0]?.title).toBe('End these online terminals?')
     await vi.waitFor(() => expect(world.ended.sort()).toEqual(['s-4', 's-5']))
   })
-
   test('asks as Close others closes it, and as its pane closes', async () => {
     workspace.openBlank('Kept', '# Kept')
     const keep = workspace.active
@@ -96,7 +85,6 @@ describe('an online terminal saved nowhere, closed', () => {
     await workspace.closeAround(keep?.id ?? '', 'others')
     expect(world.asked).toHaveLength(1)
     expect(open(tab.id)).toBe(false)
-
     const right = workspace.panes.split('row')
     expect(right).not.toBeNull()
     const again = online('s-8')
@@ -106,7 +94,6 @@ describe('an online terminal saved nowhere, closed', () => {
     expect(open(again.id)).toBe(true)
   })
 })
-
 describe('an online terminal whose session has ended, closed', () => {
   test('closes without a word, and asks again once the session runs anew', async () => {
     const { setEnded } = await import('./running')
@@ -116,7 +103,6 @@ describe('an online terminal whose session has ended, closed', () => {
     expect(world.asked).toEqual([])
     expect(open(tab.id)).toBe(false)
     expect(world.ended).toEqual([])
-
     const again = online('s-10', 'Again')
     setEnded(again.id, true)
     setEnded(again.id, false)
@@ -124,14 +110,12 @@ describe('an online terminal whose session has ended, closed', () => {
     await workspace.closeAsking(again.id)
     expect(world.asked).toEqual([{ title: 'End Again?', options: ['cancel', 'end', 'keep'] }])
   })
-
   test('is marked ended when its shell exits or the machine says it is gone', () => {
     const sessions = readFileSync(join(import.meta.dirname, 'sessions.svelte.ts'), 'utf8')
     expect(sessions).toMatch(/exitedWith\(code: number\) \{\s*if \(this\.online\) \{\s*setEnded\(this\.tab\.id, true\)/)
     expect(sessions).toMatch(/if \(what\.gone === true\) setEnded\(this\.tab\.id, true\)/)
   })
 })
-
 describe('an online terminal saved in the sidebar, closed', () => {
   test('closes without a word, its session left as it is', async () => {
     const tab = online('s-7')
@@ -142,7 +126,6 @@ describe('an online terminal saved in the sidebar, closed', () => {
     expect(world.ended).toEqual([])
   })
 })
-
 test("the strip's, the overview's and the keys' closes all ask through the store", () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
   const store = read('../../workspace/src/workspace.svelte.ts')

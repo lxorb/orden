@@ -21,9 +21,7 @@ export interface Machine {
   holds: string
   send(frame: OrdendFrame): void
 }
-
 const PROGRAM_EVERY = 1000
-
 export class Session {
   readonly id: string
   private readonly machine: Machine
@@ -48,7 +46,6 @@ export class Session {
   private scanned = 0
   private heard = 0
   private printedAt: number | null = null
-
   constructor(id: string, cols: number, rows: number, machine: Machine, saved?: Saved) {
     this.id = id
     this.machine = machine
@@ -72,19 +69,15 @@ export class Session {
         if (wanted) this.resize(wanted.cols, wanted.rows)
       })
   }
-
   get alive(): boolean {
     return this.held !== null
   }
-
   get restored(): Restored | undefined {
     return this.restoredFrom
   }
-
   get pid(): number | undefined {
     return this.shell
   }
-
   restart(): void {
     if (this.held || this.over) return
     const held = this.hold()
@@ -93,7 +86,6 @@ export class Session {
       this.died(held)
     })
   }
-
   private hold(): Held {
     const held: Held = new Held(socketOf(this.machine.holds, this.id), {
       out: (seq, data) => {
@@ -105,7 +97,6 @@ export class Session {
     })
     return held
   }
-
   private async begin(held: Held, cols: number, rows: number, saved?: Saved): Promise<void> {
     const hello = await held.find()
     if (this.over) return
@@ -116,7 +107,6 @@ export class Session {
     const folder = saved ? await this.drawBack(saved, cols, rows) : this.machine.home
     if (folder !== null) await this.spawn(held, folder)
   }
-
   private async rejoin(held: Held, hello: Hello, saved?: Saved): Promise<void> {
     this.shell = hello.shell
     const kept = saved?.v === 2 && saved.seq >= hello.from && saved.seq <= hello.end ? saved : null
@@ -140,7 +130,6 @@ export class Session {
     }
     this.ask()
   }
-
   private async drawBack(saved: Saved, cols: number, rows: number): Promise<string | null> {
     const first = await firstScreen(saved)
     if (this.over) return null
@@ -151,7 +140,6 @@ export class Session {
     if (saved.cols !== cols || saved.rows !== rows) this.screen.resize(cols, rows)
     return saved.folder && existsSync(saved.folder) ? saved.folder : this.machine.home
   }
-
   private async spawn(held: Held, folder: string): Promise<void> {
     const { file, args } = shellCommand(this.machine.shell, this.machine.user, this.machine.pidsMax)
     const base = this.ring.end
@@ -174,14 +162,12 @@ export class Session {
     this.heard = base
     held.attach(base)
   }
-
   private from(seq: number): void {
     this.ring = new Ring(seq)
     this.scanner = new Scanner()
     this.scanned = seq
     this.heard = seq
   }
-
   private read(seq: number, data: Uint8Array): void {
     if (this.over || seq + data.length <= this.heard) return
     if (seq > this.heard) {
@@ -199,7 +185,6 @@ export class Session {
     this.coalescer.push(fresh)
     this.ask()
   }
-
   private ended(held: Held, code: number | null): void {
     if (this.over || this.held !== held) return
     this.coalescer.flush()
@@ -207,35 +192,29 @@ export class Session {
     this.shell = undefined
     this.emit({ t: 'ended', session: this.id, code })
   }
-
   private died(held: Held): void {
     if (this.over || this.held !== held) return
     this.held = null
     this.emit({ t: 'ended', session: this.id, code: null })
   }
-
   private sent(bytes: Uint8Array): void {
     if (this.over) return
     const seq = this.ring.append(bytes)
     this.screen.write(bytes)
     this.emit({ t: 'out', session: this.id, seq, data: bytes })
   }
-
   private emit(frame: OrdendFrame): void {
     if (this.holding) this.holding.push(frame)
     else this.machine.send(frame)
   }
-
   input(data: Uint8Array): void {
     this.coalescer.typed()
     this.held?.write(data)
     if (data.includes(13)) this.ask()
   }
-
   pause(paused: boolean): void {
     this.held?.pause(paused)
   }
-
   resize(cols: number, rows: number): void {
     if (!this.settled) {
       this.wanted = { cols, rows }
@@ -246,7 +225,6 @@ export class Session {
     this.screen.resize(cols, rows)
     this.held?.resize(cols, rows)
   }
-
   want(since: number): Promise<void> {
     this.answering = this.answering.then(
       () => this.answer(since),
@@ -254,7 +232,6 @@ export class Session {
     )
     return this.answering
   }
-
   private async answer(since: number): Promise<void> {
     await this.ready
     if (this.over) return
@@ -280,11 +257,9 @@ export class Session {
     this.holding = null
     for (const frame of holding) this.machine.send(frame)
   }
-
   private toSafePoint(): void {
     this.coalescer.flush(Math.max(0, this.scanned + this.scanner.safe - this.ring.end))
   }
-
   now(): SessionNow {
     const shell = this.shell
     return {
@@ -295,13 +270,11 @@ export class Session {
       at: this.printedAt,
     }
   }
-
   taken(): number {
     const printed = this.printed
     this.printed = 0
     return printed
   }
-
   async save(at: number): Promise<Saved> {
     await this.ready
     if (this.over) throw new Error('this session is no longer here')
@@ -321,7 +294,6 @@ export class Session {
       folder: shell === undefined ? null : folderOf(shell),
     }
   }
-
   end(): void {
     const held = this.held
     this.held = null
@@ -329,21 +301,18 @@ export class Session {
     this.machine.cgroups?.kill(this.id)
     held?.kill()
   }
-
   detach(): void {
     const held = this.held
     this.held = null
     this.letGo()
     held?.detach()
   }
-
   private letGo(): void {
     if (this.over) return
     this.over = true
     if (this.asking) clearTimeout(this.asking)
     this.screen.dispose()
   }
-
   private ask(): void {
     if (this.asking || this.over) return
     const wait = Math.max(0, this.askedAt + PROGRAM_EVERY - Date.now())
@@ -360,11 +329,9 @@ export class Session {
     }, wait)
   }
 }
-
 function firstScreen(saved: Saved): Promise<string> {
   return saved.v === 2 ? Screen.firstOf(saved.screen, saved.cols, saved.rows) : Promise.resolve(saved.screen)
 }
-
 function restoredLine(at: number): string {
   const when = new Date(at).toLocaleString('en-GB', {
     day: 'numeric',

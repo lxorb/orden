@@ -6,12 +6,10 @@
   import VaultMark from './VaultMark.svelte'
 
   const invites = $derived(passSync.invites)
-
   let metas = $state.raw<Record<string, VaultMeta | null>>({})
   let codes = $state.raw<Record<string, string | null>>({})
   let busy = $state<string | null>(null)
   let wrong = $state('')
-
   $effect(() => {
     const now = invites
     let current = true
@@ -29,9 +27,7 @@
       current = false
     }
   })
-
   const fromOf = (invite: Invite) => (invite.fromName ? `${invite.fromName} (${invite.from})` : invite.from)
-
   async function answered(invite: Invite, accept: boolean) {
     if (busy !== null) return
     busy = invite.vault
@@ -97,12 +93,10 @@
     padding: 0 var(--space-2) var(--space-2);
     border-bottom: 1px solid var(--line);
   }
-
   .orden-section {
     margin: var(--space-2) 0 0;
     padding: 0 var(--space-2);
   }
-
   .invite {
     display: flex;
     flex-wrap: wrap;
@@ -112,24 +106,20 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .what {
     flex: 1;
     min-width: 10rem;
     display: flex;
     flex-direction: column;
   }
-
   .name {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .meta {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .buttons {
     display: flex;
     gap: var(--space-1);

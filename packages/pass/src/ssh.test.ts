@@ -47,7 +47,6 @@ BAUGBw==
 `
 const EC_PUBLIC =
   'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBN+QfA4MAPt6/mIulmZGyghJwVKUkxGGiFFDxzbsvaP00oB1XS1h4SWrm4MX5D17mNEGgTv7ZRg9gmutIfQ1qx8= ec@orden'
-
 const LOCKED_PRIVATE = `-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABAVxq9ajm
 lLncwYWngRumabAAAAGAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAIJQ3vB7f95CQtoP3
@@ -58,7 +57,6 @@ O75uH9QG4ZRHe7GA==
 -----END OPENSSH PRIVATE KEY-----
 `
 const LOCKED_PUBLIC = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQ3vB7f95CQtoP3P+h1p26hGm10nkyEB7vj2MGxBhh5'
-
 function keygen(): boolean {
   try {
     execFileSync('ssh-keygen', ['-?'], { stdio: 'ignore' })
@@ -67,18 +65,15 @@ function keygen(): boolean {
     return (error as { status?: number }).status !== undefined
   }
 }
-
 describe('an OpenSSH private key', () => {
   it('gives the public key ssh-keygen gives', () => {
     expect(sshPublicOf(ED_PRIVATE)).toBe(ED_PUBLIC)
     expect(sshPublicOf(RSA_PRIVATE)).toBe(RSA_PUBLIC)
     expect(sshPublicOf(EC_PRIVATE)).toBe(EC_PUBLIC)
   })
-
   it('locked by a passphrase gives its public key without the comment it hides', () => {
     expect(sshPublicOf(LOCKED_PRIVATE)).toBe(LOCKED_PUBLIC)
   })
-
   it('that is not one gives nothing', () => {
     expect(sshPublicOf('')).toBeNull()
     expect(sshPublicOf('hello')).toBeNull()
@@ -86,7 +81,6 @@ describe('an OpenSSH private key', () => {
     expect(sshPublicOf(ED_PRIVATE.replace('BAgM=', 'BAgQ='))).toBeNull()
   })
 })
-
 function withComment(comment: string): string {
   const body = ED_PRIVATE.split('\n').slice(1, -2).join('')
   const bytes = Buffer.from(body, 'base64')
@@ -95,7 +89,6 @@ function withComment(comment: string): string {
   const lines = bytes.toString('base64').match(/.{1,70}/g) ?? []
   return `-----BEGIN OPENSSH PRIVATE KEY-----\n${lines.join('\n')}\n-----END OPENSSH PRIVATE KEY-----\n`
 }
-
 describe('a key’s comment', () => {
   it('loses line breaks and control characters, so it stays on one line', () => {
     expect(sshComment('a\nb\r\nc\u0007d\u2028e\u200ef  ')).toBe('a b c d e f')
@@ -103,7 +96,6 @@ describe('a key’s comment', () => {
     expect(line).toBe(`${ED_PUBLIC.split(' ').slice(0, 2).join(' ')} te st orde`)
     expect(line).not.toContain('\n')
   })
-
   it('made into a new key is kept clean too', async () => {
     if (!(await canMakeSshKey())) return
     const made = await newSshKey('me\nssh-rsa AAAA evil')
@@ -112,14 +104,12 @@ describe('a key’s comment', () => {
     expect(sshPublicOf(made.privateKey)).toBe(made.publicKey)
   })
 })
-
 describe('a fingerprint', () => {
   it('is the one ssh-keygen -l prints', async () => {
     expect(await sshFingerprint(ED_PUBLIC)).toBe(ED_PRINT)
     expect(await sshFingerprint(RSA_PUBLIC)).toBe(RSA_PRINT)
     expect(await sshFingerprint(`  ${ED_PUBLIC.split(' ').slice(0, 2).join(' ')}\n`)).toBe(ED_PRINT)
   })
-
   it('is nothing for a line that is not a key', async () => {
     expect(await sshFingerprint('')).toBeNull()
     expect(await sshFingerprint('ssh-ed25519')).toBeNull()
@@ -127,7 +117,6 @@ describe('a fingerprint', () => {
     expect(await sshFingerprint(ED_PUBLIC.replace('ssh-ed25519', 'ssh-rsa'))).toBeNull()
   })
 })
-
 describe('a new key', () => {
   it('is an Ed25519 pair in OpenSSH form', async () => {
     expect(await canMakeSshKey()).toBe(true)
@@ -140,13 +129,11 @@ describe('a new key', () => {
     expect(sshPublicOf(made.privateKey)).toBe(made.publicKey)
     expect(await sshFingerprint(made.publicKey)).toMatch(/^SHA256:[A-Za-z0-9+/]{43}$/)
   })
-
   it('without a comment has none', async () => {
     const made = await newSshKey('')
     expect(made.publicKey.split(' ')).toHaveLength(2)
     expect(sshPublicOf(made.privateKey)).toBe(made.publicKey)
   })
-
   it.skipIf(!keygen())('is read by ssh-keygen as the same key', async () => {
     const made = await newSshKey('check@orden')
     const dir = mkdtempSync(join(tmpdir(), 'pass-ssh-'))

@@ -6,25 +6,19 @@ import { opened, pass } from '../test/opened'
 
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ItemEdit = (await import('./ItemEdit.svelte')).default
-
 beforeAll(opened)
-
 afterEach(closed)
-
 const shownWith = (ui: InstanceType<typeof PassUi>) => showing(ItemEdit, { ui })
-
 function saveButton(): HTMLButtonElement {
   const button = target.querySelector<HTMLButtonElement>('button[type="submit"]')
   if (!button) throw new Error('no save')
   return button
 }
-
 async function saved(ui: InstanceType<typeof PassUi>) {
   target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
   await vi.waitFor(() => expect(ui.editing).toBeNull())
   flushSync()
 }
-
 describe('editing an item', () => {
   test('cannot save without a title', async () => {
     const ui = new PassUi(null)
@@ -35,7 +29,6 @@ describe('editing an item', () => {
     expect(saveButton().disabled).toBe(false)
     expect(ui.dirty).toBe(true)
   })
-
   test('creates a login, then changes it', async () => {
     const ui = new PassUi(null)
     await ui.newItem(blank('login'))
@@ -43,11 +36,9 @@ describe('editing an item', () => {
     typed(target.querySelector('input.is-big'), 'Mail')
     typed(target.querySelector('input[autocomplete="new-password"]'), 'hunter2-very-secret')
     await saved(ui)
-
     const made = pass.items.find((one) => one.content.title === 'Mail')
     expect(made?.content.kind === 'login' && made.content.password).toBe('hunter2-very-secret')
     expect(ui.view.item).toBe(made?.id)
-
     closed()
     if (!made) throw new Error('not made')
     await ui.edit(made.id)
@@ -57,12 +48,10 @@ describe('editing an item', () => {
     expect(ui.dirty).toBe(false)
     typed(title, 'Mail at work')
     await saved(ui)
-
     const changed = pass.items.find((one) => one.id === made.id)
     expect(changed?.content.title).toBe('Mail at work')
     expect(changed?.rev).toBeGreaterThan(made.rev)
   })
-
   test('says a 2FA secret it cannot read', async () => {
     const ui = new PassUi(null)
     await ui.newItem(blank('login'))

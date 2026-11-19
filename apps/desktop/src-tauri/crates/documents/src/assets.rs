@@ -11,15 +11,10 @@ use orden_base::paths::{
 };
 
 const LIMIT: u64 = LIMIT_MB * 1024 * 1024;
-
 const LIMIT_MB: u64 = 12;
-
 const MAX_NAME: usize = 120;
-
 const MOST_EXTENSION: usize = 16;
-
 pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
-
 #[tauri::command]
 pub async fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
     orden_base::lane::off_the_runtime(move || -> Result<tauri::ipc::Response, String> {
@@ -29,12 +24,10 @@ pub async fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Respo
         let Some(bytes) = at_most(&target, FILE_LIMIT)? else {
             return Err(format!("{path} is too large to open"));
         };
-
         Ok(tauri::ipc::Response::new(bytes))
     })
     .await
 }
-
 fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     let refused = match in_spaces(app, path) {
         Ok(target) => return Ok(target),
@@ -56,21 +49,18 @@ fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     }
     Err(refused)
 }
-
 #[tauri::command(async)]
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     let target = in_spaces(&app, &path)?;
     let Some(bytes) = at_most(&target, LIMIT)? else {
         return Err(format!("{path} is larger than {LIMIT_MB} MB"));
     };
-
     Ok(format!(
         "data:{};base64,{}",
         mime_of(&target),
         encode(&bytes)
     ))
 }
-
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Kept {
@@ -78,7 +68,6 @@ struct Kept {
     folder: String,
     name: String,
 }
-
 #[tauri::command(async)]
 pub fn save_asset(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<String, String> {
     let (
@@ -93,53 +82,42 @@ pub fn save_asset(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<St
     let note_folder = note
         .parent()
         .ok_or_else(|| format!("{note_path} has no folder"))?;
-
     let limit = space_root(&spaces_dir(&app)?, note_folder)
         .ok_or_else(|| format!("{note_path} is not in a space"))?;
-
     let relative = trimmed(&folder);
     let dir = asset_dir(note_folder, relative, &limit)?;
     made(&dir)?;
-
     let safe = safe_name(&name).ok_or("that picture has no name that can be written")?;
     let target = stored(&dir, &safe, &bytes)?;
-
     let file = target
         .file_name()
         .and_then(OsStr::to_str)
         .ok_or("could not name the picture")?;
-
     Ok(if relative.is_empty() {
         file.to_string()
     } else {
         format!("{relative}/{file}")
     })
 }
-
 fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
     let ours = |one: &Path| !held_paper(one) && fs::read(one).is_ok_and(|held| held == bytes);
     let target = first_spot(&dir.join(safe), true, |one| !taken(one, true) || ours(one));
-
     if !ours(&target) {
         fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
     }
     Ok(target)
 }
-
 fn trimmed(folder: &str) -> &str {
     folder.trim_matches('/')
 }
-
 fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, String> {
     let asked = Path::new(folder);
-
     let from_the_root = asked
         .components()
         .any(|part| matches!(part, Component::Prefix(_) | Component::RootDir));
     if from_the_root {
         return Err(format!("{folder} is not a folder inside the space"));
     }
-
     let hidden = asked.components().any(|part| match part {
         Component::Normal(name) => name.to_string_lossy().starts_with('.'),
         _ => false,
@@ -147,16 +125,13 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
     if hidden {
         return Err(format!("{folder} is not a folder inside the space"));
     }
-
     let target = folded(&note_folder.join(asked));
     if !inside(limit, &target) {
         return Err(format!("{folder} is not a folder inside the space"));
     }
     really_under(limit, &target)?;
-
     Ok(target)
 }
-
 fn within_name(whole: &str) -> String {
     if whole.len() <= MAX_NAME {
         return whole.to_owned();
@@ -171,7 +146,6 @@ fn within_name(whole: &str) -> String {
     }
     format!("{}{ext}", &whole[..end])
 }
-
 pub(crate) fn safe_name(name: &str) -> Option<String> {
     let whole: String = name
         .chars()
@@ -184,18 +158,15 @@ pub(crate) fn safe_name(name: &str) -> Option<String> {
         })
         .collect();
     let safe = within_name(&whole);
-
     if safe.is_empty() || safe.chars().all(|letter| letter == '.') {
         return None;
     }
-
     Some(if is_reserved(&safe) {
         format!("_{safe}")
     } else {
         safe
     })
 }
-
 fn mime_of(path: &Path) -> &'static str {
     match path
         .extension()
@@ -227,11 +198,9 @@ fn mime_of(path: &Path) -> &'static str {
         _ => "application/octet-stream",
     }
 }
-
 fn encode(bytes: &[u8]) -> String {
     BASE64.encode(bytes)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{asset_dir, encode, mime_of, safe_name, stored, trimmed, MAX_NAME};
@@ -240,14 +209,12 @@ mod tests {
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
     }
-
     #[test]
     fn an_attachment_never_pairs_with_a_page_note_or_its_paper() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let here = dir.path();
         std::fs::write(here.join("Report.pages"), "{}").expect("a blank page note");
         std::fs::write(here.join("Lecture.pages.pdf"), b"%PDF mine").expect("a PDF");
-
         assert_eq!(
             stored(here, "Report.pages.pdf", b"%PDF dropped"),
             Ok(here.join("Report.pages 2.pdf"))
@@ -263,7 +230,6 @@ mod tests {
         assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
         assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
     }
-
     #[test]
     fn an_attachment_stepped_aside_is_still_the_one_copy() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -272,7 +238,6 @@ mod tests {
         std::fs::write(here.join("X.pdf.highlights.json"), "[]").expect("leftovers");
         std::fs::write(here.join("Lecture.pages"), "{}").expect("a page note");
         std::fs::write(here.join("Lecture.pages.pdf"), b"%PDF paper").expect("its paper");
-
         for _ in 0..2 {
             assert_eq!(
                 stored(here, "Report.pages.pdf", b"%PDF dropped"),
@@ -285,18 +250,15 @@ mod tests {
             Ok(here.join("Lecture.pages 2.pdf"))
         );
     }
-
     #[test]
     fn an_attachment_never_takes_a_device_name() {
         assert_eq!(safe_name("CON.png").as_deref(), Some("_CON.png"));
         assert_eq!(safe_name("nul.pdf").as_deref(), Some("_nul.pdf"));
         assert_eq!(safe_name("Console.png").as_deref(), Some("Console.png"));
     }
-
     #[test]
     fn the_space_folder_is_reached_from_a_note_in_it() {
         let space = path(&["Orden", "Notes"]);
-
         assert_eq!(
             asset_dir(&space, "assets", &space),
             Ok(path(&["Orden", "Notes", "assets"]))
@@ -310,15 +272,12 @@ mod tests {
             Ok(path(&["Orden", "Notes", "assets"]))
         );
     }
-
     #[test]
     fn the_folder_is_the_note_s_own_trimmed_to_what_the_markdown_says() {
         let space = path(&["Orden", "Notes"]);
         let here = space.join("Work");
-
         assert_eq!(asset_dir(&here, "", &space), Ok(here.clone()));
         let space = path(&["Orden", "Notes"]);
-
         assert_eq!(
             asset_dir(&space, "Read me", &space),
             Ok(path(&["Orden", "Notes", "Read me"]))
@@ -327,20 +286,16 @@ mod tests {
         assert_eq!(trimmed(""), "");
         assert_eq!(trimmed("../assets"), "../assets");
     }
-
     #[test]
     fn a_folder_that_climbs_out_of_the_space_is_refused() {
         let space = path(&["Orden", "Notes"]);
-
         assert!(asset_dir(&space, "../assets", &space).is_err());
         assert!(asset_dir(&space, "../../elsewhere", &space).is_err());
         assert!(asset_dir(&space.join("Work"), "../../Other/assets", &space).is_err());
     }
-
     #[test]
     fn a_hidden_folder_is_refused() {
         let spaces = path(&["Documents", "Orden"]);
-
         assert!(asset_dir(&spaces, ".trash", &spaces).is_err());
         assert!(asset_dir(&spaces, ".trash/1700000000000-0", &spaces).is_err());
         assert!(asset_dir(&spaces, "assets/.hidden", &spaces).is_err());
@@ -351,17 +306,14 @@ mod tests {
             Ok(inside_a_dot.join("assets"))
         );
     }
-
     #[test]
     fn a_folder_that_is_not_relative_is_refused() {
         let space = path(&["Orden", "Notes"]);
-
         assert!(asset_dir(&space, "/etc", &space).is_err());
         if cfg!(windows) {
             assert!(asset_dir(&space, r"C:\Windows", &space).is_err());
         }
     }
-
     #[cfg(unix)]
     #[test]
     fn a_picture_is_never_put_through_a_link_out_of_its_space() {
@@ -372,21 +324,17 @@ mod tests {
         std::fs::create_dir_all(&elsewhere).expect("a folder outside");
         std::os::unix::fs::symlink(&elsewhere, space.join("attachments")).expect("a link out");
         std::os::unix::fs::symlink(space.join("Notes"), space.join("Same")).expect("a link in");
-
         assert!(asset_dir(&space, "attachments", &space).is_err());
         assert!(asset_dir(&space, "attachments/2026", &space).is_err());
         assert!(asset_dir(&space, "Same/assets", &space).is_ok());
         assert!(asset_dir(&space, "assets", &space).is_ok());
     }
-
     #[test]
     fn a_note_outside_the_spaces_folder_reaches_its_own_folder_and_no_further() {
         let here = path(&["elsewhere", "notes"]);
-
         assert_eq!(asset_dir(&here, "assets", &here), Ok(here.join("assets")));
         assert!(asset_dir(&here, "../assets", &here).is_err());
     }
-
     #[test]
     fn encodes_bytes_as_rfc_4648_says() {
         assert_eq!(encode(b""), "");
@@ -399,7 +347,6 @@ mod tests {
         assert_eq!(encode(&[0x00, 0xff, 0x80]), "AP+A");
         assert_eq!(encode(&[0xfb, 0xff]), "+/8=");
     }
-
     #[test]
     fn names_the_type_from_the_extension() {
         assert_eq!(mime_of(Path::new("a/b.PNG")), "image/png");
@@ -419,7 +366,6 @@ mod tests {
             "application/octet-stream"
         );
     }
-
     #[test]
     fn a_picture_name_is_kept_plain_and_never_names_a_folder() {
         assert_eq!(safe_name("a1b2c3.png"), Some("a1b2c3.png".into()));
@@ -437,7 +383,6 @@ mod tests {
         assert_eq!(safe_name("."), None);
         assert_eq!(safe_name(".."), None);
     }
-
     #[test]
     fn keeps_the_extension_of_a_name_it_shortens() {
         let long = format!("{}.pdf", "Minutes of the meeting ".repeat(10));
@@ -449,7 +394,6 @@ mod tests {
         );
         assert_eq!(safe.chars().count(), MAX_NAME);
     }
-
     #[test]
     fn caps_how_long_a_name_can_get() {
         let long = format!("{}.png", "x".repeat(400));

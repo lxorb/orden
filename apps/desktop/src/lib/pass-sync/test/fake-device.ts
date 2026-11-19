@@ -7,12 +7,10 @@ export const fake = {
   yes: true,
   asked: [] as string[],
 }
-
 beforeEach(() => {
   fake.secrets.clear()
   Object.assign(fake, { guarded: true, can: true, yes: true, asked: [] })
 })
-
 vi.mock('../../ai-providers/src/api', async (original) => ({
   ...(await original<typeof import('../../ai-providers/src/api')>()),
   keysAreGuarded: () => fake.guarded,
@@ -26,7 +24,6 @@ vi.mock('../../ai-providers/src/api', async (original) => ({
     return Promise.resolve()
   },
 }))
-
 vi.mock('../../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(fake.can),
   deviceSays: (reason: string) => {

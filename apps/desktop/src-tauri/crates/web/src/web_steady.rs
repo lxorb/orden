@@ -4,18 +4,15 @@ use std::sync::{LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 const STEADY: Duration = Duration::from_millis(100);
-
 struct Kept<T> {
     last: Instant,
     loading: bool,
     held: Option<T>,
     waiting: bool,
 }
-
 pub struct Steady<T> {
     tabs: HashMap<String, Kept<T>>,
 }
-
 impl<T> Default for Steady<T> {
     fn default() -> Self {
         Self {
@@ -23,7 +20,6 @@ impl<T> Default for Steady<T> {
         }
     }
 }
-
 impl<T> Steady<T> {
     #[cfg(test)]
     pub fn told(
@@ -35,7 +31,6 @@ impl<T> Steady<T> {
     ) -> (Vec<T>, Option<Duration>) {
         self.told_over(tab, loading, one, now, |_, newer| newer)
     }
-
     pub fn told_over(
         &mut self,
         tab: &str,
@@ -78,7 +73,6 @@ impl<T> Steady<T> {
         kept.waiting = true;
         (Vec::new(), Some(STEADY.saturating_sub(since)))
     }
-
     pub fn due(&mut self, tab: &str, now: Instant) -> Option<T> {
         let kept = self.tabs.get_mut(tab)?;
         kept.waiting = false;
@@ -86,14 +80,11 @@ impl<T> Steady<T> {
         kept.last = now;
         Some(one)
     }
-
     pub fn forget(&mut self, tab: &str) {
         self.tabs.remove(tab);
     }
 }
-
 type Said = (String, serde_json::Value);
-
 fn said_over(older: Said, newer: Said) -> Said {
     let (window, mut payload) = newer;
     if let (serde_json::Value::Object(kept), serde_json::Value::Object(now)) =
@@ -108,13 +99,10 @@ fn said_over(older: Said, newer: Said) -> Said {
     }
     (window, payload)
 }
-
 static TOLD: LazyLock<Mutex<Steady<Said>>> = LazyLock::new(Mutex::default);
-
 fn told<R>(look: impl FnOnce(&mut Steady<Said>) -> R) -> R {
     look(&mut TOLD.held())
 }
-
 pub fn say(
     app: &tauri::AppHandle,
     window: &str,
@@ -148,11 +136,9 @@ pub fn say(
         }
     });
 }
-
 pub fn forget(tab: &str) {
     told(|all| all.forget(tab));
 }
-
 #[cfg(test)]
 mod tests {
     use super::{said_over, Steady, STEADY};
@@ -165,7 +151,6 @@ mod tests {
         assert_eq!(steady.told("t", false, 1, at), (vec![1], None));
         assert_eq!(steady.told("t", false, 2, at + STEADY), (vec![2], None));
     }
-
     #[test]
     fn a_storm_of_titles_reaches_the_window_as_its_last_one_each_tenth_of_a_second() {
         let mut steady = Steady::default();
@@ -187,7 +172,6 @@ mod tests {
         assert_eq!(steady.due("t", at + STEADY), Some(1000));
         assert_eq!(steady.due("t", at + STEADY), None);
     }
-
     #[test]
     fn a_load_starting_or_ending_is_never_held_back_nor_merged_away() {
         let mut steady = Steady::default();
@@ -207,7 +191,6 @@ mod tests {
         );
         assert_eq!(steady.due("t", at + STEADY), None);
     }
-
     #[test]
     fn a_title_held_back_is_not_lost_to_a_later_word_that_carries_none() {
         let mut steady = Steady::default();
@@ -227,7 +210,6 @@ mod tests {
         assert_eq!(sent["title"], "carried {}");
         assert_eq!(sent["url"], "http://a/b");
     }
-
     #[test]
     fn each_tab_keeps_its_own_pace_and_a_closed_one_is_forgotten() {
         let mut steady = Steady::default();

@@ -9,7 +9,6 @@ export async function mountedFor(root: string): Promise<boolean> {
   await keptSpaces().catch(() => [])
   return mountOf(root) !== null
 }
-
 export function hearInternal(root: string, heard: (changes: SpaceChange[]) => void): (() => void) | null {
   const found = mountOf(root)
   if (!found || found.inside) return null
@@ -24,7 +23,6 @@ export function hearInternal(root: string, heard: (changes: SpaceChange[]) => vo
     )
   })
 }
-
 export async function listInternal(root: string): Promise<Listed[] | null> {
   if (!(await mountedFor(root))) return null
   const found = mountOf(root)
@@ -37,7 +35,6 @@ export async function listInternal(root: string): Promise<Listed[] | null> {
     id: entry.key,
   }))
 }
-
 export async function listedUnder(root: string): Promise<{ path: string; dir: boolean }[] | null> {
   const kept = (await mountedFor(root)) ? mountOf(root) : null
   if (!kept && keptShaped(root)) throw new Error(`${root} is a space kept here, not mounted`)

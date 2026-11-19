@@ -10,7 +10,6 @@ describe("a file explorer's arrows", () => {
     expect(stepped('PageDown', 0, 10, 1, 3)).toBe(3)
     expect(stepped('End', 0, 10, 1, 3)).toBe(9)
   })
-
   test('walk a grid across and down by its columns', () => {
     expect(stepped('ArrowRight', 2, 10, 4, 2)).toBe(3)
     expect(stepped('ArrowLeft', 0, 10, 4, 2)).toBe(0)
@@ -19,7 +18,6 @@ describe("a file explorer's arrows", () => {
     expect(stepped('ArrowUp', 5, 10, 4, 2)).toBe(1)
     expect(stepped('PageDown', 0, 30, 4, 2)).toBe(8)
   })
-
   test('do nothing in an empty folder', () => {
     expect(stepped('ArrowDown', null, 0, 1, 3)).toBeNull()
   })

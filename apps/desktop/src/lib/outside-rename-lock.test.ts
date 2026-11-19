@@ -7,7 +7,6 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
 }))
-
 const { Disk, memoryStorage } = await import('../../test/disk')
 const d = new Disk()
 disk.current = d
@@ -18,7 +17,6 @@ const { startAcross } = await import('./workspace/src/across')
 await startAcross()
 const { heardChange } = await import('./workspace/src/outside.svelte')
 const { protection } = await import('./protect/src/api')
-
 test('a locked note renamed outside Orden keeps its lock', async () => {
   d.reset()
   d.folders.add('/s')

@@ -3,14 +3,12 @@ import type { TabMenuEntry } from './tab-kinds'
 export interface TerminalShell {
   readonly id: string
 }
-
 export interface TerminalLinesPort {
   readonly typeIn: (
     line: string,
     pick: (shells: readonly TerminalShell[], chosen: TerminalShell | undefined) => TerminalShell | undefined,
   ) => Promise<boolean>
 }
-
 interface TerminalMakingPort {
   readonly open: (shell?: string) => Promise<void>
   readonly shells: (open: (shell: string) => void) => Promise<TabMenuEntry[]>
@@ -18,7 +16,6 @@ interface TerminalMakingPort {
   readonly pickHost: (pane?: string) => Promise<void>
   readonly online: () => Promise<void>
 }
-
 interface TerminalJudgePort {
   readonly runsFree: (
     program: string,
@@ -27,7 +24,6 @@ interface TerminalJudgePort {
     folder: string,
   ) => Promise<boolean>
 }
-
 export interface TerminalPorts {
   readonly 'terminal.judge': TerminalJudgePort
   readonly 'terminal.lines': TerminalLinesPort

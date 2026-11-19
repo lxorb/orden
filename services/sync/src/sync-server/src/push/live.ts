@@ -4,7 +4,6 @@ export function liveTarget(at: string): string {
   return `exists (select 1 from sessions s
                    where s.token_hash = t.session_hash and s.expires_at > ${at})`
 }
-
 export async function forgetEndedTargets(env: Env, userId: string): Promise<void> {
   await env.DB.prepare(
     `delete from push_targets

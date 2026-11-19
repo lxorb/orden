@@ -11,29 +11,21 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
   window.dispatchEvent(new KeyboardEvent('keyup', {}))
 })
-
 const PLAN_TEXT = '# Plan\n\n| site | why |\n| - | - |\n| [docs](https://x.test) | read |\n\nend\n'
-
 const PLAN = { path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }
-
 const SPACE: NoteIndex = {
   notes: [PLAN],
   files: [],
   path: 'Today.md',
   read: () => Promise.resolve(PLAN_TEXT),
 }
-
 const NOTE = 'See [[Plan]] now.\n\nend\n'
-
 const settle = () => new Promise((done) => setTimeout(done, 20))
-
 async function cardLink() {
   const links: string[] = []
   const mount: PreviewMount = (host, note) => {
@@ -73,21 +65,18 @@ async function cardLink() {
   if (!anchor) throw new Error('no cell link drawn in the hover card')
   return { anchor, links }
 }
-
 function press(target: Element, keys: MouseEventInit) {
   const all = { bubbles: true, cancelable: true, ...keys }
   target.dispatchEvent(new MouseEvent('mousedown', all))
   target.dispatchEvent(new MouseEvent('mouseup', all))
   target.dispatchEvent(new MouseEvent('click', all))
 }
-
 describe('a link in a table of the note hover card', () => {
   test('opens once on Ctrl or Cmd-click', async () => {
     const { anchor, links } = await cardLink()
     press(anchor, { button: 0, ctrlKey: true, metaKey: true })
     expect(links).toEqual(['https://x.test'])
   })
-
   test('opens once on a middle click', async () => {
     const { anchor, links } = await cardLink()
     press(anchor, { button: 1 })

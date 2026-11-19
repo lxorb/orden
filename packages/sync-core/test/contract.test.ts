@@ -11,14 +11,12 @@ describe('order', () => {
     expect(before < middle && middle < after).toBe(true)
     for (const one of [first, after, before, middle]) expect(isPosition(one)).toBe(true)
   })
-
   it('spreads a count of positions in order', () => {
     const positions = spread(null, null, 5)
     expect(positions).toHaveLength(5)
     expect([...positions].sort()).toEqual(positions)
     expect(new Set(positions).size).toBe(5)
   })
-
   it('sorts by position and leaves equal rows where they were', () => {
     const [a, b, c] = spread(null, null, 3)
     const rows = [
@@ -29,14 +27,12 @@ describe('order', () => {
     expect([...rows].sort(byPosition).map((one) => one.id)).toEqual(['one', 'two', 'three'])
   })
 })
-
 describe('item meta', () => {
   it('reads only string-to-string records', () => {
     expect(metaOf({ colour: 'red' })).toEqual({ colour: 'red' })
     expect(metaOf({ colour: 3 })).toBeNull()
     expect(metaOf('red')).toBeNull()
   })
-
   it('patches with null meaning removed and compares by value', () => {
     const had = { colour: 'red', icon: 'star' }
     const next = patched(had, { icon: null, size: 'big' })
@@ -46,7 +42,6 @@ describe('item meta', () => {
     expect(patched(undefined, { icon: null })).toBeUndefined()
   })
 })
-
 describe('wire', () => {
   it('names the entry kinds and refuses ids that could be paths', () => {
     expect(ENTRY_KINDS).toEqual(['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder'])

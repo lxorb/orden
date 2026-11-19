@@ -1,13 +1,10 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 OFFERED = """() => [...document.querySelectorAll('.here[role=group] [data-kind]')]
   .map((one) => one.getAttribute('data-kind'))"""
-
 AS_PHONE = """
 () => {
   const app = window.ordenApp
@@ -20,13 +17,11 @@ AS_PHONE = """
   root.toggleAttribute('data-narrow', true)
 }
 """
-
 SWITCHES = """() => [...document.querySelectorAll('[role=switch]')].map((one) => ({
   name: one.getAttribute('aria-label'),
   on: one.getAttribute('aria-checked') === 'true',
   locked: one.getAttribute('aria-disabled') === 'true',
 }))"""
-
 def new_tab(page: Page, label: str, phone: bool) -> list[str]:
     if phone:
         page.evaluate("() => window.ordenApp.workspace.newTab()")
@@ -38,19 +33,15 @@ def new_tab(page: Page, label: str, phone: bool) -> list[str]:
     say(f"[{label}] the new tab offers {offered}")
     page.evaluate("() => window.ordenApp.workspace.closeActive()")
     return offered
-
 def settings(page: Page) -> None:
     page.evaluate("() => window.ordenApp.settings.show('kinds')")
     wait_for(page, "document.querySelectorAll('[role=switch]').length > 1", "Settings › Note types")
-
 def closed(page: Page) -> None:
     page.evaluate("() => { window.ordenApp.settings.open = false }")
     wait_for(page, "!document.querySelector('[role=switch]')", "Settings to close")
-
 def press(page: Page, name: str) -> None:
     names = [one["name"] for one in page.evaluate(SWITCHES)]
     page.locator("[role=switch]").nth(names.index(name)).click(force=True)
-
 def drive_on(browser: Browser, label: str, phone: bool) -> None:
     options = {"viewport": {"width": 412, "height": 915}, "has_touch": True, "is_mobile": True} if phone else {
         "viewport": {"width": 1280, "height": 820}
@@ -61,32 +52,27 @@ def drive_on(browser: Browser, label: str, phone: bool) -> None:
         page.evaluate(AS_PHONE)
     DRIVE.seed(page, "# Kestrel\n\nA kestrel hangs on the wind.\n")
     DRIVE.open_note(page, "Kestrel")
-
     first = new_tab(page, label, phone)
     if "canvas" not in first:
         wrong(f"[{label}] a new tab does not offer a canvas to begin with")
     if phone and "web" in first:
         wrong(f"[{label}] a phone was offered a website, which it has none of")
-
     settings(page)
     shot(page, f"{label}-01-note-types")
     press(page, "Canvas")
     if any(one["name"] == "Canvas" and one["on"] for one in page.evaluate(SWITCHES)):
         wrong(f"[{label}] the canvas's switch did not turn off")
     closed(page)
-
     offered = new_tab(page, label, phone)
     if "canvas" in offered:
         wrong(f"[{label}] a canvas switched off is still offered")
     if "note" not in offered:
         wrong(f"[{label}] the note went with the canvas")
-
     settings(page)
     press(page, "Canvas")
     closed(page)
     if "canvas" not in new_tab(page, label, phone):
         wrong(f"[{label}] a canvas switched back on is not offered")
-
     settings(page)
     for one in page.evaluate(SWITCHES):
         if one["on"] and one["name"] != "Note":
@@ -105,9 +91,7 @@ def drive_on(browser: Browser, label: str, phone: bool) -> None:
     if new_tab(page, label, phone) != ["note"]:
         wrong(f"[{label}] with the note alone left, the new tab offers something else")
     page.close()
-
 def drive(browser: Browser) -> None:
     drive_on(browser, "desktop", False)
     drive_on(browser, "phone", True)
-
 raise SystemExit(DRIVE.run(drive, "a kind switched off is offered nowhere, and back on, it is again"))

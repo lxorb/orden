@@ -34,7 +34,6 @@ pub struct Planned {
     #[cfg_attr(not(windows), allow(dead_code))]
     pub tomorrow: Option<u32>,
 }
-
 #[derive(Clone, Debug, Deserialize)]
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub struct Words {
@@ -45,7 +44,6 @@ pub struct Words {
     #[cfg_attr(not(windows), allow(dead_code))]
     pub tomorrow: String,
 }
-
 impl Default for Words {
     fn default() -> Self {
         Self {
@@ -57,7 +55,6 @@ impl Default for Words {
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Pressed {
@@ -67,49 +64,38 @@ pub struct Pressed {
     pub hash: String,
     pub line: u32,
 }
-
 const ANSWERED_FOR_MS: i64 = 7 * 86_400_000;
-
 const PRESSED: &str = "orden://reminder";
-
 static LAUNCHED_QUIETLY: AtomicBool = AtomicBool::new(false);
-
 const FILE: &str = "reminders.json";
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Kept {
     #[serde(flatten)]
     planned: Planned,
     nonce: String,
 }
-
 #[derive(Default)]
 struct State {
     kept: Option<HashMap<String, Kept>>,
     pressed: Vec<Arrived>,
 }
-
 struct Arrived {
     act: Act,
     id: String,
     nonce: Option<String>,
 }
-
 static STATE: Mutex<State> = Mutex::new(State {
     kept: None,
     pressed: Vec::new(),
 });
-
 fn in_state<T>(alter: impl FnOnce(&mut State) -> T) -> T {
     alter(&mut STATE.held())
 }
-
 fn file(app: &AppHandle) -> Option<PathBuf> {
     orden_base::paths::config_dir(app)
         .ok()
         .map(|dir| dir.join(FILE))
 }
-
 fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Kept> {
     state.kept.get_or_insert_with(|| {
         file(app)
@@ -123,14 +109,12 @@ fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Ke
             .unwrap_or_default()
     })
 }
-
 fn moved(kept: &HashMap<String, Kept>, plan: &[Planned]) -> Vec<String> {
     plan.iter()
         .filter(|one| kept.get(&one.id).is_some_and(|held| held.planned != **one))
         .map(|one| one.id.clone())
         .collect()
 }
-
 fn merge(
     kept: &mut HashMap<String, Kept>,
     plan: Vec<Planned>,
@@ -152,7 +136,6 @@ fn merge(
         })
         .collect()
 }
-
 fn fresh_nonce() -> String {
     let mut bytes = [0u8; 8];
     if getrandom::fill(&mut bytes).is_err() {
@@ -166,7 +149,6 @@ fn fresh_nonce() -> String {
             out
         })
 }
-
 fn now_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -174,7 +156,6 @@ fn now_ms() -> i64 {
             i64::try_from(since.as_millis()).unwrap_or(i64::MAX)
         })
 }
-
 fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
     let Some(path) = file(app) else {
         return;
@@ -188,14 +169,12 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
         let _ = orden_base::paths::write_atomically(&path, &bytes);
     }
 }
-
 fn may_schedule() -> bool {
     if orden_placement::placement::away().is_some() {
         return std::env::var_os("ORDEN_PROBE_REMINDERS").is_some();
     }
     true
 }
-
 #[tauri::command]
 pub async fn reminders_set(
     webview: tauri::Webview,
@@ -208,7 +187,6 @@ pub async fn reminders_set(
         if !may_schedule() {
             return Ok(true);
         }
-
         let now = now_ms();
         let (wanted, moved) = in_state(|state| {
             let kept = kept(state, &app);
@@ -221,7 +199,6 @@ pub async fn reminders_set(
     })
     .await
 }
-
 fn handed(
     app: &AppHandle,
     wanted: &[(Planned, String)],
@@ -246,7 +223,6 @@ fn handed(
         false
     }
 }
-
 #[tauri::command(async)]
 pub fn reminders_taken(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Pressed>, String> {
     orden_base::labels::from_the_app(&webview)?;
@@ -259,7 +235,6 @@ pub fn reminders_taken(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Pr
             .collect()
     }))
 }
-
 fn answered(kept: &HashMap<String, Kept>, press: &Arrived) -> Option<Pressed> {
     let one = kept
         .get(&press.id)
@@ -272,7 +247,6 @@ fn answered(kept: &HashMap<String, Kept>, press: &Arrived) -> Option<Pressed> {
         line: one.planned.line,
     })
 }
-
 pub struct Host {
     #[cfg(target_os = "macos")]
     pub reopen: fn(&AppHandle),
@@ -280,13 +254,10 @@ pub struct Host {
     pub in_tray: fn() -> bool,
     pub notify: fn(&AppHandle, String, String),
 }
-
 static HOST: std::sync::OnceLock<Host> = std::sync::OnceLock::new();
-
 pub(crate) fn host() -> Option<&'static Host> {
     HOST.get()
 }
-
 pub fn start(app: &AppHandle, host: Host) {
     let _ = HOST.set(host);
     #[cfg(target_os = "macos")]
@@ -296,11 +267,9 @@ pub fn start(app: &AppHandle, host: Host) {
     #[cfg(not(target_os = "macos"))]
     let _ = app;
 }
-
 pub fn pressed(app: &AppHandle, act: Act, id: &str, nonce: &str) {
     press(app, act, id, Some(nonce));
 }
-
 #[cfg(target_os = "macos")]
 pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
     press(app, act, id, None);
@@ -308,7 +277,6 @@ pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
         (host.reopen)(app);
     }
 }
-
 fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
     in_state(|state| {
         state.pressed.push(Arrived {
@@ -327,7 +295,6 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
         let _ = app.emit_to(window.label(), PRESSED, ());
     }
 }
-
 pub fn answer_link(app: &AppHandle, url: &str) -> bool {
     if !link::is_reminder(url) {
         return false;
@@ -337,7 +304,6 @@ pub fn answer_link(app: &AppHandle, url: &str) -> bool {
     }
     true
 }
-
 #[tauri::command(async)]
 pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), String> {
     orden_base::labels::from_the_app(&webview)?;
@@ -352,22 +318,18 @@ pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), 
     }
     Ok(())
 }
-
 fn goes_again(launched_quietly: bool, hidden: bool, in_tray: bool) -> bool {
     launched_quietly && hidden && !in_tray
 }
-
 pub fn came_up_quietly() {
     LAUNCHED_QUIETLY.store(true, Ordering::Relaxed);
 }
-
 pub fn quiet_launch(urls: &[String]) -> bool {
     !urls.is_empty()
         && urls
             .iter()
             .all(|url| matches!(link::parsed(url), Some((Act::Done, _, _))))
 }
-
 #[cfg(test)]
 mod tests {
     use super::schedule::tests::planned;
@@ -380,7 +342,6 @@ mod tests {
         assert!(!goes_again(true, false, false));
         assert!(!goes_again(true, true, true));
     }
-
     #[test]
     fn a_reminder_keeps_its_nonce_and_one_that_rang_is_kept_a_week() {
         let mut kept = HashMap::new();
@@ -389,7 +350,6 @@ mod tests {
             counter.set(counter.get() + 1);
             format!("n{}", counter.get())
         };
-
         let first = merge(
             &mut kept,
             vec![planned("a", 2000), planned("b", 3000)],
@@ -398,7 +358,6 @@ mod tests {
         );
         assert_eq!(first[0].1, "n1");
         assert_eq!(first[1].1, "n2");
-
         let second = merge(
             &mut kept,
             vec![planned("a", 2000), planned("c", 4000)],
@@ -408,7 +367,6 @@ mod tests {
         assert_eq!(second[0].1, "n1");
         assert_eq!(second[1].1, "n3");
         assert!(!kept.contains_key("b"));
-
         merge(&mut kept, vec![planned("c", 4000)], 2500, nonce);
         assert!(kept.contains_key("a"));
         merge(
@@ -419,7 +377,6 @@ mod tests {
         );
         assert!(!kept.contains_key("a"));
     }
-
     #[test]
     fn a_reminder_is_moved_only_when_its_moment_or_its_words_are_another() {
         let mut kept = HashMap::new();
@@ -442,7 +399,6 @@ mod tests {
         ];
         assert_eq!(moved(&kept, &plan), ["b", "d"]);
     }
-
     #[test]
     fn a_press_is_answered_only_with_its_own_nonce() {
         let mut kept = HashMap::new();
@@ -473,7 +429,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn only_a_launch_for_nothing_but_a_done_is_quiet() {
         let done = link::link(Act::Done, "aa", "bb");
@@ -483,7 +438,6 @@ mod tests {
         assert!(!quiet_launch(&[done, "orden://open?path=a".into()]));
         assert!(!quiet_launch(&[]));
     }
-
     #[test]
     fn a_nonce_is_sixteen_hex_digits() {
         let made = fresh_nonce();
@@ -491,7 +445,6 @@ mod tests {
         assert!(made.bytes().all(|byte| byte.is_ascii_hexdigit()));
         assert_ne!(made, fresh_nonce());
     }
-
     #[test]
     fn the_plan_reads_as_the_page_writes_it() {
         let read: Planned = serde_json::from_value(serde_json::json!({

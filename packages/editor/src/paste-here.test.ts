@@ -13,7 +13,6 @@ beforeAll(() => {
   noRects()
   return import('@orden/markdown/from-html')
 })
-
 async function pastedHere(marked: string, text: string, html = '') {
   const caret = marked.indexOf('|')
   const view = new EditorView({
@@ -45,17 +44,14 @@ async function pastedHere(marked: string, text: string, html = '') {
   view.destroy()
   return out
 }
-
 test('inside a code block, tab separated words go in as they are, not as a table', async () => {
   const { doc } = await pastedHere('```\n|\n```', 'a\tb\nc\td')
   expect(doc).toBe('```\na\tb\nc\td\n```')
 })
-
 test('inside a code block, copied HTML code goes in as its text, not as a fence of its own', async () => {
   const { doc } = await pastedHere('```\n|\n```', 'let a = 1', '<pre><code>let a = 1</code></pre>')
   expect(doc).toBe('```\nlet a = 1\n```')
 })
-
 test('in prose the caret lands after what was pasted', async () => {
   const { doc, head } = await pastedHere('a|b', 'xyz')
   expect(doc).toBe('axyzb')

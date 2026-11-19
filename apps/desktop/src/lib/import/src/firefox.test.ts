@@ -6,15 +6,12 @@ import { sidebarImport } from './sidebar-plan'
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
 const CONTAINERS = 'Containers stay in Firefox'
-
 const planned = (session: unknown = SESSION, bookmarks: unknown = BOOKMARKS) =>
   sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox'), NOW, CONTAINERS)
-
 describe("Firefox's tabs and bookmarks as Orden's", () => {
   test('is one space, named as asked', () => {
     expect(planned().spaces.map((one) => one.name)).toEqual(['Firefox'])
   })
-
   test('puts the pinned tab first as an Essential, then the tabs and groups in order', () => {
     const [space] = planned().spaces
     expect(space?.order['']).toEqual([
@@ -30,13 +27,11 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
     expect(space?.order.Docs).toEqual(['The guide.url', 'API reference.url'])
     expect(space?.order['Tab group']).toEqual(['Later.url'])
   })
-
   test('keeps a saved group in Saved groups', () => {
     const [space] = planned().spaces
     expect(space?.order['Saved groups']).toEqual(['Trip'])
     expect(space?.order['Saved groups/Trip']).toEqual(['Flights.url', 'Hotel.url'])
   })
-
   test('reads a group open and saved at once as the open one alone', () => {
     const session = {
       ...SESSION,
@@ -54,7 +49,6 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
     expect(space?.order['Saved groups']).toEqual(['Trip'])
     expect(space?.files.filter((one) => one.path.endsWith('The guide.url'))).toHaveLength(1)
   })
-
   test('makes the bookmarks a folder of roots, leaving the tags, the empty and the unpointable', () => {
     const [space] = planned().spaces
     expect(space?.order.Bookmarks).toEqual(['Bookmarks toolbar', 'Bookmarks menu'])
@@ -65,7 +59,6 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
     expect(paths.some((path) => path.includes('Nothing') || path.includes('bookmarklet'))).toBe(false)
     expect(paths.some((path) => path.includes('Settings') || path.includes('Secret'))).toBe(false)
   })
-
   test('reads a backup an older Firefox wrote, which names each kind rather than numbering it', () => {
     const older = {
       guid: 'root________',
@@ -117,7 +110,6 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
     expect(space?.order['Bookmarks/Bookmarks menu/Mozilla Firefox']).toEqual(['Help and Tutorials.url'])
     expect(space?.order['Bookmarks/Bookmarks toolbar']).toEqual(['Getting Started.url'])
   })
-
   test('writes a bookmark as kept on the day it was bookmarked, a tab on the day of the import', () => {
     const [space] = planned().spaces
     const read = (path: string) => {
@@ -133,24 +125,20 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
       added: NOW.toISOString(),
     })
   })
-
   test('counts the pages it left behind for not being on the web', () => {
     expect(firefoxSidebar(SESSION, BOOKMARKS, 'Firefox').dropped).toBe(2)
     expect(firefoxSidebar(null, null, 'Firefox').dropped).toBe(0)
   })
-
   test('says containers stay where a tab was in one', () => {
     expect(planned().lost).toEqual([CONTAINERS])
     expect(planned(null).lost).toEqual([])
   })
-
   test('reads a session alone, bookmarks alone, and neither', () => {
     expect(planned(SESSION, null).spaces[0]?.order['']).not.toContain('Bookmarks')
     expect(planned(null, BOOKMARKS).spaces[0]?.order['']).toEqual(['Bookmarks'])
     expect(planned('nonsense', 7).spaces[0]?.files).toEqual([])
   })
 })
-
 describe('a Firefox tab', () => {
   test('wears the mark a page process drew, out of the address Firefox wraps it in', () => {
     const wrapped = {
@@ -168,7 +156,6 @@ describe('a Firefox tab', () => {
     const mail = planned(wrapped, null).spaces[0]?.files[0]
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
   })
-
   test('pinned in two windows is one Essential, one web note', () => {
     const pinned = { ...page('https://mail.example.com/', 'Mail'), pinned: true }
     const twice = { windows: [{ tabs: [pinned] }, { tabs: [pinned] }] }

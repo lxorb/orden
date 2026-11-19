@@ -1,9 +1,7 @@
 
 import json
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -14,17 +12,13 @@ PATIENCE = 60
 EMAIL = "windows-v2@example.com"
 SPACE = "Two"
 ITEM = "both.md"
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -33,13 +27,11 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 def type_at_end(page: Page, words: str) -> None:
     page.bring_to_front()
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
     page.keyboard.type(words, delay=5)
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session() as browser:
@@ -52,10 +44,8 @@ def main() -> int:
             token=token,
             body={"path": ITEM, "content": "# Both\n\nbase line\n"},
         )["note"]
-
         context = browser.new_context(viewport={"width": 1100, "height": 700})
         context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
-
         def window(label: str) -> Page:
             page = context.new_page()
             page.set_default_timeout(30000)
@@ -73,7 +63,6 @@ def main() -> int:
                 SPACE,
             )
             return page
-
         a = window("A")
         path = f"/{SPACE}/{ITEM}"
         listed = (
@@ -84,7 +73,6 @@ def main() -> int:
         wait_for(a, "() => !!window.ordenApp.sync.engine?.engine", "[A] the engine")
         b = window("B")
         wait_for(b, listed, "[B] the note")
-
         engines = "() => !!window.ordenApp.sync.engine?.engine"
         if b.evaluate(engines):
             failed("the second window runs an engine as well")
@@ -95,14 +83,11 @@ def main() -> int:
             "[B] which space is which, from the engine's window",
         )
         say("one engine, and the other window hears the light and the rows")
-
         for page in (a, b):
             page.evaluate("(p) => window.ordenApp.workspace.openEntry(p)", path)
             wait_for(page, "() => !!document.querySelector('.cm-content')", "the editor")
-
         def account() -> str:
             return worker.request(f"/v1/notes/{note['id']}", token=token).get("content", "")
-
         def on_account(words: str, patience: int = PATIENCE) -> bool:
             until = time.monotonic() + patience
             while time.monotonic() < until:
@@ -110,7 +95,6 @@ def main() -> int:
                     return True
                 a.wait_for_timeout(250) if not a.is_closed() else b.wait_for_timeout(250)
             return False
-
         type_at_end(b, "FROM-B ")
         if not on_account("FROM-B"):
             failed(f"what the second window typed never reached the account: {account()!r}")
@@ -122,7 +106,6 @@ def main() -> int:
         if "FROM-B" not in account():
             failed(f"B's words went when A's arrived: {account()!r}")
         say(f"both typed: {account()!r}")
-
         b.bring_to_front()
         b.evaluate(
             "async (f) => { const ws = window.ordenApp.workspace;"
@@ -143,7 +126,6 @@ def main() -> int:
         say(f"made in B, on the account: {fresh}")
         if len(fresh) != 1:
             failed(f"a note made in B is on the account as {fresh}")
-
         a.close(run_before_unload=True)
         wait_for(b, engines, "[B] the engine, handed over")
         say("the first window closed, the second runs the engine")
@@ -156,7 +138,6 @@ def main() -> int:
             if words not in account():
                 failed(f"{words} is gone: {account()!r}")
         say(f"at the end: {account()!r}")
-
         c = window("C")
         c.bring_to_front()
         c.evaluate("() => window.ordenApp.account.signOut()")
@@ -167,5 +148,4 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 raise SystemExit(main())

@@ -1,9 +1,7 @@
 import json
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -12,23 +10,18 @@ BUDGET = 1200
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 EMAIL = "days-away@example.com"
 SPACE = "Days away"
 NOTES = 40
 PATIENCE = 90
 COPY = "(from another device"
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -37,7 +30,6 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
@@ -47,14 +39,11 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     wait_for(page, "() => !!window.ordenApp?.account.user", f"[{label}] the account")
     return page
-
 def settled(page: Page, what: str) -> None:
     wait_for(page, "() => window.ordenApp.sync.status !== 'syncing'", f"{what} to settle")
     page.wait_for_timeout(1200)
-
 def name(index: int) -> str:
     return f"Day {index:02d}.md"
-
 def opening(index: int) -> str:
     return (
         f"# Day {index}\n\n"
@@ -62,13 +51,11 @@ def opening(index: int) -> str:
         f"Paragraph B of day {index}, about the meeting after lunch.\n\n"
         f"Paragraph C of day {index}, about the evening walk home.\n"
     )
-
 def rewrite(index: int, who: str) -> str:
     return (
         f"Paragraph B of day {index} rewritten on machine {who}: the meeting moved, the "
         f"agenda changed and everyone agreed on something else entirely, marker {who}{index}z."
     )
-
 def edit(page: Page, note: str, old: str, new: str) -> bool:
     opened = page.evaluate(
         """async ([space, name]) => {
@@ -111,7 +98,6 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
     if not done:
         failed(f"{note} did not hold {old!r} to write over")
     return bool(done)
-
 def notes_here(page: Page) -> dict[str, str]:
     return page.evaluate(
         """async (space) => {
@@ -123,10 +109,8 @@ def notes_here(page: Page) -> dict[str, str]:
         }""",
         SPACE,
     )
-
 def held_here(page: Page) -> list[str]:
     return page.evaluate("() => (window.ordenApp.sync.engine?.heldNotes ?? []).map((one) => one.name)")
-
 def notes_there(worker: Worker, token: str, space_id: str) -> dict[str, str]:
     listed = worker.request(f"/v1/spaces/{space_id}/changes?since=0", token=token)
     out: dict[str, str] = {}
@@ -136,14 +120,12 @@ def notes_there(worker: Worker, token: str, space_id: str) -> dict[str, str]:
         held = worker.request(f"/v1/notes/{one['id']}", token=token)
         out[one["path"]] = held.get("content", "")
     return out
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session() as browser:
         worker.start()
         token = worker.account(EMAIL)
         worker.sql(f"update users set sync_version = 2 where email = '{EMAIL}'")
-
         owner = signed_in(browser, token, "owner")
         wait_for(owner, "() => !!window.ordenApp.workspace.activeSpace", "a space")
         owner.evaluate(
@@ -159,7 +141,6 @@ def main() -> int:
         )
         settled(owner, "the first push")
         owner.context.close()
-
         for index in range(NOTES):
             made = worker.request(
                 f"/v1/spaces/{space_id}/notes",
@@ -168,7 +149,6 @@ def main() -> int:
             )
             if not made.get("note"):
                 failed(f"note {index} could not be made: {made}")
-
         pages = {which: signed_in(browser, token, which) for which in ("away", "stays")}
         for which, page in pages.items():
             if page.evaluate("() => window.ordenApp.sync.version") != 2:
@@ -189,7 +169,6 @@ def main() -> int:
                 f"[{which}] all {NOTES} notes",
             )
             settled(page, f"[{which}] the first pass")
-
         away, stays = pages["away"], pages["stays"]
         kept = away.evaluate(
             """async () => {
@@ -203,7 +182,6 @@ def main() -> int:
         DRIVE.preload(away, harness.WORKER_DIST)
         away.context.set_offline(True)
         say(f"machine away is offline; writing in {NOTES} notes on both sides")
-
         typed: dict[int, dict[str, str]] = {}
         for index in range(NOTES):
             kind = index % 5
@@ -231,12 +209,10 @@ def main() -> int:
                 edit(away, name(index), "the meeting after", "the meeting before")
                 edit(stays, name(index), "the meeting after", "the meeting during")
             typed[index] = words
-
         for page in pages.values():
             page.evaluate("() => { for (const tab of [...window.ordenApp.workspace.tabs]) window.ordenApp.workspace.close(tab.id) }")
         stays.evaluate("() => window.ordenApp.sync.nudge()")
         settled(stays, "the machine that stayed")
-
         began = time.monotonic()
         away.context.set_offline(False)
         away.wait_for_timeout(1500)
@@ -247,7 +223,6 @@ def main() -> int:
             page.wait_for_timeout(4000)
             settled(page, "the last pass")
         say(f"the machine that came back settled in {time.monotonic() - began:.1f}s")
-
         planted = sorted(name(index) for index in range(NOTES) if index % 5 == 3)
         held = sorted(held_here(away))
         say(f"held for the question on the machine that came back: {held}")
@@ -255,14 +230,12 @@ def main() -> int:
             failed(f"the question came up on {held}, and the planted overlaps are {planted}")
         if held_here(stays):
             failed(f"the machine that stayed holds {held_here(stays)}")
-
         here = {which: notes_here(page) for which, page in pages.items()}
         there = notes_there(worker, token, space_id)
         for where, notes in [*here.items(), ("the account", there)]:
             copies = [one for one in notes if COPY in one]
             if copies:
                 failed(f"{where} has a copy beside a note: {copies}")
-
         for index in range(NOTES):
             note = name(index)
             if note in planted:
@@ -277,7 +250,6 @@ def main() -> int:
             for words in typed[index].values():
                 if words not in (there.get(note) or ""):
                     failed(f"{note}: lost {words!r}")
-
         for note in held:
             away.evaluate(
                 """(name) => {
@@ -296,13 +268,11 @@ def main() -> int:
                 failed(f"{name(index)}: Keep mine did not send the away machine's sentence up")
         if held_here(away):
             failed(f"still held after every answer: {held_here(away)}")
-
         for which, page in pages.items():
             page.screenshot(path=str(SHOTS / f"{which}.png"))
             status = page.evaluate("() => window.ordenApp.sync.status")
             if status == "error":
                 failed(f"[{which}] sync is in error: {page.evaluate('() => window.ordenApp.sync.lastError')}")
-
     if wrong:
         print(f"\n{len(wrong)} thing(s) wrong:", flush=True)
         for one in wrong:
@@ -310,5 +280,4 @@ def main() -> int:
         return 1
     print("\nthe question came up on exactly the planted overlaps, and nothing was lost", flush=True)
     return 0
-
 sys.exit(main())

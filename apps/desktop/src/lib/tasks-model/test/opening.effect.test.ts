@@ -14,12 +14,10 @@ providePort('sync.account', {
   forgetWithSession: () => undefined,
   askBeforeLeaving: () => undefined,
 })
-
 test('a task added before anything opened the todos still lands, and can be listed and ticked', async () => {
   const made = await addTask('Water the plants', { typed: false })
   expect(made).not.toBeNull()
   if (!made) return
-
   expect((await listed()).tasks.map((one) => one.text)).toEqual(['Water the plants'])
   expect(await tickTask(made.id, true)).toBe(true)
   expect((await listed()).tasks).toEqual([])

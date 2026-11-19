@@ -6,7 +6,6 @@ import { TodoStore, type StoreWorld } from './store.svelte'
 const LOOK_AGAIN = 60_000
 const DEVICE = 'orden:todos-device'
 const OWNER = 'orden:todos-owner'
-
 const browserWorld: StoreWorld = {
   openDisk: openTodoDisk,
   now: () => Date.now(),
@@ -17,9 +16,7 @@ const browserWorld: StoreWorld = {
     return () => clearTimeout(handle)
   },
 }
-
 export const todos = new TodoStore(browserWorld)
-
 function device(): string {
   const storage = portOf('sync.storage')
   const held = storage.ok ? storage.value.text(DEVICE) : null
@@ -28,7 +25,6 @@ function device(): string {
   if (storage.ok) storage.value.keepText(DEVICE, made)
   return made
 }
-
 function ownerOf(token: string | null, user: { id: string } | null): string | null {
   const storage = portOf('sync.storage')
   if (token === null) {
@@ -41,16 +37,13 @@ function ownerOf(token: string | null, user: { id: string } | null): string | nu
   }
   return storage.ok ? storage.value.text(OWNER) : null
 }
-
 let started = false
 let firstOpened: () => void = () => undefined
 const opened = new Promise<void>((done) => (firstOpened = done))
-
 export async function openTodos(): Promise<void> {
   startTodos()
   if (todos.openedFor === undefined) await opened
 }
-
 export function startTodos(): void {
   if (started) return
   started = true

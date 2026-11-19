@@ -8,9 +8,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 const CONNECT: Duration = Duration::from_secs(2);
-
 const STARTING: Duration = Duration::from_secs(30);
-
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Endpoint {
     pub port: u16,
@@ -18,18 +16,15 @@ pub struct Endpoint {
     #[serde(default)]
     pub pid: u32,
 }
-
 pub fn endpoint(dir: &Path) -> Option<Endpoint> {
     let text = std::fs::read_to_string(dir.join("automation.json")).ok()?;
     serde_json::from_str(&text).ok()
 }
-
 #[derive(Debug)]
 pub struct Said {
     pub status: u16,
     pub body: Value,
 }
-
 pub fn post(
     endpoint: &Endpoint,
     bearer: Option<&str>,
@@ -40,7 +35,6 @@ pub fn post(
     let mut stream = TcpStream::connect_timeout(&address, CONNECT)?;
     stream.set_read_timeout(Some(patience))?;
     stream.set_write_timeout(Some(CONNECT))?;
-
     let body = body.to_string();
     let credential = bearer
         .map(|token| format!("authorization: Bearer {token}\r\n"))
@@ -53,13 +47,11 @@ pub fn post(
     stream.write_all(head.as_bytes())?;
     stream.write_all(body.as_bytes())?;
     stream.flush()?;
-
     let mut bytes = Vec::new();
     stream.read_to_end(&mut bytes)?;
     parse(&bytes)
         .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "not an HTTP answer"))
 }
-
 fn parse(bytes: &[u8]) -> Option<Said> {
     let text = String::from_utf8_lossy(bytes);
     let (head, body) = text.split_once("\r\n\r\n")?;
@@ -73,22 +65,18 @@ fn parse(bytes: &[u8]) -> Option<Said> {
     let body = serde_json::from_str(body).unwrap_or_else(|_| Value::String(body.to_owned()));
     Some(Said { status, body })
 }
-
 pub fn answers(endpoint: &Endpoint) -> bool {
     let asked = serde_json::json!({ "verb": "agent_status" });
     post(endpoint, None, &asked, CONNECT).is_ok_and(|said| {
         said.status == 401 && said.body.get("error").is_some_and(Value::is_string)
     })
 }
-
 pub fn running(dir: &Path) -> Option<Endpoint> {
     endpoint(dir).filter(answers)
 }
-
 pub fn start(dir: &Path) -> Result<Endpoint, String> {
     let before = endpoint(dir);
     launch()?;
-
     let started = Instant::now();
     while started.elapsed() < STARTING {
         std::thread::sleep(Duration::from_millis(100));
@@ -100,13 +88,11 @@ pub fn start(dir: &Path) -> Result<Endpoint, String> {
     }
     Err("Orden did not start in 30 seconds".to_owned())
 }
-
 #[cfg(windows)]
 fn launch() -> Result<(), String> {
     use std::os::windows::process::CommandExt as _;
 
     const NO_WINDOW: u32 = 0x0800_0000;
-
     orden_agents::family::keep_the_pipes();
     let program = super::program::program()?;
     let shell = std::env::var_os("ComSpec").unwrap_or_else(|| "cmd.exe".into());
@@ -126,7 +112,6 @@ fn launch() -> Result<(), String> {
         .map_err(|error| format!("Orden could not be started: {error}"))
         .map(drop)
 }
-
 #[cfg(target_os = "macos")]
 fn launch() -> Result<(), String> {
     let program = super::program::program()?;
@@ -146,12 +131,10 @@ fn launch() -> Result<(), String> {
         None => detached(&program),
     }
 }
-
 #[cfg(all(unix, not(target_os = "macos")))]
 fn launch() -> Result<(), String> {
     detached(&super::program::program()?)
 }
-
 #[cfg(unix)]
 fn detached(program: &Path) -> Result<(), String> {
     use std::os::unix::process::CommandExt as _;
@@ -166,14 +149,12 @@ fn detached(program: &Path) -> Result<(), String> {
     std::thread::spawn(move || child.wait());
     Ok(())
 }
-
 fn quiet(command: &mut Command) -> &mut Command {
     command
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -189,7 +170,6 @@ mod tests {
         assert_eq!(said.body, Value::String("not json".into()));
         assert!(parse(b"garbage").is_none());
     }
-
     #[test]
     fn the_file_reads_as_the_app_writes_it() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -208,7 +188,6 @@ mod tests {
             })
         );
     }
-
     #[test]
     fn a_stranger_on_the_port_is_not_orden() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
@@ -232,7 +211,6 @@ mod tests {
         assert!(!request.contains("authorization"), "{request}");
         assert!(!request.contains("s3cret"));
     }
-
     #[test]
     fn nobody_on_the_port_is_not_orden() {
         let port = TcpListener::bind("127.0.0.1:0")

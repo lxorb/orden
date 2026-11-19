@@ -14,7 +14,6 @@ export function languageIn(typed: string, inEnglish: (id: string) => string = en
   )
   return found?.id ?? null
 }
-
 function englishName(id: string): string {
   try {
     return new Intl.DisplayNames(['en'], { type: 'language' }).of(id) ?? id
@@ -22,7 +21,6 @@ function englishName(id: string): string {
     return id
   }
 }
-
 export async function rewrite(verb: Verb, language = ''): Promise<boolean> {
   const view = views.of(workspace.panes.focusedId)
   if (!view || view.state.readOnly) return false
@@ -39,16 +37,13 @@ export async function rewrite(verb: Verb, language = ''): Promise<boolean> {
   rewriting.run(verb)
   return true
 }
-
 function about(named: string): string {
   const name = named.trim().replace(/^\[\[|\]\]$/g, '')
   return name ? `the note [[${name}]]` : 'the selection, or the note in front if nothing is selected'
 }
-
 function explainPrompt(): string {
   return `Explain ${about('')}: what it means and why, briefly, in the language it is written in.`
 }
-
 function summarizePrompt(named: string): string {
   return [
     `Write a summary of ${about(named)} of a few sentences,`,
@@ -56,7 +51,6 @@ function summarizePrompt(named: string): string {
     'Change nothing else in it.',
   ].join(' ')
 }
-
 function reviewPrompt(target: string): string {
   if (target.trim().toLowerCase() === 'changes') {
     return 'Review the changes you made to notes in this thread: say what is wrong or missing in each, and fix what should be fixed with edit_note.'
@@ -67,15 +61,12 @@ function reviewPrompt(target: string): string {
     'and list them briefly in your answer.',
   ].join(' ')
 }
-
 export function explain(host: Host, thread: Thread | null): void {
   sendHere(host, thread, explainPrompt())
 }
-
 export function summarize(host: Host, thread: Thread | null, named: string): void {
   sendHere(host, thread, summarizePrompt(named), { mode: 'auto' })
 }
-
 export function review(host: Host, thread: Thread | null, target: string): void {
   sendHere(host, thread, reviewPrompt(target), { mode: 'auto' })
 }

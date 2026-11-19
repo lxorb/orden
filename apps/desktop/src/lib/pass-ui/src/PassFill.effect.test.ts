@@ -7,7 +7,6 @@ const fake = vi.hoisted(() => ({
   state: 'open',
   calls: [] as unknown[][],
 }))
-
 vi.mock('../../pass-sync/src/autofill', () => {
   const said =
     (name: string) =>
@@ -28,11 +27,9 @@ vi.mock('../../pass-sync/src/autofill', () => {
     },
   }
 })
-
 vi.mock('../../pass-sync/src/open', () => ({
   openPass: () => fake.calls.push(['openPass']),
 }))
-
 vi.mock('../../pass-sync/src/store.svelte', () => ({
   pass: {
     get state() {
@@ -40,29 +37,22 @@ vi.mock('../../pass-sync/src/store.svelte', () => ({
     },
   },
 }))
-
 const PassFill = (await import('./PassFill.svelte')).default
 const { overlays } = await import('../../ui-kit/src/overlays')
-
 const TAB = 'tab-1'
-
 beforeEach(() => {
   fake.calls = []
   fake.state = 'open'
   landed()
 })
-
 afterEach(closed)
-
 const showing = (bubble: PassBubble) => draw(PassFill, { bubble })
-
 function press(words: string) {
   const button = [...target.querySelectorAll('button')].find((one) => one.textContent.includes(words))
   if (!button) throw new Error(`no button saying ${words}`)
   button.click()
   flushSync()
 }
-
 const CHOOSE: PassBubble = {
   kind: 'choose',
   tab: TAB,
@@ -75,7 +65,6 @@ const CHOOSE: PassBubble = {
   alias: true,
   fields: [],
 }
-
 describe('the fill bubble', () => {
   test("lists the site's logins and fills the one chosen", () => {
     showing(CHOOSE)
@@ -84,7 +73,6 @@ describe('the fill bubble', () => {
     target.querySelector<HTMLButtonElement>('[data-pass-choice="one"]')?.click()
     expect(fake.calls).toEqual([['choose', TAB, 'one']])
   })
-
   test('offers a generated password on a sign-up form, and Pass itself', () => {
     showing(CHOOSE)
     press('Generate password')
@@ -92,7 +80,6 @@ describe('the fill bubble', () => {
     press('Open Pass')
     expect(fake.calls).toEqual([['generate', TAB], ['alias', TAB], ['dismiss', TAB], ['openPass']])
   })
-
   test('names the fields a card would fill before one is chosen', () => {
     showing({
       ...CHOOSE,
@@ -107,13 +94,11 @@ describe('the fill bubble', () => {
       'Fills Card number, Expiry date, Security code',
     )
   })
-
   test('says when Pass has nothing for the site', () => {
     showing({ ...CHOOSE, logins: [], generate: false, alias: false })
     expect(target.textContent).toContain('Nothing in Pass for this site yet.')
     expect(target.textContent).not.toContain('Generate password')
   })
-
   test('while Pass is locked it only offers to unlock it', () => {
     fake.state = 'locked'
     showing({ kind: 'unlock', tab: TAB })
@@ -121,12 +106,10 @@ describe('the fill bubble', () => {
     press('Unlock Pass')
     expect(fake.calls).toEqual([['dismiss', TAB], ['openPass']])
   })
-
   test('offers the choices again once Pass is unlocked', () => {
     showing({ kind: 'unlock', tab: TAB })
     expect(fake.calls).toEqual([['reoffer', TAB]])
   })
-
   test('asks to save a login, with Not now and Never for this site', () => {
     showing({ kind: 'save', tab: TAB, site: 'bank.com', username: 'alice', update: false })
     expect(target.textContent).toContain('Save login?')
@@ -139,7 +122,6 @@ describe('the fill bubble', () => {
       ['save', TAB],
     ])
   })
-
   test('asks to update a password, never to stop saving the site', () => {
     showing({ kind: 'save', tab: TAB, site: 'bank.com', username: 'alice', update: true })
     expect(target.textContent).toContain('Update password?')
@@ -147,7 +129,6 @@ describe('the fill bubble', () => {
     press('Update')
     expect(fake.calls).toEqual([['save', TAB]])
   })
-
   test('says who is signing in, and Stop and Escape stop it', () => {
     showing({ kind: 'signing', tab: TAB, name: 'alice' })
     expect(target.textContent).toContain('Signing in as alice…')

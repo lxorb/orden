@@ -8,7 +8,6 @@ export const file = (path: string): Entry => ({
   created: 0,
   children: [],
 })
-
 export const folder = (path: string, children: Entry[] = []): Entry => ({
   ...file(path),
   is_dir: true,

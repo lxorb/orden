@@ -17,7 +17,6 @@ fn roots() -> Vec<PathBuf> {
     }
     roots
 }
-
 #[cfg(target_os = "macos")]
 pub fn entries(with_icons: bool) -> Vec<Entry> {
     let mut seen = HashSet::new();
@@ -45,7 +44,6 @@ pub fn entries(with_icons: bool) -> Vec<Entry> {
     }
     found
 }
-
 pub fn program(bundle: &Path) -> Option<String> {
     let contents = bundle.join("Contents");
     let info = plist::Value::from_file(contents.join("Info.plist")).ok()?;
@@ -60,7 +58,6 @@ pub fn program(bundle: &Path) -> Option<String> {
         .is_file()
         .then(|| program.to_string_lossy().into_owned())
 }
-
 pub fn bundles(root: &Path) -> Vec<PathBuf> {
     let mut found = Vec::new();
     let mut folders = vec![(root.to_path_buf(), 0)];
@@ -81,13 +78,11 @@ pub fn bundles(root: &Path) -> Vec<PathBuf> {
     found.sort();
     found
 }
-
 pub struct Bundle {
     pub name: String,
     pub key: String,
     pub icon: Option<String>,
 }
-
 pub fn read(path: &Path, with_icons: bool) -> Option<Bundle> {
     let contents = path.join("Contents");
     let info = plist::Value::from_file(contents.join("Info.plist")).ok()?;
@@ -129,7 +124,6 @@ pub fn read(path: &Path, with_icons: bool) -> Option<Bundle> {
     };
     Some(Bundle { name, key, icon })
 }
-
 pub fn icns_icon(bytes: &[u8]) -> Option<String> {
     if bytes.get(..4)? != b"icns" {
         return None;
@@ -156,7 +150,6 @@ pub fn icns_icon(bytes: &[u8]) -> Option<String> {
         .or_else(|| pngs.iter().max_by_key(|(width, _)| *width))?;
     icons::png_url(best.1)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -172,7 +165,6 @@ mod tests {
         writer.finish().unwrap();
         out
     }
-
     fn icns(chunks: &[(&[u8; 4], Vec<u8>)]) -> Vec<u8> {
         let mut body = Vec::new();
         for (kind, data) in chunks {
@@ -185,7 +177,6 @@ mod tests {
         out.extend(body);
         out
     }
-
     #[test]
     fn takes_the_smallest_png_of_an_icns_that_is_large_enough() {
         let small = png(16);
@@ -205,7 +196,6 @@ mod tests {
         assert_eq!(icns_icon(&icns(&[(b"it32", vec![0; 40])])), None);
         assert_eq!(icns_icon(b"not an icns"), None);
     }
-
     #[test]
     fn reads_a_bundle_by_its_own_name_and_leaves_out_one_with_nothing_to_show() {
         let root = std::env::temp_dir().join(format!("orden-bundles-{}", std::process::id()));
@@ -235,7 +225,6 @@ mod tests {
             "<key>CFBundleName</key><string>Helper</string><key>LSUIElement</key><true/>",
         );
         bundle("Plain.app", "");
-
         let found = bundles(&root);
         let names: Vec<String> = found
             .iter()

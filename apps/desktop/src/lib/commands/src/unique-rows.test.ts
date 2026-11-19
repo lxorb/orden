@@ -1,10 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
 
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
-
 const { workspace } = await import('../../workspace/src/api')
 const { appCommands } = await import('./api')
-
 describe('the palette’s commands', () => {
   test('name each thing once, with a space open as without', () => {
     for (const open of [false, true]) {

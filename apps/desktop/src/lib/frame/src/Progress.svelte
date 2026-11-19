@@ -2,15 +2,12 @@
   import { Facts, busy, Sweep } from '../../ui-kit/src/api'
 
   const DELAY = 200
-
   let showing = $state(false)
-
   $effect(() => {
     if (!busy.active) {
       showing = false
       return
     }
-
     const timer = setTimeout(() => (showing = true), DELAY)
     return () => clearTimeout(timer)
   })
@@ -38,13 +35,11 @@
     pointer-events: none;
     animation: fade-in var(--dur-fast) var(--ease-out);
   }
-
   .failed .line {
     height: 2px;
     border-radius: 1px;
     background: var(--danger);
   }
-
   .said {
     margin: var(--space-2) auto 0;
     width: fit-content;
@@ -58,12 +53,10 @@
     font-size: var(--text-sm);
     text-align: center;
   }
-
   .told {
     color: var(--text);
     font-variant-numeric: tabular-nums;
   }
-
   @keyframes fade-in {
     from {
       opacity: 0;

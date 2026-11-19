@@ -6,7 +6,6 @@ import { listed, subtitleOf } from './list'
 function item(id: string, content: Content, more: Partial<Item> = {}): Item {
   return { ...newEnvelope(content, 1000), id, vault: 'home', rev: 1, ...more }
 }
-
 function vault(id: string, more: Partial<Vault> = {}): Vault {
   return {
     v: 1,
@@ -24,7 +23,6 @@ function vault(id: string, more: Partial<Vault> = {}): Vault {
     ...more,
   }
 }
-
 const VAULTS = [
   vault('home', {
     folders: [
@@ -36,7 +34,6 @@ const VAULTS = [
   vault('team', { shared: true, members: 3 }),
   vault('theirs', { role: 'editor', members: 2, shared: true }),
 ]
-
 const ITEMS: Item[] = [
   item(
     'mail',
@@ -69,22 +66,18 @@ const ITEMS: Item[] = [
   item('old', { ...blank('login'), title: 'Old' }, { trashed: 7000, pinned: true }),
   item('given', { ...blank('note'), title: 'Given' }, { vault: 'theirs' }),
 ]
-
 const ids = (items: Item[]) => items.map((one) => one.id)
-
 describe('which items a scope shows', () => {
   test('all leaves the trash out', () => {
     const { rows } = listed(ITEMS, VAULTS, { kind: 'all' }, 'all', 'title', '')
     expect(ids(rows)).not.toContain('old')
     expect(rows).toHaveLength(10)
   })
-
   test('the trash shows only what was trashed, with no pinned strip', () => {
     const { rows, pinned } = listed(ITEMS, VAULTS, { kind: 'trash' }, 'all', 'title', '')
     expect(ids(rows)).toEqual(['old'])
     expect(pinned).toEqual([])
   })
-
   test('a vault shows its own items, and a folder its own and its subfolders’', () => {
     const vaultOnly = { kind: 'vault', vault: 'home', folder: null } as const
     expect(listed(ITEMS, VAULTS, vaultOnly, 'all', 'title', '').rows).toHaveLength(8)
@@ -95,7 +88,6 @@ describe('which items a scope shows', () => {
     const games = { kind: 'vault', vault: 'home', folder: 'games' } as const
     expect(listed(ITEMS, VAULTS, games, 'all', 'title', '').rows).toEqual([])
   })
-
   test('shared with me and shared by me', () => {
     const withMe = listed(ITEMS, VAULTS, { kind: 'shared-with-me' }, 'all', 'title', '')
     expect(ids(withMe.rows)).toEqual(['given'])
@@ -103,22 +95,18 @@ describe('which items a scope shows', () => {
     expect(ids(byMe.rows)).toEqual(['custom'])
   })
 })
-
 describe('the type filter', () => {
   test('counts every type in the scope, other being custom, ssh and wifi', () => {
     const { counts } = listed(ITEMS, VAULTS, { kind: 'all' }, 'login', 'title', '')
     expect(counts).toEqual({ all: 10, login: 2, alias: 1, card: 1, note: 2, identity: 1, other: 3 })
   })
-
   test('shows only the type chosen', () => {
     const other = listed(ITEMS, VAULTS, { kind: 'all' }, 'other', 'title', '')
     expect(ids(other.rows)).toEqual(['wifi', 'custom', 'ssh'])
   })
 })
-
 describe('the search', () => {
   const found = (query: string) => ids(listed(ITEMS, VAULTS, { kind: 'all' }, 'all', 'title', query).rows)
-
   test('reads titles, usernames, emails, hosts, aliases, a card’s last four and a note’s first line', () => {
     expect(found('MAIL')).toEqual(['mail'])
     expect(found('e.vinu')).toEqual(['bank'])
@@ -128,7 +116,6 @@ describe('the search', () => {
     expect(found('1234')).toEqual(['visa'])
     expect(found('dear diary')).toEqual(['diary'])
   })
-
   test('never reads a password, a card’s other digits or its code, or the rest of a note', () => {
     expect(found('zebra')).toEqual([])
     expect(found('castle-key')).toEqual([])
@@ -136,7 +123,6 @@ describe('the search', () => {
     expect(found('987')).toEqual([])
     expect(found('second line')).toEqual([])
   })
-
   test('narrows the counts too', () => {
     const { counts } = listed(ITEMS, VAULTS, { kind: 'all' }, 'all', 'title', 'emil')
     expect(counts.all).toBe(2)
@@ -144,14 +130,12 @@ describe('the search', () => {
     expect(counts.identity).toBe(1)
   })
 })
-
 describe('pinned and sorted', () => {
   test('pinned items are set apart and stay in the rows', () => {
     const { pinned, rows } = listed(ITEMS, VAULTS, { kind: 'all' }, 'all', 'title', '')
     expect(ids(pinned)).toEqual(['bank'])
     expect(ids(rows)).toContain('bank')
   })
-
   test('the four orders', () => {
     const order = (sort: 'recent' | 'title' | 'newest' | 'oldest') =>
       ids(
@@ -168,7 +152,6 @@ describe('pinned and sorted', () => {
     expect(all('oldest')[0]).toBe('alias')
   })
 })
-
 describe('the line under a title', () => {
   test('says what each kind is best known by', () => {
     const by = (id: string) => {

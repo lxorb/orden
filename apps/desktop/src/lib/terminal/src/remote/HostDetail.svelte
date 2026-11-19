@@ -18,18 +18,14 @@
   import { remote } from './hosts.svelte'
 
   const { host, onback }: { host: Host; onback: () => void } = $props()
-
   const about = (change: Change<About>) => void remote.keep((kept) => withAbout(kept, host.id, change))
-
   const NEW = '\u0000new'
-
   const groups = $derived(groupsOf(remote.hosts, remote.kept))
   const groupChoices = $derived([
     { value: '', label: 'No group' },
     ...groups.map((group) => ({ value: group, label: group })),
     { value: NEW, label: 'New group' },
   ])
-
   async function grouped(value: string) {
     if (value !== NEW) {
       about({ group: value || undefined })
@@ -38,7 +34,6 @@
     const named = await prompt.ask({ title: 'New group', confirmLabel: 'Add' })
     if (named?.trim()) about({ group: named.trim() })
   }
-
   const colours = $derived([
     { value: '', label: 'No colour', colour: 'var(--line-strong)' },
     ...COLOURS.map((one) => ({
@@ -47,9 +42,7 @@
       colour: `var(--canvas-${one})`,
     })),
   ])
-
   let problem = $state('')
-
   function placed(typed: string, field: HTMLInputElement) {
     const wanted = destinationOf(typed)
     if (!wanted) {
@@ -66,12 +59,10 @@
       }),
     )
   }
-
   function renamed(typed: string, field: HTMLInputElement) {
     if (!typed.trim()) field.value = host.name
     else void remote.keep((kept) => withOwn(kept, host.id, { name: typed.trim() }))
   }
-
   async function remove() {
     const sure = await prompt.confirm({ title: host.name, confirmLabel: 'Remove', danger: true })
     if (!sure) return
@@ -168,16 +159,13 @@
     align-items: center;
     gap: var(--space-3);
   }
-
   .who .name {
     flex: 1;
     min-width: 0;
   }
-
   .back {
     margin-inline-start: -6px;
   }
-
   .title {
     display: block;
     width: 100%;
@@ -192,15 +180,12 @@
     outline: none;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   input.title:focus {
     border-bottom-color: var(--accent);
   }
-
   .address {
     font-family: var(--font-mono);
   }
-
   .value {
     color: var(--muted-strong);
     font-family: var(--font-mono);

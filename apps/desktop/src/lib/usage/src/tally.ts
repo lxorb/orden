@@ -10,18 +10,13 @@ export interface Tally {
   onboarding: Record<string, number>
   startup: Partial<Record<UsageStartup, number>>
 }
-
 export type Tallies = Record<string, Tally>
-
 const SAVED_AFTER = 2000
-
 export function emptyTally(): Tally {
   return { commands: {}, features: {}, tabs: {}, settings: {}, onboarding: {}, startup: {} }
 }
-
 let held: Tallies | null = null
 let saving: ReturnType<typeof setTimeout> | undefined
-
 export function storedTallies(): Tallies {
   const kept = stored(USAGE_DAYS)
   if (!isRecord(kept)) return {}
@@ -31,13 +26,11 @@ export function storedTallies(): Tallies {
   }
   return tallies
 }
-
 export function saveTallies(): void {
   clearTimeout(saving)
   saving = undefined
   if (held) keepJson(USAGE_DAYS, held)
 }
-
 export function takeTallies(before: string): Tallies {
   saveTallies()
   const all = storedTallies()
@@ -51,13 +44,11 @@ export function takeTallies(before: string): Tallies {
   keepJson(USAGE_DAYS, left)
   return taken
 }
-
 export function forgetTallies(): void {
   clearTimeout(saving)
   saving = undefined
   held = {}
 }
-
 function today(): Tally | null {
   if (!usageChoice.helping) return null
   held ??= storedTallies()
@@ -66,11 +57,9 @@ function today(): Tally | null {
   saving ??= setTimeout(saveTallies, SAVED_AFTER)
   return tally
 }
-
 function add(counts: Partial<Record<string, number>>, key: string, by = 1): void {
   counts[key] = (counts[key] ?? 0) + by
 }
-
 export function ran(id: string | undefined, via: UsageVia): void {
   const name = id ? usageName(id) : null
   if (!name) return
@@ -78,7 +67,6 @@ export function ran(id: string | undefined, via: UsageVia): void {
   if (!tally) return
   add((tally.commands[name] ??= {}), via)
 }
-
 export function changed(key: string | undefined, value: unknown): void {
   const id = key ? settingName(key) : null
   if (!id) return
@@ -88,24 +76,20 @@ export function changed(key: string | undefined, value: unknown): void {
   if (!tally) return
   add((tally.settings[id] ??= {}), name)
 }
-
 export function stepped(step: string): void {
   const name = usageName(step)
   const tally = name ? today() : null
   if (name && tally) add(tally.onboarding, name)
 }
-
 export function spent(kind: 'features' | 'tabs', name: string, minutes = 1): void {
   const known = usageName(name)
   const tally = known ? today() : null
   if (known && tally) add(tally[kind], known, minutes)
 }
-
 export function started(bucket: UsageStartup): void {
   const tally = today()
   if (tally) add(tally.startup, bucket)
 }
-
 usageChoice.changes.add(() => {
   if (!usageChoice.helping) forgetTallies()
 })

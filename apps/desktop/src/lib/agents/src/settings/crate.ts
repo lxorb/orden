@@ -19,20 +19,15 @@ export interface AgentsCrate {
   program(): Promise<string | null>
   hear(on: (event: Heard) => void): Promise<() => void>
 }
-
 const known = <T extends string>(list: readonly T[], value: unknown): T | undefined => list.find((one) => one === value)
-
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
-
 const count = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback
-
 export interface Heard {
   kind: AgentEvent['kind']
   agent: string | null
 }
-
 const KINDS: readonly AgentEvent['kind'][] = [
   'acting',
   'paused',
@@ -43,7 +38,6 @@ const KINDS: readonly AgentEvent['kind'][] = [
   'closed',
   'stopped',
 ]
-
 function readHeard(value: unknown): Heard | null {
   if (!isRecord(value)) return null
   const kind = known(KINDS, value.kind)
@@ -51,7 +45,6 @@ function readHeard(value: unknown): Heard | null {
   const agent = isRecord(value.approval) ? value.approval.agent : value.agent
   return { kind, agent: typeof agent === 'string' ? agent : null }
 }
-
 const SCOPES: readonly Scope[] = [
   'context',
   'notes.read',
@@ -77,7 +70,6 @@ const SCOPES: readonly Scope[] = [
   'applications',
   'agents',
 ]
-
 const CATEGORIES: readonly Category[] = [
   'paying',
   'sending',
@@ -94,14 +86,11 @@ const CATEGORIES: readonly Category[] = [
   'takeover',
   'pairing',
 ]
-
 const RULES: readonly SiteRule[] = ['allow', 'deny', 'agent-store']
-
 export function readGrant(value: unknown): Grant | null {
   if (!isRecord(value)) return null
   const { id, name, client, sites, asks, always, limits } = value
   if (typeof id !== 'string' || typeof name !== 'string' || typeof client !== 'string') return null
-
   const limited = isRecord(limits) ? limits : {}
   return {
     id,
@@ -138,18 +127,15 @@ export function readGrant(value: unknown): Grant | null {
     created: count(value.created, 0),
   }
 }
-
 function readGrants(value: unknown): Grant[] {
   return Array.isArray(value) ? value.flatMap((one) => readGrant(one) ?? []) : []
 }
-
 function readMinted(value: unknown): Minted {
   const grant = isRecord(value) ? readGrant(value.grant) : null
   const token = isRecord(value) ? value.token : null
   if (!grant || typeof token !== 'string') throw new Error('the agent could not be made')
   return { grant, token }
 }
-
 export const tauriCrate: AgentsCrate = {
   read: async () => readGrants(await invoke<unknown>('agents_read')),
   write: async (grants) => readGrants(await invoke<unknown>('agents_write', { grants })),

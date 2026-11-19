@@ -10,24 +10,18 @@ use crate::verbs::{Answer, Approval, ApprovalAnswer, Category, Event, EVENT};
 use orden_base::letters::spelled_out;
 
 const EXPIRES: Duration = Duration::from_secs(24 * 60 * 60);
-
 const SPEND_WITHIN: Duration = Duration::from_secs(10 * 60);
-
 struct Held {
     approval: Approval,
     key: String,
     at: Instant,
     spent: bool,
 }
-
 static HELD: Mutex<Vec<Held>> = Mutex::new(Vec::new());
-
 static NEXT: AtomicU64 = AtomicU64::new(1);
-
 fn held() -> std::sync::MutexGuard<'static, Vec<Held>> {
     HELD.held()
 }
-
 pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
     format!(
         "{verb}:{}:{}",
@@ -35,13 +29,11 @@ pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
         element.unwrap_or_default()
     )
 }
-
 pub fn on_page(key: &str, url: &str, element: &str) -> String {
     let host = crate::policy::host_of(url).unwrap_or_default();
     let element = element.split_whitespace().collect::<Vec<_>>().join(" ");
     format!("{key}:{host}:{element}")
 }
-
 pub fn is_allowed(agent: &str, key: &str) -> bool {
     held().iter().any(|one| {
         one.approval.agent == agent
@@ -51,7 +43,6 @@ pub fn is_allowed(agent: &str, key: &str) -> bool {
             && one.at.elapsed() < SPEND_WITHIN
     })
 }
-
 pub fn allowed(agent: &str, key: &str) -> bool {
     let mut all = held();
     let found = all.iter_mut().find(|one| {
@@ -69,7 +60,6 @@ pub fn allowed(agent: &str, key: &str) -> bool {
         None => false,
     }
 }
-
 pub struct Asking<'a> {
     pub agent: &'a str,
     pub name: &'a str,
@@ -79,7 +69,6 @@ pub struct Asking<'a> {
     pub tab: Option<String>,
     pub key: String,
 }
-
 impl<'a> Asking<'a> {
     pub fn of(grant: &'a Grant, category: Category, summary: String, key: String) -> Self {
         Asking {
@@ -93,11 +82,9 @@ impl<'a> Asking<'a> {
         }
     }
 }
-
 pub fn unless_allowed(app: &AppHandle, asking: Asking<'_>) -> Option<Answer> {
     (!allowed(asking.agent, &asking.key)).then(|| ask(app, asking))
 }
-
 pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> Approval {
     let approval = Approval {
         id: format!("q{}", NEXT.fetch_add(1, Ordering::Relaxed)),
@@ -125,7 +112,6 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
     );
     approval
 }
-
 pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
     let mut all = held();
     if let Some(one) = all
@@ -179,11 +165,9 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
         summary: approval.summary,
     }
 }
-
 fn verb_of(key: &str) -> &str {
     key.split(':').next().unwrap_or_default()
 }
-
 pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String> {
     let approval = {
         let mut all = held();
@@ -210,21 +194,18 @@ pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String
     );
     Ok(approval)
 }
-
 pub fn status(agent: &str, id: &str) -> Option<Approval> {
     held()
         .iter()
         .find(|one| one.approval.id == id && one.approval.agent == agent)
         .map(|one| one.approval.clone())
 }
-
 pub fn any(id: &str) -> Option<Approval> {
     held()
         .iter()
         .find(|one| one.approval.id == id)
         .map(|one| one.approval.clone())
 }
-
 pub fn pending(agent: Option<&str>) -> Vec<Approval> {
     held()
         .iter()
@@ -233,7 +214,6 @@ pub fn pending(agent: Option<&str>) -> Vec<Approval> {
         .map(|one| one.approval.clone())
         .collect()
 }
-
 pub fn expire(app: &AppHandle) {
     let expired: Vec<Approval> = held()
         .iter_mut()
@@ -247,7 +227,6 @@ pub fn expire(app: &AppHandle) {
         let _ = app.emit(EVENT, Event::Answered { approval });
     }
 }
-
 pub fn waiting_on(agent: &str, tab: &str, category: Category) -> Option<Approval> {
     held()
         .iter()
@@ -259,7 +238,6 @@ pub fn waiting_on(agent: &str, tab: &str, category: Category) -> Option<Approval
         })
         .map(|one| one.approval.clone())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -285,7 +263,6 @@ mod tests {
         });
         id
     }
-
     #[test]
     fn an_allowed_question_lets_its_call_through_once() {
         let key = key("browser_click", Some("a1"), Some("e7"));
@@ -296,7 +273,6 @@ mod tests {
         assert!(!allowed("somebody", &key));
         assert!(!allowed("allowing", "browser_click:a1:e8"));
     }
-
     #[test]
     fn a_waiting_question_is_nobody_elses_to_read() {
         let id = pushed("reading", "k", ApprovalAnswer::Pending);
@@ -304,14 +280,12 @@ mod tests {
         assert!(status("other", &id).is_none());
         assert!(pending(Some("reading")).iter().any(|one| one.id == id));
     }
-
     #[test]
     fn a_question_names_the_verb_that_asked() {
         assert_eq!(verb_of("browser_click:a1:e7"), "browser_click");
         assert_eq!(verb_of(r#"edit_note:{"path":"a.md"}"#), "edit_note");
         assert_eq!(verb_of(""), "");
     }
-
     #[test]
     fn an_allowance_is_for_the_site_and_the_element_it_was_asked_about() {
         let asked = on_page(
@@ -345,7 +319,6 @@ mod tests {
         );
         assert_eq!(verb_of(&asked), "browser_press");
     }
-
     #[test]
     fn a_key_names_the_verb_the_tab_and_the_element() {
         assert_eq!(

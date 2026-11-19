@@ -4,9 +4,7 @@
   import FieldRow from './FieldRow.svelte'
 
   const { content }: { content: SshKey } = $props()
-
   let print = $state<string | null>(null)
-
   $effect(() => {
     const line = content.publicKey.trim() || (sshPublicOf(content.privateKey) ?? '')
     let current = true

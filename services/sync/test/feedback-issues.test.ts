@@ -12,14 +12,12 @@ import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const REPO = 'lxorb/orden-feedback'
-
 const REPORT = {
   text: 'The tab strip lost its line. It came back after a restart.',
   version: '0.17.0',
   platform: 'desktop, windows',
   log: 'a line\nanother line',
 }
-
 interface Opened {
   number: number
   title: string
@@ -27,7 +25,6 @@ interface Opened {
   labels: string[]
   state?: string
 }
-
 class Github {
   issues: Opened[] = []
   asked: string[] = []
@@ -35,7 +32,6 @@ class Github {
   meanwhile: (() => void) | null = null
   board = new Map<string, string | null>()
   boardRefused = false
-
   private graphql(body: string): Response {
     const { query, variables } = JSON.parse(body) as {
       query: string
@@ -77,7 +73,6 @@ class Github {
     }
     return new Response('{}', { status: 400 })
   }
-
   readonly fetch = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url)
     const method = init?.method ?? 'GET'
@@ -102,7 +97,6 @@ class Github {
       return Response.json({ number: issue.number })
     }
     if (url.pathname !== `/repos/${REPO}/issues`) return new Response('{}', { status: 404 })
-
     if (method === 'GET') {
       const page = Number(url.searchParams.get('page') ?? 1)
       const listed = this.issues.slice((page - 1) * 100, page * 100)
@@ -115,7 +109,6 @@ class Github {
         })),
       )
     }
-
     this.meanwhile?.()
     const failure = this.failing.shift()
     if (failure === 'refuse') return new Response('{}', { status: 502 })
@@ -133,21 +126,17 @@ class Github {
     )
   }
 }
-
 let env: TestEnv
 let hub: Github
-
 beforeEach(() => {
   hub = new Github()
   vi.stubGlobal('fetch', hub.fetch)
   env = testEnv({ FEEDBACK_REPO: REPO, GITHUB_FEEDBACK_TOKEN: 'minion-token' })
 })
-
 afterEach(() => {
   vi.unstubAllGlobals()
   env.close()
 })
-
 interface Row {
   id: string
   issue_number: number | null
@@ -155,21 +144,17 @@ interface Row {
   issue_tries: number
   issue_next_at: number
 }
-
 async function rows(): Promise<Row[]> {
   const read = await env.DB.prepare(
     'select id, issue_number, issue_url, issue_tries, issue_next_at from feedback',
   ).all<Row>()
   return read.results
 }
-
 const opens = () => hub.asked.filter((one) => one.startsWith('POST')).length
-
 describe('a report', () => {
   test('becomes an issue with everything in it, and the row says which', async () => {
     const answer = await call<{ id: string }>(env, '/v1/feedback', { body: REPORT })
     expect(answer.status).toBe(200)
-
     expect(hub.issues).toHaveLength(1)
     const [issue] = hub.issues
     expect(issue?.title).toBe('Feedback: The tab strip lost its line.')
@@ -181,28 +166,23 @@ describe('a report', () => {
     expect(issue?.body).toContain(`| Report | \`${answer.json.id}\` |`)
     expect(issue?.body).toContain('<details><summary>Recent app log</summary>')
     expect(issue?.body).toContain('a line\nanother line')
-
     expect(await rows()).toMatchObject([
       { issue_number: 1, issue_url: `https://github.com/${REPO}/issues/1`, issue_tries: 0 },
     ])
   })
-
   test('from somebody signed in says whose it is', async () => {
     const token = await signIn(env, 'reader@example.com')
     await call(env, '/v1/feedback', { token, body: REPORT })
     const user = env.db.prepare('select id from users where email = ?').get('reader@example.com') as {
       id: string
     }
-
     expect(hub.issues[0]?.body).toContain(`| Account | \`${user.id}\`, \`reader@example.com\` |`)
   })
-
   test('is kept and waits where no token is set yet, and is opened once there is one', async () => {
     const waiting = testEnv({ FEEDBACK_REPO: REPO })
     try {
       expect((await call(waiting, '/v1/feedback', { body: REPORT })).status).toBe(200)
       expect(hub.asked).toEqual([])
-
       await openWaitingIssues({ ...waiting, GITHUB_FEEDBACK_TOKEN: 'minion-token' })
       expect(hub.issues).toHaveLength(1)
       const row = waiting.db.prepare('select issue_number from feedback').get() as {
@@ -214,10 +194,8 @@ describe('a report', () => {
     }
   })
 })
-
 describe('a report on the board', () => {
   const PROJECT = 'lxorb/2'
-
   interface BoardRow {
     issue_node: string | null
     board_at: number | null
@@ -226,7 +204,6 @@ describe('a report on the board', () => {
   }
   const boardRows = (on: TestEnv) =>
     on.db.prepare('select issue_node, board_at, board_tries, board_next_at from feedback').all() as BoardRow[]
-
   test('goes on it as Todo as soon as its issue is open', async () => {
     const onBoard = testEnv({
       FEEDBACK_REPO: REPO,
@@ -242,14 +219,12 @@ describe('a report on the board', () => {
       onBoard.close()
     }
   })
-
   test('stays off it where no board is named', async () => {
     await call(env, '/v1/feedback', { body: REPORT })
     expect(hub.issues).toHaveLength(1)
     expect(hub.board.size).toBe(0)
     expect(hub.asked.some((one) => one.endsWith('/graphql'))).toBe(false)
   })
-
   test('the board did not take keeps its issue, and goes on once the board takes it', async () => {
     const onBoard = testEnv({
       FEEDBACK_REPO: REPO,
@@ -265,11 +240,9 @@ describe('a report on the board', () => {
       expect(row.issue_number).toBe(1)
       const [off] = boardRows(onBoard)
       expect(off).toMatchObject({ board_at: null, board_tries: 1 })
-
       hub.boardRefused = false
       await openWaitingIssues(onBoard, (off?.board_next_at ?? 0) - 1)
       expect(hub.board.size).toBe(0)
-
       await openWaitingIssues(onBoard, off?.board_next_at ?? 0)
       expect(hub.board.get('I_1')).toBe('opt_todo')
       expect(hub.issues).toHaveLength(1)
@@ -278,59 +251,48 @@ describe('a report on the board', () => {
       onBoard.close()
     }
   })
-
   test('opened before the board was named goes on it from the cron, its node asked for', async () => {
     await call(env, '/v1/feedback', { body: REPORT })
     env.db.prepare('update feedback set issue_node = null').run()
-
     await openWaitingIssues({ ...env, FEEDBACK_PROJECT: PROJECT })
     expect(hub.board.get('I_1')).toBe('opt_todo')
     expect(hub.asked).toContain(`GET /repos/${REPO}/issues/1`)
   })
 })
-
 describe('a report GitHub did not take', () => {
   test('is kept, and opened by the cron once its wait is up', async () => {
     hub.failing = ['refuse']
     expect((await call(env, '/v1/feedback', { body: REPORT })).status).toBe(200)
-
     const [row] = await rows()
     expect(row).toMatchObject({ issue_number: null, issue_tries: 1 })
     expect(hub.issues).toHaveLength(0)
-
     await openWaitingIssues(env, (row?.issue_next_at ?? 0) - 1)
     expect(opens()).toBe(1)
-
     await openWaitingIssues(env, row?.issue_next_at ?? 0)
     expect(hub.issues).toHaveLength(1)
     expect((await rows())[0]).toMatchObject({ issue_number: 1 })
   })
-
   test('whose issue opened without its answer coming back becomes no second issue', async () => {
     hub.failing = ['lose']
     await call(env, '/v1/feedback', { body: REPORT })
     expect(hub.issues).toHaveLength(1)
     const [row] = await rows()
     expect(row).toMatchObject({ issue_number: null, issue_tries: 1 })
-
     await openWaitingIssues(env, (row?.issue_next_at ?? 0) + 1)
     expect(hub.issues).toHaveLength(1)
     expect(opens()).toBe(1)
     expect((await rows())[0]).toMatchObject({ issue_number: 1 })
   })
-
   test('is not opened twice by two runs at once, nor again once it has its issue', async () => {
     hub.failing = ['refuse']
     await call(env, '/v1/feedback', { body: REPORT })
     const at = ((await rows())[0]?.issue_next_at ?? 0) + 1
-
     await Promise.all([openWaitingIssues(env, at), openWaitingIssues(env, at)])
     await openWaitingIssues(env, at + 60_000)
     expect(hub.issues).toHaveLength(1)
     expect(opens()).toBe(2)
   })
 })
-
 describe('a report whose words carry another report’s mark', () => {
   test('is not taken for that report’s issue', async () => {
     hub.failing = ['refuse']
@@ -348,13 +310,11 @@ describe('a report whose words carry another report’s mark', () => {
         text: markOf(row?.id ?? ''),
       }),
     })
-
     await openWaitingIssues(env, row?.issue_next_at ?? 0)
     expect(hub.issues).toHaveLength(2)
     expect((await rows())[0]).toMatchObject({ issue_number: 2 })
   })
 })
-
 async function leave(token: string): Promise<void> {
   const mailed = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))
   const found = /(\d{3}) (\d{3})/.exec(mailed)
@@ -369,15 +329,12 @@ async function leave(token: string): Promise<void> {
   })
   expect(gone.status).toBe(200)
 }
-
 describe('a report whose account is deleted', () => {
   test('leaves nothing of it in the issue it became', async () => {
     const token = await signIn(env, 'reader@example.com')
     await call(env, '/v1/feedback', { token, body: REPORT })
     expect(hub.issues[0]?.body).toContain('reader@example.com')
-
     await leave(token)
-
     const [issue] = hub.issues
     expect(issue?.state).toBe('closed')
     expect(JSON.stringify(issue)).not.toContain('reader@example.com')
@@ -385,7 +342,6 @@ describe('a report whose account is deleted', () => {
     expect(JSON.stringify(issue)).not.toContain('another line')
     expect(env.db.prepare("select what from leftovers where what like 'issues/%'").all()).toEqual([])
   })
-
   test('and is redacted the next night where GitHub did not answer the first time', async () => {
     const token = await signIn(env, 'reader@example.com')
     await call(env, '/v1/feedback', { token, body: REPORT })
@@ -393,35 +349,29 @@ describe('a report whose account is deleted', () => {
     vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) =>
       init?.method === 'PATCH' ? new Response('{}', { status: 502 }) : working(input, init),
     )
-
     await leave(token)
     expect(hub.issues[0]?.body).toContain('reader@example.com')
-
     vi.stubGlobal('fetch', working)
     await sweepLeftovers(env)
     expect(hub.issues[0]?.body).not.toContain('reader@example.com')
     expect(hub.issues[0]?.state).toBe('closed')
   })
-
   test('while its issue is being opened leaves nothing of it there either', async () => {
     const token = await signIn(env, 'reader@example.com')
     hub.failing = ['refuse']
     await call(env, '/v1/feedback', { token, body: REPORT })
     const at = ((await rows())[0]?.issue_next_at ?? 0) + 1
-
     hub.meanwhile = () => {
       hub.meanwhile = null
       env.db.prepare('delete from feedback').run()
     }
     await openWaitingIssues(env, at)
-
     expect(hub.issues).toHaveLength(1)
     expect(hub.issues[0]?.state).toBe('closed')
     expect(JSON.stringify(hub.issues[0])).not.toContain('reader@example.com')
     expect(JSON.stringify(hub.issues[0])).not.toContain('tab strip')
   })
 })
-
 describe('the issue', () => {
   const report = (over: Partial<Report> = {}): Report => ({
     id: 'r1',
@@ -430,41 +380,34 @@ describe('the issue', () => {
     account: null,
     ...over,
   })
-
   test('is titled with the first sentence, and cut where that is long', () => {
     expect(issueTitle('It froze! Again.')).toBe('Feedback: It froze!')
     expect(issueTitle('no full stop at all')).toBe('Feedback: no full stop at all')
     expect(issueTitle('x'.repeat(200))).toHaveLength('Feedback: '.length + 80)
   })
-
   test('is labelled with the system it came from', () => {
     expect(platformLabel('desktop, macos')).toBe('macos')
     expect(platformLabel('phone, android')).toBe('android')
     expect(platformLabel('web, Mozilla/5.0 (X11; Linux x86_64)')).toBe('web')
     expect(platformLabel('')).toBeNull()
   })
-
   test('is labelled only with a system there is, whatever the platform says', () => {
     expect(platformLabel('my own label')).toBeNull()
     expect(platformLabel('wontfix, desktop')).toBeNull()
   })
-
   test('keeps the end of a log too long for GitHub, and says what was cut', () => {
     const log = `${'old line\n'.repeat(20_000)}the last line`
     const body = issueBody(report({ log }))
-
     expect(body.length).toBeLessThanOrEqual(MOST_BODY)
     expect(body).toContain('characters cut from the start')
     expect(body).toContain('the last line')
     expect(body).toContain(markOf('r1'))
   })
-
   test('pings nobody, and a log cannot close its own fence', () => {
     const body = issueBody(report({ text: 'ask @lxorb', log: 'a ``` in the log' }))
     expect(body.startsWith('```\nask @lxorb\n```\n')).toBe(true)
     expect(body).toContain('````\na ``` in the log\n````')
   })
-
   test('holds the words in a fence they cannot leave, whatever they write', () => {
     const forged = [
       'x.@lxorb and &#64;lxorb and @lxorb',
@@ -483,7 +426,6 @@ describe('the issue', () => {
     expect(body.split(forged)).toHaveLength(2)
     expect(body).toContain('| Account | signed out |')
   })
-
   test('puts what came with the words in code, which no pipe or backtick ends', () => {
     const body = issueBody(
       report({
@@ -496,11 +438,9 @@ describe('the issue', () => {
     expect(body).toContain('| Platform | `` `@lxorb` &#64;lxorb `` |')
     expect(body).toContain('| Account | `u_1`, `x.@lxorb\\|y@example.com` |')
   })
-
   test('is titled with no name anybody answers to', () => {
     expect(issueTitle('Ask @lxorb about x.@lxorb.')).toBe('Feedback: Ask @\u200blxorb about x.@\u200blxorb.')
   })
-
   test('says so where no log came', () => {
     expect(issueBody(report({ log: '' }))).toContain('No log came with it.')
   })

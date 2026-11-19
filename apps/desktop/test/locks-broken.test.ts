@@ -6,7 +6,6 @@ import { oneWriteAt } from '../src/lib/platform/src/windows'
 import { loadSlots } from '../src/lib/session/src/api'
 
 const { takeSlot } = await loadSlots()
-
 const BROKEN = {
   missing: undefined,
   refusing: {
@@ -24,37 +23,31 @@ const BROKEN = {
     query: () => new Promise(() => undefined),
   },
 }
-
 beforeEach(() => vi.useFakeTimers())
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
-
 describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
   beforeEach(() => {
     vi.stubGlobal('navigator', { locks })
   })
-
   test('what is held for the life of a window runs all the same', async () => {
     const run = vi.fn(() => new Promise<void>(() => undefined))
     heldForLife('orden:test', run)
     await vi.advanceTimersByTimeAsync(10_000)
     expect(run).toHaveBeenCalledTimes(1)
   })
-
   test('a name is free to claim', async () => {
     const held = holdIfFree('orden:test')
     await vi.advanceTimersByTimeAsync(10_000)
     expect(await held).toBeTypeOf('function')
   })
-
   test('the window takes the first session', async () => {
     const taken = takeSlot()
     await vi.advanceTimersByTimeAsync(10_000)
     expect(await taken).toBe(0)
   })
-
   test('the window leads', async () => {
     const led = leadSync()
     await vi.advanceTimersByTimeAsync(10_000)
@@ -62,7 +55,6 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
     expect(lead).not.toBeNull()
     lead?.release()
   })
-
   test("a kept space's index is written, once", async () => {
     const run = vi.fn(() => Promise.resolve('index'))
     const written = inTurn(() => 'orden:internal:space', run, 10_000)
@@ -70,13 +62,11 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
     expect(await written).toBe('index')
     expect(run).toHaveBeenCalledTimes(1)
   })
-
   test('the sync pass hears whether the window is alone', async () => {
     const alone = aloneHere()
     await vi.advanceTimersByTimeAsync(10_000)
     expect(typeof (await alone)).toBe('boolean')
   })
-
   test('the file is written, once', async () => {
     const run = vi.fn(() => Promise.resolve('words'))
     const written = oneWriteAt('/a.md', run)
@@ -85,7 +75,6 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
     expect(run).toHaveBeenCalledTimes(1)
   })
 })
-
 describe('with locks that work', () => {
   test('a turn whose work throws at once is refused, and is over', async () => {
     vi.stubGlobal('navigator', {
@@ -100,7 +89,6 @@ describe('with locks that work', () => {
       }),
     ).rejects.toThrow('refused')
   })
-
   function working(): LockManager {
     const holders = new Set<string>()
     return {
@@ -117,7 +105,6 @@ describe('with locks that work', () => {
       },
     } as unknown as LockManager
   }
-
   test('a turn another window never gives up is taken once its patience is out', async () => {
     let free = true
     vi.stubGlobal('navigator', {
@@ -139,7 +126,6 @@ describe('with locks that work', () => {
     expect(await written).toBe('index')
     expect(run).toHaveBeenCalledTimes(1)
   })
-
   test('a name one window holds is not free to the next, until it lets go', async () => {
     vi.stubGlobal('navigator', { locks: working() })
     const first = await holdIfFree('orden:claim:/s/Plan.md')
@@ -151,7 +137,6 @@ describe('with locks that work', () => {
     expect(await holdIfFree('orden:claim:/s/Plan.md')).toBeTypeOf('function')
   })
 })
-
 describe('a main thread busy past the timer', () => {
   function slow(late: number): LockManager {
     return {
@@ -161,19 +146,16 @@ describe('a main thread busy past the timer', () => {
       },
     } as unknown as LockManager
   }
-
   test('the timer gives an answer on its way a moment more', async () => {
     const answer = locksWork(slow(2_001))
     await vi.advanceTimersByTimeAsync(5_000)
     expect(await answer).toBe(true)
   })
-
   test('a free lock too', async () => {
     const answer = ifFree(slow(2_001), 'orden:window:1', () => Promise.resolve())
     await vi.advanceTimersByTimeAsync(5_000)
     expect(await answer).toBe('held')
   })
-
   test('an answer later than that still counts from then on', async () => {
     const locks = slow(4_000)
     const first = locksWork(locks)
@@ -182,7 +164,6 @@ describe('a main thread busy past the timer', () => {
     await vi.advanceTimersByTimeAsync(2_000)
     expect(await locksWork(locks)).toBe(true)
   })
-
   test('what leads for good waits in line where locks only looked broken', async () => {
     const locks = slow(4_000)
     vi.stubGlobal('navigator', { locks })
@@ -195,7 +176,6 @@ describe('a main thread busy past the timer', () => {
     expect(requested.mock.calls.some(([name]) => name === 'orden:hub')).toBe(true)
   })
 })
-
 describe('locks that never answer and many files', () => {
   test('each file does not wait its own three seconds', async () => {
     vi.stubGlobal('navigator', { locks: { request: () => new Promise(() => undefined) } })
@@ -209,7 +189,6 @@ describe('locks that never answer and many files', () => {
     expect(wrote).toBe(8)
     await all
   })
-
   test('two spellings of one file are one turn', async () => {
     const names: string[] = []
     vi.stubGlobal('navigator', {

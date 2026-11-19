@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 const listeners: ((event: { key: string }) => void)[][] = []
-
 async function aWindow() {
   const mine: ((event: { key: string }) => void)[] = []
   listeners.push(mine)
@@ -16,13 +15,11 @@ async function aWindow() {
   modes.restore()
   return modes
 }
-
 function storageMoved(except: number) {
   listeners.forEach((one, at) => {
     if (at !== except) for (const listener of one) listener({ key: 'orden:modes' })
   })
 }
-
 beforeEach(() => {
   listeners.length = 0
   vi.stubGlobal('localStorage', memoryStorage())
@@ -34,9 +31,7 @@ beforeEach(() => {
     },
   })
 })
-
 const stored = () => JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
-
 describe('settings across two windows', () => {
   test('a setting made in one is heard in the other, and its next write keeps it', async () => {
     const a = await aWindow()
@@ -48,7 +43,6 @@ describe('settings across two windows', () => {
     expect(stored().lineHeight).toBe(2.1)
     expect(stored().typewriter).toBe(true)
   })
-
   test('two writes before either has heard the other keep both', async () => {
     const a = await aWindow()
     const b = await aWindow()
@@ -57,7 +51,6 @@ describe('settings across two windows', () => {
     expect(stored().lineHeight).toBe(2.1)
     expect(stored().typewriter).toBe(true)
   })
-
   test('a field one window does not hold is not dropped by its write', async () => {
     const a = await aWindow()
     const b = await aWindow()

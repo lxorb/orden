@@ -7,10 +7,8 @@ export interface Warmth {
   read: number
   warm: boolean
 }
-
 export function isWarmth(value: unknown): value is Warmth {
   if (typeof value !== 'object' || value === null) return false
-
   const shape = value as Partial<Record<keyof Warmth, unknown>>
   return (
     typeof shape.notes === 'number' &&
@@ -22,16 +20,13 @@ export function isWarmth(value: unknown): value is Warmth {
     typeof shape.warm === 'boolean'
   )
 }
-
 export interface PapersHeld {
   papers: number
   characters: number
   cap: number
 }
-
 export function said(warmth: Warmth | null, papers: PapersHeld | null): string | undefined {
   if (!warmth && !papers) return undefined
-
   const words = []
   if (warmth) {
     const { notes, of, characters, cap, dropped, read, warm } = warmth
@@ -43,8 +38,6 @@ export function said(warmth: Warmth | null, papers: PapersHeld | null): string |
       `warm=${warm ? 1 : 0}`,
     )
   }
-
   if (papers) words.push(`papers=${papers.papers}`, `pchars=${papers.characters}/${papers.cap}`)
-
   return words.join(' ')
 }

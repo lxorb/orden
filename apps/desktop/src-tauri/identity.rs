@@ -10,7 +10,6 @@ pub fn say() {
     println!("cargo:rustc-env=ORDEN_IDENTIFIER={}", said("identifier"));
     println!("cargo:rustc-env=ORDEN_VERSION={}", said("version"));
 }
-
 fn config() -> serde_json::Value {
     let target = std::env::var("TARGET").unwrap_or_default();
     let here = std::env::current_dir().expect("the build runs in the app's folder");
@@ -19,7 +18,6 @@ fn config() -> serde_json::Value {
         &here,
     )
     .expect("tauri.conf.json, which tauri-build has just read");
-
     let asked = std::env::var("TAURI_CONFIG").ok();
     let over = asked
         .as_deref()

@@ -16,14 +16,12 @@ use wire::{frame, unframe, Change, Query};
 
 #[derive(Default)]
 pub struct Stores(Mutex<Option<Held>>, chats::ChatStores);
-
 struct Held {
     account: String,
     path: PathBuf,
     store: Store,
     led: bool,
 }
-
 impl Held {
     fn opened_for(&mut self, lead: bool) -> Result<Opened, String> {
         if lead && self.led {
@@ -40,13 +38,11 @@ impl Held {
         Ok(self.store.opened.clone())
     }
 }
-
 impl Stores {
     fn lock(&self) -> MutexGuard<'_, Option<Held>> {
         self.0.held()
     }
 }
-
 fn store_path(app: &AppHandle, account: &str) -> Result<PathBuf, String> {
     let folder = app
         .path()
@@ -56,7 +52,6 @@ fn store_path(app: &AppHandle, account: &str) -> Result<PathBuf, String> {
         .join("sync")
         .join(format!("{}.db", account_name(account)?)))
 }
-
 fn account_name(account: &str) -> Result<&str, String> {
     let fits = !account.is_empty()
         && account.len() <= 64
@@ -69,7 +64,6 @@ fn account_name(account: &str) -> Result<&str, String> {
         Err(format!("{account} is not an account id"))
     }
 }
-
 #[tauri::command(async)]
 pub fn sync_store_open(
     app: AppHandle,
@@ -81,7 +75,6 @@ pub fn sync_store_open(
     let path = store_path(&app, &account)?;
     let stores = app.state::<Stores>();
     let mut held = stores.lock();
-
     if let Some(open) = held.as_mut() {
         if open.account == account {
             return open.opened_for(lead);
@@ -90,7 +83,6 @@ pub fn sync_store_open(
     if let Some(other) = held.take() {
         other.store.close()?;
     }
-
     let store = Store::open_as(&path, device.as_deref()).map_err(|refused| refused.said())?;
     orden_base::trace::mark("sync store opened");
     let opened = store.opened.clone();
@@ -102,12 +94,10 @@ pub fn sync_store_open(
     });
     Ok(opened)
 }
-
 #[tauri::command(async)]
 pub fn sync_store_device(app: AppHandle, account: String) -> Result<Option<String>, String> {
     Ok(device_of(&store_path(&app, &account)?))
 }
-
 #[tauri::command(async)]
 pub fn sync_store_close(app: AppHandle) -> Result<(), String> {
     match app.state::<Stores>().lock().take() {
@@ -115,7 +105,6 @@ pub fn sync_store_close(app: AppHandle) -> Result<(), String> {
         None => Ok(()),
     }
 }
-
 #[tauri::command(async)]
 pub fn sync_store_clean_exit(app: AppHandle, clean: bool) -> Result<(), String> {
     with_store(&app, |store| {
@@ -123,7 +112,6 @@ pub fn sync_store_clean_exit(app: AppHandle, clean: bool) -> Result<(), String> 
         Ok(())
     })
 }
-
 #[tauri::command(async)]
 pub fn sync_store_read(app: AppHandle, queries: Vec<Query>) -> Result<Response, String> {
     with_store(&app, |store| {
@@ -131,17 +119,14 @@ pub fn sync_store_read(app: AppHandle, queries: Vec<Query>) -> Result<Response, 
         Ok(Response::new(frame(&answers, &parts)))
     })
 }
-
 #[tauri::command(async)]
 pub fn sync_store_write(app: AppHandle, request: Request<'_>) -> Result<Vec<usize>, String> {
     let bytes = sent_bytes(request.body())?;
     let (value, parts) = unframe(&bytes)?;
     let changes: Vec<Change> = serde_json::from_value(value)
         .map_err(|error| format!("the sync store was sent an odd change: {error}"))?;
-
     with_store(&app, |store| store.write(&changes, &parts))
 }
-
 #[tauri::command(async)]
 pub fn sync_store_forget(app: AppHandle, account: String) -> Result<(), String> {
     let path = store_path(&app, &account)?;
@@ -154,7 +139,6 @@ pub fn sync_store_forget(app: AppHandle, account: String) -> Result<(), String> 
             }
         }
     }
-
     for one in files_of(&path) {
         match fs::remove_file(&one) {
             Ok(()) => {}
@@ -164,13 +148,11 @@ pub fn sync_store_forget(app: AppHandle, account: String) -> Result<(), String> 
     }
     Ok(())
 }
-
 fn sent_bytes(body: &InvokeBody) -> Result<Vec<u8>, String> {
     orden_base::sent::bytes_sent(body)
         .map(std::borrow::Cow::into_owned)
         .ok_or_else(|| "the sync store was sent something that is not bytes".to_owned())
 }
-
 fn with_store<T>(
     app: &AppHandle,
     act: impl FnOnce(&mut Store) -> Result<T, Failed>,
@@ -178,7 +160,6 @@ fn with_store<T>(
     let stores = app.state::<Stores>();
     let mut held = stores.lock();
     let open = held.as_mut().ok_or("the sync store is not open")?;
-
     match act(&mut open.store) {
         Ok(answer) => Ok(answer),
         Err(failed) if failed.damaged => {
@@ -194,7 +175,6 @@ fn with_store<T>(
         Err(failed) => Err(failed.said),
     }
 }
-
 #[cfg(test)]
 mod tests {
     #[test]
@@ -219,7 +199,6 @@ mod tests {
         let _ = held.opened_for(false).expect("a look");
         assert!(held.opened_for(true).expect("still").was_clean);
     }
-
     use super::{account_name, sent_bytes, Held, Store};
     use tauri::ipc::InvokeBody;
 
@@ -238,7 +217,6 @@ mod tests {
             assert!(account_name(odd).is_err(), "{odd}");
         }
     }
-
     #[test]
     fn a_write_is_bytes_whichever_way_the_webview_sent_them() {
         assert_eq!(sent_bytes(&InvokeBody::Raw(vec![1, 2])), Ok(vec![1, 2]));

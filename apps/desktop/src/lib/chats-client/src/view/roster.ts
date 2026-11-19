@@ -3,28 +3,22 @@ import type { Presence } from '../../../accounts/src/api'
 import type { ChatMember } from '../shapes'
 
 const RANKS = ['owner', 'member', 'bot'] as const
-
 export type Rank = (typeof RANKS)[number]
-
 export interface Listed {
   who: Who
   name: string
   rank: Rank
   presence: Presence | null
 }
-
 export interface Group {
   rank: Rank
   members: Listed[]
 }
-
 export type Line = { kind: 'group'; rank: Rank; count: number } | { kind: 'member'; member: Listed }
-
 function rankOf(member: ChatMember): Rank {
   if (member.who.startsWith('program:')) return 'bot'
   return member.role === 'owner' ? 'owner' : 'member'
 }
-
 export function listedOf(
   members: readonly ChatMember[],
   name: (who: Who) => string,
@@ -37,23 +31,18 @@ export function listedOf(
     presence: presence(one.who),
   }))
 }
-
 function fold(text: string): string {
   return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
 }
-
 function matches(member: Listed, filter: string): boolean {
   const wanted = fold(filter.trim())
   if (!wanted) return true
   return fold(member.name).includes(wanted)
 }
-
 const ORDER: Record<Presence, number> = { active: 0, away: 1, offline: 2 }
-
 function standing(member: Listed): number {
   return member.presence ? ORDER[member.presence] : 2
 }
-
 export function grouped(list: readonly Listed[], filter = ''): Group[] {
   const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
   const kept = list.filter((one) => matches(one, filter))
@@ -64,20 +53,17 @@ export function grouped(list: readonly Listed[], filter = ''): Group[] {
     return members.length ? [{ rank, members }] : []
   })
 }
-
 export function linesOf(groups: readonly Group[]): Line[] {
   return groups.flatMap((group): Line[] => [
     { kind: 'group', rank: group.rank, count: group.members.length },
     ...group.members.map((member) => ({ kind: 'member' as const, member })),
   ])
 }
-
 export interface Placed {
   line: Line
   top: number
   height: number
 }
-
 export function placed(
   lines: readonly Line[],
   heights: { group: number; member: number },
@@ -91,7 +77,6 @@ export function placed(
   })
   return { rows, total: top }
 }
-
 export function visible(rows: readonly Placed[], from: number, to: number): Placed[] {
   let low = 0
   let high = rows.length

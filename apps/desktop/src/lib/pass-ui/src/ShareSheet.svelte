@@ -16,10 +16,8 @@
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()
-
   const SETTLE = 500
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
   let members = $state.raw<Member[]>([])
   let reading = $state(false)
   let email = $state('')
@@ -28,7 +26,6 @@
   let codes = $state.raw<Record<string, Person>>({})
   let busy = $state(false)
   let wrong = $state('')
-
   const asked = $derived(ui.sheet?.kind === 'share' ? ui.sheet : null)
   const vault = $derived(asked ? (pass.vaults.find((one) => one.id === asked.vault) ?? null) : null)
   const signedIn = $derived(account.user !== null)
@@ -37,11 +34,9 @@
   const owning = $derived(vault !== null && mayHandOn(vault))
   const roles = $derived(INVITED_ROLES.map((one) => ({ value: one, label: roleName(one) })))
   const heirs = $derived(members.filter((one) => one.state === 'active' && one.role !== 'owner' && one.email !== me))
-
   const close = () => (ui.sheet = null)
   const nameOf = (member: Member) => member.name || member.email
   const changeable = (member: Member) => managing && member.role !== 'owner' && member.email !== me
-
   async function reread(id: string) {
     reading = true
     try {
@@ -52,9 +47,7 @@
       reading = false
     }
   }
-
   const vaultId = $derived(asked?.vault ?? null)
-
   $effect(() => {
     const id = vaultId
     members = []
@@ -65,7 +58,6 @@
     if (!id || !signedIn) return
     void reread(id)
   })
-
   $effect(() => {
     const typed = email.trim()
     person = undefined
@@ -84,7 +76,6 @@
       clearTimeout(timer)
     }
   })
-
   async function acted(run: () => Promise<void>, fallback: string) {
     if (!vault || busy) return
     busy = true
@@ -98,7 +89,6 @@
       busy = false
     }
   }
-
   function invited(event: SubmitEvent) {
     event.preventDefault()
     const to = email.trim()
@@ -111,7 +101,6 @@
       said.say(`Invitation sent to ${to}`)
     }, 'The invitation could not be sent.')
   }
-
   async function matched(found: Person) {
     try {
       const sure = await pass.codesMatch(found)
@@ -123,7 +112,6 @@
       return null
     }
   }
-
   async function confirmed(member: Member) {
     const id = vault?.id ?? ''
     const found = codes[member.email] ?? (await pass.memberPerson(member).catch(() => null))
@@ -134,17 +122,14 @@
     }
     void acted(() => pass.confirmMember(id, found), 'They could not be confirmed.')
   }
-
   async function matchedMember(member: Member, found: Person) {
     const sure = await matched(found)
     if (sure && member.state === 'confirm') await confirmed(member)
   }
-
   function roleChanged(member: Member, next: string) {
     const id = vault?.id ?? ''
     void acted(() => pass.setRole(id, member.email, next as InvitedRole), 'The role could not be changed.')
   }
-
   async function removed(member: Member) {
     if (!vault) return
     const sure = await prompt.confirm({
@@ -158,7 +143,6 @@
     const id = vault.id
     await acted(() => pass.removeMember(id, member.email), 'They could not be removed.')
   }
-
   async function shownCode(member: Member) {
     if (member.email in codes) {
       codes = Object.fromEntries(Object.entries(codes).filter(([one]) => one !== member.email))
@@ -170,7 +154,6 @@
       wrong = message(error, 'The safety code could not be read.')
     }
   }
-
   async function handedOn() {
     if (!vault) return
     const to = await prompt.choose({
@@ -190,7 +173,6 @@
     const id = vault.id
     await acted(() => pass.transfer(id, to), 'The vault could not be handed on.')
   }
-
   async function left() {
     if (!vault) return
     const sure = await prompt.confirm({
@@ -213,7 +195,6 @@
       busy = false
     }
   }
-
   function hidden(on: boolean) {
     const id = vault?.id ?? ''
     void acted(() => pass.updateVault(id, { hidePasswordsFromViewers: on }), 'The vault could not be kept.')
@@ -375,22 +356,18 @@
     gap: var(--space-2);
     padding: 0 var(--space-2) var(--space-2);
   }
-
   .invite {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
     gap: var(--space-2);
     align-items: center;
   }
-
   .card {
     overflow: hidden;
   }
-
   .member + .member {
     border-top: 1px solid var(--line);
   }
-
   .row {
     display: flex;
     flex-wrap: wrap;
@@ -398,40 +375,33 @@
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
   }
-
   .pick {
     flex: none;
     width: 8.5rem;
   }
-
   .who {
     flex: 1;
     min-width: 10rem;
     display: flex;
     flex-direction: column;
   }
-
   .name {
     color: var(--text-strong);
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .email,
   .state,
   .role {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .state[data-state='confirm'] {
     color: var(--text-strong);
   }
-
   .code {
     padding: 0 var(--space-3) var(--space-2);
   }
-
   .safety {
     display: flex;
     flex-wrap: wrap;
@@ -439,32 +409,26 @@
     align-items: baseline;
     margin: 0;
   }
-
   .safety code {
     font-family: var(--font-mono);
     letter-spacing: 0.04em;
     -webkit-user-select: all;
     user-select: all;
   }
-
   .empty {
     padding: var(--space-2) var(--space-3);
   }
-
   .buttons {
     display: flex;
     justify-content: flex-end;
   }
-
   .danger {
     color: var(--danger);
   }
-
   @media (max-width: 520px) {
     .invite {
       grid-template-columns: minmax(0, 1fr) auto;
     }
-
     .invite input {
       grid-column: 1 / -1;
     }

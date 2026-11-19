@@ -5,17 +5,13 @@
   import { told } from '../../ui-kit/src/api'
 
   const { ongone }: { ongone: () => void } = $props()
-
   const STAYS = 6000
-
   const said = $derived('nibeditor is now Orden')
-
   onMount(() => {
     const gone = () => ongone()
     const timer = setTimeout(gone, STAYS)
     window.addEventListener('pointerdown', gone, { capture: true })
     window.addEventListener('keydown', gone, { capture: true })
-
     return () => {
       clearTimeout(timer)
       window.removeEventListener('pointerdown', gone, { capture: true })
@@ -49,24 +45,20 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-lg);
   }
-
   :global(.notices) > .notice {
     pointer-events: none;
   }
-
   .mark {
     flex: none;
     width: 1.5rem;
     height: 1.5rem;
   }
-
   p {
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   :global([data-touch]) .notice {
     grid-column: 1;
     justify-self: stretch;

@@ -22,7 +22,6 @@ pub enum Mode {
     Full,
     Plan,
 }
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Builtin {
@@ -31,15 +30,12 @@ pub struct Builtin {
     #[serde(default = "yes")]
     pub reader_tabs: bool,
 }
-
 fn yes() -> bool {
     true
 }
-
 fn grant_id(provider: &str) -> Result<String, String> {
     grant_id_from(BUILT_IN, provider)
 }
-
 fn grant_id_from(prefix: &str, provider: &str) -> Result<String, String> {
     let fits = !provider.is_empty()
         && provider.len() <= 48
@@ -52,7 +48,6 @@ fn grant_id_from(prefix: &str, provider: &str) -> Result<String, String> {
         Err(format!("{provider} is not a provider"))
     }
 }
-
 fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     let mut grant = Grant::own(id, client);
     grant.built_in = true;
@@ -61,7 +56,6 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     }
     grant
 }
-
 fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     match mode {
         Mode::Approve => {
@@ -73,7 +67,6 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     }
     grant
 }
-
 pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
     let id = grant_id(&builtin.id)?;
     let grants = &state(app).grants;
@@ -87,20 +80,16 @@ pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
         grants.mint(app, &client, |_, client| made(id.clone(), client, builtin))?;
     Ok(grant)
 }
-
 struct Lent {
     grant: String,
     mode: Mode,
     token: String,
     hash: String,
 }
-
 static LENT: Mutex<Vec<Lent>> = Mutex::new(Vec::new());
-
 fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
     LENT.held()
 }
-
 pub fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
     let grant = grant_for(app, builtin)?.id;
     let mut all = lent_now();
@@ -119,7 +108,6 @@ pub fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, St
     });
     Ok(token)
 }
-
 pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
     let said = hashed(token);
     let (grant, mode) = {
@@ -137,14 +125,12 @@ pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
         .by_id(app, &grant)
         .map(|grant| supervised(grant, mode))
 }
-
 pub fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
         Mode::Plan => reads_only || name == "create_note" || name == "run_agent",
         Mode::Approve | Mode::Auto | Mode::Full => true,
     }
 }
-
 fn window_verbs(app: &AppHandle) -> Option<BTreeSet<String>> {
     let said = orden_agents::endpoint::ask(app, "verbs", json!({}), Duration::from_secs(2)).ok()?;
     Some(
@@ -156,7 +142,6 @@ fn window_verbs(app: &AppHandle) -> Option<BTreeSet<String>> {
             .collect(),
     )
 }
-
 fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<Value> {
     host::listed(&supervised(grant.clone(), mode), window)
         .into_iter()
@@ -164,7 +149,6 @@ fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<V
         .map(host::shown)
         .collect()
 }
-
 #[tauri::command]
 pub async fn ai_agent_tools(
     webview: tauri::Webview,
@@ -183,7 +167,6 @@ pub async fn ai_agent_tools(
     })
     .await
 }
-
 fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
     let mut asked = json!({ "verb": tool, "args": args, "rest": [] });
     if let Some(thread) = thread {
@@ -191,7 +174,6 @@ fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
     }
     asked
 }
-
 #[tauri::command]
 pub async fn ai_agent_call(
     webview: tauri::Webview,
@@ -220,9 +202,7 @@ pub async fn ai_agent_call(
     })
     .await
 }
-
 const CONTEXT: &str = "get_context";
-
 #[tauri::command]
 pub async fn ai_agent_context(
     webview: tauri::Webview,
@@ -252,7 +232,6 @@ pub async fn ai_agent_context(
     })
     .await
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -273,7 +252,6 @@ mod tests {
         Category::Showing,
         Category::Takeover,
     ];
-
     #[test]
     fn a_call_says_the_thread_it_runs_for() {
         let args = json!({ "path": "a.md" });
@@ -283,7 +261,6 @@ mod tests {
         );
         assert!(asked_for("edit_note", &args, None).get("thread").is_none());
     }
-
     fn builtin(reader_tabs: bool) -> Builtin {
         Builtin {
             id: "anthropic".into(),
@@ -291,11 +268,9 @@ mod tests {
             reader_tabs,
         }
     }
-
     fn grant() -> Grant {
         made("orden-anthropic".into(), "Orden Claude", &builtin(true))
     }
-
     fn names(mode: Mode, grant: &Grant) -> BTreeSet<String> {
         let window: BTreeSet<String> = [
             "read_note",
@@ -320,7 +295,6 @@ mod tests {
             .filter_map(|one| one["name"].as_str().map(str::to_owned))
             .collect()
     }
-
     #[test]
     fn plan_adds_the_plans_own_note_and_nothing_else_that_writes() {
         let plan = names(Mode::Plan, &grant());
@@ -329,7 +303,6 @@ mod tests {
         assert!(!plan.contains("edit_note") && !plan.contains("write_note"));
         assert!(!plan.contains("browser_click") && !plan.contains("type_terminal"));
     }
-
     #[test]
     fn the_permission_modes_list_everything_the_grant_reaches_and_no_more() {
         let grant = grant();
@@ -352,7 +325,6 @@ mod tests {
             assert!(agent.contains(verb), "{verb}");
         }
     }
-
     #[test]
     fn full_permissions_never_ask_anything() {
         let mut stored = grant();
@@ -371,7 +343,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn approve_asks_before_every_change_whatever_was_switched_off() {
         let mut stored = grant();
@@ -383,7 +354,6 @@ mod tests {
             assert!(approve.asks(category), "{category:?}");
         }
     }
-
     #[test]
     fn auto_asks_where_the_readers_access_says_and_nowhere_else() {
         let mut stored = grant();
@@ -399,7 +369,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn the_three_permission_modes_ask_less_and_less() {
         let stored = grant();
@@ -418,7 +387,6 @@ mod tests {
             GrantMode::Confirm
         );
     }
-
     #[test]
     fn a_mode_is_laid_over_a_call_as_the_grant_says() {
         let stored = grant();
@@ -430,7 +398,6 @@ mod tests {
         assert!(made("orden-a".into(), "Orden A", &builtin(true)).holds(Scope::BrowserReader));
         assert!(!made("orden-a".into(), "Orden A", &builtin(false)).holds(Scope::BrowserReader));
     }
-
     #[test]
     fn a_provider_id_that_is_not_one_makes_no_grant() {
         assert_eq!(grant_id("anthropic").as_deref(), Ok("orden-anthropic"));
@@ -446,7 +413,6 @@ mod tests {
             assert!(grant_id(bad).is_err(), "{bad:?}");
         }
     }
-
     #[test]
     fn modes_read_as_the_window_names_them() {
         let read: Vec<Mode> =

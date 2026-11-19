@@ -28,7 +28,6 @@ describe('signatures', () => {
     expect(() => statementOf('test', 'a\nb')).toThrow()
   })
 })
-
 describe('a vault key’s proof', () => {
   it('holds when the owner signed it, for that vault, key version and key', async () => {
     const owner = await newSigner()
@@ -41,7 +40,6 @@ describe('a vault key’s proof', () => {
     expect(await isProven('v1', 2, newKey(), proof, [owner.pub])).toBe(false)
     expect(await isProven('v1', 2, key, null, [owner.pub])).toBe(false)
   })
-
   it('does not hold when somebody else signed it, the account included', async () => {
     const owner = await newSigner()
     const account = await newSigner()
@@ -51,7 +49,6 @@ describe('a vault key’s proof', () => {
     const borrowed = { ...(await keyProofOf(owner, 'v1', 2, newKey(), null)), by: owner.pub }
     expect(await isProven('v1', 2, key, borrowed, [owner.pub])).toBe(false)
   })
-
   it('holds for a manager the owner vouched for, in that vault only', async () => {
     const owner = await newSigner()
     const manager = await newSigner()
@@ -65,7 +62,6 @@ describe('a vault key’s proof', () => {
     expect(await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, self), [owner.pub])).toBe(false)
   })
 })
-
 describe('owners', () => {
   it('follow the hand-overs each owner signed, from the one pinned', async () => {
     const ada = await newSigner()
@@ -80,7 +76,6 @@ describe('owners', () => {
     const injected = { to: cy.pub, sig: (await handoverTo(cy, 'v1', cy.pub)).sig }
     expect(await ownersFrom('v1', ada.pub, [injected])).toEqual([ada.pub])
   })
-
   it('are pinned by the reader’s own signature', async () => {
     const me = await newSigner()
     const owner = await newSigner()
@@ -92,7 +87,6 @@ describe('owners', () => {
     expect(await pinnedOwnerOf(owner.pub, 'v1', accepted)).toBeNull()
     expect(await pinnedOwnerOf(me.pub, 'v1', null)).toBeNull()
   })
-
   it('of an invitation are the inviter, or who vouched for them', async () => {
     const owner = await newSigner()
     const manager = await newSigner()
@@ -110,7 +104,6 @@ describe('owners', () => {
     expect(await invitedOwnerOf('v1', asManager, null)).toBeNull()
   })
 })
-
 describe('a safety code', () => {
   it('covers both public keys', async () => {
     const pair = await newPair()

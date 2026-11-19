@@ -6,14 +6,11 @@ export interface Place {
   line: number
   ch: number
 }
-
 export interface Stretch {
   anchor: Place
   head: Place
 }
-
 export type Severity = 'error' | 'warning' | 'info'
-
 export interface AgentMark {
   agent: string
   from: Place
@@ -21,7 +18,6 @@ export interface AgentMark {
   message: string
   severity: Severity
 }
-
 interface Held {
   agent: string
   from: number
@@ -29,9 +25,7 @@ interface Held {
   message: string
   severity: Severity
 }
-
 const setMarks = StateEffect.define<{ agent: string; marks: Held[] }>()
-
 const marks = StateField.define<Held[]>({
   create: () => [],
   update(held, transaction) {
@@ -63,7 +57,6 @@ const marks = StateField.define<Held[]>({
       ),
     ),
 })
-
 const look = EditorView.baseTheme({
   '.cm-agent-mark': {
     textDecorationLine: 'underline',
@@ -75,18 +68,15 @@ const look = EditorView.baseTheme({
   '.cm-agent-mark-warning': { textDecorationColor: 'var(--warning, #c80)' },
   '.cm-agent-mark-info': { textDecorationColor: 'var(--accent, #66f)' },
 })
-
 export function offsetOf(state: EditorState, place: Place): number {
   const doc = state.doc
   const line = doc.line(Math.min(Math.max(1, Math.floor(place.line)), doc.lines))
   return line.from + Math.min(Math.max(0, Math.floor(place.ch)), line.length)
 }
-
 export function placeOf(state: EditorState, offset: number): Place {
   const line = state.doc.lineAt(Math.min(Math.max(0, offset), state.doc.length))
   return { line: line.number, ch: offset - line.from }
 }
-
 export function setAgentMarks(view: EditorView, agent: string, given: AgentMark[]): void {
   const held: Held[] = given
     .map((one) => ({
@@ -101,7 +91,6 @@ export function setAgentMarks(view: EditorView, agent: string, given: AgentMark[
   if (view.state.field(marks, false) === undefined) effects.unshift(StateEffect.appendConfig.of([marks, look]))
   view.dispatch({ effects })
 }
-
 export const agentMarksIn = (view: EditorView, agent?: string): AgentMark[] =>
   (view.state.field(marks, false) ?? [])
     .filter((one) => agent === undefined || one.agent === agent)
@@ -112,7 +101,6 @@ export const agentMarksIn = (view: EditorView, agent?: string): AgentMark[] =>
       message: one.message,
       severity: one.severity,
     }))
-
 export function selectionsOf(
   view: EditorView,
   most = Infinity,
@@ -131,7 +119,6 @@ export function selectionsOf(
     }
   })
 }
-
 export function select(view: EditorView, stretches: Stretch[]): void {
   if (!stretches.length) return
   const ranges = stretches.map((one) =>
@@ -139,7 +126,6 @@ export function select(view: EditorView, stretches: Stretch[]): void {
   )
   view.dispatch({ selection: EditorSelection.create(ranges, 0) })
 }
-
 export function foldLine(view: EditorView, line: number): boolean {
   const at = view.state.doc.line(Math.min(Math.max(1, line), view.state.doc.lines))
   const range = foldable(view.state, at.from, at.to)
@@ -147,7 +133,6 @@ export function foldLine(view: EditorView, line: number): boolean {
   view.dispatch({ effects: foldEffect.of(range) })
   return true
 }
-
 export function unfoldLine(view: EditorView, line: number): boolean {
   const at = view.state.doc.line(Math.min(Math.max(1, line), view.state.doc.lines))
   const effects: StateEffect<unknown>[] = []

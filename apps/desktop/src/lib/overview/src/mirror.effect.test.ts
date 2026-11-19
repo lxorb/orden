@@ -1,11 +1,9 @@
 import { afterEach, expect, test, vi } from 'vitest'
 
 const { snapshotFrom } = await import('./mirror')
-
 afterEach(() => {
   vi.restoreAllMocks()
 })
-
 test('a canvas in a window is pictured no larger than the overview draws it', () => {
   const encoded: [number, number][] = []
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
@@ -15,7 +13,6 @@ test('a canvas in a window is pictured no larger than the overview draws it', ()
     encoded.push([this.width, this.height])
     return 'data:image/webp;base64,AA'
   })
-
   const pane = document.createElement('div')
   const big = document.createElement('canvas')
   big.width = 2400
@@ -25,9 +22,7 @@ test('a canvas in a window is pictured no larger than the overview draws it', ()
   small.height = 200
   pane.append(big, small)
   document.body.append(pane)
-
   const said = snapshotFrom(pane, new DOMRect(0, 0, 800, 600))()
-
   expect(encoded).toEqual([
     [384, 512],
     [300, 200],

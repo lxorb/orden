@@ -19,25 +19,20 @@ import type { AccountAdapter, AccountView, Route } from './adapters'
 import type { Clock } from './network'
 
 export type Plant = 'delete-without-seen'
-
 export interface Seeded {
   id: string
   name: string
   text: string
 }
-
 interface Document {
   doc: Y.Doc
   seq: number
   at: number
 }
-
 const DOCUMENTS = new Set(['note', 'canvas', 'pages'])
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-
 export class ReferenceAccount implements AccountAdapter {
   readonly tree: TreeState
   private readonly docs = new Map<string, Document>()
@@ -45,7 +40,6 @@ export class ReferenceAccount implements AccountAdapter {
   private readonly changedBy = new Map<string, string>()
   private readonly versions: string[] = []
   private readonly answered = new Map<string, PushAnswer>()
-
   constructor(
     private readonly clock: Clock,
     seeded: readonly Seeded[],
@@ -68,7 +62,6 @@ export class ReferenceAccount implements AccountAdapter {
       this.docs.set(note.id, { doc, seq: 1, at: 0 })
     }
   }
-
   private stamp(since: number, device: string) {
     for (const entry of this.tree.entries.values()) {
       if (entry.seq <= since) continue
@@ -76,7 +69,6 @@ export class ReferenceAccount implements AccountAdapter {
       this.changedBy.set(entry.id, device)
     }
   }
-
   async handle(device: string, route: Route, body: Uint8Array): Promise<Uint8Array> {
     const value = unframe(body)
     const before = this.tree.cursor
@@ -84,7 +76,6 @@ export class ReferenceAccount implements AccountAdapter {
     this.stamp(before, device)
     return Promise.resolve(frame(answer))
   }
-
   private answer(device: string, route: Route, value: unknown) {
     switch (route) {
       case 'ops':
@@ -103,11 +94,9 @@ export class ReferenceAccount implements AccountAdapter {
       }
     }
   }
-
   private ops(device: string, value: unknown) {
     const request = opsRequestOf(value)
     if (!request) throw new Error('ops: not a request')
-
     const results: OpResult[] = request.ops.map((op) => {
       const judged =
         this.plant === 'delete-without-seen' && op.t === 'delete' ? { ...op, seen: Number.MAX_SAFE_INTEGER } : op
@@ -119,13 +108,11 @@ export class ReferenceAccount implements AccountAdapter {
     })
     return { results, cursor: this.tree.cursor }
   }
-
   private feed(device: string, value: unknown) {
     if (!isRecord(value) || typeof value.since !== 'number') throw new Error('feed: no since')
     const since = value.since
     const changed = [...this.tree.entries.values()].filter((entry) => entry.seq > since).sort((a, b) => a.seq - b.seq)
     const page = changed.slice(0, FEED_PAGE)
-
     const items: FeedItem[] = page.map((entry) => ({
       id: entry.id,
       kind: entry.kind,
@@ -147,11 +134,9 @@ export class ReferenceAccount implements AccountAdapter {
     const cursor = more && last ? last.seq : this.tree.cursor
     return { items, cursor, more, order: true, meta: true, device }
   }
-
   private pull(value: unknown) {
     const request = pullRequestOf(value)
     if (!request) throw new Error('pull: not a request')
-
     const docs: PullAnswer[] = request.docs.map(({ id, sv }) => {
       const held = this.docs.get(id)
       if (!held) return { id, refused: 'gone' }
@@ -159,17 +144,14 @@ export class ReferenceAccount implements AccountAdapter {
     })
     return { docs }
   }
-
   private push(device: string, value: unknown) {
     const request = pushRequestOf(value)
     if (!request) throw new Error('push: not a request')
-
     const docs: PushAnswer[] = request.docs.map((pushed) => {
       const held = this.docs.get(pushed.id)
       if (!held) return { id: pushed.id, refused: 'gone' }
       const before = this.answered.get(pushed.push)
       if (before) return before
-
       if (pushed.seq !== held.seq) {
         return {
           id: pushed.id,
@@ -179,7 +161,6 @@ export class ReferenceAccount implements AccountAdapter {
           at: held.at,
         }
       }
-
       Y.applyUpdateV2(held.doc, pushed.update)
       held.seq += 1
       held.at = this.clock.now
@@ -195,7 +176,6 @@ export class ReferenceAccount implements AccountAdapter {
     })
     return { docs }
   }
-
   async view(): Promise<AccountView> {
     const entries = [...this.tree.entries.values()]
       .filter((entry) => !entry.deleted)

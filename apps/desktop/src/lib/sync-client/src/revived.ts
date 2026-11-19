@@ -1,13 +1,11 @@
 import { relativeTo, within } from '../../platform/src/api'
 
 const settled = () => new Promise((done) => setTimeout(done, 0))
-
 export async function calledAlso(back: string, id: string): Promise<void> {
   const { buried } = await import('../../protect/src/api')
   const held = await buried()
   held.alsoCalled(back, id)
 }
-
 export async function revived(
   path: string,
   idOf: (path: string) => string | undefined,

@@ -5,7 +5,6 @@ import type { Provider } from '../../../ai-providers/src/providers'
 class FakeChannel {
   onmessage: (value: unknown) => void = () => undefined
 }
-
 interface Open {
   id: string
   opening: Record<string, unknown>
@@ -13,13 +12,10 @@ interface Open {
   said: Record<string, unknown>[]
   closed: boolean
 }
-
 let opened: Open[] = []
 let answer: (open: Open, said: Record<string, unknown>) => string[] = () => []
 let listed: unknown = null
-
 const line = (channel: FakeChannel, text: string) => channel.onmessage({ kind: 'line', line: text })
-
 async function fakeInvoke(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   if (command === 'ai_cli_models') return listed
   if (command === 'ai_cli_open') {
@@ -48,16 +44,13 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
   }
   return null
 }
-
 vi.mock('../../../crate/src/native', () => ({ Channel: FakeChannel }))
 vi.mock('../../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../../platform/src/tauri')>()),
   invoke: fakeInvoke,
   isDesktop: true,
 }))
-
 const { createLocalEngine } = await import('./engine')
-
 const CLAUDE: Provider & { kind: 'claude-code' } = {
   id: 'cc',
   kind: 'claude-code',
@@ -71,7 +64,6 @@ const GEMINI: Provider & { kind: 'gemini-cli' } = {
   name: 'Gemini CLI',
   model: '',
 }
-
 function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
   return {
     id: 'thread-1',
@@ -88,15 +80,12 @@ function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
     ...extra,
   }
 }
-
 const draft = (text: string): Draft => ({ text, attachments: [] })
-
 const QUIET = {
   answer: () => Promise.resolve(),
   answered: () => Promise.resolve(false),
   asked: () => Promise.resolve(() => undefined),
 }
-
 function engine(provider: Provider, instructions = '') {
   const kind = provider.kind === 'codex' || provider.kind === 'gemini-cli' ? provider.kind : 'claude-code'
   return createLocalEngine(kind, {
@@ -105,7 +94,6 @@ function engine(provider: Provider, instructions = '') {
     instructions: () => Promise.resolve(instructions),
   })
 }
-
 async function send(
   provider: Provider,
   on: Thread,
@@ -117,7 +105,6 @@ async function send(
   await built.send(on, draft(text), (event) => events.push(event), signal)
   return events
 }
-
 const claudeTurn = (text: string, window = 200000) => [
   JSON.stringify({ type: 'system', subtype: 'init', model: 'claude-opus-5-5[1m]' }),
   JSON.stringify({
@@ -159,13 +146,11 @@ const claudeTurn = (text: string, window = 200000) => [
     modelUsage: { 'claude-opus-5-5': { contextWindow: window } },
   }),
 ]
-
 beforeEach(() => {
   opened = []
   listed = null
   answer = (_, said) => (said.kind === 'turn' ? claudeTurn('Herons wait.') : [])
 })
-
 describe('a call that asks the reader, in a program’s session', () => {
   function questions() {
     let hear: ((asked: { id: string; agent: string; verb: string; category: string }) => void) | null = null
@@ -191,7 +176,6 @@ describe('a call that asks the reader, in a program’s session', () => {
       raise: (verb: string, agent = 'orden-cc', category = 'writing') => hear?.({ id: 'q1', agent, verb, category }),
     }
   }
-
   function held(stopped = false) {
     const lines = claudeTurn('Herons wait.')
     let rest: () => void = () => undefined
@@ -204,7 +188,6 @@ describe('a call that asks the reader, in a program’s session', () => {
     }
     return () => rest()
   }
-
   test('its running row becomes the question, and the answer the program heard ends it', async () => {
     const go = held()
     const { built, raise } = questions()
@@ -212,7 +195,6 @@ describe('a call that asks the reader, in a program’s session', () => {
     const events: EngineEvent[] = []
     const sent = built.send(on, draft('what waits?'), (event) => events.push(event), new AbortController().signal)
     await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
-
     raise('edit_note')
     raise('read_note', 'orden-somebody-else')
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
@@ -221,12 +203,10 @@ describe('a call that asks the reader, in a program’s session', () => {
       state: 'asking',
       result: { approval: 'q1' },
     })
-
     go()
     await sent
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'ok' })
   })
-
   test('Always in the thread does not answer a question about the terminal', async () => {
     const go = held()
     const { built, given, raise } = questions()
@@ -244,7 +224,6 @@ describe('a call that asks the reader, in a program’s session', () => {
     go()
     await sent
   })
-
   test('Always in the thread answers yes at once, and a question left open is answered no', async () => {
     const go = held()
     const { built, given, raise } = questions()
@@ -257,7 +236,6 @@ describe('a call that asks the reader, in a program’s session', () => {
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
     go()
     await sent
-
     const asked = held(true)
     const second = questions()
     const other = thread(CLAUDE)
@@ -272,7 +250,6 @@ describe('a call that asks the reader, in a program’s session', () => {
     expect(other.turns.at(-1)?.parts[1]).toMatchObject({ state: 'error' })
   })
 })
-
 describe('a switch of account', () => {
   test('the next send opens a session in the account now in use, the turns carried', async () => {
     const work: Provider & { kind: 'claude-code' } = { ...CLAUDE, id: 'cc-2', name: 'Work' }
@@ -286,19 +263,16 @@ describe('a switch of account', () => {
     await send(CLAUDE, on, 'one', built)
     answering = work
     await send(work, on, 'two', built)
-
     expect(opened.map((one) => one.opening.account)).toEqual(['cc', 'cc-2'])
     expect(opened.map((one) => (one.opening.agent as { id: string }).id)).toEqual(['cc', 'cc-2'])
     const seed = opened[1]?.said[0] as { text?: string } | undefined
     expect(seed?.text).toContain('one')
   })
 })
-
 describe('a Claude Code thread', () => {
   test('streams thinking, a row per tool call and the words, with the program’s counts', async () => {
     const on = thread(CLAUDE)
     const events = await send(CLAUDE, on, 'what waits?')
-
     const answer = on.turns.at(-1)
     expect(answer?.parts.map((part) => part.kind)).toEqual(['thinking', 'tool', 'text'])
     expect(answer?.parts[1]).toMatchObject({ verb: 'read_note', state: 'ok' })
@@ -311,7 +285,6 @@ describe('a Claude Code thread', () => {
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'end' })
     expect(on.title).toBe('what waits?')
   })
-
   test('opens one session with Orden’s tools in the thread’s mode, and keeps it', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE, { model: 'opus', effort: 'high' })
@@ -319,7 +292,6 @@ describe('a Claude Code thread', () => {
     on.model = 'sonnet'
     on.effort = 'max'
     await send(CLAUDE, on, 'two', built)
-
     expect(opened).toHaveLength(1)
     expect(opened[0]?.opening).toEqual({
       tool: 'claude-code',
@@ -335,14 +307,12 @@ describe('a Claude Code thread', () => {
     expect(opened[0]?.said[2]).toEqual({ kind: 'effort', effort: 'max' })
     expect(opened[0]?.said[3]).toEqual({ kind: 'turn', text: 'two', images: [] })
   })
-
   test('a new mode is a new session, seeded with the instructions and the transcript', async () => {
     const built = engine(CLAUDE, 'File papers under Reading.')
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'one', built)
     on.mode = 'full'
     await send(CLAUDE, on, 'two', built)
-
     expect(opened).toHaveLength(2)
     expect(opened[0]?.closed).toBe(true)
     expect(opened[1]?.opening.mode).toBe('full')
@@ -354,7 +324,6 @@ describe('a Claude Code thread', () => {
       ].join('\n\n'),
     )
   })
-
   test('a chat cut back for Ask again opens a new session seeded with only what is left', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
@@ -363,7 +332,6 @@ describe('a Claude Code thread', () => {
     on.turns.splice(2)
     built.rewound?.(on)
     await send(CLAUDE, on, 'two', built)
-
     expect(opened).toHaveLength(2)
     expect(opened[0]?.closed).toBe(true)
     expect(opened[1]?.said[0]?.text).toBe(
@@ -373,7 +341,6 @@ describe('a Claude Code thread', () => {
       ].join('\n\n'),
     )
   })
-
   test('a session that ended is opened again and seeded', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
@@ -389,7 +356,6 @@ describe('a Claude Code thread', () => {
     expect(opened).toHaveLength(2)
     expect(String(opened[1]?.said[0]?.text)).toContain('<conversation>')
   })
-
   test('a stop interrupts the turn and keeps what arrived', async () => {
     answer = (_, said) =>
       said.kind === 'interrupt'
@@ -405,7 +371,6 @@ describe('a Claude Code thread', () => {
     await vi.waitFor(() => expect(on.turns.at(-1)?.parts).toHaveLength(1))
     stopper.abort()
     const events = await sending
-
     expect(opened[0]?.said.at(-1)).toEqual({ kind: 'interrupt' })
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
     expect(on.turns.at(-1)?.parts).toEqual([
@@ -413,7 +378,6 @@ describe('a Claude Code thread', () => {
       { kind: 'notice', code: 'stopped', text: '' },
     ])
   })
-
   test('a plan at its limit is the reader’s plan, and said as the limit', async () => {
     answer = () => [
       '{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","resetsAt":1790819400}}',
@@ -429,7 +393,6 @@ describe('a Claude Code thread', () => {
     expect(done).toMatchObject({ type: 'done', stop: 'error' })
     expect(done?.type === 'done' && done.error).toMatch(/Claude plan is at its limit until /)
   })
-
   test('takes no words into a running Claude turn, which would answer them only after it, so they wait in the queue (#2046)', async () => {
     let holding: Open | undefined
     answer = (open, said) => {
@@ -441,14 +404,12 @@ describe('a Claude Code thread', () => {
     const stopper = new AbortController()
     const sending = send(CLAUDE, on, 'one', built, stopper.signal)
     await vi.waitFor(() => expect(holding).toBeDefined())
-
     expect(await built.steer(on, 'and shorter')).toBe(false)
     expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn'])
     expect(on.turns.map((turn) => turn.role)).toEqual(['you', 'model'])
     stopper.abort()
     await sending
   })
-
   test('lists the models Claude Code lists', async () => {
     listed = {
       models: [{ value: 'opus[1m]', displayName: 'Opus', supportedEffortLevels: ['low', 'max'] }],
@@ -466,7 +427,6 @@ describe('a Claude Code thread', () => {
     ])
   })
 })
-
 const codexTurn = (text: string) => [
   JSON.stringify({ method: 'turn/started', params: { threadId: 'x', turn: { id: 'u' } } }),
   JSON.stringify({
@@ -494,13 +454,11 @@ const codexTurn = (text: string) => [
     params: { threadId: 'x', turn: { id: 'u', status: 'completed' } },
   }),
 ]
-
 describe('a Codex thread', () => {
   test('answers a turn with the window Codex counts', async () => {
     answer = (_, said) => (said.kind === 'turn' ? codexTurn('Herons wait.') : [])
     const on = thread(CODEX, { model: 'gpt-fake', effort: 'off', fast: true })
     const events = await send(CODEX, on, 'what waits?')
-
     expect(opened[0]?.opening).toMatchObject({
       tool: 'codex',
       mode: 'approve',
@@ -511,7 +469,6 @@ describe('a Codex thread', () => {
     expect(on.usage).toEqual({ input: 300, cached: 100, output: 20, reasoning: 5, window: 272000 })
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
-
   test('steers the running turn and says Fast when it changes', async () => {
     let held = false
     answer = (_, said) => {
@@ -528,7 +485,6 @@ describe('a Codex thread', () => {
     await built.steer(on, 'shorter')
     await sending
     expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn', 'steer'])
-
     answer = (_, said) => (said.kind === 'turn' ? codexTurn('ok') : [])
     on.fast = true
     await send(CODEX, on, 'again', built)
@@ -537,7 +493,6 @@ describe('a Codex thread', () => {
       { kind: 'turn', text: 'again', images: [] },
     ])
   })
-
   test('a thread Codex would not start ends in its words', async () => {
     answer = () => []
     const on = thread(CODEX)
@@ -555,7 +510,6 @@ describe('a Codex thread', () => {
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'orden mcp has no token' })
   })
 })
-
 describe('a question put to Codex', () => {
   test('is a thread with no tool, answered and closed', async () => {
     const { askLocal } = await import('../../../ai-providers/src/local/ask')
@@ -567,7 +521,6 @@ describe('a question put to Codex', () => {
       messages: [{ role: 'user', content: 'What waits?' }],
       stream: (piece) => pieces.push(piece),
     })
-
     expect(answered).toBe('Herons wait.')
     expect(pieces).toEqual(['Herons wait.'])
     expect(opened[0]?.opening).toMatchObject({ tool: 'codex', mode: null, model: null })
@@ -578,7 +531,6 @@ describe('a question put to Codex', () => {
     })
     expect(opened[0]?.closed).toBe(true)
   })
-
   test('at the plan’s limit says so in Orden’s words', async () => {
     const { askLocal } = await import('../../../ai-providers/src/local/ask')
     answer = () => [
@@ -605,7 +557,6 @@ describe('a question put to Codex', () => {
     await expect(asking).rejects.toThrow(/ChatGPT plan is at its limit until 3:05 PM/)
   })
 })
-
 const codexGoal = (status: string) =>
   JSON.stringify({
     method: 'thread/goal/updated',
@@ -615,21 +566,18 @@ const codexGoal = (status: string) =>
       goal: { threadId: 'x', objective: 'o', status, tokensUsed: 0, timeUsedSeconds: 0 },
     },
   })
-
 async function pursue(built: Engine, on: Thread, to: GoalTo, signal = new AbortController().signal) {
   const events: EngineEvent[] = []
   if (!built.goal) throw new Error('this engine runs no goal of its own')
   const state = await built.goal(on, to, (event) => events.push(event), signal)
   return { state, events }
 }
-
 const words = (on: Thread) =>
   on.turns.map((one) =>
     one.role === 'you'
       ? `you: ${one.draft?.text ?? ''}`
       : one.parts.map((part) => (part.kind === 'text' ? part.text : part.kind)).join(' '),
   )
-
 describe('a program’s own goal', () => {
   test('Codex sets it, starts the work, and goes on turn after turn until it says it is met', async () => {
     answer = (_, said) => {
@@ -644,7 +592,6 @@ describe('a program’s own goal', () => {
       condition: 'the inbox is filed',
       tokens: 50_000,
     })
-
     expect(state).toBe('met')
     expect(opened[0]?.said).toEqual([
       { kind: 'goal', goal: { do: 'set', objective: 'the inbox is filed', budget: 50_000 } },
@@ -653,7 +600,6 @@ describe('a program’s own goal', () => {
     expect(words(on)).toEqual(['you: the inbox is filed', 'Filed.', ' Done.'])
     expect(events.filter((one) => one.type === 'done')).toEqual([{ type: 'done', stop: 'end' }])
   })
-
   test('Codex resumes it with its own pause undone and the next turn’s words', async () => {
     answer = (_, said) =>
       said.kind === 'turn'
@@ -665,14 +611,12 @@ describe('a program’s own goal', () => {
       condition: 'the inbox is filed',
       text: 'Keep working toward the goal: the inbox is filed',
     })
-
     expect(state).toBe('budget_limited')
     expect(opened[0]?.said).toEqual([
       { kind: 'goal', goal: { do: 'resume' } },
       { kind: 'turn', text: 'Keep working toward the goal: the inbox is filed', images: [] },
     ])
   })
-
   test('a stop holds it, so the program does not start its next turn', async () => {
     answer = (_, said) =>
       said.kind === 'turn'
@@ -691,11 +635,9 @@ describe('a program’s own goal', () => {
     await vi.waitFor(() => expect(on.turns.at(-1)?.parts).toHaveLength(1))
     stopper.abort()
     const { state } = await going
-
     expect(state).toBe('paused')
     expect(opened[0]?.said.slice(-2)).toEqual([{ kind: 'goal', goal: { do: 'pause' } }, { kind: 'interrupt' }])
   })
-
   test('a stop between two of its turns holds it at once, and keeps the session', async () => {
     answer = (_, said) => (said.kind === 'turn' ? codexTurn('Filed.') : [])
     const stopper = new AbortController()
@@ -705,19 +647,16 @@ describe('a program’s own goal', () => {
     await new Promise((settle) => setTimeout(settle, 20))
     stopper.abort()
     const { state, events } = await going
-
     expect(state).toBe('paused')
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
     expect(opened[0]?.said.at(-1)).toEqual({ kind: 'goal', goal: { do: 'pause' } })
     expect(opened[0]?.closed).toBe(false)
   })
-
   test('Codex pauses and clears it in the session, at once', async () => {
     answer = (_, said) => (said.kind === 'turn' ? codexTurn('ok') : [])
     const built = engine(CODEX)
     const on = thread(CODEX)
     await send(CODEX, on, 'hi', built)
-
     expect((await pursue(built, on, { do: 'pause' })).state).toBe('paused')
     expect((await pursue(built, on, { do: 'clear' })).state).toBe('cleared')
     expect(opened[0]?.said.slice(1)).toEqual([
@@ -725,7 +664,6 @@ describe('a program’s own goal', () => {
       { kind: 'goal', goal: { do: 'clear' } },
     ])
   })
-
   test('Claude Code’s is its own message, answered as one, and says nothing of where it stands', async () => {
     answer = (_, said) => (said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : [])
     const built = engine(CLAUDE)
@@ -736,7 +674,6 @@ describe('a program’s own goal', () => {
       condition: 'tests pass',
       tokens: 9,
     })
-
     expect(state).toBeNull()
     expect(opened[0]?.said.at(-1)).toEqual({
       kind: 'goal',
@@ -745,35 +682,29 @@ describe('a program’s own goal', () => {
     expect(words(on).slice(2)).toEqual(['you: tests pass', 'thinking tool Herons wait.'])
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
-
   test('a Claude Code session that has to be seeded hears the transcript first, then the goal', async () => {
     answer = (_, said) => (said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : [])
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'one', engine(CLAUDE))
     const { state } = await pursue(engine(CLAUDE), on, { do: 'set', condition: 'tests pass' })
-
     expect(state).toBeNull()
     expect(opened[1]?.said.map((one) => one.kind)).toEqual(['turn', 'goal'])
     expect(String(opened[1]?.said[0]?.text)).toContain('<conversation>')
     expect(words(on).slice(2)).toEqual(['you: tests pass', 'thinking tool Herons wait.', 'thinking tool Herons wait.'])
   })
-
   test('Claude Code has no paused goal: a pause clears it there, and Orden keeps the condition', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'hi', built)
-
     expect((await pursue(built, on, { do: 'pause' })).state).toBe('paused')
     expect(opened[0]?.said.at(-1)).toEqual({ kind: 'goal', goal: { do: 'clear' } })
   })
 })
-
 describe('the Gemini CLI', () => {
   beforeEach(() => {
     opened = []
     listed = null
   })
-
   test('opens with no effort, hears its stream-json, and offers its aliases', async () => {
     answer = (_open, said) =>
       said.kind === 'turn'
@@ -788,7 +719,6 @@ describe('the Gemini CLI', () => {
     const on = thread(GEMINI, { effort: 'high' })
     const built = engine(GEMINI)
     const events = await send(GEMINI, on, 'What is in a.md?', built)
-
     expect(opened[0]?.opening).toMatchObject({ tool: 'gemini-cli', effort: null, mode: 'approve' })
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'end' })
     expect(events).toContainEqual({ type: 'model', model: 'gemini-3.8-flash' })
@@ -799,7 +729,6 @@ describe('the Gemini CLI', () => {
     expect((await built.models(GEMINI)).map((one) => one.id)).toEqual(['auto', 'pro', 'flash', 'flash-lite'])
     expect(await built.steer(on, 'and a stork')).toBe(false)
   })
-
   test('a session that ends unanswered says the program’s last words', async () => {
     answer = (open, said) => {
       if (said.kind === 'turn') {

@@ -23,11 +23,8 @@ import {
 import { deviceOf } from './sync2/device'
 
 const NOT_AN_INBOX_CHANGE = 'that is not a change to the inbox'
-
 const TOO_MANY_ITEMS = 'that is more to-dos than an account’s inbox keeps'
-
 const TRIES = 4
-
 interface Stored {
   id: string
   fields: string
@@ -35,7 +32,6 @@ interface Stored {
   seq: number
   at: number
 }
-
 const itemOf = (row: Stored): InboxItem => ({
   id: row.id,
   fields: JSON.parse(row.fields) as InboxFields,
@@ -43,7 +39,6 @@ const itemOf = (row: Stored): InboxItem => ({
   seq: row.seq,
   at: row.at,
 })
-
 async function inboxSince(env: Env, userId: string, since: number): Promise<InboxPage> {
   const { results } = await env.DB.prepare(
     `select id, fields, stamps, seq, at from inbox_items
@@ -51,7 +46,6 @@ async function inboxSince(env: Env, userId: string, since: number): Promise<Inbo
   )
     .bind(userId, since, INBOX_PAGE + 1)
     .all<Stored>()
-
   const page = results.slice(0, INBOX_PAGE)
   return {
     items: page.map(itemOf),
@@ -59,7 +53,6 @@ async function inboxSince(env: Env, userId: string, since: number): Promise<Inbo
     more: results.length > INBOX_PAGE,
   }
 }
-
 async function heldOf(
   env: Env,
   userId: string,
@@ -73,11 +66,9 @@ async function heldOf(
     .all<Stored>()
   return new Map(results.map((row) => [row.id, itemOf(row)]))
 }
-
 export async function heldInbox(env: Env, userId: string, id: string): Promise<InboxHeld | null> {
   return (await heldOf(env, userId, [id])).get(id) ?? null
 }
-
 function roomFor(user: string, sent: string, most: string): string {
   return `((select count(*) from inbox_items where user_id = ${user})
           + (select count(*) from json_each(${sent}) as fresh
@@ -85,7 +76,6 @@ function roomFor(user: string, sent: string, most: string): string {
                                  where kept.user_id = ${user}
                                    and kept.id = json_extract(fresh.value, '$.id'))) <= ${most})`
 }
-
 function together(changes: readonly InboxChange[]): InboxChange[] {
   const byId = new Map<string, InboxChange>()
   for (const change of changes) {
@@ -99,7 +89,6 @@ function together(changes: readonly InboxChange[]): InboxChange[] {
   }
   return [...byId.values()]
 }
-
 interface Planned {
   id: string
   fields: string
@@ -107,7 +96,6 @@ interface Planned {
   was: number | null
   seq: number
 }
-
 async function written(
   env: Env,
   userId: string,
@@ -153,7 +141,6 @@ async function written(
   const row = results.at(-1)?.results[0] as { last?: number; lost?: string } | undefined
   return { last: row?.last ?? many, lost: JSON.parse(row?.lost ?? '[]') as string[] }
 }
-
 export async function writeInbox(
   env: Env,
   userId: string,
@@ -191,21 +178,17 @@ export async function writeInbox(
   }
   return cursor
 }
-
 export const inbox = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 inbox.get('/', async (context) => {
   const asked = Math.floor(Number(context.req.query('since') ?? 0))
   const since = Number.isFinite(asked) && asked > 0 ? asked : 0
   return context.json(await inboxSince(context.env, context.get('user').id, since))
 })
-
 inbox.post('/', async (context) => {
   const body: unknown = await context.req.json().catch(() => undefined)
   if (typeof body !== 'object' || body === null) return context.json({ error: NOT_AN_OBJECT }, 400)
   const changes = inboxChangesOf(body)
   if (!changes) return context.json({ error: NOT_AN_INBOX_CHANGE }, 400)
-
   const user = context.get('user').id
   if (!changes.length) return context.json({ cursor: 0 })
   if (!(await mayChangeTree(context.env, user))) {

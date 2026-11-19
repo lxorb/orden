@@ -9,7 +9,6 @@ function folderOf(folder: string, name: string): { folder: string; title: string
   const at = name.lastIndexOf('/')
   return { folder: name.slice(0, at).replace(/^\/+/, ''), title: name.slice(at + 1) }
 }
-
 function rfFieldsOf(cells: readonly string[], login: string, password: string): Field[] {
   const fields: Field[] = []
   for (const cell of cells) {
@@ -23,7 +22,6 @@ function rfFieldsOf(cells: readonly string[], login: string, password: string): 
   }
   return fields
 }
-
 export function parseRoboForm(text: string): Imported {
   const into = new Collector('RoboForm')
   const [head, ...rows] = csvRows(text)

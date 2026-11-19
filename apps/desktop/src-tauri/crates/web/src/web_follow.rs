@@ -12,22 +12,18 @@ pub struct Bounds {
     pub width: f64,
     pub height: f64,
 }
-
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Extent {
     pub width: f64,
     pub height: f64,
 }
-
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Frame {
     pub window: Extent,
     pub area: Bounds,
     pub pane: Bounds,
 }
-
 const SAME: f64 = 0.5;
-
 fn along(
     hole: (f64, f64),
     pane: (f64, f64),
@@ -49,7 +45,6 @@ fn along(
         at(pane.1) + (hole.1 - pane.1),
     )
 }
-
 #[must_use]
 pub fn fitted(hole: Bounds, frame: &Frame, now: Extent) -> Bounds {
     if (now.width - frame.window.width).abs() < SAME
@@ -57,7 +52,6 @@ pub fn fitted(hole: Bounds, frame: &Frame, now: Extent) -> Bounds {
     {
         return hole;
     }
-
     let (left, right) = along(
         (hole.x, hole.x + hole.width),
         (frame.pane.x, frame.pane.x + frame.pane.width),
@@ -79,20 +73,16 @@ pub fn fitted(hole: Bounds, frame: &Frame, now: Extent) -> Bounds {
         height: (bottom - top).max(1.0),
     }
 }
-
 #[derive(Clone, Copy)]
 struct Followed {
     hole: Bounds,
     frame: Frame,
 }
-
 static FOLLOWING: LazyLock<Mutex<HashMap<String, (String, Followed)>>> =
     LazyLock::new(Mutex::default);
-
 fn following<T>(look: impl FnOnce(&mut HashMap<String, (String, Followed)>) -> T) -> T {
     look(&mut FOLLOWING.held())
 }
-
 #[must_use]
 fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
     if width == 0 || height == 0 || scale <= 0.0 {
@@ -103,13 +93,11 @@ fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
         height: f64::from(height) / scale,
     })
 }
-
 pub fn extent_of(window: &Window) -> Option<Extent> {
     let scale = crate::page_scale::of(window).ok()?;
     let size = window.inner_size().ok()?;
     extent(size.width, size.height, scale)
 }
-
 pub fn placed(
     window: &Window,
     label: &str,
@@ -129,11 +117,9 @@ pub fn placed(
     });
     extent_of(window).map_or(hole, |now| fitted(hole, &frame, now))
 }
-
 pub fn unfollow(label: &str) {
     following(|all| all.remove(label));
 }
-
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
@@ -147,11 +133,9 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
         bottom.saturating_sub(top).max(1).unsigned_abs(),
     )
 }
-
 pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<()> {
     view.set_bounds(rect_of(edges(bounds, scale)))
 }
-
 #[must_use]
 fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     Rect {
@@ -159,7 +143,6 @@ fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
         size: PhysicalSize::new(width, height).into(),
     }
 }
-
 pub fn heard(window: &Window, event: &WindowEvent) {
     let (now, scale) = match event {
         WindowEvent::Resized(_) => {
@@ -199,7 +182,6 @@ pub fn heard(window: &Window, event: &WindowEvent) {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{edges, extent, fitted, Bounds, Extent, Frame};
@@ -216,7 +198,6 @@ mod tests {
             "{found:?} is not {wanted:?}"
         );
     }
-
     fn at(x: f64, y: f64, width: f64, height: f64) -> Bounds {
         Bounds {
             x,
@@ -225,11 +206,9 @@ mod tests {
             height,
         }
     }
-
     fn size(width: f64, height: f64) -> Extent {
         Extent { width, height }
     }
-
     fn one_pane() -> (Bounds, Frame) {
         let area = at(240.0, 36.0, 960.0, 724.0);
         let frame = Frame {
@@ -239,27 +218,23 @@ mod tests {
         };
         (at(240.0, 76.0, 960.0, 684.0), frame)
     }
-
     #[test]
     fn the_same_size_is_the_same_place() {
         let (hole, frame) = one_pane();
         assert_eq!(fitted(hole, &frame, frame.window), hole);
     }
-
     #[test]
     fn one_pane_keeps_the_sidebar_and_the_bars_and_takes_the_rest() {
         let (hole, frame) = one_pane();
         let now = fitted(hole, &frame, size(1500.0, 900.0));
         near(now, at(240.0, 76.0, 1260.0, 784.0));
     }
-
     #[test]
     fn a_window_made_smaller_shrinks_the_page_and_nothing_else() {
         let (hole, frame) = one_pane();
         let now = fitted(hole, &frame, size(1000.0, 700.0));
         near(now, at(240.0, 76.0, 760.0, 584.0));
     }
-
     #[test]
     fn a_pane_of_two_keeps_its_share() {
         let area = at(240.0, 36.0, 960.0, 724.0);
@@ -272,14 +247,12 @@ mod tests {
         let now = fitted(hole, &frame, size(1440.0, 800.0));
         near(now, at(840.0, 76.0, 600.0, 684.0));
     }
-
     #[test]
     fn a_page_never_folds_to_nothing() {
         let (hole, frame) = one_pane();
         let now = fitted(hole, &frame, size(100.0, 50.0));
         assert!(now.width >= 1.0 && now.height >= 1.0);
     }
-
     #[test]
     fn a_page_filling_the_window_fills_it_at_every_size() {
         let whole = at(0.0, 0.0, 1200.0, 800.0);
@@ -291,21 +264,18 @@ mod tests {
         let now = fitted(whole, &frame, size(1920.0, 1080.0));
         near(now, at(0.0, 0.0, 1920.0, 1080.0));
     }
-
     #[test]
     fn half_a_pixel_of_rounding_is_no_resize() {
         let (hole, frame) = one_pane();
         let now = fitted(hole, &frame, size(1200.4, 799.7));
         assert_eq!(now, hole);
     }
-
     #[test]
     fn a_minimised_window_says_nothing_about_the_layout() {
         assert_eq!(extent(0, 0, 1.5), None);
         assert_eq!(extent(1200, 0, 1.0), None);
         assert_eq!(extent(1800, 1200, 1.5), Some(size(1200.0, 800.0)));
     }
-
     #[test]
     fn a_page_s_edges_are_rounded_where_the_hole_s_are() {
         assert_eq!(

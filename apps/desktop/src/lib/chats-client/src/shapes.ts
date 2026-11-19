@@ -5,7 +5,6 @@ export interface Shown extends Message {
   sending: boolean
   refused: Refusal | null
 }
-
 export interface ChatEntry {
   id: string
   space: string
@@ -24,19 +23,16 @@ export interface ChatEntry {
   mutedUntil: number | null
   meta: Meta
 }
-
 export interface ChatMember {
   who: Who
   name: string | null
   role: Role
 }
-
 export interface Presence {
   here: readonly Who[]
   typing: readonly { who: Who; parent?: string }[]
   reads: ReadonlyMap<Who, number>
 }
-
 export interface Draft {
   body: string
   parent?: string
@@ -47,13 +43,11 @@ export interface Draft {
   alsoToChat?: boolean
   via?: { agent: string }
 }
-
 export interface Scheduled {
   id: string
   sendAt: number
   post: Post
 }
-
 export interface HistoryAsk {
   limit: number
   before?: number
@@ -61,19 +55,16 @@ export interface HistoryAsk {
   around?: string
   parent?: string
 }
-
 export interface Offer {
   chat: string
   parent?: string
   text: string
   note?: string
 }
-
 export interface Hit {
   chat: string
   message: Message
 }
-
 export interface MessageList {
   readonly messages: readonly Shown[]
   readonly pending: readonly Shown[]
@@ -82,12 +73,10 @@ export interface MessageList {
   readonly loading: boolean
   watch(listener: () => void): () => void
 }
-
 export interface RepliesView extends MessageList {
   readonly parent: Shown | null
   close(): void
 }
-
 export interface ChatView extends MessageList {
   readonly chat: string
   readonly entry: ChatEntry | null
@@ -106,7 +95,6 @@ export interface ChatView extends MessageList {
   typed(parent?: string): void
   close(): void
 }
-
 export interface Chats {
   readonly list: readonly ChatEntry[]
   readonly ready: boolean
@@ -117,9 +105,7 @@ export interface Chats {
   message(chat: string, id: string): Promise<Message | null>
   markRead(chat: string, seq: number): Promise<void>
   receipts: boolean
-
   open(chat: string): ChatView
-
   send(chat: string, event: Event): Promise<void>
   post(chat: string, draft: Draft): Promise<string>
   schedule(chat: string, draft: Draft, sendAt: number): Promise<string>
@@ -133,16 +119,12 @@ export interface Chats {
   unsend(chat: string): Promise<string | null>
   retry(chat: string, message: string): Promise<void>
   discard(chat: string, message: string): Promise<void>
-
   notifyFor(chat: string, notify: Notify | null, mutedUntil: number | null): Promise<void>
   members(chat: string): Promise<ChatMember[]>
-
   search(query: string, chat?: string): Promise<Hit[]>
   parse(query: string): SearchQuery
   linking(names: readonly string[]): Promise<Hit[]>
-
   history(chat: string, ask: HistoryAsk): Promise<Message[]>
-
   draft(chat: string): string
   keepDraft(chat: string, text: string): void
   offer(chat: string, text: string, more?: { parent?: string; note?: string }): void
@@ -150,12 +132,10 @@ export interface Chats {
   takeOffer(chat: string, parent?: string): Offer | null
   noteReach(chat: string, path: string): Promise<{ missing: ChatMember[]; share: boolean } | null>
   shareNote(chat: string, path: string): Promise<boolean>
-
   upload(bytes: Uint8Array): Promise<string | null>
   fileUrl(chat: string, hash: string): Promise<string | null>
   readonly fileEpoch: number
   preview(url: string): Promise<Preview | null>
-
   make(folder: string, name: string): Promise<string | null>
   chatAt(path: string): Promise<string | null>
 }

@@ -7,25 +7,21 @@ async function crate<T>(command: string, args?: Record<string, unknown>): Promis
   const { invoke } = await import('../../../crate/src/api')
   return invoke<T>(command, args)
 }
-
 async function web<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   const { webInvoke } = await import('../web/commands')
   return webInvoke<T>(command, args)
 }
-
 function outOf(mount: Mounted, path: string): string {
   const at = normalise(path)
   if (at === mount.web) return mount.root
   if (!at.startsWith(`${mount.web}/`)) return path
   return joinPath(mount.root, at.slice(mount.web.length + 1))
 }
-
 interface Entry {
   name: string
   path: string
   children?: Entry[]
 }
-
 function treeOut(mount: Mounted, entry: Entry, top: boolean): Entry {
   return {
     ...entry,
@@ -42,7 +38,6 @@ function treeOut(mount: Mounted, entry: Entry, top: boolean): Entry {
     ...(entry.children ? { children: entry.children.map((one) => treeOut(mount, one, false)) } : {}),
   }
 }
-
 function trashedOut(entry: Trashed, mounts: readonly Mounted[]): Trashed {
   for (const mount of mounts) {
     const from = outOf(mount, entry.from)
@@ -50,7 +45,6 @@ function trashedOut(entry: Trashed, mounts: readonly Mounted[]): Trashed {
   }
   return entry
 }
-
 async function trash<T>(command: string, args: Record<string, unknown>, mounts: readonly Mounted[]): Promise<T> {
   const kept = (await web<Trashed[]>('list_trash')).map((one) => trashedOut(one, mounts))
   if (command === 'list_trash') {
@@ -70,7 +64,6 @@ async function trash<T>(command: string, args: Record<string, unknown>, mounts: 
   }
   return answer as T
 }
-
 async function what(path: string): Promise<{ rest: string; dir: boolean }[]> {
   const kept = mountOf(path)
   const beside = [PDF_SIDECAR, '.pdf', `.pdf${PDF_SIDECAR}`]
@@ -111,19 +104,16 @@ async function what(path: string): Promise<{ rest: string; dir: boolean }[]> {
   walk(tree)
   return out
 }
-
 interface Listed {
   path: string
   is_dir: boolean
   children?: Listed[]
 }
-
 function addressed(path: string): { kept: boolean; at: string } {
   const found = mountOf(path)
   if (!found) return { kept: false, at: path }
   return { kept: true, at: found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web }
 }
-
 async function across<T>(command: string, args: Record<string, unknown>): Promise<T> {
   if (command !== 'rename_note' && command !== 'copy_path') {
     throw new Error(`${command} cannot reach a space Orden keeps and a folder at once`)
@@ -135,7 +125,6 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   if ((await what(to)).length || (await keptHolds(to))) {
     throw new Error('something already lives there')
   }
-
   const source = addressed(from)
   const target = addressed(to)
   const join = (base: string, rest: string, kept: boolean) =>
@@ -164,7 +153,6 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     await (target.kept ? web : crate)('write_bytes', { path: into, bytes })
   }
   if (command === 'copy_path') return undefined as T
-
   const remove = (call: string, path: string) => (source.kept ? web : crate)(call, { path })
   if (going[0]?.dir && source.kept) {
     await remove('delete_folder', source.at)
@@ -186,9 +174,7 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   }
   return undefined as T
 }
-
 const strict = new TextDecoder('utf-8', { fatal: true })
-
 function isUtf8(bytes: Uint8Array): boolean {
   try {
     strict.decode(bytes)
@@ -197,7 +183,6 @@ function isUtf8(bytes: Uint8Array): boolean {
     return false
   }
 }
-
 async function keptHolds(path: string): Promise<boolean> {
   const found = mountOf(path)
   if (!found) return false
@@ -206,16 +191,13 @@ async function keptHolds(path: string): Promise<boolean> {
   }
   return false
 }
-
 async function keptBytes(path: string, rest: string): Promise<Uint8Array> {
   const found = mountOf(path)
   const bytes = found ? await found.mount.folder.read(`${found.inside}${rest}`) : null
   if (!bytes) throw new Error(`nothing is at ${path}${rest}`)
   return bytes
 }
-
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
-
 async function spaces(
   command: string,
   args: Record<string, unknown>,
@@ -247,7 +229,6 @@ async function spaces(
       return { done: false }
   }
 }
-
 export async function internalInvoke<T>(
   command: string,
   args: Record<string, unknown> = {},
@@ -269,12 +250,10 @@ export async function internalInvoke<T>(
   ) {
     return trash<T>(command, args, mounts)
   }
-
   if (SPACE_COMMANDS.has(command) || (command === 'trash_item' && args.kind === 'space')) {
     const answer = await spaces(command, args)
     if (answer.done) return answer.value as T
   }
-
   const inWeb: Record<string, unknown> = { ...args }
   const named = new Set<Mounted | null>()
   for (const key of PATH_ARGS) {
@@ -292,7 +271,6 @@ export async function internalInvoke<T>(
   if (!mount) return crate<T>(command, args)
   const pathArg = typeof args.path === 'string' ? args.path : args.root
   const at = (typeof pathArg === 'string' ? mountOf(pathArg)?.inside : undefined) ?? ''
-
   switch (command) {
     case 'read_file': {
       const bytes = await mount.folder.read(at)

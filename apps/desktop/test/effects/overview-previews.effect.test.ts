@@ -17,11 +17,9 @@ vi.mock('../../src/lib/surfaces/src/api', async (original) => {
     viewSurface: drawn,
   }
 })
-
 vi.mock('../../src/lib/terminal/src/sessions.svelte', () => ({
   screenOf: () => ({ text: '$ make\nall done', cols: 80 }),
 }))
-
 await import('../../src/lib/terminal-ports')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
@@ -29,13 +27,11 @@ const { TAB_KINDS } = await import('../../src/lib/tab-kinds/src/api')
 const { faces } = await import('../../src/lib/overview/src/faces.svelte')
 const { scrollbackOf } = await import('../../src/lib/overview/src/previews')
 const Offstage = (await import('../../src/lib/overview/src/Offstage.svelte')).default
-
 let shown: ReturnType<typeof mount> | undefined
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
 })
-
 test('every kind that is drawn from itself is drawn off the screen once, and kept as its window’s picture', async () => {
   const kinds = Object.entries(TAB_KINDS)
     .filter(([, traits]) => traits.preview === 'drawn')
@@ -60,7 +56,6 @@ test('every kind that is drawn from itself is drawn off the screen once, and kep
   for (const tab of tabs) expect(faces.of(tab.id)?.html, tab.kind).toContain('drawn:')
   target.remove()
 })
-
 test('a terminal’s window is its screen as it is now, not only what was written down of it', async () => {
   const tab = new Tab(
     new NoteDoc({ kind: 'terminal', path: null, name: 'Shell', text: '', dirty: false }, () => undefined),
@@ -68,7 +63,6 @@ test('a terminal’s window is its screen as it is now, not only what was writte
   )
   expect((await scrollbackOf(tab))?.text).toBe('$ make\nall done')
 })
-
 test('no kind is left with nothing but a picture of it, but an application, whose picture keeps its frame', () => {
   const only = Object.entries(TAB_KINDS)
     .filter(([, traits]) => traits.preview === 'picture')

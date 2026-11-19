@@ -18,15 +18,10 @@ use crate::{files, policy, stop, Caller};
 
 const WAIT: u64 = 60_000;
 const MOST_WAIT: u64 = 120_000;
-
 const MOST_HOPS: usize = 10;
-
 const MOST_BODY: usize = 1_000_000;
-
 const MOST_SAVED: u64 = 1 << 30;
-
 static REACHED: Mutex<Option<HashSet<(String, String)>>> = Mutex::new(None);
-
 struct Request {
     method: Method,
     headers: HeaderMap,
@@ -35,7 +30,6 @@ struct Request {
     until: Instant,
     since: u64,
 }
-
 pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Answer {
     if !caller.holds(Scope::Network) {
         return Answer::error(
@@ -70,7 +64,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Ans
             .unwrap_or_else(|_| Answer::error(Code::Failed, "the request broke off"))
     })
 }
-
 fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result<Request, Answer> {
     let bad = |why: String| Answer::error(Code::BadArguments, why);
     let method = asked
@@ -112,7 +105,6 @@ fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result
         since,
     })
 }
-
 async fn sent(
     start: Url,
     mut request: Request,
@@ -168,7 +160,6 @@ async fn sent(
         format!("more than {MOST_HOPS} redirects: not followed further"),
     )
 }
-
 async fn once(
     url: &Url,
     address: SocketAddr,
@@ -190,7 +181,6 @@ async fn once(
     }
     sending.send().await.map_err(failed)
 }
-
 fn failed(why: reqwest::Error) -> Answer {
     if why.is_timeout() {
         Answer::error(Code::Timeout, "it took longer than its time")
@@ -198,7 +188,6 @@ fn failed(why: reqwest::Error) -> Answer {
         Answer::error(Code::Failed, why.to_string())
     }
 }
-
 async fn read(
     mut response: reqwest::Response,
     url: &str,
@@ -233,7 +222,6 @@ async fn read(
     done.base64 = base64;
     Ok(done)
 }
-
 fn body_of(bytes: Vec<u8>, cut: bool) -> (String, bool) {
     match String::from_utf8(bytes) {
         Ok(text) => (text, false),
@@ -252,7 +240,6 @@ fn body_of(bytes: Vec<u8>, cut: bool) -> (String, bool) {
         }
     }
 }
-
 async fn saved(response: &mut reqwest::Response, path: &Path, since: u64) -> Result<u64, Answer> {
     let failing = |why: String| Answer::error(Code::Failed, why);
     if let Some(folder) = path.parent() {
@@ -291,7 +278,6 @@ async fn saved(response: &mut reqwest::Response, path: &Path, since: u64) -> Res
     }
     written.map(|()| size)
 }
-
 fn headers_of(headers: &HeaderMap) -> BTreeMap<String, String> {
     let mut all: BTreeMap<String, String> = BTreeMap::new();
     for (name, value) in headers {
@@ -305,21 +291,17 @@ fn headers_of(headers: &HeaderMap) -> BTreeMap<String, String> {
     }
     all
 }
-
 fn pinned(url: &Url) -> String {
     url.host_str().unwrap_or_default().to_owned()
 }
-
 fn host(url: &Url) -> String {
     crate::policy::host_key(url).unwrap_or_default()
 }
-
 #[derive(Debug, PartialEq, Eq)]
 enum Reach {
     Go,
     Ask { site: String, always: String },
 }
-
 fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), Answer> {
     if !orden_web_engine::from_a_site(url) {
         return Err(Answer::error(
@@ -348,7 +330,6 @@ fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), An
         },
     ))
 }
-
 fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
     let host = host(url);
     let site = policy::site_of(&host);
@@ -371,21 +352,18 @@ fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
     }
     Ok(Reach::Ask { site, always })
 }
-
 fn reached(agent: &str, site: &str) -> bool {
     REACHED
         .held()
         .as_ref()
         .is_some_and(|all| all.contains(&(agent.to_owned(), site.to_owned())))
 }
-
 fn remember(agent: &str, site: &str) {
     REACHED
         .held()
         .get_or_insert_with(HashSet::new)
         .insert((agent.to_owned(), site.to_owned()));
 }
-
 async fn address(url: &Url) -> Result<SocketAddr, Answer> {
     let named = host(url);
     let Some(port) = url.port_or_known_default() else {
@@ -417,7 +395,6 @@ async fn address(url: &Url) -> Result<SocketAddr, Answer> {
         .copied()
         .ok_or_else(|| Answer::error(Code::Failed, format!("{named} is not a name that resolves")))
 }
-
 fn own_endpoint(address: SocketAddr, own: Option<u16>) -> bool {
     let Some(own) = own else {
         return false;
@@ -428,13 +405,11 @@ fn own_endpoint(address: SocketAddr, own: Option<u16>) -> bool {
     };
     address.port() == own && (ip.is_loopback() || ip.is_unspecified())
 }
-
 fn strip_credentials(headers: &mut HeaderMap) {
     headers.remove(AUTHORIZATION);
     headers.remove(COOKIE);
     headers.remove(reqwest::header::PROXY_AUTHORIZATION);
 }
-
 fn redirected(
     status: StatusCode,
     method: &Method,
@@ -452,7 +427,6 @@ fn redirected(
         (Method::GET, None)
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -467,7 +441,6 @@ mod tests {
             assert_eq!(pinned(&url), asked);
         }
     }
-
     #[test]
     fn the_apps_own_endpoint_is_never_reached() {
         let own = Some(4100);
@@ -503,7 +476,6 @@ mod tests {
             assert!(found.iter().any(|one| own_endpoint(*one, own)), "{named}");
         }
     }
-
     #[test]
     fn only_http_and_https_are_sent() {
         for allowed in ["http://a.example/", "https://a.example:8443/x?y"] {
@@ -526,7 +498,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_host_is_named_as_a_rule_and_a_pin_name_it() {
         let url = Url::parse("https://Bank.Example./x").expect("an address");
@@ -534,7 +505,6 @@ mod tests {
         let url = Url::parse("http://[::1]:8080/").expect("an address");
         assert_eq!(host(&url), "::1");
     }
-
     #[test]
     fn a_credential_goes_to_its_own_site_alone() {
         let mut headers = HeaderMap::new();
@@ -545,7 +515,6 @@ mod tests {
         assert_eq!(headers.len(), 1);
         assert!(headers.contains_key("x-kept"));
     }
-
     #[test]
     fn a_redirect_goes_on_as_a_browser_follows_it() {
         let body = Some(b"x".to_vec());
@@ -566,7 +535,6 @@ mod tests {
             (Method::GET, None)
         );
     }
-
     #[test]
     fn a_body_is_words_where_it_is_text_and_base64_where_not() {
         assert_eq!(body_of(b"hi".to_vec(), false), ("hi".into(), false));
@@ -575,7 +543,6 @@ mod tests {
         cut.pop();
         assert_eq!(body_of(cut, true), ("gr".into(), false));
     }
-
     #[test]
     fn headers_said_twice_are_joined() {
         let mut headers = HeaderMap::new();
@@ -583,11 +550,9 @@ mod tests {
         headers.append("set-cookie", HeaderValue::from_static("b=2"));
         assert_eq!(headers_of(&headers)["set-cookie"], "a=1, b=2");
     }
-
     fn url(said: &str) -> Url {
         Url::parse(said).expect("an address")
     }
-
     #[test]
     fn a_hop_goes_asks_or_is_refused_as_the_grant_says() {
         let mut own = Grant::own("http-own".into(), "A");
@@ -604,12 +569,10 @@ mod tests {
         let goes = |grant: &Grant, said: &str| decided(grant, &url(said), false) == Ok(Reach::Go);
         assert!(refused(&own, "https://login.BANK.example./x"));
         assert!(goes(&own, "https://docs.example/"));
-
         let mut full = own.clone();
         full.mode = Mode::Autonomous;
         assert!(refused(&full, "https://bank.example/"));
         assert!(goes(&full, "https://docs.example/"));
-
         let mut confirm = Grant::third_party("http-third".into(), "B");
         confirm.sites.insert("bank.example".into(), SiteRule::Deny);
         assert!(refused(&confirm, "https://bank.example./"));
@@ -636,7 +599,6 @@ mod tests {
         quiet.asks.insert(Category::Writing, false);
         assert!(goes(&quiet, "https://docs.example/"));
     }
-
     #[test]
     fn every_redirect_is_held_to_the_grant_before_it_is_sent() {
         use std::io::{Read as _, Write as _};
@@ -663,7 +625,6 @@ mod tests {
             );
             stream.write_all(moved.as_bytes()).expect("the answer");
         });
-
         let mut grant = Grant::own("http-hops".into(), "A");
         grant.sites.insert("localhost".into(), SiteRule::Deny);
         let seen = Mutex::new(Vec::new());
@@ -683,7 +644,6 @@ mod tests {
         let start = url(&format!("http://127.0.0.1:{first_port}/"));
         let answer = tauri::async_runtime::block_on(sent(start, request, &check));
         answering.join().expect("the first hop answered");
-
         assert!(
             matches!(
                 answer,

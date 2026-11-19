@@ -3,7 +3,6 @@ import { serveSyncStore } from '../../../../test/sync-store'
 
 const sent: string[] = []
 let trees = new Map<string, unknown>()
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push(command)
@@ -12,10 +11,8 @@ vi.mock('../../platform/src/tauri', () => ({
     return Promise.resolve('')
   },
 }))
-
 const account = vi.hoisted(() => ({ signedIn: true, spaces: [] as { id: string; role: string }[] }))
 vi.mock('../../accounts/src/account.svelte', () => ({ account }))
-
 const remote = new Map<string, string>()
 let unpushed = new Set<string>()
 const synced = vi.hoisted(() => ({
@@ -24,10 +21,8 @@ const synced = vi.hoisted(() => ({
 }))
 vi.mock('../../sync-store/src/api', () => ({ sync: synced }))
 serveSyncStore(synced)
-
 const { deleteSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces
-
 const at = (path: string, children: unknown[] = []) => ({
   name: path.split('/').pop(),
   path,
@@ -36,7 +31,6 @@ const at = (path: string, children: unknown[] = []) => ({
   created: 0,
   children,
 })
-
 function store() {
   return {
     spaces: [{ id: 'w', name: 'Work', root: '/s/Work' }],
@@ -47,7 +41,6 @@ function store() {
     persist: () => undefined,
   } as unknown as HoldsSpaces
 }
-
 beforeEach(() => {
   sent.length = 0
   trees = new Map([['/s/Work', at('/s/Work', [at('/s/Work/a.md')])]])
@@ -57,28 +50,24 @@ beforeEach(() => {
   account.signedIn = true
   account.spaces = [{ id: 'r1', role: 'owner' }]
 })
-
 describe('a space of your own deleted signed in', () => {
   test('that the account holds whole is left to the account', async () => {
     await deleteSpace(store(), 'w')
     expect(sent).toContain('delete_space')
     expect(sent).not.toContain('trash_item')
   })
-
   test('with a note not pushed yet goes to this device’s trash', async () => {
     unpushed.add('/s/Work/a.md')
     await deleteSpace(store(), 'w')
     expect(sent).toContain('trash_item')
     expect(sent).not.toContain('delete_space')
   })
-
   test('with a dotfile in it goes to this device’s trash', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/.git', [at('/s/Work/.git/HEAD')])]))
     await deleteSpace(store(), 'w')
     expect(sent).toContain('trash_item')
     expect(sent).not.toContain('delete_space')
   })
-
   test('never pushed, so the account has no id for it, goes to this device’s trash', async () => {
     remote.clear()
     await deleteSpace(store(), 'w')
@@ -86,7 +75,6 @@ describe('a space of your own deleted signed in', () => {
     expect(sent).not.toContain('delete_space')
   })
 })
-
 test('a space somebody else owns goes to this device’s trash', async () => {
   account.spaces = [{ id: 'r1', role: 'writer' }]
   await deleteSpace(store(), 'w')

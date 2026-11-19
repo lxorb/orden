@@ -8,7 +8,6 @@
   import { pass, passSync, syncWord } from '../../pass-sync/src/api'
 
   const { onadopt }: { onadopt: () => void } = $props()
-
   const ICONS = {
     syncing: RefreshCw,
     synced: Cloud,
@@ -18,7 +17,6 @@
     conflict: TriangleAlert,
     'other-account': TriangleAlert,
   }
-
   const state = $derived(passSync.state)
   const word = $derived(syncWord(state))
   const icon = $derived(ICONS[state])
@@ -63,52 +61,42 @@
     font-size: var(--text-xs);
     text-align: start;
   }
-
   .sync.is-wrong {
     color: var(--danger, var(--muted));
   }
-
   .sync :global(.glyph) {
     flex: none;
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-
   .word {
     min-width: 0;
   }
-
   [data-sync='syncing'] :global(.glyph) {
     animation: turn 1.2s linear infinite;
   }
-
   [data-sync='old-server'],
   [data-sync='conflict'],
   [data-sync='other-account'] {
     color: var(--text-strong);
   }
-
   [data-sync='old-server'] :global(.glyph),
   [data-sync='conflict'] :global(.glyph),
   [data-sync='other-account'] :global(.glyph) {
     color: var(--callout-warning);
   }
-
   .is-pressable {
     cursor: pointer;
     border-radius: var(--radius-md);
   }
-
   .is-pressable:hover {
     background: var(--surface-hover);
   }
-
   @keyframes turn {
     to {
       rotate: 360deg;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     [data-sync='syncing'] :global(.glyph) {
       animation: none;

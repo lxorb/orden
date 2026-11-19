@@ -16,25 +16,21 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     :global(.line:hover) > .more,
     .more:focus-visible {
       opacity: 1;
     }
   }
-
   @media (hover: none) {
     .more {
       opacity: 1;
     }
   }
-
   .more svg {
     fill: currentColor;
     stroke: none;
   }
-
   .more:focus-visible {
     outline-offset: -1px;
   }

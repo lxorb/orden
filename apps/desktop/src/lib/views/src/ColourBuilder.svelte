@@ -10,7 +10,6 @@
   import { propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const written = $derived(view?.orden.colour)
@@ -19,7 +18,6 @@
   const shownRules = $derived((rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when, holds) })))
   const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
-
   const OPERATOR_NAMES: Record<Operator, string> = {
     '==': '=',
     '!=': '≠',
@@ -32,15 +30,12 @@
     filled: 'is not empty',
     tag: '#',
   }
-
   function write(next: ColourRule[]) {
     kit.change((base, at) => setViewOrden(base, at, 'colour', colourExpression(next)))
   }
-
   function change(at: number, rule: ColourRule) {
     write((rules ?? []).map((one, index) => (index === at ? rule : one)))
   }
-
   function add() {
     const property =
       kinds === 'notes' ? (properties.find((one) => one.startsWith('note.')) ?? 'file.name') : 'task.priority'
@@ -118,7 +113,6 @@
     align-items: center;
     gap: var(--space-2);
   }
-
   .kept {
     grid-column: 2 / 5;
     overflow: hidden;
@@ -128,7 +122,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .adder .orden-row-label {
     color: var(--muted);
   }

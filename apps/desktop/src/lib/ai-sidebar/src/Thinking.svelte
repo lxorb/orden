@@ -8,7 +8,6 @@
     display: flex;
     padding: var(--space-1) 0;
   }
-
   .thinking span {
     width: 9px;
     height: 9px;
@@ -16,7 +15,6 @@
     background: var(--text-strong);
     animation: pulse calc(var(--dur-slow) * 3) var(--ease-in-out) infinite;
   }
-
   @keyframes pulse {
     0%,
     100% {
@@ -28,7 +26,6 @@
       scale: 1;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .thinking span {
       animation: none;

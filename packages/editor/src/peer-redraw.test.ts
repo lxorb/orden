@@ -10,7 +10,6 @@ import { remoteCarets, setPeers } from './carets'
 import { external } from './external'
 
 const DOC = 'Intro\n\n$$\nx = 1\n$$\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\nend'
-
 function editingInside(source: string) {
   const start = parsed(
     EditorState.create({
@@ -27,7 +26,6 @@ function editingInside(source: string) {
   const at = DOC.indexOf(source)
   return start.update({ selection: EditorSelection.cursor(at), userEvent: 'select' }).state
 }
-
 function drawn(state: EditorState): string[] {
   const out: string[] = []
   state.field(blockDecorations).decorations.between(0, state.doc.length, (from, to) => {
@@ -35,34 +33,26 @@ function drawn(state: EditorState): string[] {
   })
   return out
 }
-
 const peer = { id: 2, name: 'Ana', colour: '#c33', head: 1, anchor: 1 }
-
 describe('a block whose source the caret is in, when a room partner moves their caret', () => {
   test('a maths block stays open as source', () => {
     const editing = editingInside('x = 1')
     expect(drawn(editing)).not.toContain('$$\nx = 1\n$$')
-
     const moved = editing.update({
       effects: setPeers.of([peer]),
       annotations: external.of(true),
     }).state
-
     expect(drawn(moved)).not.toContain('$$\nx = 1\n$$')
   })
-
   test('a table stays open as source', () => {
     const editing = editingInside('| 1 |')
     expect(drawn(editing)).toEqual(['$$\nx = 1\n$$'])
-
     const moved = editing.update({
       effects: setPeers.of([peer]),
       annotations: external.of(true),
     }).state
-
     expect(drawn(moved)).toEqual(['$$\nx = 1\n$$'])
   })
-
   test('a maths block stays open as source when a partner types further down the note', () => {
     const editing = editingInside('x = 1')
     const typed = editing.update({
@@ -70,7 +60,6 @@ describe('a block whose source the caret is in, when a room partner moves their 
       annotations: external.of(true),
       filter: false,
     }).state
-
     expect(drawn(typed)).not.toContain('$$\nx = 1\n$$')
   })
 })

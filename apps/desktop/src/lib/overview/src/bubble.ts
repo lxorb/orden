@@ -12,13 +12,11 @@ const WAVES: readonly { lobes: number; rate: number; phase: number }[] = [
   { lobes: 3, rate: -0.13, phase: 1.7 },
   { lobes: 5, rate: 0.17, phase: 4.1 },
 ]
-
 const SEAM = 4
 const STEP = 8
 const TAU = 2 * Math.PI
 export const COS = Float64Array.from({ length: N }, (_, i) => Math.cos((i / N) * TAU))
 export const SIN = Float64Array.from({ length: N }, (_, i) => Math.sin((i / N) * TAU))
-
 function reachOf(boxes: readonly Box[], by: number): Float64Array | null {
   if (!boxes.length) return null
   const out = new Float64Array(N).fill(Number.NEGATIVE_INFINITY)
@@ -38,11 +36,9 @@ function reachOf(boxes: readonly Box[], by: number): Float64Array | null {
   for (let i = 0; i < N; i++) out[i] = (out[i] ?? 0) + by
   return out
 }
-
 const ROUND = 4
 const DUAL = ROUND / (ROUND - 1)
 const SWELL = 2 ** (1 / ROUND)
-
 function roundOf(boxes: readonly Box[], by = PAD): Float64Array | null {
   if (!boxes.length) return null
   const out = new Float64Array(N).fill(Number.NEGATIVE_INFINITY)
@@ -60,14 +56,12 @@ function roundOf(boxes: readonly Box[], by = PAD): Float64Array | null {
   }
   return out
 }
-
 const SOFT = Math.round((N * 0.4) / TAU)
 const SOFTNESS = Float64Array.from({ length: 2 * SOFT + 1 }, (_, k) => {
   const at = (k - SOFT) / (SOFT + 1)
   return 0.5 + 0.5 * Math.cos(Math.PI * at)
 })
 const SOFT_SUM = SOFTNESS.reduce((sum, one) => sum + one, 0)
-
 function softened(h: Float64Array): Float64Array {
   const at = (share: number) => h[Math.round(share * N) % N] ?? 0
   const x = (at(0) - at(0.5)) / 2
@@ -84,12 +78,10 @@ function softened(h: Float64Array): Float64Array {
   for (let i = 0; i < N; i++) out[i] = (out[i] ?? 0) + short + x * (COS[i] ?? 0) + y * (SIN[i] ?? 0)
   return out
 }
-
 export function restingOf(boxes: readonly Box[]): Float64Array | null {
   const round = roundOf(boxes)
   return round && softened(round)
 }
-
 export function grownOf(box: Box): Box {
   const round = roundOf([box])
   if (!round) return box
@@ -99,15 +91,12 @@ export function grownOf(box: Box): Box {
   const top = -at(0.75)
   return { x: left, y: top, w: at(0) - left, h: at(0.25) - top }
 }
-
 interface Edge {
   x: number
   y: number
   at: number
 }
-
 type Point = [number, number]
-
 function hullOf(h: Float64Array): Point[] {
   const at = (share: number) => h[Math.round(share * N) % N] ?? 0
   let points: Point[] = [
@@ -122,7 +111,6 @@ function hullOf(h: Float64Array): Point[] {
   }
   return points
 }
-
 function cut(points: readonly Point[], edge: Edge): Point[] {
   const out: Point[] = []
   const side = ([x, y]: Point) => x * edge.x + y * edge.y - edge.at
@@ -139,7 +127,6 @@ function cut(points: readonly Point[], edge: Edge): Point[] {
   }
   return out
 }
-
 function even(points: readonly Point[]): Point[] {
   const n = points.length
   if (n < 3) return [...points]
@@ -164,7 +151,6 @@ function even(points: readonly Point[]): Point[] {
   }
   return out
 }
-
 export class Bubble {
   private readonly h = new Float64Array(N)
   private readonly speed = new Float64Array(N)
@@ -173,14 +159,12 @@ export class Bubble {
   private floor: Float64Array = new Float64Array(N)
   private edges: Edge[] = []
   private outline: Point[] = []
-
   constructor(boxes: readonly Box[]) {
     this.aim(boxes)
     this.h.set(this.goal)
     this.shown.set(this.goal)
     this.draw(0, true)
   }
-
   private aim(boxes: readonly Box[]) {
     const tight = roundOf(boxes)
     const goal = tight && softened(tight)
@@ -197,12 +181,10 @@ export class Bubble {
       this.floor[i] = Number.NEGATIVE_INFINITY
     }
   }
-
   private middle(): { x: number; y: number } {
     const at = (share: number) => this.shown[Math.round(share * N) % N] ?? 0
     return { x: (at(0) - at(0.5)) / 2, y: (at(0.25) - at(0.75)) / 2 }
   }
-
   step(seconds: number, t: number, boxes: readonly Box[], still = false) {
     this.aim(boxes)
     const dt = Math.min(Math.max(seconds, 0), 0.05)
@@ -224,10 +206,8 @@ export class Bubble {
     this.edges = []
     this.draw(t, still)
   }
-
   private t = 0
   private still = false
-
   private draw(t: number, still: boolean) {
     this.t = t
     this.still = still
@@ -246,20 +226,16 @@ export class Bubble {
     for (const edge of this.edges) points = cut(points, edge)
     this.outline = even(points)
   }
-
   meet(edge: Edge) {
     this.edges.push(edge)
     this.draw(this.t, this.still)
   }
-
   reach(i: number): number {
     return this.shown[((i % N) + N) % N] ?? 0
   }
-
   points(): readonly Point[] {
     return this.outline
   }
-
   pathOf(): string {
     const r = (value: number) => Math.round(value * 10) / 10
     let d = ''
@@ -269,7 +245,6 @@ export class Bubble {
     }
     return d ? `${d}Z` : ''
   }
-
   curves(): [number, number, number, number, number, number, number, number][] {
     const all = this.outline
     const n = all.length
@@ -284,7 +259,6 @@ export class Bubble {
     }
     return out
   }
-
   crown(): { x: number; y: number } {
     const all = this.outline
     if (!all.length) return { x: 0, y: 0 }
@@ -299,7 +273,6 @@ export class Bubble {
     return { x: (left + right) / 2, y: top }
   }
 }
-
 export function apart(one: Bubble, other: Bubble, ones: readonly Box[], others: readonly Box[]): void {
   const near = reachOf(ones, 0)
   const far = reachOf(others, 0)

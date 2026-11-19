@@ -5,16 +5,13 @@ const world = vi.hoisted(() => ({
   active: 'a',
   used: ['a', 'b', 'c'] as string[],
 }))
-
 vi.mock('../../platform/src/api', () => ({
   keep: () => undefined,
   storedText: () => 'use',
 }))
-
 vi.mock('../../panes/src/api', async () => ({
   Walk: (await import('../../panes/src/recency')).Walk,
 }))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     tabsIn: () => world.tabs.map((id) => ({ id })),
@@ -34,15 +31,12 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const { cycleTab } = await import('../src/api')
-
 test('the first Ctrl+Tab walks on while Ctrl stays down, though no key was heard before it', () => {
   cycleTab(1, true, true)
   expect(world.active).toBe('b')
   cycleTab(1, true, true)
   expect(world.active).toBe('c')
-
   window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control' }))
   expect(world.used).toEqual(['c', 'a', 'b'])
 })

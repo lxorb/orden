@@ -14,11 +14,8 @@ const PROMPT = [
   'a note says. If the lines do not answer the question, say so in the first',
   'sentence.',
 ].join('\n')
-
 export const NOT_SET = 'AI is not set up. Choose a default account in Settings, AI.'
-
 const LINES = 40
-
 export async function answerOf(question: string): Promise<string> {
   const { ai, complete } = await import('../../ai-providers/src/api')
   const provider = ai.providerFor('ask')
@@ -34,7 +31,6 @@ export async function answerOf(question: string): Promise<string> {
   })
   return answer.trim()
 }
-
 async function linesFor(question: string): Promise<string> {
   const root = workspace.activeSpace?.root
   const words = question.split(/[^\p{L}\p{N}]+/u).filter((one) => one.length > 2)

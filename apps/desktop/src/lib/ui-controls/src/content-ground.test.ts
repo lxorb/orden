@@ -16,7 +16,6 @@ const INKS: Record<'dark' | 'light', PaperInks> = {
     link: linkOf([91, 75, 224], [5, 7, 10]),
   },
 }
-
 const SPANS: Record<string, Span> = {
   white: { least: [255, 255, 255], most: [255, 255, 255] },
   black: { least: [0, 0, 0], most: [0, 0, 0] },
@@ -25,11 +24,9 @@ const SPANS: Record<string, Span> = {
   'a light Mica': { least: [192, 192, 192], most: [255, 255, 255] },
   'a sunset': { least: [60, 10, 20], most: [255, 140, 60] },
 }
-
 function grounds(inks: PaperInks, alpha: number, span: Span): Rgb[] {
   return [span.least, span.most].map((under) => over(inks.bg, alpha, under))
 }
-
 describe('the paper a note is read on', () => {
   for (const [side, inks] of Object.entries(INKS)) {
     for (const [name, span] of Object.entries(SPANS)) {
@@ -47,17 +44,14 @@ describe('the paper a note is read on', () => {
       })
     }
   }
-
   test('needs none where what is under it is the paper itself', () => {
     expect(paperFloor(INKS.dark, { least: INKS.dark.bg, most: INKS.dark.bg })).toBe(0)
   })
-
   test('is all of it over a desk that holds both black and white', () => {
     expect(paperFloor(INKS.dark, SPANS['black and white']!)).toBeGreaterThan(0.8)
     expect(paperFloor(INKS.light, SPANS['black and white']!)).toBeGreaterThan(0.8)
   })
 })
-
 describe('the three levels', () => {
   test('are the paper, the floor and halfway, never under the floor', () => {
     expect(alphaFor('opaque', 0.3)).toBe(1)
@@ -67,7 +61,6 @@ describe('the three levels', () => {
     expect(alphaFor('tinted', 1)).toBe(1)
   })
 })
-
 describe('the terminal', () => {
   test('lays over the paper only the rest of the way to its own floor', () => {
     expect(layered(0.6, 0.6)).toBe(0)
@@ -83,7 +76,6 @@ describe('the terminal', () => {
       expect(under + (1 - under) * laid).toBeGreaterThanOrEqual(total)
     }
   })
-
   test('keeps every colour xterm.js writes at AA, once it has pulled them to its own aim', () => {
     for (const [side, inks] of Object.entries(INKS)) {
       for (const [name, span] of Object.entries(SPANS)) {

@@ -5,14 +5,12 @@ export function portal(node: HTMLElement) {
   document.body.append(node)
   return { destroy: () => node.remove() }
 }
-
 export interface Box {
   left: number
   top: number
   right: number
   bottom: number
 }
-
 export interface Hanging {
   side?: 'below' | 'above'
   gap?: number
@@ -20,9 +18,7 @@ export interface Hanging {
   stretch?: boolean
   from?: HTMLElement | null
 }
-
 const MARGIN = 8
-
 export function placeOf(
   at: Box,
   size: { width: number; height: number },
@@ -34,7 +30,6 @@ export function placeOf(
   const width = size.width
   const start = rtl ? at.right - inset - width : at.left + inset
   const left = Math.max(MARGIN, Math.min(start, room.width - MARGIN - width))
-
   const below = at.bottom + gap
   const above = at.top - gap - size.height
   const fitsBelow = below + size.height <= room.height - MARGIN
@@ -49,7 +44,6 @@ export function placeOf(
         : 'below'
   return { left, top: side === 'below' ? below : above, side }
 }
-
 export function inSight(at: Box, clips: readonly Box[]): boolean {
   let { left, top, right, bottom } = at
   for (const one of clips) {
@@ -60,7 +54,6 @@ export function inSight(at: Box, clips: readonly Box[]): boolean {
   }
   return right >= left && bottom >= top
 }
-
 function clipsOf(node: HTMLElement): HTMLElement[] {
   const found: HTMLElement[] = []
   for (let up = node.parentElement; up && up !== document.body; up = up.parentElement) {
@@ -69,43 +62,35 @@ function clipsOf(node: HTMLElement): HTMLElement[] {
   }
   return found
 }
-
 function boxOf(node: Element): Box {
   const box = node.getBoundingClientRect()
   return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
 }
-
 function drawn(node: Element): boolean {
   if (typeof node.checkVisibility !== 'function') return true
   return node.checkVisibility({ visibilityProperty: true })
 }
-
 function moving(): boolean {
   if (typeof document.getAnimations !== 'function') return false
   return document
     .getAnimations()
     .some((one) => one.playState === 'running' && one.effect?.getComputedTiming().endTime !== Infinity)
 }
-
 function holderOf(node: HTMLElement): HTMLElement | null {
   for (let up = node.parentElement; up && up !== document.body; up = up.parentElement) {
     if (getComputedStyle(up).position !== 'static') return up
   }
   return node.parentElement
 }
-
 export function hang(node: HTMLElement, hanging: Hanging = {}) {
   let options = hanging
   const from = options.from ?? holderOf(node)
   if (!from) return {}
-
   const clips = clipsOf(from)
-
   document.body.append(node)
   node.style.position = 'fixed'
   node.style.inset = 'auto'
   node.style.margin = '0'
-
   let frame = 0
   const place = () => {
     frame = 0
@@ -136,14 +121,12 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
   const soon = () => {
     frame ||= requestAnimationFrame(place)
   }
-
   place()
   const moved = ['scroll', 'resize', 'transitionrun', 'animationstart'] as const
   for (const one of moved) window.addEventListener(one, soon, { capture: true, passive: true })
   const sized = typeof ResizeObserver === 'function' ? new ResizeObserver(soon) : null
   sized?.observe(node)
   for (let up: HTMLElement | null = from; up && up !== document.body; up = up.parentElement) sized?.observe(up)
-
   return {
     update(next: Hanging = {}) {
       options = next
@@ -157,7 +140,6 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
     },
   }
 }
-
 export function partView<Props extends Record<string, unknown>>(
   component: Component<Props>,
   props: (host: SettingsPartHost) => Props,

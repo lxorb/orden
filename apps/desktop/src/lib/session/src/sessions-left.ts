@@ -9,7 +9,6 @@ function wordsOnly(one: Draft): boolean {
   if (!TAB_KINDS[one.kind].words) return false
   return one.dirty || (one.path === null && one.doc.trim() !== '')
 }
-
 function parted(value: unknown, found: Draft[]): unknown {
   if (Array.isArray(value)) return value.map((one) => parted(one, found))
   if (!isRecord(value)) return value
@@ -22,7 +21,6 @@ function parted(value: unknown, found: Draft[]): unknown {
   }
   return out
 }
-
 function strip(pane: Record<string, unknown>, tabs: unknown[], found: Draft[]) {
   const moved = new Map<number, number>()
   const kept: unknown[] = []
@@ -50,7 +48,6 @@ function strip(pane: Record<string, unknown>, tabs: unknown[], found: Draft[]) {
       : {}),
   }
 }
-
 function stack(closed: unknown[], found: Draft[]): unknown[] {
   return closed.filter((one) => {
     const entry = readClosed(one)
@@ -59,7 +56,6 @@ function stack(closed: unknown[], found: Draft[]): unknown[] {
     return false
   })
 }
-
 function others(storage: Storage, mine: number): { key: string; slot: number }[] {
   const out: { key: string; slot: number }[] = []
   for (let at = 0; at < storage.length; at += 1) {
@@ -69,7 +65,6 @@ function others(storage: Storage, mine: number): { key: string; slot: number }[]
   }
   return out
 }
-
 export async function takeSessionsLeft(
   mine: number,
   take: (drafts: Draft[]) => Promise<void>,
@@ -99,7 +94,6 @@ export async function takeSessionsLeft(
   }
   return waiting
 }
-
 export async function asDrafts(
   drafts: readonly Draft[],
   says: (path: string) => Promise<string | null>,
@@ -121,7 +115,6 @@ export async function asDrafts(
   }
   return out
 }
-
 async function saidBeside(draft: Draft, at: number, drafts: readonly Draft[]): Promise<boolean> {
   if (draft.share === undefined) return false
   for (const [there, other] of drafts.entries()) {
@@ -131,7 +124,6 @@ async function saidBeside(draft: Draft, at: number, drafts: readonly Draft[]): P
   }
   return false
 }
-
 async function saidThere(draft: Draft, read: string | null): Promise<boolean> {
   if (read === null) return false
   const disk = unixLines(read)
@@ -140,7 +132,6 @@ async function saidThere(draft: Draft, read: string | null): Promise<boolean> {
   if (draft.base === undefined || draft.kind !== 'note') return false
   return (await mergedOver(unixLines(draft.base), words, disk)) === disk
 }
-
 function parsed(text: string | null): unknown {
   try {
     return text === null ? null : JSON.parse(text)

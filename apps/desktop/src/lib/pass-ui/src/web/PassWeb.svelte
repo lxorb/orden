@@ -12,18 +12,14 @@
   import { startPassWeb } from './start'
 
   onDestroy(startPassWeb())
-
   let looked = $state(false)
   void account.looked.then(() => (looked = true))
-
   const waiting = $derived(!looked || account.restoring)
-
   $effect(() => {
     if (menu.open) void contextMenu.ask()
     if (prompt.open) void promptSheet.ask()
     if (account.open) void signInSheet.ask()
   })
-
   $effect(() => {
     if (!waiting && !account.user) account.open = true
   })
@@ -97,11 +93,9 @@
     background: var(--bg);
     color: var(--text);
   }
-
   .blank {
     height: 100%;
   }
-
   .reload {
     position: fixed;
     inset-block-end: calc(var(--space-4) + var(--inset-bottom, 0px));
@@ -111,7 +105,6 @@
     justify-content: center;
     pointer-events: none;
   }
-
   .reload button {
     pointer-events: auto;
   }

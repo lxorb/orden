@@ -14,7 +14,6 @@ const QUIET: SyncStorePort = {
   entryIdAt: () => null,
   entryPathOf: () => null,
 }
-
 export function serveSyncStore(given: Partial<SyncStorePort> = {}): () => void {
   return providePort('sync.store', { ...QUIET, ...given })
 }

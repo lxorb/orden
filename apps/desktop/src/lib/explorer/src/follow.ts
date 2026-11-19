@@ -4,12 +4,10 @@ import { pins } from './pins.svelte'
 import { readSpec, specMoved, writeSpec } from './spec'
 
 const followers = new Set<() => void>()
-
 export function onMoved(follower: () => void): () => void {
   followers.add(follower)
   return () => followers.delete(follower)
 }
-
 export function moved(from: string, to: string): void {
   pins.moved(from, to)
   for (const tab of workspace.tabs) {

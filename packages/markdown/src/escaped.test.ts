@@ -27,7 +27,6 @@ const OPENERS = [
   '<kbd',
   '',
 ]
-
 const PAYLOADS = [
   '<img src=x onerror=alert(1) "">',
   '<a href="javascript:alert(1)" ">x</a>',
@@ -46,7 +45,6 @@ const PAYLOADS = [
   ']]><img src=x onerror=alert(1)>',
   '--><img src=x onerror=alert(1)>',
 ]
-
 const PLACES: ((words: string) => string)[] = [
   (words) => `x ${words}\n`,
   (words) => `# x ${words}\n`,
@@ -67,20 +65,17 @@ const PLACES: ((words: string) => string)[] = [
   (words) => `x\n${words}\n`,
   (words) => `${words}\n`,
 ]
-
 const OPTIONS = [
   { escapeHtml: true },
   { escapeHtml: true, blockAnchors: true },
   { escapeHtml: true, toc: true, footnotes: true, cover: true, properties: 'properties' as const },
 ]
-
 const OURS = new Set(
   (
     'A ABBR ASIDE B BLOCKQUOTE BR BUTTON CODE COL DD DEL DIV DL DT EM FIGCAPTION FIGURE H1 H2 H3 H4 H5 ' +
     'H6 HR I IMG INPUT LI MARK NAV OL P PRE SECTION SPAN STRONG SUB SUP TABLE TBODY TD TH THEAD TR UL'
   ).split(' '),
 )
-
 function live(html: string): string[] {
   const holder = document.createElement('div')
   holder.innerHTML = html
@@ -98,7 +93,6 @@ function live(html: string): string[] {
   }
   return out
 }
-
 describe('the words of someone else', () => {
   test('stay words after an inline tag marked reads as raw', () => {
     for (const tag of ['kbd', 'pre', 'code', 'script']) {
@@ -109,7 +103,6 @@ describe('the words of someone else', () => {
       expect(live(html), tag).toEqual([])
     }
   })
-
   test('are read by a browser as words, whatever came before them and wherever', () => {
     const wrong: string[] = []
     for (const opener of OPENERS) {
@@ -126,13 +119,11 @@ describe('the words of someone else', () => {
     expect(wrong.slice(0, 12)).toEqual([])
     expect(wrong).toHaveLength(0)
   }, 120_000)
-
   test('keep their entities, and their own markdown', () => {
     const html = renderMarkdown('<kbd>a &amp; *b* <c</kbd>\n', { escapeHtml: true })
     expect(html).toContain('a &amp; <em>b</em> &lt;c')
   })
 })
-
 test('in a note of the reader’s own: a tag the renderer never saw is no way past what it holds back', () => {
   const html = renderMarkdown('x <kbd>k</kbd> <kbd> <iframe src=javascript:alert(1) "">\n')
   expect(html).toContain('<kbd>k</kbd>')

@@ -19,7 +19,6 @@ import type { Held } from './held'
 
 export const FITS = ['fill', 'fit', 'tile', 'centre'] as const
 export type Fit = (typeof FITS)[number]
-
 export interface Dials {
   blur: number
   dim: number
@@ -28,21 +27,16 @@ export interface Dials {
   empty: boolean
   content: ContentLevel
 }
-
 export interface Colours {
   palette: Palette
   inks: PaperInks
   field: Span
 }
-
 const GRAIN_MOST = 0.16
-
 const SOFT = 16
-
 export function aimFor(blur: number): number {
   return AA + (SHARP - AA) * Math.max(0, 1 - blur / SOFT)
 }
-
 export function grained(span: Span, grain: number): Span {
   const alpha = (Math.min(100, Math.max(0, grain)) / 100) * GRAIN_MOST
   if (alpha <= 0) return span
@@ -51,16 +45,13 @@ export function grained(span: Span, grain: number): Span {
     most: over([255, 255, 255], alpha, span.most),
   }
 }
-
 const ANY: Span = { least: [0, 0, 0], most: [255, 255, 255] }
-
 export interface Floors {
   chrome: number
   paper: number
   terminal: number
   ground: string
 }
-
 export function floorsOf(
   held: Held | null,
   scheme: Scheme,
@@ -77,13 +68,11 @@ export function floorsOf(
       ? floorFor(palette, span, aim)
       : (held[scheme]?.floor ?? floorFor(palette, span, aim))
     : Math.max(fieldFloor, floorFor(palette, span, aim))
-
   const under: Span = {
     least: over(palette.scrim, chrome, span.least),
     most: over(palette.scrim, chrome, span.most),
   }
   const mean = rgbOf(held?.mean ?? '') ?? middle(span)
-
   return {
     chrome,
     paper: paperFloor(inks, under),
@@ -91,16 +80,13 @@ export function floorsOf(
     ground: hexOf(over(palette.scrim, chrome, mean)),
   }
 }
-
 function middle(span: Span): Rgb {
   return [0, 1, 2].map((at) => ((span.least[at] ?? 0) + (span.most[at] ?? 0)) / 2) as unknown as Rgb
 }
-
 export function placement(held: Held | null, fit: Fit): { size: string; position: string; repeat: string } {
   const [x, y] = held?.focus ?? [0.5, 0.5]
   const at = `${percentOf(x)} ${percentOf(y)}`
   const size = held?.size
-
   if (fit === 'fit') return { size: 'contain', position: at, repeat: 'no-repeat' }
   if (fit === 'tile' && size) {
     return { size: `${size[0]}px ${size[1]}px`, position: '0 0', repeat: 'repeat' }
@@ -115,11 +101,9 @@ export function placement(held: Held | null, fit: Fit): { size: string; position
   }
   return { size: 'cover', position: at, repeat: 'no-repeat' }
 }
-
 function percentOf(fraction: number): string {
   return `${Math.round(fraction * 1000) / 10}%`
 }
-
 export function grainOf(grain: number): string {
   const alpha = (Math.min(100, Math.max(0, grain)) / 100) * GRAIN_MOST
   if (alpha <= 0) return 'none'
@@ -137,7 +121,6 @@ export function grainOf(grain: number): string {
     "<rect width='100%' height='100%' filter='url(%23n)'/></svg>"
   return `url("data:image/svg+xml,${svg.replaceAll('<', '%3C').replaceAll('>', '%3E')}")`
 }
-
 function pictureLines(held: Held | null, fit: Fit): string[] {
   const place = placement(held, fit)
   return [
@@ -148,7 +131,6 @@ function pictureLines(held: Held | null, fit: Fit): string[] {
     `--wallpaper-repeat: ${place.repeat};`,
   ]
 }
-
 export function picturesRule(pictures: { light: Held | null; dark: Held | null }): string {
   const floors = (['dark', 'light'] as const).flatMap((scheme) => {
     const held = scheme === 'dark' ? (pictures.dark ?? pictures.light) : pictures.light
@@ -159,11 +141,9 @@ export function picturesRule(pictures: { light: Held | null; dark: Held | null }
   })
   return block(':root', [...pictureLines(pictures.light, 'fill'), ...floors])
 }
-
 function block(selector: string, lines: string[]): string {
   return `${selector} {\n${lines.map((line) => `  ${line}\n`).join('')}}\n`
 }
-
 export function wallpaperRule(
   pictures: { light: Held | null; dark: Held | null },
   dials: Dials,
@@ -177,7 +157,6 @@ export function wallpaperRule(
     `--empty-ground: ${dials.empty ? 'transparent' : 'var(--content-ground)'};`,
     ...(dials.content === 'opaque' ? [] : ['--content-inner: transparent;']),
   ]
-
   for (const scheme of ['dark', 'light'] as const) {
     const held = scheme === 'dark' ? (pictures.dark ?? pictures.light) : pictures.light
     const floors = floorsOf(held, scheme, dials, colours[scheme], fieldFloors[scheme])
@@ -190,7 +169,6 @@ export function wallpaperRule(
       `--wallpaper-terminal-${scheme}: ${percent(terminal)};`,
     )
   }
-
   const dark = pictures.dark ? block(":root[data-theme='dark']", pictureLines(pictures.dark, dials.fit)) : ''
   return `${block(':root', root)}${dark}`
 }

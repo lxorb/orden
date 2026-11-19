@@ -2,14 +2,12 @@ function anchorOf(range: Range, start: boolean): Node | null {
   let anchor: Node | null = start ? range.startContainer : range.endContainer
   if (anchor.nodeType === 3) anchor = anchor.parentNode
   if (start || range.endOffset !== 0) return anchor
-
   do {
     while (anchor && !anchor.previousSibling) anchor = anchor.parentNode
     anchor = anchor?.previousSibling ?? null
   } while (anchor && !anchor.childNodes.length)
   return anchor
 }
-
 function besideLine(layer: HTMLElement, x: number, y: number): { text: Text; offset: number } | null {
   let best: { text: Text; offset: number; gap: number } | null = null
   for (const span of layer.querySelectorAll('span')) {
@@ -24,25 +22,21 @@ function besideLine(layer: HTMLElement, x: number, y: number): { text: Text; off
   }
   return best
 }
-
 export function wordsEnd(layer: HTMLElement): () => void {
   const doc = layer.ownerDocument
   const end = doc.createElement('div')
   end.className = 'end'
   layer.append(end)
-
   const leaving = new AbortController()
   const { signal } = leaving
   let down = false
   let last: Range | null = null
-
   const reset = () => {
     down = false
     last = null
     layer.append(end)
     layer.classList.remove('selecting')
   }
-
   layer.addEventListener(
     'pointerdown',
     (event) => {
@@ -72,14 +66,12 @@ export function wordsEnd(layer: HTMLElement): () => void {
     doc.addEventListener(ending, () => down && reset(), { signal })
   }
   doc.defaultView?.addEventListener('blur', () => down && reset(), { signal })
-
   doc.addEventListener(
     'selectionchange',
     () => {
       if (!down) return
       const selection = doc.getSelection()
       if (!selection?.rangeCount) return
-
       const range = selection.getRangeAt(0)
       const start =
         !!last &&
@@ -87,14 +79,12 @@ export function wordsEnd(layer: HTMLElement): () => void {
           range.compareBoundaryPoints(Range.START_TO_END, last) === 0)
       const anchor = anchorOf(range, start)
       last = range.cloneRange()
-
       const parent = anchor?.parentNode
       if (!anchor || anchor === end || !parent || !layer.contains(parent)) return
       parent.insertBefore(end, start ? anchor : anchor.nextSibling)
     },
     { signal },
   )
-
   return () => {
     leaving.abort()
     end.remove()

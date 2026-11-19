@@ -5,17 +5,14 @@ export interface Hollow extends Rect {
   corner: number | Foot
   cut?: boolean
 }
-
 const PAINTERS = ['body', 'main', 'main > .middle', '[data-pane]'] as const
 const holes = new Map<string, Hollow>()
 const given = new Map<HTMLElement, string>()
 const ATTRIBUTE = 'data-underlay'
 const SLACK = 0.5
-
 function n(value: number): string {
   return String(Math.round(value * 100) / 100)
 }
-
 export function rounded(box: Rect, round: number | Foot, bottomOnly: boolean): string {
   const fit = (one: number) => Math.max(0, Math.min(one, box.width / 2, box.height / 2))
   const [bl, br] = typeof round === 'number' ? [fit(round), fit(round)] : [fit(round[0]), fit(round[1])]
@@ -34,7 +31,6 @@ export function rounded(box: Rect, round: number | Foot, bottomOnly: boolean): s
     'Z',
   ].join('')
 }
-
 function inside(hole: Rect, box: Rect): boolean {
   return (
     hole.x >= box.x - SLACK &&
@@ -43,7 +39,6 @@ function inside(hole: Rect, box: Rect): boolean {
     hole.y + hole.height <= box.y + box.height + SLACK
   )
 }
-
 export function groundOf(box: Rect, round: number, pages: readonly Hollow[]): string | null {
   const within = pages.filter((one) => one.width > 0 && one.height > 0 && inside(one, box))
   if (within.length === 0) return null
@@ -52,15 +47,12 @@ export function groundOf(box: Rect, round: number, pages: readonly Hollow[]): st
   const cut = within.filter((one) => one.cut !== false).map((one) => rounded(local(one), one.corner, true))
   return `path(evenodd, "${[outer, ...cut].join(' ')}")`
 }
-
 function cutWithin(box: Rect, pages: readonly Hollow[]): boolean {
   return pages.some((one) => one.cut !== false && inside(one, box))
 }
-
 function painters(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>(PAINTERS.join(', '))]
 }
-
 function paint(): void {
   if (typeof document === 'undefined') return
   const all = [...holes.values()]
@@ -79,7 +71,6 @@ function paint(): void {
       '--underlay-clip': shape,
     })
   }
-
   for (const [one, was] of given) {
     if (now.has(one)) continue
     one.removeAttribute(ATTRIBUTE)
@@ -95,7 +86,6 @@ function paint(): void {
   }
   document.documentElement.toggleAttribute(ATTRIBUTE, given.size > 0)
 }
-
 export function underlaid(tab: string, hole: Hollow | null): void {
   const was = holes.get(tab)
   if (hole === null) {
@@ -106,7 +96,6 @@ export function underlaid(tab: string, hole: Hollow | null): void {
   }
   paint()
 }
-
 export function opacityOf(hole: Element): number {
   if (typeof hole.checkVisibility === 'function' && !hole.checkVisibility({ visibilityProperty: true })) return 0
   let shown = 1
@@ -116,7 +105,6 @@ export function opacityOf(hole: Element): number {
   }
   return shown
 }
-
 export function fading(hole: Element): boolean {
   for (let at: Element | null = hole; at; at = at.parentElement) {
     if (typeof at.getAnimations !== 'function') return false

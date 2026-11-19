@@ -8,58 +8,48 @@ const status = (state: DomainStatus['state'], detail: string | null = null): Dom
   detail,
   dns: [],
 })
-
 describe('what the pane says about a domain', () => {
   test('nothing while there is no domain', () => {
     expect(domainNotice(status('none'))).toBeNull()
   })
-
   test('that it is waiting, quietly, while the record is on its way', () => {
     const notice = domainNotice(status('pending'))
     expect(notice?.tone).toBe('muted')
     expect(notice?.text).toBe('Waiting for the record to show up.')
   })
-
   test('passes on what Cloudflare is waiting for', () => {
     const notice = domainNotice(status('pending', 'custom hostname does not CNAME to this zone.'))
     expect(notice?.detail).toBe('custom hostname does not CNAME to this zone.')
   })
-
   test('that it works, once it does', () => {
     const notice = domainNotice(status('active'))
     expect(notice?.tone).toBe('ok')
     expect(notice?.text).toBe('Certificate issued.')
   })
-
   test('what went wrong, in red', () => {
     const notice = domainNotice(status('error', 'the domain no longer points here'))
     expect(notice?.tone).toBe('bad')
     expect(notice?.detail).toBe('the domain no longer points here')
   })
-
   test('that this server cannot do it yet', () => {
     const notice = domainNotice(status('unconfigured'))
     expect(notice?.tone).toBe('muted')
     expect(notice?.text).toBe('This server does not hand out certificates yet.')
   })
-
   test('nothing at all while a domain is waiting to be proved', () => {
     expect(domainNotice(status('unproved'))).toBeNull()
   })
-
   test('and the one sentence, in red, when the record was not found', () => {
     const notice = domainNotice(status('unproved', 'that record is not answering yet'))
     expect(notice?.tone).toBe('bad')
     expect(notice?.text).toBe('that record is not answering yet')
   })
 })
-
 describe('the state a refusal to verify comes back with', () => {
   test('is recognised, so the pane can show it', () => {
     expect(isDomainStatus({ domain: 'a.example', state: 'unproved', detail: null, dns: [] })).toBe(true)
     expect(isDomainStatus({ domain: 'a.example', state: 'unproved', detail: 'not yet', dns: [] })).toBe(true)
   })
-
   test('and anything else off the network is not', () => {
     expect(isDomainStatus(null)).toBe(false)
     expect(isDomainStatus('unproved')).toBe(false)
@@ -69,20 +59,16 @@ describe('the state a refusal to verify comes back with', () => {
     expect(isDomainStatus({ state: 'unproved', detail: null })).toBe(false)
   })
 })
-
 describe('whether to ask again', () => {
   test('while the record is on its way', () => {
     expect(keepAsking(status('pending'))).toBe(true)
   })
-
   test('after trouble, which the owner may be fixing', () => {
     expect(keepAsking(status('error', 'the domain no longer points here'))).toBe(true)
   })
-
   test('not once it works', () => {
     expect(keepAsking(status('active'))).toBe(false)
   })
-
   test('not when there is nothing to ask about', () => {
     expect(keepAsking(status('none'))).toBe(false)
     expect(keepAsking(status('unconfigured'))).toBe(false)

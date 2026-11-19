@@ -2,9 +2,7 @@ import { expect, test, vi } from 'vitest'
 
 const WORK = { id: 'work', name: 'Work', root: '/notes/Work' }
 const DIARY = '/notes/Work/Private/Diary.md'
-
 const disk = vi.hoisted(() => new Map<string, string>([['/notes/Work/Private/Diary.md', 'secret words']]))
-
 vi.mock('../../../protect/src/api', async (original) => ({
   ...(await original<typeof import('../../../protect/src/api')>()),
   protection: {
@@ -13,7 +11,6 @@ vi.mock('../../../protect/src/api', async (original) => ({
     agentsMayAll: (path: string) => !'/notes/Work/Private'.startsWith(path),
   },
 }))
-
 vi.mock('@orden/contracts', async (original) => ({
   ...(await original<typeof import('@orden/contracts')>()),
   webPages: () => ({
@@ -21,12 +18,10 @@ vi.mock('@orden/contracts', async (original) => ({
       Promise.resolve({ url: 'https://x.example/', title: `page of ${tab}`, html: '<p>words</p>' }),
   }),
 }))
-
 vi.mock('../../../sharing/src/api', () => ({
   reachedByOthers: () => false,
   reachedByOthersIn: () => false,
 }))
-
 vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [WORK],
@@ -40,15 +35,12 @@ vi.mock('../../../workspace/src/api', () => ({
     tabs: [{ id: 'tab-bank', kind: 'web', path: '/notes/Work/Private/Bank.url' }],
   },
 }))
-
 vi.mock('../../../link-index/src/api', () => ({ links: {} }))
 vi.mock('../../../scratchpad/src/api', () => ({
   pad: () => Promise.resolve({ where: () => Promise.resolve('') }),
 }))
 vi.mock('../chat/threads', () => ({ readThread: () => Promise.resolve(null) }))
-
 const { draftOf } = await import('./gather')
-
 test('a quote or a web tab from a note shut to agents is not sent, as the note itself is not', async () => {
   const draft = await draftOf(
     'what is this',

@@ -8,11 +8,9 @@ describe('a tool row', () => {
     expect(verbOf('browser_click')).toBe('Clicked')
     expect(bareName('mcp__orden__create_note')).toBe('create_note')
   })
-
   test('leaves a tool it does not know to its own name', () => {
     expect(verbOf('something_new')).toBeNull()
   })
-
   test('names a note without its folder or extension, a page by its host, a search by its words', () => {
     expect(objectOf({ path: 'Reading/Birds/Herons.md' })).toBe('Herons')
     expect(objectOf({ url: 'https://example.org/a/b' })).toBe('example.org')
@@ -20,7 +18,6 @@ describe('a tool row', () => {
     expect(objectOf(null)).toBe('')
   })
 })
-
 describe('a helper’s row (#1062)', () => {
   test('names the helper’s thread it opens, from the API loop or a session’s answer', () => {
     const ok = (text: string, agent?: string) => ({

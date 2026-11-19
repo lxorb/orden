@@ -12,9 +12,7 @@ interface Played {
   onfinish: (() => void) | null
   cancel: () => void
 }
-
 let played: Played[] = []
-
 beforeEach(() => {
   played = []
   vi.spyOn(Element.prototype, 'animate').mockImplementation(function (this: Element, frames, options) {
@@ -35,19 +33,15 @@ beforeEach(() => {
     return one as unknown as Animation
   })
 })
-
 afterEach(() => {
   vi.restoreAllMocks()
 })
-
 function finish(one: Played) {
   one.playState = 'finished'
   one.onfinish?.()
 }
-
 const of = (selector: string) => played.filter((one) => one.node.matches(selector))
 const opacities = (one: Played) => one.frames.map((frame) => Number(frame.opacity))
-
 function mounted() {
   const host = document.body.appendChild(document.createElement('div'))
   const fetched = vi.fn()
@@ -56,17 +50,14 @@ function mounted() {
   }
   return { host, fetched, door, gone: () => unmount(door) }
 }
-
 test('fetches nothing before it is first open', async () => {
   const { host, fetched, gone } = mounted()
   flushSync()
   await settle()
-
   expect(fetched).not.toHaveBeenCalled()
   expect(host.querySelector('.list')).toBeNull()
   await gone()
 })
-
 test('plays its way out once, from where it stood, and is gone when that ends', async () => {
   const { host, door, gone } = mounted()
   door.show(true)
@@ -76,11 +67,9 @@ test('plays its way out once, from where it stood, and is gone when that ends', 
   expect(opacities(coming!).at(0)).toBe(0)
   expect(opacities(coming!).at(-1)).toBe(1)
   finish(coming!)
-
   door.show(false)
   flushSync()
   await settle()
-
   expect(host.querySelector('.list')).not.toBeNull()
   const leaving = of('.list').slice(1)
   expect(leaving).toHaveLength(1)
@@ -88,17 +77,14 @@ test('plays its way out once, from where it stood, and is gone when that ends', 
   expect(going.at(0)).toBe(1)
   expect(going.at(-1)).toBe(0)
   expect(going.every((one, at) => at === 0 || one <= going[at - 1]!)).toBe(true)
-
   const [catchGoing] = of('.catch')
   expect(catchGoing?.frames.every((frame) => frame.pointerEvents === 'none')).toBe(true)
-
   finish(leaving[0]!)
   finish(catchGoing!)
   await settle()
   expect(host.querySelector('.list')).toBeNull()
   await gone()
 })
-
 test('pressed again on its way in, turns round where it is rather than from its end', async () => {
   const { door, gone } = mounted()
   door.show(true)
@@ -107,11 +93,9 @@ test('pressed again on its way in, turns round where it is rather than from its 
   const [coming] = of('.list')
   coming!.currentTime = coming!.duration / 2
   const shown = opacities(coming!)[Math.floor(coming!.frames.length / 2)]!
-
   door.show(false)
   flushSync()
   await settle()
-
   const [, turning] = of('.list')
   const back = opacities(turning!)
   expect(back.at(0)).toBeGreaterThan(0)
@@ -121,24 +105,20 @@ test('pressed again on its way in, turns round where it is rather than from its 
   expect(turning!.duration).toBeLessThan(coming!.duration)
   await gone()
 })
-
 test('and pressed again on its way out, comes back from where it is', async () => {
   const { host, door, gone } = mounted()
   door.show(true)
   flushSync()
   await settle()
   finish(of('.list')[0]!)
-
   door.show(false)
   flushSync()
   await settle()
   const going = of('.list')[1]!
   going.currentTime = going.duration / 2
-
   door.show(true)
   flushSync()
   await settle()
-
   const again = of('.list')[2]!
   const up = opacities(again)
   expect(up.at(0)).toBeGreaterThan(0)

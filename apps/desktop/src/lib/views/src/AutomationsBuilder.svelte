@@ -6,7 +6,6 @@
   import type { Kit } from './kit'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const automations = $derived(live.base ? readAutomations(live.base) : [])
   const keys = $derived(
@@ -17,19 +16,15 @@
       : [],
   )
   const ADDED = ''
-
   function write(next: Automation[]) {
     kit.change((base) => withAutomations(base, next))
   }
-
   function change(at: number, automation: Automation) {
     write(automations.map((one, index) => (index === at ? automation : one)))
   }
-
   function add() {
     write([...automations, { when: { added: true }, set: {}, kept: {} }])
   }
-
   function said(automation: Automation, key: 'move' | 'notify', words: string): Automation {
     const next = { ...automation }
     if (words.trim()) next[key] = words.trim()
@@ -177,18 +172,15 @@
     border-bottom: 1px solid var(--line);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .automation.off {
     opacity: 0.55;
   }
-
   .row {
     display: grid;
     grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--space-2);
   }
-
   .switch {
     display: grid;
     place-items: center;
@@ -196,21 +188,17 @@
     border: none;
     background: none;
   }
-
   .mark,
   .switch {
     width: 40px;
   }
-
   .mark {
     color: var(--muted);
     text-align: center;
   }
-
   .then .adder {
     grid-column: 2 / 4;
   }
-
   .adder .orden-row-label {
     color: var(--muted);
   }

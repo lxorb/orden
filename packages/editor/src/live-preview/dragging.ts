@@ -2,7 +2,6 @@ import { StateEffect, StateField } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 
 export const setDragging = StateEffect.define<boolean>()
-
 export const dragging = StateField.define<boolean>({
   create: () => false,
   update(value, transaction) {
@@ -10,27 +9,22 @@ export const dragging = StateField.define<boolean>({
     return value
   },
 })
-
 export const dragsSelection = (button: number, pointer: string): boolean => button === 0 && pointer === 'mouse'
-
 const watcher = ViewPlugin.fromClass(
   class {
     private readonly release: () => void
     pointer = 'mouse'
-
     constructor(private readonly view: EditorView) {
       this.release = () => this.end()
       window.addEventListener('mouseup', this.release)
       window.addEventListener('blur', this.release)
       window.addEventListener('dragend', this.release)
     }
-
     destroy() {
       window.removeEventListener('mouseup', this.release)
       window.removeEventListener('blur', this.release)
       window.removeEventListener('dragend', this.release)
     }
-
     private end() {
       if (this.view.state.field(dragging, false)) this.view.dispatch({ effects: setDragging.of(false) })
     }
@@ -49,5 +43,4 @@ const watcher = ViewPlugin.fromClass(
     },
   },
 )
-
 export const dragFreeze = [dragging, watcher]

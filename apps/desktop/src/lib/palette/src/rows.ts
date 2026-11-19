@@ -12,7 +12,6 @@ export interface OpenTab {
   shown: string
   url: string | null
 }
-
 export type Row =
   | { kind: 'note'; entry: Entry; folder: string | null; shared: boolean }
   | { kind: 'tab'; tab: OpenTab; folder: string | null; shared: boolean }

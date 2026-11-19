@@ -58,7 +58,6 @@ export { folderEntries, vaultEntries } from './vault-menu'
 export { colorName } from './vault-words'
 export { SETTINGS_TABS, type SettingsTab } from './view'
 export { openSite } from './websites'
-
 export const passCommands = {
   'pass.open': () => void openPass(),
   'pass.lock': () => void lockPass(),

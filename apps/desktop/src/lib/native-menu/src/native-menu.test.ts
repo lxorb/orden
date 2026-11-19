@@ -35,14 +35,12 @@ const KEYS: Record<string, string> = {
   'format.bold': 'Mod-b',
   'format.clash': 'Mod-q',
 }
-
 const row = (label: string, command?: string, extra: Partial<MenuItem> = {}): MenuItem => ({
   label,
   ...(command ? { command } : {}),
   run: () => undefined,
   ...extra,
 })
-
 const GROUPS: MenuGroup[] = [
   {
     id: 'file',
@@ -78,7 +76,6 @@ const GROUPS: MenuGroup[] = [
   },
   { id: 'help', label: 'Help', rows: [row('Source code')] },
 ]
-
 const WORDS = {
   app: 'Orden',
   about: 'About Orden',
@@ -93,7 +90,6 @@ const WORDS = {
   bringAllToFront: 'Bring all to front',
   find: 'Find',
 }
-
 function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
   return {
     groups: GROUPS,
@@ -111,15 +107,12 @@ function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
     ...over,
   }
 }
-
 const bar = (over: Partial<MenuBarSources> = {}) => describeMenuBar(sources(over)).entries
-
 function menu(entries: NativeEntry[], id: string): NativeSubmenu {
   const found = entries.find((one) => one.id === id)
   if (found?.kind !== 'submenu') throw new Error(`no ${id} menu`)
   return found
 }
-
 function read(submenu: NativeSubmenu): string[] {
   return submenu.items.map((one) => {
     if (one.kind === 'rule') return '---'
@@ -127,13 +120,11 @@ function read(submenu: NativeSubmenu): string[] {
     return one.text
   })
 }
-
 function itemIn(submenu: NativeSubmenu, text: string): NativeItem {
   const found = submenu.items.find((one) => one.kind === 'item' && one.text === text)
   if (found?.kind !== 'item') throw new Error(`no ${text} row`)
   return found
 }
-
 describe('a key as a Mac menu row writes it', () => {
   test.each([
     ['Mod-s', 'Cmd+S'],
@@ -155,13 +146,11 @@ describe('a key as a Mac menu row writes it', () => {
   ])('%s as %s, modifiers in one order, keys named as Tauri names them', (key, written) => {
     expect(toAccelerator(key)).toBe(written)
   })
-
   test.each(['Enter', 'Escape', 'Shift-a', 'Mod-ContextMenu', 'Mod-+', ''])(
     'refuses %j: a bare typed key, or one Tauri has no name for',
     (key) => expect(toAccelerator(key)).toBeNull(),
   )
 })
-
 describe('a key a menu row can show', () => {
   const keys: Record<string, string | null> = {
     'app.palette': 'Shift Shift',
@@ -170,23 +159,19 @@ describe('a key a menu row can show', () => {
     'app.graph': 'Alt Alt',
   }
   const keyFor = (command: string) => keys[command] ?? null
-
   test('is the chord a command has, or its second key where it has a tap', () => {
     expect(chordFor(keyFor, 'app.save')).toBe('Mod-s')
     expect(chordFor(keyFor, 'app.palette')).toBe('Mod-p')
     expect(toAccelerator(chordFor(keyFor, 'app.palette') ?? '')).toBe('Cmd+P')
   })
-
   test('is nothing for a tap with no second key', () => {
     expect(chordFor(keyFor, 'app.graph')).toBeNull()
   })
 })
-
 describe('the strip', () => {
   test('is the app menu, the app’s own groups, then Window just before Help', () => {
     expect(bar().map((one) => one.id)).toEqual(['orden', 'file', 'edit', 'format', 'view', 'window', 'help'])
   })
-
   test('opens with the app’s own menu, the way every Mac app does', () => {
     expect(read(menu(bar(), 'orden'))).toEqual([
       '[About] About Orden',
@@ -202,24 +187,20 @@ describe('the strip', () => {
       '[Quit] Quit Orden',
     ])
   })
-
   test('where Settings has its key, and File no longer has it', () => {
     expect(itemIn(menu(bar(), 'orden'), 'Settings…').accelerator).toBe('Cmd+,')
     expect(read(menu(bar(), 'file'))).not.toContain('Settings')
   })
-
   test('File has the making and closing rows around the in-window menu’s', () => {
     const file = menu(bar(), 'file')
     expect(read(file)).toEqual(['New Note', 'New Tab', '---', 'Print', '---', 'Version History', '---', 'Close Note'])
     expect(itemIn(file, 'New Tab').accelerator).toBe('Cmd+T')
     expect(itemIn(file, 'Close Note').accelerator).toBe('Cmd+W')
   })
-
   test('and no doubled rule where the in-window menu has nothing under File', () => {
     const groups = GROUPS.map((one) => (one.id === 'file' ? { ...one, rows: [] } : one))
     expect(read(menu(bar({ groups }), 'file'))).toEqual(['New Note', 'New Tab', '---', 'Close Note'])
   })
-
   test('Edit’s clipboard rows are the system’s, so they reach a field and a web page', () => {
     expect(read(menu(bar(), 'edit'))).toEqual([
       'Undo',
@@ -231,7 +212,6 @@ describe('the strip', () => {
       'Select All',
     ])
   })
-
   test('and its Undo, Redo and Select All are the app’s, standing in for the system’s', () => {
     const edit = menu(bar(), 'edit')
     expect(itemIn(edit, 'Undo')).toMatchObject({
@@ -246,7 +226,6 @@ describe('the strip', () => {
     })
     expect(itemIn(edit, 'Paste as Plain Text').standIn).toBeUndefined()
   })
-
   test('which serve whatever has the keyboard, so the note cannot grey them', () => {
     const greyed: MenuGroup = {
       id: 'edit',
@@ -260,7 +239,6 @@ describe('the strip', () => {
     expect(itemIn(edit, 'Undo')).toMatchObject({ enabled: true, anywhere: true })
     expect(itemIn(edit, 'Paste as Plain Text')).toMatchObject({ enabled: false, anywhere: false })
   })
-
   test('Window is the system’s, with walking the tabs in it', () => {
     const window = menu(bar(), 'window')
     expect(window.role).toBe('window')
@@ -274,13 +252,11 @@ describe('the strip', () => {
     ])
     expect(itemIn(window, 'Next Note').accelerator).toBe('Ctrl+Tab')
   })
-
   test('Help is the system’s, and opens with the list of keys', () => {
     const help = menu(bar(), 'help')
     expect(help.role).toBe('help')
     expect(read(help)).toEqual(['Keyboard Shortcuts', '---', 'Source Code'])
   })
-
   test('keeps the ticks, the greys and the nesting', () => {
     const format = menu(bar(), 'format')
     const colour = menu(format.items, 'format.2')
@@ -293,11 +269,9 @@ describe('the strip', () => {
     })
     expect(itemIn(menu(bar(), 'file'), 'Version History').enabled).toBe(false)
   })
-
   test('gives no row a key a system row holds', () => {
     expect(itemIn(menu(bar(), 'format'), 'Clash')).toMatchObject({ accelerator: null, key: null })
   })
-
   test('gives a key to one row only', () => {
     const doubled: MenuGroup = {
       id: 'format',
@@ -308,7 +282,6 @@ describe('the strip', () => {
     expect(itemIn(format, 'Bold').accelerator).toBe('Cmd+B')
     expect(itemIn(format, 'Again').accelerator).toBeNull()
   })
-
   test('knows a row of the window’s from a row of the note’s', () => {
     expect(itemIn(menu(bar(), 'file'), 'Close Note').anywhere).toBe(true)
     expect(itemIn(menu(bar(), 'format'), 'Bold').anywhere).toBe(false)
@@ -317,7 +290,6 @@ describe('the strip', () => {
       key: null,
     })
   })
-
   test('ends View with reloading a web tab, on its keys, from anywhere', () => {
     const reloading = sources({
       viewRows: [row('Reload', 'web.reload'), row('Hard reload', 'web.fresh', { disabled: true })],
@@ -337,7 +309,6 @@ describe('the strip', () => {
     expect(view.items.map((one) => one.kind)).toEqual(['item', 'rule', 'item', 'item'])
     expect(keyRuns(itemIn(view, 'Reload').anywhere, 'away')).toBe(true)
   })
-
   test('takes back and forward on the brackets, from anywhere, as rows', () => {
     const stepping = sources({
       viewRows: [row('Back', 'web.back'), row('Forward', 'web.forward')],
@@ -349,7 +320,6 @@ describe('the strip', () => {
     expect(itemIn(view, 'Forward')).toMatchObject({ accelerator: 'Cmd+]', anywhere: true })
     expect(keyRuns(itemIn(view, 'Back').anywhere, 'page')).toBe(true)
   })
-
   test('builds the strip again when back and forward come or go', () => {
     const keyFor = (command: string) =>
       ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null
@@ -360,7 +330,6 @@ describe('the strip', () => {
     expect(changesBetween(onPage, onNote)).toBe(null)
     expect(JSON.stringify(onNote)).not.toContain('Cmd+[')
   })
-
   test('runs each row’s own function, by the row’s id', () => {
     const ran: string[] = []
     const groups: MenuGroup[] = [
@@ -375,7 +344,6 @@ describe('the strip', () => {
     expect(ran).toEqual(['focus'])
   })
 })
-
 describe('the strip, changed', () => {
   test('in place, where only a tick, a grey, a word or a key moved', () => {
     const before = bar()
@@ -395,7 +363,6 @@ describe('the strip, changed', () => {
       keyFor: (command) => (command === 'format.bold' ? 'Mod-Shift-b' : (KEYS[command] ?? null)),
       words: { ...WORDS, quit: 'Leave Orden' },
     })
-
     expect(changesBetween(before, after)).toEqual([
       { id: 'orden.quit', text: 'Leave Orden' },
       { id: 'file.5', enabled: true },
@@ -403,16 +370,13 @@ describe('the strip, changed', () => {
       { id: 'view.0', checked: true },
     ])
   })
-
   test('not at all when nothing did', () => {
     expect(changesBetween(bar(), bar())).toEqual([])
   })
-
   test('built again when a row came or went', () => {
     const file = { opening: [row('New note', 'app.new')], closing: [] }
     expect(changesBetween(bar(), bar({ file }))).toBeNull()
   })
-
   test('and when a row became a different kind of thing', () => {
     const plain: MenuGroup = {
       id: 'view',
@@ -423,7 +387,6 @@ describe('the strip, changed', () => {
     expect(changesBetween(bar(), bar({ groups }))).toBeNull()
   })
 })
-
 describe('a key the page let pass', () => {
   const seen = (extra: Partial<SeenKey['event']> = {}): SeenKey => ({
     event: {
@@ -438,11 +401,9 @@ describe('a key the page let pass', () => {
     },
     at: 1000,
   })
-
   test('is the one the page saw a moment ago and did not act on', () => {
     expect(letPass('Mod-b', seen(), 1050)).toBe(true)
   })
-
   test('is not one the page acted on, another key, one from long ago, nor one never seen', () => {
     expect(letPass('Mod-b', seen({ defaultPrevented: true }), 1050)).toBe(false)
     expect(letPass('Mod-i', seen(), 1050)).toBe(false)
@@ -450,7 +411,6 @@ describe('a key the page let pass', () => {
     expect(letPass('Mod-b', null, 1050)).toBe(false)
   })
 })
-
 describe('full screen, left by the window', () => {
   test('takes the app’s own with it, and nothing else does', () => {
     expect(leftFullscreen(true, false, true)).toBe(true)
@@ -463,7 +423,6 @@ describe('full screen, left by the window', () => {
       expect(leftFullscreen(was, now, on)).toBe(false)
   })
 })
-
 describe('the windows that have a strip of their own', () => {
   test('are the first window and the ones opened after it, not the quick add or a print', () => {
     expect(documentWindows(['main', 'orden-2', 'orden-17'])).toBe(3)
@@ -471,7 +430,6 @@ describe('the windows that have a strip of their own', () => {
     expect(documentWindows([])).toBe(0)
   })
 })
-
 describe('a row pressed by its key', () => {
   test('of the window’s runs wherever the keyboard is, of the note’s only in the note', () => {
     for (const at of ['note', 'page', 'away'] as const) {
@@ -480,7 +438,6 @@ describe('a row pressed by its key', () => {
     }
   })
 })
-
 describe('a key a stand-in hands the page', () => {
   test('is the keystroke it names, by the key and by the character', () => {
     expect(keystrokeOf('Mod-Shift-z')).toEqual({
@@ -495,7 +452,6 @@ describe('a key a stand-in hands the page', () => {
     expect(keystrokeOf('Ctrl-Tab')).toMatchObject({ key: 'Tab', code: 'Tab' })
     expect(keystrokeOf('Mod-Space')).toMatchObject({ key: ' ', code: 'Space' })
   })
-
   test('is matched by the combination and read back as it', () => {
     for (const written of ['Mod-z', 'Mod-Shift-z', 'Mod-a', 'Mod-Alt-5', 'Mod-Shift-/', 'Mod--']) {
       const keystroke = keystrokeOf(written)
@@ -504,13 +460,11 @@ describe('a key a stand-in hands the page', () => {
       expect(readCombination(keystroke, 'mac')).toBe(written)
     }
   })
-
   test('is nothing for a combination that cannot be read', () => {
     expect(keystrokeOf('')).toBeNull()
     expect(keystrokeOf('Hyper-k')).toBeNull()
   })
 })
-
 describe('the words a Mac writes its menus in', () => {
   test('title case leaves the small words small, and the first and last never', () => {
     expect(titled('Bring all to front')).toBe('Bring All to Front')
@@ -519,28 +473,23 @@ describe('the words a Mac writes its menus in', () => {
     expect(titled('Zoom in')).toBe('Zoom In')
     expect(titled('Export as HTML without styles')).toBe('Export as HTML Without Styles')
   })
-
   test('and a word someone else spelled is left as it is', () => {
     expect(titled('Export as ePub')).toBe('Export as ePub')
     expect(titled('Read-only')).toBe('Read-Only')
     expect(titled('Heading 1')).toBe('Heading 1')
   })
-
   test('the strip is in title case', () => {
     expect(read(menu(bar(), 'file'))).toContain('Close Note')
     expect(read(menu(bar(), 'window'))).toContain('[BringAllToFront] Bring All to Front')
   })
-
   test('a row that asks first ends in an ellipsis', () => {
     const groups = GROUPS.map((group) =>
       group.id === 'file' ? { ...group, rows: [row('Rename', 'app.rename', { asks: true }), ...group.rows] } : group,
     )
     const file = menu(bar({ groups }), 'file')
-
     expect(read(file)).toContain('Rename…')
     expect(read(menu(bar(), 'orden'))).toContain('Settings…')
   })
-
   test('finding is a submenu of Edit, where the rows were', () => {
     const finding = [
       row('Find', 'edit.find', { asks: true }),
@@ -553,7 +502,6 @@ describe('the words a Mac writes its menus in', () => {
     )
     const edit = menu(bar({ groups }), 'edit')
     const find = edit.items.at(-1)
-
     expect(find?.kind === 'submenu' && find.text).toBe('Find')
     expect(find?.kind === 'submenu' && read(find)).toEqual(['Find…', 'Replace…', 'Find Next', 'Find Previous'])
   })

@@ -8,37 +8,30 @@ export interface OccurrenceOptions {
   skipPast?: boolean
   created?: boolean
 }
-
 const referenceOf = (task: TaskFields): string | undefined => task.due ?? task.scheduled ?? task.start ?? task.deadline
-
 const later = (a: string, b: string) => (a > b ? a : b)
-
 export function nextOccurrence(task: TaskFields, today: string, options: OccurrenceOptions = {}): TaskFields | null {
   if (!task.recurrence) return null
   const rule = parseRule(task.recurrence)
   if (!rule) return null
   if (rule.count !== undefined && rule.count <= 1) return null
-
   const reference = referenceOf(task)
   const next: TaskFields = { ...task, status: ' ', done: false, cancelled: false }
   if (rule.count !== undefined) next.recurrence = fewerTimes(task.recurrence, rule.count - 1)
   delete next.completed
   delete next.cancelledOn
   if (options.created) next.created = today
-
   if (rule.whenDone || !reference) {
     const date = nextDate(rule, today, today)
     if (!date) return null
     if (!reference) return next
     return shiftedBy(next, dayNumber(date) - dayNumber(reference))
   }
-
   const after = options.skipPast === false ? reference : later(reference, today)
   const date = nextDate(rule, reference, after)
   if (!date) return null
   return shiftedBy(next, dayNumber(date) - dayNumber(reference))
 }
-
 function shiftedBy(task: TaskFields, days: number): TaskFields {
   const moved = { ...task }
   for (const field of ['due', 'scheduled', 'start', 'deadline'] as const) {
@@ -48,7 +41,6 @@ function shiftedBy(task: TaskFields, days: number): TaskFields {
   moved.remind = task.remind.map((one) => ('at' in one ? { ...one, at: addDays(one.at, days) } : one))
   return moved
 }
-
 function changeBetween(before: TaskFields, after: TaskFields): TaskChange {
   const change: TaskChange = {}
   const fields = [
@@ -70,17 +62,13 @@ function changeBetween(before: TaskFields, after: TaskFields): TaskChange {
   }
   return change
 }
-
 interface NoteLine {
   text: string
   from: number
 }
-
 let lastRead: { note: string; lines: readonly NoteLine[] } | null = null
-
 function linesOf(note: string): readonly NoteLine[] {
   if (lastRead?.note === note) return lastRead.lines
-
   const out: NoteLine[] = []
   let from = 0
   for (const text of note.split('\n')) {
@@ -90,9 +78,7 @@ function linesOf(note: string): readonly NoteLine[] {
   lastRead = { note, lines: out }
   return out
 }
-
 const indentOf = (line: string) => /^[ \t]*/.exec(line)?.[0].length ?? 0
-
 function childrenOf(lines: readonly { text: string }[], at: number): number[] {
   const own = indentOf(lines[at]?.text ?? '')
   const out: number[] = []
@@ -109,25 +95,20 @@ function childrenOf(lines: readonly { text: string }[], at: number): number[] {
   }
   return out
 }
-
 const placed = (edits: readonly TextEdit[], from: number): TextEdit[] =>
   edits.map((edit) => ({ from: edit.from + from, to: edit.to + from, insert: edit.insert }))
-
 export function tick(note: string, line: number, today: string, options: OccurrenceOptions = {}): TextEdit[] {
   const lines = linesOf(note)
   const target = lines[line]
   if (!target) return []
   const task = readTask(target.text)
   if (!task) return []
-
   if (task.done || task.cancelled) {
     return placed(writeTask(target.text, { status: ' ', completed: null, cancelledOn: null }), target.from)
   }
-
   const children = childrenOf(lines, line)
   const edits: TextEdit[] = []
   const next = nextOccurrence(task, today, options)
-
   if (next) {
     const nextLine = changedTask(target.text, { ...changeBetween(task, next), block: null })
     const block = [nextLine, ...repeatedChildren(lines, children)]
@@ -145,7 +126,6 @@ export function tick(note: string, line: number, today: string, options: Occurre
     const end = lines[line + 1]?.from ?? target.from + target.text.length
     return [{ from: target.from, to: end, insert: '' }]
   }
-
   edits.push(...placed(writeTask(target.text, { done: true }), target.from))
   for (const index of children) {
     const child = lines[index]
@@ -155,7 +135,6 @@ export function tick(note: string, line: number, today: string, options: Occurre
   }
   return edits
 }
-
 function repeatedChildren(lines: readonly { text: string }[], children: readonly number[]): string[] {
   const out: string[] = []
   let seenTask = false
@@ -172,14 +151,11 @@ function repeatedChildren(lines: readonly { text: string }[], children: readonly
   while (out.length && out.at(-1)?.trim() === '') out.pop()
   return out
 }
-
 export function skip(line: string, today: string, options: OccurrenceOptions = {}): TextEdit[] {
   const task = readTask(line)
   if (!task) return []
   const next = nextOccurrence(task, today, { ...options, created: false })
   return next ? writeTask(line, changeBetween(task, { ...next, status: task.status })) : []
 }
-
 export const finish = (line: string): TextEdit[] => writeTask(line, { done: true, recurrence: null })
-
 export { todayOf }

@@ -1,18 +1,13 @@
 import type { Message, Who } from './types'
 
 const TAG = 'untrusted'
-
 export function untrusted(source: string, words: string): string {
   return `<${TAG} source="${attribute(source)}">\n${inert(words, EVERY_TAG)}\n</${TAG}>`
 }
-
 const PROMPT_TAGS = /^\s*[/\u2215\u2044]?\s*(attached|summary|reader-context)/
 const EVERY_TAG = /^\s*[/\u2215\u2044]?\s*(untrusted|attached|summary|reader-context)/
-
 export const defused = (words: string): string => inert(words, PROMPT_TAGS)
-
 const HIDDEN = /^[\p{Cf}\u034F\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u
-
 const LATIN: Record<string, string> = {
   '\u0430': 'a',
   '\u03b1': 'a',
@@ -43,9 +38,7 @@ const LATIN: Record<string, string> = {
   '\u03c7': 'x',
   '\u0443': 'y',
 }
-
 const LOOKED_AT = 64
-
 function seenAfter(words: string, from: number): string {
   let out = ''
   let kept = 0
@@ -58,10 +51,8 @@ function seenAfter(words: string, from: number): string {
   }
   return Array.from(out.normalize('NFKC').toLowerCase(), (one) => LATIN[one] ?? one).join('')
 }
-
 const inert = (words: string, tags: RegExp): string =>
   words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) => (tags.test(seenAfter(words, at + 1)) ? '&lt;' : one))
-
 const attribute = (source: string): string =>
   Array.from(source)
     .slice(0, 300)
@@ -73,16 +64,12 @@ const attribute = (source: string): string =>
       return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one) ? ' ' : one
     })
     .join('')
-
 export const oneLine = (text: string): string => text.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
-
 export const momentOf = (at: number): string => `${new Date(at).toISOString().slice(0, 16)}Z`
-
 export interface Reading {
   me: Who | null
   nameOf: (who: Who) => string
 }
-
 export interface Listed {
   id: string
   name: string
@@ -92,7 +79,6 @@ export interface Listed {
   mentions: number
   lastAt: number | null
 }
-
 export function chatsText(chats: readonly Listed[]): string {
   if (!chats.length) return 'No chats.'
   return chats
@@ -109,7 +95,6 @@ export function chatsText(chats: readonly Listed[]): string {
     )
     .join('\n')
 }
-
 function messageText(chat: string, message: Message, reading: Reading): string {
   const mine = message.author === reading.me
   const name = reading.nameOf(message.author)
@@ -130,7 +115,6 @@ function messageText(chat: string, message: Message, reading: Reading): string {
     ...(message.deleted ? ['deleted'] : []),
   ].join(' · ')
   if (message.deleted) return `- ${head}`
-
   const words = [
     message.body,
     ...(message.files.length ? [`[files: ${message.files.map((one) => one.name).join(', ')}]`] : []),
@@ -146,12 +130,10 @@ function messageText(chat: string, message: Message, reading: Reading): string {
   }
   return `- ${head}\n${untrusted(`chat:${chat} from:${name}`, words)}`
 }
-
 export function messagesText(chat: string, messages: readonly Message[], reading: Reading): string {
   if (!messages.length) return `#${oneLine(chat)} has no messages here.`
   return [`#${oneLine(chat)}`, ...messages.map((one) => messageText(chat, one, reading))].join('\n')
 }
-
 export function hitsText(hits: readonly { chat: string; message: Message }[], reading: Reading): string {
   if (!hits.length) return 'Nothing found.'
   return hits

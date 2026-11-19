@@ -14,13 +14,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function folds(view: EditorView) {
   const out: [number, number][] = []
   foldedRanges(view.state).between(0, view.state.doc.length, (from, to) => {
@@ -28,7 +25,6 @@ function folds(view: EditorView) {
   })
   return out
 }
-
 describe('jumping back from a footnote into a folded section', () => {
   test('opens the fold when the mark ends the section', () => {
     const doc = '## Intro\n\nSome claim.[^1]\n\n## Notes\n\n[^1]: The source.'
@@ -46,11 +42,9 @@ describe('jumping back from a footnote into a folded section', () => {
     const section = foldable(view.state, 0, heading)
     expect(section).toEqual({ from: heading, to: mark })
     if (section) view.dispatch({ effects: foldEffect.of(section) })
-
     const definition = footnoteAt(view.state, doc.lastIndexOf('[^1]') + 2)
     expect(definition?.kind).toBe('def')
     if (definition) followFootnote(view, definition)
-
     expect(view.state.selection.main.head).toBe(mark)
     expect(folds(view)).toEqual([])
   })

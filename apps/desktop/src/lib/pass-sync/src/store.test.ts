@@ -13,50 +13,41 @@ const FAST = { m: 64, t: 1, p: 1 }
 const PASSWORD = 'correct horse battery staple'
 const SECRET = 'hunter2-very-secret'
 const TITLE = 'Secret Bank Title'
-
 configurePass({ kdf: FAST, pinKdf: FAST })
-
 function login(title: string, more: Partial<Login> = {}): Login {
   return { ...blank('login'), title, ...more }
 }
-
 function site(url: string, match: Website['match'] = 'domain'): Website {
   return { url, match }
 }
-
 async function started(): Promise<PassStore> {
   const store = new PassStore()
   await store.start()
   return store
 }
-
 async function fresh(): Promise<{ store: PassStore; recovery: string }> {
   const store = await started()
   expect(store.state).toBe('new')
   const recovery = await store.setup(PASSWORD)
   return { store, recovery }
 }
-
 async function reopened(): Promise<PassStore> {
   const store = await started()
   expect(store.state).toBe('locked')
   expect(await store.unlock({ password: PASSWORD })).toBe(true)
   return store
 }
-
 function personal(store: PassStore): string {
   const vault = store.vaults[0]
   if (!vault) throw new Error('no vault')
   return vault.id
 }
-
 function request<T>(asked: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     asked.onsuccess = () => resolve(asked.result)
     asked.onerror = () => reject(asked.error ?? new Error('failed'))
   })
 }
-
 async function everythingKept(): Promise<string> {
   const db = await request(indexedDB.open('orden-pass'))
   const rows: unknown[] = []
@@ -66,12 +57,10 @@ async function everythingKept(): Promise<string> {
   db.close()
   return JSON.stringify(rows)
 }
-
 beforeEach(async () => {
   await forgetLocal()
   vi.stubGlobal('localStorage', memoryStorage())
 })
-
 describe('setting up and unlocking', () => {
   test('a first setup opens Pass with one vault, Personal, and a recovery code', async () => {
     const { store, recovery } = await fresh()
@@ -81,7 +70,6 @@ describe('setting up and unlocking', () => {
     expect(store.vaults[0]).toMatchObject({ name: 'Personal', color: 'purple', icon: 'home' })
     expect(store.vaults[0]?.role).toBe('owner')
   })
-
   test('locking empties everything, and the password opens it again', async () => {
     const { store } = await fresh()
     await store.create(personal(store), login('Mail'))
@@ -93,7 +81,6 @@ describe('setting up and unlocking', () => {
     expect(await store.unlock({ password: PASSWORD })).toBe(true)
     expect(store.items.map((item) => item.content.title)).toEqual(['Mail'])
   })
-
   test('a wrong password answers false and throws nothing', async () => {
     const { store } = await fresh()
     store.lock()
@@ -101,7 +88,6 @@ describe('setting up and unlocking', () => {
     expect(store.state).toBe('locked')
     expect(store.error).toBeNull()
   })
-
   test('the recovery code opens it and asks for a new password', async () => {
     const { store, recovery } = await fresh()
     store.lock()
@@ -115,7 +101,6 @@ describe('setting up and unlocking', () => {
     expect(await store.unlock({ password: 'a new password' })).toBe(true)
     expect(store.mustChangePassword).toBe(false)
   })
-
   test('a password is changed only with the old one', async () => {
     const { store } = await fresh()
     expect(await store.changePassword('wrong', 'other')).toBe(false)
@@ -123,7 +108,6 @@ describe('setting up and unlocking', () => {
     expect(await store.confirmPassword('other')).toBe(true)
     expect(await store.confirmPassword(PASSWORD)).toBe(false)
   })
-
   test('a new recovery code replaces the old one', async () => {
     const { store, recovery } = await fresh()
     expect(await store.newRecovery('wrong')).toBeNull()
@@ -135,7 +119,6 @@ describe('setting up and unlocking', () => {
     expect(await store.unlock({ recovery: next ?? '' })).toBe(true)
   })
 })
-
 describe('the PIN', () => {
   test('opens Pass, and survives a restart', async () => {
     const { store } = await fresh()
@@ -150,7 +133,6 @@ describe('the PIN', () => {
     expect(again.settings.lock).toBe('pin')
     expect(await again.unlock({ pin: '1234' })).toBe(true)
   })
-
   test('five wrong PINs forget it, and only the password opens Pass then', async () => {
     const { store } = await fresh()
     await store.useLock('pin', '1234')
@@ -166,7 +148,6 @@ describe('the PIN', () => {
     expect(await store.unlock({ pin: '1234' })).toBe(false)
     expect(await store.unlock({ password: PASSWORD })).toBe(true)
   })
-
   test('the right PIN after wrong ones starts the count again', async () => {
     const { store } = await fresh()
     await store.useLock('pin', '1234')
@@ -177,7 +158,6 @@ describe('the PIN', () => {
     expect(await store.unlock({ pin: '1234' })).toBe(true)
     expect(store.pinTries).toBe(5)
   })
-
   test('wrong PINs typed at once count once each, in one window or in two', async () => {
     const { store } = await fresh()
     await store.useLock('pin', '1234')
@@ -198,7 +178,6 @@ describe('the PIN', () => {
     expect(await after.unlock({ pin: '1234' })).toBe(false)
     expect(await after.unlock({ password: PASSWORD })).toBe(true)
   })
-
   test('going back to the password forgets this device’s seal', async () => {
     const { store } = await fresh()
     await store.useLock('pin', '1234')
@@ -207,7 +186,6 @@ describe('the PIN', () => {
     store.lock()
     expect(await store.unlock({ pin: '1234' })).toBe(false)
   })
-
   test('the browser build offers the password only', async () => {
     fake.guarded = false
     const { store } = await fresh()
@@ -218,7 +196,6 @@ describe('the PIN', () => {
     expect(store.settings.lock).toBe('password')
   })
 })
-
 describe('the device', () => {
   test('opens Pass when the system says yes, and not when it says no', async () => {
     const { store } = await fresh()
@@ -233,7 +210,6 @@ describe('the device', () => {
     expect(await store.unlock({ device: true })).toBe(true)
     expect(fake.asked).toContain('Unlock Pass')
   })
-
   test('cannot be chosen where the system cannot ask', async () => {
     fake.can = false
     const { store } = await fresh()
@@ -241,7 +217,6 @@ describe('the device', () => {
     expect(await store.useLock('device')).toBe(false)
   })
 })
-
 describe('items', () => {
   test('are written, changed and still there after a restart', async () => {
     const { store } = await fresh()
@@ -257,7 +232,6 @@ describe('items', () => {
     expect(mail?.content).toMatchObject({ title: 'Mail', password: 'two' })
     expect(mail?.rev).toBe(2)
   })
-
   test('go to the trash, come back, and go for good', async () => {
     const { store } = await fresh()
     const vault = personal(store)
@@ -274,7 +248,6 @@ describe('items', () => {
     expect(store.items.map((item) => item.id)).toEqual([b.id])
     expect((await reopened()).items.map((item) => item.id)).toEqual([b.id])
   })
-
   test('move to another vault, with their history', async () => {
     const { store } = await fresh()
     const home = personal(store)
@@ -291,7 +264,6 @@ describe('items', () => {
     expect(again.items[0]).toMatchObject({ vault: work.id, content: { title: 'Wiki 3' } })
     expect((await again.history(made.id)).map((item) => item.content.title)).toEqual(['Wiki 2', 'Wiki'])
   })
-
   test('move all from one vault, and a deleted vault takes its items', async () => {
     const { store } = await fresh()
     const home = personal(store)
@@ -306,7 +278,6 @@ describe('items', () => {
     await expect(store.deleteVault(home)).rejects.toThrow(/last vault/)
     expect((await reopened()).vaults.map((vault) => vault.name)).toEqual(['Personal'])
   })
-
   test('a vault is renamed and its folders kept', async () => {
     const { store } = await fresh()
     const home = personal(store)
@@ -318,7 +289,6 @@ describe('items', () => {
     expect(again.vaults[0]).toMatchObject({ name: 'Home', color: 'purple', rev: 2 })
     expect(again.vaults[0]?.folders).toEqual([{ id: 'f1', name: 'Banks', parent: null }])
   })
-
   test('duplicate makes a copy with its own id', async () => {
     const { store } = await fresh()
     const made = await store.create(personal(store), login('Mail', { password: 'p' }))
@@ -327,7 +297,6 @@ describe('items', () => {
     expect(copy.content).toMatchObject({ title: 'Copy of Mail', password: 'p' })
     expect(store.items).toHaveLength(2)
   })
-
   test('pin, monitor and used change the flags and leave no history', async () => {
     const { store } = await fresh()
     const made = await store.create(personal(store), login('Mail'))
@@ -341,7 +310,6 @@ describe('items', () => {
     const again = await reopened()
     expect(again.items[0]).toMatchObject({ pinned: true, monitored: false })
   })
-
   test('history keeps older versions, newest first, and one comes back', async () => {
     const { store } = await fresh()
     const made = await store.create(personal(store), login('One'))
@@ -359,7 +327,6 @@ describe('items', () => {
     await store.clearHistory(made.id)
     expect(await store.history(made.id)).toEqual([])
   })
-
   test('history keeps at most thirty versions', async () => {
     const { store } = await fresh()
     const made = await store.create(personal(store), login('v0'))
@@ -370,7 +337,6 @@ describe('items', () => {
     expect(versions.at(-1)?.content.title).toBe('v3')
   })
 })
-
 describe('matching a page', () => {
   test('is the active logins whose websites match, best rule first, then most used', async () => {
     const { store } = await fresh()
@@ -394,7 +360,6 @@ describe('matching a page', () => {
     expect(store.matching('https://nothing.org')).toEqual([])
   })
 })
-
 describe('import and export', () => {
   test('what is exported comes back in', async () => {
     const { store } = await fresh()
@@ -417,7 +382,6 @@ describe('import and export', () => {
     expect(bank?.content).toMatchObject({ password: SECRET })
     expect(into?.folders.find((folder) => folder.id === bank?.folder)?.name).toBe('Banks')
   })
-
   test('an import into a vault adds to it', async () => {
     const { store } = await fresh()
     const home = personal(store)
@@ -452,7 +416,6 @@ describe('import and export', () => {
     expect(old?.name).toBe('Old')
     expect(folders.find((folder) => folder.id === old?.parent)?.name).toBe('Work')
   })
-
   test('sealed and CSV exports', async () => {
     const { store } = await fresh()
     await store.create(personal(store), login('Bank', { password: SECRET }))
@@ -468,7 +431,6 @@ describe('import and export', () => {
     expect(csv?.text).toContain(SECRET)
   })
 })
-
 describe('what this device keeps', () => {
   test('holds no secret and no title in the clear', async () => {
     const { store } = await fresh()
@@ -483,7 +445,6 @@ describe('what this device keeps', () => {
       expect(kept).not.toContain(plain)
     expect(kept).toContain('"pending":true')
   })
-
   test('the HIBP key is kept sealed and read back after a restart', async () => {
     const { store } = await fresh()
     expect(await store.hibpKey()).toBe('')
@@ -492,7 +453,6 @@ describe('what this device keeps', () => {
     await store.setHibpKey('')
     expect(await store.hibpKey()).toBe('')
   })
-
   test('settings are kept and read back', async () => {
     const { store } = await fresh()
     expect(store.settings.relockAfter).toBe(10)

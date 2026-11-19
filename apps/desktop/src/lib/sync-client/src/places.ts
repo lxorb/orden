@@ -20,35 +20,27 @@ import { isReserved } from '../../platform/src/api'
 import { holdsDocument } from './kinds'
 
 const hiddenName = (name: string) => name.startsWith('.') && !isOwnFile(name)
-
 export const hiddenPath = (path: string) => path.split(/[\\/]/).some(hiddenName)
 import { emptyKeeping } from './keeping'
 import { emptyOrdering, type Gone, type Keeping, type Ordering, type Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
 import type { Disk, FileKind, World } from './world'
-
 export interface Outboxed {
   row: OutboxRow
   record: Outgoing
 }
-
 export const SEP = '/'
-
 export function folderOf(path: string): string {
   const at = path.lastIndexOf(SEP)
   return at < 0 ? '' : path.slice(0, at)
 }
-
 export function nameOf(path: string): string {
   return path.slice(path.lastIndexOf(SEP) + 1)
 }
-
 export function joined(folder: string, name: string): string {
   return folder ? `${folder}${SEP}${name}` : name
 }
-
 const FORBIDDEN = '<>:"\\|?*'
-
 function localName(name: string, platform: World['platform']): string {
   if (platform === 'windows') {
     let out = Array.from(name, (char) => (char < ' ' || FORBIDDEN.includes(char) ? '_' : char)).join('')
@@ -58,27 +50,21 @@ function localName(name: string, platform: World['platform']): string {
   if (platform === 'mac') return name.replace(/:/g, '_')
   return name
 }
-
 export function windowsPath(root: string): boolean {
   return /^[a-zA-Z]:/.test(root) || root.includes('\\')
 }
-
 type Placed = (row: EntryRow, from: string, to: string) => void
-
 function added(map: Map<string, Set<string>>, key: string, id: string) {
   const ids = map.get(key)
   if (ids) ids.add(id)
   else map.set(key, new Set([id]))
 }
-
 function taken(map: Map<string, Set<string>>, key: string, id: string) {
   const ids = map.get(key)
   ids?.delete(id)
   if (ids?.size === 0) map.delete(key)
 }
-
 const watched = new WeakMap<EntryRow, { path: string; maps: Set<Entries> }>()
-
 function watch(row: EntryRow, map: Entries) {
   const had = watched.get(row)
   if (had) {
@@ -98,7 +84,6 @@ function watch(row: EntryRow, map: Entries) {
     },
   })
 }
-
 class Entries extends Map<string, EntryRow> {
   constructor(
     private readonly placed: Placed,
@@ -107,11 +92,9 @@ class Entries extends Map<string, EntryRow> {
     super()
     for (const row of rows) this.set(row.id, row)
   }
-
   moved(row: EntryRow, from: string, to: string) {
     if (super.get(row.id) === row) this.placed(row, from, to)
   }
-
   override set(id: string, row: EntryRow): this {
     const had = super.get(id)
     if (had === row) return this
@@ -121,24 +104,20 @@ class Entries extends Map<string, EntryRow> {
     this.placed(row, '', row.local_path)
     return this
   }
-
   override delete(id: string): boolean {
     const had = super.get(id)
     if (had) this.letGo(had)
     return super.delete(id)
   }
-
   override clear() {
     for (const row of super.values()) this.letGo(row)
     super.clear()
   }
-
   private letGo(row: EntryRow) {
     this.placed(row, row.local_path, '')
     watched.get(row)?.maps.delete(this)
   }
 }
-
 export class SpaceState {
   readonly entries: Map<string, EntryRow>
   outbox: Outboxed[]
@@ -155,7 +134,6 @@ export class SpaceState {
   private shownAt: { paths: Map<string, string>; keys: Map<string, string[]> } | null = null
   private namesAt: Map<string | null, { taken: Set<string>; own: Set<string> }> | null = null
   private loose: Set<string> | null = null
-
   constructor(
     public row: SpaceRow,
     entries: readonly EntryRow[],
@@ -173,11 +151,9 @@ export class SpaceState {
     this.outbox = [...outbox]
     this.ordering = ordering
   }
-
   get id(): string {
     return this.row.space_id
   }
-
   changed() {
     this.shownCache = null
     this.pathsCache = null
@@ -185,15 +161,12 @@ export class SpaceState {
     this.namesAt = null
     this.loose = null
   }
-
   looseIds(): ReadonlySet<string> | null {
     return this.loose
   }
-
   settledBut(wanted: Map<string, string>, unsettled: readonly EntryRow[]) {
     if (this.pathsCache === wanted) this.loose = new Set(unsettled.map((entry) => entry.id))
   }
-
   confirmed(): TreeState {
     const entries: TreeEntry[] = []
     for (const entry of this.entries.values()) {
@@ -213,17 +186,14 @@ export class SpaceState {
     }
     return treeState(entries, this.row.cursor)
   }
-
   private positionOf(id: string): { pos?: string } {
     const pos = this.ordering.positions.get(id)
     return pos === undefined ? {} : { pos }
   }
-
   private metaOf(id: string): { meta?: ItemMeta } {
     const meta = this.ordering.meta.get(id)
     return meta === undefined ? {} : { meta }
   }
-
   described(): Map<string, ItemMeta> {
     const paths = this.paths()
     const out = new Map<string, ItemMeta>()
@@ -234,7 +204,6 @@ export class SpaceState {
     }
     return out
   }
-
   shown(): TreeState {
     if (this.shownCache) return this.shownCache
     const state = this.confirmed()
@@ -242,14 +211,12 @@ export class SpaceState {
     this.shownCache = state
     return state
   }
-
   private showing(state: TreeState, one: Outboxed) {
     if (one.record.t !== 'op') return
     const op: Op = { ...one.record.op }
     if (op.t === 'create') delete op.mergeable
     applyOp(state, op, { role: 'owner', device: this.device })
   }
-
   paths(): Map<string, string> {
     if (this.pathsCache) return this.pathsCache
     const shown = this.shown()
@@ -260,7 +227,6 @@ export class SpaceState {
       list.push(entry)
       children.set(entry.parent, list)
     }
-
     const out = new Map<string, string>()
     const names = new Map<string | null, { taken: Set<string>; own: Set<string> }>()
     const walk = (parent: string | null, folder: string) => {
@@ -283,7 +249,6 @@ export class SpaceState {
     this.namesAt = names
     return out
   }
-
   private pathed(paths: Map<string, string>, shown: TreeState, id: string): boolean {
     const names = this.namesAt
     const entry = shown.entries.get(id)
@@ -310,7 +275,6 @@ export class SpaceState {
     }
     return true
   }
-
   placedNames(): Map<string, { folder: string; names: string[] }> {
     if (this.placedCache) return this.placedCache
     const shown = this.shown()
@@ -332,7 +296,6 @@ export class SpaceState {
     this.placedCache = out
     return out
   }
-
   childrenAt(folder: string): Map<string, TreeEntry> | null {
     const parent = this.folderAt(folder)
     if (parent === undefined) return null
@@ -345,19 +308,15 @@ export class SpaceState {
     }
     return out
   }
-
   spelled(name: string): string {
     return localName(name, this.world.platform)
   }
-
   key(path: string): string {
     return this.world.foldsCase ? nameKey(path) : path.normalize('NFC')
   }
-
   get keepsFew(): boolean {
     return this.world.lazy === true && this.keeping.on && !this.keeping.refused
   }
-
   at(path: string): EntryRow | null {
     const wanted = this.key(path)
     const held = this.holding.get(wanted)
@@ -377,7 +336,6 @@ export class SpaceState {
     }
     return null
   }
-
   awaitedAt(path: string): EntryRow | null {
     for (const id of this.shownKeys().get(this.key(path)) ?? []) {
       const entry = this.entries.get(id)
@@ -385,7 +343,6 @@ export class SpaceState {
     }
     return null
   }
-
   private keyOf(path: string): string {
     let key = this.keys.get(path)
     if (key === undefined) {
@@ -395,7 +352,6 @@ export class SpaceState {
     }
     return key
   }
-
   heldAt(path: string): EntryRow[] {
     const out: EntryRow[] = []
     for (const id of this.holding.get(this.key(path)) ?? []) {
@@ -404,11 +360,9 @@ export class SpaceState {
     }
     return out
   }
-
   wantedAt(path: string): readonly string[] {
     return this.shownKeys().get(this.key(path)) ?? []
   }
-
   inside(folder: string): EntryRow[] {
     const out: EntryRow[] = []
     for (const id of this.within.get(this.key(folder)) ?? []) {
@@ -417,19 +371,16 @@ export class SpaceState {
     }
     return out
   }
-
   private hold(id: string, path: string) {
     if (!path) return
     added(this.holding, this.keyOf(path), id)
     for (let at = folderOf(path); at; at = folderOf(at)) added(this.within, this.keyOf(at), id)
   }
-
   private unhold(id: string, path: string) {
     if (!path) return
     taken(this.holding, this.keyOf(path), id)
     for (let at = folderOf(path); at; at = folderOf(at)) taken(this.within, this.keyOf(at), id)
   }
-
   private shownKeys(): Map<string, string[]> {
     const paths = this.paths()
     if (this.shownAt?.paths === paths) return this.shownAt.keys
@@ -443,7 +394,6 @@ export class SpaceState {
     this.shownAt = { paths, keys }
     return keys
   }
-
   folderAt(path: string): string | null | undefined {
     if (!path) return null
     const entry = this.at(path)
@@ -454,17 +404,14 @@ export class SpaceState {
     }
     return undefined
   }
-
   foreign(id: string): boolean {
     const path = this.paths().get(id) ?? this.entries.get(id)?.local_path ?? ''
     return inForeignCopy(path)
   }
-
   isLive(id: string): boolean {
     const entry = this.shown().entries.get(id)
     return entry !== undefined && !entry.deleted
   }
-
   queue(one: Outboxed) {
     this.outbox.push(one)
     const shown = this.shownCache
@@ -485,7 +432,6 @@ export class SpaceState {
     this.pathsCache = paths
     if (loose) this.loose = loose.add(op.id)
   }
-
   placedBy(op: Op, before: string | null, after: string | null): boolean {
     const had = this.ordering.positions.get(op.id)
     const pos = positionAfter(op, had, before, after)
@@ -495,9 +441,7 @@ export class SpaceState {
     this.repositioned = true
     return true
   }
-
   repositioned = false
-
   describedBy(id: string, patch: MetaPatch) {
     const had = this.ordering.meta.get(id)
     const meta = patched(had, patch)
@@ -506,7 +450,6 @@ export class SpaceState {
     else this.ordering.meta.set(id, meta)
     this.repositioned = true
   }
-
   heardMeta(id: string, meta: ItemMeta | undefined) {
     const had = this.ordering.meta.get(id)
     if (sameMeta(had, meta)) return
@@ -514,7 +457,6 @@ export class SpaceState {
     else this.ordering.meta.set(id, meta)
     this.repositioned = true
   }
-
   answered(op: Op, result: OpResult): EntryRow[] {
     const touched: EntryRow[] = []
     if ('refused' in result || 'merged' in result) return touched
@@ -536,7 +478,6 @@ export class SpaceState {
     return touched
   }
 }
-
 function positionAfter(op: Op, had: string | undefined, before: string | null, after: string | null) {
   if (op.t === 'place') return op.pos
   if ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined) {
@@ -545,7 +486,6 @@ function positionAfter(op: Op, had: string | undefined, before: string | null, a
   if (op.t === 'move' && before !== after) return undefined
   return had
 }
-
 export interface Settling {
   disk: Disk
   join: (root: string, path: string) => string
@@ -553,11 +493,9 @@ export interface Settling {
   forget: (id: string) => void
   busy?: (id: string) => boolean
 }
-
 function aside(path: string, id: string): string {
   return joined(folderOf(path), `.orden-moving-${hash32(id).toString(36)}`)
 }
-
 export async function settle(space: SpaceState, how: Settling): Promise<EntryRow[]> {
   const wanted = space.paths()
   const moved = new Set<EntryRow>()
@@ -589,7 +527,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       return false
     }
   }
-
   const slashed = (path: string) => space.key(path.replace(/\\/g, '/'))
   const strays = async (folder: string): Promise<boolean> => {
     if (!how.disk.holds) return false
@@ -609,7 +546,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       else if (!(await strays(one.local_path))) await removes(one.local_path, 'folder')
     }
   }
-
   const busy = how.busy ?? (() => false)
   const loose = space.looseIds()
   const looked = (): EntryRow[] => {
@@ -625,7 +561,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     if (!entry.local_path || wanted.has(entry.id) || busy(entry.id)) continue
     if (entry.kind !== 'folder' && how.keeps(entry.id)) continue
     if (entry.kind === 'folder' && holdsKept(space, entry, how)) continue
-
     const mine = inForeignCopy(entry.local_path) || hiddenPath(entry.local_path)
     if (!mine && (await how.disk.exists(full(entry.local_path)))) {
       const kind = entry.kind === 'folder' ? 'folder' : 'file'
@@ -637,7 +572,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     moved.add(entry)
     if (entry.kind !== 'folder') how.forget(entry.id)
   }
-
   for (let round = 0; round <= space.entries.size; round += 1) {
     const due = looked()
       .filter((entry) => {
@@ -647,7 +581,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       })
       .sort((a, b) => depth(a.local_path) - depth(b.local_path))
     if (!due.length) break
-
     const arriving = new Set(
       due.filter((one) => one.kind === 'folder').map((one) => space.key(wanted.get(one.id) ?? '')),
     )
@@ -658,7 +591,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       return false
     }
     let progress = 0
-
     for (const entry of due) {
       const want = wanted.get(entry.id)
       if (want === undefined || entry.local_path === want) continue
@@ -689,7 +621,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     }
     if (!progress) break
   }
-
   const folders = looked()
     .filter((entry) => entry.kind === 'folder' && !entry.local_path && wanted.has(entry.id))
     .sort((a, b) => depth(wanted.get(a.id) ?? '') - depth(wanted.get(b.id) ?? ''))
@@ -700,7 +631,6 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     entry.local_path = want
     moved.add(entry)
   }
-
   const unsettled = looked().filter((entry) => {
     const want = wanted.get(entry.id)
     if (!entry.local_path) return want !== undefined && entry.kind === 'folder'
@@ -710,11 +640,9 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
   else space.settledBut(wanted, unsettled)
   return [...moved]
 }
-
 function depth(path: string): number {
   return path.split(SEP).length
 }
-
 function carry(space: SpaceState, entry: EntryRow, to: string, moved: Set<EntryRow>) {
   const from = entry.local_path
   if (entry.kind === 'folder') {
@@ -727,7 +655,6 @@ function carry(space: SpaceState, entry: EntryRow, to: string, moved: Set<EntryR
   entry.local_path = to
   moved.add(entry)
 }
-
 function forgetUnder(space: SpaceState, folder: string, moved: Set<EntryRow>, how: Settling) {
   for (const one of space.inside(folder)) {
     one.local_path = ''
@@ -735,7 +662,6 @@ function forgetUnder(space: SpaceState, folder: string, moved: Set<EntryRow>, ho
     if (one.kind !== 'folder') how.forget(one.id)
   }
 }
-
 function holdsKept(space: SpaceState, folder: EntryRow, how: Settling): boolean {
   return space.inside(folder.local_path).some((one) => one.kind !== 'folder' && how.keeps(one.id))
 }

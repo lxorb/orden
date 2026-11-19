@@ -12,7 +12,6 @@ const TAGS: Record<string, string> = {
   Superscript: 'sup',
   Subscript: 'sub',
 }
-
 const HIDDEN = new Set([
   'EmphasisMark',
   'CodeMark',
@@ -24,11 +23,8 @@ const HIDDEN = new Set([
   'LinkTitle',
   'WikilinkMark',
 ])
-
 const SAFE_URL = /^(https?:\/\/|mailto:|#|\/|\.)/i
-
 export type Inline = { text: string } | { tag: string; href?: string; children: Inline[] }
-
 function address(shown: Inline, holder: SyntaxNode): Inline {
   const written = 'text' in shown ? shown.text : ''
   if ((holder.name === 'Link' || holder.name === 'Image') && linkAddress(holder)) {
@@ -38,25 +34,19 @@ function address(shown: Inline, holder: SyntaxNode): Inline {
   const href = /^www\./i.test(linked) ? `https://${linked}` : linked
   return SAFE_URL.test(href) ? { tag: 'a', href, children: [shown] } : shown
 }
-
 interface Written {
   text: string
   at: number
 }
-
 function walked(source: string, texts?: Written[]): Inline[] {
   if (!source) return []
-
   const top = ordenMarkdownParser.parse(source).topNode
   const paragraph = top.firstChild ?? top
-
   return walk(paragraph, source, paragraph.from, paragraph.to, false, texts)
 }
-
 export function parseInline(source: string): Inline[] {
   return walked(source)
 }
-
 export function sourceOffset(source: string, shown: number): number {
   const texts: Written[] = []
   walked(source, texts)
@@ -70,13 +60,11 @@ export function sourceOffset(source: string, shown: number): number {
   }
   return source.length
 }
-
 export function renderInline(source: string): DocumentFragment {
   const fragment = document.createDocumentFragment()
   build(fragment, parseInline(source))
   return fragment
 }
-
 function walk(
   node: SyntaxNode,
   source: string,
@@ -91,13 +79,10 @@ function walk(
     texts?.push({ text, at: start })
     return { text }
   }
-
   for (let child = node.firstChild; child; child = child.nextSibling) {
     if (child.from >= to) break
     if (child.to <= at) continue
-
     if (child.from > at) out.push(words(source.slice(at, child.from), at))
-
     if (child.name === 'Escape') {
       out.push(words(source.slice(child.from + 1, child.to), child.from + 1))
     } else if (child.name === 'InlineCode') {
@@ -113,7 +98,6 @@ function walk(
     } else if (!HIDDEN.has(child.name)) {
       const children = walk(child, source, child.from, child.to, false, texts)
       const tag = TAGS[child.name]
-
       if (child.name === 'Link') {
         const url = linkAddress(child)
         const href = url ? linkDestination(source.slice(url.from, url.to)) : ''
@@ -124,37 +108,29 @@ function walk(
         out.push(...children)
       }
     }
-
     at = child.to
   }
-
   if (at < to) out.push(words(source.slice(at, to), at))
   return out
 }
-
 function codeText(node: SyntaxNode, source: string): { text: string; from: number } {
   let from = node.from
   let to = node.to
-
   for (let child = node.firstChild; child; child = child.nextSibling) {
     if (child.name !== 'CodeMark') continue
     if (child.from === from) from = child.to
     if (child.to === to) to = child.from
   }
-
   return { text: source.slice(from, to).replace(/\\\|/g, '|'), from }
 }
-
 function build(parent: Node, nodes: Inline[]) {
   for (const node of nodes) {
     if ('text' in node) {
       parent.appendChild(document.createTextNode(node.text))
       continue
     }
-
     const element = document.createElement(node.tag)
     if (node.href) element.setAttribute('href', node.href)
-
     build(element, node.children)
     parent.appendChild(element)
   }

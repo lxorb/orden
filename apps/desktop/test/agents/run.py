@@ -26,9 +26,7 @@ The exe is a probe build, as scripts/probe_app.py says. A scenario ends as one o
 alternately, with the app's own launch trace on, and compares the two: an agent that is
 configured and not connected must cost the launch nothing.
 """
-
 from __future__ import annotations
-
 import argparse
 import copy
 import hashlib
@@ -49,13 +47,10 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(HERE))
-
 from fake_agent import Endpoint, Mcp, Sidebar  # noqa: E402
 from pages import CANARY, Site  # noqa: E402
-
 SCENARIOS = HERE / "scenarios"
 SPACE = "Agent harness"
-
 GRANT: dict[str, Any] = {
     "id": "harness",
     "name": "Harness",
@@ -79,7 +74,6 @@ GRANT: dict[str, Any] = {
     "asks": {},
     "limits": {"tabs": 4, "calls": 600, "navigations": 60},
 }
-
 SIDEBAR_GRANT: dict[str, Any] = {
     **GRANT,
     "id": "orden-claude-code",
@@ -87,13 +81,9 @@ SIDEBAR_GRANT: dict[str, Any] = {
     "client": "Orden Claude Code",
     "built_in": True,
 }
-
 KEPT = {key: value for key, value in GRANT.items() if key not in ("id", "name", "client")}
-
 ROADS = ("endpoint", "mcp", "sidebar")
-
 CONNECTED = ("endpoint", "mcp")
-
 LANES = {
     "browser_": "agent-core",
     "agent_": "agent-core",
@@ -101,21 +91,16 @@ LANES = {
     "read_note": "agent-workspace-tools",
     "edit_note": "agent-workspace-tools",
 }
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 def logs_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier / "logs"
-
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
         shutil.rmtree(pathlib.Path(base) / identifier, ignore_errors=True)
-
 def seeded(identifier: str, agents: bool) -> tuple[str, str]:
-
     folder = config_dir(identifier)
     folder.mkdir(parents=True, exist_ok=True)
     secret = secrets.token_hex(32)
@@ -133,9 +118,7 @@ def seeded(identifier: str, agents: bool) -> tuple[str, str]:
     elif kept.exists():
         kept.unlink()
     return secret, token
-
 def endpoint(identifier: str, pid: int, seconds: float = 90) -> tuple[int, str]:
-
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -147,12 +130,9 @@ def endpoint(identifier: str, pid: int, seconds: float = 90) -> tuple[int, str]:
             pass
         time.sleep(0.2)
     raise SystemExit(f"the probe never wrote {path}")
-
 class Probe:
-
     def __init__(self, exe: pathlib.Path, identifier: str, spaces: pathlib.Path, env: dict[str, str] | None = None) -> None:
         from probe_app import main_window, run_probe
-
         self.exe = exe
         self.identifier = identifier
         self.app = run_probe(exe, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces), **(env or {})}, quiet=True)
@@ -161,25 +141,19 @@ class Probe:
         while time.perf_counter() < until and not main_window(self.app.pid):
             time.sleep(0.2)
         self.window = Endpoint(self.port, self.secret)
-
     def reader(self, code: str, seconds: float = 60) -> dict[str, Any]:
-
         wrapped = f"(async () => {{ {code} }})().then((v) => JSON.stringify(v ?? null))"
         said = self.window.call("eval", {"code": wrapped, "yes": True}, seconds)
         if said["status"] == "ok" and isinstance(said.get("result"), str):
             said["result"] = json.loads(said["result"])
         return said
-
     def open_space(self) -> None:
         self.window.call("open", {"path": "Idea.md", "space": SPACE})
         time.sleep(1.5)
-
     def close(self) -> None:
         from probe_app import close_app
-
         if self.app.poll() is None and not close_app(self.app):
             self.app.kill()
-
 def made_spaces() -> pathlib.Path:
     root = pathlib.Path(tempfile.mkdtemp(prefix="orden-agent-harness-"))
     space = root / SPACE
@@ -187,15 +161,11 @@ def made_spaces() -> pathlib.Path:
     (space / "Idea.md").write_text("# Idea\n\nA note to open the space on.\n", encoding="utf-8")
     (space / "Secret.md").write_text(f"# Secret\n\nThe code for the door is {CANARY}.\n", encoding="utf-8")
     return root
-
 def stand_in(folder: pathlib.Path) -> dict[str, str]:
-
     shim = folder / "claude.cmd"
     shim.write_text(f'@node "{ROOT / "scripts" / "fake-ai-cli.mjs"}" claude %*\n', encoding="utf-8")
     return {"ORDEN_AI_CLAUDE_CODE": str(shim)}
-
 def dotted(value: Any, path: str) -> Any:
-
     for part in path.split("."):
         if isinstance(value, dict):
             value = value.get(part)
@@ -204,9 +174,7 @@ def dotted(value: Any, path: str) -> Any:
         else:
             return None
     return value
-
 def filled(value: Any, names: dict[str, Any]) -> Any:
-
     if isinstance(value, str):
         whole = re.fullmatch(r"\{(\w+)\}", value)
         if whole and whole.group(1) in names:
@@ -217,13 +185,9 @@ def filled(value: Any, names: dict[str, Any]) -> Any:
     if isinstance(value, dict):
         return {key: filled(one, names) for key, one in value.items()}
     return value
-
 def worded(value: Any) -> str:
-
     return (value if isinstance(value, str) else json.dumps(value)).lower()
-
 def judged(said: dict[str, Any], expect: dict[str, Any]) -> str | None:
-
     if "one_of" in expect:
         reasons = [judged(said, one) for one in expect["one_of"]]
         return None if any(one is None for one in reasons) else " / ".join(str(one) for one in reasons)
@@ -247,15 +211,11 @@ def judged(said: dict[str, Any], expect: dict[str, Any]) -> str | None:
     if "faster_than_ms" in expect and said.get("ms", 0) > expect["faster_than_ms"]:
         return f"took {said.get('ms')} ms, more than {expect['faster_than_ms']}"
     return None
-
 class Waiting(Exception):
     ...
-
 class Skipped(Exception):
     ...
-
 class Run:
-
     def __init__(self, scenario: dict[str, Any], agent: Any, probe: Probe, site: Site) -> None:
         self.scenario = scenario
         self.agent = agent
@@ -269,7 +229,6 @@ class Run:
         self.before: set[int] = set()
         self.tabs: list[str] = []
         self.grant = SIDEBAR_GRANT["id"] if agent.name == "sidebar" else GRANT["id"]
-
     def step(self, at: int, step: dict[str, Any]) -> None:
         step = filled(step, self.names)
         if "call" in step:
@@ -281,7 +240,6 @@ class Run:
             self.record(step)
         elif step.get("keyboard") == "now":
             from probe_app import keyboard
-
             self.keys = keyboard(self.probe.app.pid)
         elif "keyboard" in step:
             self.keyboard_same(f"step {at}")
@@ -307,10 +265,8 @@ class Run:
             self.observe(step["observe"])
         else:
             raise AssertionError(f"step {at} is not a kind of step: {step}")
-
     def call(self, step: dict[str, Any]) -> None:
         verb, args = step["call"], step.get("args", {})
-
         def made() -> dict[str, Any]:
             said = self.agent.call(verb, args, seconds=float(step.get("seconds", 60)))
             if said["status"] == "missing":
@@ -318,17 +274,14 @@ class Run:
             if verb == "browser_open" and said["status"] == "ok":
                 self.tabs.append(str(dotted(said, "result.tab")))
             return said
-
         if "as" in step:
             name = step["as"]
             self.background[name] = {}
-
             def later() -> None:
                 try:
                     self.background[name] = made()
                 except Waiting as waiting:
                     self.background[name] = {"status": "missing", "message": str(waiting)}
-
             self.threads[name] = threading.Thread(target=later, daemon=True)
             self.threads[name].start()
             return
@@ -336,16 +289,13 @@ class Run:
         self.expect(said, step.get("expect", {"status": "ok"}), verb)
         for name, path in step.get("save", {}).items():
             self.names[name] = dotted(said, path)
-
     def expect(self, said: dict[str, Any], expect: dict[str, Any], what: str) -> None:
         if said.get("status") == "missing":
             raise Waiting(str(said.get("message")))
         why = judged(said, expect)
         if why:
             raise AssertionError(f"{what}: {why}")
-
     def record(self, step: dict[str, Any]) -> None:
-
         kind, where = step["record"], step.get("where", {})
         exact = step.get("count")
         least = step.get("at_least", exact or 0)
@@ -356,7 +306,6 @@ class Run:
         if len(found) < least or (exact is not None and len(found) != exact):
             wanted = str(exact) if exact is not None else f"at least {least}"
             raise AssertionError(f"the sites saw {len(found)} {kind} {where or ''}, not {wanted}: {found[:3]}")
-
     def reader(self, step: dict[str, Any]) -> None:
         command, args = step["reader"], step.get("args", {})
         said = self.probe.reader(f"return await window.__TAURI_INTERNALS__.invoke({json.dumps(command)}, {json.dumps(args)})")
@@ -365,18 +314,13 @@ class Run:
             if "not found" in message or "unknown" in message.lower():
                 raise Waiting(f"agent-core: the command {command}")
             raise AssertionError(f"the reader's {command}: {message}")
-
     def keyboard_same(self, when: str) -> None:
         from probe_app import keyboard
-
         now = keyboard(self.probe.app.pid)
         if now != self.keys:
             raise AssertionError(f"the keyboard moved by {when}: {self.keys} then {now}")
-
     def watch_windows(self, seconds: float) -> None:
-
         from probe_app import UNDRAWN, UNDRAWN_SUFFIX, family, in_physical_pixels, look, on_a_screen
-
         in_physical_pixels()
         pids = family(self.probe.app.pid)
         known = self.before | {one["hwnd"] for one in self.windows}
@@ -390,7 +334,6 @@ class Run:
                     self.windows.append({"hwnd": one.hwnd, "pid": one.pid, "kind": one.kind, "box": one.box,
                                          "on a screen": on_a_screen(one.box, now.screens)})
             time.sleep(0.004)
-
     def observe(self, what: dict[str, Any]) -> None:
         if "record" in what:
             time.sleep(float(what.get("within_ms", 1500)) / 1000)
@@ -400,10 +343,8 @@ class Run:
             value = str(self.names.get(what["saved"]) or "").lower()
             for label, words in what.get("counts", {}).items():
                 self.observed.append(f"{label}: {value.count(str(words).lower())}")
-
     def run(self) -> dict[str, Any]:
         from probe_app import family, idle_seconds, keyboard, look
-
         scenario = self.scenario
         via = scenario.get("via", CONNECTED)
         if self.agent.name not in via:
@@ -416,10 +357,8 @@ class Run:
         missing = [verb for verb in needed(scenario) if not self.agent.has(verb)]
         if missing:
             return {"result": "waiting", "why": f"{lane_of(missing[0])}: {', '.join(missing)} ({self.agent.name})"}
-
         if scenario.get("grant") and not granted(self.probe, scenario["grant"], self.grant):
             return {"result": "waiting", "why": "agent-core: agents_read and agents_write"}
-
         self.site.forget()
         self.keys = keyboard(self.probe.app.pid)
         self.before = {one.hwnd for one in look(family(self.probe.app.pid)).windows}
@@ -449,16 +388,13 @@ class Run:
         if self.windows:
             result["windows"] = self.windows
         return result
-
 def needed(scenario: dict[str, Any]) -> list[str]:
     return sorted({step["call"] for step in scenario["steps"] if "call" in step})
-
 def lane_of(verb: str) -> str:
     for prefix, lane in LANES.items():
         if verb.startswith(prefix):
             return lane
     return "agent-workspace-tools"
-
 def scenarios(only: str | None, skip: list[str] | None = None) -> list[tuple[str, dict[str, Any]]]:
     found = []
     for path in sorted(SCENARIOS.glob("*.json")):
@@ -466,9 +402,7 @@ def scenarios(only: str | None, skip: list[str] | None = None) -> list[tuple[str
             continue
         found.append((path.stem, json.loads(path.read_text(encoding="utf-8"))))
     return sorted(found, key=lambda one: bool(one[1].get("idle")))
-
 def granted(probe: Probe, change: dict[str, Any], agent: str = GRANT["id"]) -> bool:
-
     said = probe.reader("return await window.__TAURI_INTERNALS__.invoke('agents_read')")
     if said["status"] != "ok" or not isinstance(said.get("result"), list):
         return False
@@ -479,10 +413,8 @@ def granted(probe: Probe, change: dict[str, Any], agent: str = GRANT["id"]) -> b
                 grant[key] = {**grant.get(key, {}), **value} if isinstance(value, dict) else value
     written = probe.reader(f"return await window.__TAURI_INTERNALS__.invoke('agents_write', {{ grants: {json.dumps(grants)} }})")
     return written["status"] == "ok"
-
 def road(via: str, probe: Probe, token: str, spaces: pathlib.Path) -> Any:
     from probe_app import run_probe
-
     if via == "endpoint":
         return Endpoint(probe.port, token)
     if via == "sidebar":
@@ -493,7 +425,6 @@ def road(via: str, probe: Probe, token: str, spaces: pathlib.Path) -> Any:
     (clients / Mcp.CLIENT).write_text(json.dumps(kept), encoding="utf-8")
     process = run_probe(probe.exe, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, args=["mcp"], piped=True)
     return Mcp(process)
-
 def scenario_run(args: argparse.Namespace) -> int:
     wipe(args.identifier)
     spaces = made_spaces()
@@ -525,17 +456,14 @@ def scenario_run(args: argparse.Namespace) -> int:
         shutil.rmtree(spaces, ignore_errors=True)
         shutil.rmtree(programs, ignore_errors=True)
     return failed
-
 def traced(identifier: str) -> dict[str, Any] | None:
     path = logs_dir(identifier) / "startup-trace.log"
     if not path.exists():
         return None
     lines = [one for one in path.read_text(encoding="utf-8", errors="replace").splitlines() if one.startswith("{")]
     return json.loads(lines[-1]) if lines else None
-
 def launch_cost(args: argparse.Namespace) -> int:
     from probe_app import family, parents
-
     wipe(args.identifier)
     spaces = made_spaces()
     runs: dict[bool, list[dict[str, Any]]] = {False: [], True: []}
@@ -560,7 +488,6 @@ def launch_cost(args: argparse.Namespace) -> int:
                     runs[agents].append({"steps": {one["step"]: one["at"] for one in line["steps"]}, "processes": processes})
     finally:
         shutil.rmtree(spaces, ignore_errors=True)
-
     wrong: list[str] = []
     if not runs[False] or not runs[True]:
         print("no trace was written; is this a build with ORDEN_TRACE_STARTUP?")
@@ -591,7 +518,6 @@ def launch_cost(args: argparse.Namespace) -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 def main() -> int:
     parsed = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parsed.add_argument("--exe", type=pathlib.Path)
@@ -604,7 +530,6 @@ def main() -> int:
     parsed.add_argument("--list", action="store_true")
     args = parsed.parse_args()
     sys.stdout.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
-
     if args.list:
         for name, scenario in scenarios(args.only, args.skip):
             print(f"{name:28} {scenario.get('proves', '')}")
@@ -615,6 +540,5 @@ def main() -> int:
     if not args.exe or not args.identifier:
         parsed.error("--exe and --identifier name the probe build")
     return launch_cost(args) if args.launch_cost else scenario_run(args)
-
 if __name__ == "__main__":
     raise SystemExit(main())

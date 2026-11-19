@@ -5,7 +5,6 @@ enum Found {
     Handed,
     Silent,
 }
-
 #[cfg(windows)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Asked {
@@ -13,9 +12,7 @@ enum Asked {
     Leave,
     Answered,
 }
-
 static ENDED: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
-
 #[cfg(windows)]
 pub fn handed_over(identifier: &str) -> bool {
     let names = Names::of(identifier);
@@ -36,7 +33,6 @@ pub fn handed_over(identifier: &str) -> bool {
         },
     }
 }
-
 #[cfg(target_os = "linux")]
 pub fn handed_over(identifier: &str) -> bool {
     let mut launch: Vec<String> = std::env::args_os()
@@ -47,7 +43,6 @@ pub fn handed_over(identifier: &str) -> bool {
     }
     on_the_bus(identifier, &launch).unwrap_or(false)
 }
-
 #[cfg(target_os = "linux")]
 fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
     let name = format!("{identifier}.SingleInstance");
@@ -79,12 +74,10 @@ fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
     )?;
     Ok(true)
 }
-
 #[cfg(not(any(windows, target_os = "linux")))]
 pub fn handed_over(_identifier: &str) -> bool {
     false
 }
-
 pub fn said(app: &tauri::AppHandle) {
     if let Some(pid) = ENDED.get() {
         orden_base::logs::say(
@@ -96,19 +89,15 @@ pub fn said(app: &tauri::AppHandle) {
         );
     }
 }
-
 #[cfg(windows)]
 const ANSWER: std::time::Duration = std::time::Duration::from_secs(2);
-
 #[cfg(windows)]
 const MARK: usize = 1542;
-
 #[cfg(windows)]
 struct Names {
     class: Vec<u16>,
     window: Vec<u16>,
 }
-
 #[cfg(windows)]
 impl Names {
     fn of(identifier: &str) -> Self {
@@ -118,7 +107,6 @@ impl Names {
             window: wide(format!("{identifier}-siw")),
         }
     }
-
     #[allow(unsafe_code, reason = "a window is found through FindWindowW")]
     fn find(&self) -> Option<windows::Win32::Foundation::HWND> {
         use windows::core::PCWSTR;
@@ -127,7 +115,6 @@ impl Names {
             .ok()
             .filter(|window| !window.is_invalid())
     }
-
     #[allow(
         unsafe_code,
         reason = "a window's process is asked through GetWindowThreadProcessId"
@@ -140,7 +127,6 @@ impl Names {
         (pid != 0 && pid != std::process::id()).then_some(pid)
     }
 }
-
 #[cfg(windows)]
 fn arguments() -> Vec<u8> {
     let folder = std::env::current_dir().unwrap_or_default();
@@ -150,7 +136,6 @@ fn arguments() -> Vec<u8> {
         .join("|");
     format!("{}|{args}\0", folder.to_str().unwrap_or_default()).into_bytes()
 }
-
 #[cfg(windows)]
 #[allow(
     unsafe_code,
@@ -189,7 +174,6 @@ fn handed(names: &Names, launch: &[u8], within: std::time::Duration) -> Found {
         Found::Silent
     }
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code, reason = "the question is a Win32 message box")]
 fn asked(names: &Names, launch: &[u8]) -> Asked {
@@ -231,7 +215,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
             }
         })
     };
-
     let chosen = if orden_placement::placement::asked_away() {
         match std::env::var("ORDEN_PROBE_NOT_RESPONDING").as_deref() {
             Ok("end") => IDOK,
@@ -256,7 +239,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
     };
     done.store(true, Ordering::SeqCst);
     let _ = trying.join();
-
     if answered.load(Ordering::SeqCst) {
         Asked::Answered
     } else if chosen == IDOK {
@@ -265,7 +247,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
         Asked::Leave
     }
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code, reason = "a process is ended through TerminateProcess")]
 fn ended(pid: u32) -> bool {
@@ -275,7 +256,6 @@ fn ended(pid: u32) -> bool {
     };
 
     const GOING: u32 = 10_000;
-
     unsafe {
         let Ok(process) = OpenProcess(PROCESS_TERMINATE | PROCESS_SYNCHRONIZE, false, pid) else {
             return false;
@@ -286,7 +266,6 @@ fn ended(pid: u32) -> bool {
         gone
     }
 }
-
 #[cfg(all(test, windows))]
 mod tests {
     use super::{arguments, handed, Found, Names};
@@ -301,7 +280,6 @@ mod tests {
         );
         assert_eq!(names.owner(), None);
     }
-
     #[test]
     fn the_launch_is_the_folder_then_the_arguments() {
         let launch = String::from_utf8(arguments()).expect("text");

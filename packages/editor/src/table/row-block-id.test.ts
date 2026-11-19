@@ -14,15 +14,11 @@ beforeAll(() => {
     HTMLElement.prototype.focus.call(this, options)
   }
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const NOTE = '| a | b |\n| --- | --- |\n| 1 | 2 | ^t1\n| 3 | 4 |\n\nend'
-
 function drawn(): EditorView {
   const view = createEditor({
     parent: document.body,
@@ -33,7 +29,6 @@ function drawn(): EditorView {
   forceParsing(view, NOTE.length, 10_000)
   return view
 }
-
 describe('a table row named by a block id at its end', () => {
   test('draws only the columns the table has', () => {
     const view = drawn()
@@ -41,7 +36,6 @@ describe('a table row named by a block id at its end', () => {
     expect(view.dom.querySelectorAll('th').length).toBe(2)
     expect(cells).toEqual(['1', '2', '3', '4'])
   })
-
   test('keeps its name after a cell of the table is typed in', () => {
     const view = drawn()
     const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '3')

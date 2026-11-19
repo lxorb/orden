@@ -17,13 +17,11 @@ function linked(doc: string, from: number, to = from): string {
   insertLink({ state, dispatch: (one: Transaction) => (next = one.state) })
   return next.doc.toString()
 }
-
 describe('Insert link (Mod-K) with the caret in a link already written', () => {
   test('a markdown link stays whole', () => {
     const doc = 'Read the [docs](https://example.com) first'
     expect(linked(doc, doc.indexOf('docs') + 2)).toContain('[docs](https://example.com)')
   })
-
   test('a wikilink stays whole', () => {
     const doc = 'See [[Project plan]] today'
     expect(linked(doc, doc.indexOf('plan'))).toContain('[[Project plan]]')

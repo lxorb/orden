@@ -7,7 +7,6 @@ const FAMILIES = [
   { name: 'Inter', mono: false },
   { name: 'JetBrains Mono', mono: true },
 ]
-
 describe('the families offered', () => {
   test('are every one installed, in the order they came, for a face for prose', () => {
     expect(offered(FAMILIES, '', false).map((one) => one.name)).toEqual([
@@ -17,7 +16,6 @@ describe('the families offered', () => {
       'JetBrains Mono',
     ])
   })
-
   test('put the monospaced first for a face for code, and still offer the rest', () => {
     expect(offered(FAMILIES, '', true).map((one) => one.name)).toEqual([
       'DejaVu Sans Mono',
@@ -26,13 +24,11 @@ describe('the families offered', () => {
       'Inter',
     ])
   })
-
   test('narrow to the ones whose name has what was typed, whatever its case', () => {
     expect(offered(FAMILIES, 'dejavu', true).map((one) => one.name)).toEqual(['DejaVu Sans Mono', 'DejaVu Sans'])
     expect(offered(FAMILIES, '  ', false)).toHaveLength(4)
   })
 })
-
 describe('a name this machine is asked to draw', () => {
   test('is taken as installed where there is no canvas to measure it on', () => {
     expect(isInstalled('Anything At All')).toBe(true)

@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 use orden_dictation::dictation::catalog;
 
 #[test]
@@ -10,7 +9,6 @@ fn this_machine_has_one_pinned_runtime() {
         catalog::rid_of(std::env::consts::OS, std::env::consts::ARCH)
     );
 }
-
 #[test]
 fn every_download_is_pinned_by_its_hash() {
     for runtime in catalog::RUNTIMES {

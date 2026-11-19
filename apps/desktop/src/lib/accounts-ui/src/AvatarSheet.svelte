@@ -22,9 +22,7 @@
     source: { file: Blob } | { camera: true }
     onclose: () => void
   } = $props()
-
   const VIEW = 240
-
   let bitmap = $state<ImageBitmap | null>(null)
   let turns = $state(0)
   let picture = $state<HTMLCanvasElement | null>(null)
@@ -33,9 +31,7 @@
   let wrong = $state<string | null>(null)
   let stream = $state<MediaStream | null>(null)
   let video = $state<HTMLVideoElement>()
-
   const scale = $derived(picture ? scaleAt(picture.width, picture.height, VIEW, crop.zoom) : 1)
-
   async function take(file: Blob) {
     wrong = null
     try {
@@ -50,7 +46,6 @@
       wrong = message(error, 'that picture could not be opened')
     }
   }
-
   function turn() {
     if (!bitmap) return
     turns = (turns + 1) % 4
@@ -60,7 +55,6 @@
       offset: clampOffset({ x: 0, y: 0 }, picture.width, picture.height, VIEW, crop.zoom),
     }
   }
-
   function moveTo(offset: Point) {
     if (!picture) return
     crop = {
@@ -68,12 +62,10 @@
       offset: clampOffset(offset, picture.width, picture.height, VIEW, crop.zoom),
     }
   }
-
   function zoomTo(zoom: number, at: Point = { x: 0, y: 0 }) {
     if (!picture) return
     crop = zoomed(crop, zoom, at, picture.width, picture.height, VIEW)
   }
-
   async function keep() {
     if (!picture || busy) return
     busy = true
@@ -87,7 +79,6 @@
       busy = false
     }
   }
-
   async function startCamera() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -98,12 +89,10 @@
       wrong = message(error, 'the camera could not be opened')
     }
   }
-
   function stopCamera() {
     for (const track of stream?.getTracks() ?? []) track.stop()
     stream = null
   }
-
   async function shutter() {
     if (!video?.videoWidth) return
     const frame = document.createElement('canvas')
@@ -119,11 +108,9 @@
     })
     if (blob) await take(blob)
   }
-
   $effect(() => {
     if (video && stream) video.srcObject = stream
   })
-
   onMount(() => {
     if ('file' in source) void take(source.file)
     else void startCamera()
@@ -132,11 +119,9 @@
       bitmap?.close()
     }
   })
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the pointers down now; nothing renders from them
   const down = new Map<number, Point>()
   let pinch: { distance: number; zoom: number } | null = null
-
   function fromMiddle(event: PointerEvent | WheelEvent, box: Element): Point {
     const rect = box.getBoundingClientRect()
     return {
@@ -144,7 +129,6 @@
       y: event.clientY - rect.top - rect.height / 2,
     }
   }
-
   function pressed(event: PointerEvent) {
     if (!picture) return
     ;(event.currentTarget as Element).setPointerCapture(event.pointerId)
@@ -154,13 +138,11 @@
       if (a && b) pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y), zoom: crop.zoom }
     }
   }
-
   function moved(event: PointerEvent) {
     const was = down.get(event.pointerId)
     if (!was) return
     const now = { x: event.clientX, y: event.clientY }
     down.set(event.pointerId, now)
-
     if (down.size === 2 && pinch) {
       const [a, b] = [...down.values()]
       if (a && b) zoomTo(pinch.zoom * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.distance))
@@ -168,22 +150,18 @@
     }
     moveTo({ x: crop.offset.x + now.x - was.x, y: crop.offset.y + now.y - was.y })
   }
-
   function lifted(event: PointerEvent) {
     down.delete(event.pointerId)
     if (down.size < 2) pinch = null
   }
-
   function wheeled(event: WheelEvent) {
     event.preventDefault()
     zoomTo(wheeledZoom(crop.zoom, event), fromMiddle(event, event.currentTarget as Element))
   }
-
   function given(files: FileList | null | undefined) {
     const file = [...(files ?? [])].find((one) => one.type.startsWith('image/'))
     if (file) void take(file)
   }
-
   function shows(host: HTMLElement, canvas: HTMLCanvasElement) {
     host.replaceChildren(canvas)
     return {
@@ -278,7 +256,6 @@
     gap: var(--space-3);
     padding: var(--space-2) 0 var(--space-3);
   }
-
   .window {
     position: relative;
     width: var(--view);
@@ -289,30 +266,25 @@
     touch-action: none;
     cursor: grab;
   }
-
   .window:active {
     cursor: grabbing;
   }
-
   .picture {
     position: absolute;
     top: 50%;
     left: 50%;
   }
-
   .picture :global(canvas) {
     display: block;
     width: 100%;
     height: 100%;
   }
-
   .live {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transform: scaleX(-1);
   }
-
   .ring {
     position: absolute;
     inset: 0;
@@ -322,18 +294,15 @@
     outline-offset: -2px;
     pointer-events: none;
   }
-
   .controls {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     width: var(--view);
   }
-
   .zoom {
     flex: 1;
   }
-
   .wrong {
     margin: 0;
     color: var(--danger);

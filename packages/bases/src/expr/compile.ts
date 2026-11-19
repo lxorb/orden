@@ -25,11 +25,8 @@ import {
 } from './runtime'
 
 type Fn = (scope: Scope) => Val
-
 const BOUND = new Set(['value', 'index', 'acc', 'values'])
-
 const READS_OTHERS = new Set(['asFile', 'linksTo', 'backlinks', 'hasLink', 'link'])
-
 export interface Compiled {
   source: string
   local: boolean
@@ -38,20 +35,16 @@ export interface Compiled {
   run: (scope: Scope) => Val
   evaluate: (row: Row | null, context: Context, formulas?: Record<string, string>) => Value
 }
-
 interface Facts {
   local: boolean
   clock: boolean
   formulas: Set<string>
 }
-
 const CLOCK = new Set(['now', 'relative'])
-
 const literal =
   (value: Val): Fn =>
   () =>
     value
-
 function compileName(name: string): Fn {
   switch (name) {
     case 'file':
@@ -75,7 +68,6 @@ function compileName(name: string): Fn {
       return (scope) => (scope.row ? fieldOf(scope.row.note, name) : null)
   }
 }
-
 function compileMember(node: Extract<Node, { type: 'member' }>, facts: Facts): Fn {
   const { name } = node
   if (READS_OTHERS.has(name)) facts.local = false
@@ -95,26 +87,21 @@ function compileMember(node: Extract<Node, { type: 'member' }>, facts: Facts): F
   const object = compileNode(node.object, facts)
   return (scope) => member(object(scope), name, scope)
 }
-
 const thunks = (args: readonly Fn[], scope: Scope): Arg[] =>
   args.map(
     (arg): Arg =>
       (locals) =>
         locals ? arg({ ...scope, locals: { ...scope.locals, ...locals } }) : arg(scope),
   )
-
 const NODES_A_STEP = 32
-
 function sizeOf(part: unknown): number {
   if (typeof part !== 'object' || part === null) return 0
   return Object.values(part).reduce<number>((sum, one) => sum + sizeOf(one), 1)
 }
-
 function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
   const args = node.args.map((arg) => compileNode(arg, facts))
   const { callee } = node
   if ((callee.type === 'name' || callee.type === 'member') && CLOCK.has(callee.name)) facts.clock = true
-
   if (callee.type === 'name') {
     const name = callee.name
     if (!GLOBALS.has(name)) throw new BasesError(`There is no function ${name}()`, callee.at)
@@ -122,7 +109,6 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
     if (name === 'today' && !args.length) return (scope) => ({ kind: 'date', iso: scope.context.today })
     return (scope) => callGlobal(name, thunks(args, scope), scope)
   }
-
   if (callee.type === 'member') {
     if (READS_OTHERS.has(callee.name)) facts.local = false
     const receiver = compileNode(callee.object, facts)
@@ -134,10 +120,8 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
       return callMethod(on, name, thunks(args, scope), scope)
     }
   }
-
   throw new BasesError('Only a function or a method can be called', node.at)
 }
-
 function compileNode(node: Node, facts: Facts): Fn {
   switch (node.type) {
     case 'literal':
@@ -239,19 +223,16 @@ function compileNode(node: Node, facts: Facts): Fn {
     }
   }
 }
-
 export function formulaReader(formulas: Record<string, string>): (name: string, row: Row, scope: Scope) => Val {
   const compiled = new Map<string, Compiled>()
   const cache = new WeakMap<Row, Map<string, Val>>()
   const running = new Set<string>()
-
   return (name, row, scope) => {
     const kept = cache.get(row)?.get(name)
     if (kept !== undefined) return kept
     const source = Object.hasOwn(formulas, name) ? formulas[name] : undefined
     if (source === undefined) return null
     if (running.has(name)) throw new BasesError(`formula.${name} refers to itself`)
-
     let formula = compiled.get(name)
     if (!formula) {
       formula = compile(source)
@@ -269,7 +250,6 @@ export function formulaReader(formulas: Record<string, string>): (name: string, 
     }
   }
 }
-
 export function scopeFor(row: Row | null, context: Context, formulas: Record<string, string> = {}): Scope {
   const read = formulaReader(formulas)
   const scope: Scope = {
@@ -280,14 +260,11 @@ export function scopeFor(row: Row | null, context: Context, formulas: Record<str
   }
   return scope
 }
-
 const MOST_KEPT = 4000
 const kept = new Map<string, Compiled>()
-
 export function compile(source: string): Compiled {
   const known = kept.get(source)
   if (known) return known
-
   const facts: Facts = { local: true, clock: false, formulas: new Set() }
   const node = compileNode(parseExpression(source), facts)
   const run: Fn = (scope) => evaluation(node, scope, weigh)
@@ -299,7 +276,6 @@ export function compile(source: string): Compiled {
     run,
     evaluate: (row, context, formulas) => settled(run(scopeFor(row, context, formulas))),
   }
-
   if (kept.size >= MOST_KEPT) kept.clear()
   kept.set(source, compiled)
   return compiled

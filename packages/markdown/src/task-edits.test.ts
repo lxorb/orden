@@ -33,7 +33,6 @@ const CANONICAL = [
   '- [-] Renew the gym ❌ 2026-09-30',
   '- [ ] Review [time:: 09:30 Europe/Zurich] [assignee:: Lucile] #work 🆔 a1 ⛔ b2,c3 🔺 🔁 every weekday ➕ 2026-10-01 🛫 2026-10-02 ⏳ 2026-10-03 📅 2026-10-04 ^blk',
 ]
-
 describe('a canonical line', () => {
   test.each(CANONICAL)('reads and writes back unchanged: %s', (line) => {
     const fields = readTask(line)
@@ -41,7 +40,6 @@ describe('a canonical line', () => {
     if (!fields) return
     expect(taskLine(fields)).toBe(line)
   })
-
   test.each(CANONICAL)('takes no edit for a change to what it already says: %s', (line) => {
     const fields = readTask(line)
     if (!fields) return
@@ -49,7 +47,6 @@ describe('a canonical line', () => {
     expect(writeTask(line, fields)).toEqual([])
   })
 })
-
 const CHANGES: [string, TaskChange, string][] = [
   ['- [ ] a', { due: '2026-10-06' }, '- [ ] a 📅 2026-10-06'],
   ['- [ ] a 📅 2026-10-06', { due: '2026-10-07' }, '- [ ] a 📅 2026-10-07'],
@@ -92,12 +89,10 @@ const CHANGES: [string, TaskChange, string][] = [
   ['- [ ] ', { due: '2026-10-06' }, '- [ ] 📅 2026-10-06'],
   ['  * [ ] nested', { due: '2026-10-06' }, '  * [ ] nested 📅 2026-10-06'],
 ]
-
 describe('a change', () => {
   test.each(CHANGES)('%s with %o is %s', (line, change, after) => {
     expect(changedTask(line, change)).toBe(after)
   })
-
   test.each([
     ['- [ ] #a [due:: 2026-10-01] Buy milk', { tags: [], due: null }],
     ['- [ ] [due:: 2026-10-01] #a Buy milk', { tags: [], due: null }],
@@ -111,7 +106,6 @@ describe('a change', () => {
     })
     expect(changedTask(line, change)).toBe('- [ ] Buy milk')
   })
-
   test('touches only the characters that change; of a field written twice is made to the one that is read; taken off goes from among the words too', () => {
     expect(writeTask('- [ ] a ⏫ 📅 2026-10-06', { due: '2026-10-07' })).toEqual([
       { from: 13, to: 23, insert: '2026-10-07' },
@@ -128,7 +122,6 @@ describe('a change', () => {
     const timed = '- [ ] (time:: 09:00) word [time:: 10:00]'
     expect(readTask(changedTask(timed, { time: null }))?.time).toBeUndefined()
   })
-
   test('of a date written with a time moves the date and keeps the time; takes off a tag written twice everywhere it is written', () => {
     expect(changedTask('- [ ] a [due:: 2026-10-06T10:00]', { due: '2026-10-13' })).toBe(
       '- [ ] a [due:: 2026-10-13T10:00]',
@@ -141,7 +134,6 @@ describe('a change', () => {
     expect(changedTask('- [ ] #x #x a b', { tags: [] })).toBe('- [ ] a b')
     expect(changedTask('- [ ] a #x b #x c', { tags: [] })).toBe('- [ ] a b c')
   })
-
   test('of new words keeps a tag the words held and the change still holds', () => {
     expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })).toBe('- [ ] Buy now #milk')
     expect(readTask(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] }))).toMatchObject({
@@ -153,11 +145,9 @@ describe('a change', () => {
     )
     expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: [] })).toBe('- [ ] Buy now')
   })
-
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })
-
   test('of the words of a line with none stands a blank from the box and the fields', () => {
     expect(changedTask('- [ ] #work', { text: 'Call Bob' })).toBe('- [ ] Call Bob #work')
     expect(changedTask('- [ ] 📅 2026-10-06', { text: 'Call Bob' })).toBe('- [ ] Call Bob 📅 2026-10-06')
@@ -167,27 +157,23 @@ describe('a change', () => {
       tags: ['work'],
     })
   })
-
   test("keeps every Tasks field readable: Orden's fields never land after its fields", () => {
     const line = changedTask('- [ ] a ⏫ 📅 2026-10-06', { remind: [{ before: 15 }], tags: ['x'] })
     expect(line).toBe('- [ ] a [remind:: 15m] #x ⏫ 📅 2026-10-06')
     expect(readTask(line)).toMatchObject({ priority: 2, due: '2026-10-06', tags: ['x'] })
   })
 })
-
 test('unknown fields an object would answer from its prototype: are removed, changed and added like any other', () => {
   expect(changedTask('- [ ] Pay [toString:: 1]', { fields: {} })).toBe('- [ ] Pay')
   expect(changedTask('- [ ] Pay [toString:: 1]', { fields: { toString: '2' } })).toBe('- [ ] Pay [toString:: 2]')
   expect(changedTask('- [ ] Pay', { fields: { constructor: '1' } })).toBe('- [ ] Pay [constructor:: 1]')
 })
-
 describe('code in a task', () => {
   test('keeps a hash at its end when the words change; is not cut into when a tag is taken away', () => {
     const line = '- [ ] run `git tag #v2`'
     expect(changedTask(line, { text: 'run `git tag #v2` extra' })).toBe('- [ ] run `git tag #v2` extra')
     expect(changedTask('- [ ] run `a #foo` now #foo', { tags: [] })).toBe('- [ ] run `a #foo` now')
   })
-
   test('takes the repeat and the time away with the last date the task had', () => {
     expect(changedTask('- [ ] Pay 🔁 every month 📅 2026-10-01', { due: null })).toBe('- [ ] Pay')
     expect(
@@ -202,7 +188,6 @@ describe('code in a task', () => {
       '- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]',
     )
   })
-
   test('reads a date given as undefined as left, and one given as nothing as taken; keeps a repeat and a time the change itself gives, with its last date taken', () => {
     const line = '- [ ] Pay 🔁 every week 📅 2026-10-01'
     expect(changedTask(line, { due: undefined, priority: 2 } as unknown as TaskChange)).toBe(
@@ -215,13 +200,11 @@ describe('code in a task', () => {
     )
   })
 })
-
 function readTaskOf(line: string) {
   const found = readTask(line)
   if (!found) throw new Error('not a task')
   return found
 }
-
 test('a field arriving in front of one glued to the words: stands apart from them, so a tag is a tag; and adds no second blank where there is one', () => {
   expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe('- [ ] x #new ⏫ 📅 2026-01-02')
   expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe('- [ ] x #new ⏫ 📅 2026-01-02')

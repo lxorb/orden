@@ -13,23 +13,18 @@ const RANGES = {
   month: 28 * 24 * 60 * 60_000,
   all: null,
 } as const
-
 export type Range = keyof typeof RANGES
-
 export const DEFAULT_RANGE: Range = 'hour'
-
 export interface Asked {
   range: Range
   history: boolean
   site: boolean
   cache: boolean
 }
-
 export function sinceFor(range: Range, now: number): number {
   const back = RANGES[range]
   return back === null ? 0 : now - back
 }
-
 export function sitesSince(books: readonly string[], since: number): string[] {
   const sites = new Set<string>()
   for (const book of books) {
@@ -40,7 +35,6 @@ export function sitesSince(books: readonly string[], since: number): string[] {
   }
   return [...sites]
 }
-
 export function reach(apart: readonly (string | null)[]): {
   stores: (string | null)[]
   books: string[]
@@ -48,11 +42,9 @@ export function reach(apart: readonly (string | null)[]): {
   const own = apart.map((one) => ownStore(one)).filter((one) => one !== null)
   return { stores: [null, ...new Set(own)], books: [webData.history()] }
 }
-
 export async function clearData(asked: Asked, apart: readonly (string | null)[], now = Date.now()): Promise<void> {
   const since = sinceFor(asked.range, now)
   const { stores, books } = reach(apart)
-
   if (asked.site || asked.cache) {
     await invoke('web_clear', {
       stores,
@@ -60,7 +52,6 @@ export async function clearData(asked: Asked, apart: readonly (string | null)[],
       sites: sitesSince(books, since),
     })
   }
-
   if (asked.history) {
     const gone = new Set(books.flatMap((book) => visited.removeSince(book, since)))
     placesForgotten(since <= 0 ? null : gone)

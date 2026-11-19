@@ -7,17 +7,14 @@ const STANDARD = new Set(['Title', 'UserName', 'Password', 'URL', 'Notes'])
 const TOTP_KEYS = new Set(['otp', 'totp', 'totp seed', 'timeotp-secret-base32'])
 const IGNORED_KEYS = new Set(['totp settings', 'timeotp-algorithm', 'timeotp-length', 'timeotp-period'])
 const URL_KEY = /^(kp2a_url|url)(_\d+)?$/i
-
 interface Context {
   into: Collector
   recycleBin: string
 }
-
 interface EntryValue {
   value: string
   hidden: boolean
 }
-
 function stringsOf(entry: XmlElement, into: Collector): Map<string, EntryValue> {
   const title = childrenOf(entry, 'String').find((one) => textAt(one, 'Key') === 'Title')
   const strings = new Map<string, EntryValue>()
@@ -36,7 +33,6 @@ function stringsOf(entry: XmlElement, into: Collector): Map<string, EntryValue> 
   }
   return strings
 }
-
 function entryOf(entry: XmlElement, folder: string, trashed: boolean, context: Context): void {
   const strings = stringsOf(entry, context.into)
   const value = (key: string): string => strings.get(key)?.value ?? ''
@@ -75,7 +71,6 @@ function entryOf(entry: XmlElement, folder: string, trashed: boolean, context: C
     context.into.skip('Its attachments did not come in.', title)
   }
 }
-
 function groupOf(group: XmlElement, path: string[], trashed: boolean, context: Context): void {
   const folder = path.join('/')
   for (const entry of childrenOf(group, 'Entry')) entryOf(entry, folder, trashed, context)
@@ -88,7 +83,6 @@ function groupOf(group: XmlElement, path: string[], trashed: boolean, context: C
     groupOf(child, inBin ? [] : [...path, textAt(child, 'Name')], inBin, context)
   }
 }
-
 export function parseKeePass(text: string): Imported {
   const root = parseXml(text)
   if (root.name !== 'KeePassFile') throw new ImportError('This is not a KeePass XML export.')

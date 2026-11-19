@@ -6,33 +6,26 @@ pub const APP_HOSTS: [&str; 4] = [
     "asset.localhost",
     "nib.localhost",
 ];
-
 pub const INTERNAL_MARK: &str = "data-tauri-cef-internal";
-
 pub trait ExtensionUrls {
     fn is_extension(&self, url: &Url) -> bool;
 }
-
 impl<F: Fn(&Url) -> bool> ExtensionUrls for F {
     fn is_extension(&self, url: &Url) -> bool {
         self(url)
     }
 }
-
 pub struct NoExtensions;
-
 impl ExtensionUrls for NoExtensions {
     fn is_extension(&self, _url: &Url) -> bool {
         false
     }
 }
-
 #[must_use]
 pub fn app_host(host: &str) -> bool {
     let plain = host.trim_end_matches('.').to_ascii_lowercase();
     APP_HOSTS.contains(&plain.as_str())
 }
-
 #[must_use]
 pub fn allowed(url: &Url) -> bool {
     if url.scheme() == "view-source" {
@@ -47,11 +40,9 @@ pub fn allowed(url: &Url) -> bool {
     }
     !app_host(url.host_str().unwrap_or_default())
 }
-
 pub fn tab_may_open(url: &Url, extensions: &impl ExtensionUrls) -> bool {
     allowed(url) || extensions.is_extension(url)
 }
-
 pub fn frame_may_open(url: &Url, extensions: &impl ExtensionUrls) -> bool {
     match url.scheme() {
         "about" => matches!(url.path(), "blank" | "srcdoc"),
@@ -62,29 +53,24 @@ pub fn frame_may_open(url: &Url, extensions: &impl ExtensionUrls) -> bool {
         _ => tab_may_open(url, extensions),
     }
 }
-
 #[must_use]
 pub fn internal(url: &str) -> bool {
     url.starts_with("data:") && url.contains(INTERNAL_MARK)
 }
-
 #[must_use]
 pub fn from_a_site(url: &Url) -> bool {
     matches!(url.scheme(), "http" | "https") && url.host_str().is_some_and(|host| !host.is_empty())
 }
-
 #[must_use]
 pub fn blank(url: &Url) -> bool {
     url.scheme() == "about" && url.path() == "blank"
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Becomes {
     Tab(String),
     Window,
     Nothing,
 }
-
 pub fn becomes(url: &Url, sized: bool, extensions: &impl ExtensionUrls) -> Becomes {
     if matches!(url.scheme(), "blob" | "data")
         && frame_may_open(url, extensions)
@@ -104,7 +90,6 @@ pub fn becomes(url: &Url, sized: bool, extensions: &impl ExtensionUrls) -> Becom
         Becomes::Nothing
     }
 }
-
 const SIGNING_IN: &[&str] = &[
     "auth",
     "authorize",
@@ -123,11 +108,9 @@ const SIGNING_IN: &[&str] = &[
     "threeds",
     "challenge",
 ];
-
 const SIGNING_IN_HOSTS: &[&str] = &[
     "accounts", "account", "auth", "login", "sso", "id", "secure",
 ];
-
 #[must_use]
 pub fn signs_in(url: &Url) -> bool {
     let words = |text: &str| {

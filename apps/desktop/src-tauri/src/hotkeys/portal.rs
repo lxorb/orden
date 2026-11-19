@@ -20,22 +20,16 @@ const REQUEST: &str = "org.freedesktop.portal.Request";
 const SESSION: &str = "org.freedesktop.portal.Session";
 const REGISTRY: &str = "org.freedesktop.host.portal.Registry";
 const PROPERTIES: &str = "org.freedesktop.DBus.Properties";
-
 const ENTRIES: [&str; 5] = ["nib", "orden", "Orden", "so.orden.Orden", "ch.emilvinu.nib"];
-
 enum Ask {
     Want(BTreeMap<Which, String>),
     Change,
 }
-
 static ASKS: OnceLock<Sender<Ask>> = OnceLock::new();
-
 static SESSION_NOW: Mutex<Option<String>> = Mutex::new(None);
-
 pub fn wake(app: &AppHandle) {
     let _ = asks(app);
 }
-
 fn asks(app: &AppHandle) -> &'static Sender<Ask> {
     ASKS.get_or_init(|| {
         let (asks, asked) = mpsc::channel();
@@ -46,15 +40,12 @@ fn asks(app: &AppHandle) -> &'static Sender<Ask> {
         asks
     })
 }
-
 pub fn want_keys(app: &AppHandle, wanted: BTreeMap<Which, String>) {
     let _ = asks(app).send(Ask::Want(wanted));
 }
-
 pub fn reconfigure(app: &AppHandle) {
     let _ = asks(app).send(Ask::Change);
 }
-
 fn run(app: &AppHandle, asked: &Receiver<Ask>) {
     let portal = match Portal::open() {
         Ok(portal) => portal,
@@ -78,7 +69,6 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
     );
     super::reached(app, Reach::Portal, portal.version >= 2);
     portal.hear(app);
-
     let mut bound = Bound::default();
     while let Ok(first) = asked.recv() {
         let mut wanted = None;
@@ -99,19 +89,16 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
         }
     }
 }
-
 #[derive(Default)]
 struct Bound {
     keys: BTreeMap<Which, String>,
     session: Option<String>,
 }
-
 struct Portal {
     bus: Connection,
     sender: String,
     version: u32,
 }
-
 impl Portal {
     fn open() -> zbus::Result<Self> {
         let bus = Connection::session()?;
@@ -134,7 +121,6 @@ impl Portal {
             version,
         })
     }
-
     fn rebind(&self, app: &AppHandle, bound: &mut Bound, wanted: BTreeMap<Which, String>) {
         if bound.keys == wanted {
             return;
@@ -165,7 +151,6 @@ impl Portal {
             }
         }
     }
-
     fn bind(
         &self,
         wanted: &BTreeMap<Which, String>,
@@ -181,7 +166,6 @@ impl Portal {
             .and_then(|value| text(value))
             .filter(|_| code == 0)
             .ok_or_else(|| zbus::Error::Failure(format!("no session ({code})")))?;
-
         let shortcuts: Vec<(&str, HashMap<&str, Value>)> = wanted
             .iter()
             .map(|(which, key)| {
@@ -214,7 +198,6 @@ impl Portal {
             }
         }
     }
-
     fn request<B>(
         &self,
         method: &str,
@@ -240,7 +223,6 @@ impl Portal {
         let body = answer.body();
         body.deserialize()
     }
-
     fn configure(&self, session: &str) {
         if self.version < 2 {
             return;
@@ -257,13 +239,11 @@ impl Portal {
             &(&path, "", options),
         );
     }
-
     fn close(&self, session: &str) {
         let _ = self
             .bus
             .call_method(Some(DESKTOP), session, Some(SESSION), "Close", &());
     }
-
     fn hear(&self, app: &AppHandle) {
         let bus = self.bus.clone();
         let app = app.clone();
@@ -276,7 +256,6 @@ impl Portal {
             });
     }
 }
-
 fn presses(bus: &Connection, app: &AppHandle) -> zbus::Result<()> {
     let rule = MatchRule::builder()
         .msg_type(Kind::Signal)
@@ -316,7 +295,6 @@ fn presses(bus: &Connection, app: &AppHandle) -> zbus::Result<()> {
     }
     Ok(())
 }
-
 fn register(bus: &Connection) {
     if std::env::var_os("FLATPAK_ID").is_some() || std::env::var_os("SNAP").is_some() {
         return;
@@ -333,7 +311,6 @@ fn register(bus: &Connection) {
         &(entry.as_str(), options),
     );
 }
-
 fn installed_entry() -> Option<String> {
     let home = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
@@ -349,7 +326,6 @@ fn installed_entry() -> Option<String> {
         .collect();
     first_entry(&folders, std::path::Path::is_file)
 }
-
 fn first_entry(folders: &[PathBuf], exists: impl Fn(&std::path::Path) -> bool) -> Option<String> {
     folders.iter().find_map(|folder| {
         ENTRIES
@@ -358,20 +334,16 @@ fn first_entry(folders: &[PathBuf], exists: impl Fn(&std::path::Path) -> bool) -
             .map(|entry| (*entry).to_owned())
     })
 }
-
 fn set_session(session: Option<String>) {
     *SESSION_NOW.held() = session;
 }
-
 fn is_now(session: &str) -> bool {
     SESSION_NOW.held().as_deref() == Some(session)
 }
-
 fn token() -> String {
     static NEXT: AtomicU32 = AtomicU32::new(0);
     format!("orden{}", NEXT.fetch_add(1, Ordering::Relaxed))
 }
-
 fn triggers(value: &Value<'_>) -> BTreeMap<Which, String> {
     let Value::Array(items) = unwrapped(value) else {
         return BTreeMap::new();
@@ -399,9 +371,7 @@ fn triggers(value: &Value<'_>) -> BTreeMap<Which, String> {
         })
         .collect()
 }
-
 type Listed = Vec<(String, HashMap<String, OwnedValue>)>;
-
 fn listed(shortcuts: Listed) -> BTreeMap<Which, String> {
     shortcuts
         .into_iter()
@@ -414,18 +384,15 @@ fn listed(shortcuts: Listed) -> BTreeMap<Which, String> {
         })
         .collect()
 }
-
 fn unwrapped<'v, 'a>(value: &'v Value<'a>) -> &'v Value<'a> {
     match value {
         Value::Value(inner) => unwrapped(inner),
         other => other,
     }
 }
-
 fn text(value: &Value<'_>) -> Option<String> {
     String::try_from(unwrapped(value)).ok()
 }
-
 impl Which {
     fn portal_id(self) -> &'static str {
         match self {
@@ -433,11 +400,9 @@ impl Which {
             Self::StopAgents => "stop-agents",
         }
     }
-
     fn from_portal(id: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|which| which.portal_id() == id)
     }
-
     fn description(self) -> &'static str {
         match self {
             Self::QuickAdd => "Add a task",
@@ -445,7 +410,6 @@ impl Which {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -471,7 +435,6 @@ mod tests {
         assert_eq!(held.get(&Which::StopAgents).map(String::as_str), Some(""));
         assert_eq!(held.len(), 2);
     }
-
     #[test]
     fn the_first_entry_installed_is_the_one_registered() {
         let folders = [
@@ -484,7 +447,6 @@ mod tests {
         assert_eq!(found.as_deref(), Some("Orden"));
         assert_eq!(first_entry(&folders, |_| false), None);
     }
-
     #[test]
     fn every_key_has_a_portal_id_of_its_own() {
         for which in Which::ALL {

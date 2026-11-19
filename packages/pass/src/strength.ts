@@ -1,12 +1,10 @@
 import { WORDS } from './words'
 
 export type Strength = 'vulnerable' | 'weak' | 'strong'
-
 export interface StrengthOf {
   strength: Strength
   bits: number
 }
-
 export const STRENGTH_BITS = { weak: 40, strong: 70 } as const
 export const COMMON_PASSWORDS: readonly string[] = `123456 password 123456789 12345678 12345 qwerty
 1234567 111111 1234567890 123123 abc123 1234 password1 iloveyou 1q2w3e4r 000000 qwerty123 zaq12wsx
@@ -29,7 +27,6 @@ garfield mickey minnie batman1 superman1 hello123 hellokitty whatever1 nothing s
 mypass yourpassword secret123 private qweasd qweasdzxc 1qazxsw2 asdasd qweqwe zxczxc 112233 121212
 131313 123654 147258 159753 159357 741852 753951 789456 987654 password12 pa55word
 p4ssword`.split(/\s/)
-
 const KEYBOARD_ROWS = [
   '`1234567890-=',
   'qwertyuiop[]\\',
@@ -44,7 +41,6 @@ const KEYBOARD_ROWS = [
   'qsdfghjklmù*',
   'wxcvbn,;:!',
 ]
-
 const LEET: Record<string, string> = {
   '4': 'a',
   '@': 'a',
@@ -63,22 +59,18 @@ const LEET: Record<string, string> = {
   '+': 't',
   '2': 'z',
 }
-
 const YEAR = /^(?:19|20)\d\d$/
 const LONGEST_BLOCK = 8
 const KEYBOARD_BITS = Math.log2(KEYBOARD_ROWS.join('').length * 2)
 const SEQUENCE_BITS = Math.log2(62 * 2)
 const YEAR_BITS = Math.log2(200)
 const WORD_BITS = Math.log2(WORDS.length)
-
 interface Dictionaries {
   common: Map<string, number>
   words: Set<string>
   longest: number
 }
-
 let dictionaries: Dictionaries | null = null
-
 function dictionariesOf(): Dictionaries {
   dictionaries ??= {
     common: new Map(COMMON_PASSWORDS.map((one, at) => [one, Math.log2(at + 2)])),
@@ -87,7 +79,6 @@ function dictionariesOf(): Dictionaries {
   }
   return dictionaries
 }
-
 function poolOf(password: string): number {
   let pool = 0
   if (/[a-z]/.test(password)) pool += 26
@@ -97,18 +88,15 @@ function poolOf(password: string): number {
   if (/[^\x20-\x7e]/.test(password)) pool += 100
   return Math.max(pool, 1)
 }
-
 function caseBits(piece: string): number {
   const lower = piece.toLowerCase()
   if (piece === lower) return 0
   if (piece === piece.toUpperCase() || piece === lower.charAt(0).toUpperCase() + lower.slice(1)) return 1
   return 2
 }
-
 function unleeted(lower: string, one: string): string {
   return lower.replace(/./gsu, (char) => (char === '1' ? one : (LEET[char] ?? char)))
 }
-
 function readingsOf(lower: string): { text: string; bits: number }[] {
   const readings = [{ text: lower, bits: 0 }]
   for (const one of ['i', 'l']) {
@@ -118,13 +106,11 @@ function readingsOf(lower: string): { text: string; bits: number }[] {
   }
   return readings
 }
-
 function wordBits(piece: string, dictionaries: Dictionaries): number {
   const common = dictionaries.common.get(piece)
   if (common !== undefined) return common
   return dictionaries.words.has(piece) ? WORD_BITS : Infinity
 }
-
 function keyboardRun(lower: string, from: number): number {
   let longest = 1
   for (const row of KEYBOARD_ROWS) {
@@ -143,7 +129,6 @@ function keyboardRun(lower: string, from: number): number {
   }
   return longest
 }
-
 function sequenceRun(lower: string, from: number): number {
   if (!/[a-z0-9]/.test(lower.charAt(from))) return 1
   let longest = 1
@@ -159,14 +144,12 @@ function sequenceRun(lower: string, from: number): number {
   }
   return longest
 }
-
 function repeatsOf(password: string, from: number, block: number): number {
   const unit = password.slice(from, from + block)
   let count = 1
   while (password.startsWith(unit, from + count * block)) count++
   return count
 }
-
 function cheapestBits(password: string, memo: Map<string, number>): number {
   const known = memo.get(password)
   if (known !== undefined) return known
@@ -206,7 +189,6 @@ function cheapestBits(password: string, memo: Map<string, number>): number {
   memo.set(password, bits)
   return bits
 }
-
 export function strengthOf(password: string): StrengthOf {
   const bits = Math.round(cheapestBits(password, new Map()) * 10) / 10
   const strength: Strength =

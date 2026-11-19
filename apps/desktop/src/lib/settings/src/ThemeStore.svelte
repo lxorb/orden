@@ -16,7 +16,6 @@
 
   const STYLE_ID = 'orden-theme-miniatures'
   const PALETTE_ID = 'orden-theme-palettes'
-
   const SWATCHES = [
     '--bg',
     '--surface',
@@ -29,76 +28,55 @@
     '--danger',
     '--success',
   ]
-
   const WAITING = [0, 1, 2, 3, 4, 5]
-
   let hovered = $state<string | null>(null)
-
   let previewing = $state<Scheme | null>(null)
-
   const sample = $derived(sampleHtml())
   const fullSample = $derived(sampleHtml(true))
-
   $effect(() => (store.open ? overlays.show(() => store.close()) : undefined))
   $effect(() => closeOnBack(store.open, () => store.close()))
   $effect(() => closeOnBack(store.open && store.chosen !== null, leavePreview))
-
   function leavePreview() {
     store.opened = null
     previewing = null
   }
-
   function inject(id: string, css: string) {
     let style = document.getElementById(id)
-
     if (!css) {
       style?.remove()
       return
     }
-
     if (!style) {
       style = document.createElement('style')
       style.id = id
       document.head.append(style)
     }
-
     if (style.textContent !== css) style.textContent = css
   }
-
   $effect(() => {
     if (!store.open || document.getElementById(STYLE_ID)) return
-
     void miniatureCss().then((css) => inject(STYLE_ID, css))
   })
-
   $effect(() => inject(PALETTE_ID, store.open ? paletteCss(store.themes) : ''))
-
   $effect(() => {
     const themes = store.shown
     if (!store.open || !themes.length) return
-
     const frame = requestAnimationFrame(() => {
       if (!performance.getEntriesByName(`${PAINT}:index`).length) return
-
       performance.measure(PAINT, `${PAINT}:index`)
       performance.clearMarks(`${PAINT}:index`)
     })
-
     return () => cancelAnimationFrame(frame)
   })
-
   function schemeOf(one: StoreTheme, wanted?: Scheme | null): Scheme {
     const shows = wanted ?? theme.current
     if (!one.variants.includes(shows)) return one.variants[0] ?? shows
-
     const pointed = hovered === one.id && one.variants.length > 1
     return pointed && !wanted ? (shows === 'dark' ? 'light' : 'dark') : shows
   }
-
   function moodOf(one: StoreTheme): string | undefined {
     return one.tags.find((tag) => tag !== 'light' && tag !== 'dark')
   }
-
   function swatchesOf(one: StoreTheme, scheme: Scheme) {
     const palette = one.palettes[scheme]
     return SWATCHES.filter((token) => palette[token]).map((token) => ({
@@ -106,7 +84,6 @@
       value: palette[token] ?? '',
     }))
   }
-
   const ORDERS = $derived([
     { value: 'newest', label: 'Newest' },
     { value: 'name', label: 'Name' },
@@ -297,18 +274,15 @@
     --scrim-z: var(--z-store);
     --scrim-ink: 55%;
   }
-
   .sheet {
     --screen-gutter: calc(2 * var(--space-5));
     --screen-width: calc(var(--screen-panes) - 2 * var(--space-5));
     --screen-height: calc(var(--screen-tall) - 2 * var(--space-5));
-
     z-index: var(--z-store);
     display: grid;
     grid-template-rows: auto 1fr;
     overflow: hidden;
   }
-
   header {
     display: flex;
     align-items: center;
@@ -317,7 +291,6 @@
     border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
-
   .find {
     flex: 1;
     min-width: 0;
@@ -332,12 +305,10 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .sort {
     flex: none;
     width: 8.5rem;
   }
-
   .title {
     flex: 1;
     min-width: 0;
@@ -350,18 +321,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .body {
     padding: var(--space-4);
     overflow-y: auto;
   }
-
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
     gap: var(--space-3);
   }
-
   .card {
     display: flex;
     flex-direction: column;
@@ -377,7 +345,6 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .card:hover {
       translate: 0 -2px;
@@ -385,43 +352,35 @@
       box-shadow: var(--shadow-md);
     }
   }
-
   .card:active {
     translate: 0 0;
   }
-
   .card:focus-visible {
     outline-offset: 2px;
   }
-
   .frame {
     --mini-scale: 0.62;
     width: 100%;
     border-bottom: 1px solid var(--line);
   }
-
   .frame.big {
     --mini-scale: 1;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
   }
-
   .card.waiting {
     border-style: dashed;
     opacity: 0.6;
   }
-
   .card.waiting .frame {
     background: var(--surface-3);
   }
-
   .label {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     padding: 9px 11px;
   }
-
   .who {
     flex: 1;
     min-width: 0;
@@ -429,7 +388,6 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .name {
     font-family: var(--font-ui);
     font-size: var(--text-sm);
@@ -439,7 +397,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .by {
     font-size: var(--text-xs);
     color: var(--muted);
@@ -447,7 +404,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .state {
     flex: none;
     width: 14px;
@@ -458,19 +414,16 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .state.using,
   .state.up {
     stroke: var(--accent);
   }
-
   .full {
     display: grid;
     grid-template-columns: 1fr 16rem;
     gap: var(--space-4);
     align-items: start;
   }
-
   .shown,
   .about {
     display: flex;
@@ -478,12 +431,10 @@
     gap: var(--space-3);
     min-width: 0;
   }
-
   .sides {
     display: flex;
     gap: var(--space-1);
   }
-
   .side {
     padding: 4px 10px;
     border: none;
@@ -498,18 +449,15 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .side.at {
     background: var(--surface-selected);
     color: var(--active-file-text-color);
   }
-
   .palette {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
   }
-
   .chip {
     width: 20px;
     height: 20px;
@@ -517,14 +465,12 @@
     background: var(--chip);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
   }
-
   .says {
     margin: 0;
     font-size: var(--text-sm);
     line-height: 1.55;
     color: var(--muted-strong);
   }
-
   .facts {
     display: flex;
     flex-wrap: wrap;
@@ -532,29 +478,24 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .facts .tag {
     padding: 1px 7px;
     border-radius: 99px;
     background: var(--surface-2);
   }
-
   .row {
     display: flex;
     gap: var(--space-2);
     margin-top: var(--space-1);
   }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .note.bad {
     color: var(--danger);
   }
-
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -564,11 +505,9 @@
     height: min(90dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
-
   :global([data-touch]) .grid {
     grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   }
-
   :global([data-touch]) .full {
     grid-template-columns: 1fr;
   }

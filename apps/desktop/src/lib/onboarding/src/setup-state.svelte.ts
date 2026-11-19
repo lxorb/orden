@@ -11,15 +11,12 @@ export interface Issue {
   id: number
   text: string
 }
-
 const blank = (): Answers => ({ browser: null, notes: null, code: null })
-
 export interface Brought {
   notes: boolean
   browser: boolean
   ai: boolean
 }
-
 class Setup {
   step = $state<Step>('account')
   answers = $state<Answers>(blank())
@@ -31,18 +28,14 @@ class Setup {
   phone = $state(isMobile)
   connected = $state(false)
   brought = $state<Brought>({ notes: false, browser: false, ai: false })
-
   get showing(): boolean {
     return gate.showing
   }
-
   set showing(on: boolean) {
     gate.showing = on
   }
-
   private trail: Step[] = []
   private told = 0
-
   resume() {
     if (this.trail.length) return
     const kept = readProgress()
@@ -50,14 +43,12 @@ class Setup {
     this.answers = kept.answers
     this.open(kept.step)
   }
-
   begin(signedIn: boolean) {
     if (readProgress() === 'done' || this.showing) return
     this.signedIn = signedIn
     this.answers = blank()
     this.open(firstStep(this.answers, this.reach))
   }
-
   private open(step: Step) {
     this.step = step
     this.trail = [step]
@@ -65,7 +56,6 @@ class Setup {
     this.keep()
     stepped(`setup-${step}`)
   }
-
   async look() {
     const { signInKind } = await import('./connect')
     this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
@@ -76,7 +66,6 @@ class Setup {
       this.here = await bringing().here()
     }
   }
-
   get reach(): Reach {
     return {
       signedIn: this.signedIn,
@@ -90,20 +79,16 @@ class Setup {
       connected: this.connected,
     }
   }
-
   private get earlier(): Step[] {
     return this.trail.slice(0, -1).filter((step) => shows(step, this.answers, this.reach))
   }
-
   get canGoBack(): boolean {
     return this.earlier.length > 0
   }
-
   answer(change: Partial<Answers>) {
     this.answers = { ...this.answers, ...change }
     this.keep()
   }
-
   next(from: Step) {
     if (from !== this.step) return
     const step = stepAfter(this.step, this.answers, this.reach)
@@ -113,7 +98,6 @@ class Setup {
     this.keep()
     stepped(`setup-${step}`)
   }
-
   back() {
     const earlier = this.earlier
     if (!earlier.length) return
@@ -122,38 +106,30 @@ class Setup {
     this.step = this.trail.at(-1) ?? 'account'
     this.keep()
   }
-
   tell(text: string | null) {
     if (text) this.issues = [...this.issues, { id: ++this.told, text }]
   }
-
   got(what: keyof Brought) {
     this.brought = { ...this.brought, [what]: true }
   }
-
   finish() {
     this.showing = false
     keepProgress('done')
     stepped('setup-finished')
   }
-
   showAround() {
     this.finish()
     gate.guiding = true
     stepped('setup-guide')
   }
-
   private keep() {
     if (this.showing) keepProgress({ step: this.step, answers: this.answers })
   }
 }
-
 export const setup = new Setup()
-
 export function presetOf(browser: string | null): Preset | null {
   return BROWSERS.find((one) => one.id === browser)?.preset ?? null
 }
-
 export async function applyPreset(preset: Preset): Promise<void> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
     import('../../tab-strip/src/api'),
@@ -170,7 +146,6 @@ export async function applyPreset(preset: Preset): Promise<void> {
     setters[setting](on)
   }
 }
-
 export async function currentSettings(): Promise<Record<PresetSetting, boolean>> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
     import('../../tab-strip/src/api'),
@@ -184,7 +159,6 @@ export async function currentSettings(): Promise<Record<PresetSetting, boolean>>
     swipe: swipeChoice.on,
   }
 }
-
 export async function settleMarkdown(app: string | null): Promise<void> {
   const style = markdownStyleFor(app)
   if (!style) return

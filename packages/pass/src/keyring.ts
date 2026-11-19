@@ -9,12 +9,10 @@ export interface PasswordSeal {
   sealed: string
   at?: number
 }
-
 export interface SignSeal {
   pub: string
   private: string
 }
-
 export interface Keyring {
   v: 1
   pub: string
@@ -24,11 +22,9 @@ export interface Keyring {
   recovery: string | null
   at: number
 }
-
 function isTime(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
-
 function passwordSealIn(value: unknown): PasswordSeal | null {
   const params = writtenKdfIn(value)
   if (params === null) return null
@@ -37,14 +33,12 @@ function passwordSealIn(value: unknown): PasswordSeal | null {
   if (at === undefined) return { salt, ...params, sealed }
   return isTime(at) ? { salt, ...params, sealed, at } : null
 }
-
 function signSealIn(value: unknown): SignSeal | null | undefined {
   if (value === undefined) return undefined
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
   const { pub, private: sealed } = value as Record<string, unknown>
   return isSignPub(pub) && isBase64(sealed, 1) ? { pub, private: sealed } : null
 }
-
 export function keyringIn(value: unknown): Keyring | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
   const raw = value as Record<string, unknown>

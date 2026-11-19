@@ -6,11 +6,9 @@ import { watchRows } from './store'
 function post(answer: Answer) {
   self.postMessage(answer)
 }
-
 function warmth() {
   post({ kind: 'warmth', warmth: space.warmth() })
 }
-
 let hearing = Promise.resolve()
 watchRows((change) => {
   hearing = hearing.then(async () => {
@@ -19,7 +17,6 @@ watchRows((change) => {
     warmth()
   })
 })
-
 self.onmessage = (event: MessageEvent<unknown>) => {
   const told = event.data
   if (isWarm(told)) {
@@ -29,9 +26,7 @@ self.onmessage = (event: MessageEvent<unknown>) => {
       .then(warmth)
     return
   }
-
   if (!isAsk(told)) return
-
   searchRows(
     told.root,
     told.query,

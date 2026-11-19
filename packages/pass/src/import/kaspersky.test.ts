@@ -47,7 +47,6 @@ eggs
 
 ---
 `
-
 describe('parseKaspersky', () => {
   it('reads websites, applications, other accounts and notes', () => {
     const items = parseKaspersky(TXT.replace(/\n/g, '\r\n')).vaults[0]?.items ?? []

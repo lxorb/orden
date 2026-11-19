@@ -14,11 +14,8 @@ use super::wire::{from_sql, to_sql, Change, Parts, Query, MOST_PARTS};
 use orden_base::paths::{cannot, made};
 
 const MIGRATIONS: [&str; 1] = [include_str!("1.sql")];
-
 const PATIENCE: Duration = Duration::from_secs(5);
-
 const LOG_ROWS: i64 = 1000;
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Opened {
@@ -27,14 +24,12 @@ pub struct Opened {
     pub schema: usize,
     pub recovered: bool,
 }
-
 #[derive(Debug)]
 pub enum Refused {
     Damaged(String),
     Newer(usize),
     Other(String),
 }
-
 impl Refused {
     pub fn said(&self) -> String {
         match self {
@@ -46,7 +41,6 @@ impl Refused {
         }
     }
 }
-
 impl From<rusqlite::Error> for Refused {
     fn from(error: rusqlite::Error) -> Self {
         if damaged(&error) {
@@ -56,19 +50,16 @@ impl From<rusqlite::Error> for Refused {
         }
     }
 }
-
 fn damaged(error: &rusqlite::Error) -> bool {
     error
         .sqlite_error_code()
         .is_some_and(|code| matches!(code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase))
 }
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Failed {
     pub said: String,
     pub damaged: bool,
 }
-
 impl From<rusqlite::Error> for Failed {
     fn from(error: rusqlite::Error) -> Self {
         Self {
@@ -77,7 +68,6 @@ impl From<rusqlite::Error> for Failed {
         }
     }
 }
-
 impl From<String> for Failed {
     fn from(said: String) -> Self {
         Self {
@@ -86,18 +76,15 @@ impl From<String> for Failed {
         }
     }
 }
-
 pub struct Store {
     conn: Connection,
     pub opened: Opened,
 }
-
 impl Store {
     pub fn open_as(path: &Path, device: Option<&str>) -> Result<Self, Refused> {
         if let Some(folder) = path.parent() {
             made(folder).map_err(Refused::Other)?;
         }
-
         match Self::opened(path, false, device) {
             Err(Refused::Damaged(_)) => {
                 set_aside(path)?;
@@ -106,12 +93,10 @@ impl Store {
             other => other,
         }
     }
-
     #[cfg(test)]
     pub fn open(path: &Path) -> Result<Self, Refused> {
         Self::open_as(path, None)
     }
-
     fn opened(path: &Path, recovered: bool, preferred: Option<&str>) -> Result<Self, Refused> {
         let conn = Connection::open(path)?;
         conn.busy_timeout(PATIENCE)?;
@@ -123,11 +108,9 @@ impl Store {
             )));
         }
         conn.pragma_update(None, "synchronous", "normal")?;
-
         let schema = migrated_with(&conn, &MIGRATIONS)?;
         let device = device(&conn, preferred)?;
         let was_clean = mark_clean(&conn, false)?;
-
         Ok(Self {
             conn,
             opened: Opened {
@@ -138,18 +121,15 @@ impl Store {
             },
         })
     }
-
     pub fn mark_clean(&self, clean: bool) -> Result<bool, rusqlite::Error> {
         mark_clean(&self.conn, clean)
     }
-
     pub fn read(&mut self, queries: &[Query]) -> Result<(Json, Vec<Vec<u8>>), Failed> {
         let snapshot = self
             .conn
             .transaction_with_behavior(TransactionBehavior::Deferred)?;
         let mut parts = Parts::default();
         let mut answers = Vec::with_capacity(queries.len());
-
         for query in queries {
             answers.push(match query {
                 Query::Get { table: name, key } => {
@@ -191,7 +171,6 @@ impl Store {
                 }
             });
         }
-
         if parts.len() > MOST_PARTS {
             return Err(format!(
                 "a read of {} values of bytes is more than one answer carries ({MOST_PARTS}); ask in batches",
@@ -201,14 +180,12 @@ impl Store {
         }
         Ok((Json::Array(answers), parts.into_parts()))
     }
-
     pub fn write(&mut self, changes: &[Change], parts: &[&[u8]]) -> Result<Vec<usize>, Failed> {
         let batch = self
             .conn
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let mut counts = Vec::with_capacity(changes.len());
         let mut logged = false;
-
         for change in changes {
             counts.push(match change {
                 Change::Put { table: name, row } => {
@@ -236,7 +213,6 @@ impl Store {
                 }
             });
         }
-
         if logged {
             run(
                 &batch,
@@ -244,18 +220,15 @@ impl Store {
                 vec![Sql::Integer(LOG_ROWS)],
             )?;
         }
-
         batch.commit()?;
         Ok(counts)
     }
-
     pub fn close(self) -> Result<(), String> {
         self.conn
             .close()
             .map_err(|(_, error)| format!("the sync store would not close: {error}"))
     }
 }
-
 fn rows(
     conn: &Connection,
     table: &Table,
@@ -266,7 +239,6 @@ fn rows(
     let mut statement = conn.prepare_cached(sql)?;
     let mut rows = statement.query(params_from_iter(values))?;
     let mut out = Vec::new();
-
     while let Some(row) = rows.next()? {
         let mut object = Map::with_capacity(table.columns.len());
         for (at, column) in table.columns.iter().enumerate() {
@@ -275,16 +247,13 @@ fn rows(
         }
         out.push(Json::Object(object));
     }
-
     Ok(out)
 }
-
 fn run(conn: &Connection, sql: &str, values: Vec<Sql>) -> Result<usize, Failed> {
     Ok(conn
         .prepare_cached(sql)?
         .execute(params_from_iter(values))?)
 }
-
 fn put(
     conn: &Connection,
     table: &Table,
@@ -294,13 +263,11 @@ fn put(
     for name in row.keys() {
         table.column(name)?;
     }
-
     let mut values = Vec::with_capacity(table.columns.len());
     for column in table.columns {
         let value = row.get(column.name).unwrap_or(&Json::Null);
         values.push(to_sql(table, column, value, parts)?);
     }
-
     let slots = vec!["?"; values.len()].join(", ");
     let verb = if table.key.is_some() {
         "insert or replace"
@@ -314,7 +281,6 @@ fn put(
     );
     run(conn, &sql, values)
 }
-
 fn patch(
     conn: &Connection,
     table: &Table,
@@ -326,7 +292,6 @@ fn patch(
     if set.is_empty() {
         return Err(format!("a patch of {} changes nothing", table.name).into());
     }
-
     let mut assignments = Vec::with_capacity(set.len());
     let mut values = Vec::with_capacity(set.len() + 1);
     for (name, value) in set {
@@ -338,7 +303,6 @@ fn patch(
         values.push(to_sql(table, column, value, parts)?);
     }
     values.push(Sql::Text(key.to_owned()));
-
     let sql = format!(
         "update {} set {} where {keyed} = ?",
         table.name,
@@ -346,7 +310,6 @@ fn patch(
     );
     run(conn, &sql, values)
 }
-
 pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Refused> {
     let has_meta: bool = conn.query_row(
         "select exists (select 1 from sqlite_master where type = 'table' and name = 'meta')",
@@ -363,11 +326,9 @@ pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Re
     } else {
         0
     };
-
     if at > migrations.len() {
         return Err(Refused::Newer(at));
     }
-
     for (done, sql) in migrations.iter().enumerate().skip(at) {
         let step = conn.unchecked_transaction()?;
         step.execute_batch(sql)?;
@@ -377,15 +338,12 @@ pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Re
         )?;
         step.commit()?;
     }
-
     Ok(migrations.len())
 }
-
 #[cfg(test)]
 pub fn migrated(conn: &Connection) -> Result<usize, Refused> {
     migrated_with(conn, &MIGRATIONS)
 }
-
 pub fn device_of(path: &Path) -> Option<String> {
     if !path.is_file() {
         return None;
@@ -403,7 +361,6 @@ pub fn device_of(path: &Path) -> Option<String> {
     .ok()
     .flatten()
 }
-
 fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused> {
     let kept: Option<String> = conn
         .query_row("select value from meta where key = 'device'", [], |row| {
@@ -413,7 +370,6 @@ fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused>
     if let Some(kept) = kept {
         return Ok(kept);
     }
-
     let made = match preferred.filter(|one| is_device_id(one)) {
         Some(one) => one.to_owned(),
         None => new_id()?,
@@ -424,21 +380,18 @@ fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused>
     )?;
     Ok(made)
 }
-
 fn is_device_id(word: &str) -> bool {
     (8..=64).contains(&word.len())
         && word
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
 }
-
 fn new_id() -> Result<String, Refused> {
     let mut bytes = [0_u8; 16];
     getrandom::fill(&mut bytes)
         .map_err(|error| Refused::Other(format!("no randomness for a device id: {error}")))?;
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
-
     let hex = bytes
         .iter()
         .fold(String::with_capacity(32), |mut hex, byte| {
@@ -454,7 +407,6 @@ fn new_id() -> Result<String, Refused> {
         &hex[20..]
     ))
 }
-
 fn mark_clean(conn: &Connection, clean: bool) -> Result<bool, rusqlite::Error> {
     let before: Option<i64> = conn
         .query_row(
@@ -469,7 +421,6 @@ fn mark_clean(conn: &Connection, clean: bool) -> Result<bool, rusqlite::Error> {
     )?;
     Ok(before.is_none_or(|said| said != 0))
 }
-
 pub fn set_aside(path: &Path) -> Result<(), Refused> {
     let aside = with_suffix(path, ".damaged");
     let _ = fs::remove_file(&aside);
@@ -479,7 +430,6 @@ pub fn set_aside(path: &Path) -> Result<(), Refused> {
     }
     Ok(())
 }
-
 pub fn files_of(path: &Path) -> [PathBuf; 4] {
     [
         path.to_path_buf(),
@@ -488,13 +438,11 @@ pub fn files_of(path: &Path) -> [PathBuf; 4] {
         with_suffix(path, ".damaged"),
     ]
 }
-
 fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
     let mut name = path.as_os_str().to_os_string();
     name.push(suffix);
     PathBuf::from(name)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{device_of, files_of, migrated_with, Refused, Store, MIGRATIONS, MOST_PARTS};
@@ -512,27 +460,21 @@ mod tests {
             Err(refused) => panic!("{}", refused.said()),
         }
     }
-
     fn changes(value: Json) -> Vec<Change> {
         serde_json::from_value(value).expect("changes")
     }
-
     fn queries(value: Json) -> Vec<Query> {
         serde_json::from_value(value).expect("queries")
     }
-
     fn slices(parts: &[Vec<u8>]) -> Vec<&[u8]> {
         parts.iter().map(Vec::as_slice).collect()
     }
-
     fn read(store: &mut Store, asked: Json) -> (Json, Vec<Vec<u8>>) {
         store.read(&queries(asked)).expect("a read")
     }
-
     fn file(hash: &str) -> Json {
         json!({ "t": "put", "table": "files", "row": { "hash": hash, "state": "here" } })
     }
-
     #[test]
     fn a_new_store_takes_the_device_id_it_is_given() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -544,35 +486,29 @@ mod tests {
         let again = Store::open_as(&path, Some("ffffffffffffffffffffffffffffffff")).expect("again");
         assert_eq!(again.opened.device, made, "a store keeps its own");
         again.close().expect("closed");
-
         let other = dir.path().join("other.db");
         let odd = Store::open_as(&other, Some("../not an id")).expect("a store");
         assert_eq!(odd.opened.device.len(), 36);
     }
-
     #[test]
     fn the_device_id_is_read_without_opening_the_store() {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("sync.db");
         assert_eq!(device_of(&path), None);
         assert!(!path.exists(), "a look makes no store");
-
         let store = Store::open(&path).expect("a store");
         let device = store.opened.device.clone();
         assert_eq!(device_of(&path).as_deref(), Some(device.as_str()));
         store.mark_clean(true).expect("said");
         store.close().expect("closed");
-
         assert_eq!(device_of(&path).as_deref(), Some(device.as_str()));
         let again = Store::open(&path).expect("again");
         assert!(again.opened.was_clean, "the look left the quit clean");
     }
-
     #[test]
     fn a_new_store_is_at_the_latest_schema_with_a_device_of_its_own() {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("sync").join("account.db");
-
         let store = opened(&path);
         assert_eq!(store.opened.schema, MIGRATIONS.len());
         assert!(!store.opened.recovered);
@@ -581,29 +517,23 @@ mod tests {
         assert_eq!(device.len(), 36);
         assert_eq!(&device[14..15], "4", "{device}");
         store.close().expect("closed");
-
         let again = opened(&path);
         assert_eq!(again.opened.device, device, "the device id is kept");
     }
-
     #[test]
     fn clean_exit_is_false_until_said_otherwise() {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("a.db");
-
         opened(&path).close().expect("closed without a word");
         let crashed = opened(&path);
         assert!(!crashed.opened.was_clean, "nothing said it ended cleanly");
-
         assert_eq!(crashed.mark_clean(true), Ok(false));
         crashed.close().expect("closed");
         let clean = opened(&path);
         assert!(clean.opened.was_clean);
         clean.close().expect("closed");
-
         assert!(!opened(&path).opened.was_clean);
     }
-
     #[test]
     fn a_migration_runs_once_and_keeps_what_was_there() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -613,7 +543,6 @@ mod tests {
             .write(&changes(json!([file("h")])), &[])
             .expect("a row");
         store.close().expect("closed");
-
         let conn = Connection::open(&path).expect("the file");
         let second = [MIGRATIONS[0], "alter table files add column size integer;"];
         assert!(matches!(migrated_with(&conn, &second), Ok(2)));
@@ -628,7 +557,6 @@ mod tests {
             .expect("the row survived");
         assert_eq!(kept, "here");
         drop(conn);
-
         let Err(refused) = Store::open(&path) else {
             panic!("a store from a newer Orden was opened");
         };
@@ -643,25 +571,21 @@ mod tests {
             .expect("its shape");
         assert_eq!(columns, 3, "left as the newer Orden made it");
     }
-
     #[test]
     fn a_file_that_is_not_a_store_is_set_aside_and_a_new_one_made() {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("a.db");
         std::fs::write(&path, b"this was never a database, not even a little bit").expect("junk");
-
         let store = opened(&path);
         assert!(store.opened.recovered);
         assert_eq!(store.opened.schema, MIGRATIONS.len());
         let aside = &files_of(&path)[3];
         assert!(aside.exists(), "the damaged copy is kept");
     }
-
     #[test]
     fn a_batch_that_fails_leaves_nothing() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.db"));
-
         let refused = store.write(
             &changes(json!([
                 file("a"),
@@ -671,7 +595,6 @@ mod tests {
             &[],
         );
         assert!(refused.is_err());
-
         let unknown = store.write(
             &changes(json!([
                 file("a"),
@@ -683,18 +606,14 @@ mod tests {
             .expect_err("a key changed")
             .said
             .contains("cannot change"));
-
         let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "files" }]));
         assert_eq!(answer, json!([[]]));
-
         assert_eq!(store.write(&changes(json!([file("a")])), &[]), Ok(vec![1]));
     }
-
     #[test]
     fn each_operation_does_what_it_says() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.db"));
-
         let entry = |id: &str, space: &str| {
             json!({ "t": "put", "table": "entries", "row": {
                 "id": id, "space_id": space, "kind": "note", "parent": null, "name": format!("{id}.md"),
@@ -714,7 +633,6 @@ mod tests {
             )
             .expect("written");
         assert_eq!(counts, [1, 1, 1, 1, 0], "a patch of nothing says so");
-
         let (answer, _) = read(
             &mut store,
             json!([
@@ -734,7 +652,6 @@ mod tests {
             .filter_map(|row| row["id"].as_str())
             .collect();
         assert_eq!(ids, ["a", "b"]);
-
         let counts = store
             .write(
                 &changes(json!([
@@ -747,19 +664,16 @@ mod tests {
         assert_eq!(counts, [1, 1]);
         let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "entries" }]));
         assert_eq!(answer[0].as_array().map(Vec::len), Some(1));
-
         assert!(store
             .read(&queries(
                 json!([{ "t": "scan", "table": "files", "space": "one" }])
             ))
             .is_err());
     }
-
     #[test]
     fn bytes_come_back_as_they_went() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.db"));
-
         let every: Vec<u8> = (0..=255).collect();
         let large: Vec<u8> = (0..1_000_000_u32).map(|at| (at % 251) as u8).collect();
         let mut parts = Parts::default();
@@ -773,11 +687,9 @@ mod tests {
             } }]),
             &parts.into_parts(),
         );
-
         let (value, tail) = unframe(&sent).expect("the envelope");
         let batch: Vec<Change> = serde_json::from_value(value).expect("changes");
         store.write(&batch, &tail).expect("written");
-
         let (answer, parts) = read(
             &mut store,
             json!([{ "t": "get", "table": "docs", "key": "n" }]),
@@ -792,7 +704,6 @@ mod tests {
         assert_eq!(slice(&row["pending"]), Vec::<u8>::new());
         assert_eq!(row["client_id"], 4_294_967_295_u32);
     }
-
     #[test]
     fn a_read_past_the_envelope_is_refused_in_words() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -809,7 +720,6 @@ mod tests {
         store
             .write(&changes(Json::Array(rows)), &slices(&parts.into_parts()))
             .expect("written");
-
         let refused = store
             .read(&queries(json!([{ "t": "scan", "table": "docs" }])))
             .expect_err("too many parts");
@@ -820,13 +730,11 @@ mod tests {
         );
         assert_eq!(half[0]["client_id"], 1);
     }
-
     #[test]
     fn what_orden_wrote_is_kept_small_and_read_back_whole() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.db"));
         let text = "# Plan\n\nThe same line of prose, written again.\n".repeat(400);
-
         store
             .write(
                 &changes(
@@ -841,19 +749,16 @@ mod tests {
         );
         assert_eq!(answer[0]["text"], text);
     }
-
     #[test]
     fn the_log_keeps_its_newest_thousand_rows() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.db"));
-
         let rows: Vec<Json> = (0..1200)
             .map(|at| json!({ "t": "put", "table": "log", "row": { "at": at, "space": "s", "pulled": 1 } }))
             .collect();
         store
             .write(&changes(Json::Array(rows)), &[])
             .expect("logged");
-
         let (answer, _) = read(
             &mut store,
             json!([{ "t": "scan", "table": "log", "space": "s" }]),
@@ -863,10 +768,8 @@ mod tests {
         assert_eq!(kept[0]["at"], 200, "the oldest went first");
         assert_eq!(kept[999]["at"], 1199);
     }
-
     const CHILD: &str = "sync_store::store::tests::a_child_writes_and_waits_to_be_killed";
     const CHILD_STORE: &str = "ORDEN_SYNC_STORE_CHILD";
-
     #[test]
     #[ignore = "the child half of `a_kill_between_write_and_checkpoint_loses_nothing`"]
     fn a_child_writes_and_waits_to_be_killed() {
@@ -882,16 +785,13 @@ mod tests {
         store
             .write(&changes(Json::Array(rows)), &[])
             .expect("written");
-
         println!("written");
         std::thread::sleep(std::time::Duration::from_secs(60));
     }
-
     #[test]
     fn a_kill_between_write_and_checkpoint_loses_nothing() {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("a.db");
-
         let mut child = Command::new(std::env::current_exe().expect("this test binary"))
             .args([
                 CHILD,
@@ -913,19 +813,16 @@ mod tests {
         child.kill().expect("killed");
         let _ = child.wait();
         assert!(said, "the child never wrote");
-
         let log = std::fs::metadata(&files_of(&path)[1]).map(|meta| meta.len());
         assert!(
             log.is_ok_and(|size| size > 0),
             "the rows were only in the log"
         );
-
         let mut store = opened(&path);
         assert!(!store.opened.was_clean, "a kill is not a clean exit");
         let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "files" }]));
         assert_eq!(answer[0].as_array().map(Vec::len), Some(50));
     }
-
     #[test]
     #[ignore = "a measurement, run by hand in release"]
     fn measured() {
@@ -940,7 +837,6 @@ mod tests {
                 "pending": null, "pending_at": null,
             } })
         };
-
         let mut store = opened(&path);
         for thousand in 0..10 {
             let mut parts = Parts::default();
@@ -953,12 +849,10 @@ mod tests {
         }
         store.mark_clean(true).expect("clean");
         store.close().expect("closed");
-
         let started = Instant::now();
         let mut store = opened(&path);
         let open = started.elapsed();
         assert!(store.opened.was_clean);
-
         let mut parts = Parts::default();
         let rows: Vec<Json> = (0..500).map(|at| doc(20_000 + at, &mut parts)).collect();
         let batch = changes(Json::Array(rows));
@@ -966,7 +860,6 @@ mod tests {
         let started = Instant::now();
         store.write(&batch, &slices(&tail)).expect("500 rows");
         let write = started.elapsed();
-
         let bytes: Vec<u8> = (0..500 * (4096 + 24_u32))
             .map(|at| (at % 251) as u8)
             .collect();
@@ -983,7 +876,6 @@ mod tests {
         let back: Vec<u8> = serde_json::from_str(&spelled).expect("json back");
         let as_json = started.elapsed();
         assert_eq!(back.len(), bytes.len());
-
         println!("open with 10,000 docs: {open:?}; a batch of 500 docs: {write:?}");
         println!(
             "500 docs' bytes ({} B): framed {raw:?}, as JSON numbers {as_json:?} ({} B)",

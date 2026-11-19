@@ -1,12 +1,10 @@
 import { isNative } from './ports'
 
 type MetaValue = string | number | Uint8Array | null
-
 export interface MetaRow {
   key: string
   value: MetaValue
 }
-
 export interface SpaceRow {
   space_id: string
   root: string
@@ -14,7 +12,6 @@ export interface SpaceRow {
   role: string | null
   store: string | null
 }
-
 export interface EntryRow {
   id: string
   space_id: string
@@ -29,12 +26,10 @@ export interface EntryRow {
   seq: number | null
   deleted: boolean
 }
-
 export interface WrittenRow {
   id: string
   text: string
 }
-
 export interface DocRow {
   id: string
   epoch: number
@@ -44,7 +39,6 @@ export interface DocRow {
   pending: Uint8Array | null
   pending_at: number | null
 }
-
 export interface OutboxRow {
   op_id: string
   space_id: string
@@ -52,7 +46,6 @@ export interface OutboxRow {
   seen: number
   made_at: number
 }
-
 export interface HeldRow {
   id: string
   remote: Uint8Array
@@ -60,19 +53,16 @@ export interface HeldRow {
   device: string | null
   at: number
 }
-
 export interface FileStateRow {
   hash: string
   state: string
 }
-
 export interface WebRow {
   key: string
   fence: number | null
   version: number | null
   applied: number | null
 }
-
 export interface LogRow {
   at: number
   space: string | null
@@ -80,7 +70,6 @@ export interface LogRow {
   pushed: number | null
   failed: string | null
 }
-
 export interface Rows {
   meta: MetaRow
   spaces: SpaceRow
@@ -93,13 +82,9 @@ export interface Rows {
   web: WebRow
   log: LogRow
 }
-
 export type TableName = keyof Rows
-
 export type KeyedTable = Exclude<TableName, 'log'>
-
 export type SpacedTable = 'entries' | 'outbox' | 'log'
-
 interface Keys {
   meta: 'key'
   spaces: 'space_id'
@@ -111,24 +96,19 @@ interface Keys {
   files: 'hash'
   web: 'key'
 }
-
 type Kind = 'text' | 'integer' | 'bool' | 'blob' | 'packed' | 'any'
-
 interface Column {
   name: string
   kind: Kind
   required: boolean
 }
-
 export interface TableSpec {
   key: string | null
   space: string | null
   columns: readonly Column[]
 }
-
 const maybe = (name: string, kind: Kind): Column => ({ name, kind, required: false })
 const always = (name: string, kind: Kind): Column => ({ name, kind, required: true })
-
 export const TABLES: Readonly<Record<TableName, TableSpec>> = {
   meta: { key: 'key', space: null, columns: [always('key', 'text'), maybe('value', 'any')] },
   spaces: {
@@ -219,93 +199,73 @@ export const TABLES: Readonly<Record<TableName, TableSpec>> = {
     ],
   },
 }
-
 export const LOG_ROWS = 1000
-
 export interface Get<T extends KeyedTable = KeyedTable> {
   t: 'get'
   table: T
   key: string
 }
-
 export interface Scan<T extends TableName = TableName> {
   t: 'scan'
   table: T
   space?: string
 }
-
 export type Query = { [T in KeyedTable]: Get<T> }[KeyedTable] | { [T in TableName]: Scan<T> }[TableName]
-
 export type Answer<Q> = Q extends Get<infer T> ? Rows[T] | null : Q extends Scan<infer T> ? Rows[T][] : never
-
 export type Answers<Q extends readonly Query[]> = { -readonly [I in keyof Q]: Answer<Q[I]> }
-
 export const get = <T extends KeyedTable>(table: T, key: string): Get<T> => ({
   t: 'get',
   table,
   key,
 })
-
 export const scan = <T extends TableName>(table: T): Scan<T> => ({ t: 'scan', table })
-
 export const scanSpace = <T extends SpacedTable>(table: T, space: string): Scan<T> => ({
   t: 'scan',
   table,
   space,
 })
-
 export interface Put<T extends TableName = TableName> {
   t: 'put'
   table: T
   row: Rows[T]
 }
-
 export interface Patch<T extends KeyedTable = KeyedTable> {
   t: 'patch'
   table: T
   key: string
   set: Partial<Omit<Rows[T], Keys[T]>>
 }
-
 export interface Delete {
   t: 'delete'
   table: KeyedTable
   key: string
 }
-
 export interface Clear {
   t: 'clear'
   table: SpacedTable
   space: string
 }
-
 export type Change =
   { [T in TableName]: Put<T> }[TableName] | { [T in KeyedTable]: Patch<T> }[KeyedTable] | Delete | Clear
-
 export const put = <T extends TableName>(table: T, row: Rows[T]): Put<T> => ({
   t: 'put',
   table,
   row,
 })
-
 export const patch = <T extends KeyedTable>(table: T, key: string, set: Partial<Omit<Rows[T], Keys[T]>>): Patch<T> => ({
   t: 'patch',
   table,
   key,
   set,
 })
-
 export const remove = (table: KeyedTable, key: string): Delete => ({ t: 'delete', table, key })
-
 export const clear = (table: SpacedTable, space: string): Clear => ({ t: 'clear', table, space })
-
 export interface Opened {
   device: string
   wasClean: boolean
   schema: number
   recovered: boolean
 }
-
 export interface SyncStore {
   readonly opened: Opened
   read<const Q extends readonly Query[]>(queries: Q): Promise<Answers<Q>>
@@ -313,7 +273,6 @@ export interface SyncStore {
   cleanExit(clean: boolean): Promise<void>
   close(): Promise<void>
 }
-
 export async function openSyncStore(account: string, leads = false, device?: string): Promise<SyncStore> {
   if (isNative()) {
     const { openNative } = await import('./native-sync-store')
@@ -322,7 +281,6 @@ export async function openSyncStore(account: string, leads = false, device?: str
   const { openWeb } = await import('./browser-store')
   return openWeb(account, device)
 }
-
 export async function deviceOfSyncStore(account: string): Promise<string | null> {
   if (isNative()) {
     const { deviceNative } = await import('./native-sync-store')
@@ -331,7 +289,6 @@ export async function deviceOfSyncStore(account: string): Promise<string | null>
   const { deviceWeb } = await import('./browser-store')
   return deviceWeb(account)
 }
-
 export async function forgetSyncStore(account: string): Promise<void> {
   if (isNative()) {
     const { forgetNative } = await import('./native-sync-store')
@@ -340,18 +297,14 @@ export async function forgetSyncStore(account: string): Promise<void> {
   const { forgetWeb } = await import('./browser-store')
   return forgetWeb(account)
 }
-
 export class StoreError extends Error {
   override name = 'StoreError'
 }
-
 function tableNamed(name: string): TableSpec {
   if (!(name in TABLES)) throw new StoreError(`the sync store has no table ${name}`)
   return TABLES[name as TableName]
 }
-
 const fits = (value: unknown): value is number => Number.isSafeInteger(value)
-
 function holds(kind: Kind, value: unknown): boolean {
   switch (kind) {
     case 'text':
@@ -367,7 +320,6 @@ function holds(kind: Kind, value: unknown): boolean {
       return typeof value === 'string' || fits(value) || value instanceof Uint8Array
   }
 }
-
 function checked(table: string, column: Column, value: unknown): unknown {
   if (value === null || value === undefined) {
     if (column.required) throw new StoreError(`${table}.${column.name} may not be empty`)
@@ -378,14 +330,12 @@ function checked(table: string, column: Column, value: unknown): unknown {
   }
   return value
 }
-
 function describe(value: unknown): string {
   if (value instanceof Uint8Array) return `${value.length} bytes`
   if (typeof value === 'string') return JSON.stringify(value.slice(0, 40))
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   return typeof value
 }
-
 export function rowOf<T extends TableName>(table: T, value: unknown): Rows[T] {
   if (typeof value !== 'object' || value === null) {
     throw new StoreError(`a ${table} row is not an object`)
@@ -397,12 +347,10 @@ export function rowOf<T extends TableName>(table: T, value: unknown): Rows[T] {
       throw new StoreError(`${table} has no column ${name}`)
     }
   }
-
   const row: Record<string, unknown> = {}
   for (const column of spec.columns) row[column.name] = checked(table, column, given[column.name])
   return row as unknown as Rows[T]
 }
-
 export function patchOf(table: KeyedTable, set: unknown): Record<string, unknown> {
   if (typeof set !== 'object' || set === null) {
     throw new StoreError(`a patch of ${table} is not an object`)
@@ -410,7 +358,6 @@ export function patchOf(table: KeyedTable, set: unknown): Record<string, unknown
   const spec = TABLES[table]
   const entries = Object.entries(set)
   if (entries.length === 0) throw new StoreError(`a patch of ${table} changes nothing`)
-
   const out: Record<string, unknown> = {}
   for (const [name, value] of entries) {
     const column = spec.columns.find((one) => one.name === name)
@@ -420,7 +367,6 @@ export function patchOf(table: KeyedTable, set: unknown): Record<string, unknown
   }
   return out
 }
-
 export function changeOf(change: Change): Change {
   const spec = tableNamed(change.table)
   switch (change.t) {
@@ -438,7 +384,6 @@ export function changeOf(change: Change): Change {
       return change
   }
 }
-
 export function queryOf(query: Query): Query {
   const spec = tableNamed(query.table)
   if (query.t === 'get' && spec.key === null) {
@@ -449,7 +394,6 @@ export function queryOf(query: Query): Query {
   }
   return query
 }
-
 export function answerOf<Q extends Query>(query: Q, value: unknown): Answer<Q> {
   if (query.t === 'get') {
     return (value === null || value === undefined ? null : rowOf(query.table, value)) as Answer<Q>
@@ -457,7 +401,6 @@ export function answerOf<Q extends Query>(query: Q, value: unknown): Answer<Q> {
   if (!Array.isArray(value)) throw new StoreError(`a scan of ${query.table} did not answer rows`)
   return value.map((row) => rowOf(query.table, row)) as Answer<Q>
 }
-
 export function openedOf(value: unknown): Opened {
   const said = (typeof value === 'object' && value !== null ? value : {}) as Record<string, unknown>
   const { device, wasClean, schema, recovered } = said
@@ -466,7 +409,6 @@ export function openedOf(value: unknown): Opened {
   }
   return { device, wasClean, schema, recovered }
 }
-
 export function countsOf(value: unknown, changes: number): number[] {
   if (!Array.isArray(value) || value.length !== changes || !value.every(fits)) {
     throw new StoreError('the sync store answered an odd count')

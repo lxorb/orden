@@ -8,11 +8,9 @@ const PLAN = [
   'Then write it: for each todo you scheduled, update_task with its start date, and move what does not fit today to a later day.',
   'Change nothing else. End with the plan as a short list, earliest first.',
 ].join(' ')
-
 export function planDay(host: Host, thread: Thread | null, args: string): void {
   sendHere(host, thread, args.trim() ? `${PLAN}\n\n${args.trim()}` : PLAN, { mode: 'auto' })
 }
-
 export interface Listed {
   filter?: string
   total: number
@@ -26,7 +24,6 @@ export interface Listed {
     priority?: number
   }[]
 }
-
 export async function showTasks(host: Host, thread: Thread, args: string): Promise<void> {
   const { listed } = await import('../../../tasks-model/src/api')
   const asked = args.trim()

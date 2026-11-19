@@ -5,7 +5,6 @@ import { loadHistory, RECOVERY_KEY } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 describe('the module stands on its own', () => {
   test('the api leaves the version list and the versions behind doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')

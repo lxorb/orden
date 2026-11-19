@@ -3,7 +3,6 @@ import { totpOf } from './build'
 import { keeperFolderOf, parseKeeper } from './keeper'
 
 const OTP = 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP&issuer=&algorithm=SHA1&digits=6&period=30'
-
 const JSON_EXPORT = JSON.stringify({
   shared_folders: [{ uid: 'sf1', path: 'Team\\Ops' }],
   records: [
@@ -78,14 +77,12 @@ const JSON_EXPORT = JSON.stringify({
     { title: 'Photo', $type: 'photo', notes: 'beach' },
   ],
 })
-
 describe('keeperFolderOf', () => {
   it('splits on single backslashes and keeps doubled ones', () => {
     expect(keeperFolderOf('Work\\Projects\\2025')).toBe('Work/Projects/2025')
     expect(keeperFolderOf('Dev\\Name\\\\with')).toBe('Dev/Name\\with')
   })
 })
-
 describe('parseKeeper json', () => {
   it('reads each kind of record', () => {
     const { vaults, skipped } = parseKeeper(JSON_EXPORT)
@@ -144,7 +141,6 @@ describe('parseKeeper json', () => {
     expect(skipped.map((s) => s.title).sort()).toEqual(['DB', 'Photo'])
   })
 })
-
 describe('parseKeeper csv', () => {
   it('reads the columns and the custom pairs', () => {
     const csv =

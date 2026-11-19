@@ -4,16 +4,13 @@ interface SnssTab {
   pinned: boolean
   group: string | null
 }
-
 interface SnssWindow {
   tabs: SnssTab[]
 }
-
 export interface SnssSession {
   windows: SnssWindow[]
   groups: Map<string, string>
 }
-
 const SET_TAB_WINDOW = 0
 const SET_TAB_INDEX_IN_WINDOW = 2
 const TAB_NAVIGATION_PATH_PRUNED_FROM_BACK = 5
@@ -31,7 +28,6 @@ const SET_TAB_GROUP_METADATA_2 = 27
 const SIGNATURE = [0x53, 0x4e, 0x53, 0x53]
 const CLEAR = new Set([1, 3])
 const NORMAL = 0
-
 interface Tab {
   window: number | null
   index: number
@@ -40,12 +36,10 @@ interface Tab {
   pages: Map<number, { url: string; title: string }>
   selected: number | null
 }
-
 export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
   if (bytes.length < 8 || SIGNATURE.some((byte, at) => bytes[at] !== byte)) return null
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   if (!CLEAR.has(view.getInt32(4, true))) return 'locked'
-
   const tabs = new Map<number, Tab>()
   const types = new Map<number, number>()
   const order: number[] = []
@@ -62,7 +56,6 @@ export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
   const seen = (window: number) => {
     if (!order.includes(window)) order.push(window)
   }
-
   for (let at = 8; at + 2 <= bytes.length;) {
     const size = view.getUint16(at, true)
     at += 2
@@ -76,7 +69,6 @@ export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
       // A command cut short or shaped otherwise says nothing; the rest still does.
     }
   }
-
   function apply(id: number, said: Reader) {
     switch (id) {
       case SET_TAB_WINDOW: {
@@ -144,7 +136,6 @@ export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
       }
     }
   }
-
   const windows = order
     .filter((window) => !closed.has(window) && (types.get(window) ?? NORMAL) === NORMAL)
     .map((window) => ({
@@ -157,10 +148,8 @@ export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
         }),
     }))
     .filter((window) => window.tabs.length)
-
   return { windows, groups }
 }
-
 function prune(tab: Tab, from: number, count: number) {
   if (tab.selected !== null) {
     if (tab.selected >= from + count) tab.selected -= count
@@ -173,7 +162,6 @@ function prune(tab: Tab, from: number, count: number) {
     else if (index >= from + count) tab.pages.set(index - count, page)
   }
 }
-
 function pageOf(tab: Tab): { url: string; title: string } | null {
   const indices = [...tab.pages.keys()].sort((a, b) => a - b)
   const { selected } = tab
@@ -181,48 +169,38 @@ function pageOf(tab: Tab): { url: string; title: string } | null {
   const at = chosen ?? indices.at(-1)
   return at === undefined ? null : (tab.pages.get(at) ?? null)
 }
-
 class Reader {
   private readonly view: DataView
-
   constructor(private readonly bytes: Uint8Array) {
     this.view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   }
-
   int(at: number): number {
     return this.view.getInt32(at, true)
   }
-
   byte(at: number): number {
     const one = this.bytes[at]
     if (one === undefined) throw new RangeError('cut short')
     return one
   }
-
   hex(at: number, length: number): string {
     if (at + length > this.bytes.length) throw new RangeError('cut short')
     return [...this.bytes.subarray(at, at + length)].map((one) => one.toString(16).padStart(2, '0')).join('')
   }
-
   pickle(): Pickle {
     return new Pickle(this.bytes.subarray(4))
   }
 }
-
 class Pickle {
   private readonly view: DataView
   private at = 0
-
   constructor(private readonly bytes: Uint8Array) {
     this.view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   }
-
   int(): number {
     const one = this.view.getInt32(this.at, true)
     this.at += 4
     return one
   }
-
   hex(length: number): string {
     if (this.at + length > this.bytes.length) throw new RangeError('cut short')
     const out = [...this.bytes.subarray(this.at, this.at + length)]
@@ -231,7 +209,6 @@ class Pickle {
     this.at += padded(length)
     return out
   }
-
   string(): string {
     const length = this.int()
     if (length < 0 || this.at + length > this.bytes.length) throw new RangeError('cut short')
@@ -239,7 +216,6 @@ class Pickle {
     this.at += padded(length)
     return out
   }
-
   string16(): string {
     const units = this.int()
     const length = units * 2
@@ -249,7 +225,6 @@ class Pickle {
     return out
   }
 }
-
 function padded(length: number): number {
   return Math.ceil(length / 4) * 4
 }

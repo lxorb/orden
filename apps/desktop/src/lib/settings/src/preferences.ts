@@ -12,7 +12,6 @@ import type { Field, Pane } from './fields'
 import { changed } from '../../usage/src/api'
 
 export type { Caption, Field, Group, PairField, Pane, PictureSide, Segment, SwatchOption } from './fields'
-
 export function preferences(view?: EditorView): Pane[] {
   return declaredPanes(view).map((pane) => ({
     ...pane,
@@ -22,7 +21,6 @@ export function preferences(view?: EditorView): Pane[] {
     })),
   }))
 }
-
 function tallied(field: Field): Field {
   if (field.kind === 'switch') {
     const set = (on: boolean) => {
@@ -40,10 +38,8 @@ function tallied(field: Field): Field {
   }
   return field
 }
-
 export function declaredPanes(view?: EditorView): Pane[] {
   const moment = new Date()
-
   return [
     generalPane(),
     editorPane(view, moment),
@@ -55,13 +51,11 @@ export function declaredPanes(view?: EditorView): Pane[] {
     exportPane(),
   ]
 }
-
 export function resettable(pane: Pane): boolean {
   return pane.groups.every((group) =>
     group.fields.every((field) => field.kind === 'value' || field.initial !== undefined),
   )
 }
-
 export function resetPane(pane: Pane) {
   resetFields(pane.groups.flatMap((group) => group.fields))
 }

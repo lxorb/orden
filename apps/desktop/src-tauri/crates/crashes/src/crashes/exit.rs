@@ -8,9 +8,7 @@ use super::native;
 use super::report::{self, Crumb, Report};
 
 const MARKER: &str = "running.json";
-
 const MOST_CRUMBS: usize = 20;
-
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Running {
@@ -25,21 +23,16 @@ pub struct Running {
     #[serde(default)]
     pub breadcrumbs: Vec<Crumb>,
 }
-
 static MINE: Mutex<Option<Running>> = Mutex::new(None);
-
 static PATH: OnceLock<PathBuf> = OnceLock::new();
-
 pub fn marker(dir: &Path) -> PathBuf {
     dir.join(MARKER)
 }
-
 pub struct Before {
     pub last: Option<Running>,
     pub booted: Option<u64>,
     pub version: String,
 }
-
 pub fn after_last_run(dir: &Path, before: &Before) -> Vec<Report> {
     let mut found = Vec::new();
     let stub = native::stub_path(dir);
@@ -60,12 +53,10 @@ pub fn after_last_run(dir: &Path, before: &Before) -> Vec<Report> {
         }
         found.push(report);
     }
-
     for mut ongoing in report::ongoing_in(dir) {
         ongoing.killed = Some(true);
         found.push(ongoing);
     }
-
     if let Some(last) = &before.last {
         let rebooted = before.booted.is_some_and(|booted| booted > last.alive);
         let updated = last.version != before.version;
@@ -75,7 +66,6 @@ pub fn after_last_run(dir: &Path, before: &Before) -> Vec<Report> {
     }
     found
 }
-
 fn ended(last: &Running) -> Report {
     let mut report = report::fresh(
         "exit",
@@ -94,7 +84,6 @@ fn ended(last: &Running) -> Report {
         .unwrap_or_default();
     report
 }
-
 fn spoken(millis: u64) -> String {
     let seconds = millis / 1000;
     if seconds < 120 {
@@ -105,12 +94,10 @@ fn spoken(millis: u64) -> String {
         format!("{} h", seconds / 3600)
     }
 }
-
 pub fn read(dir: &Path) -> Option<Running> {
     let text = std::fs::read(marker(dir)).ok()?;
     serde_json::from_slice(&text).ok()
 }
-
 pub fn begin(dir: &Path, version: &str) {
     let now = orden_base::clock::now();
     let mine = Running {
@@ -124,7 +111,6 @@ pub fn begin(dir: &Path, version: &str) {
     *MINE.held() = Some(mine);
     write();
 }
-
 fn changed(change: impl FnOnce(&mut Running)) {
     let mut held = MINE.held();
     if let Some(mine) = held.as_mut() {
@@ -135,7 +121,6 @@ fn changed(change: impl FnOnce(&mut Running)) {
     drop(held);
     write();
 }
-
 fn write() {
     let Some(path) = PATH.get() else { return };
     let held = MINE.held();
@@ -146,7 +131,6 @@ fn write() {
         let _ = std::fs::rename(&partial, path);
     }
 }
-
 pub fn alive() {
     let crumbs = report::crumbs();
     changed(|mine| {
@@ -154,18 +138,15 @@ pub fn alive() {
         mine.breadcrumbs = crumbs[crumbs.len().saturating_sub(MOST_CRUMBS)..].to_vec();
     });
 }
-
 pub fn reported() {
     let already = MINE.held().as_ref().is_none_or(|mine| mine.reported);
     if !already {
         changed(|mine| mine.reported = true);
     }
 }
-
 pub fn leaving() {
     changed(|mine| mine.leaving = true);
 }
-
 pub fn ended_well() {
     let mut held = MINE.held();
     *held = None;
@@ -173,7 +154,6 @@ pub fn ended_well() {
         let _ = std::fs::remove_file(path);
     }
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 #[allow(clippy::unnecessary_wraps)]
@@ -181,7 +161,6 @@ pub fn booted() -> Option<u64> {
     let since = unsafe { windows::Win32::System::SystemInformation::GetTickCount64() };
     Some(orden_base::clock::now().saturating_sub(since))
 }
-
 #[cfg(target_os = "linux")]
 pub fn booted() -> Option<u64> {
     let stat = std::fs::read_to_string("/proc/stat").ok()?;
@@ -193,7 +172,6 @@ pub fn booted() -> Option<u64> {
         .ok()?;
     Some(seconds * 1000)
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 pub fn booted() -> Option<u64> {
@@ -213,7 +191,6 @@ pub fn booted() -> Option<u64> {
     }
     Some(u64::try_from(when.tv_sec).ok()? * 1000)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{after_last_run, marker, Before, Running};
@@ -228,7 +205,6 @@ mod tests {
             ..Running::default()
         }
     }
-
     fn before(last: Option<Running>, booted: u64) -> Before {
         Before {
             last,
@@ -236,9 +212,7 @@ mod tests {
             version: "1.0.0".to_owned(),
         }
     }
-
     const RACING: &str = "ORDEN_EXIT_RACE_DIR";
-
     #[test]
     fn a_quit_while_the_marker_is_being_written_never_leaves_it_behind() {
         if let Some(dir) = std::env::var_os(RACING) {
@@ -276,7 +250,6 @@ mod tests {
             .expect("the child ran");
         assert!(status.success(), "the marker was left behind");
     }
-
     #[test]
     fn a_run_that_ended_without_quitting_is_reported_once_it_is_seen() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -289,7 +262,6 @@ mod tests {
         );
         assert_eq!(found[0].at, 90_000);
     }
-
     #[test]
     fn a_run_ended_by_a_restart_an_update_or_a_quit_is_not_reported() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -303,7 +275,6 @@ mod tests {
         assert!(after_last_run(dir.path(), &before(None, 10)).is_empty());
         assert!(!marker(dir.path()).exists());
     }
-
     #[test]
     fn a_freeze_the_last_run_was_killed_in_is_reported_as_killed_and_alone() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -320,7 +291,6 @@ mod tests {
         assert_eq!(found[0].kind, "freeze");
         assert_eq!(found[0].killed, Some(true));
     }
-
     #[test]
     fn a_native_crash_the_last_run_wrote_is_reported_in_place_of_its_exit() {
         let dir = tempfile::tempdir().expect("a folder");

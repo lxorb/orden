@@ -6,7 +6,6 @@ import type { Answer, Base, Context, Filter, Row, Value } from '../types'
 import { AgentError, type TaskOut, taskOut } from './tasks'
 
 export const VIEWS = ['todos', 'inbox', 'today', 'upcoming', 'logbook'] as const
-
 const everything = (filters?: Filter): Base => ({
   formulas: {},
   properties: {},
@@ -26,7 +25,6 @@ const everything = (filters?: Filter): Base => ({
   orden: { properties: {}, kept: {} },
   kept: {},
 })
-
 function narrowed(base: Base, filter: Filter): Base {
   const [view, ...rest] = base.views
   if (!view) return everything(filter)
@@ -35,7 +33,6 @@ function narrowed(base: Base, filter: Filter): Base {
     views: [{ ...view, filters: view.filters === undefined ? filter : { and: [view.filters, filter] } }, ...rest],
   }
 }
-
 export interface ListAsk {
   view?: string
   filter?: string
@@ -44,7 +41,6 @@ export interface ListAsk {
   inboxes?: { space: string; path: string }[]
   isNote?: TodoistOptions['isNote']
 }
-
 export function listTasks(rows: readonly Row[], ask: ListAsk, context: Context): { total: number; tasks: TaskOut[] } {
   let base: Base
   let view: string | undefined
@@ -60,7 +56,6 @@ export function listTasks(rows: readonly Row[], ask: ListAsk, context: Context):
   } else {
     base = everything()
   }
-
   let lists: Filter[] = []
   if (ask.filter?.trim()) {
     try {
@@ -69,7 +64,6 @@ export function listTasks(rows: readonly Row[], ask: ListAsk, context: Context):
       throw new AgentError('bad_arguments', `filter: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
-
   const seen = new Set<Row>()
   const out: Row[] = []
   for (const one of lists.length ? lists.map((filter) => narrowed(base, filter)) : [base]) {
@@ -84,7 +78,6 @@ export function listTasks(rows: readonly Row[], ask: ListAsk, context: Context):
   const limit = Math.min(Math.max(0, Math.floor(ask.limit ?? 50)), 500)
   return { total: out.length, tasks: out.slice(0, limit).map(taskOut) }
 }
-
 function answered(base: Base, view: string | undefined, rows: readonly Row[], context: Context): Answer {
   try {
     return answer(base, view, rows, context)
@@ -93,7 +86,6 @@ function answered(base: Base, view: string | undefined, rows: readonly Row[], co
     throw error
   }
 }
-
 export function plainValue(value: Value): unknown {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) return value.map(plainValue)
@@ -107,19 +99,16 @@ export function plainValue(value: Value): unknown {
   }
   return Object.fromEntries(Object.entries(value).map(([key, one]) => [key, plainValue(one as Value)]))
 }
-
 interface NoteOut {
   path: string
   space: string
   [column: string]: unknown
 }
-
 export interface QueryOut {
   total: number
   groups: { key: string; rows: (TaskOut | NoteOut)[]; summaries?: Record<string, unknown> }[]
   summaries?: Record<string, unknown>
 }
-
 export function queryBase(
   base: Base,
   view: string | undefined,
@@ -131,7 +120,6 @@ export function queryBase(
   const chosen = view === undefined ? base.views[0] : (base.views.find((one) => one.name === view) ?? base.views[0])
   const columns = chosen?.order ?? []
   let left = Math.min(Math.max(1, Math.floor(limit)), 1000)
-
   const rowOut = (row: Row): TaskOut | NoteOut => {
     if (row.kind === 'task') return taskOut(row)
     const values: Record<string, unknown> = {}
@@ -146,7 +134,6 @@ export function queryBase(
     Object.keys(summaries).length
       ? Object.fromEntries(Object.entries(summaries).map(([key, one]) => [key, plainValue(one)]))
       : undefined
-
   const groups = answer.groups.map((group) => {
     const taken = group.rows.slice(0, Math.max(0, left))
     left -= taken.length

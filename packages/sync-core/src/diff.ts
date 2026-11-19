@@ -15,33 +15,26 @@ import type { Edit, Span } from './merge3'
 import { charAt, charBefore, isWordChar, tokens, wordEnd, wordStart } from './words'
 
 const MOST_DIFFED = 5_000
-
 const UNCLOCKED = { diffTimeout: 0 }
-
 function leads(text: string, at: number): boolean {
   const code = text.charCodeAt(at)
   return code >= 0xd800 && code <= 0xdbff
 }
-
 function characters(old: string, now: string): Diff[] {
   const middle = fold(old, now)
   if (!middle) return old ? [[DIFF_EQUAL, old]] : []
-
   const before = old.slice(middle.from, middle.to)
   const out: Diff[] = []
   if (middle.from) out.push([DIFF_EQUAL, old.slice(0, middle.from)])
-
   if (before.length > MOST_DIFFED || middle.insert.length > MOST_DIFFED) {
     if (before) out.push([DIFF_DELETE, before])
     if (middle.insert) out.push([DIFF_INSERT, middle.insert])
   } else {
     out.push(...diffMain(before, middle.insert, UNCLOCKED, false))
   }
-
   if (middle.to < old.length) out.push([DIFF_EQUAL, old.slice(middle.to)])
   return out
 }
-
 function tidied(old: string, now: string): Diff[] {
   const middle = fold(old, now)
   if (!middle) return old ? [[DIFF_EQUAL, old]] : []
@@ -54,11 +47,9 @@ function tidied(old: string, now: string): Diff[] {
   if (middle.to < old.length) out.push([DIFF_EQUAL, old.slice(middle.to)])
   return out
 }
-
 function linesOf(text: string): string[] {
   return text.match(/[^\n]*\n|[^\n]+$/g) ?? []
 }
-
 function alike(one: string, other: string, compare: (a: string, b: string) => number | null): number {
   const a = one.replace(/\r?\n$/, '')
   const b = other.replace(/\r?\n$/, '')
@@ -77,25 +68,18 @@ function alike(one: string, other: string, compare: (a: string, b: string) => nu
   const common = compare(a.slice(front, a.length - back), b.slice(front, b.length - back))
   return common === null ? ends : (2 * (front + back + common)) / total
 }
-
 const MOST_COMPARED = 4_000
-
 const MOST_LINE = 400
-
 const ONE_LINE = 0.8
-
 const MOST_PAIRED = 400
-
 function paired(gone: string, come: string): Diff[] {
   const before = linesOf(gone)
   const after = linesOf(come)
   const n = before.length
   const m = after.length
   if (!n || !m || (n === 1 && m === 1) || n * m > MOST_PAIRED) return tidied(gone, come)
-
   const plain = tidied(gone, come)
   if (plain.every(([operation, text]) => operation === DIFF_EQUAL || !text.trim())) return plain
-
   let budget = MOST_COMPARED
   const compare = (a: string, b: string): number | null => {
     if (a.length + b.length > Math.min(budget, MOST_LINE)) return null
@@ -123,7 +107,6 @@ function paired(gone: string, come: string): Diff[] {
       row[j] = Math.max(below[j] ?? 0, row[j + 1] ?? 0, pair ? pair + (below[j + 1] ?? 0) : 0)
     }
   }
-
   const out: Diff[] = []
   let gap = { gone: '', come: '' }
   const close = () => {
@@ -154,17 +137,14 @@ function paired(gone: string, come: string): Diff[] {
   close()
   return cost(plain) * 3 <= cost(out) * 2 ? plain : out
 }
-
 function cost(diffs: readonly Diff[]): number {
   return diffs.reduce((sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? 0 : text.length), 0)
 }
-
 function lines(old: string, now: string): Diff[] {
   const { chars1, chars2, lineArray } = diffLinesToChars(old, now)
   const coarse = diffMain(chars1, chars2, UNCLOCKED, false)
   diffCharsToLines(coarse, lineArray)
   diffCleanupSemantic(coarse)
-
   const out: Diff[] = []
   let gone = ''
   let come = ''
@@ -173,7 +153,6 @@ function lines(old: string, now: string): Diff[] {
     gone = ''
     come = ''
   }
-
   for (const [operation, text] of coarse) {
     if (operation === DIFF_DELETE) gone += text
     else if (operation === DIFF_INSERT) come += text
@@ -182,16 +161,13 @@ function lines(old: string, now: string): Diff[] {
       out.push([DIFF_EQUAL, text])
     }
   }
-
   flush()
   return out
 }
-
 function editsOf(diffs: readonly Diff[], offset: number): Edit[] {
   const out: Edit[] = []
   let at = offset
   let open: Edit | null = null
-
   for (const [operation, text] of diffs) {
     if (operation === DIFF_DELETE || operation === DIFF_INSERT) {
       open ??= { from: at, to: at, insert: '' }
@@ -203,19 +179,15 @@ function editsOf(diffs: readonly Diff[], offset: number): Edit[] {
       }
       continue
     }
-
     if (open) out.push(open)
     open = null
     at += text.length
   }
-
   if (open) out.push(open)
   return out
 }
-
 function whole(old: string, edits: readonly Edit[]): Edit[] {
   const out: Edit[] = []
-
   for (const edit of edits) {
     let { from, to, insert } = edit
     if (from > 0 && leads(old, from - 1)) {
@@ -226,7 +198,6 @@ function whole(old: string, edits: readonly Edit[]): Edit[] {
       insert += old.charAt(to)
       to += 1
     }
-
     const last = out.at(-1)
     if (last && last.to >= from) {
       last.insert += old.slice(last.to, from) + insert.slice(Math.max(0, last.to - from))
@@ -235,10 +206,8 @@ function whole(old: string, edits: readonly Edit[]): Edit[] {
       out.push({ from, to, insert })
     }
   }
-
   return out
 }
-
 function slid(old: string, list: readonly Edit[]): Edit[] {
   const cuts = (from: number, insert: string) =>
     (isWordChar(charBefore(old, from)) && isWordChar(charAt(insert, 0))) ||
@@ -271,25 +240,20 @@ function slid(old: string, list: readonly Edit[]): Edit[] {
     return { from: best.from, to: best.from, insert: best.insert }
   })
 }
-
 export type Tidy = 'semantic' | 'operations'
-
 function wordSpan(old: string, edit: Edit): Span {
   const gone = old.slice(edit.from, edit.to)
   const opens = isWordChar(charAt(gone, 0)) || isWordChar(charAt(edit.insert, 0))
   const closes = isWordChar(charBefore(gone, gone.length)) || isWordChar(charBefore(edit.insert, edit.insert.length))
-
   return {
     from: opens && isWordChar(charBefore(old, edit.from)) ? wordStart(old, edit.from) : edit.from,
     to: closes && isWordChar(charAt(old, edit.to)) ? wordEnd(old, edit.to) : edit.to,
   }
 }
-
 function worded(old: string, now: string, list: readonly Edit[]): Edit[] {
   const out: Edit[] = []
   let shift = 0
   let open: { from: number; to: number; change: number } | null = null
-
   const close = () => {
     if (!open) return
     const at = open.from + shift
@@ -301,7 +265,6 @@ function worded(old: string, now: string, list: readonly Edit[]): Edit[] {
     shift += open.change
     open = null
   }
-
   for (const edit of list) {
     const span = wordSpan(old, edit)
     const change = edit.insert.length - (edit.to - edit.from)
@@ -313,38 +276,30 @@ function worded(old: string, now: string, list: readonly Edit[]): Edit[] {
     close()
     open = { from: span.from, to: span.to, change }
   }
-
   close()
   return out
 }
-
 export function edits(old: string, now: string, tidy: Tidy): Edit[] {
   const middle = fold(old, now)
   if (!middle) return []
-
   if (tidy === 'semantic') return worded(old, now, slid(old, whole(old, read(old, now, middle))))
-
   const before = old.slice(middle.from, middle.to)
   if (!before || !middle.insert) return [middle]
-
   const long = before.length > MOST_DIFFED || middle.insert.length > MOST_DIFFED
   const diffs = long ? lines(before, middle.insert) : characters(before, middle.insert)
   diffCleanupMerge(diffs)
   diffCleanupEfficiency(diffs)
   return whole(old, editsOf(diffs, middle.from))
 }
-
 function read(old: string, now: string, middle: Edit): Edit[] {
   const from = middle.from === 0 ? 0 : old.lastIndexOf('\n', middle.from - 1) + 1
   const ends = middle.to === 0 || middle.to === old.length || old.charAt(middle.to - 1) === '\n'
   const newline = ends ? -1 : old.indexOf('\n', middle.to)
   const to = ends ? middle.to : newline === -1 ? old.length : newline + 1
   const after = old.length - to
-
   const { chars1, chars2, lineArray } = diffLinesToChars(old.slice(from, to), now.slice(from, now.length - after))
   const coarse = diffMain(chars1, chars2, UNCLOCKED, false)
   diffCharsToLines(coarse, lineArray)
-
   let run = { gone: '', come: '', kept: '' }
   const runs = [run]
   for (const [operation, text] of coarse) {
@@ -356,7 +311,6 @@ function read(old: string, now: string, middle: Edit): Edit[] {
     if (operation === DIFF_DELETE) run.gone += text
     else run.come += text
   }
-
   const rewrites = (one: { gone: string; come: string }) => one.gone !== '' && one.come !== ''
   const longest = (one: { gone: string; come: string }) => Math.max(one.gone.length, one.come.length)
   const diffs: Diff[] = []
@@ -387,7 +341,6 @@ function read(old: string, now: string, middle: Edit): Edit[] {
   flush()
   return editsOf(diffs, from)
 }
-
 export function wordEdits(old: string, now: string): Edit[] {
   const codes = new Map<string, string>()
   const spelled = (list: readonly string[]) =>
@@ -401,13 +354,11 @@ export function wordEdits(old: string, now: string): Edit[] {
         return code
       })
       .join('')
-
   const oldTokens = tokens(old)
   const nowTokens = tokens(now)
   const oldCodes = spelled(oldTokens)
   const nowCodes = spelled(nowTokens)
   if (codes.size >= 0xd7ff) return edits(old, now, 'semantic')
-
   const vocabulary = new Map([...codes].map(([token, code]) => [code, token]))
   const spoken = (text: string) =>
     Array.from({ length: text.length }, (_, at) => vocabulary.get(text.charAt(at)) ?? '').join('')
@@ -415,6 +366,5 @@ export function wordEdits(old: string, now: string): Edit[] {
     operation,
     spoken(text),
   ])
-
   return editsOf(diffs, 0)
 }

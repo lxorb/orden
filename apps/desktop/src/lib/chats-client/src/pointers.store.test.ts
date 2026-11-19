@@ -2,7 +2,6 @@ import { expect, test, vi } from 'vitest'
 import { serveSyncStore } from '../../../../test/sync-store'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -23,14 +22,11 @@ vi.mock('./http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./http')>()),
   makeChat: async () => ({ chat: 'new-chat', space: 'remote-away' }),
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../../workspace/src/api')
 const { makePointer } = await import('./pointers')
-
 test("a chat made for a note of another space steps past that space's Chat.chat", async () => {
   const files = disk.current?.files ?? new Map<string, string>()
   files.set('/away/Chat.chat', 'the other chat\n')
@@ -41,9 +37,7 @@ test("a chat made for a note of another space steps past that space's Chat.chat"
   ]
   workspace.activeSpaceId = 'home'
   await workspace.loadTree()
-
   const place = await makePointer('/away', 'Chat')
-
   expect(place?.path).toBe('/away/Chat 2.chat')
   expect(files.get('/away/Chat.chat')).toBe('the other chat\n')
 })

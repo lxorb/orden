@@ -16,7 +16,6 @@ function stateOf(doc: string): EditorState {
     }),
   )
 }
-
 function shownLines(doc: string): string[] {
   const state = stateOf(doc)
   const gone = new Set<number>()
@@ -34,9 +33,7 @@ function shownLines(doc: string): string[] {
   }
   return shown
 }
-
 const leadOf = (text: string) => /^ */.exec(text)?.[0].length ?? 0
-
 describe('indentation inside a quote or callout in Live Preview', () => {
   test('code in a callout keeps its own indentation', () => {
     const doc = '> [!example] Python\n> ```py\n> def total(items):\n>     return sum(items)\n> ```\n\nafter'
@@ -44,13 +41,11 @@ describe('indentation inside a quote or callout in Live Preview', () => {
     expect(shown[2]).toBe('def total(items):')
     expect(shown[3]).toBe('    return sum(items)')
   })
-
   test('code in a list item in a callout keeps its own indentation', () => {
     const doc = '> [!note]\n> - step\n>   ```py\n>   if ready:\n>       go()\n>   ```\n\nafter'
     const shown = shownLines(doc)
     expect(leadOf(shown[4] ?? '') - leadOf(shown[3] ?? '')).toBe(4)
   })
-
   test('a nested item in a callout is drawn deeper than its parent, as outside a quote', () => {
     const plain = shownLines('- parent\n  - child\n\nafter')
     expect(leadOf(plain[1] ?? '')).toBeGreaterThan(leadOf(plain[0] ?? ''))

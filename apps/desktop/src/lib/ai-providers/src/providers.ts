@@ -1,15 +1,11 @@
 export type LocalKind = 'claude-code' | 'codex' | 'gemini-cli'
-
 export type ProviderKind = 'anthropic' | 'openai' | 'gemini' | 'compatible' | 'chatgpt' | LocalKind
-
 export function isLocal(kind: ProviderKind): kind is LocalKind {
   return kind === 'claude-code' || kind === 'codex' || kind === 'gemini-cli'
 }
-
 export function steers(kind: ProviderKind): boolean {
   return kind === 'codex' || !isLocal(kind)
 }
-
 export function offeredKinds(desktop: boolean, claudeCode: boolean): ProviderKind[] {
   const keyed: ProviderKind[] = ['anthropic', 'openai', 'gemini', 'compatible']
   if (!desktop) return keyed
@@ -18,7 +14,6 @@ export function offeredKinds(desktop: boolean, claudeCode: boolean): ProviderKin
     : ['chatgpt', 'codex', 'gemini-cli']
   return [...plans, ...keyed]
 }
-
 export interface Provider {
   id: string
   kind: ProviderKind
@@ -26,7 +21,6 @@ export interface Provider {
   baseUrl?: string
   model: string
 }
-
 export const KIND_NAMES: Record<ProviderKind, string> = {
   anthropic: 'Claude',
   openai: 'OpenAI',
@@ -37,18 +31,15 @@ export const KIND_NAMES: Record<ProviderKind, string> = {
   codex: 'Codex',
   'gemini-cli': 'Gemini CLI',
 }
-
 const ROOTS: Record<Exclude<ProviderKind, 'compatible' | LocalKind>, string> = {
   anthropic: 'https://api.anthropic.com/v1',
   openai: 'https://api.openai.com/v1',
   gemini: 'https://generativelanguage.googleapis.com/v1beta',
   chatgpt: 'https://api.openai.com/v1',
 }
-
 const ANTHROPIC_VERSION = '2023-06-01'
 const MOST_TOKENS = 4096
 const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|\[::1\])(?=[:/]|$)/i
-
 export function apiRoot(provider: Provider): string {
   if (isLocal(provider.kind)) return ''
   if (provider.kind !== 'compatible') return ROOTS[provider.kind]
@@ -56,49 +47,39 @@ export function apiRoot(provider: Provider): string {
   if (!typed) return ''
   return /\/v\d+$/.test(typed) ? typed : `${typed}/v1`
 }
-
 export function usable(provider: Provider): boolean {
   if (isLocal(provider.kind)) return true
   return !!provider.model && !!apiRoot(provider)
 }
-
 export function reachable(provider: Provider, keyed: boolean): boolean {
   if (isLocal(provider.kind)) return true
   return !!apiRoot(provider) && (provider.kind === 'compatible' || keyed)
 }
-
 export function modelsUrl(provider: Provider): string {
   if (provider.kind === 'gemini') return `${apiRoot(provider)}/models?pageSize=1000`
   return `${apiRoot(provider)}/models`
 }
-
 export function geminiUrl(provider: Provider, model: string): string {
   return `${apiRoot(provider)}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`
 }
-
 export function askUrl(provider: Provider): string {
   if (provider.kind === 'gemini') return geminiUrl(provider, provider.model)
   if (provider.kind === 'anthropic') return `${apiRoot(provider)}/messages`
   if (provider.kind === 'chatgpt') return `${apiRoot(provider)}/responses`
   return `${apiRoot(provider)}/chat/completions`
 }
-
 export function conversationUrl(provider: Provider): string {
   return provider.kind === 'openai' ? `${apiRoot(provider)}/responses` : askUrl(provider)
 }
-
 export function compactUrl(provider: Provider): string {
   return `${apiRoot(provider)}/responses/compact`
 }
-
 export function heardUrl(provider: Provider): string {
   return `${apiRoot(provider)}/audio/transcriptions`
 }
-
 export function transcribes(provider: Provider): boolean {
   return (provider.kind === 'openai' || provider.kind === 'compatible') && !!apiRoot(provider)
 }
-
 export function headersFor(provider: Provider, apiKey: string): Record<string, string> {
   if (provider.kind === 'anthropic') {
     return {
@@ -116,13 +97,11 @@ export function headersFor(provider: Provider, apiKey: string): Record<string, s
     ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
   }
 }
-
 export function headersWithoutType(provider: Provider, apiKey: string): Record<string, string> {
   const headers = { ...headersFor(provider, apiKey) }
   delete headers['content-type']
   return headers
 }
-
 export function modelsIn(body: unknown): string[] {
   if (typeof body !== 'object' || body === null) return []
   const { data, models } = body as { data?: unknown; models?: unknown }
@@ -147,19 +126,15 @@ export function modelsIn(body: unknown): string[] {
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
   return [...new Set(names)].sort((a, b) => a.localeCompare(b))
 }
-
 export const NOT_CHAT =
   /embedding|whisper|tts|dall-e|moderation|transcribe|audio|realtime|image|search|babbage|davinci/i
-
 const NOT_GEMINI_CHAT =
   /embedding|imagen|veo|lyria|tts|image|live|native-audio|transcribe|translate|robotics|aqa|deep-research|antigravity|computer-use/i
-
 export function talkable(kind: ProviderKind, ids: readonly string[]): string[] {
   if (kind === 'gemini') return ids.filter((id) => !NOT_GEMINI_CHAT.test(id))
   if (kind !== 'openai' && kind !== 'chatgpt') return [...ids]
   return ids.filter((id) => !NOT_CHAT.test(id))
 }
-
 function rankOf(kind: ProviderKind, id: string): number[] | null {
   if (kind === 'openai' || kind === 'chatgpt') {
     const gpt = /^gpt-(\d+)(?:\.(\d+))?(-mini)?$/.exec(id)
@@ -184,7 +159,6 @@ function rankOf(kind: ProviderKind, id: string): number[] | null {
   }
   return null
 }
-
 export function firstModel(kind: ProviderKind, ids: readonly string[]): string | null {
   const offered = talkable(kind, ids)
   const known = offered
@@ -199,12 +173,10 @@ export function firstModel(kind: ProviderKind, ids: readonly string[]): string |
     })
   return known[0]?.id ?? offered[0] ?? null
 }
-
 export interface Message {
   role: 'system' | 'user' | 'assistant'
   content: string
 }
-
 export function bodyFor(provider: Provider, messages: readonly Message[], stream: boolean): string {
   if (provider.kind === 'chatgpt') return responsesBody(provider.model, messages)
   if (provider.kind === 'gemini') return geminiBody(messages)
@@ -220,13 +192,11 @@ export function bodyFor(provider: Provider, messages: readonly Message[], stream
   }
   return JSON.stringify({ model: provider.model, stream, messages })
 }
-
 const systemOf = (messages: readonly Message[]) =>
   messages
     .filter((one) => one.role === 'system')
     .map((one) => one.content)
     .join('\n\n')
-
 function geminiBody(messages: readonly Message[]): string {
   const system = systemOf(messages)
   return JSON.stringify({
@@ -239,7 +209,6 @@ function geminiBody(messages: readonly Message[]): string {
       })),
   })
 }
-
 function geminiText(event: unknown): string {
   const candidates = (event as { candidates?: unknown }).candidates
   if (!Array.isArray(candidates)) return ''
@@ -252,7 +221,6 @@ function geminiText(event: unknown): string {
     })
     .join('')
 }
-
 function responsesBody(model: string, messages: readonly Message[]): string {
   const instructions = systemOf(messages)
   return JSON.stringify({
@@ -263,7 +231,6 @@ function responsesBody(model: string, messages: readonly Message[]): string {
     stream: true,
   })
 }
-
 export function deltaIn(kind: ProviderKind, event: unknown): string {
   if (typeof event !== 'object' || event === null) return ''
   if (kind === 'chatgpt') {
@@ -281,7 +248,6 @@ export function deltaIn(kind: ProviderKind, event: unknown): string {
   const content = (choices[0] as { delta?: { content?: unknown } } | undefined)?.delta?.content
   return typeof content === 'string' ? content : ''
 }
-
 export function troubleIn(body: unknown): string | null {
   if (Array.isArray(body)) return troubleIn(body[0])
   if (typeof body !== 'object' || body === null) return null

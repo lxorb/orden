@@ -15,7 +15,6 @@ const hello = 'world'
 | This note | your Notes space |
 | Everything you write | your account |
 `
-
 export function welcomeNote(): string {
   return EN
 }

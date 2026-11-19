@@ -5,7 +5,6 @@ import { inCode } from './code'
 import { enclosingNamed } from './nodes'
 
 export type LigatureScope = 'off' | 'code' | 'all'
-
 export const LIGATURES: Record<string, string> = {
   '->': '→',
   '<-': '←',
@@ -28,18 +27,15 @@ export const LIGATURES: Record<string, string> = {
   ':=': '≔',
   '...': '…',
 }
-
 const RUNS: readonly (readonly [run: string, glyph: string])[] = Object.entries(LIGATURES).sort(
   ([a], [b]) => b.length - a.length,
 )
 const OPENERS = new Set(RUNS.map(([run]) => run.charAt(0)))
-
 export interface Ligature {
   from: number
   to: number
   glyph: string
 }
-
 export function findLigatures(text: string, offset = 0): Ligature[] {
   const out: Ligature[] = []
   for (let at = 0; at < text.length;) {
@@ -54,7 +50,6 @@ export function findLigatures(text: string, offset = 0): Ligature[] {
   }
   return out
 }
-
 const LEFT_ALONE = new Set([
   'URL',
   'Autolink',
@@ -69,16 +64,13 @@ const LEFT_ALONE = new Set([
   'InlineMath',
   'BlockMath',
 ])
-
 function standsAlone(state: EditorState, from: number, to: number): boolean {
   const tree = syntaxTree(state)
   const head = tree.resolveInner(from, 1)
   const tail = tree.resolveInner(to, -1)
   if (head.from !== tail.from || head.to !== tail.to || head.name !== tail.name) return false
-
   return enclosingNamed(head, LEFT_ALONE) === null
 }
-
 export function ligaturesIn(
   state: EditorState,
   ranges: readonly { from: number; to: number }[] = [{ from: 0, to: state.doc.length }],
@@ -90,15 +82,12 @@ export function ligaturesIn(
       const inside = state.selection.ranges.some((one) => one.from < run.to && one.to > run.from)
       if (inside || !standsAlone(state, run.from, run.to)) continue
       if (scope === 'code' && !inCode(state, run.from)) continue
-
       out.push(run)
     }
   }
   return out
 }
-
 const marks = new Map<string, Decoration>()
-
 function markFor(glyph: string): Decoration {
   let mark = marks.get(glyph)
   if (!mark) {
@@ -107,7 +96,6 @@ function markFor(glyph: string): Decoration {
   }
   return mark
 }
-
 function buildLigatures(
   state: EditorState,
   scope: Exclude<LigatureScope, 'off'>,
@@ -117,17 +105,14 @@ function buildLigatures(
   for (const one of ligaturesIn(state, ranges, scope)) out.push(markFor(one.glyph).range(one.from, one.to))
   return Decoration.set(out, true)
 }
-
 export function ligatures(scope: Exclude<LigatureScope, 'off'>): Extension {
   return Prec.high(
     ViewPlugin.fromClass(
       class {
         decorations: DecorationSet
-
         constructor(view: EditorView) {
           this.decorations = buildLigatures(view.state, scope, view.visibleRanges)
         }
-
         update(update: ViewUpdate) {
           const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
           if (update.docChanged || update.viewportChanged || update.selectionSet || reparsed)

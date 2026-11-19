@@ -12,25 +12,20 @@
   import type { PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
-
   const A_WEEK: LinkLife = LINK_LIVES[2]
-
   const asked = $derived(ui.sheet?.kind === 'link' ? ui.sheet : null)
   const itemId = $derived(asked?.item ?? null)
   const item = $derived(itemId === null ? null : (pass.items.find((one) => one.id === itemId) ?? null))
   const vault = $derived(item ? (pass.vaults.find((one) => one.id === item.vault) ?? null) : null)
   const signedIn = $derived(account.user !== null)
   const lives = $derived(LINK_LIVES.map((one) => ({ value: String(one), label: lifeName(one) })))
-
   let expires = $state<LinkLife>(A_WEEK)
   let views = $state('')
   let url = $state<string | null>(null)
   let busy = $state(false)
   let wrong = $state('')
-
   const limit = $derived(views.trim() === '' ? null : Number(views.trim()))
   const fits = $derived(limit === null || (Number.isInteger(limit) && limit >= 1 && limit <= MOST_LINK_VIEWS))
-
   $effect(() => {
     if (itemId === null) return
     expires = A_WEEK
@@ -38,9 +33,7 @@
     url = null
     wrong = ''
   })
-
   const close = () => (ui.sheet = null)
-
   async function made(event: SubmitEvent) {
     event.preventDefault()
     if (!item || !fits || busy) return
@@ -54,7 +47,6 @@
       busy = false
     }
   }
-
   async function copied() {
     if (url === null) return
     await pass.copy(url)
@@ -137,31 +129,25 @@
     flex-direction: column;
     gap: var(--space-3);
   }
-
   .link {
     padding: 0 var(--space-2) var(--space-2);
   }
-
   .row {
     gap: var(--space-2);
     padding: var(--space-1) 0;
   }
-
   .name {
     flex: 1;
   }
-
   .pick,
   .views {
     flex: none;
     width: 10rem;
   }
-
   .made {
     display: flex;
     gap: var(--space-2);
   }
-
   .made input {
     flex: 1;
     min-width: 0;

@@ -25,9 +25,7 @@ import type { Imported } from './types'
 
 const NAME = '1Password'
 const SEPARATOR = /^\*\*\*[0-9a-f-]{36}\*\*\*$/i
-
 type Category = 'login' | 'card' | 'note' | 'identity' | 'password' | 'document' | 'wifi' | 'ssh' | 'custom' | 'unknown'
-
 interface OneField {
   id: string
   title: string
@@ -38,7 +36,6 @@ interface OneField {
   privateKey: string
   publicKey: string
 }
-
 interface OneItem {
   category: Category
   template: string
@@ -56,7 +53,6 @@ interface OneItem {
   attachment: boolean
   passkey: boolean
 }
-
 const CATEGORIES: Record<string, [Category, string]> = {
   '001': ['login', 'Login'],
   '002': ['card', 'Credit Card'],
@@ -81,7 +77,6 @@ const CATEGORIES: Record<string, [Category, string]> = {
   '114': ['ssh', 'SSH Key'],
   '115': ['custom', 'Crypto Wallet'],
 }
-
 const LEGACY: Record<string, [Category, string]> = {
   'webforms.WebForm': ['login', 'Login'],
   'wallet.financial.CreditCard': ['card', 'Credit Card'],
@@ -90,7 +85,6 @@ const LEGACY: Record<string, [Category, string]> = {
   'passwords.Password': ['password', 'Password'],
   'wallet.computer.Router': ['wifi', 'Wireless Router'],
 }
-
 const IDENTITY: Record<string, IdentityKey> = {
   firstname: 'firstName',
   initial: 'middleName',
@@ -108,7 +102,6 @@ const IDENTITY: Record<string, IdentityKey> = {
   website: 'website',
   yahoo: 'yahoo',
 }
-
 const ADDRESS: Record<string, IdentityKey> = {
   street: 'street',
   city: 'city',
@@ -116,7 +109,6 @@ const ADDRESS: Record<string, IdentityKey> = {
   zip: 'zip',
   country: 'country',
 }
-
 export function parseOnePassword(data: string | Files): Imported {
   if (typeof data !== 'string') return parse1pux(data)
   const text = data.charCodeAt(0) === 0xfeff ? data.slice(1) : data
@@ -127,7 +119,6 @@ export function parseOnePassword(data: string | Files): Imported {
   if (head.startsWith('{') || head.startsWith('***')) return parse1pif(text)
   return parseOnePasswordCsv(text)
 }
-
 function wholeJson(text: string): unknown {
   try {
     return JSON.parse(text) as unknown
@@ -135,14 +126,12 @@ function wholeJson(text: string): unknown {
     return null
   }
 }
-
 function parse1pux(files: Files): Imported {
   const name = Object.keys(files).find((one) => one === 'export.data' || one.endsWith('/export.data'))
   const bytes = name === undefined ? undefined : files[name]
   if (bytes === undefined) throw new ImportError('The 1PUX archive has no export.data.')
   return parseAccounts(textOf(bytes))
 }
-
 function blankItem(category: Category, template: string): OneItem {
   return {
     category,
@@ -162,16 +151,13 @@ function blankItem(category: Category, template: string): OneItem {
     passkey: false,
   }
 }
-
 function oneField(id: string, title: string, section: string, kind: FieldKind, value: string): OneField {
   return { id, title, section, kind, value, address: null, privateKey: '', publicKey: '' }
 }
-
 function monthYearText(value: unknown): string {
   const digits = stringOf(value)
   return /^\d{6}$/.test(digits) ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits
 }
-
 function addressOf(value: unknown): Record<string, string> {
   const address: Record<string, string> = {}
   for (const [key, one] of Object.entries(recordOf(value))) {
@@ -180,14 +166,12 @@ function addressOf(value: unknown): Record<string, string> {
   }
   return address
 }
-
 function addressText(address: Record<string, string>): string {
   return ['street', 'city', 'state', 'zip', 'country']
     .map((key) => address[key] ?? '')
     .filter((one) => one !== '')
     .join(', ')
 }
-
 function typedField(key: string, id: string, title: string, section: string, value: unknown): OneField {
   if (key === 'concealed') return oneField(id, title, section, 'hidden', stringOf(value))
   if (key === 'date') return oneField(id, title, section, 'date', dayOf(dateOf(value)))
@@ -196,7 +180,6 @@ function typedField(key: string, id: string, title: string, section: string, val
   const address = addressOf(value)
   return { ...oneField(id, title, section, 'text', addressText(address)), address }
 }
-
 function puxField(raw: unknown, section: string, item: OneItem): OneField | null {
   const field = recordOf(raw)
   const id = stringOf(field.id)
@@ -218,7 +201,6 @@ function puxField(raw: unknown, section: string, item: OneItem): OneField | null
     publicKey: stringOf(meta.publicKey),
   }
 }
-
 function designated(item: OneItem, fields: unknown): void {
   for (const one of listOf(fields)) {
     const field = recordOf(one)
@@ -227,7 +209,6 @@ function designated(item: OneItem, fields: unknown): void {
     if (designation === 'password') item.password = stringOf(field.value)
   }
 }
-
 function sectioned(
   item: OneItem,
   sections: readonly unknown[],
@@ -242,7 +223,6 @@ function sectioned(
     }
   }
 }
-
 function parseAccounts(text: string): Imported {
   const root = recordOf(jsonOf(text))
   if (!Array.isArray(root.accounts)) throw new ImportError('This is not a 1Password export.')
@@ -257,7 +237,6 @@ function parseAccounts(text: string): Imported {
   }
   return into.result()
 }
-
 function puxItem(raw: Record<string, unknown>): OneItem {
   const uuid = stringOf(raw.categoryUuid)
   const [category, template] = CATEGORIES[uuid] ?? ['unknown', uuid]
@@ -282,7 +261,6 @@ function puxItem(raw: Record<string, unknown>): OneItem {
   sectioned(item, listOf(details.sections), (field, title) => puxField(field, title, item))
   return item
 }
-
 function legacyField(raw: unknown, section: string): OneField | null {
   const field = recordOf(raw)
   const id = stringOf(field.n)
@@ -291,7 +269,6 @@ function legacyField(raw: unknown, section: string): OneField | null {
   if (id.startsWith('TOTP')) return oneField(id, title, section, 'totp', stringOf(field.v))
   return kind === 'reference' || kind === 'file' ? null : typedField(kind, id, title, section, field.v)
 }
-
 function legacyCategory(typeName: string): [Category, string] {
   const known = LEGACY[typeName]
   if (known) return known
@@ -301,7 +278,6 @@ function legacyCategory(typeName: string): [Category, string] {
   }
   return ['unknown', typeName]
 }
-
 function parse1pif(text: string): Imported {
   const records: Record<string, unknown>[] = []
   for (const line of text.split(/\r?\n/)) {
@@ -330,7 +306,6 @@ function parse1pif(text: string): Imported {
   }
   return into.result()
 }
-
 function legacyItem(raw: Record<string, unknown>, typeName: string, folders: Map<string, string>): OneItem {
   const [category, template] = legacyCategory(typeName)
   const item = blankItem(category, template)
@@ -360,7 +335,6 @@ function legacyItem(raw: Record<string, unknown>, typeName: string, folders: Map
   sectioned(item, sections, legacyField)
   return item
 }
-
 function take(item: OneItem, ...ids: string[]): string {
   for (const id of ids) {
     const at = item.fields.findIndex((one) => one.id === id && one.value !== '')
@@ -370,11 +344,9 @@ function take(item: OneItem, ...ids: string[]): string {
   }
   return ''
 }
-
 function extraOf(fields: readonly OneField[]): Field[] {
   return fields.filter((one) => one.value !== '').map((one) => fieldOf(one.title || one.id, one.value, one.kind))
 }
-
 function sectionsOf(fields: readonly OneField[]): Section[] {
   const named = new Map<string, OneField[]>()
   for (const field of fields) {
@@ -385,7 +357,6 @@ function sectionsOf(fields: readonly OneField[]): Section[] {
   }
   return [...named].map(([name, list]) => sectionOf(name, extraOf(list)))
 }
-
 function loginContent(item: OneItem): Content {
   const totpAt = item.fields.findIndex((one) => one.kind === 'totp' && one.value !== '')
   const [totp] = totpAt < 0 ? [] : item.fields.splice(totpAt, 1)
@@ -399,7 +370,6 @@ function loginContent(item: OneItem): Content {
     fields: extraOf(item.fields),
   })
 }
-
 function identityContent(item: OneItem): Content {
   const values: Partial<Record<IdentityKey, string>> = {}
   const rest: OneField[] = []
@@ -423,7 +393,6 @@ function identityContent(item: OneItem): Content {
     extra: rest.map((one) => ({ name: one.title || one.id, value: one.value, kind: one.kind })),
   })
 }
-
 function contentOf(item: OneItem): Content {
   switch (item.category) {
     case 'login':
@@ -474,7 +443,6 @@ function contentOf(item: OneItem): Content {
       return noteOf(item.title, item.note, extraOf(item.fields))
   }
 }
-
 function add(into: Collector, item: OneItem, vault: string): void {
   const content = contentOf(item)
   if (item.category === 'unknown') {
@@ -484,12 +452,10 @@ function add(into: Collector, item: OneItem, vault: string): void {
   if (item.passkey) into.skip('Its passkey stays in 1Password: 1Password does not export it.', item.title)
   into.add(itemOf(content, item), vault)
 }
-
 const CSV_KNOWN = new Set(
   `title,name,url,urls,website,login_url,username,login_username,password,login_password,otpauth,
 one-time password,favorite,archived,tags,notes,notesplain,type`.split(/,\n?/),
 )
-
 function parseOnePasswordCsv(text: string): Imported {
   const rows = csvRecords(text)
   const first = rows[0]

@@ -6,7 +6,6 @@ export interface LogRead {
   to: number
   fresh: boolean
 }
-
 export interface Source {
   state(): Promise<Overview>
   stop(agent?: string): Promise<boolean>
@@ -19,7 +18,6 @@ export interface Source {
   holds(): Promise<boolean>
   hide(): Promise<boolean>
 }
-
 export const crate: Source = {
   state: () => invoke<Overview>('agents_state'),
   stop: (agent) => invoke<boolean>('agents_stop', agent === undefined ? {} : { agent }),

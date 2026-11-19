@@ -20,7 +20,6 @@
 
   const UNLISTED = 'unlisted'
   const CUSTOM = 'custom'
-
   let view = $state<'main' | 'other'>('main')
   let picked = $state<string | null>(null)
   let query = $state('')
@@ -30,44 +29,35 @@
     byUse: false,
     swipe: true,
   })
-
   onMount(() => {
     void currentSettings().then((now) => (custom = now))
   })
-
   const main = MAIN_BROWSERS.map((id) => BROWSERS.find((one) => one.id === id)).filter((one) => one !== undefined)
   const known = $derived(matching(BROWSERS, query))
   const later = $derived(matching(LATER_BROWSERS, query))
   const nothing = $derived(!!query.trim() && !known.length && !later.length)
-
   const asked = $derived.by((): Brand | null => {
     if (picked === UNLISTED) return { id: UNLISTED, name: typedName(query), icon: null, colour: null }
     return LATER_BROWSERS.find((one) => one.id === picked) ?? null
   })
-
   const preset = $derived<Preset | null>(presetOf(picked))
   const chips = $derived(preset ? (Object.entries(preset) as [PresetSetting, boolean][]) : [])
-
   function other() {
     view = 'other'
     picked = null
     query = ''
   }
-
   function leave() {
     view = 'main'
     picked = null
   }
-
   $effect(() => closeOnBack(view === 'other', leave))
-
   async function done() {
     if (picked === CUSTOM) await applyPreset(custom)
     else if (preset) await applyPreset(preset)
     setup.answer({ browser: BROWSERS.some((one) => one.id === picked) ? picked : null })
     setup.next('browser')
   }
-
   function skip() {
     setup.answer({ browser: null })
     setup.next('browser')
@@ -186,7 +176,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .settled {
     display: flex;
     flex-wrap: wrap;
@@ -196,7 +185,6 @@
     align-content: flex-start;
     max-width: 560px;
   }
-
   .chip {
     display: inline-flex;
     align-items: center;
@@ -210,7 +198,6 @@
     color: var(--text);
     animation: pop 0.45s var(--ease-spring) both;
   }
-
   .chip svg {
     width: 13px;
     height: 13px;
@@ -220,13 +207,11 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .chip kbd {
     font-family: var(--font-ui);
     font-size: 12.5px;
     color: var(--muted);
   }
-
   @keyframes pop {
     from {
       opacity: 0;

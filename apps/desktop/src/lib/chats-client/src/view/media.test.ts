@@ -9,7 +9,6 @@ const file = (type: string, more: Partial<FileRef> = {}): FileRef => ({
   type,
   ...more,
 })
-
 describe('pictures', () => {
   test('one is fitted inside the column and the caps, its shape kept', () => {
     expect(fitted(file('image/webp', { width: 1600, height: 1200 }), 800)).toEqual({
@@ -29,11 +28,9 @@ describe('pictures', () => {
       height: 225,
     })
   })
-
   test('one whose size nobody stated is a square', () => {
     expect(fitted(file('image/webp'), 800)).toEqual({ width: 240, height: 240 })
   })
-
   test('a gallery is two across for two and four, three otherwise, six at most', () => {
     const many = (count: number) => Array.from({ length: count }, () => file('image/webp'))
     expect(gallery(many(2)).across).toBe(2)
@@ -43,7 +40,6 @@ describe('pictures', () => {
     const nine = gallery(many(9))
     expect([nine.shown.length, nine.more]).toEqual([6, 3])
   })
-
   test('files are sorted into what draws them', () => {
     const sorted = sortFiles([file('image/png'), file('video/mp4'), file('audio/webm'), file('application/pdf')])
     expect(sorted.seen.map((one) => one.type)).toEqual(['image/png', 'video/mp4'])
@@ -51,7 +47,6 @@ describe('pictures', () => {
     expect(sorted.other.map((one) => one.type)).toEqual(['application/pdf'])
   })
 })
-
 describe('sound', () => {
   test('bars for more stretches than a call takes arguments come out whole', () => {
     const samples = new Float32Array(200_000).map((_, at) => (at % 7) / 7)
@@ -60,7 +55,6 @@ describe('sound', () => {
     expect(Math.max(bars[0] ?? 0, bars[1] ?? 0, bars[2] ?? 0)).toBeLessThanOrEqual(255)
     expect(bars.some((one) => one === 255)).toBe(true)
   })
-
   test('bars are each stretch’s loudness, the loudest 255', () => {
     const samples = new Float32Array(64 * 10)
     for (let i = 0; i < samples.length; i++) samples[i] = i < 320 ? 0.1 : 0.4
@@ -69,12 +63,10 @@ describe('sound', () => {
     expect(bars[0]).toBe(64)
     expect(bars[63]).toBe(255)
   })
-
   test('silence is flat, and nothing is no bars of nothing', () => {
     expect(barsOf(new Float32Array(100))).toEqual(Array.from({ length: 64 }, () => 0))
     expect(barsOf(new Float32Array(0), 4)).toEqual([0, 0, 0, 0])
   })
-
   test('a press seeks to where it fell, within the bars', () => {
     expect(seekAt(150, 100, 200)).toBe(0.25)
     expect(seekAt(50, 100, 200)).toBe(0)

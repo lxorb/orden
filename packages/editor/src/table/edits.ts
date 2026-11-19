@@ -17,12 +17,10 @@ export interface Focus {
   at: CellAddress
   offset: number
 }
-
 export interface Edit {
   next: TableModel
   focus: Focus | undefined
 }
-
 export function alignedColumn(
   base: TableModel,
   column: number,
@@ -34,21 +32,17 @@ export function alignedColumn(
     focus: focused,
   }
 }
-
 const afterRemoval = (index: number, removed: number, left: number): number =>
   Math.min(index > removed ? index - 1 : index, left - 1)
-
 function afterMove(index: number, from: number, to: number): number {
   if (index === from) return to
   if (from < to && index > from && index <= to) return index - 1
   if (from > to && index >= to && index < from) return index + 1
   return index
 }
-
 export function movedColumn(base: TableModel, column: number, step: number, focused: Focus | undefined): Edit {
   const next = moveColumn(base, column, column + step)
   if (next === base || !focused) return { next, focus: focused }
-
   const landed = afterMove(focused.at.column, column, column + step)
   return {
     next,
@@ -58,16 +52,13 @@ export function movedColumn(base: TableModel, column: number, step: number, focu
     },
   }
 }
-
 export const insertedColumn = (base: TableModel, after: number): Edit => ({
   next: insertColumn(base, after + 1),
   focus: { at: { row: -1, column: after + 1 }, offset: 0 },
 })
-
 export function removedColumn(base: TableModel, column: number, focused: Focus | undefined): Edit {
   const next = removeColumn(base, column)
   if (next === base || !focused) return { next, focus: focused }
-
   return {
     next,
     focus: {
@@ -79,14 +70,11 @@ export function removedColumn(base: TableModel, column: number, focused: Focus |
     },
   }
 }
-
 export function sortedColumn(base: TableModel, column: number, order: Order, focused: Focus | undefined): Edit {
   const next = sortRows(base, column, order)
   if (next === base || !focused || focused.at.row < 0) return { next, focus: focused }
-
   const was = base.rows[focused.at.row]
   const now = was === undefined ? -1 : next.rows.indexOf(was)
-
   return {
     next,
     focus: {
@@ -95,11 +83,9 @@ export function sortedColumn(base: TableModel, column: number, order: Order, foc
     },
   }
 }
-
 export function movedRow(base: TableModel, row: number, step: number, focused: Focus | undefined): Edit {
   const next = moveRow(base, row, row + step)
   if (next === base || !focused) return { next, focus: focused }
-
   return {
     next,
     focus: {
@@ -111,16 +97,13 @@ export function movedRow(base: TableModel, row: number, step: number, focused: F
     },
   }
 }
-
 export const insertedRow = (base: TableModel, after: number, column = 0): Edit => ({
   next: insertRow(base, after + 1),
   focus: { at: { row: after + 1, column }, offset: 0 },
 })
-
 export function removedRow(base: TableModel, row: number, focused: Focus | undefined): Edit {
   const next = removeRow(base, row)
   if (next === base || !focused) return { next, focus: focused }
-
   return {
     next,
     focus: {

@@ -4,7 +4,6 @@ import { forget, isNumber, isRecord, isString, keepJson, stored } from '../../..
 import { isRetiredChat } from '../../../documents/src/api'
 
 const KEY = 'orden:chats-saved'
-
 interface SavedMessage {
   chat: string
   message: string
@@ -12,7 +11,6 @@ interface SavedMessage {
   line: string
   at: number
 }
-
 function read(): SavedMessage[] {
   const said = stored(KEY)
   if (!Array.isArray(said)) return []
@@ -36,14 +34,11 @@ function read(): SavedMessage[] {
       : [],
   )
 }
-
 class Saved {
   list = $state<SavedMessage[]>(read())
-
   has(chat: string, message: string): boolean {
     return this.list.some((one) => one.chat === chat && one.message === message)
   }
-
   toggle(chat: string, message: Message): void {
     const rest = this.list.filter((one) => !(one.chat === chat && one.message === message.id))
     this.list =
@@ -61,13 +56,10 @@ class Saved {
         : rest
     keepJson(KEY, this.list)
   }
-
   forget(): void {
     this.list = []
     forget(KEY)
   }
 }
-
 export const saved = new Saved()
-
 account.forgetWithSession(() => saved.forget())

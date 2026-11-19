@@ -3,25 +3,20 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 counter = {"n": 0}
-
 def note(page, words):
     counter["n"] += 1
     title = f"T{counter['n']}x"
     DRIVE.seed(page, f"# {title}\n\n{words}")
     DRIVE.open_note(page, title)
     page.wait_for_timeout(250)
-
 def body(page):
     whole = page.evaluate("() => window.orden.state.doc.toString()")
     return whole.split("\n\n", 1)[1]
-
 def caret(page, words, offset=0):
     page.evaluate(
         """([words, offset]) => {
@@ -32,7 +27,6 @@ def caret(page, words, offset=0):
         [words, offset],
     )
     page.wait_for_timeout(80)
-
 def select(page, words):
     page.evaluate(
         """(words) => {
@@ -44,7 +38,6 @@ def select(page, words):
         words,
     )
     page.wait_for_timeout(80)
-
 def paste(page, text="", html="", image=False):
     page.evaluate(
         """([text, html, image]) => {
@@ -59,14 +52,12 @@ def paste(page, text="", html="", image=False):
         [text, html, image],
     )
     page.wait_for_timeout(350)
-
 def holds(page, what, wanted):
     got = body(page)
     if got.rstrip("\n") != wanted.rstrip("\n"):
         wrong(f"{what}: {got!r}, wanted {wanted!r}")
     else:
         say(f"ok: {what}")
-
 def handle(page, words):
     caret(page, words)
     spot = page.evaluate(
@@ -92,14 +83,11 @@ def handle(page, words):
     page.mouse.move(grip["x"], grip["y"])
     page.mouse.click(grip["x"], grip["y"])
     page.wait_for_timeout(200)
-
 def choose(page, label):
     page.locator("[role=menu] [role=menuitem],[role=menu] button", has_text=label).first.click()
     page.wait_for_timeout(250)
-
 def pasting(page):
     table = "| a | b |\n| --- | --- |\n| c | d |"
-
     note(page, "abc def\n")
     caret(page, "def")
     paste(page, text="a\tb\nc\td")
@@ -107,31 +95,26 @@ def pasting(page):
     caret(page, "def")
     if page.locator("table.orden-table").count() != 1:
         wrong("the pasted cells are not drawn as a table")
-
     note(page, "abc def\n")
     caret(page, "abc def", 7)
     paste(page, text="Head", html="<h2>Head</h2>")
     holds(page, "a heading pasted after words is a heading", "abc def\n\n## Head")
-
     note(page, "start\n")
     caret(page, "start", 5)
     page.keyboard.press("Enter")
     page.keyboard.type("- ")
     paste(page, text="x\ny", html="<ul><li>x</li><li>y</li></ul>")
     holds(page, "a list on an empty item", "start\n- x\n- y")
-
     note(page, "start\n")
     caret(page, "start", 5)
     page.keyboard.press("Enter")
     page.keyboard.type("- ")
     paste(page, text="- p\n- q")
     holds(page, "plain text list on an empty item", "start\n- p\n- q")
-
     note(page, "here: \n")
     caret(page, "here: ", 6)
     paste(page, text="Name\tAge\nBob\t3", html="<table><tr><td>Name</td><td>Age</td></tr></table>", image=True)
     holds(page, "cells beside a picture of them", "here:\n\n| Name | Age |\n| --- | --- |\n| Bob | 3 |")
-
 def keys(page):
     note(page, "1. x\n2. y\n3. z\n")
     caret(page, "2. y", 3)
@@ -139,7 +122,6 @@ def keys(page):
     holds(page, "Tab under a number nests", "1. x\n   1. y\n3. z")
     page.keyboard.press("Shift+Tab")
     holds(page, "Shift Tab comes back", "1. x\n2. y\n3. z")
-
     note(page, "**word** tail\n")
     select(page, "word")
     page.keyboard.press("Control+i")
@@ -148,7 +130,6 @@ def keys(page):
     page.keyboard.press("Control+i")
     page.wait_for_timeout(100)
     holds(page, "and comes off", "**word** tail")
-
     note(page, "seed\n")
     page.evaluate(
         """() => {
@@ -167,7 +148,6 @@ def keys(page):
         wrong(f"bold over a whole note: {got!r}")
     else:
         say("ok: bold over a whole note leaves what is typed as it stands")
-
     note(page, "start\n\n| x |\n| - |\n| 1 |\n\nb\n")
     caret(page, "start")
     page.keyboard.press("Alt+ArrowDown")
@@ -175,12 +155,10 @@ def keys(page):
     holds(page, "Alt Down steps over a table", "| x |\n| - |\n| 1 |\n\nstart\n\nb")
     if page.locator("table.orden-table").count() != 1:
         wrong("the table stopped being one")
-
 SECTION = (
     "# Head\n\npara\n\n- item a\n- [ ] task b\n\n> quoted\n\n```py\n# comment\n- dash\n```\n\n"
     "| a | b |\n| --- | --- |\n| 1 | 2 |\n\n## Sub\n\nunder\n\n# Next\n\nkeep\n"
 )
-
 def menus(page):
     for shape, line in (("Heading 2", "## Head"), ("Bullet", "- Head")):
         note(page, SECTION)
@@ -189,7 +167,6 @@ def menus(page):
         page.locator("[role=dialog] button,[role=option],[role=menuitem]", has_text=shape).first.click()
         page.wait_for_timeout(300)
         holds(page, f"turning a heading into {shape}", SECTION.replace("# Head", line))
-
     for name, words, press in (
         ("a fence", "before\n\n```py\ncode\n```\n\nafter\n", "code"),
         ("a table", "before\n\n| a |\n| --- |\n| 1 |\n\nafter\n", "| a |"),
@@ -213,15 +190,12 @@ def menus(page):
         wrong("a fence an older build named got another name")
     else:
         say("ok: a fence an older build named keeps its name")
-
     if page.locator(".cm-content table.orden-table td", has_text="^").count():
         wrong("a table grew a cell with the name in it")
-
 def tap(page, locator):
     box = locator.bounding_box()
     page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.wait_for_timeout(350)
-
 def phone(browser):
     context = browser.new_context(
         viewport={"width": 390, "height": 844},
@@ -233,7 +207,6 @@ def phone(browser):
     DRIVE.open(page)
     tabs = "window.ordenApp.workspace.tabs"
     named = "window.ordenApp.workspace.notes.some((one) => one.name.includes(%r))"
-
     tap(page, page.locator("button.fab"))
     page.keyboard.type("Shopping list")
     page.wait_for_timeout(100)
@@ -241,7 +214,6 @@ def phone(browser):
     page.wait_for_timeout(100)
     page.keyboard.type("milk and eggs")
     page.wait_for_timeout(300)
-
     tap(page, page.locator("button.fab"))
     DRIVE.wait_for(page, f"() => {named % 'Shopping list'}", "the draft to be written down")
     kept = f"() => {tabs}.some((one) => one.path?.includes('Shopping list'))"
@@ -249,7 +221,6 @@ def phone(browser):
     if page.evaluate("() => window.ordenApp.workspace.active.doc"):
         wrong("the new tab is not empty")
     say("ok: a draft the plus put away is a note, and still a tab")
-
     page.evaluate("() => window.orden.focus()")
     page.keyboard.type("Second thought")
     page.wait_for_timeout(1000)
@@ -259,7 +230,6 @@ def phone(browser):
     DRIVE.wait_for(page, f"() => {named % 'Second thought'}", "the second draft to be written down")
     say("ok: and so is one left by opening another")
     context.close()
-
 def drive(browser):
     page = DRIVE.page(
         browser,
@@ -271,5 +241,4 @@ def drive(browser):
     keys(page)
     menus(page)
     phone(browser)
-
 raise SystemExit(DRIVE.run(drive, "the writing holds"))

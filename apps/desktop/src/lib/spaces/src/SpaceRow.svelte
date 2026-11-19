@@ -18,7 +18,6 @@
     held = false,
     on = false,
   }: { space: Space; place: number; typed?: string; held?: boolean; on?: boolean } = $props()
-
   const name = $derived(isNumber(typed) ? [{ text: space.name, hit: false }] : pieces(space.name, typed))
   const reads = $derived(roleOf(space.root) === 'read')
   const others = $derived.by(() => {

@@ -21,13 +21,11 @@
     stranger?: boolean
     title: string
   } = $props()
-
   const made = untrack(() => {
     const source = file !== null ? fileSource(file, view, () => rowAt(from)) : fenceSource(code ?? '', from, stranger)
     const live = new LiveView(source)
     return { live, kit: kitFor(live, view === undefined ? {} : { view }, file, true) }
   })
-
   $effect(() => {
     if (basesOn()) return untrack(() => made.live.start())
   })

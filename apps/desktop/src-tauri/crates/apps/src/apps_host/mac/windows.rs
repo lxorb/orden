@@ -9,10 +9,8 @@ use objc2_core_graphics::{CGDirectDisplayID, CGDisplayBounds};
 
 const EVERY: Duration = Duration::from_millis(120);
 const NEAR: f64 = 1.5;
-
 const POINT: u32 = 1;
 const SIZE: u32 = 2;
-
 #[link(name = "ApplicationServices", kind = "framework")]
 extern "C" {
     fn AXUIElementCreateApplication(pid: i32) -> *mut c_void;
@@ -29,11 +27,9 @@ extern "C" {
     fn AXValueCreate(kind: u32, value: *const c_void) -> *mut c_void;
     fn AXValueGetValue(value: *const c_void, kind: u32, out: *mut c_void) -> u8;
 }
-
 pub struct Placer {
     ended: Arc<AtomicBool>,
 }
-
 impl Placer {
     pub fn start(pid: i32, display: CGDirectDisplayID) -> Placer {
         let ended = Arc::new(AtomicBool::new(false));
@@ -52,13 +48,11 @@ impl Placer {
         Placer { ended }
     }
 }
-
 impl Drop for Placer {
     fn drop(&mut self) {
         self.ended.store(true, Ordering::SeqCst);
     }
 }
-
 pub fn placed(fills: bool, size: CGSize, screen: CGRect) -> CGRect {
     if fills {
         return screen;
@@ -73,7 +67,6 @@ pub fn placed(fills: bool, size: CGSize, screen: CGRect) -> CGRect {
         CGSize::new(width, height),
     )
 }
-
 fn there(now: CGRect, goes: CGRect, fills: bool) -> bool {
     let near = |a: f64, b: f64| (a - b).abs() <= NEAR;
     let inside = now.origin.x >= goes.origin.x - NEAR
@@ -86,13 +79,11 @@ fn there(now: CGRect, goes: CGRect, fills: bool) -> bool {
         inside
     }
 }
-
 #[allow(unsafe_code)]
 fn application(pid: i32) -> Option<CFRetained<CFType>> {
     let made = NonNull::new(unsafe { AXUIElementCreateApplication(pid) })?;
     Some(unsafe { CFRetained::from_raw(made.cast()) })
 }
-
 #[allow(unsafe_code)]
 fn attribute(element: &CFType, name: &CFString) -> Option<CFRetained<CFType>> {
     let mut value: *const c_void = std::ptr::null();
@@ -105,7 +96,6 @@ fn attribute(element: &CFType, name: &CFString) -> Option<CFRetained<CFType>> {
     let value = NonNull::new(value.cast_mut())?;
     Some(unsafe { CFRetained::from_raw(value.cast()) })
 }
-
 #[allow(unsafe_code)]
 fn geometry<T: Default>(element: &CFType, name: &CFString, kind: u32) -> Option<T> {
     let value = attribute(element, name)?;
@@ -119,7 +109,6 @@ fn geometry<T: Default>(element: &CFType, name: &CFString, kind: u32) -> Option<
     };
     (read != 0).then_some(out)
 }
-
 #[allow(unsafe_code)]
 fn set_geometry<T>(element: &CFType, name: &CFString, kind: u32, value: &T) {
     unsafe {
@@ -134,7 +123,6 @@ fn set_geometry<T>(element: &CFType, name: &CFString, kind: u32, value: &T) {
         );
     }
 }
-
 #[allow(unsafe_code)]
 fn place_all(app: &CFType, screen: CGRect) {
     let windows_name = CFString::from_static_str("AXWindows");
@@ -153,7 +141,6 @@ fn place_all(app: &CFType, screen: CGRect) {
         place(window, screen);
     }
 }
-
 fn place(window: &CFType, screen: CGRect) {
     let position = CFString::from_static_str("AXPosition");
     let size = CFString::from_static_str("AXSize");
@@ -180,7 +167,6 @@ fn place(window: &CFType, screen: CGRect) {
         set_geometry(window, &size, SIZE, &left);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,7 +174,6 @@ mod tests {
     fn rect(x: f64, y: f64, w: f64, h: f64) -> CGRect {
         CGRect::new(CGPoint::new(x, y), CGSize::new(w, h))
     }
-
     #[test]
     fn fills_the_display_with_a_main_window_and_centres_the_rest() {
         let screen = rect(3000.0, 1000.0, 800.0, 600.0);
@@ -202,7 +187,6 @@ mod tests {
             rect(3000.0, 1200.0, 800.0, 200.0)
         );
     }
-
     #[test]
     fn leaves_a_window_that_is_where_it_goes() {
         let screen = rect(3000.0, 1000.0, 800.0, 600.0);

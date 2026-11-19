@@ -1,13 +1,10 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PATIENCE = 30
 HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -21,7 +18,6 @@ async () => {
   return root
 }
 """
-
 STATE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -33,7 +29,6 @@ STATE = """
   }
 }
 """
-
 COUNTING = """
 (() => {
   window.__animated = 0
@@ -54,10 +49,8 @@ COUNTING = """
 })()
 """
 MOVING = "() => { const n = window.__animated; window.__animated = 0; return n }"
-
 def row(page: Page, at: str):
     return page.locator(f"aside .row[data-path$='/{at}']").first
-
 def until(page: Page, check: str, what: str) -> bool:
     try:
         wait_for(page, f"() => {{ const s = ({STATE})(); return {check} }}", what, PATIENCE)
@@ -65,7 +58,6 @@ def until(page: Page, check: str, what: str) -> bool:
     except BaseException:
         wrong(f"{what}: {page.evaluate(STATE)}")
         return False
-
 def moved(page: Page, what: str, want: bool = True) -> None:
     running = 0
     for _ in range(10):
@@ -78,18 +70,15 @@ def moved(page: Page, what: str, want: bool = True) -> None:
         wrong(f"{what}: nothing moved")
     if not want and running:
         wrong(f"{what}: {running} animations ran for a reader who asked for less motion")
-
 def drag(page: Page, source, target, what: str) -> None:
     source.drag_to(target)
     say(f"dragged: {what}")
     page.wait_for_timeout(40)
-
 def keys(page: Page, chord: str) -> None:
     marked = "() => { window.__mark = window.ordenApp.workspace.undone.last }"
     page.evaluate(marked)
     page.keyboard.press(chord)
     wait_for(page, "() => window.ordenApp.workspace.undone.last !== window.__mark", f"{chord} landed", PATIENCE)
-
 def walk(browser: Browser, reduced: bool) -> None:
     context = browser.new_context(
         viewport={"width": 1180, "height": 800}, reduced_motion="reduce" if reduced else "no-preference"
@@ -105,7 +94,6 @@ def walk(browser: Browser, reduced: bool) -> None:
         page.evaluate("() => window.ordenApp.workspace.device.expand(window.ordenApp.workspace.activeSpace.root + '/Work')")
         wait_for(page, "() => !!document.querySelector(\"aside .row[data-path$='/Work/Gamma.md']\")", "the rows")
         page.wait_for_timeout(500)
-
         page.evaluate(MOVING)
         row(page, "Alpha.md").hover()
         page.mouse.down()
@@ -125,12 +113,10 @@ def walk(browser: Browser, reduced: bool) -> None:
         if not until(page, "s.kept.includes('Alpha.md') && !s.rows.includes('Alpha.md') && s.tiles === 1", f"{tag}a file dragged into the Essentials"):
             say(f"{tag}what the drag met: {page.evaluate('() => window.__events')}")
         moved(page, f"{tag}into the Essentials", not reduced)
-
         keys(page, "Control+z")
         until(page, "!s.kept.length && s.rows.includes('Alpha.md')", f"{tag}undone, the file back in the list")
         keys(page, "Control+Shift+z")
         until(page, "s.kept.includes('Alpha.md') && !s.rows.includes('Alpha.md')", f"{tag}done again")
-
         page.wait_for_timeout(300)
         page.evaluate(MOVING)
         drag(page, page.locator(".tiles [data-at]").first, row(page, "Work"), "Alpha's tile onto Work")
@@ -138,7 +124,6 @@ def walk(browser: Browser, reduced: bool) -> None:
         moved(page, f"{tag}out of the Essentials", not reduced)
         keys(page, "Control+z")
         until(page, "s.kept.includes('Alpha.md') && !s.rows.includes('Work/Alpha.md')", f"{tag}undone, the tile back")
-
         row(page, "Beta.md").click()
         row(page, "Work/Gamma.md").click(modifiers=["Alt"])
         drag(page, row(page, "Beta.md"), page.locator(".tiles"), "Beta and Gamma onto the Essentials")
@@ -148,9 +133,7 @@ def walk(browser: Browser, reduced: bool) -> None:
         DRIVE.shot(page, "essentials-drag" + ("-reduced" if reduced else ""))
     finally:
         context.close()
-
 def drive(browser: Browser) -> None:
     walk(browser, reduced=False)
     walk(browser, reduced=True)
-
 raise SystemExit(DRIVE.run(drive, "files dragged into the Essentials and tiles back out, each one undo"))

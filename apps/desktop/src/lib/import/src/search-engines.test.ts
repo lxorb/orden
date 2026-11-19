@@ -22,21 +22,18 @@ const ZEN = {
     defaultEngineIdHash: 'HFSavauRhIgANGCy8HXuGd+sA43nvoP+T68CL3agT+o=',
   },
 }
-
 describe("a browser's search engine", () => {
   test("is Firefox's and Zen's chosen one, by its name, or a custom one's address", () => {
     expect(mozillaEngine(ZEN)).toEqual({ id: 'duckduckgo', name: 'DuckDuckGo' })
     const kagi = { ...ZEN, metaData: { ...ZEN.metaData, defaultEngineId: ZEN.engines[2]?.id } }
     expect(mozillaEngine(kagi)).toEqual({ custom: 'https://kagi.com/search?q=%s', name: 'Kagi' })
   })
-
   test('is nothing where nobody chose one', () => {
     const untouched = { ...ZEN, metaData: { ...ZEN.metaData, defaultEngineId: '' } }
     expect(mozillaEngine(untouched)).toBeNull()
     expect(chromiumEngine({ browser: {} })).toBeNull()
     expect(safariEngine(null)).toBeNull()
   })
-
   test("is a Chromium's, its address's own words in Orden's", () => {
     const prefs = (url: string, short_name: string) => ({
       default_search_provider_data: { template_url_data: { short_name, keyword: 'x', url } },
@@ -55,7 +52,6 @@ describe("a browser's search engine", () => {
     })
     expect(chromiumEngine(prefs('https://x.example.com/?q={searchTerms}&e={inputEncoding}', 'X'))).toBeNull()
   })
-
   test("is Safari's, by the name it shows", () => {
     expect(safariEngine('DuckDuckGo')).toEqual({ id: 'duckduckgo', name: 'DuckDuckGo' })
     expect(safariEngine('Nowhere')).toBeNull()

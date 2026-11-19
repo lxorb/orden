@@ -6,21 +6,16 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
-
 const AddressField = (await import('../../src/lib/web-tab/src/AddressField.svelte')).default
-
 const ADDRESS = 'https://example.com/page'
-
 let target: HTMLElement
 let app: ReturnType<typeof mount>
 let address = ADDRESS
-
 function field(): HTMLInputElement {
   const found = target.querySelector('input')
   if (!found) throw new Error('no field')
   return found
 }
-
 function typed(letters: string) {
   const box = field()
   box.focus()
@@ -30,7 +25,6 @@ function typed(letters: string) {
   box.dispatchEvent(new InputEvent('input', { bubbles: true }))
   flushSync()
 }
-
 function awayAndBack() {
   const box = field()
   box.dispatchEvent(new FocusEvent('blur'))
@@ -38,7 +32,6 @@ function awayAndBack() {
   box.dispatchEvent(new FocusEvent('focus'))
   flushSync()
 }
-
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
@@ -57,12 +50,10 @@ beforeEach(() => {
   })
   flushSync()
 })
-
 afterEach(() => {
   void unmount(app)
   target.remove()
 })
-
 test('comes back with what was typed and where the caret was', () => {
   typed('exa')
   awayAndBack()
@@ -70,19 +61,16 @@ test('comes back with what was typed and where the caret was', () => {
   expect(field().selectionStart).toBe(2)
   expect(field().selectionEnd).toBe(2)
 })
-
 test('the reader leaving the field leaves the words in it, as Chrome does (#381)', () => {
   typed('exa')
   field().blur()
   flushSync()
   expect(field().value).toBe('exa')
-
   field().focus()
   flushSync()
   expect(field().value).toBe('exa')
   expect(field().selectionStart).toBe(2)
 })
-
 test('nothing typed is the whole address again, selected', () => {
   field().focus()
   flushSync()
@@ -91,12 +79,10 @@ test('nothing typed is the whole address again, selected', () => {
   expect(field().selectionStart).toBe(0)
   expect(field().selectionEnd).toBe(ADDRESS.length)
 })
-
 describe('across a switch of tabs', () => {
   const page = { halfTyped: null as HalfTyped | null, keyboard: null as 'address' | null }
   let other: ReturnType<typeof mount> | null = null
   let gone = ''
-
   function bar() {
     if (other) void unmount(other)
     target.replaceChildren()
@@ -113,7 +99,6 @@ describe('across a switch of tabs', () => {
     })
     flushSync()
   }
-
   function into(words: string, caret: number) {
     const box = field()
     box.focus()
@@ -124,14 +109,12 @@ describe('across a switch of tabs', () => {
     box.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowLeft', bubbles: true }))
     flushSync()
   }
-
   beforeEach(() => {
     page.halfTyped = null
     gone = ''
     void unmount(app)
     bar()
   })
-
   afterEach(() => {
     if (other) void unmount(other)
     other = null
@@ -146,20 +129,17 @@ describe('across a switch of tabs', () => {
       },
     })
   })
-
   test('another tab pressed: back on it, the words are there and so is the caret', () => {
     into('weather in zur', 8)
     field().blur()
     flushSync()
     bar()
-
     const box = field()
     box.focus()
     flushSync()
     expect(box.value).toBe('weather in zur')
     expect([box.selectionStart, box.selectionEnd]).toEqual([8, 8])
   })
-
   test('pressed past the field: the words stay, there and back, and it is not given the keyboard', () => {
     into('weather in zur', 8)
     vi.spyOn(document, 'hasFocus').mockReturnValue(true)
@@ -169,36 +149,30 @@ describe('across a switch of tabs', () => {
     flushSync()
     expect(field().value).toBe('weather in zur')
     bar()
-
     expect(field().value).toBe('weather in zur')
     expect(page.keyboard).toBeNull()
     expect(document.activeElement).not.toBe(field())
     vi.restoreAllMocks()
   })
-
   test('Ctrl+Tab typed into the field: the tab goes with the field still focused', () => {
     into('news', 2)
     bar()
-
     field().focus()
     flushSync()
     expect(field().value).toBe('news')
     expect(field().selectionStart).toBe(2)
   })
-
   test('Enter took it where it was going: nothing is waiting when the tab comes back', () => {
     into('example.org', 11)
     field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     flushSync()
     expect(gone).toBe('example.org')
     bar()
-
     field().focus()
     flushSync()
     expect(field().value).toBe('')
     expect(page.halfTyped).toBeNull()
   })
-
   test('Escape twice gave it up: nothing is waiting either', () => {
     into('half', 4)
     field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))

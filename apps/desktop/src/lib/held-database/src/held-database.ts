@@ -2,16 +2,12 @@ interface HeldDatabase {
   transaction(stores: string | readonly string[], mode?: IDBTransactionMode): Promise<IDBTransaction>
   close(): void
 }
-
 type Upgrade = (request: IDBOpenDBRequest, oldVersion: number) => void
-
 export function heldDatabase(name: string, version: number, upgrade: Upgrade): HeldDatabase {
   let open: Promise<IDBDatabase> | null = null
-
   const lost = (was: Promise<IDBDatabase>) => {
     if (open === was) open = null
   }
-
   const database = (): Promise<IDBDatabase> => {
     if (open) return open
     const opening = new Promise<IDBDatabase>((resolve, reject) => {
@@ -34,7 +30,6 @@ export function heldDatabase(name: string, version: number, upgrade: Upgrade): H
     open = opening
     return opening
   }
-
   return {
     async transaction(stores, mode = 'readonly') {
       const names = typeof stores === 'string' ? stores : [...stores]

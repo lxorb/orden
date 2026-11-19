@@ -4,22 +4,18 @@ import { type Kept, keptOver, type TodoDisk } from './records'
 const ITEMS = 'items'
 const META = 'meta'
 const CURSOR = 'cursor'
-
 const nameFor = (owner: string | null): string => (owner === null ? 'orden-todos' : `orden-todos:${owner}`)
-
 const settled = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the todo store refused'))
   })
-
 const finished = (tx: IDBTransaction): Promise<void> =>
   new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error ?? new Error('the todo store did not write'))
     tx.onabort = () => reject(tx.error ?? new Error('the todo store did not write'))
   })
-
 const keptOf = (value: unknown): Kept | null => {
   if (typeof value !== 'object' || value === null) return null
   const { id, fields, stamps, dirty } = value as Record<string, unknown>
@@ -32,12 +28,10 @@ const keptOf = (value: unknown): Kept | null => {
     dirty: Array.isArray(dirty) ? dirty.filter((one): one is string => typeof one === 'string') : [],
   }
 }
-
 export interface ClosingDisk extends TodoDisk {
   close(): void
   clear(): Promise<void>
 }
-
 export async function openTodoDisk(owner: string | null): Promise<ClosingDisk> {
   const held = heldDatabase(nameFor(owner), 1, (request) => {
     const db = request.result

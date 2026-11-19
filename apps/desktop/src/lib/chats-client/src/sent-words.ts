@@ -8,7 +8,6 @@ export function sentWords(name: string, quote?: { text: string; heading?: string
   const link = quote.heading ? `[[${name}#${quote.heading}]]` : `[[${name}]]`
   return `${quoted}\n\n${link} `
 }
-
 export function headingAbove(text: string, at: number): string | null {
   const lines = text.slice(0, at).split('\n')
   for (let index = lines.length - 1; index >= 0; index--) {

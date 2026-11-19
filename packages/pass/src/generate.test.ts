@@ -22,12 +22,10 @@ function seeded(seed: number): Random {
     return state % n
   }
 }
-
 function has(text: string, pool: string): boolean {
   for (const one of text) if (pool.includes(one)) return true
   return false
 }
-
 describe('secureRandom', () => {
   it('stays in range and covers it', () => {
     const seen = new Set<number>()
@@ -43,7 +41,6 @@ describe('secureRandom', () => {
     expect(() => secureRandom(1.5)).toThrow()
   })
 })
-
 describe('randomPassword', () => {
   it('holds every chosen class, at the length asked', () => {
     for (let at = 0; at < 200; at++) {
@@ -57,31 +54,26 @@ describe('randomPassword', () => {
       expect(has(four, LOWER) && has(four, UPPER) && has(four, DIGITS) && has(four, SYMBOLS)).toBe(true)
     }
   })
-
   it('leaves out what is not chosen', () => {
     for (let at = 0; at < 100; at++) {
       const password = randomPassword({ length: 30, upper: false, digits: false, symbols: false })
       expect(password).toMatch(new RegExp(`^[${LOWER}]{30}$`))
     }
   })
-
   it('keeps the length in range', () => {
     expect(randomPassword({ ...DEFAULT_RANDOM, length: 1 })).toHaveLength(4)
     expect(randomPassword({ ...DEFAULT_RANDOM, length: 500 })).toHaveLength(64)
   })
-
   it('never uses characters that look alike', () => {
     const all = LOWER + UPPER + DIGITS + SYMBOLS
     for (const confusing of 'Il1O0o') expect(all).not.toContain(confusing)
     for (let at = 0; at < 100; at++) expect(randomPassword({ ...DEFAULT_RANDOM, length: 64 })).not.toMatch(/[Il1O0o]/)
   })
-
   it('is decided by the random it is given', () => {
     expect(randomPassword(DEFAULT_RANDOM, seeded(3))).toBe(randomPassword(DEFAULT_RANDOM, seeded(3)))
     expect(randomPassword(DEFAULT_RANDOM, seeded(3))).not.toBe(randomPassword(DEFAULT_RANDOM, seeded(4)))
   })
 })
-
 describe('memorablePassword', () => {
   it('joins capitalised words with one number', () => {
     for (let seed = 0; seed < 2000; seed++) {
@@ -91,7 +83,6 @@ describe('memorablePassword', () => {
       expect(parts.filter((part) => /[2-9]$/.test(part))).toHaveLength(1)
     }
   })
-
   it('shows as many words as asked, whatever word and separator', () => {
     const marks = { hyphen: '-', space: ' ', period: '.', comma: ',', underscore: '_' } as const
     const wrong: string[] = []
@@ -114,12 +105,10 @@ describe('memorablePassword', () => {
     }
     expect(wrong).toEqual([])
   })
-
   it('takes words from the list it is given', () => {
     const password = memorablePassword({ words: 3, separator: 'space', capitalize: false, numbers: false }, ['cat'])
     expect(password).toBe('cat cat cat')
   })
-
   it('separates as asked', () => {
     const rule = { words: 4, capitalize: false, numbers: false }
     const words = ['w']
@@ -132,13 +121,11 @@ describe('memorablePassword', () => {
     expect(joinedWords(['a', 'b'], 'none')).toBe('ab')
     expect(SEPARATORS).toHaveLength(7)
   })
-
   it('keeps the word count in range', () => {
     const rule = { separator: 'hyphen', capitalize: false, numbers: false } as const
     expect(memorablePassword({ ...rule, words: 0 }, ['w'])).toBe('w')
     expect(memorablePassword({ ...rule, words: 40 }, ['w']).split('-')).toHaveLength(10)
   })
-
   it('is decided by the random it is given', () => {
     expect(memorablePassword(DEFAULT_MEMORABLE, WORDS, seeded(9))).toBe(
       memorablePassword(DEFAULT_MEMORABLE, WORDS, seeded(9)),

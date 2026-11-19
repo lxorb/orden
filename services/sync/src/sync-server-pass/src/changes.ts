@@ -6,7 +6,6 @@ import { ITEM_COLUMNS, type ItemDb, itemRowOf, keyringRowOf, VAULT_SELECT, type 
 import { seqNow } from './seq'
 
 export const changes = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 interface InviteDb {
   vault_id: string
   role: Role
@@ -20,17 +19,14 @@ interface InviteDb {
   key_proof: string | null
   pin: string | null
 }
-
 function sinceIn(raw: string | undefined): number | null {
   const since = Number(raw ?? '0')
   return Number.isSafeInteger(since) && since >= 0 ? since : null
 }
-
 changes.get('/changes', async (context) => {
   const user = context.get('user')
   const since = sinceIn(context.req.query('since'))
   if (since === null) return context.json({ error: 'since must be a whole number' }, 400)
-
   const env = context.env
   const top = await seqNow(env.DB)
   const { results: rows } = await env.DB.prepare(
@@ -46,11 +42,9 @@ changes.get('/changes', async (context) => {
   )
     .bind(user.email, since, top, MOST_PAGE + 1)
     .all<ItemDb & { seq: number }>()
-
   const more = rows.length > MOST_PAGE
   const page = rows.slice(0, MOST_PAGE)
   const seq = more ? (page[page.length - 1]?.seq ?? since) : top
-
   const [vaults, keyring, invites] = await Promise.all([
     env.DB.prepare(
       `${VAULT_SELECT}
@@ -75,7 +69,6 @@ changes.get('/changes', async (context) => {
       .bind(user.email)
       .all<InviteDb>(),
   ])
-
   const answer: Changes = {
     seq,
     more,

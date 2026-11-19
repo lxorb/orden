@@ -9,18 +9,14 @@ use tauri::Webview;
 use tauri_runtime_cef::{allocate_devtools_message_id, DevToolsProtocol, WebviewCefExt as _};
 
 type Hearing = Arc<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
-
 #[derive(Default)]
 struct Page {
     waiting: Mutex<HashMap<i64, SyncSender<Result<Value, String>>>>,
     hearing: Mutex<Vec<Hearing>>,
     observed: Mutex<bool>,
 }
-
 type Pages = Mutex<HashMap<String, Arc<Page>>>;
-
 static PAGES: LazyLock<Pages> = LazyLock::new(Mutex::default);
-
 fn page(view: &Webview) -> Result<Arc<Page>, String> {
     page_in(&PAGES, view.label(), |made| {
         let heard = Arc::clone(made);
@@ -34,7 +30,6 @@ fn page(view: &Webview) -> Result<Arc<Page>, String> {
         .map_err(|error| format!("the page's agent could not be reached: {error}"))
     })
 }
-
 fn page_in(
     pages: &Pages,
     label: &str,
@@ -49,7 +44,6 @@ fn page_in(
     drop(observed);
     Ok(found)
 }
-
 fn read(page: &Page, message: &Value) {
     let session = message.get("sessionId").and_then(Value::as_str);
     if let Some(id) = message.get("id").and_then(Value::as_i64) {
@@ -68,7 +62,6 @@ fn read(page: &Page, message: &Value) {
         one(method, session, &params);
     }
 }
-
 fn answer(message: &Value) -> Result<Value, String> {
     if let Some(error) = message.get("error") {
         return Err(error
@@ -79,7 +72,6 @@ fn answer(message: &Value) -> Result<Value, String> {
     }
     Ok(message.get("result").cloned().unwrap_or(Value::Null))
 }
-
 fn asking(id: i64, method: &str, params: &Value, session: Option<&str>) -> Value {
     let mut message = json!({ "id": id, "method": method, "params": params });
     if let Some(session) = session {
@@ -87,7 +79,6 @@ fn asking(id: i64, method: &str, params: &Value, session: Option<&str>) -> Value
     }
     message
 }
-
 pub fn call(
     view: &Webview,
     session: Option<&str>,
@@ -102,7 +93,6 @@ pub fn call(
     );
     let (answered, waiting) = sync_channel(1);
     page.waiting.held().insert(id, answered);
-
     let sent = view
         .send_dev_tools_message(asking(id, method, params, session).to_string().as_bytes())
         .map_err(|error| format!("the page's agent could not be reached: {error}"));
@@ -114,7 +104,6 @@ pub fn call(
     page.waiting.held().remove(&id);
     outcome
 }
-
 pub fn tell(view: &Webview, session: Option<&str>, said: Vec<(&'static str, Value)>) {
     let view = view.clone();
     let session = session.map(str::to_string);
@@ -128,7 +117,6 @@ pub fn tell(view: &Webview, session: Option<&str>, said: Vec<(&'static str, Valu
         }
     });
 }
-
 pub fn hear(
     view: &Webview,
     heard: impl Fn(&str, Option<&str>, &Value) + Send + Sync + 'static,
@@ -136,15 +124,12 @@ pub fn hear(
     page(view)?.hearing.held().push(Arc::new(heard));
     Ok(())
 }
-
 pub fn let_go_of(label: &str) {
     forget(&PAGES, label);
 }
-
 fn forget(pages: &Pages, label: &str) {
     pages.held().remove(label);
 }
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -160,7 +145,6 @@ mod tests {
         let pages: Arc<Pages> = Arc::default();
         let (registering, registered) = channel();
         let (window, waiting_for_window) = channel::<()>();
-
         let building = Arc::clone(&pages);
         let builder = std::thread::spawn(move || {
             page_in(&building, "web-a", |_| {
@@ -170,7 +154,6 @@ mod tests {
             .map(|_| ())
         });
         registered.recv().unwrap();
-
         let (closed, closing) = channel();
         let window_thread = Arc::clone(&pages);
         std::thread::spawn(move || {
@@ -178,7 +161,6 @@ mod tests {
             closed.send(()).unwrap();
         });
         let answered = closing.recv_timeout(Duration::from_secs(5));
-
         window.send(()).unwrap();
         builder.join().unwrap().unwrap();
         assert!(
@@ -186,7 +168,6 @@ mod tests {
             "closing a page waited for another being registered"
         );
     }
-
     #[test]
     fn a_page_is_observed_once_and_after_a_failure_again() {
         let pages = Pages::default();
@@ -208,12 +189,10 @@ mod tests {
         .unwrap();
         assert_eq!(tries, 2);
         assert!(Arc::ptr_eq(&first, &again));
-
         forget(&pages, "web-a");
         let fresh = page_in(&pages, "web-a", |_| Ok(())).unwrap();
         assert!(!Arc::ptr_eq(&first, &fresh));
     }
-
     #[test]
     fn an_answer_is_its_result_or_the_agent_s_words() {
         assert_eq!(
@@ -225,7 +204,6 @@ mod tests {
             Err("No frame".to_string())
         );
     }
-
     #[test]
     fn a_call_names_its_session_only_when_it_has_one() {
         let page = asking(7, "Runtime.evaluate", &json!({ "expression": "1" }), None);
@@ -234,7 +212,6 @@ mod tests {
         assert_eq!(frame["sessionId"], "S1");
         assert_eq!(frame["id"], 7);
     }
-
     #[test]
     fn an_event_reaches_every_hearer_with_its_session() {
         let page = Page::default();

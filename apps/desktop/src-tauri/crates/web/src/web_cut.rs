@@ -14,7 +14,6 @@ pub struct Hollow {
     #[serde(default)]
     pub radius: f64,
 }
-
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 pub struct Cut {
     #[serde(default)]
@@ -22,14 +21,12 @@ pub struct Cut {
     #[serde(default)]
     pub hollows: Vec<Hollow>,
 }
-
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum Foot {
     Even(f64),
     Apart(f64, f64),
 }
-
 impl Foot {
     #[must_use]
     pub fn sides(self) -> (f64, f64) {
@@ -39,24 +36,18 @@ impl Foot {
         }
     }
 }
-
 pub type Piece = (i32, i32, i32, i32, i32, i32);
-
 pub type Row = (i32, i32, i32, i32);
-
 pub type Shape = Option<Vec<Piece>>;
-
 #[allow(clippy::cast_possible_truncation)]
 fn pixels(length: f64, scale: f64) -> i32 {
     (length * scale).round() as i32
 }
-
 #[must_use]
 pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) -> Shape {
     if cut.is_some_and(|one| one.all) {
         return Some(Vec::new());
     }
-
     let wide = i32::try_from(wide).unwrap_or(i32::MAX);
     let tall = i32::try_from(tall).unwrap_or(i32::MAX);
     let round = |one: f64| pixels(one.max(0.0) * 2.0, scale).clamp(0, wide.min(tall).max(0));
@@ -83,7 +74,6 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: Foo
             left < right && top < bottom && left < wide && right > 0 && top < tall && bottom > 0
         })
         .collect();
-
     if pieces.is_empty() && left == 0 && right == 0 {
         return None;
     }
@@ -91,7 +81,6 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: Foo
     all.extend(pieces);
     Some(all)
 }
-
 #[must_use]
 pub fn rectangles(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Row> {
     let wide = right - left;
@@ -108,7 +97,6 @@ pub fn rectangles(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> V
     }
     all
 }
-
 #[must_use]
 pub fn lower(left: i32, top: i32, right: i32, bottom: i32, foot: (i32, i32)) -> Vec<Row> {
     let wide = right - left;
@@ -133,25 +121,20 @@ pub fn lower(left: i32, top: i32, right: i32, bottom: i32, foot: (i32, i32)) -> 
     }
     all
 }
-
 #[allow(clippy::cast_possible_truncation)]
 fn inset(radius: i32, line: i32) -> i32 {
     let r = f64::from(radius);
     let off = r - f64::from(line) - 0.5;
     (r - (r * r - off * off).max(0.0).sqrt()).round() as i32
 }
-
 const CUTS: bool = cfg!(target_os = "linux");
-
 const HOLLOWS: bool = cfg!(any(windows, target_os = "macos"));
-
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Layering {
     Cuts(bool),
     Hollows(&'static str),
 }
-
 pub fn layering(label: &str) -> Layering {
     let _ = label;
     if HOLLOWS {
@@ -160,15 +143,11 @@ pub fn layering(label: &str) -> Layering {
         Layering::Cuts(CUTS)
     }
 }
-
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
-
 type Given = HashMap<String, (Option<Cut>, Foot, Shape)>;
-
 fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.held())
 }
-
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
     let shape = shape_of(cut.as_ref(), wide, tall, scale, corner);
     let label = view.label().to_string();
@@ -181,7 +160,6 @@ pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64,
         engine::shape(view, shape);
     }
 }
-
 pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
     let kept = given(|all| {
         all.get(view.label())
@@ -194,11 +172,9 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
         apply(view, cut, wide, tall, scale, corner);
     }
 }
-
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
 }
-
 #[cfg(target_os = "linux")]
 mod engine {
     use std::sync::LazyLock;
@@ -216,7 +192,6 @@ mod engine {
         x.shape_query_version().ok()?.reply().ok()?;
         Some(x)
     });
-
     pub fn shape(view: &Webview, shape: Shape) {
         let _ = view.with_webview(move |platform| {
             let Some(window) = crate::host::x11_page(&platform) else {
@@ -228,7 +203,6 @@ mod engine {
             let _ = give(x, window, shape.as_deref());
         });
     }
-
     fn give(x: &RustConnection, window: u32, shape: Option<&[Piece]>) -> Option<()> {
         match shape {
             None => {
@@ -275,7 +249,6 @@ mod engine {
         }
         x.flush().ok()
     }
-
     fn rows(all: Vec<super::Row>) -> Vec<Rectangle> {
         all.into_iter()
             .map(|(x, y, width, height)| Rectangle {
@@ -286,12 +259,10 @@ mod engine {
             })
             .collect()
     }
-
     fn clamp16(value: i32) -> i16 {
         i16::try_from(value.clamp(i32::from(i16::MIN), i32::from(i16::MAX))).unwrap_or(0)
     }
 }
-
 #[cfg(windows)]
 mod engine {
     use tauri::Webview;
@@ -313,7 +284,6 @@ mod engine {
             give(HWND(page as _), shape.as_deref());
         });
     }
-
     #[allow(
         unsafe_code,
         reason = "the page's window is given its region through GDI"
@@ -350,7 +320,6 @@ mod engine {
         }
     }
 }
-
 #[cfg(target_os = "macos")]
 mod engine {
     use std::collections::HashMap;
@@ -369,15 +338,12 @@ mod engine {
     use super::{Piece, Shape};
 
     const PREFIX: &str = "OrdenCut_";
-
     #[repr(C)]
     struct CGPath([u8; 0]);
-
     #[allow(unsafe_code)]
     unsafe impl RefEncode for CGPath {
         const ENCODING_REF: Encoding = Encoding::Pointer(&Encoding::Struct("CGPath", &[]));
     }
-
     #[allow(unsafe_code)]
     #[link(name = "CoreGraphics", kind = "framework")]
     unsafe extern "C" {
@@ -392,11 +358,8 @@ mod engine {
         );
         fn CGPathRelease(path: *mut CGPath);
     }
-
     type Hollows = Vec<(NSRect, f64)>;
-
     static HELD: LazyLock<Mutex<HashMap<usize, Hollows>>> = LazyLock::new(Mutex::default);
-
     #[allow(unsafe_code)]
     pub fn shape(view: &Webview, shape: Shape) {
         let _ = view.with_webview(move |platform| {
@@ -411,7 +374,6 @@ mod engine {
             give(&page, shape.as_deref());
         });
     }
-
     fn give(page: &NSView, shape: Option<&[Piece]>) {
         let key = std::ptr::from_ref(page).addr();
         let bounds = page.bounds();
@@ -467,7 +429,6 @@ mod engine {
             }
         }
     }
-
     #[allow(unsafe_code)]
     fn mask(page: &NSView, whole: Option<&[NSRect]>, hollows: Option<&[(NSRect, f64)]>) {
         unsafe {
@@ -509,7 +470,6 @@ mod engine {
             let () = msg_send![layer, setMask: cut];
         }
     }
-
     fn within(page: &NSView, point: NSPoint) -> bool {
         let key = std::ptr::from_ref(page).addr();
         HELD.held().get(&key).is_some_and(|hollows| {
@@ -521,7 +481,6 @@ mod engine {
             })
         })
     }
-
     fn original_of(view: &NSView) -> Option<&'static AnyClass> {
         let mut class = view.class();
         loop {
@@ -531,7 +490,6 @@ mod engine {
             class = class.superclass()?;
         }
     }
-
     #[allow(unsafe_code)]
     extern "C-unwind" fn hit(this: &NSView, _: Sel, point: NSPoint) -> *mut NSView {
         let Some(original) = original_of(this) else {
@@ -546,7 +504,6 @@ mod engine {
         }
         unsafe { msg_send![super(this, original), hitTest: point] }
     }
-
     #[allow(unsafe_code)]
     fn adopt(page: &NSView) {
         if original_of(page).is_some() {
@@ -577,7 +534,6 @@ mod engine {
         }
     }
 }
-
 #[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
 mod engine {
     use tauri::Webview;
@@ -586,7 +542,6 @@ mod engine {
 
     pub fn shape(_view: &Webview, _shape: Shape) {}
 }
-
 #[cfg(test)]
 mod tests {
     use super::{lower, rectangles, shape_of, Cut, Foot, Hollow};
@@ -604,7 +559,6 @@ mod tests {
             .collect();
         Cut { all, hollows }
     }
-
     #[test]
     fn the_page_is_cut_round_its_corner_and_what_lies_over_it_in_screen_pixels() {
         let menu = cut(false, &[(10.0, 20.0, 200.0, 100.0, 0.0)]);
@@ -678,7 +632,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn each_system_says_how_a_page_meets_what_lies_over_it() {
         let said = serde_json::to_value(super::layering("page")).expect("said");
@@ -691,7 +644,6 @@ mod tests {
         };
         assert_eq!(said, wanted);
     }
-
     #[test]
     fn a_page_is_rounded_at_each_bottom_corner_its_card_rounds() {
         assert_eq!(
@@ -708,7 +660,6 @@ mod tests {
         let said: Foot = serde_json::from_str("10").expect("one corner");
         assert_eq!(said.sides(), (10.0, 10.0));
     }
-
     #[test]
     fn a_page_is_rounded_at_the_bottom_alone() {
         let page = lower(0, 0, 100, 50, (16, 16));
@@ -721,7 +672,6 @@ mod tests {
         assert!(last.0 + last.2 < 100);
         assert_eq!(lower(0, 0, 100, 50, (0, 0)).len(), 1);
     }
-
     #[test]
     fn a_page_square_at_one_bottom_corner_runs_to_it() {
         let page = lower(0, 0, 100, 50, (16, 0));
@@ -733,12 +683,10 @@ mod tests {
         assert_eq!(last.0, 0);
         assert!(last.2 < 100);
     }
-
     #[test]
     fn corners_are_rows_as_wide_as_the_curve() {
         let square = rectangles(10, 20, 110, 70, 0);
         assert_eq!(square, vec![(10, 20, 100, 50)]);
-
         let round = rectangles(0, 0, 100, 50, 16);
         assert_eq!(round.len(), 1 + 2 * 8);
         assert_eq!((round[0].1, round[0].3), (8, 34));

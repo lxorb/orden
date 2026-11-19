@@ -9,7 +9,6 @@ import { openChat } from './view/open'
 import { store } from './view/source.svelte'
 
 const NEW = '\0new'
-
 export async function sendToChat(note: string, quote?: { text: string; heading?: string | null }): Promise<void> {
   if (!account.accountToken) {
     account.ask()
@@ -24,7 +23,6 @@ export async function sendToChat(note: string, quote?: { text: string; heading?:
   const open = chats.list
     .filter((one) => one.path && one.name && may(one.role, 'post', one.meta.posting))
     .sort((a, b) => ours(a.root) - ours(b.root))
-
   const chosen = await prompt.find({
     title: 'Send to chat',
     placeholder: 'Chat',
@@ -34,7 +32,6 @@ export async function sendToChat(note: string, quote?: { text: string; heading?:
     ],
   })
   if (!chosen) return
-
   let chat = chosen
   let path = open.find((one) => one.id === chosen)?.path ?? null
   if (chosen === NEW && space) {
@@ -42,11 +39,9 @@ export async function sendToChat(note: string, quote?: { text: string; heading?:
     chat = (path ? await chats.chatAt(path) : null) ?? ''
   }
   if (!path || !chat) return
-
   openChat(path)
   chats.offer(chat, sentWords(withoutExtension(nameOf(note)), quote), { note })
 }
-
 export function sendSelection(note: string, text: string, from: number, to: number): Promise<void> {
   return sendToChat(note, { text: text.slice(from, to), heading: headingAbove(text, from) })
 }

@@ -5,7 +5,6 @@
   import { time } from './time.svelte'
 
   const { now, wide = false }: { now: number; wide?: boolean } = $props()
-
   let said = $state('')
   let looking = $state(false)
   const running = $derived(time.running[0] ?? null)
@@ -16,13 +15,11 @@
       .filter((one) => !wanted || one.name.toLocaleLowerCase().includes(wanted))
       .slice(0, 6)
   })
-
   function started(name = said) {
     if (!time.startNamed(name)) return
     said = ''
     looking = false
   }
-
   function switchMenu(event: MouseEvent) {
     const span = running
     if (!span) return
@@ -114,18 +111,15 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .timer.running {
     padding-inline-start: var(--space-3);
   }
-
   .dot {
     flex: none;
     width: 10px;
     height: 10px;
     border-radius: 50%;
   }
-
   .what {
     flex: 1;
     min-width: 0;
@@ -140,7 +134,6 @@
     text-align: start;
     cursor: default;
   }
-
   .name {
     max-width: 100%;
     overflow: hidden;
@@ -149,12 +142,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .since {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .tick {
     flex: none;
     color: var(--text-strong);
@@ -162,13 +153,11 @@
     font-variant-numeric: tabular-nums;
     font-weight: var(--weight-strong);
   }
-
   .asking {
     position: relative;
     flex: 1;
     min-width: 0;
   }
-
   .matches {
     position: absolute;
     inset-inline: 0;
@@ -178,27 +167,22 @@
     padding: var(--space-1);
     list-style: none;
   }
-
   .go {
     flex: none;
     width: var(--row-height);
     padding: 0;
   }
-
   .go svg {
     width: 12px;
     height: 12px;
     fill: currentColor;
   }
-
   .wide {
     padding: var(--space-3);
   }
-
   .wide .tick {
     font-size: 1.6rem;
   }
-
   .wide .go {
     width: auto;
     min-width: 3rem;

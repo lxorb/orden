@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-
 import json
 import subprocess
 import sys
 import time
-
 from drive_scheme import other, switch
 from linux_app import run
 from linux_desk import DESK, OUT, failures, window, ratio, box, press, fail
@@ -20,7 +18,6 @@ HOLE = (
     "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
-
 for _ in range(30):
     if run(VISIBLE):
         break
@@ -31,7 +28,6 @@ for _ in range(30):
 else:
     raise SystemExit(f"::error::{DESK}: no web tab's page in sight")
 time.sleep(2)
-
 seen = []
 for turn in range(2):
     app = run("document.documentElement.dataset.theme")
@@ -52,7 +48,6 @@ for turn in range(2):
     else:
         subprocess.run(["import", "-window", "root", "-crop", f"{width}x{height}+{left}+{top}", str(shot)], check=False)
     from PIL import Image
-
     pixels = list(Image.open(shot).convert("L").getdata())
     light = sum(1 for one in pixels if one > 235) / len(pixels)
     words = sum(1 for one in pixels if one < 90) / len(pixels)
@@ -66,6 +61,5 @@ for turn in range(2):
     if said != "switched":
         fail(f"turn {turn}: the app's scheme did not switch: {said}", f"{turn}-toggle")
         break
-
 (OUT / "ground.json").write_text(json.dumps({"seen": seen, "failures": failures}, indent=2))
 sys.exit(1 if failures else 0)

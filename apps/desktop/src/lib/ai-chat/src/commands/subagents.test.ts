@@ -11,9 +11,7 @@ vi.mock('../../../workspace/src/api', () => ({
     leftOutOf: () => [],
   },
 }))
-
 const { fork, research, subtask } = await import('./helpers')
-
 function hosted() {
   const adopted: Thread[] = []
   const lines: { text: string; threads?: readonly string[] }[] = []
@@ -27,14 +25,12 @@ function hosted() {
   } as unknown as Host
   return { host, adopted, lines }
 }
-
 function parent(): Thread {
   const thread = newThread('space', 'p', 'm')
   thread.title = 'Serie 6'
   thread.turns = [{ id: 'y1', role: 'you', at: 1, parts: [] }]
   return thread
 }
-
 test('/subtask and /deep-research run a helper of the parent, which their line opens', async () => {
   const { host, adopted, lines } = hosted()
   const from = parent()
@@ -43,7 +39,6 @@ test('/subtask and /deep-research run a helper of the parent, which their line o
   expect(adopted.map((one) => one.parent)).toEqual([from.id, from.id])
   expect(lines.map((one) => one.threads)).toEqual([[adopted[0]?.id], [adopted[1]?.id]])
 })
-
 test('/fork leaves a chat of the reader’s own, even of a helper', () => {
   const { host, adopted } = hosted()
   const helper = { ...parent(), parent: 'above' }

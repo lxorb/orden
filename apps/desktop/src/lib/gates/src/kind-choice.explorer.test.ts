@@ -2,12 +2,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 vi.mock('../../platform/src/tauri', async (actual) => ({
   ...(await actual<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
 }))
-
 const saved = vi.hoisted(() => [] as unknown[])
 vi.mock('../../accounts/src/client', async (actual) => ({
   ...(await actual<typeof import('../../accounts/src/client')>()),
@@ -18,7 +16,6 @@ vi.mock('../../accounts/src/client', async (actual) => ({
     },
   },
 }))
-
 const opened = vi.hoisted(() => [] as unknown[])
 vi.mock('../../explorer/src/api', () => ({
   openExplorer: () => {
@@ -26,7 +23,6 @@ vi.mock('../../explorer/src/api', () => ({
     return Promise.resolve()
   },
 }))
-
 const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } = await import('./gates.svelte')
 const { receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds } = await import('../../new-here/src/api')
@@ -37,12 +33,9 @@ const { BY_ID } = await import('../../shortcuts/src/api')
 await import('../../features')
 const { account } = await import('../../accounts/src/account.svelte')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
-
 let token: string | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })
-
 let was: 'phone' | 'tablet' | 'desktop'
-
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
@@ -52,12 +45,10 @@ beforeEach(() => {
   localStorage.setItem(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
 })
-
 afterEach(() => {
   viewport.device = was
   token = null
 })
-
 function field() {
   const found = experimentalPane()
     .groups.flatMap((group) => group.fields)
@@ -65,17 +56,14 @@ function field() {
   if (found?.kind !== 'switch') throw new Error('no switch for the file explorer')
   return found
 }
-
 const offered = () => offeredKinds().map((one) => one.kind)
 const lettered = () => kindOfLetter(offeredKinds(), { key: 'f' })?.kind ?? null
-
 async function pressed() {
   BY_ID.get('app.explorer')?.run?.({ palette: () => undefined, fullscreen: () => undefined })
   await vi.dynamicImportSettled()
   await new Promise((done) => setTimeout(done))
   return opened.length > 0
 }
-
 describe('the file explorer, under Experimental', () => {
   test('is not there until it is turned on, and not among the note types', async () => {
     expect(kindsHere()).not.toContain('explorer')
@@ -91,67 +79,53 @@ describe('the file explorer, under Experimental', () => {
         .map((one) => one.key),
     ).not.toContain('kinds.explorer')
   })
-
   test('shows in Settings as off, and off is its default', () => {
     expect(field().get()).toBe(false)
     expect(field().initial).toBe(false)
     expect(field().locked?.()).toBe(false)
   })
-
   test('stays off for a reader who had it on before it was experimental', () => {
     localStorage.setItem(KINDS_KEY, JSON.stringify(['canvas', 'shown-explorer']))
     hiddenKinds.restore()
-
     expect(hiddenKinds.offers('explorer')).toBe(false)
     expect(hiddenKinds.offers('canvas')).toBe(false)
     expect(hiddenKinds.offers('note')).toBe(true)
   })
-
   test('is offered once Settings turns it on, with its letter and its key', async () => {
     field().set(true)
-
     expect(field().get()).toBe(true)
     expect(offered()).toContain('explorer')
     expect(lettered()).toBe('explorer')
     expect(await pressed()).toBe(true)
   })
-
   test('stays on for the next run, and goes when turned off', () => {
     field().set(true)
     expect(JSON.parse(localStorage.getItem(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, EXPLORER_WORD])
-
     hiddenKinds.hidden = []
     hiddenKinds.restore()
     expect(hiddenKinds.offers('explorer')).toBe(true)
-
     field().set(false)
     expect(hiddenKinds.offers('explorer')).toBe(false)
     expect(JSON.parse(localStorage.getItem(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
-
   test('keeps what else the reader chose when it is turned on and off', () => {
     localStorage.setItem(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'canvas']))
     hiddenKinds.restore()
-
     field().set(true)
     expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas', EXPLORER_WORD])
     expect(hiddenKinds.offers('canvas')).toBe(false)
     setKind('explorer', false)
     expect(hiddenKinds.offers('explorer')).toBe(true)
-
     field().set(false)
     expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas'])
   })
-
   test('is told to the account, and followed from it once the account heard it', async () => {
     token = 'token'
     field().set(true)
     expect(saved).toEqual([{ hiddenKinds: [EXPERIMENTAL_WORD, EXPLORER_WORD] }])
     await new Promise((done) => setTimeout(done, 0))
-
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('explorer')).toBe(false)
-
     receive({ hiddenKinds: ['web', EXPERIMENTAL_WORD, EXPLORER_WORD] })
     expect(hiddenKinds.offers('explorer')).toBe(true)
     expect(hiddenKinds.offers('web')).toBe(false)

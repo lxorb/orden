@@ -5,7 +5,6 @@ import type { OpenTab, Row } from './rows'
 import type { Bookmark, PaletteSetting, Entry } from '@orden/contracts'
 
 export const ROOT = '/Space'
-
 export const file = (path: string): Entry => ({
   name: path.slice(path.lastIndexOf('/') + 1),
   path: `${ROOT}/${path}`,
@@ -14,14 +13,12 @@ export const file = (path: string): Entry => ({
   created: 0,
   children: [],
 })
-
 export const command = (id: string, label: string, more: Partial<Command> = {}): Command => ({
   id,
   label,
   run: () => undefined,
   ...more,
 })
-
 export const tab = (id: string, shown: string, more: Partial<OpenTab> = {}): OpenTab => ({
   id,
   kind: 'note',
@@ -30,7 +27,6 @@ export const tab = (id: string, shown: string, more: Partial<OpenTab> = {}): Ope
   url: null,
   ...more,
 })
-
 export const visit = (url: string, title: string, more: Partial<Visit> = {}): Visit => ({
   url,
   title,
@@ -39,7 +35,6 @@ export const visit = (url: string, title: string, more: Partial<Visit> = {}): Vi
   last: NOW - 60_000,
   ...more,
 })
-
 export const setting = (label: string, where: string, more: Partial<PaletteSetting> = {}): PaletteSetting => ({
   section: 'editor',
   label,
@@ -53,9 +48,7 @@ export const setting = (label: string, where: string, more: Partial<PaletteSetti
   press: null,
   ...more,
 })
-
 export const NOW = Date.UTC(2026, 8, 30, 12)
-
 export function world(more: Partial<World> = {}): World {
   return {
     root: ROOT,
@@ -74,7 +67,6 @@ export function world(more: Partial<World> = {}): World {
     ...more,
   }
 }
-
 export function named(row: Row): string {
   switch (row.kind) {
     case 'note':

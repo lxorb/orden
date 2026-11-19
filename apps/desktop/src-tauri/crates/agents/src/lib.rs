@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 pub mod approvals;
 pub mod commands;
 pub mod endpoint;
@@ -35,41 +34,32 @@ pub struct Host {
     pub hold_stop: fn(&AppHandle, Option<String>) -> Option<String>,
     pub quit: fn(&AppHandle),
 }
-
 static HOST: OnceLock<Host> = OnceLock::new();
-
 pub fn hand(host: Host) {
     let _ = HOST.set(host);
 }
-
 pub fn host() -> Option<&'static Host> {
     HOST.get()
 }
-
 pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args: Value) -> Answer {
     match host() {
         Some(host) => (host.answer)(app, caller, session, verb, args),
         None => Answer::error(Code::Failed, "the app is still starting"),
     }
 }
-
 #[derive(Default)]
 pub struct Agents {
     pub grants: Grants,
 }
-
 pub static AGENTS: OnceLock<Agents> = OnceLock::new();
-
 pub fn state(_app: &AppHandle) -> &'static Agents {
     AGENTS.get_or_init(Agents::default)
 }
-
 #[derive(Clone, Debug)]
 pub enum Caller {
     Reader,
     Agent(Box<Grant>),
 }
-
 impl Caller {
     pub fn id(&self) -> &str {
         match self {
@@ -77,21 +67,18 @@ impl Caller {
             Caller::Agent(grant) => &grant.id,
         }
     }
-
     pub fn holds(&self, scope: Scope) -> bool {
         match self {
             Caller::Reader => true,
             Caller::Agent(grant) => grant.holds(scope),
         }
     }
-
     pub fn told(&self) -> Option<Value> {
         match self {
             Caller::Reader => None,
             Caller::Agent(grant) => serde_json::to_value(grant).ok(),
         }
     }
-
     pub fn limits(&self) -> grants::Limits {
         match self {
             Caller::Reader => grants::Limits::default(),
@@ -99,18 +86,15 @@ impl Caller {
         }
     }
 }
-
 pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
     if let Some(grant) = state(app).grants.by_token(app, token) {
         return Some(Caller::Agent(Box::new(connected(grant))));
     }
     (host()?.lent)(app, token).map(|grant| Caller::Agent(Box::new(grant)))
 }
-
 fn connected(grant: Grant) -> Grant {
     grant.with_full_permissions()
 }
-
 pub fn session_of(asked: &Value) -> String {
     asked
         .get("session")
@@ -124,7 +108,6 @@ pub fn session_of(asked: &Value) -> String {
         .unwrap_or_default()
         .to_owned()
 }
-
 #[allow(clippy::too_many_arguments)]
 pub fn logged(
     app: &AppHandle,
@@ -159,7 +142,6 @@ pub fn logged(
         },
     );
 }
-
 pub fn said_waiting(app: &AppHandle, caller: &Caller, session: &str, what: &str) {
     logged(
         app,
@@ -172,9 +154,7 @@ pub fn said_waiting(app: &AppHandle, caller: &Caller, session: &str, what: &str)
         Instant::now(),
     );
 }
-
 const LONGEST_PAIRING_WAIT: Duration = Duration::from_secs(300);
-
 pub fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answer {
     if !matches!(caller, Caller::Reader) {
         return Answer::error(
@@ -217,9 +197,7 @@ pub fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answ
         std::thread::sleep(Duration::from_millis(200));
     }
 }
-
 const PAIRING: &str = "";
-
 pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
     let Caller::Agent(_) = caller else {
         return Ok(());
@@ -244,11 +222,9 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
         _ => Ok(()),
     }
 }
-
 pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> {
     approvals::any(id).map(|one| (one.category, one.site))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,16 +234,13 @@ mod tests {
         let mut grant = Grant::own("a".into(), "A");
         grant.scopes.retain(|one| *one != Scope::NotesWrite);
         let agent = Caller::Agent(Box::new(grant));
-
         assert!(may_ask_the_window(&agent, "read_note").is_ok());
         assert!(may_ask_the_window(&agent, "edit_note").is_err());
         assert!(may_ask_the_window(&agent, "files.write").is_err());
         assert!(may_ask_the_window(&agent, "eval").is_err());
         assert!(may_ask_the_window(&agent, "list_spaces").is_ok());
-
         assert!(may_ask_the_window(&Caller::Reader, "files.write").is_ok());
     }
-
     #[test]
     fn a_client_connected_over_mcp_is_asked_nothing() {
         let mut kept = Grant::third_party("codex".into(), "Codex");
@@ -276,7 +249,6 @@ mod tests {
             .insert("bank.example".into(), grants::SiteRule::Deny);
         kept.spaces = grants::Spaces::Named(vec!["Work".into()]);
         let grant = connected(kept);
-
         for category in [
             Category::Paying,
             Category::Sending,
@@ -302,13 +274,11 @@ mod tests {
         }
         let agent = Caller::Agent(Box::new(grant.clone()));
         assert!(may_ask_the_window(&agent, "write_setting").is_ok());
-
         assert!(
             policy::site_allowed(&grant, "https://bank.example/", verbs::Store::Reader).is_err()
         );
         assert!(!grant.spaces.reach("Home"));
     }
-
     #[test]
     fn the_command_line_is_filed_as_cli_with_every_scope() {
         assert_eq!(Caller::Reader.id(), "cli");

@@ -26,23 +26,19 @@
     padding-inline-start: var(--space-3);
     animation: pill-in var(--dur-base) var(--ease-spring);
   }
-
   :global([data-touch]) .recording {
     grid-column: 1;
     justify-self: center;
   }
-
   @keyframes pill-in {
     from {
       opacity: 0;
       transform: translateY(var(--space-3));
     }
   }
-
   .recording.saving {
     opacity: 0.75;
   }
-
   .dot {
     width: 8px;
     height: 8px;
@@ -50,31 +46,26 @@
     background: var(--danger);
     animation: pill-beat 1.8s var(--ease-in-out) infinite;
   }
-
   .recording.saving .dot {
     background: var(--muted);
     animation: none;
   }
-
   @keyframes pill-beat {
     50% {
       opacity: 0.35;
     }
   }
-
   .clock {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
     color: var(--muted-strong);
   }
-
   .recording svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
     fill: currentColor;
   }
-
   @media (prefers-reduced-motion: reduce) {
     .dot,
     .recording {

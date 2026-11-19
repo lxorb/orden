@@ -24,31 +24,23 @@ export interface RowChange {
   task?: TaskChange
   list?: Record<string, ListChange>
 }
-
 export type ListChange = { add: string } | { remove: number }
-
 export async function writeRow(ws: HoldsNotes, path: string, row: Row, change: RowChange): Promise<boolean> {
   const before = await noteText(ws, path)
   if (before === null) return false
-
   const after = changed(before, row, change)
   if (after === null) return false
-
   const edit = oneEdit(before, after)
   if (!edit) return false
-
   return (await replaceInNotes(ws, [changeOf(path, before, [edit])])) > 0
 }
-
 export function changed(text: string, row: Row, change: RowChange): string | null {
   let after = text
-
   for (const [key, value] of Object.entries(change.note ?? {})) {
     const edit = propertyEdit(after, key, value)
     if (edit === undefined) return null
     if (edit) after = appliedEdits(after, [edit])
   }
-
   for (const [key, edit] of Object.entries(change.list ?? {})) {
     const list = asList(after, key)
     if (!list) return null
@@ -57,12 +49,10 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
     const written = list.write(items)
     if (written) after = appliedEdits(after, [written])
   }
-
   if (change.task && Object.keys(change.task).length) {
     if (!row.anchor) return null
     const at = lineOfTask(after, row.anchor)
     if (at === null) return null
-
     const { done, ...rest } = change.task
     const line = after.slice(at.from, at.to)
     const edits = writeTask(line, rest).map((edit) => ({
@@ -73,16 +63,13 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
     after = appliedEdits(after, edits)
     if (done != null) after = ticked(after, at.from, done)
   }
-
   return after
 }
-
 function ticked(text: string, from: number, done: boolean): string {
   const end = text.indexOf('\n', from)
   const line = text.slice(from, end === -1 ? text.length : end).replace(/\r$/, '')
   const fields = readTask(line)
   if (!fields || fields.done === done) return text
-
   const today = todayOf()
   if (done && fields.cancelled) {
     const edits = writeTask(line, { done: true, cancelledOn: null })
@@ -93,7 +80,6 @@ function ticked(text: string, from: number, done: boolean): string {
   }
   return appliedEdits(text, tick(text, text.slice(0, from).split('\n').length - 1, today))
 }
-
 function asList(
   text: string,
   key: string,
@@ -129,13 +115,11 @@ function asList(
     ...(found.quoted ? { quotedItems: [true] } : {}),
   })
 }
-
 function listChanged(property: Property, edit: ListChange): ListItem[] | null {
   if ('add' in edit) return withItem(property, edit.add)
   if (edit.remove < 0 || edit.remove >= property.items.length) return null
   return listItems(property).filter((_, at) => at !== edit.remove)
 }
-
 function propertyEdit(text: string, key: string, value: Value): TextEdit | null | undefined {
   if (value === null) return writeProperty(text, key, null)
   if (Array.isArray(value)) {
@@ -156,7 +140,6 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
   if (said === null) return undefined
   return writeProperty(text, key, said, hasKind(value, 'date') ? 'date' : 'text')
 }
-
 function keptMembers(text: string, key: string): (value: Value) => ListItem | null {
   const list = asList(text, key)?.property
   const values = list ? noteValues(text)[list.key] : undefined
@@ -171,14 +154,12 @@ function keptMembers(text: string, key: string): (value: Value) => ListItem | nu
     return found?.member ?? null
   }
 }
-
 function hasKind<K extends 'date' | 'duration' | 'link'>(
   value: Value,
   kind: K,
 ): value is Extract<DateValue | DurationValue | LinkValue, { kind: K }> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) && value.kind === kind
 }
-
 function written(value: Value): string | null {
   if (value === null) return ''
   if (typeof value !== 'object') return String(value)

@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import type { Field } from '../../settings/src/preferences'
 import { resetFields } from './reset-fields'
 
@@ -7,7 +6,6 @@ function recorder() {
   const written: unknown[] = []
   return { written, write: (value: unknown) => void written.push(value) }
 }
-
 describe('putting settings back', () => {
   test('writes each field of every kind that differs back to where it started', () => {
     const { written, write } = recorder()
@@ -52,12 +50,9 @@ describe('putting settings back', () => {
         set: write,
       },
     ]
-
     resetFields(fields)
-
     expect(written).toEqual([true, 16, 'system', 'left', ''])
   })
-
   test('leaves one already where it started untouched, since a switch may be a toggle', () => {
     let on = true
     const toggle: Field = {
@@ -70,15 +65,11 @@ describe('putting settings back', () => {
         on = !on
       },
     }
-
     resetFields([toggle])
-
     expect(on).toBe(true)
   })
-
   test('and one that does not say what it started as', () => {
     const { written, write } = recorder()
-
     resetFields([
       {
         kind: 'slider',
@@ -91,7 +82,6 @@ describe('putting settings back', () => {
         set: write,
       },
     ])
-
     expect(written).toEqual([])
   })
 })

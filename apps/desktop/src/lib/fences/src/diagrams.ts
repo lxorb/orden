@@ -4,7 +4,6 @@ import type { Scheme } from '../../theme/src/api'
 
 const FONT = "'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
 const PAGE_FONT = "ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
-
 const FLOW = {
   light: {
     fill: '#f3f5f8',
@@ -19,10 +18,8 @@ const FLOW = {
     'font-color': '#dde2ea',
   },
 }
-
 let sequence = 0
 export type DiagramFor = 'document' | 'page'
-
 export async function drawDiagram(
   code: string,
   language: string,
@@ -31,35 +28,24 @@ export async function drawDiagram(
   pictures = true,
 ): Promise<string> {
   if (__EVEN_PLUGIN__) throw new Error('no diagrams in the Even Realities plugin')
-
   if (language === 'flow') return drawFlowchart(code, scheme)
   const mermaid = language === 'sequence' ? sequenceToMermaid(code) : code
   return drawMermaid(pictures ? mermaid : withoutPictures(mermaid), scheme, where, pictures)
 }
-
 const PICTURE_TAGS = /<\/?(?:img|image|picture|source|video|audio|track|input|feimage|iframe|object|embed)\b[^>]*>/gi
-
 const LOADING_ATTRIBUTE = /\s(?:src|srcset|poster|background)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi
-
 const STYLE_LINE = /^.*\b(?:classDef|style|linkStyle|Update\w*Style)\b.*$/gim
-
 const REACHES_OUT = /url|image|@|\\|expression/i
-
 const PICTURE_SHAPE = /\bimg\b|\\[xuU]/i
-
 const ACTOR_PROPERTIES = /^[ \t]*properties\b.*$/gim
-
 const AWAY_URL = /url\s*\(\s*(?!['"]?#)[^)]*\)/gi
-
 function withoutPictures(code: string): string {
   if (code.includes('@{') && PICTURE_SHAPE.test(code)) {
     throw new Error('a picture shape from elsewhere')
   }
   return code.replace(STYLE_LINE, (line) => (REACHES_OUT.test(line) ? '' : line)).replace(ACTOR_PROPERTIES, '')
 }
-
 const OWN_SECURE = ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'suppressErrorRendering', 'maxEdges']
-
 const HELD_SECURE = [
   ...OWN_SECURE,
   'dompurifyConfig',
@@ -69,7 +55,6 @@ const HELD_SECURE = [
   'fontFamily',
   'altFontFamily',
 ]
-
 const HELD = {
   ALLOWED_TAGS: [
     'a',
@@ -99,7 +84,6 @@ const HELD = {
   ],
   FORBID_ATTR: ['style', 'src', 'srcset', 'background', 'poster'],
 }
-
 async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor, pictures: boolean): Promise<string> {
   const svg = await mermaidSvg(`orden-export-${sequence++}`, code, {
     startOnLoad: false,
@@ -112,13 +96,11 @@ async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor, pict
   })
   return pictures ? svg : svg.replace(PICTURE_TAGS, '').replace(LOADING_ATTRIBUTE, '').replace(AWAY_URL, 'none')
 }
-
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
   const flowchart = (await import('flowchart.js')).default
   const host = document.createElement('div')
   host.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;'
   document.body.append(host)
-
   try {
     flowchart.parse(flowSource(code)).drawSVG(host, {
       'line-width': 1.5,
@@ -129,7 +111,6 @@ async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
       'no-text': 'no',
     })
     keepSafeLinks(host)
-
     return host.innerHTML
   } finally {
     host.remove()

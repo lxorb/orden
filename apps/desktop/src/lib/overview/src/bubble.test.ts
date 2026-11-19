@@ -16,7 +16,6 @@ function outline(one: Bubble): [number, number][] {
   }
   return out
 }
-
 function insideOf(poly: readonly (readonly [number, number])[], x: number, y: number): boolean {
   let inside = false
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -26,7 +25,6 @@ function insideOf(poly: readonly (readonly [number, number])[], x: number, y: nu
   }
   return inside
 }
-
 function encloses(one: Bubble, windows: readonly Box[], by = CLEAR / 2): boolean {
   const poly = outline(one)
   return windows.every((w) => {
@@ -43,7 +41,6 @@ function encloses(one: Bubble, windows: readonly Box[], by = CLEAR / 2): boolean
     return true
   })
 }
-
 function farthest(one: Bubble, box: Box): number {
   let most = 0
   for (const [x, y] of outline(one)) {
@@ -53,13 +50,10 @@ function farthest(one: Bubble, box: Box): number {
   }
   return most
 }
-
 const reachPast = (box: Box) => 0.25 * (Math.max(box.w, box.h) / 2 + PAD) + PAD + 4
-
 const run = (one: Bubble, windows: () => readonly Box[], frames: number, from = 0) => {
   for (let frame = 0; frame < frames; frame++) one.step(1 / 60, (from + frame) / 60, windows())
 }
-
 test('round one window it is that window grown a little, and nowhere further', () => {
   const only = { x: 40, y: 900, w: 360, h: 260 }
   const one = new Bubble([only])
@@ -78,7 +72,6 @@ test('round one window it is that window grown a little, and nowhere further', (
   }
   expect(sharpest).toBeLessThan((8 * Math.PI) / 180)
 })
-
 function tightestOf(one: Bubble): number {
   const curve = outline(one)
   const even: [number, number][] = []
@@ -101,7 +94,6 @@ function tightestOf(one: Bubble): number {
   }
   return least
 }
-
 test('a window pushed against its bubble from inside swells it round, never into a corner', () => {
   for (const [dx, dy] of [
     [1, 0],
@@ -121,7 +113,6 @@ test('a window pushed against its bubble from inside swells it round, never into
     }
   }
 })
-
 test('dragged at any speed, turned at once, or late a frame, it stays round', () => {
   let seed = 11
   const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
@@ -148,7 +139,6 @@ test('dragged at any speed, turned at once, or late a frame, it stays round', ()
     }
   }
 })
-
 test('round two windows far apart it bows out between them, and only a little', () => {
   const left = { x: 0, y: 0, w: 300, h: 200 }
   const right = { x: 900, y: 0, w: 300, h: 200 }
@@ -156,7 +146,6 @@ test('round two windows far apart it bows out between them, and only a little', 
   run(one, () => [left, right], 120)
   expect(farthest(one, { x: 0, y: 0, w: 1200, h: 200 })).toBeLessThan(PAD + 0.1 * 1200)
 })
-
 test('its one window dragged away takes the bubble and its name with it', () => {
   const was = { x: 0, y: 0, w: 300, h: 200 }
   const one = new Bubble([was])
@@ -176,7 +165,6 @@ test('its one window dragged away takes the bubble and its name with it', () => 
   expect(now.y - crown.y).toBeGreaterThan(PAD)
   expect(now.y - crown.y).toBeLessThan(reachPast(now))
 })
-
 test('every window is inside it on every frame: dragged, thrown, arriving and leaving', () => {
   let seed = 7
   const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
@@ -196,7 +184,6 @@ test('every window is inside it on every frame: dragged, thrown, arriving and le
     }
   }
 })
-
 test('two bubbles that would overlap meet along a line between them, and never overlap', () => {
   for (const gap of [70, 40, 20, 8]) {
     const ones = [{ x: 0, y: 0, w: 300, h: 200 }]
@@ -219,7 +206,6 @@ test('two bubbles that would overlap meet along a line between them, and never o
     expect(encloses(other, others, Math.min(CLEAR / 2, gap / 2 - 5))).toBe(true)
   }
 })
-
 test('it moves only slightly: a pixel or two, with nothing moving it', () => {
   const box = { x: 0, y: 0, w: 400, h: 300 }
   const one = new Bubble([box])
@@ -235,7 +221,6 @@ test('it moves only slightly: a pixel or two, with nothing moving it', () => {
   expect(spread).toBeGreaterThan(0.2)
   expect(spread).toBeLessThan(5)
 })
-
 test('asked for less movement it stands still, and follows its windows at once', () => {
   const box = { x: 0, y: 0, w: 400, h: 300 }
   const one = new Bubble([box])
@@ -249,7 +234,6 @@ test('asked for less movement it stands still, and follows its windows at once',
   expect(farthest(one, moved)).toBeLessThan(reachPast(moved))
   expect(insideOf(outline(one), 200, 150)).toBe(false)
 })
-
 function walked(one: Bubble, step = 2): [number, number][] {
   const curve = outline(one)
   const out: [number, number][] = []
@@ -261,7 +245,6 @@ function walked(one: Bubble, step = 2): [number, number][] {
   }
   return out
 }
-
 function straightest(points: readonly [number, number][]): number {
   const n = points.length
   const at = (i: number) => points[((i % n) + n) % n] ?? [0, 0]
@@ -283,7 +266,6 @@ function straightest(points: readonly [number, number][]): number {
   }
   return longest
 }
-
 test('round rows of windows it is round all the way, with no long straight edge', () => {
   const W = 400
   const H = 260

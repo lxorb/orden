@@ -1,8 +1,6 @@
 import json
 import time
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
@@ -14,17 +12,13 @@ EMAIL = "kept-away-click@example.com"
 SPACE = "Live"
 ROOT = f"/{SPACE}"
 NOTES = [f"{ROOT}/Note {index:02d}.md" for index in range(1, 61)]
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -34,11 +28,8 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
         page.wait_for_timeout(100)
     failed(f"gave up waiting for {what}")
     return None
-
 MISSING = "(paths) => paths.filter((one) => !window.ordenApp.workspace.entryAt(one))"
-
 ROW = """(path) => document.querySelector(`.row[data-path="${CSS.escape(path)}"]`)"""
-
 def window_for(context, label: str) -> Page:
     page = context.new_page()
     page.set_default_timeout(30000)
@@ -66,7 +57,6 @@ def window_for(context, label: str) -> Page:
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     wait_for(page, "() => !!document.querySelector('[role=tree] .row')", f"[{label}] the file list")
     return page
-
 def scroll_to(page: Page, path: str) -> None:
     page.evaluate(
         f"""async (path) => {{
@@ -85,13 +75,11 @@ def scroll_to(page: Page, path: str) -> None:
         path,
     )
     page.wait_for_timeout(300)
-
 def kept_away(page: Page, path: str) -> bool:
     return page.evaluate(
         "(path) => window.ordenApp.sync.engine.engine.awayFiles().some((one) => one.path === path)",
         path,
     )
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session() as browser:
@@ -106,16 +94,13 @@ def main() -> int:
                 token=token,
                 body={"path": name, "content": f"# {name}\n"},
             )
-
         def device():
             context = browser.new_context(viewport={"width": 1100, "height": 560})
             context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
             return context
-
         a = window_for(device(), "A")
         b = window_for(device(), "B")
         a.bring_to_front()
-
         reading = f"{ROOT}/Note 35.md"
         if not kept_away(a, reading):
             failed("A keeps the words of Note 35 before anything asked for them")
@@ -134,7 +119,6 @@ def main() -> int:
         if "# Note 35.md" not in (words or ""):
             failed(f"Note 35 opened on A with other words: {words!r}")
         say(f"A clicked Note 35: it opened, and {60 - len(lost)} of 60 notes stayed listed")
-
         going = f"{ROOT}/Note 36.md"
         if not kept_away(b, going):
             failed("B keeps the words of Note 36 before anything asked for them")
@@ -154,5 +138,4 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 raise SystemExit(main())

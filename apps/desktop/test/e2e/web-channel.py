@@ -4,10 +4,8 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-
 from playwright.sync_api import Page
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
-
 import harness
 from harness import Drive
 
@@ -16,10 +14,8 @@ say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = harness.worker_origin()
 PATIENCE = 60
 ROOT = harness.APP.parent.parent
-
 MARK = "header :text-is('Unstable')"
 ROW = ".sheet .orden-segmented[aria-label='Web version']"
-
 def wait(page: Page, script: str, what: str) -> object:
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -28,7 +24,6 @@ def wait(page: Page, script: str, what: str) -> object:
             return answer
         page.wait_for_timeout(250)
     raise SystemExit(f"gave up waiting for {what}")
-
 def both_builds(worker: harness.Worker) -> Path:
     worker.prepare()
     edge = Path(tempfile.mkdtemp(prefix="orden-web-edge-")) / "dist"
@@ -42,7 +37,6 @@ def both_builds(worker: harness.Worker) -> Path:
             os.environ.pop("VITE_ORDEN_CHANNEL", None)
         else:
             os.environ["VITE_ORDEN_CHANNEL"] = said
-
     folder = Path(tempfile.mkdtemp(prefix="orden-web-channel-")) / "dist"
     DRIVE.later(lambda: shutil.rmtree(folder.parent, ignore_errors=True))
     shutil.copytree(harness.WORKER_DIST, folder)
@@ -57,12 +51,10 @@ def both_builds(worker: harness.Worker) -> Path:
         raise SystemExit(f"the two builds did not go together:\n{done.stdout}\n{done.stderr}")
     say(done.stdout.strip())
     return folder
-
 def settled(page: Page) -> None:
     page.wait_for_load_state("domcontentloaded")
     wait(page, "() => !!window.ordenApp?.workspace", "the app")
     page.wait_for_timeout(800)
-
 def row(page: Page) -> str:
     page.evaluate("() => window.ordenApp.settings.show('general')")
     found = page.locator(ROW)
@@ -73,16 +65,13 @@ def row(page: Page) -> str:
         return ""
     found.scroll_into_view_if_needed()
     return found.locator("[aria-checked='true']").inner_text().strip()
-
 def choose(page: Page, label: str) -> None:
     with page.expect_navigation(timeout=PATIENCE * 1000):
         page.locator(ROW).get_by_role("radio", name=label, exact=True).click()
     settled(page)
-
 def drive(page: Page) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     settled(page)
-
     if page.locator(MARK).count():
         wrong("the release shows the Unstable mark")
     said = row(page)
@@ -90,7 +79,6 @@ def drive(page: Page) -> None:
     if said != "Stable":
         wrong(f"on the release the row says {said!r}")
     shot(page, "1-release-settings")
-
     choose(page, "Unstable")
     cookies = {one["name"]: one["value"] for one in page.context.cookies()}
     say(f"[edge] cookie {cookies.get('orden-channel')!r}, at {page.url}")
@@ -106,7 +94,6 @@ def drive(page: Page) -> None:
     if said != "Unstable":
         wrong(f"on the edge the row says {said!r}")
     shot(page, "3-edge-settings")
-
     page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)
     row(page)
@@ -121,7 +108,6 @@ def drive(page: Page) -> None:
     if said != "Stable":
         wrong(f"back on the release the row says {said!r}")
     shot(page, "4-release-again")
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     folder = both_builds(worker)
@@ -133,5 +119,4 @@ def main() -> int:
         drive(page)
         context.close()
     return DRIVE.verdict("the web app moves between its two builds from Settings")
-
 raise SystemExit(main())

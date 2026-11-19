@@ -7,7 +7,6 @@ function closeness(label: string, needle: string): number {
   if (folded.startsWith(needle)) return 1
   return folded.includes(needle) ? 2 : 3
 }
-
 export function bestShown(
   rows: readonly Completion[],
   needle: string,

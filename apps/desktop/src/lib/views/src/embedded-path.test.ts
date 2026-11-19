@@ -14,9 +14,7 @@ vi.mock('../../link-index/src/api', () => ({
       link.target === 'Clients.base' ? (from?.startsWith('/s/Work/') ? 'Bases/Clients.base' : null) : null,
   },
 }))
-
 const { embeddedPath } = await import('./source')
-
 test("a base embedded in a note of another space is that space's base", () => {
   expect(embeddedPath('Clients.base#Table', '/s/Work/Plan.md')).toBe('/s/Work/Bases/Clients.base')
   expect(embeddedPath('Clients.base', '/s/Home/Plan.md')).toBeNull()

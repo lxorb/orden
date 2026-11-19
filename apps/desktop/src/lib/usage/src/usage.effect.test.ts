@@ -3,24 +3,19 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const HELPING = 'orden:usage-help'
 const INSTALL = 'orden:usage-install'
-
 beforeEach(() => {
   localStorage.clear()
   vi.resetModules()
 })
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 async function load() {
   const choice = await import('./choice.svelte')
   const tally = await import('./tally')
   return { ...choice, ...tally }
 }
-
 const TODAY = dayOf(Date.now())
-
 function common() {
   return {
     v: 1 as const,
@@ -36,7 +31,6 @@ function common() {
     signedIn: false,
   }
 }
-
 describe('the day’s tally', () => {
   test('counts nothing until usage data is turned on', async () => {
     const { ran, changed, storedTallies, saveTallies } = await load()
@@ -45,7 +39,6 @@ describe('the day’s tally', () => {
     saveTallies()
     expect(storedTallies()).toEqual({})
   })
-
   test('counts commands by their stable id and the way they ran', async () => {
     localStorage.setItem(HELPING, 'true')
     const { ran, storedTallies, saveTallies } = await load()
@@ -61,7 +54,6 @@ describe('the day’s tally', () => {
       layout: { menu: 1 },
     })
   })
-
   test('keeps setting values only when they are option names', async () => {
     localStorage.setItem(HELPING, 'true')
     const { changed, storedTallies, saveTallies } = await load()
@@ -79,7 +71,6 @@ describe('the day’s tally', () => {
       'appearance.monoFont': { other: 1 },
     })
   })
-
   test('turning usage data off forgets the tally and the install id', async () => {
     localStorage.setItem(HELPING, 'true')
     const { ran, usageChoice, storedTallies, saveTallies } = await load()
@@ -94,7 +85,6 @@ describe('the day’s tally', () => {
     expect(usageChoice.install()).toMatch(/^[0-9a-f]{32}$/)
   })
 })
-
 describe('nothing private is ever sent', () => {
   const PRIVATE = [
     '/home/anna/Notes/Diary.md',
@@ -105,7 +95,6 @@ describe('nothing private is ever sent', () => {
     'my secret search',
     'Dear diary',
   ]
-
   test('a day fed with paths, addresses and text still sends none of them', async () => {
     localStorage.setItem(HELPING, 'true')
     const { ran, changed, stepped, spent, storedTallies, saveTallies } = await load()
@@ -123,7 +112,6 @@ describe('nothing private is ever sent', () => {
     for (const one of PRIVATE) expect(text).not.toContain(one)
     for (const one of PRIVATE) expect(text.toLowerCase()).not.toContain(one.toLowerCase())
   })
-
   test('the shared schema refuses anything outside the allowlist', () => {
     const base = { ...common(), kind: 'daily', day: TODAY }
     expect(typeof usageEventOf(base)).toBe('object')
@@ -132,7 +120,6 @@ describe('nothing private is ever sent', () => {
     }
   })
 })
-
 describe('the queue', () => {
   let queue: UsageEvent[] = []
   const how = (post: () => Promise<unknown>) => ({
@@ -143,11 +130,9 @@ describe('the queue', () => {
   beforeEach(() => {
     queue = [{ ...common(), kind: 'daily', day: TODAY }]
   })
-
   test('keeps the queue while offline and sends it later', async () => {
     const { flush } = await import('./queue')
     const { ApiError } = await import('../../accounts/src/client')
-
     expect(await flush(how(() => Promise.reject(new TypeError('offline'))))).toBe('later')
     expect(queue).toHaveLength(1)
     expect(await flush(how(() => Promise.reject(new ApiError(503, 'later', null))))).toBe('later')
@@ -155,7 +140,6 @@ describe('the queue', () => {
     expect(await flush(how(() => Promise.resolve({ ok: true })))).toBe('done')
     expect(queue).toEqual([])
   })
-
   test('drops what the server refuses instead of sending it forever', async () => {
     const { flush } = await import('./queue')
     const { ApiError } = await import('../../accounts/src/client')
@@ -163,7 +147,6 @@ describe('the queue', () => {
     expect(queue).toEqual([])
   })
 })
-
 describe('what a device says about itself', () => {
   test('keeps to buckets and short versions', async () => {
     const { commonOf } = await import('./system')
@@ -192,7 +175,6 @@ describe('what a device says about itself', () => {
     })
     expect(typeof usageEventOf({ v: 1, kind: 'daily', day: TODAY, ...said })).toBe('object')
   })
-
   test('a browser is told apart by its engine only', async () => {
     const { commonOf } = await import('./system')
     const said = commonOf({

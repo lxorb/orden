@@ -8,23 +8,19 @@ export interface StateView extends DocView {
   scrollSnapshot(): StateEffect<unknown>
   readonly scrollDOM: { scrollTop: number }
 }
-
 interface EditContextKeeper {
   pendingContextChange: unknown
   composing: unknown
   reset(state: EditorState): void
 }
-
 const keeperOf = (view: StateView): EditContextKeeper | null =>
   (view as { observer?: { editContext?: EditContextKeeper | null } }).observer?.editContext ?? null
-
 function endComposing(view: StateView): () => void {
   const real = view as StateView & { contentDOM?: HTMLElement; focus?: () => void }
   if (!real.contentDOM || !keeperOf(view)?.composing) return () => undefined
   real.contentDOM.blur()
   return () => real.focus?.()
 }
-
 function fillEditContext(view: StateView) {
   const keeper = keeperOf(view)
   if (!keeper) return
@@ -32,11 +28,9 @@ function fillEditContext(view: StateView) {
   keeper.composing = null
   keeper.reset(view.state)
 }
-
 export class HeldState implements DocView {
   private held: EditorState
   private place: StateEffect<unknown> | null
-
   private constructor(
     private readonly note: SharedDoc,
     state: EditorState,
@@ -45,33 +39,26 @@ export class HeldState implements DocView {
     this.held = state
     this.place = place
   }
-
   static waiting(note: SharedDoc, state: EditorState, place: StateEffect<unknown> | null = null): HeldState {
     const held = new HeldState(note, state, place)
     note.join(held)
     return held
   }
-
   static shownIn(note: SharedDoc, view: StateView, place: StateEffect<unknown> | null = null): HeldState {
     return new HeldState(note, view.state, place)
   }
-
   get state(): EditorState {
     return this.held
   }
-
   dispatch(spec: TransactionSpec) {
     const made = this.held.update(spec)
     this.held = made.state
     if (made.changes.empty) return
-
     if (this.place) this.place = this.place.map(made.changes) ?? null
     if (isExternal(made)) return
-
     const userEvent = made.annotation(Transaction.userEvent)
     this.note.local(made.changes, made.state.selection, this, userEvent)
   }
-
   give(view: StateView, effects: readonly StateEffect<unknown>[] = []) {
     this.note.handOver(this, view, () => {
       const refocus = endComposing(view)
@@ -82,12 +69,10 @@ export class HeldState implements DocView {
     })
     this.settle(view, effects)
   }
-
   settle(view: StateView, effects: readonly StateEffect<unknown>[] = []) {
     const all = this.place ? [this.place, ...effects] : effects
     if (all.length) view.dispatch({ effects: [...all] })
   }
-
   take(view: StateView) {
     flushTableEdits()
     this.note.handOver(view, this, () => {
@@ -95,7 +80,6 @@ export class HeldState implements DocView {
       this.place = view.scrollSnapshot()
     })
   }
-
   release() {
     this.note.leave(this)
   }

@@ -14,7 +14,6 @@ const MIX: Crowd | undefined =
 const SEEDS = Number(process.env.SIM_SEEDS ?? (MIX ? 10_000 : 1_000_000))
 const CHUNK = Math.min(SEEDS, MIX ? 1_000 : 10_000)
 const START = Number(process.env.SIM_FROM ?? Math.floor(Date.now() / 86_400_000) * SEEDS)
-
 describe(`nightly walks${MIX ? ` of the ${MIX}` : ''}`, () => {
   for (let chunk = 0; chunk < Math.ceil(SEEDS / CHUNK); chunk++) {
     const from = START + chunk * CHUNK

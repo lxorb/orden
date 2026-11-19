@@ -5,7 +5,6 @@ const leaf = (url: string, title: string, more: Record<string, unknown> = {}) =>
   URIDictionary: { title },
   ...more,
 })
-
 const folder = (title: string, children: unknown[], more: Record<string, unknown> = {}) => ({
   WebBookmarkType: 'WebBookmarkTypeList',
   WebBookmarkUUID: `uuid-${title}`,
@@ -13,7 +12,6 @@ const folder = (title: string, children: unknown[], more: Record<string, unknown
   Children: children,
   ...more,
 })
-
 export const BOOKMARKS = folder('', [
   { WebBookmarkType: 'WebBookmarkTypeProxy', Title: 'History', WebBookmarkIdentifier: 'History' },
   folder('BookmarksBar', [
@@ -32,7 +30,6 @@ export const BOOKMARKS = folder('', [
     { ShouldOmitFromUI: true },
   ),
 ])
-
 const row = (id: number, parent: number, type: number, title: string, url: string | null = null, deleted = false) => ({
   id,
   parent,
@@ -42,7 +39,6 @@ const row = (id: number, parent: number, type: number, title: string, url: strin
   order: id,
   deleted,
 })
-
 export const TABS = [
   row(1, 0, 1, 'Root'),
   row(2, 1, 1, 'Personal'),
@@ -59,7 +55,6 @@ export const TABS = [
   row(13, 1, 1, 'com.apple.Safari.CloudTabs'),
   row(14, 13, 0, 'Elsewhere', 'https://elsewhere.example.com/'),
 ]
-
 export const SESSION = {
   SessionVersion: '1.0',
   SessionWindows: [

@@ -7,7 +7,6 @@ import { saver } from './saver.svelte'
 import { CUSTOM, searchEngine } from './search-engine.svelte'
 
 let asking = $state(false)
-
 export const browserFields = (): SettingField[] => [
   {
     kind: 'select',
@@ -39,7 +38,6 @@ export const browserFields = (): SettingField[] => [
     },
   },
 ]
-
 export const tabFields = (): SettingField[] =>
   isDesktop
     ? [

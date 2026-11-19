@@ -12,36 +12,23 @@ use tauri::{AppHandle, Emitter, Manager};
 use orden_base::paths::{config_dir, made, write_privately};
 
 const TAKES: Duration = Duration::from_millis(1500);
-
 const ASKED: &str = "orden://automation";
-
 const MOST_BYTES: usize = 8 * 1024 * 1024;
-
 const PATIENCE: Duration = Duration::from_secs(30);
-
 const DELIVERY: Duration = Duration::from_secs(5);
-
 const TERMINAL_STARTING: Duration = Duration::from_secs(90);
-
 const SLOWEST: Duration = Duration::from_secs(10);
-
 const SECRET_BYTES: usize = 32;
-
 const MOST_AT_ONCE: usize = 32;
-
 static OPEN: AtomicUsize = AtomicUsize::new(0);
-
 static NEXT: AtomicU64 = AtomicU64::new(1);
-
 static PORT: AtomicU16 = AtomicU16::new(0);
-
 pub fn own_port() -> Option<u16> {
     match PORT.load(Ordering::SeqCst) {
         0 => None,
         port => Some(port),
     }
 }
-
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Kept {
     port: u16,
@@ -51,7 +38,6 @@ struct Kept {
     #[serde(default)]
     pid: u32,
 }
-
 #[derive(Default)]
 pub struct Waiting(
     Mutex<HashMap<u64, SyncSender<String>>>,
@@ -60,7 +46,6 @@ pub struct Waiting(
     Mutex<HashMap<u64, String>>,
     Mutex<HashMap<String, u64>>,
 );
-
 impl Waiting {
     fn listens(&self, label: &str) {
         if let Ok(mut heard) = self.1.lock() {
@@ -68,26 +53,22 @@ impl Waiting {
         }
         self.2.notify_all();
     }
-
     fn page_started(&self, label: &str) {
         if let Ok(mut pages) = self.4.lock() {
             *pages.entry(label.to_owned()).or_default() += 1;
         }
         self.listens(label);
     }
-
     fn page_of(&self, label: &str) -> u64 {
         self.4
             .lock()
             .map_or(0, |pages| pages.get(label).copied().unwrap_or_default())
     }
-
     fn ask_of(&self, id: u64, label: &str) {
         if let Ok(mut asked) = self.3.lock() {
             asked.insert(id, label.to_owned());
         }
     }
-
     fn claim(&self, id: u64, label: &str) -> bool {
         self.listens(label);
         let Ok(mut asked) = self.3.lock() else {
@@ -100,13 +81,11 @@ impl Waiting {
         }
         false
     }
-
     fn gave_up(&self, id: u64) -> bool {
         self.3
             .lock()
             .map_or(true, |mut asked| asked.remove(&id).is_none())
     }
-
     fn taken_within(&self, id: u64, patience: Duration) -> bool {
         let deadline = Instant::now() + patience;
         loop {
@@ -119,7 +98,6 @@ impl Waiting {
             std::thread::sleep(left.min(Duration::from_millis(5)));
         }
     }
-
     fn passed_over(&self, label: &str, page: u64) {
         if let Ok(mut heard) = self.1.lock() {
             if self.page_of(label) == page {
@@ -127,17 +105,14 @@ impl Waiting {
             }
         }
     }
-
     pub fn forget(&self, label: &str) {
         if let Ok(mut heard) = self.1.lock() {
             heard.remove(label);
         }
     }
-
     pub fn hears(&self, label: &str) -> bool {
         self.1.lock().is_ok_and(|heard| heard.contains(label))
     }
-
     fn listener_within(
         &self,
         patience: Duration,
@@ -158,7 +133,6 @@ impl Waiting {
         }
     }
 }
-
 pub fn start(app: &AppHandle) {
     let Ok(listener) = TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, 0))) else {
         return;
@@ -166,7 +140,6 @@ pub fn start(app: &AppHandle) {
     let Ok(address) = listener.local_addr() else {
         return;
     };
-
     let app = app.clone();
     let port = address.port();
     PORT.store(port, Ordering::SeqCst);
@@ -174,10 +147,8 @@ pub fn start(app: &AppHandle) {
         let Ok(kept) = remember(&app, port) else {
             return;
         };
-
         for incoming in listener.incoming() {
             let Ok(mut stream) = incoming else { continue };
-
             let Some(admitted) = Admitted::into(&OPEN) else {
                 turn_away(&mut stream);
                 continue;
@@ -195,22 +166,18 @@ pub fn start(app: &AppHandle) {
         }
     });
 }
-
 struct Admitted(&'static AtomicUsize);
-
 impl Admitted {
     fn into(open: &'static AtomicUsize) -> Option<Self> {
         let admitted = Self(open);
         (open.fetch_add(1, Ordering::SeqCst) < MOST_AT_ONCE).then_some(admitted)
     }
 }
-
 impl Drop for Admitted {
     fn drop(&mut self) {
         self.0.fetch_sub(1, Ordering::SeqCst);
     }
 }
-
 fn turn_away(stream: &mut TcpStream) {
     if stream.set_nonblocking(true).is_ok() {
         let _ = say(
@@ -220,12 +187,10 @@ fn turn_away(stream: &mut TcpStream) {
         );
     }
 }
-
 #[tauri::command]
 pub fn automation_listening(window: tauri::Window, waiting: tauri::State<'_, Waiting>) {
     waiting.page_started(window.label());
 }
-
 #[tauri::command]
 pub fn automation_claim(
     window: tauri::Window,
@@ -234,24 +199,20 @@ pub fn automation_claim(
 ) -> bool {
     waiting.claim(id, window.label())
 }
-
 #[tauri::command]
 pub fn automation_result(waiting: tauri::State<'_, Waiting>, id: u64, result: serde_json::Value) {
     let Ok(mut held) = waiting.0.lock() else {
         return;
     };
-
     if let Some(send) = held.remove(&id) {
         let _ = send.try_send(result.to_string());
     }
 }
-
 fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
     let path = endpoint_file(app)?;
     let held: Option<Kept> = fs::read_to_string(&path)
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok());
-
     let kept = Kept {
         port,
         secret: match held.as_ref() {
@@ -261,29 +222,22 @@ fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
         eval: held.is_some_and(|one| one.eval),
         pid: std::process::id(),
     };
-
     let written = serde_json::to_string_pretty(&kept)
         .map_err(|error| format!("could not write the endpoint file: {error}"))?;
     write_privately(&path, written.as_bytes())?;
-
     Ok(kept)
 }
-
 fn endpoint_file(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = config_dir(app)?;
-
     made(&dir)?;
     Ok(dir.join("automation.json"))
 }
-
 fn fresh_secret() -> Result<String, String> {
     let mut bytes = [0_u8; SECRET_BYTES];
     getrandom::fill(&mut bytes)
         .map_err(|error| format!("no randomness to make a secret from: {error}"))?;
-
     Ok(crate::grants::hex(&bytes))
 }
-
 fn answer(
     app: &AppHandle,
     mut stream: TcpStream,
@@ -293,7 +247,6 @@ fn answer(
 ) -> std::io::Result<()> {
     stream.set_read_timeout(Some(SLOWEST))?;
     stream.set_write_timeout(Some(SLOWEST))?;
-
     let Some(request) = read_request(&mut stream, SLOWEST)? else {
         return say(
             &mut stream,
@@ -301,7 +254,6 @@ fn answer(
             &refused("that is not a request this endpoint reads"),
         );
     };
-
     if request.method != "POST" {
         return say(&mut stream, 405, &refused("this endpoint reads a POST"));
     }
@@ -338,14 +290,12 @@ fn answer(
             }
         }
     };
-
     let Ok(asked) = serde_json::from_str::<serde_json::Value>(&request.body) else {
         return say(&mut stream, 400, &refused("that body is not JSON"));
     };
     let (status, body) = dispatch(app, &caller, asked, eval);
     say(&mut stream, status, &body)
 }
-
 pub fn dispatch(
     app: &AppHandle,
     caller: &crate::Caller,
@@ -359,7 +309,6 @@ pub fn dispatch(
     let Some(verb) = verb else {
         return (400, refused("say which verb"));
     };
-
     let args = asked.get("args").cloned().unwrap_or_default();
     let session = crate::session_of(&asked);
     if let Some(read) = crate::verbs::Verb::read(&verb, args.clone()) {
@@ -370,14 +319,12 @@ pub fn dispatch(
         let text = serde_json::to_string(&answered).unwrap_or_else(|_| refused("no answer"));
         return (200, text);
     }
-
     if verb == "eval" && !eval {
         return (
             403,
             refused("eval is off: set \"eval\": true in the endpoint file to turn it on"),
         );
     }
-
     if let Err(why) = crate::may_ask_the_window(caller, &verb) {
         return (403, refused(&why));
     }
@@ -385,7 +332,6 @@ pub fn dispatch(
     if let (Some(told), Some(body)) = (caller.told(), asked.as_object_mut()) {
         body.insert("agent".to_owned(), told);
     }
-
     let started = std::time::Instant::now();
     let outcome = ask_the_window(app, &mut asked);
     if agent {
@@ -410,7 +356,6 @@ pub fn dispatch(
         Err(reason) => (503, refused(&reason)),
     }
 }
-
 pub fn ask(
     app: &AppHandle,
     verb: &str,
@@ -431,7 +376,6 @@ pub fn ask(
             .to_owned())
     }
 }
-
 fn answering_order(app: &AppHandle) -> Vec<String> {
     let mut labels: Vec<String> = orden_base::labels::document_windows(app)
         .iter()
@@ -441,18 +385,15 @@ fn answering_order(app: &AppHandle) -> Vec<String> {
     labels.sort_by_key(|one| (one != "main", one.clone()));
     labels
 }
-
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
     let verb = asked.get("verb").and_then(serde_json::Value::as_str);
     let args = asked.get("args").cloned().unwrap_or_default();
     let patience = window_patience(verb.unwrap_or_default(), &args);
     ask_the_window_within(app, asked, patience)
 }
-
 pub fn window_patience(verb: &str, args: &serde_json::Value) -> Duration {
     PATIENCE + declared_wait(verb, args)
 }
-
 pub fn declared_wait(verb: &str, args: &serde_json::Value) -> Duration {
     let waited = |name: &str, fallback: u64, most: u64| {
         let millis = match args.get(name) {
@@ -472,15 +413,12 @@ pub fn declared_wait(verb: &str, args: &serde_json::Value) -> Duration {
         _ => Duration::ZERO,
     }
 }
-
 fn listening_patience(left: Duration) -> Duration {
     left.min(PATIENCE)
 }
-
 fn answer_within(left: Duration) -> Duration {
     left.saturating_sub(DELIVERY.min(left / 4))
 }
-
 fn stamped(asked: &mut serde_json::Value, deadline: Instant) {
     let left = deadline.saturating_duration_since(Instant::now());
     let within = u64::try_from(answer_within(left).as_millis()).unwrap_or(u64::MAX);
@@ -488,7 +426,6 @@ fn stamped(asked: &mut serde_json::Value, deadline: Instant) {
         body.insert("within_ms".to_owned(), serde_json::Value::from(within));
     }
 }
-
 fn ask_the_window_within(
     app: &AppHandle,
     asked: &mut serde_json::Value,
@@ -497,14 +434,11 @@ fn ask_the_window_within(
     if orden_base::labels::document_windows(app).is_empty() {
         return Err("the app has no window open to ask".to_owned());
     }
-
     let Some(body) = asked.as_object_mut() else {
         return Err("that body is not an object".to_owned());
     };
-
     let id = NEXT.fetch_add(1, Ordering::Relaxed);
     body.insert("id".to_owned(), serde_json::Value::from(id));
-
     let (send, answered) = sync_channel::<String>(1);
     let waiting = app.state::<Waiting>();
     let deadline = Instant::now() + patience;
@@ -513,14 +447,12 @@ fn ask_the_window_within(
     else {
         return Err("the window is not listening yet".to_owned());
     };
-
     {
         let Ok(mut held) = waiting.0.lock() else {
             return Err("the app cannot take a request just now".to_owned());
         };
         held.insert(id, send);
     }
-
     let outcome = asked_of_one(
         &waiting,
         id,
@@ -539,14 +471,11 @@ fn ask_the_window_within(
             waiting.hears(&window) && waiting.page_of(&window) == page
         })
     });
-
     if let Ok(mut held) = waiting.0.lock() {
         held.remove(&id);
     }
-
     outcome
 }
-
 fn asked_of_one(
     waiting: &Waiting,
     id: u64,
@@ -573,7 +502,6 @@ fn asked_of_one(
             .ok_or_else(|| "the window did not answer".to_owned())?;
     }
 }
-
 fn awaited(
     answered: &std::sync::mpsc::Receiver<String>,
     deadline: Instant,
@@ -597,19 +525,16 @@ fn awaited(
         }
     }
 }
-
 fn say(stream: &mut TcpStream, status: u16, body: &str) -> std::io::Result<()> {
     let head = format!(
         "HTTP/1.1 {status} {}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
         reason(status),
         body.len()
     );
-
     stream.write_all(head.as_bytes())?;
     stream.write_all(body.as_bytes())?;
     stream.flush()
 }
-
 fn reason(status: u16) -> &'static str {
     match status {
         200 => "OK",
@@ -621,17 +546,14 @@ fn reason(status: u16) -> &'static str {
         _ => "Service Unavailable",
     }
 }
-
 fn refused(why: &str) -> String {
     serde_json::json!({ "error": why }).to_string()
 }
-
 struct Request {
     method: String,
     headers: Vec<(String, String)>,
     body: String,
 }
-
 impl Request {
     fn header(&self, name: &str) -> Option<&str> {
         self.headers
@@ -640,38 +562,31 @@ impl Request {
             .map(|(_, value)| value.as_str())
     }
 }
-
 fn read_request(stream: &mut impl Read, within: Duration) -> std::io::Result<Option<Request>> {
     let deadline = Instant::now() + within;
     let mut bytes: Vec<u8> = Vec::new();
     let mut chunk = [0_u8; 8192];
-
     let mut scanned = 0;
-
     let ends = loop {
         if let Some(at) = find(&bytes[scanned..], b"\r\n\r\n") {
             break scanned + at;
         }
         scanned = bytes.len().saturating_sub(3);
-
         if bytes.len() > MOST_BYTES || Instant::now() > deadline {
             return Ok(None);
         }
-
         let read = stream.read(&mut chunk)?;
         if read == 0 {
             return Ok(None);
         }
         bytes.extend_from_slice(&chunk[..read]);
     };
-
     let Ok(head) = std::str::from_utf8(&bytes[..ends]) else {
         return Ok(None);
     };
     let Some((method, headers)) = parse_head(head) else {
         return Ok(None);
     };
-
     let length = headers
         .iter()
         .find(|(name, _)| name == "content-length")
@@ -680,7 +595,6 @@ fn read_request(stream: &mut impl Read, within: Duration) -> std::io::Result<Opt
     if length > MOST_BYTES {
         return Ok(None);
     }
-
     let mut body = bytes[ends + 4..].to_vec();
     while body.len() < length {
         if Instant::now() > deadline {
@@ -693,64 +607,51 @@ fn read_request(stream: &mut impl Read, within: Duration) -> std::io::Result<Opt
         body.extend_from_slice(&chunk[..read]);
     }
     body.truncate(length);
-
     let Ok(body) = String::from_utf8(body) else {
         return Ok(None);
     };
-
     Ok(Some(Request {
         method,
         headers,
         body,
     }))
 }
-
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|one| one == needle)
 }
-
 fn parse_head(head: &str) -> Option<(String, Vec<(String, String)>)> {
     let mut lines = head.split("\r\n");
     let mut words = lines.next()?.split(' ');
-
     let method = words.next()?.to_owned();
     if method.is_empty() {
         return None;
     }
     words.next()?;
     words.next()?;
-
     let headers = lines
         .filter_map(|line| line.split_once(':'))
         .map(|(name, value)| (name.trim().to_lowercase(), value.trim().to_owned()))
         .collect();
-
     Some((method, headers))
 }
-
 fn is_json(said: Option<&str>) -> bool {
     said.is_some_and(|one| one.trim().to_lowercase().starts_with("application/json"))
 }
-
 fn is_local(said: Option<&str>, port: u16) -> bool {
     let Some(host) = said else { return false };
-
     ["127.0.0.1", "localhost", "[::1]"]
         .iter()
         .any(|name| host == format!("{name}:{port}"))
 }
-
 fn bearer(said: Option<&str>) -> Option<&str> {
     let header = said?;
     header
         .strip_prefix("Bearer ")
         .or_else(|| header.strip_prefix("bearer "))
 }
-
 fn same_secret(said: Option<&str>, secret: &str) -> bool {
     bearer(said).is_some_and(|token| crate::grants::same(token, secret))
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -773,26 +674,21 @@ mod tests {
             pid: std::process::id(),
         })
         .expect("a kept endpoint is serialisable");
-
         let read: Kept = serde_json::from_str(&text).expect("and readable again");
         assert_eq!(read.pid, std::process::id());
         assert_eq!(read.port, 1234);
     }
-
     #[test]
     fn reads_a_file_written_without_one() {
         let read: Kept = serde_json::from_str(r#"{"port":9,"secret":"ab"}"#).expect("a Kept");
-
         assert_eq!(read.pid, 0);
         assert!(!read.eval);
     }
-
     #[test]
     fn reads_a_request_line_and_folds_the_header_names() {
         let (method, headers) =
             parse_head("POST / HTTP/1.1\r\nContent-Type: application/json\r\nHost: 127.0.0.1:9")
                 .expect("a request");
-
         assert_eq!(method, "POST");
         assert_eq!(
             headers,
@@ -802,27 +698,22 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn refuses_anything_that_is_not_a_request_line() {
         assert!(parse_head("hello").is_none());
         assert!(parse_head("POST /").is_none());
         assert!(parse_head(" / HTTP/1.1").is_none());
     }
-
     #[test]
     fn finds_where_the_head_ends() {
         assert_eq!(find(b"ab\r\n\r\ncd", b"\r\n\r\n"), Some(2));
         assert_eq!(find(b"ab", b"\r\n\r\n"), None);
     }
-
     fn read(said: &[u8]) -> Option<Request> {
         read_request(&mut std::io::Cursor::new(said.to_vec()), SLOWEST)
             .expect("a cursor cannot fail")
     }
-
     struct Trickle(Duration);
-
     impl std::io::Read for Trickle {
         fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
             std::thread::sleep(self.0);
@@ -830,94 +721,74 @@ mod tests {
             Ok(1)
         }
     }
-
     #[test]
     fn a_caller_trickling_a_byte_at_a_time_is_let_go_when_its_time_is_up() {
         let started = Instant::now();
-
         let read = read_request(
             &mut Trickle(Duration::from_millis(2)),
             Duration::from_millis(100),
         )
         .expect("a trickle cannot fail");
-
         assert!(read.is_none());
         assert!(started.elapsed() < Duration::from_secs(2));
     }
-
     #[test]
     fn no_more_callers_are_answered_at_once_than_the_endpoint_allows() {
         static OPEN: AtomicUsize = AtomicUsize::new(0);
-
         let mut held: Vec<Admitted> = (0..MOST_AT_ONCE)
             .map(|_| Admitted::into(&OPEN).expect("room for one more"))
             .collect();
         assert!(Admitted::into(&OPEN).is_none());
-
         drop(held.pop());
         let again = Admitted::into(&OPEN);
         assert!(again.is_some());
         drop(again);
         assert_eq!(OPEN.load(Ordering::SeqCst), MOST_AT_ONCE - 1);
     }
-
     #[test]
     fn reads_a_whole_request_off_the_wire() {
         let request = read(b"POST / HTTP/1.1\r\ncontent-type: application/json\r\ncontent-length: 16\r\n\r\n{\"verb\":\"open\"}\n")
             .expect("a request");
-
         assert_eq!(request.method, "POST");
         assert_eq!(request.header("content-type"), Some("application/json"));
         assert_eq!(request.body, "{\"verb\":\"open\"}\n");
     }
-
     #[test]
     fn anything_that_is_not_a_request_is_no_request() {
         assert!(read(b"").is_none());
         assert!(read(b"GET /\r\n").is_none());
         assert!(read(b"\x16\x03\x01\x02\x00\x01\x00").is_none());
     }
-
     #[test]
     fn a_head_that_never_ends_is_refused_without_being_read_twice() {
         let started = std::time::Instant::now();
-
         assert!(read(&vec![b'a'; MOST_BYTES + 1]).is_none());
-
         let spent = started.elapsed();
         assert!(spent.as_secs() < 5, "{spent:?} for a head of 8 MB");
     }
-
     #[test]
     fn a_body_longer_than_a_note_is_not_read_at_all() {
         let said = format!(
             "POST / HTTP/1.1\r\ncontent-length: {}\r\n\r\n",
             MOST_BYTES + 1
         );
-
         assert!(read(said.as_bytes()).is_none());
     }
-
     #[test]
     fn a_body_shorter_than_it_said_is_what_arrived() {
         let request =
             read(b"POST / HTTP/1.1\r\ncontent-length: 99\r\n\r\n{\"verb\"").expect("a request");
-
         assert_eq!(request.body, "{\"verb\"");
     }
-
     #[test]
     fn a_body_longer_than_it_said_is_cut_where_it_said() {
         let request = read(b"POST / HTTP/1.1\r\ncontent-length: 2\r\n\r\n{}POST /").expect("one");
-
         assert_eq!(request.body, "{}");
     }
-
     #[test]
     fn a_body_that_is_not_text_is_no_request() {
         assert!(read(b"POST / HTTP/1.1\r\ncontent-length: 2\r\n\r\n\xff\xfe").is_none());
     }
-
     #[test]
     fn only_json_is_a_body_it_reads() {
         assert!(is_json(Some("application/json")));
@@ -927,7 +798,6 @@ mod tests {
         assert!(!is_json(Some("multipart/form-data")));
         assert!(!is_json(None));
     }
-
     #[test]
     fn only_this_endpoints_own_address_is_its_address() {
         assert!(is_local(Some("127.0.0.1:1500"), 1500));
@@ -936,28 +806,23 @@ mod tests {
         assert!(!is_local(Some("127.0.0.1:1501"), 1500));
         assert!(!is_local(None, 1500));
     }
-
     #[test]
     fn only_the_secret_itself_gets_in() {
         let secret = hex(&[7_u8; SECRET_BYTES]);
-
         assert!(same_secret(Some(&format!("Bearer {secret}")), &secret));
         assert!(same_secret(Some(&format!("bearer {secret}")), &secret));
         assert!(!same_secret(Some(&secret), &secret));
         assert!(!same_secret(Some("Bearer "), &secret));
         assert!(!same_secret(Some(&format!("Bearer {secret}x")), &secret));
         assert!(!same_secret(None, &secret));
-
         let wrong = hex(&[8_u8; SECRET_BYTES]);
         assert!(!same_secret(Some(&format!("Bearer {wrong}")), &secret));
     }
-
     #[test]
     fn a_secret_is_two_characters_a_byte() {
         assert_eq!(hex(&[0_u8, 15, 16, 255]), "000f10ff");
         assert_eq!(hex(&[0_u8; SECRET_BYTES]).len(), SECRET_BYTES * 2);
     }
-
     #[test]
     fn every_status_it_answers_with_has_a_word() {
         for status in [200_u16, 400, 401, 403, 405, 415, 503] {
@@ -965,13 +830,11 @@ mod tests {
         }
         assert_eq!(reason(200), "OK");
     }
-
     #[test]
     fn a_refusal_is_json_with_the_reason_in_it() {
         assert_eq!(refused("no"), r#"{"error":"no"}"#);
         assert_eq!(refused(r#"say "yes""#), r#"{"error":"say \"yes\""}"#);
     }
-
     #[test]
     fn a_request_before_the_window_listens_waits_for_it() {
         let open = || vec!["main".to_owned()];
@@ -979,13 +842,11 @@ mod tests {
         assert!(waiting
             .listener_within(std::time::Duration::from_millis(10), open)
             .is_none());
-
         let asking = waiting.clone();
         let asked = std::thread::spawn(move || {
             asking.listener_within(std::time::Duration::from_secs(30), open)
         });
         waiting.listens("main");
-
         assert_eq!(asked.join().expect("asked").as_deref(), Some("main"));
         assert_eq!(
             waiting
@@ -994,7 +855,6 @@ mod tests {
             Some("main")
         );
     }
-
     #[test]
     fn a_request_is_taken_once_by_the_window_it_is_asked_of() {
         let waiting = Waiting::default();
@@ -1002,19 +862,16 @@ mod tests {
         assert!(!waiting.claim(7, "orden-2"));
         assert!(waiting.claim(7, "main"));
         assert!(!waiting.claim(7, "main"));
-
         waiting.ask_of(8, "main");
         assert!(!waiting.gave_up(8), "still asked");
         waiting.claim(8, "main");
         assert!(waiting.gave_up(8), "taken in time");
-
         waiting.ask_of(9, "main");
         assert!(!waiting.gave_up(9));
         waiting.forget("main");
         assert!(!waiting.claim(9, "main"), "too late");
         assert!(waiting.hears("main"), "but alive");
     }
-
     #[test]
     fn a_new_page_is_a_new_page() {
         let waiting = Waiting::default();
@@ -1026,7 +883,6 @@ mod tests {
         waiting.page_started("main");
         assert_ne!(waiting.page_of("main"), page);
     }
-
     #[test]
     fn a_verb_that_waits_is_waited_for_past_the_longest_wait_it_takes() {
         let patience = |verb: &str, args: serde_json::Value| window_patience(verb, &args);
@@ -1047,7 +903,6 @@ mod tests {
             patience("read_terminal", serde_json::json!({})) > PATIENCE + started_and_connected
         );
     }
-
     #[test]
     fn a_window_that_is_not_listening_is_not_waited_for_as_long_as_its_answer() {
         let args = serde_json::json!({ "timeout_ms": 600_000 });
@@ -1057,7 +912,6 @@ mod tests {
         let left = Duration::from_secs(3);
         assert_eq!(listening_patience(left), left);
     }
-
     #[test]
     fn an_edit_waiting_on_a_typing_reader_answers_before_the_window_is_given_up_on() {
         let edit = include_str!("../../../../src/lib/agent-docs/src/edit.ts");
@@ -1071,7 +925,6 @@ mod tests {
         let waits_out_the_reader = Duration::from_secs(20 + 2);
         assert!(waits_out_the_reader + DELIVERY < PATIENCE);
     }
-
     #[test]
     fn the_window_is_told_how_long_it_has_to_answer_with_time_left_to_carry_it_back() {
         let millis = |one: Duration| u64::try_from(one.as_millis()).expect("short");
@@ -1081,17 +934,14 @@ mod tests {
         let answered_by = millis(PATIENCE) - millis(DELIVERY);
         assert!(within <= answered_by);
         assert!(within > answered_by - 1000);
-
         let mut quick = serde_json::json!({ "verb": "verbs" });
         stamped(&mut quick, Instant::now() + Duration::from_secs(2));
         let within = quick["within_ms"].as_u64().expect("told");
         assert!(within > 1000 && within <= 1500, "{within}");
-
         let mut late = serde_json::json!({ "verb": "verbs" });
         stamped(&mut late, Instant::now());
         assert_eq!(late["within_ms"].as_u64(), Some(0));
     }
-
     #[test]
     fn the_window_stops_its_work_before_the_answer_is_too_late_to_carry_back() {
         let start = include_str!("../../../../src/lib/automation/src/start.ts");
@@ -1102,7 +952,6 @@ mod tests {
         assert!(last_word < DELIVERY / 2);
         assert_eq!(DELIVERY, Duration::from_secs(5));
     }
-
     #[test]
     fn the_waits_are_the_ones_the_window_verbs_take() {
         let ask = include_str!("../../../../src/lib/agent-host/src/ask.ts");
@@ -1120,7 +969,6 @@ mod tests {
             assert!(tab.contains(starting), "{starting}");
         }
     }
-
     #[test]
     fn a_window_that_reloads_while_asked_is_not_waited_out() {
         let later = Instant::now() + Duration::from_secs(30);
@@ -1130,12 +978,10 @@ mod tests {
             .expect_err("no answer")
             .contains("reloaded"));
         assert!(started.elapsed() < Duration::from_secs(5));
-
         send.send("said".to_owned()).expect("sent");
         assert_eq!(awaited(&answered, later, || false).as_deref(), Ok("said"));
         drop(send);
     }
-
     #[test]
     fn a_window_that_reloads_before_it_takes_a_request_is_asked_again_and_still_heard() {
         let waiting = Waiting::default();
@@ -1158,12 +1004,10 @@ mod tests {
                 Ok(())
             },
         );
-
         assert_eq!(taken.as_deref(), Ok("main"));
         assert_eq!(asks.load(Ordering::SeqCst), 2);
         assert!(waiting.hears("main"));
     }
-
     #[test]
     fn a_window_that_does_not_listen_is_passed_over_for_one_that_does() {
         let open = || {
@@ -1180,17 +1024,14 @@ mod tests {
             waiting.listener_within(now, open).as_deref(),
             Some("orden-2")
         );
-
         waiting.listens("main");
         assert_eq!(waiting.listener_within(now, open).as_deref(), Some("main"));
-
         waiting.forget("main");
         assert!(!waiting.hears("main"));
         assert_eq!(
             waiting.listener_within(now, open).as_deref(),
             Some("orden-2")
         );
-
         assert_eq!(
             waiting
                 .listener_within(now, || vec!["main".to_owned()])

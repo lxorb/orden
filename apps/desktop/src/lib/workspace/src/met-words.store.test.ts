@@ -20,7 +20,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { startAcross } = await import('./across')
 await startAcross()
-
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`
 const tab = (fields: object = {}) => ({
@@ -41,7 +40,6 @@ const layout = (...tabs: object[]) =>
     focused: 'p1',
     frame: { kind: 'pane', pane: { id: 'p1', active: 0, linked: false, tabs } },
   }) as never
-
 beforeEach(async () => {
   await workspace.writesSettled()
   slow.hold = null
@@ -55,7 +53,6 @@ beforeEach(async () => {
   workspace.closed.stack = []
   await workspace.loadTree()
 })
-
 describe('unwritten words meeting an open document', () => {
   test('a note open already takes them, and the file has them, with a version of before', async () => {
     await workspace.open(PATH)
@@ -66,7 +63,6 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.tabs[0]?.note.latest).toBe('base\ntyped\n')
     expect(versions).toContain('base\n')
   })
-
   test('a note on its way open, its read not answered yet, takes them as well', async () => {
     let go: () => void = () => undefined
     slow.hold = new Promise((open) => (go = open))
@@ -78,7 +74,6 @@ describe('unwritten words meeting an open document', () => {
     await workspace.writesSettled()
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
   })
-
   test('a closed entry reopened over the same note opened again, and it is spent', async () => {
     await workspace.loadTree()
     workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab() }])
@@ -88,7 +83,6 @@ describe('unwritten words meeting an open document', () => {
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
     expect(workspace.closed.stack).toHaveLength(0)
   })
-
   test('a closed tab reopened over the note open again in its strip leaves one tab of it', async () => {
     await workspace.loadTree()
     workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab() }])
@@ -100,7 +94,6 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.active).toBe(open)
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
   })
-
   test('a closed entry of another space goes back there, and meets the note open in it', async () => {
     const OTHER = '/spaces/Two'
     const THERE = `${OTHER}/a.md`
@@ -121,7 +114,6 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.closed.stack).toHaveLength(0)
     await workspace.showSpace('one')
   })
-
   test('what the open document has typed itself stays beside them', async () => {
     await workspace.open(PATH)
     workspace.tabs[0]!.note.replace('intro\nbase\n')
@@ -129,7 +121,6 @@ describe('unwritten words meeting an open document', () => {
     await workspace.writesSettled()
     expect(d.files.get(PATH)).toBe('intro\nbase\ntyped\n')
   })
-
   test('words already in the open document are not written twice', async () => {
     d.files.set(PATH, 'base\ntyped\nmore\n')
     await workspace.open(PATH)
@@ -139,7 +130,6 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.tabs).toHaveLength(1)
     expect(workspace.tabs[0]?.dirty).toBe(false)
   })
-
   test('with nothing to merge against they stay as a draft beside it', async () => {
     await workspace.open(PATH)
     const bare = tab()
@@ -151,7 +141,6 @@ describe('unwritten words meeting an open document', () => {
     expect(words).toContainEqual([PATH, 'base\n'])
     expect(words).toContainEqual([null, 'base\ntyped\n'])
   })
-
   test('a plane does not merge: its words stay as a draft beside the open one', async () => {
     const plane = `${ROOT}/p.canvas`
     d.files.set(plane, '{"nodes":[],"edges":[]}')
@@ -166,7 +155,6 @@ describe('unwritten words meeting an open document', () => {
     expect(d.files.get(plane)).toBe('{"nodes":[],"edges":[]}')
     expect(workspace.tabs.map((one) => one.note.latest)).toContain(words)
   })
-
   test('two panes of one note that came back are one document, its words once', async () => {
     d.files.set(PATH, 'base\nelsewhere\n')
     await workspace.applyLayout(layout(tab(), tab()), false)
@@ -177,7 +165,6 @@ describe('unwritten words meeting an open document', () => {
     expect(file.match(/typed/g)).toHaveLength(1)
     expect(file).toContain('elsewhere')
   })
-
   test('a note clicked and typed in a launch, then a kill: two tabs of it fold into one', async () => {
     const other = `${ROOT}/z.md`
     d.files.set(other, 'z\n')
@@ -196,7 +183,6 @@ describe('unwritten words meeting an open document', () => {
     expect(file).toContain('typed')
     expect(file).toContain('more')
   })
-
   test('the tab folded away was in front: the one it folded into is', async () => {
     const shown = layout(tab({ share: 'read' }), tab({ share: 'gap', doc: 'base\nmore\n' })) as {
       frame: { pane: { active: number } }
@@ -207,7 +193,6 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.tabs).toHaveLength(1)
     expect(workspace.active?.path).toBe(PATH)
   })
-
   test('two panes of one note are still two tabs of it', async () => {
     const twoPanes = {
       panel: null,
@@ -234,7 +219,6 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.tabs).toHaveLength(2)
     expect(new Set(workspace.tabs.map((one) => one.note)).size).toBe(1)
   })
-
   test('a closed entry of the document still open is a view of it, not words to bring back', async () => {
     await workspace.open(PATH)
     const note = workspace.tabs[0]!.note
@@ -243,7 +227,6 @@ describe('unwritten words meeting an open document', () => {
     await workspace.writesSettled()
     expect(d.files.get(PATH)).toBe('base\n')
   })
-
   test('a landed write of the same words spends an entry of the run before', async () => {
     workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab() }])
     await workspace.applyLayout(layout(tab()), false)

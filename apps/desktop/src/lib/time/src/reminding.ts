@@ -8,14 +8,12 @@ import { time } from './time.svelte'
 
 const TOLD = 'orden:time-told'
 const KEPT = 100
-
 function toldNow(): Set<string> {
   const held = stored(TOLD)
   return new Set(
     (Array.isArray(held) ? (held as unknown[]) : []).filter((one): one is string => typeof one === 'string'),
   )
 }
-
 function look(): void {
   if (!time.ready || !time.reminding || !timeOn()) return
   const told = toldNow()
@@ -27,7 +25,6 @@ function look(): void {
   }
   if (due.length) keepJson(TOLD, [...told].slice(-KEPT))
 }
-
 export const remind = (): Promise<void> =>
   inTurn(
     () => TOLD,
@@ -37,5 +34,4 @@ export const remind = (): Promise<void> =>
     },
     MINUTE,
   )
-
 setInterval(() => void remind(), MINUTE)

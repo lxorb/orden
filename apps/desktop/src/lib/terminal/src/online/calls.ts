@@ -14,7 +14,6 @@ export interface ServerInfo {
   made: boolean
   spent: number | null
 }
-
 export interface Offer {
   name: string
   cores: number
@@ -24,19 +23,16 @@ export interface Offer {
   arch: 'x86' | 'arm'
   prices: { location: string; monthly: number; hourly: number }[]
 }
-
 interface Place {
   name: string
   city: string
   country: string
 }
-
 export interface Offers {
   currency: string
   locations: Place[]
   types: Offer[]
 }
-
 interface MachineInfo {
   id: string
   state: MachineState
@@ -45,7 +41,6 @@ interface MachineInfo {
   server: ServerInfo | null
   disk: Disk | null
 }
-
 export interface Online {
   allowed: boolean
   machine: MachineInfo | null
@@ -53,18 +48,14 @@ export interface Online {
   limit: Allowance
   resets: number
 }
-
 export type Refused = 'signed-out' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'other'
-
 const STATES: readonly MachineState[] = ['asleep', 'starting', 'awake', 'stopping']
-
 function allowanceOf(value: unknown): Allowance | null {
   if (!isRecord(value)) return null
   const { awakeS, cpuS, homeBytes, egressBytes } = value
   if (!isNumber(awakeS) || !isNumber(cpuS) || !isNumber(homeBytes) || !isNumber(egressBytes)) return null
   return { awakeS, cpuS, homeBytes, egressBytes }
 }
-
 function serverOf(value: unknown): ServerInfo | null {
   if (!isRecord(value) || !isString(value.type)) return null
   const { cores, memoryGb, diskGb, price, hourly, currency, spent } = value
@@ -82,7 +73,6 @@ function serverOf(value: unknown): ServerInfo | null {
     spent: isNumber(spent) ? spent : null,
   }
 }
-
 function offerOf(value: unknown): Offer | null {
   if (!isRecord(value) || !isString(value.name) || !Array.isArray(value.prices)) return null
   const { cores, memoryGb, diskGb } = value
@@ -102,7 +92,6 @@ function offerOf(value: unknown): Offer | null {
     prices,
   }
 }
-
 export function offersOf(value: unknown): Offers | null {
   if (!isRecord(value) || !isString(value.currency)) return null
   if (!Array.isArray(value.types) || !Array.isArray(value.locations)) return null
@@ -116,12 +105,10 @@ export function offersOf(value: unknown): Offers | null {
     types: value.types.flatMap((one: unknown) => offerOf(one) ?? []),
   }
 }
-
 function diskOf(value: unknown): Disk | null {
   if (!isRecord(value) || !isNumber(value.used) || !isNumber(value.total)) return null
   return { used: value.used, total: value.total }
 }
-
 function machineOf(value: unknown): MachineInfo | null {
   if (!isRecord(value) || !isString(value.id)) return null
   const state = STATES.find((one) => one === value.state)
@@ -135,7 +122,6 @@ function machineOf(value: unknown): MachineInfo | null {
     disk: diskOf(value.disk),
   }
 }
-
 const CITIES: Record<string, string> = {
   nbg1: 'Nuremberg',
   fsn1: 'Falkenstein',
@@ -144,11 +130,9 @@ const CITIES: Record<string, string> = {
   hil: 'Hillsboro',
   sin: 'Singapore',
 }
-
 export function cityOf(location: string): string {
   return CITIES[location] ?? location
 }
-
 export function onlineOf(value: unknown): Online | null {
   if (!isRecord(value)) return null
   const used = allowanceOf(value.used)
@@ -162,29 +146,23 @@ export function onlineOf(value: unknown): Online | null {
     resets: value.resetAt,
   }
 }
-
 const saidBy = (error: unknown) =>
   error instanceof ApiError && isRecord(error.body) && isString(error.body.error) ? error.body.error : ''
-
 const REFUSALS: readonly Refused[] = ['list', 'allowance', 'budget', 'off', 'flag', 'sessions']
-
 export function refusedOf(error: unknown): Refused {
   if (!(error instanceof ApiError)) return 'other'
   if (error.status === 401) return 'signed-out'
   if (error.status === 404) return 'off'
   return REFUSALS.find((one) => one === saidBy(error)) ?? 'other'
 }
-
 function token(): string {
   const now = account.accountToken
   if (!now) throw new ApiError(401, 'signed out')
   return now
 }
-
 export async function online(): Promise<Online | null> {
   return onlineOf(await request<unknown>('/v2/online/machine', { token: token() }))
 }
-
 export async function termSession(term: string | null, session?: string): Promise<Term> {
   const said = await request<unknown>('/v2/online/terms', {
     method: 'POST',
@@ -195,7 +173,6 @@ export async function termSession(term: string | null, session?: string): Promis
   if (!found) throw new ApiError(500, 'no session')
   return found
 }
-
 export async function offers(): Promise<Offers | null> {
   try {
     return offersOf(await request<unknown>('/v2/online/types', { token: token() }))
@@ -204,15 +181,11 @@ export async function offers(): Promise<Offers | null> {
     throw error
   }
 }
-
 export type Refit = 'disk' | 'arch' | 'busy' | 'budget' | 'type' | 'other'
-
 const REFITS: readonly Refit[] = ['disk', 'arch', 'busy', 'budget', 'type']
-
 export function refitOf(error: unknown): Refit {
   return REFITS.find((one) => one === saidBy(error)) ?? 'other'
 }
-
 export async function chooseType(type: string, location: string | null): Promise<void> {
   await request<unknown>('/v2/online/machine/type', {
     method: 'POST',
@@ -220,14 +193,12 @@ export async function chooseType(type: string, location: string | null): Promise
     body: { type, ...(location ? { location } : {}) },
   })
 }
-
 export async function startStop(start: boolean): Promise<void> {
   await request<unknown>(`/v2/online/machine/${start ? 'start' : 'stop'}`, {
     method: 'POST',
     token: token(),
   })
 }
-
 export interface Listed {
   term: string | null
   session: string
@@ -240,9 +211,7 @@ export interface Listed {
   alive: boolean | null
   at: number | null
 }
-
 const orNull = <T>(value: unknown, is: (one: unknown) => one is T): T | null => (is(value) ? value : null)
-
 function listedOf(value: unknown): Listed | null {
   if (!isRecord(value) || !isString(value.session)) return null
   return {
@@ -258,16 +227,13 @@ function listedOf(value: unknown): Listed | null {
     at: orNull(value.at, isNumber),
   }
 }
-
 export function listOf(value: unknown): Listed[] {
   if (!isRecord(value) || !Array.isArray(value.terms)) return []
   return value.terms.flatMap((one) => listedOf(one) ?? [])
 }
-
 export async function listed(): Promise<Listed[]> {
   return listOf(await request<unknown>('/v2/online/terms', { token: token() }))
 }
-
 export async function endSession(id: string): Promise<void> {
   await request<unknown>(`/v2/online/terms/${encodeURIComponent(id)}`, {
     method: 'DELETE',

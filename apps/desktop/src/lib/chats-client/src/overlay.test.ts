@@ -6,7 +6,6 @@ import { overlay } from './overlay'
 import { messageOf } from './test-account'
 
 const CHAT = `c_${'b'.repeat(32)}`
-
 function placed(id: string, seq: number, extra: Partial<Message> = {}): Kept {
   return {
     upto: seq,
@@ -14,11 +13,9 @@ function placed(id: string, seq: number, extra: Partial<Message> = {}): Kept {
     message: messageOf(seq, { id, body: `words ${id}`, ...extra }),
   }
 }
-
 function row(event: Event, refused: OutboxRow['refused'] = null): OutboxRow {
   return { id: event.id, chat: CHAT, event, madeAt: 99_000, tries: 0, refused }
 }
-
 describe('the outbox drawn over the window', () => {
   test('a post is drawn at once under the placed ones, sending', async () => {
     const { messages, pending } = await overlay(
@@ -30,7 +27,6 @@ describe('the outbox drawn over the window', () => {
     expect(messages.map((one) => [one.id, one.sending])).toEqual([['m1', false]])
     expect(pending.map((one) => [one.id, one.body, one.sending, one.at])).toEqual([['m2', 'hello', true, 99_000]])
   })
-
   test('an edit and a reaction are drawn over a placed message', async () => {
     const { messages } = await overlay(
       [placed('m1', 1)],
@@ -47,7 +43,6 @@ describe('the outbox drawn over the window', () => {
       sending: true,
     })
   })
-
   test('a refused edit leaves the words as placed, marked', async () => {
     const { messages } = await overlay(
       [placed('m1', 1)],
@@ -57,7 +52,6 @@ describe('the outbox drawn over the window', () => {
     )
     expect(messages[0]).toMatchObject({ body: 'words m1', sending: false, refused: 'role' })
   })
-
   test('a reply waiting counts under its message, and is drawn in its replies only', async () => {
     const reply = row({ kind: 'post', id: 'e1', message: 'r1', body: 'yes', parent: 'm1' })
     const chat = await overlay([placed('m1', 1)], [reply], 'user:ana', isMain)
@@ -66,7 +60,6 @@ describe('the outbox drawn over the window', () => {
     const replies = await overlay([], [reply], 'user:ana', (one) => one.parent === 'm1')
     expect(replies.pending.map((one) => one.id)).toEqual(['r1'])
   })
-
   test('a refused post stays drawn, marked, with its words', async () => {
     const { pending } = await overlay(
       [],

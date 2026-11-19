@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
@@ -11,7 +10,6 @@ function pageOf(name: string, url: string): Document {
   const html = readFileSync(join(import.meta.dirname, 'fixtures', name), 'utf8')
   return new JSDOM(html, { url }).window.document
 }
-
 function snapshotOf(page: Document): string {
   const copy = page.documentElement.cloneNode(true) as HTMLElement
   const base = page.createElement('base')
@@ -19,24 +17,20 @@ function snapshotOf(page: Document): string {
   copy.querySelector('head')?.prepend(base)
   return `<!DOCTYPE html>${copy.outerHTML}`
 }
-
 function both(name: string, url: string) {
   const page = pageOf(name, url)
   const live = extract(page, 'page', url)
   const written = readSnapshot(snapshotOf(page), url)
   return { live, written, markdown: htmlToMarkdown(live.html) }
 }
-
 describe('a news article', () => {
   const url = 'https://ledger.example/news/2026/lake.html'
   const { live, written, markdown } = both('news.html', url)
-
   test('reads the same live and written down; is called what the article says, without the site; carries the tags the page published', () => {
     expect(written).toEqual(live)
     expect(live.title).toBe('Lake Zurich warms a full degree in a decade')
     expect(live.tags).toEqual(['Climate', 'Zurich', 'Lakes'])
   })
-
   test('keeps the article and leaves the furniture; keeps the photograph a lazy picture deferred, at its widest; resolves a link that climbs out of the page’s folder', () => {
     expect(markdown).toContain('the cantonal water office said on Friday')
     expect(markdown).toContain('"A lake does not forget a warm winter,"')
@@ -48,11 +42,9 @@ describe('a news article', () => {
     expect(markdown).toContain('[plant shade trees](https://ledger.example/news/plans/shade.html)')
   })
 })
-
 describe('a page of documentation', () => {
   const url = 'https://rivulet.example/docs/streams.html'
   const { live, written, markdown } = both('docs.html', url)
-
   test('reads the same live and written down; fences each block with the language its page named, however it named it; keeps code as it was written', () => {
     expect(written).toEqual(live)
     expect(markdown).toContain("```ts\nimport { from } from 'rivulet'")
@@ -61,17 +53,14 @@ describe('a page of documentation', () => {
     expect(markdown).toContain('.map((n) => n * 2)')
     expect(markdown).toContain('`map`, `filter` and `take`')
   })
-
   test('leaves the sidebar and the footer behind', () => {
     expect(markdown).not.toContain('Getting started')
     expect(markdown).not.toContain('Edit on GitHub')
   })
 })
-
 describe('Wikipedia, with maths', () => {
   const url = 'https://en.wikipedia.example/wiki/Euler%27s_identity'
   const { live, written, markdown } = both('wikipedia.html', url)
-
   test('reads the same live and written down; keeps a formula as the TeX it was written in, once; keeps an inline formula inline', () => {
     expect(written).toEqual(live)
     expect(markdown).toContain('e^{i\\pi }+1=0')
@@ -79,17 +68,14 @@ describe('Wikipedia, with maths', () => {
     expect(markdown).not.toContain('render/svg')
     expect(markdown).toMatch(/where \$\{?\\displaystyle e\}?\$ is/)
   })
-
   test('leaves the navigation and the edit links behind', () => {
     expect(markdown).not.toContain('Random article')
     expect(markdown).not.toContain('action=edit')
   })
 })
-
 describe('a page whose point is a table', () => {
   const url = 'https://rails.example/guides/night-trains'
   const { live, written, markdown } = both('tables.html', url)
-
   test('reads the same live and written down; keeps the table as a table; escapes a pipe a cell holds, so the row stays one row', () => {
     expect(written).toEqual(live)
     expect(markdown).toMatch(/\| Destination \| Leaves \| Arrives \| Couchette from \|/)

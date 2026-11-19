@@ -5,7 +5,6 @@ const world = vi.hoisted(() => ({
   rolled: [] as { space: string; at: number; preview: boolean }[],
   space: 'space-a',
 }))
-
 vi.mock('../../accounts/src/api', async (original) => ({
   ...(await original<typeof import('../../accounts/src/api')>()),
   account: {
@@ -37,32 +36,25 @@ vi.mock('../../sync-mirror/src/api', async (original) => ({
 vi.mock('../../workspace/src/api', () => ({
   workspace: { activeSpace: { root: '/space' }, spaces: [] },
 }))
-
 const { modes, KEEP_MONTH, KEEP_YEAR } = await import('../../modes/src/api')
 const SyncPane = (await import('./SyncPane.svelte')).default
-
 const settled = () => new Promise((resolve) => setTimeout(resolve))
 const DAY = 24 * 60 * 60 * 1000
-
 let target: HTMLElement
 let close: (() => void) | undefined
-
 beforeEach(() => {
   world.rolled = []
   world.space = 'space-a'
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   close?.()
   target.remove()
 })
-
 function button(label: string): HTMLButtonElement | undefined {
   return [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === label)
 }
-
 describe('going back to how a space was', () => {
   test('never goes back further than the moment the picker shows', async () => {
     modes.setKeepVersions(KEEP_YEAR)

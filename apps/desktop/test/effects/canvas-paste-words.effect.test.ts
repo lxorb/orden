@@ -7,7 +7,6 @@ import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 import { settle } from './settle'
 
 const stored = vi.hoisted(() => ({ pictures: 0 }))
-
 vi.mock('../../src/lib/workspace/src/api', async (actual) => ({
   ...(await actual<typeof import('../../src/lib/workspace/src/api')>()),
   storeImage: () => {
@@ -15,12 +14,10 @@ vi.mock('../../src/lib/workspace/src/api', async (actual) => ({
     return Promise.resolve('/space/assets/shot.png')
   },
 }))
-
 Element.prototype.hasPointerCapture = () => false
 let host: HTMLElement
 let note: NoteDoc
 let close: () => void
-
 beforeEach(() => {
   stored.pictures = 0
   vi.useFakeTimers()
@@ -44,13 +41,11 @@ beforeEach(() => {
   close = () => void unmount(shown)
   flushSync()
 })
-
 afterEach(() => {
   close()
   host.remove()
   vi.useRealTimers()
 })
-
 function pasted(said: Record<string, string>, files: File[]) {
   const event = new Event('paste', { bubbles: true, cancelable: true })
   Object.defineProperty(event, 'clipboardData', {
@@ -64,14 +59,11 @@ function pasted(said: Record<string, string>, files: File[]) {
   host.querySelector('.canvas')?.dispatchEvent(event)
   flushSync()
 }
-
 const settled = async () => {
   await settle()
   vi.advanceTimersByTime(2000)
 }
-
 const shot = () => new File(['png'], 'image.png', { type: 'image/png' })
-
 test('cells copied from a spreadsheet, which carry a picture of themselves, paste as words', async () => {
   pasted(
     {
@@ -81,15 +73,12 @@ test('cells copied from a spreadsheet, which carry a picture of themselves, past
     [shot()],
   )
   await settled()
-
   const nodes = readCanvas(note.text).nodes
   expect(stored.pictures).toBe(0)
   expect(nodes.map((node) => node.type)).toEqual(['text'])
 })
-
 test('a picture alone, or with no words beside it, still pastes as a picture', async () => {
   pasted({ 'text/html': '<img src="x.png">' }, [shot()])
   await settled()
-
   expect(stored.pictures).toBe(1)
 })

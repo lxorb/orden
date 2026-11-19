@@ -35,23 +35,19 @@ import { noteBehind } from '../../protect/src/api'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
 type Shape = (typeof SHAPES)[number]
-
 interface Kept {
   base64: string
   extension: 'png' | 'pdf'
 }
-
 interface Page {
   url: string
   title: string
   html: string
   file: Kept | null
 }
-
 function isShape(value: string): value is Shape {
   return SHAPES.some((one) => one === value)
 }
-
 async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
   const reader = workspace.tabs.find((one) => one.id === tab && one.kind === 'web')
   if (reader) {
@@ -74,16 +70,13 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
     }
     return readersPage(call, tab, shape, known)
   }
-
   needScope(call, 'browser', 'an agent tab')
   if (shape !== 'link') return captured(call, tab, shape)
-
   const state = await invoke<Overview>('agents_state').catch(() => null)
   const own = state?.tabs.find(([agent, one]) => agent === call.caller.agent?.id && one.id === tab)
   if (!own) throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
   return { url: own[1].url, title: own[1].title, html: '', file: null }
 }
-
 async function readersPage(call: Call, tab: string, shape: CaptureAs, known: Page): Promise<Page> {
   try {
     return await captured(call, tab, shape)
@@ -100,7 +93,6 @@ async function readersPage(call: Call, tab: string, shape: CaptureAs, known: Pag
     throw error
   }
 }
-
 async function captured(call: Call, tab: string, shape: CaptureAs): Promise<Page> {
   const said = recordOf(
     await invoke<unknown>('agents_capture', {
@@ -111,26 +103,21 @@ async function captured(call: Call, tab: string, shape: CaptureAs): Promise<Page
       page: paperInches(choices.page),
     }).catch((error: unknown) => ({ status: 'error', code: 'failed', message: String(error) })),
   )
-
   if (said.status === 'error') {
     const message = typeof said.message === 'string' ? said.message : 'the page was not read'
     throw new Refused(String(said.code) as Code, message)
   }
   if (said.status !== 'ok') throw new Refused('failed', 'the page was not read')
-
   const page = pageOf(recordOf(said.result), shape)
   if (shape !== 'clip' && !page.file) throw new Refused('failed', 'the engine answered nothing')
   return page
 }
-
 function recordOf(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
-
 function pageOf(record: Record<string, unknown>, shape: CaptureAs): Page {
   const words = (key: string) => (typeof record[key] === 'string' ? record[key] : '')
   const base64 = shape === 'screenshot' ? words('png') : shape === 'pdf' ? words('pdf') : ''
-
   return {
     url: words('url'),
     title: words('title'),
@@ -138,15 +125,12 @@ function pageOf(record: Record<string, unknown>, shape: CaptureAs): Page {
     file: base64 ? { base64, extension: shape === 'pdf' ? 'pdf' : 'png' } : null,
   }
 }
-
 async function wordsFor(page: Page, shape: Shape, embed: string | null): Promise<string> {
   if (shape === 'clip') return webPages().clipNote(page, new Date())
-
   const title = page.title.trim() || page.url
   const shown = embed === null ? `<${page.url}>` : `![[${embed}]]`
   return `${frontMatter(page, title)}\n\n# ${asWords(title)}\n\n${shown}\n`
 }
-
 function frontMatter(page: Page, title: string): string {
   return writeFrontMatter([
     ['source', page.url],
@@ -154,11 +138,9 @@ function frontMatter(page: Page, title: string): string {
     ['date', new Date().toISOString()],
   ])
 }
-
 function body(words: string): string {
   return stripFrontMatter(words).trim()
 }
-
 async function freshPath(place: Place, folder: string | null, title: string): Promise<string> {
   const tree = await treeOf(place)
   const taken = new Set<string>()
@@ -169,7 +151,6 @@ async function freshPath(place: Place, folder: string | null, title: string): Pr
     }
   }
   if (tree) walk(tree)
-
   const stem =
     title
       .replace(/[\\/:*?"<>|#^[\]]+/g, ' ')
@@ -180,32 +161,25 @@ async function freshPath(place: Place, folder: string | null, title: string): Pr
   const inside = (name: string) => (folder ? `${folder}/${name}` : name)
   return inside(freePath(`${stem}.md`, (candidate) => taken.has(inside(candidate))))
 }
-
 export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const shape = maybe(call, 'as') ?? 'clip'
   if (!isShape(shape)) throw new Refused('bad_arguments', `as is one of ${SHAPES.join(', ')}`)
-
   const place = placeOf(call)
   const folder = maybe(call, 'folder')
   const within = folder === null ? null : judgedForWriting(folder)
   const page = await pageIn(call, need(call, 'tab'), shape)
   if (!page.url) throw new Refused('failed', 'that tab has no page to capture')
-
   const named = maybe(call, 'note')
   const target = named === null ? null : judgedForWriting(named)
   const relative = target === null ? await freshPath(place, within, page.title || page.url) : notePath(target)
   if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
-
   const path = onDisk(place, relative)
   writableAt(place, path)
-
   const question = await asked(call, null, `Capture ${page.url} into ${relative}`)
   if (question) return question
-
   inTime(call, 'the page was kept')
   const embed = page.file ? await attachment(place, path, page.file) : null
   const words = await wordsFor(page, shape, embed)
-
   const under = maybe(call, 'under')
   const title = page.title.trim() || page.url
   const section = `## ${asWords(title)}\n\n${shape === 'clip' ? `<${page.url}>\n\n` : ''}${body(words).replace(/^# .*\n+/, '')}`
@@ -228,10 +202,8 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
     },
     call.deadline,
   )
-
   return done({ path: relative, space: place.space.id, source: page.url, created }, page.url)
 }
-
 async function attachment(place: Place, notePath: string, file: Kept): Promise<string> {
   writableAt(place, notePath)
   const bytes = await decoded(`data:application/octet-stream;base64,${file.base64}`)
@@ -241,6 +213,5 @@ async function attachment(place: Place, notePath: string, file: Kept): Promise<s
     name: `page-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${file.extension}`,
     bytes,
   })
-
   return saved
 }

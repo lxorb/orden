@@ -60,11 +60,8 @@ vi.mock('../../link-index/src/api', () => ({
     targetOf: () => null,
   },
 }))
-
 const { laidOf, pagesOutOf, pagesPdf, pageSvg } = await import('./out')
-
 const out = (canvas: Canvas) => ({ canvas, palette: {}, name: 'P', path: '/s/P.pages', root: '/s' })
-
 function note(pattern: PageNode['pattern'] = 'blank'): Canvas {
   const one = emptyPages()
   const grown = added(one, one.nodes[0]!.id).canvas
@@ -86,7 +83,6 @@ function note(pattern: PageNode['pattern'] = 'blank'): Canvas {
     nodes: [...two.nodes, words('w1', 'Exam on Friday', a!), words('w2', 'Second sheet', b!)],
   }
 }
-
 async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
   const doc = await PDFDocument.load(bytes)
   const sheet = doc.getPage(at)
@@ -97,10 +93,8 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
     .map((one) => new TextDecoder().decode(one))
     .join('\n')
 }
-
 const hex = (text: string) =>
   Array.from(text, (one) => one.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()).join('')
-
 const run = (text: string, more: Record<string, unknown> = {}) => ({
   text,
   x: 6,
@@ -114,26 +108,22 @@ const run = (text: string, more: Record<string, unknown> = {}) => ({
   colour: 'rgb(26, 29, 35)',
   ...more,
 })
-
 describe('words typed on a page', () => {
   test('reach its sheet of the PDF as real text, and only that sheet', async () => {
     const bytes = (await pagesPdf(out(note())))!
     const first = await contentOf(bytes, 0)
     const second = await contentOf(bytes, 1)
-
     expect(first).toMatch(/Tj/)
     expect(first).toContain(hex('Exam on Friday'))
     expect(first).not.toContain(hex('Second sheet'))
     expect(second).toContain(hex('Second sheet'))
   })
-
   test('are drawn on the lines the browser set them on, as wide as it set them', async () => {
     layout.runs.set('w1', [run('Exam on', { x: 6, y: 20, width: 70 }), run('Friday', { x: 6, y: 44.8, width: 50 })])
     const canvas = note()
     const page = canvas.nodes[0] as PageNode
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
     layout.runs.clear()
-
     const helvetica = await (await PDFDocument.create()).embedFont(StandardFonts.Helvetica)
     expect(first).toMatch(/^1 0 0 1 46 -60 Tm$/m)
     expect(first).toMatch(/^1 0 0 1 46 -84\.8 Tm$/m)
@@ -141,7 +131,6 @@ describe('words typed on a page', () => {
     expect((squeeze / 100) * helvetica.widthOfTextAtSize('Exam on', 16)).toBeCloseTo(70, 1)
     expect(page).toBeTruthy()
   })
-
   test('in bold, in italics and in code keep their face', async () => {
     layout.runs.set('w1', [
       run('bold', { weight: 700 }),
@@ -150,7 +139,6 @@ describe('words typed on a page', () => {
     ])
     const doc = await PDFDocument.load((await pagesPdf(out(note())))!)
     layout.runs.clear()
-
     const faces = doc.context
       .enumerateIndirectObjects()
       .map(([, one]) => (one instanceof PDFDict ? one.get(PDFName.of('BaseFont')) : undefined))
@@ -159,15 +147,12 @@ describe('words typed on a page', () => {
     expect(faces).toContain('/Helvetica-Oblique')
     expect(faces).toContain('/Courier')
   })
-
   test('in a colour the browser gives as rgb() print in that colour', async () => {
     layout.runs.set('w1', [run('Exam', { colour: 'rgb(255, 0, 0)' })])
     const first = await contentOf((await pagesPdf(out(note())))!, 0)
     layout.runs.clear()
-
     expect(first).toMatch(/^1 0 0 rg$/m)
   })
-
   test('in a colour of three hex digits print in that colour', async () => {
     const canvas = note()
     const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
@@ -177,10 +162,8 @@ describe('words typed on a page', () => {
     card.bare = false
     card.color = '#f00'
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
-
     expect(first).toMatch(/^1 0 0 RG$/m)
   })
-
   test('that the PDF font cannot spell go onto the sheet as a picture of the card', async () => {
     raster.drawn = []
     layout.runs.set('w1', [
@@ -191,7 +174,6 @@ describe('words typed on a page', () => {
     const card = canvas.nodes.find((node) => node.id === 'w1')!
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
     layout.runs.clear()
-
     expect(raster.drawn).toHaveLength(1)
     const svg = raster.drawn[0] ?? ''
     expect(svg).toContain(`<tspan x="${card.x + 6}" y="${card.y + 20}">Kolokwium w środę</tspan>`)
@@ -200,36 +182,30 @@ describe('words typed on a page', () => {
     expect(first).toMatch(/ Do$/m)
     expect(first).not.toContain(hex('Kolokwium'))
   })
-
   test('are never lost: a refused picture leaves the letters the font has', async () => {
     raster.refuse = true
     layout.runs.set('w1', [run('Kolokwium w środę')])
     const first = await contentOf((await pagesPdf(out(note())))!, 0)
     raster.refuse = false
     layout.runs.clear()
-
     expect(first).toContain(hex('Kolokwium w'))
   })
-
   test('reach the SVG of their page, and the PNG picture of it', async () => {
     const canvas = note()
     const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
     const laid = await laidOf(out(canvas))
     const svg = pageSvg(laid, pages[0]!, 1)
     const plain = pageSvg(laid, pages[0]!, 1, true)
-
     expect(svg).toContain('Exam on Friday')
     expect(svg).not.toContain('Second sheet')
     expect(plain).toContain('Exam on Friday')
     expect(plain).not.toContain('foreignObject')
   })
-
   test('stay inside their card in the PNG picture of the page', async () => {
     const canvas = note()
     const card = canvas.nodes.find((node) => node.id === 'w1')!
     const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
     const svg = pageSvg(await laidOf(out(canvas)), pages[0]!, 1, true)
-
     const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
     const box = doc.querySelector('tspan')?.closest('text')?.parentElement?.closest('svg')
     expect(box).not.toBe(doc.documentElement)
@@ -239,27 +215,22 @@ describe('words typed on a page', () => {
     expect(box?.getAttribute('height')).toBe(String(card.height))
   })
 })
-
 describe('the ruling of a page', () => {
   test('is drawn on its SVG', () => {
     const canvas = note('lines')
     const pages = canvas.nodes.filter((node): node is PageNode => node.type === 'page')
-
     expect(pageSvg(out(canvas), pages[0]!, 1)).toMatch(/<pattern/)
     expect(pageSvg(out(canvas), pages[1]!, 2)).not.toMatch(/<pattern/)
   })
-
   test('is drawn on its sheet of the PDF', async () => {
     const bytes = (await pagesPdf(out(note('grid'))))!
     const ruled = await contentOf(bytes, 0)
     const blank = await contentOf(bytes, 1)
-
     expect(ruled).toMatch(/^\/Pattern cs$/m)
     expect(ruled).toMatch(/^\/Ruling-?\d* scn$/m)
     expect(blank).not.toMatch(/Pattern/)
   })
 })
-
 test('what else is on a page goes into the PDF as a picture: a shape, a link, a picture', async () => {
   raster.drawn = []
   const canvas = note()
@@ -270,11 +241,9 @@ test('what else is on a page goes into the PDF as a picture: a shape, a link, a 
     { id: 'l', type: 'link', url: 'https://example.com', ...at, y: at.y + 100 },
   )
   const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
-
   expect(raster.drawn).toHaveLength(2)
   expect(first.match(/ Do$/gm)).toHaveLength(2)
 })
-
 test('ink in the pen with no colour of its own (B571) is the dark ink of white paper, whatever theme is on', () => {
   const sheet = document.createElement('style')
   sheet.textContent = [
@@ -283,23 +252,19 @@ test('ink in the pen with no colour of its own (B571) is the dark ink of white p
   ].join('\n')
   document.head.append(sheet)
   document.documentElement.dataset.theme = 'dark'
-
   const canvas = note('lines')
   const page = canvas.nodes[0] as PageNode
   const point = { x: page.x + 50, y: page.y + 50, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
   canvas.ink = [{ id: 'i', tool: 'pen', color: 'ink', size: 3, points: [point] }]
   const open = pagesOutOf({ text: writeCanvas(canvas), name: 'P', path: null, root: null })
   const svg = pageSvg(open, page, 1)
-
   sheet.remove()
   delete document.documentElement.dataset.theme
-
   expect(svg).toContain('#0b0d10')
   expect(svg).not.toContain('#f4f7fb')
   expect(svg).toContain('#d5dce5')
   expect(svg).not.toContain('#2b323d')
 })
-
 describe('a group', () => {
   test("keep a group's name, which sits above its box", async () => {
     raster.drawn = []
@@ -315,14 +280,12 @@ describe('a group', () => {
       height: 100,
     })
     await pagesPdf(out(canvas))
-
     const svg = raster.drawn[0] ?? ''
     const top = Number(/viewBox="[-\d.]+ ([-\d.]+)/.exec(svg)?.[1])
     const label = Number(/<text[^>]*y="([-\d.]+)"[^>]*>Week one/.exec(svg)?.[1])
     expect(label - 13).toBeGreaterThanOrEqual(top)
   })
 })
-
 test('a PDF laid on a page is drawn as its first page, not as its name', async () => {
   const canvas = note()
   const page = canvas.nodes[0] as PageNode

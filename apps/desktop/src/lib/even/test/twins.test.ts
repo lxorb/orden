@@ -7,18 +7,15 @@ const repo = resolve(import.meta.dirname, '../../../../../..')
 const TWINS = Object.keys(
   import.meta.glob(['/src/**/*.even.{ts,svelte}', '/../../packages/*/src/**/*.even.{ts,svelte}']),
 )
-
 function valuesOf(path: string): string[] {
   const { program } = parseSync(path, readFileSync(path, 'utf8'), { lang: 'ts' })
   const names: string[] = []
-
   for (const statement of program.body) {
     if (statement.type === 'ExportAllDeclaration') {
       throw new Error(`${path}: \`export *\` cannot be held to a twin; name the exports`)
     }
     if (statement.type === 'ExportDefaultDeclaration') names.push('default')
     if (statement.type !== 'ExportNamedDeclaration' || statement.exportKind === 'type') continue
-
     const declared = statement.declaration
     if (declared?.type === 'VariableDeclaration') {
       for (const one of declared.declarations) {
@@ -32,20 +29,16 @@ function valuesOf(path: string): string[] {
       names.push(one.exported.type === 'Identifier' ? one.exported.name : one.exported.value)
     }
   }
-
   return names.sort()
 }
-
 describe("the plugin's twins", () => {
   test('are found', () => {
     expect(TWINS.length).toBeGreaterThan(0)
   })
-
   for (const glob of TWINS) {
     const twin = resolve(import.meta.dirname, '../../../..', glob.slice(1))
     const real = twin.replace(/\.even\.(ts|svelte)$/, '.$1')
     const name = relative(repo, twin).replace(/\\/g, '/')
-
     test(`${name} stands in for a module that is there, under the same names`, () => {
       expect(existsSync(real)).toBe(true)
       expect(valuesOf(twin)).toEqual(valuesOf(real))

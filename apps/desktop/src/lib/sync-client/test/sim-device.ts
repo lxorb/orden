@@ -26,25 +26,21 @@ import { put, type Change } from '../src/store'
 import type { World } from '../src/world'
 
 const SPACE = 'sim'
-
 function spot(text: string, fraction: number): number {
   let at = Math.max(0, Math.min(text.length, Math.floor(fraction * text.length)))
   while (at < text.length && !/\s/.test(text.charAt(at))) at++
   return at
 }
-
 function withWords(text: string, fraction: number, words: string): string {
   if (!text) return words
   const at = spot(text, fraction)
   return `${text.slice(0, at)} ${words}${text.slice(at)}`
 }
-
 function withoutWords(text: string, fraction: number, length: number): string {
   const from = spot(text, fraction)
   const to = spot(text, Math.min(1, (from + length) / Math.max(1, text.length)))
   return text.slice(0, from) + text.slice(Math.max(from, to))
 }
-
 function freeIn(taken: (path: string) => boolean, folder: string, name: string): string {
   const dot = name.lastIndexOf('.')
   const stem = dot > 0 ? name.slice(0, dot) : name
@@ -55,7 +51,6 @@ function freeIn(taken: (path: string) => boolean, folder: string, name: string):
     if (!taken(path)) return path
   }
 }
-
 export class EngineDevice implements DeviceAdapter {
   readonly disk = new MemoryDisk()
   readonly store: MemoryStore
@@ -66,7 +61,6 @@ export class EngineDevice implements DeviceAdapter {
   private life = 0
   private readonly root: string
   private starting: Promise<void>
-
   constructor(
     readonly id: string,
     private readonly clock: Clock,
@@ -78,7 +72,6 @@ export class EngineDevice implements DeviceAdapter {
     this.root = `/sim/${id}`
     this.starting = this.seed(seeded).then(() => this.launchNow())
   }
-
   private async seed(seeded: readonly Seeded[]) {
     const store = this.store.open()
     const changes: Change[] = [
@@ -125,7 +118,6 @@ export class EngineDevice implements DeviceAdapter {
     await store.write(changes)
     await store.cleanExit(true)
   }
-
   private world(): World {
     return {
       disk: this.disk,
@@ -152,23 +144,19 @@ export class EngineDevice implements DeviceAdapter {
       platform: 'other',
     }
   }
-
   private async launchNow() {
     this.engine = await Engine.start(this.world(), this.store.open(), { freshens: false })
     await this.refreshHeld()
   }
-
   private async ready(): Promise<Engine | null> {
     await this.starting
     return this.running ? this.engine : null
   }
-
   private async refreshHeld() {
     const engine = this.engine
     if (!engine) return
     await engine.core.use(() => this.readHeld(engine))
   }
-
   private async readHeld(engine: Engine) {
     const out: Held[] = []
     for (const note of engine.held.notes) {
@@ -197,17 +185,14 @@ export class EngineDevice implements DeviceAdapter {
     }
     this.heldNow = out
   }
-
   private live(engine: Engine) {
     const space = engine.core.spaces.get(SPACE)
     if (!space) return []
     return [...space.shown().entries.values()].filter((entry) => !entry.deleted).sort((a, b) => (a.id < b.id ? -1 : 1))
   }
-
   private chosen<T>(list: readonly T[], pick: Pick): T | undefined {
     return list[Math.min(list.length - 1, Math.floor(pick * list.length))]
   }
-
   private writable(engine: Engine, pick: Pick): string | null {
     const notes = this.live(engine).filter(
       (entry) =>
@@ -218,17 +203,14 @@ export class EngineDevice implements DeviceAdapter {
     )
     return this.chosen(notes, pick)?.id ?? null
   }
-
   private pathOf(engine: Engine, id: string | null): string | null {
     if (id === null) return ''
     const path = engine.core.spaces.get(SPACE)?.entries.get(id)?.local_path
     return path === undefined || path === '' ? null : path
   }
-
   private full(path: string): string {
     return path ? `${this.root}/${path}` : this.root
   }
-
   private taken(engine: Engine): (path: string) => boolean {
     const space = engine.core.spaces.get(SPACE)
     return (path) => {
@@ -240,7 +222,6 @@ export class EngineDevice implements DeviceAdapter {
       return false
     }
   }
-
   async act(action: Action): Promise<void> {
     const engine = await this.ready()
     if (!engine) return
@@ -248,7 +229,6 @@ export class EngineDevice implements DeviceAdapter {
     await engine.core.use(() => this.perform(engine, action))
     if (this.life === life) await this.refreshHeld()
   }
-
   private async type(engine: Engine, id: string, to: (text: string) => string) {
     const doc = await engine.core.doc(id)
     if (!doc) return
@@ -259,7 +239,6 @@ export class EngineDevice implements DeviceAdapter {
       if (next !== from) textops(text, from, next, HERE)
     })
   }
-
   private async perform(engine: Engine, action: Action) {
     switch (action.t) {
       case 'type': {
@@ -390,7 +369,6 @@ export class EngineDevice implements DeviceAdapter {
         const file = withoutWords(withWords(ancestor, action.at, action.words), 1 - action.at, action.cut)
         await this.disk.write(this.full(path), file)
         await engine.foreign(this.full(path))
-
         return
       }
       case 'save':
@@ -398,7 +376,6 @@ export class EngineDevice implements DeviceAdapter {
         return
     }
   }
-
   private trash: {
     path: string
     id: string
@@ -406,7 +383,6 @@ export class EngineDevice implements DeviceAdapter {
     folders: string[]
     files: [string, string][]
   }[] = []
-
   private trashed(engine: Engine, id: string, path: string) {
     const inside = (one: string) => one === path || one.startsWith(`${path}/`)
     const ids = this.live(engine)
@@ -424,11 +400,9 @@ export class EngineDevice implements DeviceAdapter {
       .filter((one): one is [string, string] => one[0] !== null && inside(one[0]))
     this.trash.push({ path, id, ids, folders, files })
   }
-
   private relativeOf(full: string): string | null {
     return full.startsWith(`${this.root}/`) ? full.slice(this.root.length + 1) : null
   }
-
   async pass(link: Link): Promise<void> {
     const engine = await this.ready()
     if (!engine || this.link) return
@@ -444,11 +418,9 @@ export class EngineDevice implements DeviceAdapter {
       }
     }
   }
-
   held(): readonly Held[] {
     return this.heldNow
   }
-
   async answer(id: string, choice: Answer): Promise<void> {
     const engine = await this.ready()
     if (!engine) return
@@ -456,7 +428,6 @@ export class EngineDevice implements DeviceAdapter {
     await engine.pause()
     await this.refreshHeld()
   }
-
   async quit(): Promise<void> {
     const engine = await this.ready()
     if (!engine) return
@@ -465,13 +436,11 @@ export class EngineDevice implements DeviceAdapter {
     engine.stop()
     this.stopped()
   }
-
   async crash(): Promise<void> {
     const engine = await this.ready()
     engine?.stop()
     this.stopped()
   }
-
   private stopped() {
     this.running = false
     this.life += 1
@@ -479,14 +448,12 @@ export class EngineDevice implements DeviceAdapter {
     this.engine = null
     this.heldNow = []
   }
-
   async launch(): Promise<void> {
     if (this.running) return
     this.running = true
     this.starting = this.launchNow()
     await this.starting
   }
-
   async view(): Promise<View> {
     const engine = await this.ready()
     if (!engine) return { entries: [], texts: {} }
@@ -510,14 +477,12 @@ export class EngineDevice implements DeviceAdapter {
       return { entries, texts }
     })
   }
-
   classified(): Classification[] {
     const engine = this.engine
     if (!engine) return []
     return engine.core.classified.splice(0)
   }
 }
-
 export interface FreshDevice {
   engine: Engine
   disk: MemoryDisk
@@ -525,7 +490,6 @@ export interface FreshDevice {
   routes: string[]
   space: () => SpaceState
 }
-
 export async function freshDevice(
   account: { handle(device: string, route: string, body: Uint8Array): Promise<Uint8Array> },
   id: string,

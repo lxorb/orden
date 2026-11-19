@@ -1,27 +1,22 @@
 ;(function () {
   if (window.top !== window) return
-
   const AT_REST = 350
   const PRESS_EVENTS = ['pointermove', 'pointerup', 'pointercancel', 'mousemove', 'mouseup']
   const KEPT_FROM_THE_PAGE = ['mousedown', 'contextmenu']
   const SAME_PLACE = 2
-
   let drag = null
   let pressed = 0
-
   function effectOf(wanted, allowed) {
     if (wanted === 'none') return 'none'
     if (allowed === 'uninitialized' || allowed === 'all') return wanted
     return allowed.toLowerCase().includes(wanted) ? wanted : 'none'
   }
-
   function startingEffect(allowed) {
     if (allowed === 'none') return 'none'
     if (allowed === 'move') return 'move'
     if (allowed === 'link' || allowed === 'linkMove') return 'link'
     return 'copy'
   }
-
   function say(type, target, related) {
     return target.dispatchEvent(
       new DragEvent(type, {
@@ -44,18 +39,15 @@
       }),
     )
   }
-
   function takesWords(element) {
     return (
       drag.transfer.types.includes('text/plain') && !!element.closest('[contenteditable="true"], [contenteditable=""]')
     )
   }
-
   function cursor(effect) {
     const shown = { copy: 'copy', move: 'move', link: 'alias' }[effect] ?? 'no-drop'
     drag.style.textContent = `html, html * { cursor: ${shown} !important; user-select: none !important; }`
   }
-
   function step() {
     say('drag', drag.source)
     const under = document.elementFromPoint(drag.x, drag.y)
@@ -80,12 +72,10 @@
     cursor(drag.effect)
     if (drag.image) drag.image.style.transform = `translate(${drag.x + 8}px, ${drag.y + 8}px)`
   }
-
   function swallow(event) {
     event.preventDefault()
     event.stopImmediatePropagation()
   }
-
   function onPointer(event) {
     if (!drag) return
     swallow(event)
@@ -102,23 +92,19 @@
       step()
     }
   }
-
   function onNewPress(event) {
     pressed = event.pointerId
     if (drag) end(false)
   }
-
   function onGone() {
     if (drag && (document.visibilityState === 'hidden' || !document.hasFocus())) end(false)
   }
-
   function onKey(event) {
     if (!drag) return
     swallow(event)
     drag.keys = event
     if (event.key === 'Escape') end(false)
   }
-
   function end(dropped) {
     const { target, source, effect, style, image, timer } = drag
     clearInterval(timer)
@@ -146,7 +132,6 @@
     window.addEventListener('click', noClick, true)
     window.addEventListener('pointerdown', noClick, true)
   }
-
   function imageOf(element) {
     const box = element.getBoundingClientRect()
     const image = element.cloneNode(true)
@@ -166,7 +151,6 @@
     })
     return image
   }
-
   window.addEventListener('pointerdown', onNewPress, true)
   window.addEventListener('blur', onGone)
   document.addEventListener('visibilitychange', onGone)

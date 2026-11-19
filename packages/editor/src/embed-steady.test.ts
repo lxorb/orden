@@ -13,15 +13,11 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const PLAN = { path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }
-
 function space(): NoteIndex {
   return {
     notes: [PLAN],
@@ -32,7 +28,6 @@ function space(): NoteIndex {
     render: (source) => Promise.resolve(`<p>${source}</p>`),
   }
 }
-
 function viewOf(index: NoteIndex) {
   const doc = 'Top\n\n![[Plan]]\n\nend'
   const state = parsed(
@@ -50,19 +45,15 @@ function viewOf(index: NoteIndex) {
   open.push(view)
   return view
 }
-
 const settle = () => new Promise((done) => setTimeout(done, 30))
-
 describe('a note embed while the note around it is typed in and saved', () => {
   test('keeps showing the embedded words when only the note around it was saved', async () => {
     const view = viewOf(space())
     await settle()
     const shown = () => view.dom.querySelector('.orden-embed-body')?.textContent ?? ''
     expect(shown()).toBe('the plan words')
-
     view.dispatch({ changes: { from: 3, insert: ' typed' }, selection: EditorSelection.cursor(9) })
     setNoteIndex(view, space())
-
     expect(shown()).toBe('the plan words')
     expect(view.dom.querySelector('.orden-embed-loading')).toBeNull()
   })

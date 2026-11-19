@@ -3,9 +3,7 @@ import hashlib
 import json
 import struct
 import zlib
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -13,20 +11,15 @@ DRIVE = Drive(__file__, served=False)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = harness.worker_origin()
 PATIENCE = 60
-
 def png(width: int, height: int, rgb: tuple[int, int, int]) -> bytes:
     row = b"\x00" + bytes(rgb) * width
     raw = zlib.compress(row * height)
-
     def chunk(kind: bytes, data: bytes) -> bytes:
         body = kind + data
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
-
     head = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", head) + chunk(b"IDAT", raw) + chunk(b"IEND", b"")
-
 PICTURE = base64.b64encode(png(64, 48, (220, 40, 120))).decode()
-
 PASTE = """(data) => {
   const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
   const file = new File([bytes], 'image.png', { type: 'image/png' })
@@ -36,10 +29,8 @@ PASTE = """(data) => {
   plane.focus()
   plane.dispatchEvent(new ClipboardEvent('paste', { clipboardData: carried, bubbles: true, cancelable: true }))
 }"""
-
 PICTURES = """() => [...document.querySelectorAll('.canvas img.picture')].map((one) =>
   ({ loaded: one.complete && one.naturalWidth > 0, src: one.getAttribute('src') }))"""
-
 def wait(page: Page, script: str, what: str) -> object:
     for _ in range(PATIENCE * 4):
         answer = page.evaluate(script)
@@ -47,7 +38,6 @@ def wait(page: Page, script: str, what: str) -> object:
             return answer
         page.wait_for_timeout(250)
     raise SystemExit(f"gave up waiting for {what}")
-
 def board(page: Page, label: str) -> str:
     wait(page, "() => !!window.ordenApp?.workspace?.activeSpace && typeof window.ordenApp.tasks === 'function'", f"[{label}] the app")
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
@@ -61,7 +51,6 @@ def board(page: Page, label: str) -> str:
     wait(page, "() => !!document.querySelector('.canvas')", f"[{label}] the canvas")
     page.wait_for_timeout(600)
     return path
-
 def pasted(page: Page, label: str, path: str) -> None:
     page.evaluate(PASTE, PICTURE)
     try:
@@ -75,7 +64,6 @@ def pasted(page: Page, label: str, path: str) -> None:
     shot(page, f"{label}-pasted")
     said = page.evaluate(PICTURES)
     say(f"ok   [{label}] the pasted picture loaded: {said[0]['src'][:80]}")
-
     page.reload(wait_until="domcontentloaded")
     wait(page, "() => !!window.ordenApp?.workspace?.activeSpace", f"[{label}] the app again")
     page.evaluate("async (path) => { await window.ordenApp.workspace.openEntry(path, { activate: true }) }", path)
@@ -84,9 +72,7 @@ def pasted(page: Page, label: str, path: str) -> None:
         say(f"ok   [{label}] and after the canvas is opened again")
     except SystemExit:
         wrong(f"[{label}] after a reload the picture did not load: {page.evaluate(PICTURES)}")
-
 HASH = hashlib.sha256(base64.b64decode(PICTURE)).hexdigest()
-
 def written_before(page: Page, label: str, signed: bool) -> None:
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     path = f"{root}/Before.canvas"
@@ -110,7 +96,6 @@ def written_before(page: Page, label: str, signed: bool) -> None:
             wrong(f"[{label}] a card written before #364 loaded with nobody signed in")
         else:
             say(f"ok   [{label}] a card written before #364 is nothing, with nobody signed in")
-
 def drive(browser: Browser, token: str) -> None:
     for label, signed in (("signed in", True), ("signed out", False)):
         context = browser.new_context(
@@ -126,7 +111,6 @@ def drive(browser: Browser, token: str) -> None:
         pasted(page, label, path)
         written_before(page, label, signed)
         context.close()
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
@@ -134,5 +118,4 @@ def main() -> int:
         token = worker.account("paster@example.com")
         drive(browser, token)
     return DRIVE.verdict("a picture pasted onto a canvas is the picture, signed in and not")
-
 raise SystemExit(main())

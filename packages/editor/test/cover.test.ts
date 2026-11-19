@@ -14,7 +14,6 @@ interface StandIn {
   addEventListener(): void
   removeEventListener(): void
 }
-
 function standIn(tag: string): StandIn {
   return {
     tag,
@@ -35,33 +34,25 @@ function standIn(tag: string): StandIn {
     },
   }
 }
-
 const observers: { watched: unknown[]; disconnected: boolean; resize: () => void }[] = []
-
 class Observer {
   private readonly own: (typeof observers)[number]
-
   constructor(callback: () => void) {
     this.own = { watched: [], disconnected: false, resize: callback }
     observers.push(this.own)
   }
-
   observe(target: unknown) {
     this.own.watched.push(target)
   }
-
   disconnect() {
     this.own.disconnected = true
   }
 }
-
 vi.stubGlobal('document', { createElement: standIn })
 vi.stubGlobal('ResizeObserver', Observer)
-
 afterEach(() => {
   observers.length = 0
 })
-
 function drawn() {
   const requestMeasure = vi.fn()
   const view = {
@@ -72,7 +63,6 @@ function drawn() {
   const block = widget.toDOM(view) as unknown as StandIn
   return { widget, block, requestMeasure }
 }
-
 describe("a note's cover in the editor", () => {
   test('is a block holding the band, not the band itself', () => {
     const { block } = drawn()
@@ -80,44 +70,36 @@ describe("a note's cover in the editor", () => {
     expect(block.children.map((one) => one.className)).toEqual(['orden-cover'])
     expect(block.children[0]?.children.map((one) => one.tag)).toEqual(['img', 'div'])
   })
-
   test('has the editor measure again when its height changes by itself', () => {
     const { block, requestMeasure } = drawn()
     const [observer] = observers
     expect(observer?.watched).toEqual([block])
-
     observer?.resize()
     expect(requestMeasure).toHaveBeenCalledTimes(1)
   })
-
   test('stops watching once the editor lets it go', () => {
     const { widget, block } = drawn()
     widget.destroy(block as unknown as HTMLElement)
     expect(observers[0]?.disconnected).toBe(true)
   })
 })
-
 describe("the cover's stylesheets", () => {
   const sheet = (name: string) =>
     readFileSync(fileURLToPath(new URL(`../../themes/src/${name}`, import.meta.url)), 'utf8').replace(
       /\/\*[\s\S]*?\*\//g,
       '',
     )
-
   function body(css: string, selector: string): string {
     const found = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((match) => (match[1] ?? '').trim() === selector)
     return found.map((match) => match[2] ?? '').join(';')
   }
-
   test('give the band a margin below it, which is what the block has to hold', () => {
     expect(body(sheet('document.css'), '#write .orden-cover')).toMatch(/\bmargin\s*:/)
   })
-
   test('give the blocks over a note no margin of their own, outside the box the editor measures', () => {
     for (const selector of ['#write .orden-cover-block', '.orden-toc'])
       expect(body(sheet('editor.css'), selector), selector).not.toMatch(/\bmargin/)
   })
-
   test('make the block hold its margins inside the box the editor measures', () => {
     const block = body(sheet('editor.css'), '#write .orden-cover-block')
     expect(block).toMatch(/\bdisplay\s*:\s*flow-root\b/)

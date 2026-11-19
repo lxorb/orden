@@ -5,15 +5,12 @@ interface AccountRow {
   label: string
   active: boolean
 }
-
 let listing: (() => AccountRow[]) | null = null
 let choosing: ((id: string) => void) | null = null
-
 export function accountsAre(rows: () => AccountRow[], choose: (id: string) => void): void {
   listing = rows
   choosing = choose
 }
-
 export function accountRows(): CommandExtension[] {
   return (listing?.() ?? []).map((one) => ({
     id: `ai-account:${one.id}`,

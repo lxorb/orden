@@ -9,7 +9,6 @@ interface Signed {
   user: { id: string; email: string; name: string } | null
   token: string | null
 }
-
 const fake = vi.hoisted(() => {
   const account: Signed = {
     user: { id: 'ada', email: 'ada@example.com', name: 'Ada' },
@@ -35,7 +34,6 @@ const fake = vi.hoisted(() => {
     prompt: { confirm: vi.fn(), choose: vi.fn(), ask: vi.fn() },
   }
 })
-
 vi.mock('../../pass-sync/src/store.svelte', () => ({ pass: fake.pass }))
 vi.mock('../../accounts/src/api', async (real) => ({
   ...(await real<typeof import('../../accounts/src/api')>()),
@@ -51,26 +49,22 @@ vi.mock('../../pass-sync/src/api', async () => ({
   pass: fake.pass,
 }))
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({ prompt: fake.prompt }))
-
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ShareSheet = (await import('./ShareSheet.svelte')).default
 const FieldRow = (await import('./FieldRow.svelte')).default
 const CODE = '1a2b 3c4d 5e6f 7a8b 9c0d 1e2f 3a4b 5c6d'
-
 const MEMBERS: Member[] = [
   { email: 'ada@example.com', name: 'Ada', role: 'owner', state: 'active', pub: 'P1' },
   { email: 'bob@example.com', name: 'Bob', role: 'editor', state: 'active', pub: 'P2' },
   { email: 'cy@example.com', name: '', role: 'viewer', state: 'confirm', pub: 'P3' },
   { email: 'dee@example.com', name: '', role: 'viewer', state: 'pending', pub: null },
 ].map((one) => ({ ...one, signPub: null, vouch: null }) as Member)
-
 const personAt = (email: string, known: Person['known'] = 'seen'): Person => ({
   email,
   key: { pub: 'P', signPub: 'S' },
   code: CODE,
   known,
 })
-
 beforeEach(() => {
   for (const one of Object.values(fake.pass)) {
     if (typeof one === 'function') one.mockReset()
@@ -84,9 +78,7 @@ beforeEach(() => {
   fake.prompt.confirm.mockResolvedValue(true)
   landed()
 })
-
 afterEach(closed)
-
 async function shown() {
   const ui = new PassUi(null)
   ui.sheet = { kind: 'share', vault: 'v1' }
@@ -96,13 +88,11 @@ async function shown() {
   })
   return ui
 }
-
 function member(email: string): HTMLElement {
   const found = target.querySelector<HTMLElement>(`[data-member="${email}"]`)
   if (!found) throw new Error(`no ${email}`)
   return found
 }
-
 describe('sharing a vault', () => {
   test('asks to sign in first, and asks the account nothing', async () => {
     fake.account.user = null
@@ -111,7 +101,6 @@ describe('sharing a vault', () => {
     expect(fake.pass.members).not.toHaveBeenCalled()
     expect(target.querySelector('input[type="email"]')).toBe(null)
   })
-
   test('lists the members with their state, and confirms the one waiting', async () => {
     await shown()
     expect(fake.pass.members).toHaveBeenCalledWith('v1')
@@ -120,7 +109,6 @@ describe('sharing a vault', () => {
     const waiting = member('cy@example.com')
     expect(waiting.textContent).toContain('Waiting for you to confirm')
     expect(() => button('Confirm', member('bob@example.com'))).toThrow()
-
     button('Confirm', waiting).click()
     await vi.waitFor(() => expect(waiting.textContent).toContain(CODE))
     expect(fake.pass.confirmMember).not.toHaveBeenCalled()
@@ -133,14 +121,12 @@ describe('sharing a vault', () => {
     )
     await vi.waitFor(() => expect(fake.pass.members).toHaveBeenCalledTimes(2))
   })
-
   test('warns when somebody’s key is not the one this device knew', async () => {
     fake.pass.person.mockResolvedValue(personAt('eve@example.com', 'changed'))
     await shown()
     typed(target.querySelector<HTMLInputElement>('input[type="email"]'), 'eve@example.com')
     await vi.waitFor(() => expect(target.querySelector('[data-changed]')).not.toBe(null))
   })
-
   test('shows the safety code of the address typed, then invites with the role chosen', async () => {
     fake.pass.invite.mockResolvedValue('pending')
     await shown()
@@ -151,7 +137,6 @@ describe('sharing a vault', () => {
     expect(fake.pass.person).toHaveBeenCalledWith('Eve@Example.com')
     button('Codes match').click()
     await vi.waitFor(() => expect(target.querySelector('[data-matched]')).not.toBe(null))
-
     button('Role').click()
     flushSync()
     const editor = [...document.querySelectorAll('[role="option"]')].find(
@@ -159,7 +144,6 @@ describe('sharing a vault', () => {
     ) as HTMLElement
     editor.click()
     flushSync()
-
     button('Invite').click()
     await vi.waitFor(() =>
       expect(fake.pass.invite).toHaveBeenCalledWith(
@@ -170,7 +154,6 @@ describe('sharing a vault', () => {
     )
     await vi.waitFor(() => expect(email.value).toBe(''))
   })
-
   test('says when the person has no Pass yet', async () => {
     fake.pass.person.mockResolvedValue({
       email: 'new@example.com',
@@ -182,14 +165,12 @@ describe('sharing a vault', () => {
     typed(target.querySelector<HTMLInputElement>('input[type="email"]'), 'new@example.com')
     await vi.waitFor(() => expect(target.querySelector('[data-safety]')?.textContent).toContain('not set up Pass'))
   })
-
   test('shows a member’s safety code to read aloud', async () => {
     await shown()
     button('Safety code', member('bob@example.com')).click()
     await vi.waitFor(() => expect(member('bob@example.com').textContent).toContain(CODE))
     expect(fake.pass.memberPerson).toHaveBeenCalledWith(MEMBERS[1])
   })
-
   test('changes a role and removes somebody once asked', async () => {
     await shown()
     button('Role of Bob').click()
@@ -199,14 +180,12 @@ describe('sharing a vault', () => {
     ) as HTMLElement
     viewer.click()
     await vi.waitFor(() => expect(fake.pass.setRole).toHaveBeenCalledWith('v1', 'bob@example.com', 'viewer'))
-
     await vi.waitFor(() => expect(button('Remove Bob').disabled).toBe(false))
     button('Remove Bob').click()
     await vi.waitFor(() => expect(fake.pass.removeMember).toHaveBeenCalledWith('v1', 'bob@example.com'))
     expect(fake.prompt.confirm).toHaveBeenCalledOnce()
     expect(() => button('Remove Ada')).toThrow()
   })
-
   test('hides passwords from viewers and hands the vault on, for its owner', async () => {
     fake.prompt.choose.mockResolvedValue('bob@example.com')
     await shown()
@@ -214,7 +193,6 @@ describe('sharing a vault', () => {
     expect(hide.getAttribute('aria-checked')).toBe('false')
     hide.click()
     await vi.waitFor(() => expect(fake.pass.updateVault).toHaveBeenCalledWith('v1', { hidePasswordsFromViewers: true }))
-
     expect(() => button('Leave vault')).toThrow()
     await vi.waitFor(() => expect(button('Transfer ownership').disabled).toBe(false))
     button('Transfer ownership').click()
@@ -222,7 +200,6 @@ describe('sharing a vault', () => {
     const offered = fake.prompt.choose.mock.calls[0]?.[0] as { options: { id: string }[] }
     expect(offered.options.map((one) => one.id)).toEqual(['bob@example.com'])
   })
-
   test('to a viewer, shows the members only, and lets them leave', async () => {
     fake.pass.vaults = [vaultAs('viewer', true)]
     fake.account.user = { id: 'cy', email: 'cy@example.com', name: '' }
@@ -234,13 +211,11 @@ describe('sharing a vault', () => {
     expect(() => button('Confirm')).toThrow()
     expect(() => button('Transfer ownership')).toThrow()
     expect(target.textContent).toContain('Passwords in this vault are hidden from you.')
-
     button('Leave vault').click()
     await vi.waitFor(() => expect(fake.pass.leave).toHaveBeenCalledWith('v1'))
     await vi.waitFor(() => expect(ui.sheet).toBe(null))
   })
 })
-
 describe('a hidden field in a vault that hides passwords from viewers', () => {
   test('shows neither Show nor Copy, nor the value', () => {
     draw(FieldRow, { label: 'Password', value: 'hunter2', hidden: true, sealed: true })

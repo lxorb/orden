@@ -5,10 +5,8 @@ use serde::Serialize;
 use super::shells::Launch;
 
 pub const PREFIX: &str = "tmux:";
-
 const FORMAT: &str =
     "#{session_name}\t#{session_attached}\t#{session_activity}\t#{pane_current_command}\t#{pane_current_path}";
-
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct Found {
     pub name: String,
@@ -17,19 +15,15 @@ pub struct Found {
     pub program: Option<String>,
     pub folder: Option<String>,
 }
-
 pub fn name_of(shell: &str) -> Option<&str> {
     shell.strip_prefix(PREFIX).filter(|one| fits(one))
 }
-
 fn fits(name: &str) -> bool {
     !name.is_empty() && name.chars().count() <= 200 && !name.chars().any(char::is_control)
 }
-
 fn program() -> Option<PathBuf> {
     orden_base::program::which("tmux")
 }
-
 pub fn parsed(listed: &str) -> Vec<Found> {
     listed
         .lines()
@@ -49,7 +43,6 @@ pub fn parsed(listed: &str) -> Vec<Found> {
         })
         .collect()
 }
-
 pub fn listed() -> Vec<Found> {
     let Some(tmux) = program() else {
         return Vec::new();
@@ -64,7 +57,6 @@ pub fn listed() -> Vec<Found> {
         .map(|done| parsed(&String::from_utf8_lossy(&done.stdout)))
         .unwrap_or_default()
 }
-
 pub fn launch(name: &str, home: Option<PathBuf>) -> Result<Launch, String> {
     let program = program().ok_or_else(|| "there is no tmux here".to_owned())?;
     Ok(Launch {
@@ -82,7 +74,6 @@ pub fn launch(name: &str, home: Option<PathBuf>) -> Result<Launch, String> {
         ],
     })
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,7 +103,6 @@ mod tests {
         );
         assert!(parsed("odd line\n").is_empty());
     }
-
     #[test]
     fn a_session_is_named_in_the_shell_id_and_attached_exactly() {
         assert_eq!(name_of("tmux:work"), Some("work"));
@@ -123,7 +113,6 @@ mod tests {
             assert_eq!(launch.args, ["attach-session", "-t", "=work"]);
         }
     }
-
     #[cfg(unix)]
     #[test]
     fn a_tmux_session_of_this_machine_is_listed_and_adopted() {
@@ -156,7 +145,6 @@ mod tests {
             ["mine"]
         );
         assert!(!found[0].attached);
-
         tmux_here(&[
             "send-keys",
             "-t",
@@ -202,7 +190,6 @@ mod tests {
             }
         }
         assert!(String::from_utf8_lossy(&seen).contains("orden-adopted"));
-
         session.end();
         std::thread::sleep(std::time::Duration::from_millis(500));
         let still = tmux_here(&["has-session", "-t", "=mine"]);

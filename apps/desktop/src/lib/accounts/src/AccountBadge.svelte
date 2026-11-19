@@ -35,7 +35,6 @@
     overflow: hidden;
     border-radius: 50%;
   }
-
   .person img {
     position: absolute;
     inset: 0;
@@ -44,7 +43,6 @@
     object-fit: cover;
     opacity: 0;
   }
-
   .person img.shown {
     opacity: 1;
   }

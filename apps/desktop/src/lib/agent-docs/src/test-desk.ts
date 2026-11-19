@@ -5,10 +5,8 @@ import type { Keeping } from '../../workspace/src/api'
 import type { Desk, Space } from './desk'
 
 const SPACE: Space = { id: 's1', name: 'Space', root: '/space' }
-
 export class Pane {
   state: EditorState
-
   constructor(
     readonly note: NoteDoc,
     caret = 0,
@@ -20,46 +18,36 @@ export class Pane {
     })
     note.live.join(this)
   }
-
   dispatch(spec: Parameters<EditorState['update']>[0]) {
     this.state = this.state.update(spec).state
   }
-
   get text(): string {
     return this.state.doc.toString()
   }
-
   get caret(): number {
     return this.state.selection.main.head
   }
-
   type(at: number, insert: string) {
     this.change({ from: at, insert }, at + insert.length)
   }
-
   erase(from: number, to: number) {
     this.change({ from, to }, from)
   }
-
   select(from: number, to: number) {
     this.state = this.state.update({ selection: { anchor: from, head: to } }).state
   }
-
   undo(): boolean {
     return undoEdit(this as unknown as EditorView)
   }
-
   get agents() {
     return agentsOf(this.state)
   }
-
   private change(changes: { from: number; to?: number; insert?: string }, caret: number) {
     const made = this.state.update({ changes, selection: { anchor: caret } })
     this.state = made.state
     documentOf(this)?.local(made.changes, made.state.selection, this)
   }
 }
-
 export function deskWith(notes: Record<string, string>, open: readonly string[] = []) {
   const disk = new Map(Object.entries(notes).map(([path, text]) => [`${SPACE.root}/${path}`, text]))
   const documents = new Map<string, NoteDoc>()
@@ -70,7 +58,6 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
   const pad = { text: '', wrote: 0 }
   const refusing = { next: false }
   const shut = new Set<string>()
-
   const opened = (path: string, caret = 0): Pane => {
     const at = `${SPACE.root}/${path}`
     const note = new NoteDoc(
@@ -80,9 +67,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     documents.set(at, note)
     return new Pane(note, caret)
   }
-
   const panes = Object.fromEntries(open.map((path) => [path, opened(path)]))
-
   const desk: Desk = {
     spaces: [SPACE],
     activeSpace: SPACE,
@@ -123,7 +108,6 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
       return Promise.resolve(true)
     },
   }
-
   return {
     desk,
     panes,
@@ -151,7 +135,6 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     fileOf: (path: string) => disk.get(`${SPACE.root}/${path}`),
   }
 }
-
 export function deskOpen(path: string, text: string) {
   const at = deskWith({ [path]: text }, [path])
   const pane = at.panes[path]

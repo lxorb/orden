@@ -13,11 +13,9 @@ export class BulletWidget extends OrdenWidget {
   constructor(private readonly depth: number) {
     super()
   }
-
   override eq(other: BulletWidget) {
     return other.depth === this.depth
   }
-
   toDOM() {
     const dot = document.createElement('span')
     dot.className = 'orden-bullet'
@@ -25,7 +23,6 @@ export class BulletWidget extends OrdenWidget {
     return dot
   }
 }
-
 export class CheckboxWidget extends OrdenWidget {
   constructor(
     private readonly checked: boolean,
@@ -34,18 +31,15 @@ export class CheckboxWidget extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: CheckboxWidget) {
     return other.checked === this.checked && other.from === this.from
   }
-
   toDOM(view: EditorView) {
     const box = document.createElement('input')
     box.type = 'checkbox'
     box.className = 'orden-checkbox'
     box.checked = this.checked
     box.setAttribute('aria-label', 'Done')
-
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()
       if (view.state.readOnly) return
@@ -53,32 +47,26 @@ export class CheckboxWidget extends OrdenWidget {
         changes: { from: this.from, to: this.to, insert: this.checked ? '[ ]' : '[x]' },
       })
     })
-
     return box
   }
-
   override ignoreEvent() {
     return false
   }
 }
-
 export class RuleWidget extends OrdenWidget {
   override eq() {
     return true
   }
-
   toDOM() {
     const rule = document.createElement('span')
     rule.className = 'orden-rule'
     return rule
   }
 }
-
 function calloutIcon(look: string | null): SVGElement | null {
   const parts = calloutIconParts(look)
   return parts ? iconElement(parts, 'callout-icon') : null
 }
-
 export class CalloutWidget extends OrdenWidget {
   constructor(
     private readonly type: string,
@@ -87,29 +75,23 @@ export class CalloutWidget extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: CalloutWidget) {
     return other.type === this.type && other.look === this.look && other.name === this.name
   }
-
   toDOM() {
     const label = document.createElement('span')
     label.className = 'orden-callout-label'
     label.dataset.callout = this.type
-
     const icon = calloutIcon(this.look)
     if (icon) label.append(icon)
-
     if (this.name) {
       const word = document.createElement('span')
       word.textContent = this.name
       label.append(word)
     }
-
     return label
   }
 }
-
 export class FenceHeaderWidget extends OrdenWidget {
   constructor(
     private readonly language: string,
@@ -121,7 +103,6 @@ export class FenceHeaderWidget extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: FenceHeaderWidget) {
     return (
       other.language === this.language &&
@@ -131,34 +112,28 @@ export class FenceHeaderWidget extends OrdenWidget {
       other.asking === this.asking
     )
   }
-
   toDOM(view: EditorView) {
     const bar = document.createElement('span')
     bar.className = 'orden-fence-header'
     bar.contentEditable = 'false'
-
     const row = document.createElement('span')
     row.className = 'orden-fence-row'
     bar.append(row)
-
     if (this.caption) {
       const said = document.createElement('span')
       said.className = 'orden-fence-caption'
       said.textContent = this.caption
       row.append(said)
     }
-
     const controls = document.createElement('span')
     controls.className = 'orden-fence-controls'
     row.append(controls)
-
     const label = document.createElement('button')
     label.className = 'orden-fence-language'
     label.type = 'button'
     label.title = 'Set the language'
     label.textContent = this.language || 'plain'
     if (!this.language) label.classList.add('orden-fence-unset')
-
     const edit = () => this.editLanguage(view, label, bar)
     label.addEventListener('mousedown', (event) => {
       event.preventDefault()
@@ -166,37 +141,28 @@ export class FenceHeaderWidget extends OrdenWidget {
       edit()
     })
     pressedByKey(label, edit)
-
     controls.append(label)
-
     if (isRunnableLanguage(this.language)) controls.append(this.runButton(view))
     else if (isAiLanguage(this.language)) controls.append(this.askButton(view))
-
     const copy = document.createElement('button')
     copy.className = 'orden-fence-copy'
     copy.type = 'button'
     copy.title = 'Copy'
     copy.setAttribute('aria-label', 'Copy code')
-
     const draw = (paths: string[]) => {
       copy.replaceChildren()
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
       svg.setAttribute('viewBox', '0 0 14 14')
-
       for (const d of paths) {
         const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path')
         shape.setAttribute('d', d)
         svg.append(shape)
       }
-
       copy.append(svg)
     }
-
     const SHEETS = ['M5 5h7v7H5z', 'M2 9V2h7']
     const TICK = ['M2.5 7.5l3 3 6-6']
-
     draw(SHEETS)
-
     const take = () => {
       navigator.clipboard
         .writeText(fenceCodeAt(view.state, this.blockFrom))
@@ -204,7 +170,6 @@ export class FenceHeaderWidget extends OrdenWidget {
           copy.classList.add('orden-fence-copied')
           copy.title = 'Copied'
           draw(TICK)
-
           window.setTimeout(() => {
             copy.classList.remove('orden-fence-copied')
             copy.title = 'Copy'
@@ -213,92 +178,75 @@ export class FenceHeaderWidget extends OrdenWidget {
         })
         .catch(() => undefined)
     }
-
     copy.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
       take()
     })
     pressedByKey(copy, take)
-
     controls.append(copy)
-
     const over = (event: Event) => {
       const target = event.target
       const line = target instanceof Element ? target.closest('.cm-line') : null
       bar.classList.toggle('orden-fence-hover', !!line && FenceHeaderWidget.holds(bar, line))
     }
     const leave = () => bar.classList.remove('orden-fence-hover')
-
     view.contentDOM.addEventListener('mouseover', over)
     view.contentDOM.addEventListener('mouseleave', leave)
     this.onDestroy(bar, () => {
       view.contentDOM.removeEventListener('mouseover', over)
       view.contentDOM.removeEventListener('mouseleave', leave)
     })
-
     return bar
   }
-
   private static holds(bar: Element, line: Element): boolean {
     let current: Element | null = bar.closest('.cm-line')
-
     while (current?.classList.contains('orden-code')) {
       if (current === line) return true
       if (current.classList.contains('orden-code-close')) break
       current = current.nextElementSibling
     }
-
     return false
   }
-
   private glyphButton(title: string, spoken: string, path: string, press: () => void): HTMLElement {
     const button = document.createElement('button')
     button.className = 'orden-fence-run'
     button.type = 'button'
     button.title = title
     button.setAttribute('aria-label', spoken)
-
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     svg.setAttribute('viewBox', '0 0 14 14')
     const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     shape.setAttribute('d', path)
     svg.append(shape)
     button.append(svg)
-
     button.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
       press()
     })
     pressedByKey(button, press)
-
     return button
   }
-
   private runButton(view: EditorView): HTMLElement {
     return this.glyphButton('Run', 'Run the code', 'M4 2.6l7 4.4-7 4.4z', () => {
       const fence = runnableFenceAt(view.state, this.blockFrom)
       if (fence) runFence(view, fence)
     })
   }
-
   private askButton(view: EditorView): HTMLElement {
     if (this.asking) return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, this.blockFrom))
-
     return this.glyphButton('Ask', 'Ask the model', 'M4 2.6l7 4.4-7 4.4z', () => {
       const fence = aiFenceAt(view.state, this.blockFrom)
       if (fence) askAiFence(view, fence)
     })
   }
-
   private editLanguage(view: EditorView, label: HTMLElement, dom: HTMLElement) {
     const field = document.createElement('input')
     field.className = 'orden-fence-language-input'
     field.value = this.language
     field.placeholder = 'language'
     field.spellcheck = false
-
     const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
     const opening = view.state.doc.lineAt(this.infoFrom)
     const ticked = view.state.sliceDoc(opening.from, this.infoFrom).trimEnd().endsWith('`')
@@ -309,7 +257,6 @@ export class FenceHeaderWidget extends OrdenWidget {
       done = true
       const next = field.value.replace(ticked ? /[\s`]+/g : /\s+/g, '')
       field.replaceWith(label)
-
       if (next === this.language) return
       queueMicrotask(() => {
         land((state) =>
@@ -319,7 +266,6 @@ export class FenceHeaderWidget extends OrdenWidget {
         )
       })
     }
-
     field.addEventListener('keydown', (event) => {
       event.stopPropagation()
       if (event.key === 'Enter') field.blur()
@@ -330,22 +276,18 @@ export class FenceHeaderWidget extends OrdenWidget {
     })
     field.addEventListener('blur', commit)
     this.onDestroy(dom, commit)
-
     label.replaceWith(field)
     field.focus()
     field.select()
   }
-
   override ignoreEvent() {
     return true
   }
 }
-
 export class PageBreakWidget extends OrdenWidget {
   override eq() {
     return true
   }
-
   toDOM() {
     const rule = document.createElement('span')
     rule.className = 'orden-page-break'
@@ -353,16 +295,13 @@ export class PageBreakWidget extends OrdenWidget {
     return rule
   }
 }
-
 export class EmojiWidget extends OrdenWidget {
   constructor(private readonly character: string) {
     super()
   }
-
   override eq(other: EmojiWidget) {
     return other.character === this.character
   }
-
   toDOM() {
     const span = document.createElement('span')
     span.className = 'orden-emoji'

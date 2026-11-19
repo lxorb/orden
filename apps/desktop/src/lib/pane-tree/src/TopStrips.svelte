@@ -13,7 +13,6 @@
     start?: boolean
     end?: boolean
   } = $props()
-
   const split = $derived(frame.kind === 'split' ? frame : null)
 </script>
 
@@ -35,26 +34,21 @@
     min-width: 0;
     transition: grid-template-columns var(--dur-base) var(--ease-out);
   }
-
   .split.sliding {
     transition: none;
   }
-
   .slot {
     display: flex;
     align-items: stretch;
     min-width: 0;
     overflow: clip;
   }
-
   .slot.start {
     padding-inline-start: var(--strip-lead, 0px);
   }
-
   .slot.finish {
     padding-inline-end: var(--strip-end, 0px);
   }
-
   .slot > :global(.strip) {
     pointer-events: auto;
   }

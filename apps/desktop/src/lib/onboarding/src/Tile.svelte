@@ -11,7 +11,6 @@
     glyph?: Snippet
     onpick: () => void
   }
-
   const { name, icon = null, colour = null, checked, later = '', glyph, onpick }: Props = $props()
 </script>
 
@@ -50,26 +49,21 @@
       border-color 0.25s var(--ease-out),
       transform 0.25s var(--ease-out);
   }
-
   .tile:hover {
     transform: translateY(-2px);
   }
-
   .tile[aria-checked='true'] {
     border-color: var(--accent);
   }
-
   .mark {
     width: 40px;
     height: 40px;
     display: grid;
     place-items: center;
   }
-
   .later .mark {
     opacity: 0.55;
   }
-
   .label {
     display: block;
     max-width: 100%;
@@ -77,7 +71,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .soon {
     position: absolute;
     left: 0;
@@ -87,7 +80,6 @@
     color: var(--muted);
     text-align: center;
   }
-
   .ring {
     position: absolute;
     top: 8px;
@@ -100,12 +92,10 @@
     place-items: center;
     transition: all 0.25s var(--ease-out);
   }
-
   .tile[aria-checked='true'] .ring {
     background: var(--accent);
     border-color: var(--accent);
   }
-
   .tile[aria-checked='true'] .ring::after {
     content: '';
     width: 6px;

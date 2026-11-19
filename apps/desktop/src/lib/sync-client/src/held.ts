@@ -16,7 +16,6 @@ interface Sides {
   local: string
   remote: string
 }
-
 function sidesOf(doc: Doc, against: Holding['against']): Sides {
   if (against.t === 'moved') {
     return {
@@ -28,12 +27,10 @@ function sidesOf(doc: Doc, against: Holding['against']): Sides {
   if (against.t === 'blob') return { base: '', local: '', remote: '' }
   return { base: against.base, local: against.local, remote: doc.text() }
 }
-
 function remoteOnly(doc: Doc, against: Holding['against']): string {
   if (against.t !== 'moved') return doc.text()
   return fileOfUpdates(doc.shape, doc.row().confirmed, against.update)
 }
-
 function planeOf(text: string): string | undefined {
   try {
     readCanvas(text)
@@ -42,28 +39,22 @@ function planeOf(text: string): string | undefined {
     return undefined
   }
 }
-
 function passagesOf(sides: Sides, times: { local: number; remote: number }) {
   const overlaps = diverge(sides.base, sides.local, sides.remote, times).overlaps
   return excerpt(sides.base, sides.local, sides.remote, overlaps)
 }
-
 export type Names = (device: string | null) => Promise<string>
-
 export class HeldList implements HeldNotes {
   notes: readonly Held[] = []
   changed: ((notes: readonly Held[]) => void) | null = null
   freshens = true
-
   constructor(
     private readonly core: Core,
     private readonly names: Names,
   ) {}
-
   refresh(): Promise<void> {
     return this.core.use(() => this.read())
   }
-
   private async read(): Promise<void> {
     const out: Held[] = []
     for (const [id, holding] of this.core.held) {
@@ -80,7 +71,6 @@ export class HeldList implements HeldNotes {
     this.notes = out
     this.changed?.(out)
   }
-
   private async heldOf(space: SpaceState, entry: EntryRow, doc: Doc, holding: Holding): Promise<Held> {
     const against = holding.against
     const sides = sidesOf(doc, against)
@@ -101,7 +91,6 @@ export class HeldList implements HeldNotes {
       theirs: side(sides.remote, shown?.remote, await this.names(holding.row.device), theirsAt),
     }
   }
-
   private async fileHeld(
     space: SpaceState,
     entry: EntryRow,
@@ -122,11 +111,9 @@ export class HeldList implements HeldNotes {
       theirs: side(await this.names(holding.row.device), against.at),
     }
   }
-
   answer(id: string, answer: HeldAnswer): Promise<string | undefined> {
     return this.core.use(() => this.answered(id, answer))
   }
-
   private async answered(id: string, answer: HeldAnswer): Promise<string | undefined> {
     const core = this.core
     const holding = core.held.get(id)
@@ -139,13 +126,11 @@ export class HeldList implements HeldNotes {
     }
     const doc = await core.doc(id)
     if (!holding || !space || !entry || !doc) return undefined
-
     const against = await this.freshest(space, doc, holding)
     if (against.t === 'blob') return undefined
     const local = against.t === 'moved' ? doc.text() : against.local
     const remote = remoteOnly(doc, against)
     const changes: Change[] = []
-
     if (answer === 'mine') {
       if (against.t === 'moved') {
         doc.took(against.update, against.seq)
@@ -163,11 +148,9 @@ export class HeldList implements HeldNotes {
         doc.restart(fileBytes(doc, against.update), against.seq, doc.epoch, core.freshClient())
       }
     }
-
     changes.push(...core.letGoChanges(id))
     changes.push(...core.docChanges(doc))
     changes.push(...(await project(core, space, entry, doc)))
-
     let copy: string | undefined
     if (answer === 'both') {
       const path = this.copyPath(space, entry)
@@ -176,14 +159,11 @@ export class HeldList implements HeldNotes {
       changes.push(...made_.changes)
       copy = core.world.join(space.row.root, path)
     }
-
     if (against.t === 'merge') changes.push(...core.forgetChanges(against.from))
-
     await core.commit(changes)
     await this.read()
     return copy
   }
-
   private async fileAnswered(space: SpaceState, entry: EntryRow, answer: HeldAnswer): Promise<string | undefined> {
     const core = this.core
     const full = core.world.join(space.row.root, entry.local_path)
@@ -204,7 +184,6 @@ export class HeldList implements HeldNotes {
     await core.commit(changes)
     return copy
   }
-
   private async freshest(space: SpaceState, doc: Doc, holding: Holding): Promise<Holding['against']> {
     const against = holding.against
     if (against.t !== 'moved' || !this.freshens) return against
@@ -222,7 +201,6 @@ export class HeldList implements HeldNotes {
     }
     return against
   }
-
   private copyPath(space: SpaceState, entry: EntryRow): string {
     const name = entry.name
     const dot = name.lastIndexOf('.')
@@ -237,7 +215,6 @@ export class HeldList implements HeldNotes {
     }
   }
 }
-
 function fileBytes(doc: Doc, update: Uint8Array): Uint8Array {
   return Y.mergeUpdatesV2([doc.row().confirmed, update])
 }

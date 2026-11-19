@@ -4,13 +4,11 @@ import { describe, expect, test } from 'vitest'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 
 const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
-
 const SURFACES = [...SOURCE.matchAll(/\{#await (\w+)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
 const DOORS = [
   ...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then/g),
   ...SOURCE.matchAll(/\{@render surface\((\w+Surface), tab\)\}/g),
 ]
-
 describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {
     expect(DOORS.map(([, door]) => door).sort()).toEqual([
@@ -30,18 +28,15 @@ describe('a surface a pane is filled with', () => {
       'webSurface',
     ])
   })
-
   test('offers a reload where it could not be fetched, rather than a blank pane', () => {
     for (const [, door, body] of SURFACES) {
       expect(body, door).toMatch(/\{:catch\}\s*\{@render unreachable\(\)\}/)
     }
   })
 })
-
 const OWN_SURFACES = [...SOURCE.matchAll(/\{:else if tab\?\.kind === '(\w+)'\}/g)].map(
   ([, kind]) => kind as keyof typeof TAB_KINDS,
 )
-
 describe('a kind with a surface of its own', () => {
   test('is not the editor, so a note dropped in its middle is not taken as a link', () => {
     expect(OWN_SURFACES).toContain('channel')
@@ -49,13 +44,11 @@ describe('a kind with a surface of its own', () => {
     expect(SOURCE).toMatch(/const writing = \$derived\(!!tab && TAB_KINDS\[tab\.kind\]\.editor/)
     expect(SOURCE).toMatch(/const keepsMiddle = \$derived\(\s*ownSurface \|\| \(writing &&/)
   })
-
   test("has no editor's find bar drawn over it", () => {
     expect(TAB_KINDS.channel.editor).toBe(false)
     expect(SOURCE).toContain('<Door open={finding && writing} load={() => findBar()}>')
   })
 })
-
 describe('a protected tab', () => {
   test('is drawn as its lock before any surface or the editor', () => {
     const chain = SOURCE.slice(SOURCE.indexOf('{#if tab && behind && locked}'))
@@ -66,13 +59,11 @@ describe('a protected tab', () => {
     expect(chain.indexOf('<Editor')).toBeGreaterThan(0)
     expect(SOURCE).toContain('const locked = $derived(protection.locked(behind))')
   })
-
   test('is never a column beside an open one, and has no find bar', () => {
     expect(SOURCE).toMatch(/one\.kind === 'note' && !one\.reading && !protection\.locked\(one\.path\)/)
     expect(SOURCE).toMatch(/const writing = \$derived\([^)]*&& !locked\)/)
   })
 })
-
 describe('a column of a stacked pane', () => {
   test('is the active tab once anything in it takes focus, so keys and menus act on it', () => {
     expect(SOURCE).toMatch(

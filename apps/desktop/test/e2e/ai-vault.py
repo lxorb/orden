@@ -4,27 +4,21 @@ import sys
 import time
 import uuid
 from typing import Any
-
 from playwright.sync_api import Browser, BrowserContext, Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = harness.worker_origin()
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
-
 KEY = "sk-ant-drive-" + uuid.uuid4().hex
 LIVE = 20
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def wait(page: Page, script: str, what: str, patience: float = LIVE) -> Any:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -33,7 +27,6 @@ def wait(page: Page, script: str, what: str, patience: float = LIVE) -> Any:
             return answer
         page.wait_for_timeout(150)
     raise SystemExit(f"gave up waiting for {what}")
-
 def signed_in(
     browser: Browser, token: str, label: str, vault: bool = True
 ) -> tuple[BrowserContext, Page]:
@@ -47,10 +40,8 @@ def signed_in(
     wait(page, "() => !!window.ordenApp && window.ordenApp.account.signedIn", f"[{label}] the session", 40)
     wait(page, "() => !!window.ordenApp.aiVault", f"[{label}] the AI vault handle", 40)
     return context, page
-
 def standing(word: str) -> str:
     return f"async () => (await window.ordenApp.aiVault()).vault.standing === {json.dumps(word)}"
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
@@ -64,7 +55,6 @@ def main() -> int:
             statements.append(harness.session_row(digest, user, now))
         worker.sql("".join(statements))
         worker.start()
-
         _, laptop = signed_in(browser, tokens[0], "laptop")
         laptop.evaluate(
             """async (key) => {
@@ -77,14 +67,12 @@ def main() -> int:
         )
         wait(laptop, standing("open"), "the laptop's vault open", 40)
         check("the account's first device opens without a word", True)
-
         _, stranger = signed_in(browser, tokens[2], "a browser not told", vault=False)
         stranger.wait_for_timeout(3000)
         check(
             "a browser not told to keep its keys in the vault stays out of it",
             stranger.evaluate(standing("off")) and len(worker.query("select id from ai_devices")) == 1,
         )
-
         _, phone = signed_in(browser, tokens[1], "phone")
         wait(phone, standing("waiting"), "the phone waiting", 40)
         digits = wait(
@@ -97,20 +85,17 @@ def main() -> int:
         phone.wait_for_selector(f"text={digits}")
         shot(phone, "01-phone-waiting")
         check("the phone waits, its six digits in Settings > AI", bool(digits))
-
         laptop.wait_for_selector(".approve", timeout=LIVE * 1000)
         bubble = laptop.locator(".approve").inner_text()
         shot(laptop, "02-laptop-asked")
         check("the laptop's bubble names the phone and shows the same digits", digits in bubble)
         laptop.locator(".approve").get_by_role("button", name="Allow", exact=True).click()
-
         wait(phone, standing("offered"), "the phone offered the vault", LIVE)
         phone.wait_for_selector("text=offers this device your AI vault")
         before = phone.evaluate("() => window.ordenApp.ai.accounts.map((one) => one.id)")
         shot(phone, "03-phone-offered")
         check("the phone, offered the vault, takes nothing until Join", before == [])
         phone.get_by_role("button", name="Join", exact=True).click()
-
         wait(phone, standing("open"), "the phone open", LIVE)
         have = phone.evaluate(
             """async () => {
@@ -122,24 +107,20 @@ def main() -> int:
         check("the phone has the account", have["ids"] == ["anthropic"])
         check("the phone has the key, in its own secret store", have["key"] == KEY)
         shot(phone, "04-phone-open")
-
         rows = worker.query("select blob from ai_vaults")
         wraps = worker.query("select wrapped, pub from ai_devices")
         stored = json.dumps(rows) + json.dumps(wraps)
         check("the account holds the vault sealed", len(rows) == 1 and KEY not in stored)
         check("both devices are allowed", len(wraps) == 2 and all(one["wrapped"] for one in wraps))
-
         phone.evaluate("window.ordenApp.ai.update('anthropic', { name: 'Work' })")
         start = time.monotonic()
         wait(laptop, "() => window.ordenApp.ai.accounts[0]?.name === 'Work'", "the change on the laptop", LIVE)
         say(f"     a change on the phone reached the laptop in {time.monotonic() - start:.1f} s")
         check("a change on the phone reaches the laptop", True)
-
         phone.reload(wait_until="domcontentloaded")
         wait(phone, "() => !!window.ordenApp && !!window.ordenApp.aiVault", "the phone again", 40)
         wait(phone, standing("open"), "the phone open after a reload", 40)
         check("the phone, reloaded, opens without asking", True)
-
         phone.keyboard.press("Control+Shift+KeyP")
         phone.wait_for_selector(".palette input")
         phone.keyboard.type("Sign out")
@@ -152,7 +133,6 @@ def main() -> int:
         wait(phone, "() => !window.ordenApp.account.signedIn", "the phone signed out", LIVE)
         approved = worker.query("select id from ai_devices where approved_at is not null")
         check("Sign out alone keeps the phone in the vault", len(approved) == 2)
-
         held = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
         laptop.evaluate("window.ordenApp.settings.show('ai')")
         laptop.wait_for_selector("text=Devices with your AI vault")
@@ -176,5 +156,4 @@ def main() -> int:
         wait(laptop, standing("open"), "the laptop still open", LIVE)
         shot(laptop, "07-laptop-alone")
     return DRIVE.verdict("the AI accounts carried from one device to another, end to end")
-
 raise SystemExit(main())

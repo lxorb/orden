@@ -9,54 +9,43 @@ const fake = vi.hoisted(() => ({
   confirm: vi.fn(),
   delivered: [] as { name: string; extension: string; bytes: Uint8Array }[],
 }))
-
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: { confirm: fake.confirm, choose: vi.fn(), ask: vi.fn() },
 }))
-
 vi.mock('../../files-out/src/save', () => ({
   deliver: (name: string, extension: string, _label: string, payload: { bytes: Uint8Array }) => {
     fake.delivered.push({ name, extension, bytes: payload.bytes })
     return Promise.resolve(name)
   },
 }))
-
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ItemView = (await import('./ItemView.svelte')).default
 const ItemEdit = (await import('./ItemEdit.svelte')).default
-
 let vault = ''
-
 beforeAll(async () => {
   await opened()
   pass.fileSource = () => Promise.resolve(null)
   vault = pass.vaults[0]?.id ?? ''
 })
-
 beforeEach(() => {
   fake.confirm.mockReset()
   fake.confirm.mockResolvedValue(true)
   fake.delivered.length = 0
 })
-
 afterEach(closed)
-
 const viewing = (item: Item) => showing(ItemView, { ui: new PassUi(null), item })
 const editing = (ui: InstanceType<typeof PassUi>) => showing(ItemEdit, { ui })
-
 function press(label: string) {
   const button = target.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
   if (!button) throw new Error(`no button ${label}`)
   button.click()
   flushSync()
 }
-
 function current(id: string): Item {
   const item = pass.items.find((one) => one.id === id)
   if (!item) throw new Error('gone')
   return item
 }
-
 describe('the files of an item', () => {
   test('are listed with their size, saved by Download and taken off by Remove', async () => {
     const made = await pass.create(vault, { ...blank('note'), title: 'Passport' })
@@ -72,12 +61,10 @@ describe('the files of an item', () => {
     await vi.waitFor(() => expect(fake.delivered).toHaveLength(1))
     expect(fake.delivered[0]).toMatchObject({ name: 'passport', extension: 'pdf' })
     expect(fake.delivered[0]?.bytes.length).toBe(2048)
-
     press('Remove passport.pdf')
     await vi.waitFor(() => expect(current(made.id).attachments).toEqual([]))
     expect(fake.confirm).toHaveBeenCalledOnce()
   })
-
   test('are attached while editing and kept on save', async () => {
     const made = await pass.create(vault, { ...blank('note'), title: 'Lease' })
     const ui = new PassUi(null)
@@ -96,7 +83,6 @@ describe('the files of an item', () => {
     expect(attachment).toMatchObject({ name: 'lease.txt', type: 'text/plain', size: 3 })
     expect(await pass.fileBytes(made.id, attachment?.id ?? '')).toEqual(new Uint8Array([1, 2, 3]))
   })
-
   test('are attached to a new item once it is made', async () => {
     const ui = new PassUi(null)
     await ui.newItem({ ...blank('note'), title: 'Will' })
@@ -113,7 +99,6 @@ describe('the files of an item', () => {
     expect(will?.attachments.map((one) => one.name)).toEqual(['will.txt'])
   })
 })
-
 describe('the passkeys of a login', () => {
   const passkey: Passkey = {
     id: 'pk1',
@@ -129,7 +114,6 @@ describe('the passkeys of a login', () => {
     created: Date.UTC(2026, 0, 2),
     note: '',
   }
-
   test('are shown with their site and user, and can be removed', async () => {
     const made = await pass.create(vault, {
       ...blank('login'),
@@ -147,7 +131,6 @@ describe('the passkeys of a login', () => {
       expect(after.kind === 'login' && after.passkeys).toEqual([])
     })
   })
-
   test('cannot be removed in the trash', async () => {
     const made = await pass.create(vault, { ...blank('login'), title: 'Old', passkeys: [passkey] })
     await pass.trash([made.id])
@@ -156,7 +139,6 @@ describe('the passkeys of a login', () => {
     expect(target.querySelector('button[aria-label="Remove the passkey for github.com"]')).toBeNull()
   })
 })
-
 describe('an SSH key', () => {
   test('is made by Generate key and shows its fingerprint', async () => {
     const ui = new PassUi(null)
@@ -178,7 +160,6 @@ describe('an SSH key', () => {
     const key = pass.items.find((one) => one.content.title === 'Server')
     if (key?.content.kind !== 'ssh') throw new Error('no key')
     expect(key.content.publicKey).toMatch(/^ssh-ed25519 \S+ Server$/)
-
     closed()
     viewing(key)
     await vi.waitFor(() => expect(target.querySelector('[data-field="Fingerprint"]')?.textContent).toMatch(/SHA256:/))

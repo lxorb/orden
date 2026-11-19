@@ -8,16 +8,13 @@ async function mute(tab: string, muted: boolean) {
   const { muteSite } = await import('./mute')
   await muteSite(tab, muted)
 }
-
 async function clearData(tab: string) {
   const { clearingAsked } = await import('./clearing-asked.svelte')
   clearingAsked.ask(tab)
 }
-
 export function webRows(): CommandExtension[] {
   const tab = workspace.active
   if (!isDesktop || tab?.kind !== 'web') return []
-
   const page = pages.of(tab.id)
   const rows: [Step, string, string][] = [
     ['reload', 'Reload', 'web.reload'],

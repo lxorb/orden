@@ -3,7 +3,6 @@ import { totpOf } from './build'
 import { parseDashlane } from './dashlane'
 
 const utf8 = (text: string): Uint8Array => new TextEncoder().encode(text)
-
 const CREDENTIALS =
   'username,username2,username3,title,password,note,url,category,otpSecret\n' +
   'me@example.com,alt,,GitHub,"pa""ss",,https://github.com,Work,JBSWY3DPEHPK3PXP\n' +
@@ -21,7 +20,6 @@ const PERSONAL =
   'type,title,first_name,middle_name,last_name,login,date_of_birth,place_of_birth,email,email_type,item_name,phone_number,address,country,state,city,zip,address_recipient,address_building,address_apartment,address_floor,address_door_code,job_title,url\n' +
   'name,Ms,Ada,,Lovelace,,1815-12-10,London,,,Me,,,,,,,,,,,,,\n' +
   'address,,,,,,,,,,Home,,12 Rue Ünique,FR,,Paris,75001,Ada,B,3,2,4711,,\n'
-
 describe('parseDashlane', () => {
   it('reads every file of the zip', () => {
     const { vaults, skipped } = parseDashlane({
@@ -85,12 +83,10 @@ describe('parseDashlane', () => {
       },
     })
   })
-
   it('reads one csv by its header', () => {
     const items = parseDashlane(CREDENTIALS).vaults[0]?.items ?? []
     expect(items).toHaveLength(2)
   })
-
   it('says when a file is not one it knows', () => {
     expect(parseDashlane('a,b\n1,2\n').skipped).toHaveLength(1)
   })

@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const made = vi.hoisted(() => [] as string[])
-
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: { path: string }) => {
@@ -13,7 +12,6 @@ vi.mock('./open', () => ({ inASpace: () => true }))
 const { newFolder } = await import('./changes')
 const { workspace } = await import('../../workspace/src/api')
 vi.spyOn(workspace, 'loadTree').mockResolvedValue()
-
 function filteredView() {
   const entries = ['New folder', 'apples', 'pears'].map((name) => ({ name }))
   const view = {
@@ -34,7 +32,6 @@ function filteredView() {
   }
   return view
 }
-
 test('a new folder made while a filter hides a folder of the same name gets a free name of its own, and is shown to be named', async () => {
   const view = filteredView()
   await newFolder(view as never)

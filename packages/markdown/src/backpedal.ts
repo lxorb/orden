@@ -6,15 +6,12 @@ const CLOSE = 41
 const AMPERSAND = 38
 const SEMICOLON = 59
 const plain = (code: number): boolean => !MARKS.has(code) && code !== OPEN && code !== AMPERSAND
-
 const alphanumeric = (code: number): boolean =>
   (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)
-
 interface Stop {
   at: number
   run: number
 }
-
 function read(text: string, from: number, end: number, starts: number[]): Stop {
   let at = from
   while (at < end) {
@@ -51,7 +48,6 @@ function read(text: string, from: number, end: number, starts: number[]): Stop {
   }
   return { at: end, run: -1 }
 }
-
 function slowly(address: string): string {
   for (let before = ''; before !== address;) {
     before = address
@@ -59,7 +55,6 @@ function slowly(address: string): string {
   }
   return address
 }
-
 export function backpedal(address: string): string {
   const starts: number[] = []
   let end = address.length
@@ -68,7 +63,6 @@ export function backpedal(address: string): string {
     const stop = read(address, from, end, starts)
     if (stop.at === end) return address.slice(0, end)
     if (stop.at === 0) return slowly(address.slice(0, end))
-
     end = stop.run === -1 ? stop.at : stop.run + 1
     let last = starts.length - 1
     while (last > 0 && (starts[last] ?? 0) >= end) last--

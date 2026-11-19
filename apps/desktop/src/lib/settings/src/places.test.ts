@@ -2,10 +2,8 @@ import { describe, expect, test, vi } from 'vitest'
 import { registerSettingsPart } from '@orden/contracts'
 
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
-
 const { places } = await import('./places')
 const { sectionGroups } = await import('./sections')
-
 describe('the places settings search can land on', () => {
   test('are only in sections the window shows, signed out and outside coder mode', () => {
     const stop = registerSettingsPart({

@@ -3,26 +3,19 @@ import { byName } from '../../tree/src/api'
 import type { Entry } from './commands'
 
 export type SortKey = 'name' | 'modified' | 'created' | 'size' | 'kind' | 'folder'
-
 export const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'created', 'size', 'kind', 'folder']
-
 export interface Sort {
   key: SortKey
   down: boolean
 }
-
 export function endingOf(name: string): string {
   const dot = name.lastIndexOf('.')
   return dot > 0 ? name.slice(dot + 1).toLowerCase() : ''
 }
-
 export const firstDown = (key: SortKey): boolean => key === 'modified' || key === 'created' || key === 'size'
-
 export const sortShown = (sort: Sort, searching: boolean): Sort =>
   !searching && sort.key === 'folder' ? { key: 'name', down: sort.down } : sort
-
 const kindOf = (entry: Entry): string => (entry.folder ? '' : endingOf(nameOf(entry.name)))
-
 function compared(one: Entry, other: Entry, key: SortKey): number {
   switch (key) {
     case 'name':
@@ -39,10 +32,8 @@ function compared(one: Entry, other: Entry, key: SortKey): number {
       return byName(folderOf(one.name), folderOf(other.name))
   }
 }
-
 const byLeaf = (one: Entry, other: Entry): number =>
   byName(nameOf(one.name), nameOf(other.name)) || byName(one.name, other.name)
-
 export function ordered(entries: readonly Entry[], sort: Sort, hidden: boolean): Entry[] {
   const turn = sort.down ? -1 : 1
   return entries
@@ -54,7 +45,6 @@ export function ordered(entries: readonly Entry[], sort: Sort, hidden: boolean):
       return byLeaf(one, other) * (sort.key === 'name' ? turn : 1)
     })
 }
-
 export function filtered(entries: readonly Entry[], typed: string): Entry[] {
   const wanted = typed.trim().toLowerCase()
   if (!wanted) return [...entries]

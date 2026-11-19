@@ -18,7 +18,6 @@ export function scopeName(scope: Scope, vaults: readonly Vault[]): string {
     }
   }
 }
-
 export function filterName(filter: TypeFilter): string {
   return {
     all: 'All',
@@ -30,7 +29,6 @@ export function filterName(filter: TypeFilter): string {
     other: 'Other',
   }[filter]
 }
-
 export function sortName(sort: Sort): string {
   return { recent: 'Most recent', title: 'Title A-Z', newest: 'Newest', oldest: 'Oldest' }[sort]
 }

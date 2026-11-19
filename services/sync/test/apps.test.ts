@@ -12,18 +12,15 @@ import { MachineSocket } from './machine-fakes'
 
 let env: TestEnv
 let opened = false
-
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
   vi.setSystemTime(Date.UTC(2026, 10, 4, 12))
 })
-
 afterEach(() => {
   vi.useRealTimers()
   if (opened) env.close()
   opened = false
 })
-
 function relay() {
   const state = new HubState()
   Object.assign(state, {
@@ -60,7 +57,6 @@ function relay() {
   }
   return { made, state, join, say, closed, viewer }
 }
-
 describe('an application’s relay', () => {
   test('the first viewer holds it, and the host is told who and at what size', async () => {
     const { join, viewer } = relay()
@@ -78,41 +74,34 @@ describe('an application’s relay', () => {
       view: { width: 1200, height: 800, dpr: 2, hz: 120 },
     })
   })
-
   test('only the holder’s signalling reaches the host, and the host’s only the holder', async () => {
     const { join, say, viewer } = relay()
     const host = await join('host', 'desktop')
     const laptop = await viewer('laptop')
     const phone = await viewer('phone')
     expect(phone.of('held')).toHaveLength(1)
-
     await say(phone, { t: 'signal', data: 'offer from the phone' })
     await say(phone, { t: 'run', what: 'stop' })
     expect(host.of('signal')).toEqual([])
     expect(host.of('run')).toEqual([])
     await say(laptop, { t: 'signal', data: 'offer' })
     expect(host.of('signal')).toEqual([{ t: 'signal', data: 'offer' }])
-
     await say(host, { t: 'signal', data: 'answer' })
     expect(laptop.of('signal')).toEqual([{ t: 'signal', data: 'answer' }])
     expect(phone.of('signal')).toEqual([])
   })
-
   test('Take over hands it to the new device, and the host is told to wait for its offer', async () => {
     const { join, say, viewer } = relay()
     const host = await join('host', 'desktop')
     const laptop = await viewer('laptop')
     const phone = await viewer('phone')
-
     await say(phone, { t: 'take' })
     expect(phone.of('hold')).toEqual([{ t: 'hold' }])
     expect(laptop.of('held').at(-1)).toMatchObject({ by: 'phone’s screen', taken: true })
     expect(host.of('viewer').at(-1)).toMatchObject({ device: 'phone' })
-
     await say(laptop, { t: 'signal', data: 'stale offer' })
     expect(host.of('signal')).toEqual([])
   })
-
   test('two Take overs at once end with one holder', async () => {
     const { say, viewer } = relay()
     await viewer('laptop')
@@ -122,7 +111,6 @@ describe('an application’s relay', () => {
     const holding = [phone, tablet].filter((one) => one.of('held').at(-1)?.taken !== true)
     expect(holding).toHaveLength(1)
   })
-
   test('a holder that crashed is let go of after the grace, and the one waiting has it', async () => {
     const { closed, viewer } = relay()
     const laptop = await viewer('laptop')
@@ -132,7 +120,6 @@ describe('an application’s relay', () => {
     await vi.advanceTimersByTimeAsync(HOLD_GRACE + 100)
     expect(phone.of('hold')).toEqual([{ t: 'hold' }])
   })
-
   test('the host leaving and coming back is said to every viewer; the state is kept for joiners', async () => {
     const { closed, join, say, viewer } = relay()
     const host = await join('host', 'desktop')
@@ -141,14 +128,12 @@ describe('an application’s relay', () => {
     expect(laptop.of('state')).toEqual([{ t: 'state', state: 'running' }])
     await closed(host)
     expect(laptop.of('host').at(-1)).toEqual({ t: 'host', up: false })
-
     const again = await join('host', 'desktop')
     expect(laptop.of('host').at(-1)).toEqual({ t: 'host', up: true })
     expect(again.of('viewer').at(-1)).toMatchObject({ device: 'laptop' })
     const late = await viewer('phone')
     expect(late.of('state')).toEqual([{ t: 'state', state: 'running' }])
   })
-
   test('a second host replaces the first', async () => {
     const { join } = relay()
     const first = await join('host', 'desktop')
@@ -156,7 +141,6 @@ describe('an application’s relay', () => {
     expect(first.closedWith?.code).toBe(4409)
   })
 })
-
 describe('an application’s door', () => {
   function namespace() {
     const asked: Headers[] = []
@@ -178,7 +162,6 @@ describe('an application’s door', () => {
       } as unknown as DurableObjectNamespace,
     }
   }
-
   const knock = (token: string, host = false) =>
     call(env, '/v2/apps/app-1/socket', {
       headers: {
@@ -190,7 +173,6 @@ describe('an application’s door', () => {
         ].join(', '),
       },
     })
-
   async function world(apps: DurableObjectNamespace) {
     env = testEnv({ APPS: apps })
     opened = true
@@ -215,44 +197,35 @@ describe('an application’s door', () => {
       .run()
     return { owner, other }
   }
-
   const on = () => env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
-
   test('answers 404 while switched off, as a route that does not exist', async () => {
     const { APPS } = namespace()
     const { owner } = await world(APPS)
     vi.setSystemTime(Date.now() + 31_000)
     expect((await knock(owner)).status).toBe(404)
   })
-
   test('lets in the owner’s devices, as host or viewer, and nobody else', async () => {
     const { APPS, asked } = namespace()
     const { owner, other } = await world(APPS)
     on()
     vi.setSystemTime(Date.now() + 31_000)
-
     expect((await knock(other)).status).toBe(404)
     expect(asked).toHaveLength(0)
-
     await knock(owner)
     await knock(owner, true)
     expect(asked.map((one) => one.get('x-orden-role'))).toEqual(['viewer', 'host'])
     expect(asked[0]?.get('x-orden-app-id')).toBe('app-1')
-
     env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
     expect((await knock(owner)).status).toBe(404)
   })
-
   test('a look without a socket says whether it may open, and why not, and opens nothing', async () => {
     const { APPS, asked } = namespace()
     const { owner, other } = await world(APPS)
     const look = (token?: string, app = 'app-1') =>
       call(env, `/v2/apps/${app}/socket`, token === undefined ? {} : { token })
     vi.setSystemTime(Date.now() + 31_000)
-
     const off = await look(owner)
     expect([off.status, off.json]).toEqual([404, { error: 'not found' }])
-
     on()
     expect((await look(owner)).status).toBe(426)
     expect((await look()).status).toBe(401)
@@ -262,23 +235,18 @@ describe('an application’s door', () => {
     expect((await look(other)).status).toBe(404)
     expect(asked).toHaveLength(0)
   })
-
   test('says which sign-in came, and keeps out a deleted space’s file', async () => {
     const { APPS, asked } = namespace()
     const { owner } = await world(APPS)
     on()
     vi.setSystemTime(Date.now() + 31_000)
-
     await knock(owner)
     expect(asked[0]?.get('x-orden-login')).toBe(await sha256(owner))
-
     env.db.prepare("update spaces set deleted = 1 where id = 'space-1'").run()
     expect((await knock(owner)).status).toBe(404)
   })
-
   describe('each minute', () => {
     const LATER = 61_000
-
     async function sockets() {
       env = testEnv()
       opened = true
@@ -317,7 +285,6 @@ describe('an application’s door', () => {
       }
       return { made, state, join, login }
     }
-
     test('a sign-in that ended closes its socket, and only its', async () => {
       const { made, state, join } = await sockets()
       const host = await join('host', 'desktop')
@@ -325,31 +292,25 @@ describe('an application’s door', () => {
       const other = await signIn(env, 'owner@example.com')
       const viewer = await join('viewer', 'laptop', await sha256(other))
       expect(state.alarm).not.toBeNull()
-
       env.db.prepare('delete from sessions where token_hash = ?').run(await sha256(other))
       vi.setSystemTime(Date.now() + LATER)
       await made.alarm()
-
       expect(viewer.closedWith?.code).toBe(4401)
       expect(host.closedWith).toBeNull()
       expect(state.alarm).not.toBeNull()
     })
-
     test('a file deleted closes every socket, and the object stops asking', async () => {
       const { made, state, join } = await sockets()
       const host = await join('host', 'desktop')
       const viewer = await join('viewer', 'laptop')
-
       env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
       state.alarm = null
       vi.setSystemTime(Date.now() + LATER)
       await made.alarm()
-
       expect(host.closedWith?.code).toBe(4404)
       expect(viewer.closedWith?.code).toBe(4404)
       expect(state.alarm).toBeNull()
     })
-
     test('a lock handed on tells the host once', async () => {
       const { made, join } = await sockets()
       const host = await join('host', 'desktop')
@@ -359,7 +320,6 @@ describe('an application’s door', () => {
       await say(laptop)
       const phone = await join('viewer', 'phone')
       await say(phone)
-
       vi.setSystemTime(Date.now() + HOLD_QUIET + 1000)
       phone.beatAt = new Date()
       await made.alarm()
@@ -369,11 +329,9 @@ describe('an application’s door', () => {
       const before = host.of('viewer').length
       await made.alarm()
       await vi.advanceTimersByTimeAsync(0)
-
       expect(phone.of('hold')).toEqual([{ t: 'hold' }])
       expect(host.of('viewer').slice(before)).toEqual([{ t: 'viewer', device: 'phone', name: 'phone' }])
     })
-
     test('a database that does not answer ends nothing', async () => {
       const { made, join } = await sockets()
       const host = await join('host', 'desktop')
@@ -384,16 +342,13 @@ describe('an application’s door', () => {
       vi.setSystemTime(Date.now() + LATER)
       await made.alarm()
       env.DB = db
-
       expect(host.closedWith).toBeNull()
     })
   })
 })
-
 describe('a host’s catalogue', () => {
   const APPS = {} as unknown as DurableObjectNamespace
   const GIMP = { id: 'org.gimp.GIMP.desktop', name: 'GIMP' }
-
   async function device(email: string, id: string): Promise<string> {
     const token = await signIn(env, email)
     const hash = createHash('sha256').update(token).digest('hex')
@@ -409,23 +364,19 @@ describe('a host’s catalogue', () => {
       .run(id, session.user_id, session.id)
     return token
   }
-
   const on = () => env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
   const write = (token: string, apps: unknown) =>
     call(env, '/v2/apps/catalogue', { token, method: 'PUT', body: { apps } })
   const read = (token: string, id: string) => call<{ apps?: unknown }>(env, `/v2/apps/catalogue/${id}`, { token })
-
   beforeEach(() => {
     env = testEnv({ APPS })
     opened = true
   })
-
   test('answers 404 while switched off', async () => {
     const laptop = await device('owner@example.com', 'device-laptop')
     expect((await write(laptop, [GIMP])).status).toBe(404)
     expect((await read(laptop, 'device-laptop')).status).toBe(404)
   })
-
   test('a host writes its own, and the reader’s other devices read it by its id', async () => {
     on()
     const laptop = await device('owner@example.com', 'device-laptop')
@@ -438,7 +389,6 @@ describe('a host’s catalogue', () => {
       { name: 'no id' },
     ])
     expect(written.json).toEqual({ kept: 2 })
-
     const answered = await read(phone, 'device-laptop')
     expect(answered.json.apps).toEqual([
       { ...GIMP, icon },
@@ -446,42 +396,35 @@ describe('a host’s catalogue', () => {
     ])
     expect((await read(phone, 'device-phone')).status).toBe(404)
   })
-
   test('nobody else’s, and nothing of a device that was ended', async () => {
     on()
     const laptop = await device('owner@example.com', 'device-laptop')
     const other = await device('other@example.com', 'device-other')
     await write(laptop, [GIMP])
     expect((await read(other, 'device-laptop')).status).toBe(404)
-
     env.db.prepare("update devices set revoked_at = 2 where id = 'device-laptop'").run()
     const phone = await device('owner@example.com', 'device-phone')
     expect((await read(phone, 'device-laptop')).status).toBe(404)
   })
-
   test('a session no device said hello with writes nothing', async () => {
     on()
     const token = await signIn(env, 'owner@example.com')
     expect((await write(token, [GIMP])).status).toBe(409)
   })
 })
-
 describe('an application’s ICE servers', () => {
   const APPS = {} as unknown as DurableObjectNamespace
   const on = () => env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
   const ask = (token: string) => call<{ iceServers?: unknown }>(env, '/v2/apps/ice', { token })
-
   afterEach(() => {
     vi.restoreAllMocks()
   })
-
   test('answers 404 while switched off', async () => {
     env = testEnv({ APPS })
     opened = true
     const token = await signIn(env, 'owner@example.com')
     expect((await ask(token)).status).toBe(404)
   })
-
   test('hands out STUN alone where there is no TURN key, and asks nobody', async () => {
     env = testEnv({ APPS })
     opened = true
@@ -492,7 +435,6 @@ describe('an application’s ICE servers', () => {
     expect(answered.json.iceServers).toEqual([{ urls: ['stun:stun.cloudflare.com:3478'] }])
     expect(asked).not.toHaveBeenCalled()
   })
-
   test('with a key, Cloudflare’s TURN credentials for a day', async () => {
     env = testEnv({ APPS, TURN_KEY_ID: 'key-1', TURN_KEY_TOKEN: 'secret' })
     opened = true
@@ -521,7 +463,6 @@ describe('an application’s ICE servers', () => {
     expect(init?.headers).toMatchObject({ authorization: 'Bearer secret' })
     expect(init?.body).toBe(JSON.stringify({ ttl: 86_400 }))
   })
-
   test('Cloudflare not answering leaves STUN', async () => {
     env = testEnv({ APPS, TURN_KEY_ID: 'key-1', TURN_KEY_TOKEN: 'secret' })
     opened = true

@@ -10,15 +10,12 @@ use orden_agents::grants::Grant;
 pub fn instructions() -> &'static str {
     INSTRUCTIONS
 }
-
 pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static Tool> {
     tools::listed(grant, window)
 }
-
 pub fn shown(tool: &Tool) -> Value {
     tool.listed()
 }
-
 pub fn reads_only(tool: &Tool) -> bool {
     tool.annotations
         .as_ref()
@@ -26,16 +23,13 @@ pub fn reads_only(tool: &Tool) -> bool {
         .and_then(Value::as_bool)
         .unwrap_or(false)
 }
-
 pub fn with_defaults(tool: &str, args: Value) -> Value {
     defaults(tool, args)
 }
-
 pub fn rendered(tool: &str, args: &Value, status: u16, body: &str) -> Value {
     let said = serde_json::from_str(body).unwrap_or_else(|_| Value::String(body.to_owned()));
     written(tool, args, &Outcome::from_endpoint(status, &said))
 }
-
 pub fn categorized(
     rendered: &mut Value,
     category_of: impl Fn(&str) -> Option<(orden_agents::verbs::Category, Option<String>)>,
@@ -57,7 +51,6 @@ pub fn categorized(
         said["site"] = serde_json::json!(site);
     }
 }
-
 #[cfg(test)]
 mod category_tests {
     use super::*;
@@ -73,7 +66,6 @@ mod category_tests {
         });
         assert_eq!(asked["_meta"][META]["category"], "writing");
         assert_eq!(asked["_meta"][META]["site"], "shop.example");
-
         let mut done = json!({ "_meta": { META: { "status": "ok" } } });
         categorized(&mut done, |_| Some((Category::Terminal, None)));
         assert!(done["_meta"][META].get("category").is_none());

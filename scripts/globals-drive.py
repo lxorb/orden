@@ -11,14 +11,11 @@ import linux_app
 
 OUT, APP = Path(sys.argv[1]), sys.argv[2]
 failures = []
-
 def fail(what):
     print(f"::error::globals: {what}")
     failures.append(what)
-
 def run(code):
     return linux_app.run(code, 15)
-
 def until(code, seconds=20):
     for _ in range(seconds * 4):
         said = run(code)
@@ -26,7 +23,6 @@ def until(code, seconds=20):
             return said
         time.sleep(0.25)
     return None
-
 def reports(seconds=30):
     found = {}
     for _ in range(seconds * 2):
@@ -38,7 +34,6 @@ def reports(seconds=30):
             return found
         time.sleep(0.5)
     return found
-
 said = reports()
 for who in ("page", "frame"):
     one = said.get(who)
@@ -52,12 +47,10 @@ for who in ("page", "frame"):
         fail(f"the {who} has the app's internals")
     if one.get("declared") != "1":
         fail(f"the {who}'s own `ipc` is {one.get('declared')}")
-
 kept = until("JSON.stringify(Object.getOwnPropertyDescriptor(window, 'ipc') ? { kind: typeof window.ipc } : { kind: 'none' })")
 print(f"globals: the app's page holds {kept}")
 if kept != '{"kind":"object"}':
     fail(f"the app's page lost window.ipc: {kept}")
-
 def hears(channel, kind):
     name = re.sub(r"\W", "_", channel)
     run(
@@ -70,12 +63,10 @@ def hears(channel, kind):
 }})()"""
     )
     return f"window.__{name}"
-
 heard = hears("orden-quick-add", "hello")
 subprocess.run([APP, "--quick-add"], check=False, timeout=30, capture_output=True)
 if not until(heard):
     fail("the quick add window was never heard: it is not in the app's profile")
-
 answered = run(
     """new Promise((settle) => {
   const internals = window.__TAURI_INTERNALS__
@@ -90,7 +81,6 @@ answered = run(
 print(f"globals: a command down window.ipc: {answered}")
 if answered != "answered":
     fail(f"a command down window.ipc came back {answered}")
-
 if failures:
     sys.exit(1)
 print("globals: nothing on a page, and the app's own pages hear each other")

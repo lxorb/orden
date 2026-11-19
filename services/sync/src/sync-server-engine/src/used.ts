@@ -4,7 +4,6 @@ import { readSpaceFiles } from './spaces/files'
 import { blobKey } from './sync2/files'
 
 const LIVE = '(sp.deleted = 0 or sp.deleted_at is not null)'
-
 export async function usedElsewhere(
   env: Env,
   userId: string,
@@ -19,7 +18,6 @@ export async function usedElsewhere(
     found.add(hash)
   }
   const held = JSON.stringify([...hashes])
-
   const { results: used } = await env.DB.prepare(
     `select sp.user_id as owner, n.hash as hash
        from notes n join spaces sp on sp.id = n.space_id
@@ -46,7 +44,6 @@ export async function usedElsewhere(
     .bind(userId, held, own ? 1 : 0)
     .all<{ owner: string; hash: string }>()
   for (const one of used) owe(one.owner, one.hash)
-
   const { results: listing } = await env.DB.prepare(
     `select user_id as owner, files from spaces sp
       where (?3 or user_id <> ?1) and ${LIVE}
@@ -59,10 +56,8 @@ export async function usedElsewhere(
       if (hashes.has(file.hash)) owe(one.owner, file.hash)
     }
   }
-
   return owed
 }
-
 async function ownOtherwise(
   env: Env,
   userId: string,
@@ -80,7 +75,6 @@ async function ownOtherwise(
     .bind(userId, hash)
     .first()
   if (held) return 'used'
-
   const named = await env.DB.prepare(
     `select 1 as one from chat_files f join chats c on c.id = f.chat_id
        join spaces sp on sp.id = c.space_id
@@ -89,17 +83,13 @@ async function ownOtherwise(
     .bind(hash)
     .first()
   if (named) return 'used'
-
   const posts = await heldFiles(env, userId, done)
   if (posts === null) return 'unknown'
   if (posts.has(hash)) return 'used'
-
   if (!picture) return null
-
   const shown = await versionShows(env, userId, hash, done)
   if (shown === 'used') done.versioned.add(`${userId} ${hash}`)
   if (shown !== null) return shown
-
   const unread = await env.DB.prepare(
     `select 1 as one from notes n join spaces sp on sp.id = n.space_id
       where sp.user_id = ?1 and ${LIVE} and n.size > 0 and n.kind != 'file'
@@ -110,7 +100,6 @@ async function ownOtherwise(
     .first()
   return unread ? 'unknown' : null
 }
-
 export function handedTo(
   env: Env,
   userId: string,
@@ -128,11 +117,8 @@ export function handedTo(
       ).bind(userId, owner, at, JSON.stringify([...hashes])),
     )
 }
-
 const MOST_READ = 250
-
 const MOST_ASKED = 100
-
 export interface Reading {
   left: number
   read: Map<string, { pictures: Set<string>; whole: boolean }>
@@ -141,7 +127,6 @@ export interface Reading {
   versions: Map<string, boolean>
   versioned: Set<string>
 }
-
 export function reading(): Reading {
   return {
     left: MOST_READ,
@@ -152,22 +137,18 @@ export function reading(): Reading {
     versioned: new Set(),
   }
 }
-
 const ITS_SPACES = `(sp.user_id = ?1
   or exists (select 1 from space_members m join users u on u.email = m.email
               where m.space_id = sp.id and u.id = ?1))`
-
 async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<string> | null> {
   const known = done.held.get(userId)
   if (known !== undefined) return known
-
   const { results: chats } = await env.DB.prepare(
     `select c.id from chats c join spaces sp on sp.id = c.space_id
       where c.ended_at is null and ${LIVE} and ${ITS_SPACES} limit ?2`,
   )
     .bind(userId, done.asks + 1)
     .all<{ id: string }>()
-
   let found: Set<string> | null = chats.length > done.asks ? null : new Set()
   if (found) {
     done.asks -= chats.length
@@ -186,10 +167,8 @@ async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<s
   done.held.set(userId, found)
   return found
 }
-
 async function versionShows(env: Env, userId: string, hash: string, done: Reading): Promise<'used' | 'unknown' | null> {
   if (!(await versionsRead(env, userId, done))) return 'unknown'
-
   const found = await env.DB.prepare(
     `select v.pictures is null as unread from note_versions v join notes n on n.id = v.note_id
        join spaces sp on sp.id = n.space_id
@@ -201,11 +180,9 @@ async function versionShows(env: Env, userId: string, hash: string, done: Readin
   if (!found) return null
   return found.unread ? 'unknown' : 'used'
 }
-
 async function versionsRead(env: Env, userId: string, done: Reading): Promise<boolean> {
   const known = done.versions.get(userId)
   if (known !== undefined) return known
-
   const { results: unread } = await env.DB.prepare(
     `select distinct v.hash from note_versions v join notes n on n.id = v.note_id
        join spaces sp on sp.id = n.space_id
@@ -213,7 +190,6 @@ async function versionsRead(env: Env, userId: string, done: Reading): Promise<bo
   )
     .bind(userId, done.left + 1)
     .all<{ hash: string }>()
-
   let whole = unread.length <= done.left
   const reading = unread.slice(0, done.left)
   done.left -= reading.length
@@ -243,7 +219,6 @@ async function versionsRead(env: Env, userId: string, done: Reading): Promise<bo
   done.versions.set(userId, whole)
   return whole
 }
-
 export async function unreadUses(
   env: Env,
   user: { id: string; email: string },
@@ -258,7 +233,6 @@ export async function unreadUses(
     owed.set(owner, found)
     found.add(hash)
   }
-
   const { results: written } = await env.DB.prepare(
     `select sp.id as space, sp.user_id as owner, m.item as item, m.role as role
        from space_members m join spaces sp on sp.id = m.space_id
@@ -266,13 +240,10 @@ export async function unreadUses(
   )
     .bind(user.email, user.id)
     .all<{ space: string; owner: string; item: string; role: string }>()
-
   let complete = true
-
   for (const one of written) {
     const at = one.item ? `${one.space}/${one.item}` : one.space
     let known = done.read.get(at)
-
     if (!known) {
       const { results: notes } = await env.DB.prepare(
         one.item
@@ -283,7 +254,6 @@ export async function unreadUses(
       )
         .bind(one.space, one.item || done.left + 1, FRONT_REV)
         .all<{ id: string }>()
-
       if (notes.length > done.left && one.role === 'write' && guess) {
         for (const hash of pictures) owe(one.owner, hash)
         done.left = 0
@@ -295,17 +265,13 @@ export async function unreadUses(
       known = { pictures: await picturesIn(env, one.space, notes), whole }
       done.read.set(at, known)
     }
-
     if (!known.whole) complete = false
     for (const hash of known.pictures) if (pictures.has(hash)) owe(one.owner, hash)
   }
-
   return complete
 }
-
 async function picturesIn(env: Env, space: string, notes: readonly { id: string }[]): Promise<Set<string>> {
   const found = new Set<string>()
-
   for (let from = 0; from < notes.length; from += 25) {
     const bodies = await Promise.all(
       notes.slice(from, from + 25).map(async (one) => {
@@ -313,13 +279,10 @@ async function picturesIn(env: Env, space: string, notes: readonly { id: string 
         return object ? await object.text() : ''
       }),
     )
-
     for (const body of bodies) for (const hash of picturesOf(body)) found.add(hash)
   }
-
   return found
 }
-
 export async function letGo(
   env: Env,
   userId: string,
@@ -329,30 +292,25 @@ export async function letGo(
 ): Promise<boolean> {
   const owed = await usedElsewhere(env, userId, new Set([hash]), own)
   if (owed.has(userId)) return true
-
   const mine = await env.DB.prepare(
     'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
   )
     .bind(hash, userId)
     .first<{ email: string; type: string }>()
   const picture = mine?.type.startsWith('image/') ?? false
-
   if (own) {
     const otherwise = await ownOtherwise(env, userId, hash, picture, done)
     if (otherwise === 'used') return true
     if (otherwise === 'unknown') return false
   }
-
   if (mine && picture) {
     const user = { id: userId, email: mine.email }
     if (!(await unreadUses(env, user, new Set([hash]), owed, false, done))) return false
   }
-
   await env.DB.batch([
     ...handedTo(env, userId, owed, now()),
     env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
   ])
-
   const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1').bind(hash).first()
   if (!others) await env.NOTES.delete(blobKey(hash))
   return true

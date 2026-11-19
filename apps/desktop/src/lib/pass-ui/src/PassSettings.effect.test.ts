@@ -10,20 +10,15 @@ vi.mock('../../files-out/src/save', () => ({
     return Promise.resolve(name)
   },
 }))
-
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const PassSettings = (await import('./PassSettings.svelte')).default
-
 beforeAll(opened)
-
 afterEach(closed)
-
 function shownOn(tab: 'general' | 'export') {
   const ui = new PassUi(null)
   ui.show({ settingsTab: tab })
   showing(PassSettings, { ui })
 }
-
 async function until(ready: () => boolean): Promise<void> {
   await vi.waitFor(
     () => {
@@ -33,7 +28,6 @@ async function until(ready: () => boolean): Promise<void> {
     { timeout: 5000, interval: 20 },
   )
 }
-
 describe('Pass settings', () => {
   test('a row is its switch', () => {
     shownOn('general')
@@ -48,7 +42,6 @@ describe('Pass settings', () => {
     row?.click()
     expect(pass.settings.autoLogin).toBe(false)
   })
-
   test('export asks for the Pass password, and says when it is wrong', async () => {
     shownOn('export')
     const csv = [...target.querySelectorAll<HTMLButtonElement>('[role=radio]')].find(
@@ -62,7 +55,6 @@ describe('Pass settings', () => {
     await until(() => target.querySelector('[role=alert]') !== null)
     expect(target.querySelector('[role=alert]')?.textContent).toContain('Wrong password')
     expect(delivered).toEqual([])
-
     typed(field(), PASSWORD)
     target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
     await until(() => delivered.length > 0)

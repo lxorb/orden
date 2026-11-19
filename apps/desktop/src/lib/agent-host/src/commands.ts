@@ -46,9 +46,7 @@ const ASKS: Record<string, Category> = {
   'zoom-out': 'settings',
   'zoom-reset': 'settings',
 }
-
 const WINDOW = new Set(['new-window', 'close-window', 'update', 'logs', 'themes-folder'])
-
 const SCREEN = new Set([
   'agents-panel',
   'always-on-top',
@@ -95,7 +93,6 @@ const SCREEN = new Set([
   'web-reload',
   'web-stop',
 ])
-
 const MAKES_NOTE = new Set([
   'new-canvas',
   'new-database',
@@ -104,9 +101,7 @@ const MAKES_NOTE = new Set([
   'new-unique',
   'new-web-note',
 ])
-
 const MAKES_SPACE = new Set(['space'])
-
 const PANELS = new Set([
   'ask-panel',
   'files',
@@ -122,7 +117,6 @@ const PANELS = new Set([
   'search-space',
   'sidebar',
 ])
-
 function scopesOf(id: string): readonly Scope[] | null {
   if (ASKS[id] || asksOfSetting(id) || PANELS.has(id) || id.startsWith('view.')) {
     return ['workspace']
@@ -136,15 +130,12 @@ function scopesOf(id: string): readonly Scope[] | null {
   if (NOTE_WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
   return null
 }
-
 function opensADialog(id: string): boolean {
   return id.startsWith('export-') || id === 'import'
 }
-
 function asksOfSetting(id: string): boolean {
   return /^(theme|scheme|accent|properties|code-theme):/.test(id) || id === 'read-only'
 }
-
 function exportsOnlyWhatAgentsMay(id: string): void {
   const space = workspace.activeSpace
   const front = workspace.active?.path
@@ -153,10 +144,8 @@ function exportsOnlyWhatAgentsMay(id: string): void {
   }
   for (const one of workspace.spaces) readableAll(one.root, one.name)
 }
-
 export async function runCommand(call: Call): Promise<AgentAnswer> {
   placeFor(call, null)
-
   const id = need(call, 'id')
   await commandRowsLoaded()
   const found: Command | undefined = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
@@ -179,7 +168,6 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   const scopes = path !== null && opensADialog(id) ? [] : scopesOf(id)
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
   for (const scope of scopes ?? []) needScope(call, scope, id)
-
   reachesNothingShut(id, scopes ?? [])
   if (id === 'undo-file' || id === 'redo-file') {
     const agent = call.caller.agent
@@ -188,26 +176,21 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
     }
     await nothingLockedWaits(null)
   }
-
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)
   if (question) return question
-
   if (path === null) {
     found.run()
     return done({ id, label: found.label })
   }
   return withPath(call, found, path)
 }
-
 function reachesNothingShut(id: string, scopes: readonly Scope[]): void {
   const note = workspace.active?.path
   const touches = id.startsWith('export-') || scopes.includes('notes.write')
   if (note && touches) readable(note, 'The note in front')
 }
-
 const DIALOG_WITHIN = 15_000
-
 async function withPath(call: Call, found: Command, path: string): Promise<AgentAnswer> {
   const agent = call.caller.agent
   let settle: (said: AgentAnswer | null) => void = () => undefined
@@ -228,7 +211,6 @@ async function withPath(call: Call, found: Command, path: string): Promise<Agent
     const result = (said as { result?: { path?: unknown } }).result
     return typeof result?.path === 'string' ? result.path : null
   })
-
   found.run()
   const over = new Promise<'unused'>((go) => setTimeout(() => go('unused'), DIALOG_WITHIN))
   const outcome = await Promise.race([judged, over])

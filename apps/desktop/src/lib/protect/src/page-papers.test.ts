@@ -2,11 +2,8 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import '../test/storage'
 
 const { Protection } = await import('./protection.svelte')
-
 const ROOT = '/space'
-
 beforeEach(() => localStorage.clear())
-
 describe('the paper of a page note', () => {
   test('stays locked after its page note is renamed', () => {
     const protection = new Protection()
@@ -22,21 +19,18 @@ describe('the paper of a page note', () => {
       'paper.pages.pdf': 'password',
     })
   })
-
   test('is locked with its page note', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/Lecture.pages`, 'password')
     expect(protection.agentsMay(`${ROOT}/Lecture.pages.pdf`)).toBe(false)
     expect(protection.locked(`${ROOT}/Lecture.pages.pdf`)).toBe(true)
   })
-
   test('keeps the lock of a folder its page note left', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/Private`, 'password')
     protection.moved(`${ROOT}/Private/Scan.pages`, `${ROOT}/Open/Scan.pages`, ROOT)
     expect(protection.agentsMay(`${ROOT}/Open/Scan.pages.pdf`)).toBe(false)
   })
-
   test('of a copied locked page note is locked too', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/Lecture.pages`, 'password')
@@ -44,7 +38,6 @@ describe('the paper of a page note', () => {
     protection.copied(`${ROOT}/Lecture.pages`, `${ROOT}/Copy.pages`, ROOT, ROOT)
     expect(protection.ways(ROOT)['Copy.pages.pdf']).toBe('password')
   })
-
   test('left behind by a page note renamed outside Orden stays locked', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/Lecture.pages`, 'password')

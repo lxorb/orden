@@ -29,25 +29,21 @@ import { isMarkdownPath } from '../../platform/src/api'
 import { held } from '../../ui-kit/src/api'
 
 const PLAIN_TEXT = /\.(txt|text)$/i
-
 const Workflow: IconNode = [
   ['rect', { width: '9', height: '9', x: '2', y: '2', rx: '2.25' }],
   ['path', { d: 'M6.5 11v4.25a2.25 2.25 0 0 0 2.25 2.25H13' }],
   ['rect', { width: '9', height: '9', x: '13', y: '13', rx: '2.25' }],
 ]
-
 const Key: IconNode = [
   ['circle', { cx: '8', cy: '16', r: '6' }],
   ['path', { d: 'm12.25 11.75 9.75-9.75' }],
   ['path', { d: 'm19 5 3 3' }],
   ['path', { d: 'm16 8 2 2' }],
 ]
-
 const Window: IconNode = [
   ['rect', { width: '18', height: '20', x: '3', y: '2', rx: '2' }],
   ['path', { d: 'M3 9h18' }],
 ]
-
 const PAGE_TOP: IconNode = [
   [
     'path',
@@ -57,18 +53,14 @@ const PAGE_TOP: IconNode = [
   ],
   ['path', { d: 'M14 2v5a1 1 0 0 0 1 1h5' }],
 ]
-
 const typeMark = (letters: IconNode): IconNode => [...PAGE_TOP, ...letters]
-
 const Pdf: IconNode = typeMark([
   ['path', { d: 'M3 21v-7h2a2 2 0 0 1 0 4H3' }],
   ['path', { d: 'M10 14v7h1a3 3 0 0 0 3-3v-1a3 3 0 0 0-3-3z' }],
   ['path', { d: 'M21 14h-4v7' }],
   ['path', { d: 'M17 17.5h3' }],
 ])
-
 export type { FileMark }
-
 export function fileMark(name: string): FileMark {
   if (isWebTarget(name)) return 'web'
   if (isCanvasTarget(name)) return 'canvas'
@@ -82,7 +74,6 @@ export function fileMark(name: string): FileMark {
   if (isMarkdownPath(name) || PLAIN_TEXT.test(name)) return 'note'
   return 'file'
 }
-
 export const MARKS: Record<FileMark, IconNode> = {
   note: FileText,
   folder: Folder,
@@ -101,25 +92,18 @@ export const MARKS: Record<FileMark, IconNode> = {
   time: Clock,
   settings: Cog,
 }
-
 export const faceOf = (mark: FileMark, chosen: boolean): 'mark' | 'letter' =>
   mark === 'note' && !chosen ? 'letter' : 'mark'
-
 const GRAPHEMES = new Intl.Segmenter()
-
 export function initialOf(name: string): string {
   let first: string | null = null
-
   for (const { segment } of GRAPHEMES.segment(name.trim())) {
     first ??= segment
     if (/[\p{L}\p{N}]/u.test(segment)) return segment.toLocaleUpperCase()
   }
-
   return first ?? ''
 }
-
 type TermTab = Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null }
-
 export const terminalMark = held(
   () => surfaceLoad('terminal-mark') as Promise<{ default: Component<{ tab: TermTab }> }>,
 )

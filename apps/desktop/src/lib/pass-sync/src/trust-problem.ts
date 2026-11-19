@@ -1,11 +1,9 @@
 export type TrustReason = 'unasked' | 'unproven' | 'older' | 'swapped' | 'replayed'
-
 export interface TrustProblem {
   vault: string
   item: string | null
   reason: TrustReason
 }
-
 export function trustWords(problem: TrustProblem): string {
   return {
     unasked: 'The account offered a vault you never made or accepted. Pass left it out.',

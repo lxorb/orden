@@ -10,12 +10,10 @@ const pong = (at: number, now: number) => ({
   hardware: false,
   usage: null,
 })
-
 describe('the clocks', () => {
   test('are set side by side by half the round trip', () => {
     expect(clockOf(pong(1000, 5010), 1020)).toEqual({ offset: 4000, rtt: 20 })
   })
-
   test('put a frame’s RTP time on this clock, the 32 bits come round or not', () => {
     const clock = { offset: 4000, rtt: 0 }
     expect(seenAt(180_000, 100_000, clock, 98_050)).toBeCloseTo(98_000)
@@ -25,13 +23,11 @@ describe('the clocks', () => {
     expect(seenAt(rtp, 100_000, clock, 100_000 + fourteen - 4000)).toBeCloseTo(100_000 + fourteen - 4000)
     expect(wrap).toBeGreaterThan(4.7e7)
   })
-
   test('the middle of what was measured', () => {
     expect(middle([30, 10, 20])).toBe(20)
     expect(middle([])).toBeNull()
   })
 })
-
 describe('the engine’s numbers', () => {
   const report = (bytes: number, frames: number, delay: number, squared: number) => [
     {
@@ -61,7 +57,6 @@ describe('the engine’s numbers', () => {
     { id: 'l', type: 'local-candidate', candidateType: 'host' },
     { id: 'r', type: 'remote-candidate', candidateType: 'srflx' },
   ]
-
   test('are read, the rates over the second since the last', () => {
     const first = streamStats(report(0, 0, 0, 0), null, 1000)
     expect(first.stats).toMatchObject({
@@ -80,7 +75,6 @@ describe('the engine’s numbers', () => {
     expect(second.stats.bitrate).toBe(4_000_000)
     expect(second.stats.pacing).toBeCloseTo(0)
   })
-
   test('say nothing they do not have', () => {
     const none = streamStats([], null, 0)
     expect(none.stats).toMatchObject({ width: null, fps: null, rtt: null, route: null })

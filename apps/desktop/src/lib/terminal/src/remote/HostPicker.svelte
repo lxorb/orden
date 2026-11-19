@@ -23,9 +23,7 @@
 
   $effect(() => (hostPicker.open ? overlays.show(() => hostPicker.dismiss()) : undefined))
   $effect(() => closeOnBack(hostPicker.open, () => hostPicker.dismiss()))
-
   const placed = $derived(pickerOrder(remote.hosts, remote.kept))
-
   const typing = $derived(
     hostPicker.open
       ? new ListTyping(
@@ -42,7 +40,6 @@
     const one = typing
     return () => one?.stop()
   })
-
   const typed = $derived(typing?.typed ?? '')
   const shown = $derived(
     (typing?.reading.shown ?? []).flatMap((at) => {
@@ -50,21 +47,16 @@
       return one ? [{ ...one, at }] : []
     }),
   )
-
   const offer = $derived.by(() => {
     if (!typed || isNumber(typed)) return null
     if (shown.length && !plainlyDestination(typed)) return null
     const wanted = destinationOf(typed)
     return wanted && !hostFor(remote.hosts, wanted) ? wanted : null
   })
-
   const empty = $derived(remote.read && remote.hosts.length === 0 && !offer)
-
   let box = $state<HTMLElement>()
-
   const buttons = $state<Record<number, HTMLButtonElement | null>>({})
   let offerButton = $state<HTMLButtonElement | null>(null)
-
   $effect(() => {
     const best = typing?.reading.best ?? -1
     const first = shown[0]?.at
@@ -76,14 +68,11 @@
       else box?.querySelector<HTMLElement>('button')?.focus()
     })
   })
-
   const relative = $derived(new Intl.RelativeTimeFormat(region(), { style: 'narrow', numeric: 'auto' }))
-
   function ago(at: number): string {
     const step = relativeStep(Date.now() - at)
     return relative.format(step.value, step.unit)
   }
-
   function about(event: MouseEvent, host: Host) {
     event.preventDefault()
     menu.show(event, [
@@ -94,7 +83,6 @@
       { label: 'Settings', run: () => hostPicker.manage() },
     ])
   }
-
   function aboutGroup(event: MouseEvent, group: string) {
     event.preventDefault()
     menu.show(event, [{ label: 'Open all', run: () => hostPicker.chooseGroup(group) }])
@@ -174,18 +162,15 @@
     overscroll-behavior: contain;
     outline: none;
   }
-
   b {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .detail {
     margin-inline-start: var(--space-2);
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .head {
     margin: var(--space-2) 0 0;
     padding: 0 var(--row-pad);
@@ -197,7 +182,6 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
   }
-
   .all {
     margin-inline-start: auto;
     padding: 0 var(--space-2);
@@ -210,23 +194,19 @@
     cursor: pointer;
     opacity: 0;
   }
-
   .head:hover .all,
   .all:focus-visible {
     opacity: 1;
   }
-
   .all:hover {
     background: var(--surface-hover);
     color: var(--text-strong);
   }
-
   hr {
     margin: var(--space-1);
     border: none;
     border-top: 1px solid var(--line);
   }
-
   button:focus-visible {
     outline-offset: -1px;
   }

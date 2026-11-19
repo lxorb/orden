@@ -33,11 +33,8 @@
     ongoto?: ((line: number) => void) | undefined
   }
   const { turn, sources, last, live, ongoto }: Props = $props()
-
   const words = $derived(turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''))
-
   type Notice = Extract<Part, { kind: 'notice' }>
-
   const blocks = $derived(blocksOf(turn.parts))
   const fold = $derived(foldOf(blocks, live))
   let working = $state(false)
@@ -45,7 +42,6 @@
   const worked = $derived(turn.took ? `Worked for ${lasted(turn.took, region())}` : 'Worked')
   const pictures = new SvelteSet<string>()
   const show = (src: string) => pictures.add(src)
-
   function drawn(text: string, still: boolean): string {
     const source = citationLinks(text, sources.length)
     const from = untrack(() => workspace.panelTab?.path ?? null)
@@ -60,7 +56,6 @@
       shown: pictures,
     })
   }
-
   const cited = $derived.by(() => {
     const out: Source[] = []
     for (const n of citedIn(words, sources.length)) {
@@ -69,7 +64,6 @@
     }
     return out
   })
-
   async function openAt(source: Source, press: MouseEvent) {
     const root = chat.root
     if (!root) return
@@ -78,7 +72,6 @@
     await workspace.open(insideSpace(root, source.path), howFor(ask))
     if (ask !== 'behind') ongoto?.(source.line)
   }
-
   function follow(event: MouseEvent) {
     if (!opensLink(event)) return
     const anchor = (event.target as Element | null)?.closest('a')
@@ -102,18 +95,15 @@
       workspace.panelTab?.path ?? null,
     )
   }
-
   const spelled = $derived(dollarMaths(words))
   const asNote = $derived(linkedAnswer(spelled, sources))
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
-
   function inserted(): string {
     const root = chat.root
     const into = workspace.active?.path ?? null
     const here = root !== null && into !== null && withinSpace(root, into) !== null
     return here ? asNote : linkedAnswer(spelled, sources, (one) => one.name)
   }
-
   function insert() {
     const editor = view
     if (!editor || editor.state.readOnly) return
@@ -127,14 +117,12 @@
     })
     editor.focus()
   }
-
   const saveAsNote = () => chat.noteFrom(asNote)
   const copied = new Copied()
   const DONE = 'M2.8 6.8l2.4 2.4 5-5.4'
   const COPY =
     'M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z'
   const INSERT = 'M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8'
-
   function againMenu(event: MouseEvent) {
     const provider = chat.provider
     if (!provider) return
@@ -148,14 +136,12 @@
       title: 'Ask again',
     })
   }
-
   function moreMenu(event: MouseEvent) {
     menu.show(event, [
       ...(answered ? [{ label: 'Save as a note', run: () => void saveAsNote() }] : []),
       { label: 'Branch', run: () => chat.branch(undefined, turn.id) },
     ])
   }
-
   const NOTICE_WORDS: Partial<Record<Notice['code'], string>> = {
     compacted: 'Compacted',
     steps: 'Step limit',
@@ -164,12 +150,10 @@
     no_tools: 'Without tools',
     tasks: '',
   }
-
   function noticeOf({ code, text }: Notice): string {
     if (code === 'refusal') return text ? `Declined: ${text}` : 'Declined'
     return NOTICE_WORDS[code] ?? text
   }
-
   const failed = $derived(turn.parts.some((part) => part.kind === 'notice' && part.code === 'error'))
   const answered = $derived(!!words.trim())
   const reset = $derived(chat.head ? chat.resets[chat.head.id] : undefined)
@@ -278,26 +262,22 @@
     gap: var(--space-2);
     min-width: 0;
   }
-
   .worked {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .worked::after {
     content: '';
     flex: 1;
     height: 1px;
     background: var(--line);
   }
-
   .work {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .notice {
     margin: 0;
     color: var(--muted);
@@ -305,13 +285,11 @@
     font-size: var(--text-sm);
     overflow-wrap: anywhere;
   }
-
   .notice.model {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .notice.model::before,
   .notice.model::after {
     content: '';
@@ -319,23 +297,19 @@
     height: 1px;
     background: var(--line);
   }
-
   .notice.said {
     color: var(--muted-strong);
     white-space: pre-wrap;
   }
-
   .notice.wrong {
     color: var(--danger);
   }
-
   .sources,
   .acts {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
   }
-
   .source {
     max-width: 100%;
     padding: 1px var(--space-2);
@@ -353,40 +327,33 @@
       border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .source:hover {
       border-color: var(--accent);
       color: var(--accent);
     }
   }
-
   .acts {
     gap: 0;
     margin-inline-start: -6px;
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .answer:hover .acts,
   .acts:focus-within,
   :global([data-touch]) .acts {
     opacity: 1;
   }
-
   .act {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
   }
-
   .act .dots {
     stroke-width: 2.2;
   }
-
   .act svg {
     stroke-width: 1.3;
   }
-
   .link {
     padding: 0;
     margin-inline-start: var(--space-1);
@@ -396,7 +363,6 @@
     font: inherit;
     cursor: default;
   }
-
   @media (hover: hover) {
     .link:hover {
       text-decoration: underline;

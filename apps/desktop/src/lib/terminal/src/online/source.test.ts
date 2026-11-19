@@ -10,7 +10,6 @@ const seen = vi.hoisted((): { words: string | null; written: string[]; passes: n
   written: [],
   passes: 0,
 }))
-
 vi.mock('../../../accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',
@@ -56,7 +55,6 @@ vi.mock('../../../online-link/src/api', async (real) => ({
     }
   },
 }))
-
 const source = () =>
   new OnlineSource(
     () => '/space/Terminal.term',
@@ -65,7 +63,6 @@ const source = () =>
     { tab: () => 't1', front: () => true, offer: () => undefined },
     { pages: false, native: false },
   )
-
 function hearing(frame: ServerFrame): Said[] {
   const said: Said[] = []
   ;(source() as unknown as { heard(frame: ServerFrame, said: (what: Said) => void): void }).heard(frame, (what) =>
@@ -77,22 +74,18 @@ describe('an online source told it is refused', () => {
   test('a session that is gone is said as gone, which only a new terminal answers', () => {
     expect(hearing({ t: 'refused', error: 'gone' })).toEqual([{ refused: 'This terminal is gone', gone: true }])
   })
-
   test('any other refusal is its words alone', () => {
     expect(hearing({ t: 'refused', error: 'allowance' })).toEqual([{ refused: 'This month’s online hours are used' }])
     expect(hearing({ t: 'refused', error: 'role' })).toEqual([{ typing: false }])
   })
 })
-
 describe('an online source starting under v2', () => {
   const asked = vi.mocked(termSession)
   const OLD = '{"v":1,"machine":"m1","session":"s_old"}\n'
-
   beforeEach(() => {
     asked.mockReset()
     seen.written = []
   })
-
   test('asks by the file’s id with the session its words name, and leaves them', async () => {
     seen.words = OLD
     asked.mockResolvedValue({ v: 1, machine: 'm1', session: 's_old' })
@@ -100,7 +93,6 @@ describe('an online source starting under v2', () => {
     expect(asked).toHaveBeenCalledWith('file-1', 's_old')
     expect(seen.written).toEqual([])
   })
-
   test('writes the session the account answered where the words name another, or none', async () => {
     seen.words = OLD
     asked.mockResolvedValue({ v: 1, machine: 'm1', session: 's_new' })
@@ -113,7 +105,6 @@ describe('an online source starting under v2', () => {
       '{"v":1,"machine":"m1","session":"s_new"}\n',
     ])
   })
-
   test('writes nothing into a file it could not read', async () => {
     seen.words = null
     asked.mockResolvedValue({ v: 1, machine: 'm1', session: 's_new' })
@@ -121,28 +112,23 @@ describe('an online source starting under v2', () => {
     expect(seen.written).toEqual([])
   })
 })
-
 describe('an online source whose file the account does not have yet', () => {
   const asked = vi.mocked(termSession)
-
   beforeEach(() => {
     vi.useFakeTimers()
     asked.mockReset()
     seen.words = ''
     seen.passes = 0
   })
-
   afterEach(() => {
     vi.useRealTimers()
   })
-
   test('has sync send it now, and asks again as soon as that pass is done', async () => {
     asked
       .mockRejectedValueOnce(new ApiError(404, 'not found'))
       .mockRejectedValueOnce(new ApiError(404, 'not found'))
       .mockResolvedValue({ v: 1, machine: 'm1', session: 's_new' })
     const started = source().start(80, 24, () => undefined)
-
     await vi.advanceTimersByTimeAsync(0)
     expect(asked).toHaveBeenCalledTimes(1)
     expect(seen.passes).toBe(1)
@@ -154,13 +140,11 @@ describe('an online source whose file the account does not have yet', () => {
     expect(seen.passes).toBe(2)
   })
 })
-
 describe('an online source carrying a picture up', () => {
   interface Inside {
     link: { say(frame: ClientFrame): boolean } | null
     heard(frame: ServerFrame, said: (what: Said) => void): void
   }
-
   test('sends it in parts no larger than a frame, the last marked, and answers where it landed', async () => {
     const online = source()
     const inside = online as unknown as Inside
@@ -171,7 +155,6 @@ describe('an online source carrying a picture up', () => {
         return true
       },
     }
-
     const landed = online.image(new Uint8Array(IMAGE_PART + 3).fill(7), 'png')
     await vi.waitFor(() => {
       expect(frames).toHaveLength(2)
@@ -180,11 +163,9 @@ describe('an online source carrying a picture up', () => {
     expect(first?.last).toBe(false)
     expect(atob(first?.part ?? '')).toHaveLength(IMAGE_PART)
     expect(second).toEqual({ t: 'image', id: first?.id, kind: 'png', part: 'BwcH', last: true })
-
     inside.heard({ t: 'image', id: first?.id ?? '', path: '/home/nib/a.png' }, () => undefined)
     await expect(landed).resolves.toBe('/home/nib/a.png')
   })
-
   test('rejects where the machine could not write it, or the socket is not open', async () => {
     const online = source()
     const inside = online as unknown as Inside
@@ -201,7 +182,6 @@ describe('an online source carrying a picture up', () => {
     })
     inside.heard({ t: 'image', id, path: null }, () => undefined)
     await expect(refused).rejects.toThrow()
-
     inside.link = { say: () => false }
     await expect(online.image(new Uint8Array(1), 'png')).rejects.toThrow()
   })

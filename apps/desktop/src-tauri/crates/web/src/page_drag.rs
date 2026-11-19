@@ -1,5 +1,4 @@
 pub const SCRIPT: &str = include_str!("page_drag.js");
-
 #[cfg(test)]
 mod tests {
     use super::SCRIPT;

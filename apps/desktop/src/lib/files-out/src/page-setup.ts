@@ -8,41 +8,30 @@ const PER_INCH = { mm: 25.4, cm: 2.54, in: 1, pt: 72, px: 96 } as const
 type Unit = keyof typeof PER_INCH
 const UNITS: readonly Unit[] = ['mm', 'cm', 'in', 'pt', 'px']
 const LENGTH = new RegExp(`^(\\d+(?:\\.\\d+)?)\\s*(${UNITS.join('|')})?$`)
-
 interface Length {
   amount: string
   unit: Unit
 }
-
 const DEFAULT_MARGIN: Length = { amount: '20', unit: 'mm' }
 const isUnit = (value: string): value is Unit => UNITS.some((unit) => unit === value)
-
 function parseLength(value: string): Length | null {
   const [, amount, unit] = LENGTH.exec(value.trim()) ?? []
   if (amount === undefined) return null
-
   return { amount, unit: unit !== undefined && isUnit(unit) ? unit : DEFAULT_MARGIN.unit }
 }
-
 export function pageSetupFor(source: string, base: PageSetup = DEFAULT_PAGE_SETUP): PageSetup {
   const block = frontMatter(source)
   if (!block) return base
-
   const lines = block.split(/\r?\n/)
   const start = lines.findIndex((line) => /^export\s*:\s*$/.test(line))
   if (start < 0) return base
-
   const setup = { ...base }
-
   for (const line of lines.slice(start + 1)) {
     if (!/^\s+\S/.test(line)) break
-
     const [, field, written = ''] = /^\s+([A-Za-z_]+)\s*:\s*(.*)$/.exec(line) ?? []
     if (field === undefined) continue
-
     const value = written.trim().replace(/^["']|["']$/g, '')
     if (!value) continue
-
     switch (field.toLowerCase()) {
       case 'paper':
       case 'size': {
@@ -64,42 +53,33 @@ export function pageSetupFor(source: string, base: PageSetup = DEFAULT_PAGE_SETU
         break
     }
   }
-
   return setup
 }
-
 export function length(value: string): string | null {
   const parsed = parseLength(value)
   return parsed ? `${parsed.amount}${parsed.unit}` : null
 }
-
 export function fill(template: string, title: string, date: string): string {
   return template
     .replace(/\$\{title\}/g, () => title)
     .replace(/\$\{date\}/g, () => date)
     .replace(/\$\{year\}/g, () => date.slice(0, 4))
 }
-
 export function pageCss(setup: PageSetup): string {
   const margin = length(setup.margin) ?? DEFAULT_PAGE_SETUP.margin
   return `@page { size: ${setup.paper} ${setup.orientation}; margin: ${margin}; }`
 }
-
 export function withRunningText(body: string, setup: PageSetup, title: string, date: string): string {
   if (!setup.header && !setup.footer) return body
-
   const header = setup.header
     ? `<thead><tr><td><div class="running-header">${escapeAll(fill(setup.header, title, date))}</div></td></tr></thead>\n`
     : ''
   const footer = setup.footer
     ? `<tfoot><tr><td></td></tr></tfoot>\n<div class="running-footer">${escapeAll(fill(setup.footer, title, date))}</div>\n`
     : ''
-
   return `<table class="sheet">\n${header}<tbody><tr><td>\n${body}</td></tr></tbody>\n</table>\n${footer}`
 }
-
 export const TWIPS_PER_INCH = 1440
-
 const PAPER_INCHES: Record<Paper, [number, number]> = {
   A3: [297 / PER_INCH.mm, 420 / PER_INCH.mm],
   A4: [210 / PER_INCH.mm, 297 / PER_INCH.mm],
@@ -107,14 +87,11 @@ const PAPER_INCHES: Record<Paper, [number, number]> = {
   Letter: [8.5, 11],
   Legal: [8.5, 14],
 }
-
 export const runningDate = (source: string, given?: string, now = new Date()): string =>
   given ?? frontMatterValue(source, 'date') ?? todayOf(now)
-
 export function paperInches(setup: PageSetup): PaperInches {
   const [width, height] = PAPER_INCHES[setup.paper]
   const margin = parseLength(setup.margin) ?? DEFAULT_MARGIN
-
   return {
     width,
     height,
@@ -122,7 +99,6 @@ export function paperInches(setup: PageSetup): PaperInches {
     landscape: setup.orientation === 'landscape',
   }
 }
-
 export interface PaperTwips {
   width: number
   height: number
@@ -131,12 +107,10 @@ export interface PaperTwips {
   header: string
   footer: string
 }
-
 export function paperTwips(setup: PageSetup, title: string, date: string): PaperTwips {
   const [width, height] = PAPER_INCHES[setup.paper]
   const margin = parseLength(setup.margin) ?? DEFAULT_MARGIN
   const twips = (value: number) => Math.round(value * TWIPS_PER_INCH)
-
   return {
     width: twips(width),
     height: twips(height),

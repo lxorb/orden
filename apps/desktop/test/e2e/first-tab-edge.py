@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 LOOK = """() => [...document.querySelectorAll('.tabs')].map((strip) => {
   const id = strip.dataset.strip
   const pane = document.querySelector(`[data-pane="${id}"]`)
@@ -23,14 +21,11 @@ LOOK = """() => [...document.querySelectorAll('.tabs')].map((strip) => {
     corner: style ? parseFloat(style.borderTopLeftRadius) : null,
   }
 })"""
-
 def strips(page: Page) -> dict[str, dict]:
     page.wait_for_timeout(600)
     return {one["id"]: one for one in page.evaluate(LOOK)}
-
 def pane_ids(page: Page) -> list[str]:
     return page.evaluate("() => window.ordenApp.workspace.panes.all.map((one) => one.id)")
-
 def flush(label: str, one: dict, squared: bool) -> None:
     say(f"[{label}] {one}")
     if one["fill"] is None or abs(one["fill"] - one["start"]) > 0.5:
@@ -41,7 +36,6 @@ def flush(label: str, one: dict, squared: bool) -> None:
         wrong(f"[{label}] the first tab lost its foot behind it")
     if squared and one["corner"] != 0:
         wrong(f"[{label}] the pane's corner under the tab is {one['corner']}px round, not square")
-
 def flared(label: str, one: dict, corner: float | None = None) -> None:
     say(f"[{label}] {one}")
     if not (one["ahead"] and one["behind"]):
@@ -50,7 +44,6 @@ def flared(label: str, one: dict, corner: float | None = None) -> None:
         wrong(f"[{label}] the tab in front stands at the pane's edge though something is ahead of it")
     if corner is not None and one["corner"] != corner:
         wrong(f"[{label}] the pane's corner is {one['corner']}px, not its card's {corner}px")
-
 def opened(browser: Browser, *scripts: str) -> Page:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 700})
     for script in ("localStorage.setItem('orden:icon-tabs', 'no')", *scripts):
@@ -59,12 +52,10 @@ def opened(browser: Browser, *scripts: str) -> Page:
     DRIVE.seed(page, "# Alpha\n\nWords.\n")
     DRIVE.open_note(page, "Alpha")
     return page
-
 def split(page: Page, along: str) -> list[str]:
     page.evaluate(f"() => window.ordenApp.workspace.split('{along}')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "the split")
     return pane_ids(page)
-
 def drive(browser: Browser) -> None:
     for mode, scripts in (("fit", ()), ("uniform", ("localStorage.setItem('orden:fit-tabs', 'no')",))):
         page = opened(browser, *scripts)
@@ -79,13 +70,11 @@ def drive(browser: Browser) -> None:
         card = next(iter(only.values()))["corner"]
         for one in only.values():
             flared(f"{mode}, one pane, the search ahead", one, card)
-
         left, right = split(page, "row")
         seen = strips(page)
         flared(f"{mode}, row, the bar's first strip", seen[left], card)
         flush(f"{mode}, row, the second strip", seen[right], squared=True)
         DRIVE.shot(page, f"{mode}-row")
-
         page.evaluate(f"() => window.ordenApp.workspace.newTab('{right}')")
         wait_for(
             page,
@@ -96,11 +85,9 @@ def drive(browser: Browser) -> None:
         )
         flared(f"{mode}, row, the second tab in front", strips(page)[right], card)
         page.close()
-
         page = opened(browser, *scripts)
         _upper, lower = split(page, "column")
         flush(f"{mode}, column, the lower pane's own strip", strips(page)[lower], squared=False)
         DRIVE.shot(page, f"{mode}-column")
         page.close()
-
 raise SystemExit(DRIVE.run(drive, "the first tab with nothing ahead of it stands at its pane's edge"))

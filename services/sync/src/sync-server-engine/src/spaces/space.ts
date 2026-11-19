@@ -30,32 +30,23 @@ import { readIcons, readTints } from './icons'
 export function withoutSetup<T extends ReturnType<typeof presentSpace>>(view: T): T {
   return { ...view, blog: { ...view.blog, dns: [], site: EMPTY_SITE } }
 }
-
 const EMPTY_SITE = {
   rules: { include: [], exclude: [], otherwise: 'all' as const },
   password: false,
 }
-
 const RANK: Record<Role, number> = { read: 0, write: 1, owner: 2 }
-
 export type Given = 'write' | 'read'
-
 export function isGiven(value: unknown): value is Given {
   return value === 'write' || value === 'read'
 }
-
 function isRole(value: unknown): value is Role {
   return value === 'owner' || isGiven(value)
 }
-
 export function allows(held: Role, needed: Role): boolean {
   return RANK[held] >= RANK[needed]
 }
-
 export const MOST_OWN_SPACES = 500
-
 export const TOO_MANY_SPACES = `that is as many spaces as one account keeps (${MOST_OWN_SPACES})`
-
 export async function addSpace(
   env: Env,
   userId: string,
@@ -65,7 +56,6 @@ export async function addSpace(
   const last = await env.DB.prepare('select max(position) as last from spaces where user_id = ? and deleted = 0')
     .bind(userId)
     .first<{ last: number | null }>()
-
   const space: Space = {
     id: newId(),
     user_id: userId,
@@ -95,7 +85,6 @@ export async function addSpace(
     site: '{}',
     sort: '',
   }
-
   const added = await env.DB.prepare(
     `insert into spaces (id, user_id, name, position, icon, created_at, updated_at)
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7
@@ -112,31 +101,25 @@ export async function addSpace(
       MOST_OWN_SPACES,
     )
     .run()
-
   return added.meta.changes ? space : null
 }
-
 const REACHED = `select sp.*,
     case when sp.user_id = ?2 then 'owner' else m.role end as role
   from spaces sp
   left join space_members m on m.space_id = sp.id and m.email = ?3 and m.item = ''
  where sp.id = ?1 and sp.deleted = 0`
-
 const GUEST_REACHED = `select sp.*, g.role as role
   from spaces sp
   join guest_members g on g.space_id = sp.id and g.guest_id = ?2 and g.item = ''
  where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
-
 const ITEM_REACHED = `select sp.*, m.role as role
   from spaces sp
   join space_members m on m.space_id = sp.id and m.email = ?2 and m.item = ?3
  where sp.id = ?1 and sp.deleted = 0`
-
 const GUEST_ITEM_REACHED = `select sp.*, g.role as role
   from spaces sp
   join guest_members g on g.space_id = sp.id and g.guest_id = ?2 and g.item = ?3
  where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
-
 export async function reachedSpace(env: Env, who: Whoever, spaceId: string): Promise<Reached | null> {
   const row =
     who.kind === 'user'
@@ -144,11 +127,9 @@ export async function reachedSpace(env: Env, who: Whoever, spaceId: string): Pro
           .bind(spaceId, who.user.id, who.user.email)
           .first<Space & { role: string | null }>()
       : await env.DB.prepare(GUEST_REACHED).bind(spaceId, who.guest.id).first<Space & { role: string | null }>()
-
   if (!row || !isRole(row.role)) return null
   return { ...row, role: row.role }
 }
-
 export async function reachedItem(
   env: Env,
   who: Whoever,
@@ -162,11 +143,9 @@ export async function reachedItem(
       : await env.DB.prepare(GUEST_ITEM_REACHED)
           .bind(note.space_id, who.guest.id, note.id)
           .first<Space & { role: string | null }>()
-
   if (!row || !isRole(row.role)) return null
   return { ...row, role: row.role }
 }
-
 export function atLeast(
   needed: Role,
   param = 'id',
@@ -179,23 +158,18 @@ export function atLeast(
     const space = await reachedSpace(context.env, context.get('who'), asked)
     if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!allows(space.role, needed)) return context.json({ error: refusal(needed) }, 403)
-
     context.set('space', space)
     await next()
   }
 }
-
 export function refusal(needed: Role): string {
   return needed === 'owner' ? 'only the owner can do that' : 'you can only read this space'
 }
-
 export function spaceOf(context: Context<{ Bindings: Env; Variables: Variables }>): Reached {
   return context.get('space')
 }
-
 export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promise<Set<string>> {
   if (!spaceIds.length) return new Set<string>()
-
   const found = await askInChunks(
     spaceIds,
     async (chunk) => {
@@ -207,21 +181,17 @@ export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promis
       )
         .bind(...chunk, ...chunk)
         .all<{ space_id: string }>()
-
       return results
     },
     AT_A_TIME / 2,
   )
-
   return new Set(found.map((row) => row.space_id))
 }
-
 export async function onceShared(env: Env, spaceId: string, item = ''): Promise<void> {
   await env.DB.prepare('insert or ignore into once_shared (space_id, item, at) values (?, ?, ?)')
     .bind(spaceId, item, now())
     .run()
 }
-
 export async function onceSharedAmong(
   env: Env,
   spaceIds: readonly string[],
@@ -229,17 +199,14 @@ export async function onceSharedAmong(
   const spaces = new Set<string>()
   const items = new Map<string, string[]>()
   if (!spaceIds.length) return { spaces, items }
-
   const found = await askInChunks(spaceIds, async (chunk) => {
     const { results } = await env.DB.prepare(
       `select space_id, item from once_shared where space_id in (${places(chunk.length)})`,
     )
       .bind(...chunk)
       .all<{ space_id: string; item: string }>()
-
     return results
   })
-
   for (const row of found) {
     if (!row.item) {
       spaces.add(row.space_id)
@@ -249,10 +216,8 @@ export async function onceSharedAmong(
     if (held.length < MOST_ITEMS) held.push(row.item)
     items.set(row.space_id, held)
   }
-
   return { spaces, items }
 }
-
 export async function trustAgain(env: Env, spaceId: string): Promise<void> {
   await env.DB.prepare(
     `delete from once_shared
@@ -266,13 +231,10 @@ export async function trustAgain(env: Env, spaceId: string): Promise<void> {
     .bind(spaceId)
     .run()
 }
-
 export const MOST_ITEMS = 200
-
 export async function itemsSharedIn(env: Env, spaceIds: readonly string[]): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>()
   if (!spaceIds.length) return out
-
   const found = await askInChunks(
     spaceIds,
     async (chunk) => {
@@ -285,24 +247,19 @@ export async function itemsSharedIn(env: Env, spaceIds: readonly string[]): Prom
       )
         .bind(...chunk, ...chunk)
         .all<{ space_id: string; item: string }>()
-
       return results
     },
     AT_A_TIME / 2,
   )
-
   for (const row of found) {
     const held = out.get(row.space_id) ?? []
     if (held.length < MOST_ITEMS && !held.includes(row.item)) held.push(row.item)
     out.set(row.space_id, held)
   }
-
   return out
 }
-
 export async function notesAmong(env: Env, spaceIds: readonly string[]): Promise<Map<string, number>> {
   if (!spaceIds.length) return new Map<string, number>()
-
   const found = await askInChunks(spaceIds, async (chunk) => {
     const { results } = await env.DB.prepare(
       `select space_id, count(*) as notes from notes
@@ -311,13 +268,10 @@ export async function notesAmong(env: Env, spaceIds: readonly string[]): Promise
     )
       .bind(...chunk)
       .all<{ space_id: string; notes: number }>()
-
     return results
   })
-
   return new Map(found.map((row) => [row.space_id, row.notes]))
 }
-
 export function presentSpace(
   space: Space,
   env: Env,
@@ -357,7 +311,6 @@ export function presentSpace(
     },
   }
 }
-
 export function columnRoute(
   column: Column,
   wrong: (sent: unknown) => string | null,

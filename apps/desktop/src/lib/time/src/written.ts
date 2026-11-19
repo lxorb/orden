@@ -3,12 +3,10 @@ import { isRecord } from '../../platform/src/api'
 import type { Activity, Span } from './records'
 
 const HEAD = ['start', 'end', 'minutes', 'activity', 'tags', 'note', 'source', 'place']
-
 function cell(value: string): string {
   const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
-
 export function csvOf(spans: readonly Span[], activities: readonly Activity[], now: number): string {
   const named = new Map(activities.map((one) => [one.id, one.name]))
   const rows = spans.map((span) => {
@@ -26,18 +24,14 @@ export function csvOf(spans: readonly Span[], activities: readonly Activity[], n
   })
   return [HEAD, ...rows].map((row) => row.map(cell).join(',')).join('\r\n') + '\r\n'
 }
-
 const TIME_FORMAT = 'orden-time'
-
 export interface TimeRecord {
   kind: string
   id: string
   value: Record<string, unknown>
 }
-
 export const jsonOf = (records: readonly TimeRecord[]): string =>
   `${JSON.stringify({ format: TIME_FORMAT, version: 1, records }, null, 2)}\n`
-
 export function recordsIn(text: string): TimeRecord[] | null {
   let parsed: unknown
   try {

@@ -2,22 +2,15 @@ import base64
 import io
 import os
 import sys
-
 from playwright.sync_api import Browser
-
 from harness import ROOT, Drive
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from heavy_paper import BENCH_BODY, REFERENCE, heavy_paper  # noqa: E402
-
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
-
 OPEN_LIMIT = float(os.environ.get("ORDEN_OPEN_LIMIT") or 8000)
-
 BLOCK_LIMIT = float(os.environ.get("ORDEN_BLOCK_LIMIT") or 200)
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -37,7 +30,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 WATCH = """
 () => {
   const probe = { beats: [], frames: [], longest: 0, marks: {} }
@@ -64,7 +56,6 @@ WATCH = """
   return true
 }
 """
-
 SINCE = """
 (from) => {
   const probe = window.__steady
@@ -80,40 +71,31 @@ SINCE = """
   }
 }
 """
-
 DRAWN = """
 () => {
   const sheets = [...document.querySelectorAll('.pages .sheet')]
   return sheets.length === 2 && sheets.every((one) => one.querySelector('canvas.there')?.width > 1)
 }
 """
-
-
 class Frames:
     def __init__(self, cdp) -> None:
         self.cdp = cdp
         self.kept: list[tuple[bytes, dict]] = []
         cdp.on("Page.screencastFrame", self.came)
-
     def came(self, frame: dict) -> None:
         self.kept.append((base64.b64decode(frame["data"]), frame.get("metadata", {})))
         try:
             self.cdp.send("Page.screencastFrameAck", {"sessionId": frame["sessionId"]})
         except Exception:
             pass
-
     def start(self) -> None:
         self.kept.clear()
         self.cdp.send("Page.startScreencast", {"format": "png", "everyNthFrame": 1})
-
     def stop(self) -> list[tuple[bytes, dict]]:
         self.cdp.send("Page.stopScreencast")
         return list(self.kept)
-
-
 def dark_share(png: bytes, box: dict, scale: float) -> float:
     from PIL import Image
-
     picture = Image.open(io.BytesIO(png)).convert("RGB")
     left = max(0, int(box["x"] * scale) + 4)
     top = max(0, int(box["y"] * scale) + 4)
@@ -125,8 +107,6 @@ def dark_share(png: bytes, box: dict, scale: float) -> float:
     pixels = list(part.get_flattened_data() if hasattr(part, "get_flattened_data") else part.getdata())
     dark = sum(1 for r, g, b in pixels if r < 24 and g < 24 and b < 24)
     return dark / max(1, len(pixels))
-
-
 def blackness(page, frames: list[tuple[bytes, dict]], label: str) -> None:
     box = page.locator(".pages").first.bounding_box()
     if not box:
@@ -138,7 +118,6 @@ def blackness(page, frames: list[tuple[bytes, dict]], label: str) -> None:
     for at, (png, meta) in enumerate(frames):
         wide = meta.get("deviceWidth") or css
         from PIL import Image
-
         scale = Image.open(io.BytesIO(png)).width / wide
         share = dark_share(png, box, scale)
         worst = max(worst, share)
@@ -151,8 +130,6 @@ def blackness(page, frames: list[tuple[bytes, dict]], label: str) -> None:
         wrong(f"{label}: no frames were recorded")
     if black:
         wrong(f"{label}: {black} of {len(frames)} frames showed the page note black")
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 860}, device_scale_factor=1.5)
     page = context.new_page()
@@ -172,7 +149,6 @@ def drive(browser: Browser) -> None:
     say(f"the fixed work took {bench:.1f} ms against {REFERENCE:.1f}: opening may take {open_limit:.0f} ms, the main thread may be held {block_limit:.0f} ms")
     page.evaluate(WATCH)
     page.wait_for_timeout(300)
-
     started = page.evaluate("() => performance.now()")
     page.evaluate("(path) => { void window.ordenApp.workspace.openPdf(path, 1) }", pdf)
     wait_for(page, "window.ordenApp.pages.current?.store.count === 2", "the page note", 60)
@@ -186,7 +162,6 @@ def drive(browser: Browser) -> None:
     if opening["blocked"] > block_limit:
         wrong(f"opening the page note held the main thread {opening['blocked']:.0f} ms")
     shot(page, "opened")
-
     cdp = context.new_cdp_session(page)
     frames = Frames(cdp) if cdp else None
     box = page.locator(".pages").first.bounding_box()
@@ -195,7 +170,6 @@ def drive(browser: Browser) -> None:
     page.mouse.click(box["x"] + 30, box["y"] + 30)
     page.keyboard.press("d")
     page.wait_for_timeout(200)
-
     def pen(what: str, x: float, y: float, held: int) -> None:
         if cdp is None:
             page.mouse.move(x, y)
@@ -208,7 +182,6 @@ def drive(browser: Browser) -> None:
             "Input.dispatchMouseEvent",
             {"type": what, "x": x, "y": y, "button": "left", "buttons": held, "clickCount": 1, "pointerType": "pen", "force": 0.6},
         )
-
     sheet = page.locator(".pages .sheet").first.bounding_box()
     assert sheet
     before = page.evaluate("() => window.ordenApp.pages.current.store.canvas.ink.length")
@@ -237,7 +210,6 @@ def drive(browser: Browser) -> None:
         wrong(f"editing held the main thread {editing['blocked']:.0f} ms")
     if edited is not None:
         blackness(page, edited, "edit")
-
     page.keyboard.press("Escape")
     page.keyboard.press("v")
     from_zoom = page.evaluate("() => performance.now()")
@@ -263,6 +235,4 @@ def drive(browser: Browser) -> None:
         blackness(page, zoomed, "zoom")
     shot(page, "zoomed")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a page note with a heavy PDF opens, edits and zooms without holding the app or showing black"))

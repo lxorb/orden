@@ -22,19 +22,16 @@ const store = new RowsStore({
   meta: (root, path) => workspace.itemMeta.itemsOf(root)[path] ?? null,
   list: () => false,
 })
-
 links.hearSaves((path, content) => store.saved(path, content))
 workspace.itemMeta.hear((path) => store.described(path))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
-
 $effect.root(() => {
   $effect(() => {
     const spaces = workspace.shownSpaces.map(({ root, name }) => ({ root, name }))
     untrack(() => store.spacesAre(spaces))
   })
 })
-
 export const rows = {
   of: (space?: string): readonly Row[] => store.of(space),
   shown: (space?: string): readonly Row[] =>
@@ -45,7 +42,6 @@ export const rows = {
   get ready(): boolean {
     return store.ready
   },
-
   async write(row: Row, change: RowChange): Promise<boolean> {
     const root = store.rootOf(row)
     if (root === null) return false

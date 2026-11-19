@@ -19,50 +19,39 @@ import { frontShut, openOut, openTarget, renderOptions } from './context'
 import { picker } from './picker.svelte'
 
 type Row = CommandExtension
-
 export function exportCommands(): Row[] {
   if (__EVEN_PLUGIN__) return []
-
   const note = () => workspace.active
   const source = () => openTarget().source
   const name = () => note()?.name ?? 'Untitled.md'
   const shut = (rows: Row[]) => (frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows)
-
   const open = note()
   const kind = exportKindOf(open ? { exports: TAB_KINDS[open.kind].exports, path: open.path } : null)
-
   const noteOut = async (id: Exportable) => {
     const m = await import('./exporters')
     const target = openTarget()
     await m.runExport(id, target, await renderOptions(target))
   }
-
   const drawingOut = async (id: ExportId) => {
     const picture = await import('../../plane/src/api')
     const drawing = picture.drawingOf(openOut())
-
     if (id === 'png') await picture.exportCanvasPng(drawing)
     else if (id === 'svg') await picture.exportCanvasSvg(drawing)
     else if (id === 'pdf') await picture.exportCanvasPdf(drawing)
   }
-
   const pagesOut = async (id: ExportId) => {
     const out = await (await import('../../pages/src/api')).pagesOut()
     const about = out.pagesOutOf(openOut())
-
     if (id === 'pdf') await out.exportPagesPdf(about)
     else if (id === 'png') await out.exportPagesPng(about)
     else if (id === 'svg') await out.exportPagesSvg(about)
   }
-
   const copyOut = async () => {
     const path = openTarget().path
     if (path === null) return
-
     const m = await import('../../files-out/src/api')
     await m.saveCopy(path, name())
   }
-
   const run = (id: ExportId) => () =>
     busy.start(
       'Exporting',
@@ -74,11 +63,9 @@ export function exportCommands(): Row[] {
       },
       `export-${id}`,
     )
-
   const offered = offeredBy(kind)
   const nothing = offered.length === 0
   const asNote = kind === 'note' || nothing
-
   const commands: Row[] = (nothing ? offeredBy('note') : offered).map((id) => ({
     id: `export-${id}`,
     label: labelOf(id),
@@ -86,7 +73,6 @@ export function exportCommands(): Row[] {
     disabled: nothing,
     run: run(id),
   }))
-
   if (asNote) {
     commands.push({
       id: 'page-setup',
@@ -94,9 +80,7 @@ export function exportCommands(): Row[] {
       run: () => settingsWindow().show('export'),
     })
   }
-
   if (!choices.pandoc || !asNote) return shut(commands)
-
   for (const format of PANDOC_FORMATS) {
     commands.push({
       id: `export-${format.id}`,
@@ -114,15 +98,11 @@ export function exportCommands(): Row[] {
         ),
     })
   }
-
   return shut(commands)
 }
-
 export function exportPicker(): Row[] {
   if (__EVEN_PLUGIN__) return []
-
   const formats = exportCommands().filter((one) => one.id !== 'page-setup')
-
   return [
     {
       id: 'export',

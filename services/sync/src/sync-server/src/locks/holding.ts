@@ -7,16 +7,13 @@ export interface Hold {
   since: number
   left: number | null
 }
-
 export interface Claim {
   device: string
   who: string
   name: string
   take: boolean
 }
-
 export const holdKey = (session: string) => `hold:${session}`
-
 export function holdOf(value: unknown): Hold | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Partial<Hold>
@@ -29,14 +26,12 @@ export function holdOf(value: unknown): Hold | null {
     left: typeof one.left === 'number' ? one.left : null,
   }
 }
-
 export function standing(hold: Hold | null, present: boolean, now: number): Hold | null {
   if (!hold) return null
   if (present) return hold.left === null ? hold : { ...hold, left: null }
   const left = hold.left ?? now
   return now - left >= HOLD_GRACE ? null : { ...hold, left }
 }
-
 export function claimed(
   hold: Hold | null,
   claim: Claim,

@@ -1,27 +1,21 @@
 use base64::Engine;
 
 pub const SIDE: u32 = 32;
-
 pub const KIND_SIDE: u32 = 64;
-
 #[cfg(any(target_os = "linux", test))]
 pub const MOST_FILE: u64 = 4 * 1024 * 1024;
-
 #[cfg(any(target_os = "linux", test))]
 pub const MOST_SVG: usize = 35 * 1024;
-
 pub fn data_url(kind: &str, bytes: &[u8]) -> String {
     format!(
         "data:{kind};base64,{}",
         base64::engine::general_purpose::STANDARD.encode(bytes)
     )
 }
-
 #[cfg(any(target_os = "macos", test))]
 pub fn png_url(bytes: &[u8]) -> Option<String> {
     png_url_within(bytes, SIDE)
 }
-
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
 pub fn png_url_within(bytes: &[u8], side: u32) -> Option<String> {
     let (width, height) = png_size(bytes)?;
@@ -34,7 +28,6 @@ pub fn png_url_within(bytes: &[u8], side: u32) -> Option<String> {
         &rgba_png_within(&rgba, width, height, side)?,
     ))
 }
-
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
 pub fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
     if bytes.get(..8)? != b"\x89PNG\r\n\x1a\n" || bytes.get(12..16)? != b"IHDR" {
@@ -44,7 +37,6 @@ pub fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
     let height = u32::from_be_bytes(bytes.get(20..24)?.try_into().ok()?);
     Some((width, height))
 }
-
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
 fn read_png(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
@@ -93,12 +85,10 @@ fn read_png(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     }
     (rgba.len() == count * 4).then_some((rgba, width, height))
 }
-
 #[cfg(any(target_os = "windows", test))]
 pub fn rgba_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
     rgba_png_within(rgba, width, height, SIDE)
 }
-
 pub fn rgba_png_within(rgba: &[u8], width: u32, height: u32, side: u32) -> Option<Vec<u8>> {
     let (w, h) = (usize::try_from(width).ok()?, usize::try_from(height).ok()?);
     if w == 0 || h == 0 || rgba.len() < w * h * 4 {
@@ -151,12 +141,10 @@ pub fn rgba_png_within(rgba: &[u8], width: u32, height: u32, side: u32) -> Optio
     writer.finish().ok()?;
     Some(png)
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn side_of(value: f64) -> usize {
     (value.round() as usize).max(1)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,12 +159,10 @@ mod tests {
         writer.finish().unwrap();
         out
     }
-
     #[test]
     fn sends_a_small_png_as_it_is_and_makes_a_large_one_small() {
         let small = png_of(&[255, 0, 0, 255].repeat(16 * 16), 16, 16);
         assert_eq!(png_url(&small), Some(data_url("image/png", &small)));
-
         let large = png_of(&[0, 0, 255, 255].repeat(256 * 128), 256, 128);
         let url = png_url(&large).unwrap();
         let bytes = base64::engine::general_purpose::STANDARD
@@ -186,7 +172,6 @@ mod tests {
         let (rgba, _, _) = read_png(&bytes).unwrap();
         assert_eq!(&rgba[..4], &[0, 0, 255, 255]);
     }
-
     #[test]
     fn a_transparent_edge_does_not_darken_what_it_is_mixed_with() {
         let shrunk = rgba_png(&[255, 255, 255, 255, 0, 0, 0, 0], 2, 1).unwrap();
@@ -197,7 +182,6 @@ mod tests {
         assert_eq!(width, 32);
         assert_eq!(&rgba[..4], &[255, 255, 255, 127]);
     }
-
     #[test]
     fn a_kind_s_icon_is_kept_larger_than_an_application_s() {
         let large = png_of(&[0, 255, 0, 255].repeat(256 * 256), 256, 256);
@@ -209,7 +193,6 @@ mod tests {
         let shrunk = rgba_png_within(&[0, 255, 0, 255].repeat(48 * 48), 48, 48, KIND_SIDE).unwrap();
         assert_eq!(png_size(&shrunk), Some((48, 48)));
     }
-
     #[test]
     fn is_nothing_for_what_is_not_a_png() {
         assert_eq!(png_url(b"GIF89a"), None);

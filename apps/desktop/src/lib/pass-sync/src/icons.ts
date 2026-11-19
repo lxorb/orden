@@ -40,7 +40,6 @@ export const KIND_ICONS: Record<ItemKind, IconNode> = {
   ssh: KeySquare,
   wifi: Wifi,
 }
-
 export const VAULT_ICON_MARKS: Record<VaultIcon, IconNode> = {
   home: House,
   work: Briefcase,
@@ -63,7 +62,6 @@ export const VAULT_ICON_MARKS: Record<VaultIcon, IconNode> = {
   car: Car,
   cloud: Cloud,
 }
-
 const ACCENT_OF: Record<Exclude<VaultColor, 'lime'>, string> = {
   purple: 'violet',
   pink: 'pink',
@@ -75,7 +73,6 @@ const ACCENT_OF: Record<Exclude<VaultColor, 'lime'>, string> = {
   blue: 'blue',
   grey: 'slate',
 }
-
 export function vaultColour(color: VaultColor, scheme: 'dark' | 'light'): string {
   if (color !== 'lime') return accentColour(ACCENT_OF[color], scheme)
   const green = accentColour('green', scheme)

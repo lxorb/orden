@@ -4,9 +4,7 @@ export interface Owing {
   id: string
   what: { kind: 'wrote'; path: string; text: string } | { kind: 'op'; op: SyncFileOp; entry?: string }
 }
-
 const MOST_OWED = 1_000
-
 export async function takeOwed(
   engine: {
     saved(path: string, text: string): Promise<void>
@@ -28,13 +26,10 @@ export async function takeOwed(
   }
   await follow(op)
 }
-
 export class Owed {
   private readonly owing: Owing[] = []
   private next = 0
-
   constructor(private readonly say: (item: Owing) => void) {}
-
   add(what: Owing['what']): void {
     if (what.kind === 'wrote') {
       const last = this.owing.map((one) => one.what.kind).lastIndexOf('op')
@@ -51,24 +46,19 @@ export class Owed {
     this.owing.push(item)
     this.say(item)
   }
-
   clear(): void {
     this.owing.length = 0
   }
-
   done(id: string): void {
     const at = this.owing.findIndex((one) => one.id === id)
     if (at >= 0) this.owing.splice(at, 1)
   }
-
   resend(): void {
     for (const item of this.owing) this.say(item)
   }
-
   drain(): Owing[] {
     return this.owing.splice(0)
   }
-
   get size(): number {
     return this.owing.length
   }

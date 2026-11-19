@@ -10,19 +10,15 @@ import sys
 import threading
 import time
 from pathlib import Path
-
 from playwright.sync_api import Page, sync_playwright
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parent.parent
 DIST = APP / "dist"
 SHOTS = HERE / "shots" / "tabs-hints"
-
 PORT = 23911
 ORIGIN = f"http://127.0.0.1:{PORT}"
-
 NAMES = ["Alpha", "Beta", "Gamma", "Delta"]
-
 SEED = """
 async (names) => {
   const ws = window.ordenApp.workspace
@@ -40,7 +36,6 @@ async (names) => {
   return ws.tabs.map((one) => one.shown)
 }
 """
-
 STRIP = """
 () => {
   const ws = window.ordenApp.workspace
@@ -53,10 +48,7 @@ STRIP = """
   }))
 }
 """
-
 failures: list[str] = []
-
-
 SHOWN = """
 () => {
   window.__numeral = null
@@ -75,23 +67,16 @@ SHOWN = """
   )
 }
 """
-
 FRONT = "() => window.ordenApp.workspace.tabs.find((one) => one.id === window.ordenApp.workspace.activeTabId)?.shown"
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
-
 def wrong(what: str) -> None:
     say(f"FAILED: {what}")
     failures.append(what)
-
-
 def build() -> None:
     if os.environ.get("ORDEN_SKIP_BUILD") and (DIST / "index.html").exists():
         say("reusing the build that is there")
         return
-
     say("building the web app")
     shutil.rmtree(DIST, ignore_errors=True)
     built = subprocess.run(
@@ -106,24 +91,16 @@ def build() -> None:
     )
     if built.returncode != 0:
         raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         return
-
     def end_headers(self) -> None:
         self.send_header("Cache-Control", "no-store, must-revalidate")
         super().end_headers()
-
-
 class Strict(socketserver.ThreadingTCPServer):
-
     allow_reuse_address = False
     daemon_threads = True
     request_queue_size = 128
-
-
 def serve() -> Strict:
     say(f"serving {DIST.name} on {ORIGIN}")
     handler = functools.partial(Quiet, directory=str(DIST))
@@ -131,7 +108,6 @@ def serve() -> Strict:
         server = Strict(("127.0.0.1", PORT), handler)
     except OSError as error:
         raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
     threading.Thread(target=server.serve_forever, daemon=True).start()
     until = time.monotonic() + 20
     while time.monotonic() < until:
@@ -141,8 +117,6 @@ def serve() -> Strict:
         except OSError:
             time.sleep(0.2)
     raise SystemExit("the file server never answered")
-
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -151,41 +125,29 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bo
         page.wait_for_timeout(40)
     wrong(f"gave up waiting for {what}")
     return False
-
-
 def shot(page: Page, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SHOTS / f"{name}.png"))
     say(f"shot {name}.png")
-
-
 def title(page: Page, selector: str) -> str:
     found = page.locator(selector).first
     if found.count() == 0:
         wrong(f"nothing at {selector}")
         return ""
     return found.get_attribute("title") or ""
-
-
 def keyed(page: Page, selector: str, name: str, key: str) -> None:
     said = title(page, selector)
     if said != f"{name} ({key})":
         wrong(f"{selector} says {said!r}, not {name!r} with {key!r}")
     else:
         say(f"{said}")
-
-
 def centre(page: Page, selector: str) -> tuple[float, float]:
     box = page.locator(selector).first.bounding_box()
     if not box:
         raise SystemExit(f"nothing to point at: {selector}")
     return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
-
-
 def tab(name: str) -> str:
     return f'.tab:has(.label:text-is("{name}")) .pick'
-
-
 def tooltips(page: Page) -> None:
     say("the tooltips")
     keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Shift+L")
@@ -193,7 +155,6 @@ def tooltips(page: Page) -> None:
     keyed(page, ".tab.active .shut", "Close", "Ctrl+W")
     keyed(page, '[data-region="panels"] [role="tab"]', "Files", "Ctrl+Shift+E")
     keyed(page, '.foot button[aria-label="Settings"]', "Settings", "Ctrl+,")
-
     page.evaluate("() => window.ordenApp.shortcuts.set('app.sidebar', 'Mod-Alt-j')")
     page.wait_for_timeout(60)
     keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Alt+J")
@@ -202,12 +163,10 @@ def tooltips(page: Page) -> None:
     if title(page, "header .toggle") != "Hide left sidebar":
         wrong("a key taken away still shows in the sidebar toggle's tooltip")
     page.evaluate("() => window.ordenApp.shortcuts.reset('app.sidebar')")
-
     page.locator('.cm-line:has-text("Words about")').first.dblclick()
     if wait_for(page, "document.querySelector('.orden-bar-at')", "the format bar", 10):
         keyed(page, '.orden-bar-at button[aria-label="Bold"]', "Bold", "Ctrl+B")
     page.keyboard.press("ArrowRight")
-
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+f")
     if wait_for(page, "document.querySelector('.findbar')", "the find bar", 10):
@@ -216,7 +175,6 @@ def tooltips(page: Page) -> None:
         keyed(page, '.findbar button[aria-label="Previous"]', "Previous", "Ctrl+Shift+G")
         keyed(page, '.findbar button[aria-label="Close"]', "Close", "Esc")
         page.keyboard.press("Escape")
-
     page.evaluate("() => window.ordenApp.workspace.openPage('https://example.com/', 'plain')")
     if wait_for(page, "document.querySelector('.webbar')", "a web tab's bar", 15):
         keyed(page, '.webbar button[aria-label="Back"]', "Back", "Alt+←")
@@ -227,7 +185,6 @@ def tooltips(page: Page) -> None:
         else:
             say(reload)
     page.evaluate("() => window.ordenApp.workspace.closeActive()")
-
     page.evaluate(
         "async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
     )
@@ -236,20 +193,14 @@ def tooltips(page: Page) -> None:
         keyed(page, '.scroller button[aria-label="Undo"]', "Undo", "Ctrl+Z")
     page.evaluate("() => window.ordenApp.workspace.closeActive()")
     shot(page, "01-tooltips")
-
-
 def card_up(page: Page) -> bool:
     return bool(page.evaluate("() => !!document.querySelector('.card')"))
-
-
 def hover_cards(page: Page) -> None:
     say("the hover cards")
     page.mouse.move(640, 500)
     page.wait_for_timeout(400)
-
     if page.locator(".tabs .pick[title]").count():
         wrong("a tab still has a native tooltip beside its card")
-
     x, y = centre(page, tab("Beta"))
     started = time.monotonic()
     page.mouse.move(x, y, steps=4)
@@ -263,7 +214,6 @@ def hover_cards(page: Page) -> None:
     if "Beta" not in words:
         wrong(f"the card under Beta says {words!r}")
     shot(page, "02-card")
-
     x, y = centre(page, tab("Gamma"))
     page.mouse.move(x, y, steps=3)
     page.wait_for_timeout(120)
@@ -271,12 +221,10 @@ def hover_cards(page: Page) -> None:
         wrong("the card did not follow the pointer to the next tab at once")
     page.wait_for_timeout(300)
     shot(page, "03-card-slid")
-
     page.mouse.move(640, 500, steps=4)
     page.wait_for_timeout(400)
     if card_up(page):
         wrong("the card stayed after the pointer left the strip")
-
     x, y = centre(page, tab("Delta"))
     page.mouse.move(x, y, steps=3)
     wait_for(page, "document.querySelector('.card')", "a card under Delta", 3)
@@ -287,7 +235,6 @@ def hover_cards(page: Page) -> None:
         wrong("the card stayed through a press on its tab")
     page.mouse.move(640, 500, steps=3)
     page.wait_for_timeout(400)
-
     x, y = centre(page, tab("Alpha"))
     page.mouse.click(x, y, button="right")
     page.wait_for_timeout(200)
@@ -299,12 +246,8 @@ def hover_cards(page: Page) -> None:
     page.keyboard.press("Escape")
     page.mouse.move(640, 500, steps=3)
     page.wait_for_timeout(400)
-
-
 def strip(page: Page) -> list[dict]:
     return page.evaluate(STRIP)
-
-
 def several(page: Page) -> None:
     say("several tabs at once")
     page.locator(tab("Alpha")).click()
@@ -316,7 +259,6 @@ def several(page: Page) -> None:
     if sorted(now["picked"]) != ["Alpha", "Delta", "Gamma"]:
         wrong(f"Ctrl and a click picked {now['picked']}")
     shot(page, "04-picked")
-
     page.locator(tab("Gamma")).click(button="right")
     menu = page.locator('[role="menu"]')
     menu.wait_for(state="visible", timeout=5000)
@@ -325,7 +267,6 @@ def several(page: Page) -> None:
     shot(page, "05-pick-menu")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     sx, sy = centre(page, tab("Gamma"))
     end = page.locator(".tabs .new").first.bounding_box()
     page.mouse.move(sx, sy)
@@ -342,7 +283,6 @@ def several(page: Page) -> None:
         wrong(f"the block did not land together at the end: {now['tabs']}")
     if sorted(now["picked"]) != ["Alpha", "Delta", "Gamma"]:
         wrong(f"the pick did not survive its drag: {now['picked']}")
-
     page.evaluate("() => window.ordenApp.workspace.split('row', window.ordenApp.workspace.tabs.find((one) => one.shown === 'Beta').id)")
     page.wait_for_timeout(500)
     page.locator(tab("Alpha")).first.click()
@@ -365,7 +305,6 @@ def several(page: Page) -> None:
     say(f"after the carry {[one['tabs'] for one in panes]}")
     if not any(one["tabs"][-3:] == ["Alpha", "Gamma", "Delta"] for one in panes):
         wrong(f"the three did not arrive in the other pane together: {panes}")
-
     before = [one["tabs"] for one in strip(page)]
     page.keyboard.press("Control+w")
     page.wait_for_timeout(500)
@@ -380,8 +319,6 @@ def several(page: Page) -> None:
     if again != before:
         wrong(f"one Reopen closed tab did not bring the pick back where it was: {again}")
     shot(page, "08-reopened")
-
-
 FILLS = """
 () => {
   const one = document.querySelector('.tab.chosen:not(.active)')
@@ -401,8 +338,6 @@ FILLS = """
   }
 }
 """
-
-
 def ctrl_drag(browser, scheme: str) -> None:
     say(f"[{scheme}] a Ctrl press drags the pick")
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
@@ -412,7 +347,6 @@ def ctrl_drag(browser, scheme: str) -> None:
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 40)
     page.evaluate(SEED, NAMES)
     page.wait_for_timeout(500)
-
     page.locator(tab("Beta")).click(modifiers=["Control"])
     page.mouse.move(5, 500)
     page.wait_for_timeout(300)
@@ -421,7 +355,6 @@ def ctrl_drag(browser, scheme: str) -> None:
     if fills["shown"] is None or fills["picked"] == fills["frame"]:
         wrong(f"[{scheme}] a picked tab cannot be told from the frame: {fills}")
     shot(page, f"10-picked-{scheme}")
-
     sx, sy = centre(page, tab("Delta"))
     start = page.locator(".tabs .tab").first.bounding_box()
     page.keyboard.down("Control")
@@ -440,8 +373,6 @@ def ctrl_drag(browser, scheme: str) -> None:
     if sorted(now["picked"]) != ["Alpha", "Beta", "Delta"]:
         wrong(f"[{scheme}] the pick did not survive a Ctrl drag: {now['picked']}")
     context.close()
-
-
 def alt_numbers(page: Page, scheme: str) -> None:
     say(f"[{scheme}] the numbers while Alt is held")
     page.emulate_media(color_scheme=scheme)
@@ -451,7 +382,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.locator(".cm-content").first.click()
     page.wait_for_timeout(300)
     count = len(strip(page)[0]["tabs"])
-
     page.evaluate(SHOWN)
     page.keyboard.down("Alt")
     if not wait_for(page, "window.__numeral !== null", f"[{scheme}] the numbers after Alt", 3):
@@ -470,7 +400,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     SCRATCH = os.environ.get("ORDEN_SHOTS_TOO")
     if SCRATCH:
         shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
-
     for digit in ("2", "3", "0"):
         page.keyboard.press(digit)
         page.wait_for_timeout(120)
@@ -481,7 +410,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
             wrong(f"[{scheme}] Alt+{digit} left the numbers at {now}")
     if page.evaluate(FRONT) != strip(page)[0]["tabs"][-1]:
         wrong(f"[{scheme}] Alt+0 did not bring the last tab to the front")
-
     page.keyboard.press("F4")
     page.wait_for_timeout(200)
     if page.locator(".numeral").count() != len(wanted):
@@ -490,7 +418,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.wait_for_timeout(250)
     if page.locator(".numeral").count():
         wrong(f"[{scheme}] the numbers stayed after Alt+F4 and Alt let go of")
-
     page.keyboard.down("Alt")
     page.wait_for_timeout(150)
     if page.locator(".numeral").count() != len(wanted):
@@ -502,8 +429,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.locator(tab(NAMES[0])).first.click()
     page.locator(".cm-content").first.click()
     page.wait_for_timeout(200)
-
-
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     build()
@@ -522,7 +447,6 @@ def main() -> int:
                 raise SystemExit(1)
             say(f"seeded {page.evaluate(SEED, NAMES)}")
             page.wait_for_timeout(500)
-
             tooltips(page)
             hover_cards(page)
             several(page)
@@ -534,9 +458,6 @@ def main() -> int:
     finally:
         server.shutdown()
         server.server_close()
-
     print(f"\n{len(failures)} failed" if failures else "\nall held")
     return 1 if failures else 0
-
-
 raise SystemExit(main())

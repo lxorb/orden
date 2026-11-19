@@ -14,17 +14,13 @@ const CALC_HTML = [
   '<tr><td height="17" align="left">Apple</td><td align="left"><a href="https://apple.com/">https://apple.com/</a></td></tr>',
   '</table></body></html>',
 ].join('\n')
-
 const CALC_TEXT = 'Name\tSite\nApple\thttps://apple.com/\n'
-
 const CALC_PLAIN_HTML = CALC_HTML.replace('<a href="https://apple.com/">https://apple.com/</a>', 'https://apple.com/')
-
 describe('a LibreOffice Calc range pasted into a note', () => {
   test('without a link cell, its first row is the header', async () => {
     const written = (await pastedMarkdown(CALC_PLAIN_HTML, CALC_TEXT)) ?? ''
     expect(written.split('\n')[0]).toBe('| Name | Site |')
   })
-
   test('with a link cell, its first row is still the header, as from Excel or Google Sheets', async () => {
     const written = (await pastedMarkdown(CALC_HTML, CALC_TEXT)) ?? ''
     expect(written.split('\n')[0]).toBe('| Name | Site |')

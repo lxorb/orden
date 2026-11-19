@@ -7,13 +7,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [new DOMRect(0, 0, 1000, 20)] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 class Carried {
   private held = new Map<string, string>()
   effectAllowed = 'all'
@@ -24,7 +21,6 @@ class Carried {
     return this.held.get(type) ?? ''
   }
 }
-
 class Dragging extends MouseEvent {
   readonly dataTransfer: Carried
   constructor(type: string, init: MouseEventInit & { dataTransfer: Carried }) {
@@ -32,10 +28,8 @@ class Dragging extends MouseEvent {
     this.dataTransfer = init.dataTransfer
   }
 }
-
 const DOC = 'alpha beta gamma\n\nlast line here'
 const BETA = { from: 6, to: 10 }
-
 function pressedInBeta(): EditorView {
   const view = new EditorView({
     state: EditorState.create({ doc: DOC, selection: { anchor: BETA.from, head: BETA.to } }),
@@ -58,19 +52,16 @@ function pressedInBeta(): EditorView {
   )
   return view
 }
-
 function movedTo(view: EditorView, clientY: number) {
   view.contentDOM.ownerDocument.dispatchEvent(
     new MouseEvent('mousemove', { bubbles: true, buttons: 1, clientX: 70, clientY }),
   )
 }
-
 function dragged(view: EditorView): string | null {
   const data = new Carried()
   view.contentDOM.dispatchEvent(new Dragging('dragstart', { bubbles: true, dataTransfer: data }))
   return data.getData('Text') || null
 }
-
 describe('a press in the selection that moves far at once', () => {
   test('drags the words selected, when the browser starts a drag right after the move', () => {
     const view = pressedInBeta()
@@ -78,7 +69,6 @@ describe('a press in the selection that moves far at once', () => {
     expect(dragged(view)).toBe('beta')
     expect(view.state.selection.main).toMatchObject(BETA)
   })
-
   test('selects from the press, when no drag starts', async () => {
     const view = pressedInBeta()
     movedTo(view, 80)

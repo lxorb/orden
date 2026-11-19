@@ -8,7 +8,6 @@ describe('a terminal file', () => {
     expect(readSpec('not json')).toBeNull()
   })
 })
-
 describe('a remote destination', () => {
   test('is read from what was typed, with or without ssh, a user and a port', () => {
     const plain = destinationOf('ssh box')
@@ -18,13 +17,11 @@ describe('a remote destination', () => {
     expect(destinationOf('two words')).toBeNull()
     expect(destinationOf('  ')).toBeNull()
   })
-
   test('finds no host when none is known', () => {
     const wanted = destinationOf('box')
     expect(wanted && hostFor([], wanted)).toBeNull()
   })
 })
-
 describe('the overview preview', () => {
   test('a terminal with no session and no history shows nothing', async () => {
     expect(await scrollbackOf({ id: 'none', doc: '', home: null })).toBeNull()

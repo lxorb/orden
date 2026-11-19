@@ -8,12 +8,10 @@ interface Entry {
   is_dir: boolean
   children: Entry[]
 }
-
 const wrote = new Set<string>()
 const said = new Map<string, string>()
 const opened: string[] = []
 const ROOT = '/spaces/Brain'
-
 function treeOf(paths: Iterable<string>): Entry {
   const root: Entry = { path: ROOT, name: 'Brain', is_dir: true, children: [] }
   for (const full of paths) {
@@ -43,7 +41,6 @@ function treeOf(paths: Iterable<string>): Entry {
   sort(root)
   return root
 }
-
 const ws = {
   tree: null as Entry | null,
   activeSpaceId: 'old',
@@ -79,7 +76,6 @@ const ws = {
   openEntry: async (path: string) => void opened.push(path),
   showPanel: () => undefined,
 }
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'write_note' || command === 'write_bytes') wrote.add(String(args.path))
@@ -111,13 +107,10 @@ vi.mock('./carry-over', async () => {
     },
   }
 })
-
 const { importAsSpace, arrive } = await import('./migrating.svelte')
 const { busy } = await import('../../ui-kit/src/api')
-
 const file = (path: string, body: string | Uint8Array = 'x'): Source =>
   sourceOf(path, typeof body === 'string' ? new TextEncoder().encode(body) : body)
-
 beforeEach(() => {
   wrote.clear()
   said.clear()
@@ -129,7 +122,6 @@ beforeEach(() => {
   ws.refusing = false
   busy.clear()
 })
-
 describe('a vault brought in as a space', () => {
   test('opens on its first note, not a PDF or canvas in a folder that sorts first', async () => {
     const space = await importAsSpace('Brain', [
@@ -139,10 +131,8 @@ describe('a vault brought in as a space', () => {
       file('Welcome.md', '# Welcome\n\nStart here.'),
     ])
     await arrive(space)
-
     expect(opened).toEqual([`${ROOT}/Welcome.md`])
   })
-
   test('keeps its wikilinks when the Links setting was last on markdown links', async () => {
     setLinkWriting('shortest')
     await importAsSpace('Brain', [
@@ -151,11 +141,9 @@ describe('a vault brought in as a space', () => {
       file('Plan.md', '# Plan\n'),
       file('diagram.png', 'png'),
     ])
-
     expect(linkWriting()).toBe('wikilink')
     expect(said.get(`${ROOT}/Home.md`)).toBe('See [[Plan]] and ![[diagram.png]].\n')
   })
-
   test('holding nothing but Obsidian housekeeping makes no empty space', async () => {
     await expect(
       importAsSpace('Brain', [
@@ -166,7 +154,6 @@ describe('a vault brought in as a space', () => {
     ).rejects.toThrow('Nothing in there can be read as notes.')
     expect(ws.added).toBe(0)
   })
-
   test('says how many of its files are in iCloud rather than on this Mac', async () => {
     await importAsSpace('Brain', [
       file('.obsidian/app.json', '{}'),
@@ -175,11 +162,9 @@ describe('a vault brought in as a space', () => {
       file('Attachments/.diagram.png.icloud', 'bplist00'),
       file('Home.md', '# Home\n\nSee [[Plan]] and [[Budget]].\n'),
     ])
-
     expect(wrote).toContain(`${ROOT}/Home.md`)
     expect(busy.trouble).toBe('3 files are in iCloud rather than on this Mac')
   })
-
   test('with every note in iCloud says so, rather than only that nothing could be read', async () => {
     await expect(
       importAsSpace('Brain', [
@@ -189,7 +174,6 @@ describe('a vault brought in as a space', () => {
       ]),
     ).rejects.toThrow('Nothing in there can be read as notes. 2 files are in iCloud rather than on this Mac')
   })
-
   test('says it was not written when its space cannot be made', async () => {
     ws.refusing = true
     await expect(importAsSpace('Brain', [file('.obsidian/app.json', '{}'), file('Home.md', '# Home')])).rejects.toThrow(

@@ -1,22 +1,17 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SIDES = """() => ({
   left: window.ordenApp.workspace.panel,
   right: window.ordenApp.workspace.rightPanel,
   leftDrawn: !!document.querySelector('aside[data-sidebar]:not(.right) [role=tablist]'),
   rightDrawn: !!document.querySelector('aside.right [role=tablist]'),
 })"""
-
 ASIDE = {"left": "aside[data-sidebar]:not(.right)", "right": "aside.right"}
-
 def tab(page: Page, side: str, label: str):
     return page.locator(f"{ASIDE[side]} [role=tablist] [role=tab][aria-label='{label}']")
-
 def pressed(page: Page, side: str, label: str, wanted: str | None, what: str) -> None:
     tab(page, side, label).click()
     page.wait_for_timeout(300)
@@ -24,7 +19,6 @@ def pressed(page: Page, side: str, label: str, wanted: str | None, what: str) ->
     say(f"[{side}] {what}: {seen}")
     if seen[side] != wanted or not seen[f"{side}Drawn"]:
         wrong(f"[{side}] {what}: the side shows {seen[side]!r}, drawn {seen[f'{side}Drawn']}, not {wanted!r}")
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1400, "height": 800})
     page = context.new_page()
@@ -33,10 +27,8 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('tree') }")
     wait_for(page, "() => window.ordenApp.workspace.panel === 'tree'", "the file list")
     wait_for(page, "() => !!document.querySelector('aside[data-sidebar]:not(.right) [role=tablist]')", "the left side's tabs")
-
     pressed(page, "left", "Files", "tree", "the folder pressed while it is in front")
     pressed(page, "left", "Files", "tree", "and again")
-
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar('right')")
     wait_for(page, "() => window.ordenApp.workspace.rightPanel !== null", "the right side")
     page.wait_for_timeout(300)
@@ -50,7 +42,6 @@ def drive(browser: Browser) -> None:
         else:
             pressed(page, "right", label, right, "its tab in front pressed")
     DRIVE.shot(page, "01-after-presses")
-
     labels = page.locator("aside[data-sidebar]:not(.right) [role=tablist] [role=tab]:not(.behind)").evaluate_all(
         "(tabs) => tabs.map((one) => one.getAttribute('aria-label'))"
     )
@@ -62,11 +53,9 @@ def drive(browser: Browser) -> None:
         pressed(page, "left", other, shows, f"{other} pressed while it is in front")
         tab(page, "left", "Files").click()
         page.wait_for_timeout(300)
-
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
     wait_for(page, "() => window.ordenApp.workspace.panel === null", "the left side shut by its own button")
     page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
     wait_for(page, "() => window.ordenApp.workspace.panel === 'tree'", "the left side open again")
     context.close()
-
 raise SystemExit(DRIVE.run(drive, "a panel tab pressed is that panel, and the side stays"))

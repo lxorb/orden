@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import base64
 import json
@@ -23,7 +22,6 @@ SPAN = """
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 })()
 """
-
 CLOSE = """
 (() => {
   const close = document.querySelector('.pages .sheet canvas.close.there')
@@ -32,7 +30,6 @@ CLOSE = """
   return { pixels: close ? close.width : 0, shown: box ? box.width * devicePixelRatio : 0, wide: sheet ? sheet.width : 0 }
 })()
 """
-
 ZOOM_IN = """
 (() => {
   const host = document.querySelector('.pages')
@@ -43,7 +40,6 @@ ZOOM_IN = """
   return true
 })()
 """
-
 UNDER = """
 (() => {
   const host = document.querySelector('.pages').getBoundingClientRect()
@@ -61,7 +57,6 @@ UNDER = """
   return null
 })()
 """
-
 LOOKED = """
 (() => ({
   pages: document.querySelectorAll('.pages').length,
@@ -73,7 +68,6 @@ LOOKED = """
   errors: (window.__errors ?? []).slice(0, 5),
 }))()
 """
-
 HEAR = """
 (() => {
   window.__heard = []
@@ -82,18 +76,14 @@ HEAR = """
   return true
 })()
 """
-
 HEARD = "(() => { const said = window.__heard.splice(0); return said.length > 24 ? [...said.slice(0, 12), '…', ...said.slice(-12)] : said })()"
-
 INNER = (
     "const i = window.__TAURI_INTERNALS__;"
     "const at = await i.invoke('plugin:window|inner_position', { label: 'main' });"
     "const scale = await i.invoke('plugin:window|scale_factor', { label: 'main' });"
     "return { x: at.x, y: at.y, scale, ratio: devicePixelRatio }"
 )
-
 STILL = 250
-
 def long_paper(pages: int = 120, lines: int = 70) -> bytes:
     w, h = 595, 842
     words = "the kestrel hangs above the field while the river turns slowly under a grey and patient sky"
@@ -118,7 +108,6 @@ def long_paper(pages: int = 120, lines: int = 70) -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
 SCROLL = """
 const [frames, step, hide] = %s
 document.getElementById('no-words')?.remove()
@@ -155,7 +144,6 @@ document.getElementById('no-words')?.remove()
 const sorted = [...gaps].sort((a, b) => a - b)
 return { mean: gaps.reduce((sum, one) => sum + one, 0) / gaps.length, p95: sorted[Math.floor(sorted.length * 0.95)], long: gaps.filter((one) => one > 50).length, most: sorted.at(-1), moved: from - rise(), built }
 """
-
 def paper() -> bytes:
     w, h = 595, 842
     lines = [f"BT /F1 9 Tf 40 {h - 60 - row * 12} Td (Line {row + 1}: the kestrel hangs above the field.) Tj ET" for row in range(60)]
@@ -178,16 +166,13 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size 6>>\nstartxref\n%d\n%%%%EOF\n" % table
     return bytes(out)
-
 class Windows:
     def __init__(self) -> None:
         import ctypes
         from ctypes import wintypes
-
         self.ctypes = ctypes
         self.user32 = ctypes.WinDLL("user32", use_last_error=True)
         self.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
-
         class PointerInfo(ctypes.Structure):
             _fields_ = [
                 ("pointerType", wintypes.DWORD),
@@ -207,7 +192,6 @@ class Windows:
                 ("PerformanceCount", ctypes.c_uint64),
                 ("ButtonChangeType", ctypes.c_int),
             ]
-
         class PenInfo(ctypes.Structure):
             _fields_ = [
                 ("pointerInfo", PointerInfo),
@@ -218,7 +202,6 @@ class Windows:
                 ("tiltX", ctypes.c_int32),
                 ("tiltY", ctypes.c_int32),
             ]
-
         class TouchInfo(ctypes.Structure):
             _fields_ = [
                 ("pointerInfo", PointerInfo),
@@ -229,19 +212,15 @@ class Windows:
                 ("orientation", ctypes.c_uint32),
                 ("pressure", ctypes.c_uint32),
             ]
-
         class Either(ctypes.Union):
             _fields_ = [("touchInfo", TouchInfo), ("penInfo", PenInfo)]
-
         class TypeInfo(ctypes.Structure):
             _fields_ = [("type", wintypes.DWORD), ("u", Either)]
-
         self.TypeInfo = TypeInfo
         self.user32.CreateSyntheticPointerDevice.restype = wintypes.HANDLE
         self.user32.CreateSyntheticPointerDevice.argtypes = [wintypes.DWORD, wintypes.ULONG, wintypes.DWORD]
         self.user32.InjectSyntheticPointerInput.argtypes = [wintypes.HANDLE, ctypes.POINTER(TypeInfo), ctypes.c_uint32]
         self.devices: dict[int, Any] = {}
-
     def drag(self, start: tuple[float, float], end: tuple[float, float]) -> None:
         user32 = self.user32
         user32.SetCursorPos(round(start[0]), round(start[1]))
@@ -252,7 +231,6 @@ class Windows:
             time.sleep(0.03)
         user32.mouse_event(0x0004, 0, 0, 0, 0)
         time.sleep(0.4)
-
     def wheel(self, at: tuple[float, float], turn: int, ctrl: bool = False) -> None:
         user32 = self.user32
         user32.SetCursorPos(round(at[0]), round(at[1]))
@@ -266,7 +244,6 @@ class Windows:
         if ctrl:
             user32.keybd_event(0x11, 0, 0x0002, 0)
         time.sleep(0.5)
-
     def _device(self, kind: int) -> Any:
         if kind not in self.devices:
             made = self.user32.CreateSyntheticPointerDevice(kind, 1, 1)
@@ -274,7 +251,6 @@ class Windows:
                 raise OSError(f"CreateSyntheticPointerDevice({kind}) failed: {self.ctypes.get_last_error()}")
             self.devices[kind] = made
         return self.devices[kind]
-
     def _send(self, kind: int, at: tuple[float, float], flags: int) -> None:
         one = self.TypeInfo()
         one.type = kind
@@ -294,7 +270,6 @@ class Windows:
             box.left, box.top, box.right, box.bottom = round(at[0]) - 2, round(at[1]) - 2, round(at[0]) + 2, round(at[1]) + 2
         if not self.user32.InjectSyntheticPointerInput(self._device(kind), self.ctypes.byref(one), 1):
             raise OSError(f"InjectSyntheticPointerInput failed: {self.ctypes.get_last_error()}")
-
     def stroke(self, kind: int, start: tuple[float, float], end: tuple[float, float], hold: float = 0) -> None:
         down = 0x2 | 0x4 | 0x2000
         if kind == 3:
@@ -315,23 +290,17 @@ class Windows:
             time.sleep(0.05)
             self._send(kind, end, 0x20000)
         time.sleep(0.5)
-
     def pen(self, start: tuple[float, float], end: tuple[float, float]) -> None:
         self.stroke(3, start, end)
-
     def finger(self, start: tuple[float, float], end: tuple[float, float], hold: float = 0) -> None:
         self.stroke(2, start, end, hold)
-
 class Mac:
     def __init__(self) -> None:
         import Quartz
-
         self.q = Quartz
-
     def _post(self, kind: int, at: tuple[float, float]) -> None:
         event = self.q.CGEventCreateMouseEvent(None, kind, at, self.q.kCGMouseButtonLeft)
         self.q.CGEventPost(self.q.kCGHIDEventTap, event)
-
     def drag(self, start: tuple[float, float], end: tuple[float, float]) -> None:
         q = self.q
         self._post(q.kCGEventMouseMoved, start)
@@ -342,7 +311,6 @@ class Mac:
             time.sleep(0.03)
         self._post(q.kCGEventLeftMouseUp, end)
         time.sleep(0.4)
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -354,7 +322,6 @@ def main() -> int:
         print("this drive is for WebView2 and WKWebView; the Linux engines are driven by test/e2e/pages-words.py")
         return 0
     engine: Any = Windows() if sys.platform == "win32" else Mac()
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -388,30 +355,24 @@ def main() -> int:
         inner = app.eval(INNER)
         touchy = app.eval("'ontouchstart' in window")
         print(f"engine: {app.eval('navigator.userAgent')}; touch events: {touchy}; window: {inner}", flush=True)
-
         def screen(x: float, y: float) -> tuple[float, float]:
             if sys.platform == "darwin":
                 return inner["x"] / inner["scale"] + x, inner["y"] / inner["scale"] + y
             return inner["x"] + x * inner["ratio"], inner["y"] + y * inner["ratio"]
-
         def line(number: int) -> dict[str, float]:
             box = app.eval(SPAN % json.dumps(f"Line {number}:"))
             if not isinstance(box, dict):
                 raise SystemExit(f"no words for line {number}: {box}")
             return box
-
         def chosen() -> str:
             said = app.eval("String(getSelection())")
             return said if isinstance(said, str) else ""
-
         def menu() -> list[str]:
             rows = app.eval("[...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.innerText.trim())")
             return rows if isinstance(rows, list) else []
-
         def shut_menu() -> None:
             app.eval("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); getSelection().removeAllRanges(); return true")
             time.sleep(0.3)
-
         app.eval(HEAR)
         box = line(3)
         middle = box["y"] + box["height"] / 2
@@ -426,7 +387,6 @@ def main() -> int:
         if "Line 3: the kestrel hangs above the field." not in said:
             wrong.append(f"a mouse drag over a line of the PDF chose {said!r}")
         shut_menu()
-
         if isinstance(engine, Windows):
             try:
                 box = line(8)
@@ -439,7 +399,6 @@ def main() -> int:
                 if not any(one.startswith("Copy") for one in rows):
                     wrong.append(f"after a pen chose words its menu has no Copy: {rows}")
                 shut_menu()
-
                 box = line(10)
                 middle = box["y"] + box["height"] / 2
                 start = box["x"] + box["width"] * 0.38
@@ -457,7 +416,6 @@ def main() -> int:
                 unverified.append(f"pen and touch could not be made on this machine: {error}")
         else:
             unverified.append("a Mac has no pen or touch to make from outside the app; only the mouse was driven")
-
         if isinstance(engine, Windows):
             sheet = "(() => { const b = document.querySelector('.pages .sheet').getBoundingClientRect(); return { top: b.top, width: b.width } })()"
             host = app.eval("(() => { const b = document.querySelector('.pages').getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 } })()")
@@ -473,7 +431,6 @@ def main() -> int:
             print(f"Ctrl and the wheel, as a touchpad's pinch comes: {before} -> {after}", flush=True)
             if after["width"] <= before["width"]:
                 wrong.append(f"Ctrl and the wheel no longer zoom a page note: {before} -> {after}")
-
         for wanted in (8, 16, 32):
             first = app.eval(CLOSE)
             for _ in range(40):
@@ -488,7 +445,6 @@ def main() -> int:
             print(f"zoomed in about {wanted}x: the close-up is {seen['pixels']} pixels for {seen['shown']:.0f} on screen ({stretch:.2f}x)", flush=True)
             if stretch > 1.15:
                 wrong.append(f"zoomed in about {wanted}x the words are stretched {stretch:.2f}x")
-
         under = app.eval(UNDER)
         if isinstance(under, dict):
             middle = under["y"]
@@ -499,7 +455,6 @@ def main() -> int:
                 wrong.append(f"zoomed in, a drag over words chose {said!r}")
         else:
             unverified.append(f"no words under the middle of the page zoomed in: {under}")
-
         long = f"{root}/Long.pdf"
         put = app.eval(
             f"orden.invoke('write_bytes', {{ path: {json.dumps(long)}, base64: {json.dumps(base64.b64encode(long_paper()).decode())} }})"
@@ -519,12 +474,10 @@ def main() -> int:
     finally:
         ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in unverified:
         print(f"::warning::{one}", flush=True)
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -4,9 +4,7 @@ import type { Item, Login } from './types'
 import { siteOf } from './urls'
 
 export const FLAGS = ['compromised', 'weak', 'reused', 'inactive2fa', 'excluded'] as const
-
 export type Flag = (typeof FLAGS)[number]
-
 export interface Report {
   weak: string[]
   reused: Map<string, string[]>
@@ -14,21 +12,16 @@ export interface Report {
   excluded: string[]
   compromised: string[]
 }
-
 export type LoginItem = Item & { content: Login }
-
 export function isLoginItem(item: Item): item is LoginItem {
   return item.content.kind === 'login'
 }
-
 export function activeLogins(items: readonly Item[]): LoginItem[] {
   return items.filter(isLoginItem).filter((item) => item.trashed === null)
 }
-
 export function watchedLogins(items: readonly Item[]): LoginItem[] {
   return activeLogins(items).filter((item) => item.monitored)
 }
-
 export function hasTwoFactor(login: Login): boolean {
   return (
     login.totp.trim() !== '' ||
@@ -36,14 +29,12 @@ export function hasTwoFactor(login: Login): boolean {
     login.fields.some((field) => field.kind === 'totp' && field.value.trim() !== '')
   )
 }
-
 export function offersTwoFactorFor(login: Login): boolean {
   return login.websites.some((website) => {
     const site = siteOf(website.url)
     return site !== null && offersTwoFactor(site)
   })
 }
-
 export function idsByPassword(logins: readonly LoginItem[]): Map<string, string[]> {
   const byPassword = new Map<string, string[]>()
   for (const item of logins) {
@@ -55,7 +46,6 @@ export function idsByPassword(logins: readonly LoginItem[]): Map<string, string[
   }
   return byPassword
 }
-
 function reusedOf(logins: readonly LoginItem[]): Map<string, string[]> {
   const reused = new Map<string, string[]>()
   for (const ids of idsByPassword(logins).values()) {
@@ -68,7 +58,6 @@ function reusedOf(logins: readonly LoginItem[]): Map<string, string[]> {
   }
   return reused
 }
-
 export function report(items: readonly Item[], compromised: ReadonlySet<string> = new Set()): Report {
   const active = activeLogins(items)
   const watched = active.filter((item) => item.monitored)
@@ -85,7 +74,6 @@ export function report(items: readonly Item[], compromised: ReadonlySet<string> 
     compromised: watched.filter((item) => compromised.has(item.id)).map((item) => item.id),
   }
 }
-
 export function flagsOf(item: Item, of: Report): Flag[] {
   const has: Record<Flag, boolean> = {
     compromised: of.compromised.includes(item.id),

@@ -3,7 +3,6 @@ import { note } from '../failed'
 import { claimed, type Hold, holdKey, holdOf, standing } from './holding'
 
 const OPEN = 1
-
 export interface Holder {
   session: string
   device: string
@@ -13,9 +12,7 @@ export interface Holder {
   parked?: boolean
   lost?: boolean
 }
-
 type LockFrame = { t: 'held'; by: string; since: number; taken: boolean } | { t: 'hold' }
-
 export interface LockHost<V extends Holder> {
   ctx: DurableObjectState
   viewerOf(socket: WebSocket): V | null
@@ -24,24 +21,19 @@ export interface LockHost<V extends Holder> {
   parked?(socket: WebSocket): void
   handed?(session: string): void
 }
-
 export class SocketLock<V extends Holder> {
   private holding: Promise<unknown> = Promise.resolve()
   private readonly heardAt = new WeakMap<WebSocket, number>()
   private readonly freeing = new Map<string, ReturnType<typeof setTimeout>>()
-
   constructor(private readonly host: LockHost<V>) {}
-
   heard(socket: WebSocket): void {
     this.heardAt.set(socket, Date.now())
   }
-
   inTurn<T>(work: () => Promise<T>): Promise<T> {
     const turn = this.holding.then(work)
     this.holding = turn.catch(() => undefined)
     return turn
   }
-
   private present(session: string, device: string, except?: WebSocket): boolean {
     const now = Date.now()
     let found = false
@@ -57,12 +49,10 @@ export class SocketLock<V extends Holder> {
     }
     return found
   }
-
   private lastHeard(socket: WebSocket, viewer: V): number {
     const beat = this.host.ctx.getWebSocketAutoResponseTimestamp(socket)?.getTime() ?? 0
     return Math.max(this.heardAt.get(socket) ?? 0, beat, viewer.seen)
   }
-
   claim(socket: WebSocket, take: boolean): Promise<boolean> {
     return this.inTurn(async () => {
       const viewer = this.host.viewerOf(socket)
@@ -88,7 +78,6 @@ export class SocketLock<V extends Holder> {
       return true
     })
   }
-
   private handed(session: string, hold: Hold, except?: WebSocket): void {
     for (const other of this.host.ctx.getWebSockets(session)) {
       const viewer = this.host.viewerOf(other)
@@ -104,13 +93,11 @@ export class SocketLock<V extends Holder> {
     }
     this.host.handed?.(session)
   }
-
   private park(socket: WebSocket, viewer: V, hold: Hold, lost: boolean): void {
     socket.serializeAttachment({ ...viewer, parked: true, lost })
     this.host.parked?.(socket)
     this.host.say(socket, { t: 'held', by: hold.name, since: hold.since, taken: lost })
   }
-
   leave(socket: WebSocket): Promise<void> {
     return this.inTurn(async () => {
       const viewer = this.host.viewerOf(socket)
@@ -123,7 +110,6 @@ export class SocketLock<V extends Holder> {
       await this.handOn(viewer.session, socket)
     })
   }
-
   settle(session: string, gone?: WebSocket): Promise<void> {
     return this.inTurn(async () => {
       const key = holdKey(session)
@@ -142,15 +128,12 @@ export class SocketLock<V extends Holder> {
       await this.handOn(session)
     })
   }
-
   drop(session: string): Promise<boolean> {
     return this.inTurn(() => this.host.ctx.storage.delete(holdKey(session)))
   }
-
   async holder(session: string): Promise<Hold | null> {
     return holdOf(await this.host.ctx.storage.get(holdKey(session)))
   }
-
   private async handOn(session: string, except?: WebSocket): Promise<void> {
     const waiting = this.host.ctx.getWebSockets(session).flatMap((socket) => {
       const viewer = this.host.viewerOf(socket)
@@ -170,7 +153,6 @@ export class SocketLock<V extends Holder> {
     await this.host.ctx.storage.put(holdKey(session), hold)
     this.handed(session, hold)
   }
-
   private freeLater(session: string, hold: Hold): void {
     if (hold.left === null || this.freeing.has(session)) return
     const timer = setTimeout(

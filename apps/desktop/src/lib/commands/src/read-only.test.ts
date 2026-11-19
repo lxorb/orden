@@ -1,20 +1,16 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const readOnly = new Set<string>()
-
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
-
 const { workspace } = await import('../../workspace/src/api')
 const { appCommands } = await import('./api')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
-
 const SPACE = '/Theirs'
 const MAKING = ['new-unique', 'new-canvas', 'new-pages', 'new-database', 'new-from-template']
-
 function offered(): string[] {
   vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
     id: 'theirs',
@@ -25,26 +21,21 @@ function offered(): string[] {
     .filter((one) => MAKING.includes(one.id) && one.disabled !== true)
     .map((one) => one.id)
 }
-
 afterEach(() => {
   vi.restoreAllMocks()
   readOnly.clear()
 })
-
 describe('making a file from the palette', () => {
   test('is offered in a space that may be written in', () => {
     expect(offered()).toEqual(MAKING)
   })
-
   test('is not offered in a space shared to be read', () => {
     readOnly.add(SPACE)
     expect(offered()).toEqual([])
   })
 })
-
 describe('the note in front', () => {
   const NOTE = `${SPACE}/Plan.md`
-
   function rows() {
     vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
       id: 'theirs',
@@ -74,22 +65,18 @@ describe('the note in front', () => {
       moves: commands.some((one) => one.id === 'move-note'),
     }
   }
-
   test('is renamed and moved in a space that may be written in', () => {
     expect(rows()).toEqual({ renames: true, moves: true })
   })
-
   test('is neither in a space shared to be read', () => {
     readOnly.add(SPACE)
     expect(rows()).toEqual({ renames: false, moves: false })
   })
-
   test('promises no key that only works on a focused tab', () => {
     rows()
     expect(appCommands().find((one) => one.id === 'rename')?.hint).toBeFalsy()
   })
 })
-
 describe('converting syntax', () => {
   const offers = () => {
     vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
@@ -99,14 +86,12 @@ describe('converting syntax', () => {
     })
     return appCommands().some((one) => one.id === 'convert-syntax' && one.disabled !== true)
   }
-
   test('is offered in a space that may be written in, and not in one shared to be read', () => {
     expect(offers()).toBe(true)
     readOnly.add(SPACE)
     expect(offers()).toBe(false)
   })
 })
-
 describe('converting website notes', () => {
   async function offers(): Promise<boolean> {
     const { links } = await import('../../link-index/src/api')
@@ -118,11 +103,9 @@ describe('converting website notes', () => {
     })
     return appCommands().some((one) => one.id === 'convert-website-notes' && one.disabled !== true)
   }
-
   test('is offered in a space that may be written in', async () => {
     expect(await offers()).toBe(true)
   })
-
   test('is not offered in a space shared to be read', async () => {
     readOnly.add(SPACE)
     expect(await offers()).toBe(false)

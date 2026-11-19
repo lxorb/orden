@@ -1,6 +1,5 @@
 <script lang="ts">
   const { text }: { text: string } = $props()
-
   const pieces = $derived(
     Array.from(text).map((char) => ({
       char,
@@ -27,11 +26,9 @@
     user-select: all;
     -webkit-user-select: all;
   }
-
   .digit {
     color: var(--accent);
   }
-
   .symbol {
     color: var(--success);
   }

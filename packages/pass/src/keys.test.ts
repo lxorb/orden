@@ -29,7 +29,6 @@ import type { VaultMeta } from './types'
 
 const AT = { keyVersion: 1, rev: 1 }
 const SMALL = { m: 64, t: 1, p: 1 }
-
 describe('recovery codes', () => {
   it('round-trips in upper case groups of four', async () => {
     const bytes = newKey()
@@ -38,7 +37,6 @@ describe('recovery codes', () => {
     expect(code.replace(/-/g, '')).toHaveLength(55)
     expect(await recoveryKey(code)).toEqual(bytes)
   })
-
   it('forgives case, spaces and look-alike letters', async () => {
     const bytes = newKey()
     const code = await recoveryCode(bytes)
@@ -46,7 +44,6 @@ describe('recovery codes', () => {
     expect(await recoveryKey(typed)).toEqual(bytes)
     expect(await recoveryKey(code.replace(/1/g, 'I'))).toEqual(bytes)
   })
-
   it('refuses a mistyped code', async () => {
     const code = await recoveryCode(newKey())
     const letters = code.replace(/-/g, '')
@@ -57,7 +54,6 @@ describe('recovery codes', () => {
     expect(await recoveryKey(letters.slice(0, -1) + 'U')).toBeNull()
     expect(await recoveryKey('')).toBeNull()
   })
-
   it('refuses padding bits that are not zero', async () => {
     const letters = (await recoveryCode(newKey())).replace(/-/g, '')
     const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
@@ -66,7 +62,6 @@ describe('recovery codes', () => {
     expect(await recoveryKey(changed)).toBeNull()
   })
 })
-
 describe('keyring', () => {
   it('opens with the password and the recovery code', async () => {
     const { keyring, opened, recovery } = await newKeyring('correct horse', SMALL)
@@ -77,7 +72,6 @@ describe('keyring', () => {
     expect(keyring).toMatchObject({ v: 1, pub: opened.pair.pub, password: SMALL })
     expect(keyringIn(JSON.parse(JSON.stringify(keyring)))).toEqual(keyring)
   })
-
   it('refuses a wrong password or recovery code', async () => {
     const { keyring } = await newKeyring('correct horse', SMALL)
     await expect(openWithPassword(keyring, 'wrong horse')).rejects.toThrow(WrongSecret)
@@ -85,13 +79,11 @@ describe('keyring', () => {
     await expect(openWithRecovery(keyring, 'nonsense')).rejects.toThrow(WrongSecret)
     await expect(openWithRecovery({ ...keyring, recovery: null }, 'x')).rejects.toThrow(WrongSecret)
   })
-
   it('refuses parameters out of range as a wrong secret', async () => {
     const { keyring } = await newKeyring('pw', SMALL)
     const bad = { ...keyring, password: { ...keyring.password, m: 4 } }
     await expect(openWithPassword(bad, 'pw')).rejects.toThrow(WrongSecret)
   })
-
   it('changes the password', async () => {
     const { keyring, opened, recovery } = await newKeyring('old', SMALL)
     const changed = await changePassword(keyring, opened, 'new', SMALL)
@@ -99,7 +91,6 @@ describe('keyring', () => {
     await expect(openWithPassword(changed, 'old')).rejects.toThrow(WrongSecret)
     expect((await openWithRecovery(changed, recovery)).root).toEqual(opened.root)
   })
-
   it('makes a new recovery code that replaces the old one', async () => {
     const { keyring, opened, recovery } = await newKeyring('pw', SMALL)
     const renewed = await newRecovery(keyring, opened)
@@ -108,7 +99,6 @@ describe('keyring', () => {
     await expect(openWithRecovery(renewed.keyring, recovery)).rejects.toThrow(WrongSecret)
     expect((await openWithPassword(renewed.keyring, 'pw')).root).toEqual(opened.root)
   })
-
   it('refuses a malformed keyring', async () => {
     const { keyring } = await newKeyring('pw', SMALL)
     for (const bad of [
@@ -130,7 +120,6 @@ describe('keyring', () => {
       expect(keyringIn(bad)).toBeNull()
     expect(keyringIn({ ...keyring, recovery: null })).toMatchObject({ recovery: null })
   })
-
   it('holds a signing pair, its private half sealed under the root key', async () => {
     const { keyring, opened } = await newKeyring('pw', SMALL)
     expect(opened.signer?.pub).toBe(keyring.sign?.pub)
@@ -143,7 +132,6 @@ describe('keyring', () => {
     }
     await expect(openWithPassword(swapped, 'pw')).rejects.toThrow(WrongSecret)
   })
-
   it('gives an older keyring without a signing pair one, keeping everything else', async () => {
     const { keyring, opened } = await newKeyring('pw', SMALL)
     const older = { ...keyring }
@@ -158,7 +146,6 @@ describe('keyring', () => {
     expect((await openedWith(made.keyring, opened.root)).signer?.pub).toBe(made.keyring.sign?.pub)
     expect(await withSigner(made.keyring, made.opened)).toEqual(made)
   })
-
   it('binds the password seal to the keyring’s public key, and still opens an older seal', async () => {
     const { keyring, opened } = await newKeyring('pw', SMALL)
     expect(isOldPasswordSeal(keyring)).toBe(false)
@@ -167,7 +154,6 @@ describe('keyring', () => {
     await expect(openWithPassword(mixed, 'pw')).rejects.toThrow(WrongSecret)
     const moved = { ...keyring, password: { ...keyring.password, at: keyring.password.at! + 1 } }
     await expect(openWithPassword(moved, 'pw')).rejects.toThrow(WrongSecret)
-
     const old = await legacyPasswordSeal(opened.root, 'pw')
     const older = { ...keyring, password: old }
     expect(isOldPasswordSeal(older)).toBe(true)
@@ -176,7 +162,6 @@ describe('keyring', () => {
     expect(isOldPasswordSeal(upgraded)).toBe(false)
     expect((await openWithPassword(upgraded, 'pw')).root).toEqual(opened.root)
   })
-
   it('refuses to stretch a password with more memory or passes than Pass allows', async () => {
     const { keyring } = await newKeyring('pw', SMALL)
     for (const costly of [{ m: 262145 }, { m: 1048576 }, { t: 11 }]) {
@@ -186,7 +171,6 @@ describe('keyring', () => {
     }
   })
 })
-
 async function legacyPasswordSeal(root: Uint8Array<ArrayBuffer>, password: string) {
   const { stretch, subkey } = await import('./crypto')
   const salt = crypto.getRandomValues(new Uint8Array(16))
@@ -194,7 +178,6 @@ async function legacyPasswordSeal(root: Uint8Array<ArrayBuffer>, password: strin
   const { base64 } = await import('./bytes')
   return { salt: base64(salt), ...SMALL, sealed: await seal(key, root, 'root', 'password') }
 }
-
 describe('vaults and items', () => {
   const meta: VaultMeta = {
     v: 1,
@@ -205,7 +188,6 @@ describe('vaults and items', () => {
     folders: [],
     hidePasswordsFromViewers: false,
   }
-
   it('seals and opens a vault and its key', async () => {
     const pair = await newPair()
     const vaultKey = newKey()
@@ -217,7 +199,6 @@ describe('vaults and items', () => {
     expect(await openVault(vaultKey, 'v1', sealed)).toEqual(meta)
     await expect(openVault(vaultKey, 'v2', sealed)).rejects.toThrow(WrongSecret)
   })
-
   it('seals and opens an item', async () => {
     const vaultKey = newKey()
     const envelope = newEnvelope({ ...blank('login'), title: 'Bank', password: 'p' }, 7)
@@ -229,7 +210,6 @@ describe('vaults and items', () => {
     const again = await sealItem(vaultKey, 'v1', 'i1', envelope, AT, itemKey)
     expect((await openItem(vaultKey, 'v1', 'i1', again.key, again.body, 1)).itemKey).toEqual(itemKey)
   })
-
   it('binds an item to its key version and its sealed revision, which anybody can read', async () => {
     const vaultKey = newKey()
     const envelope = newEnvelope(blank('note'), 1)
@@ -243,7 +223,6 @@ describe('vaults and items', () => {
     expect(sealedRevOf(bumped)).toBe(9)
     await expect(openItem(vaultKey, 'v1', 'i1', sealed.key, bumped, 3)).rejects.toThrow(WrongSecret)
   })
-
   it('still opens an item sealed before it carried its revision', async () => {
     const vaultKey = newKey()
     const itemKey = newKey()
@@ -254,7 +233,6 @@ describe('vaults and items', () => {
     const opened = await openItem(vaultKey, 'v1', 'i1', key, body, 4)
     expect(opened).toMatchObject({ envelope, rev: null })
   })
-
   it('seals an older version apart from the item, under its revision', async () => {
     const vaultKey = newKey()
     const envelope = newEnvelope({ ...blank('login'), title: 'Old' }, 1)
@@ -267,7 +245,6 @@ describe('vaults and items', () => {
     const legacy = await seal(item.itemKey, JSON.stringify(envelope), 'item', 'v1', 'i1')
     expect((await openVersion(vaultKey, 'v1', 'i1', 2, item.key, legacy)).envelope).toEqual(envelope)
   })
-
   it('refuses an item moved to another id or vault, or given another key', async () => {
     const vaultKey = newKey()
     const envelope = newEnvelope(blank('note'), 1)
@@ -282,7 +259,6 @@ describe('vaults and items', () => {
     ] as const)
       await expect(openItem(key2, vault, id, key, body, 1)).rejects.toThrow(WrongSecret)
   })
-
   it('reports a genuine item of the wrong shape as unreadable', async () => {
     const vaultKey = newKey()
     const itemKey = newKey()

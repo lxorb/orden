@@ -1,6 +1,5 @@
 export function stepped(key: string, at: number | null, count: number, wrap = false): number | null {
   if (count <= 0) return null
-
   switch (key) {
     case 'ArrowDown':
       if (at === null) return 0

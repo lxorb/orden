@@ -8,14 +8,11 @@ vi.mock('../../../../../../packages/markdown/src/maths', async (actual) => {
   await landed
   return actual()
 })
-
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({
   chat: { unfolded: false, root: '/n/Work', head: null, provider: null, models: {}, resets: {} },
 }))
-
 const engines = await import('@orden/markdown/engines')
 const Reply = (await import('./Reply.svelte')).default
-
 test('a formula already drawn is drawn again once its engine lands, and never as TeX', async () => {
   expect(engines.mathsEngine()).toBeNull()
   const turn = {

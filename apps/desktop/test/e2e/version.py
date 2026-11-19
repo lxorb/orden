@@ -1,27 +1,21 @@
 import json
 import subprocess
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PHONE = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 ROW = ".sheet .setting.pressable"
-
 RELEASE = json.loads((harness.APP / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))["version"]
 COMMIT = subprocess.run(
     ["git", "rev-parse", "--short", "HEAD"], cwd=harness.APP, capture_output=True, text=True, check=False
 ).stdout.strip()
 VERSION = f"{RELEASE} ({COMMIT})" if COMMIT else RELEASE
-
 def fresh(browser: Browser, finger: bool) -> Page:
     page = DRIVE.page(
         browser,
@@ -33,10 +27,8 @@ def fresh(browser: Browser, finger: bool) -> Page:
     )
     DRIVE.open(page)
     return page
-
 def clipboard(page: Page) -> str:
     return str(page.evaluate("() => navigator.clipboard.readText()"))
-
 def settings(page: Page, label: str, version: str) -> None:
     page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, f"!!document.querySelector({ROW!r})", f"[{label}] the Version row")
@@ -47,7 +39,6 @@ def settings(page: Page, label: str, version: str) -> None:
     if said != f"{version}, Stable":
         wrong(f"[{label}] Version says {said!r}, not the build and its channel")
     shot(page, f"{label}-settings")
-
     page.evaluate("() => navigator.clipboard.writeText('')")
     row.click()
     page.wait_for_timeout(300)
@@ -58,7 +49,6 @@ def settings(page: Page, label: str, version: str) -> None:
     shot(page, f"{label}-copied")
     page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(1800)
-
 def searched(page: Page, label: str, version: str) -> None:
     for word in ("about", "version"):
         page.locator("body").click(position={"x": 600, "y": 400})
@@ -84,7 +74,6 @@ def searched(page: Page, label: str, version: str) -> None:
             wrong(f"[{label}] the palette went away after copying")
         page.keyboard.press("Escape")
         page.wait_for_timeout(1800)
-
 def drive(browser: Browser) -> None:
     for label, finger in (("desktop", False), ("phone", True)):
         page = fresh(browser, finger)
@@ -92,5 +81,4 @@ def drive(browser: Browser) -> None:
         if not finger:
             searched(page, label, VERSION)
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "the version is in Settings and the search, and copies"))

@@ -11,16 +11,13 @@ class SettingsWindow {
   space = $state<string | null>(null)
   landsOnField = $state(false)
   asked = $state(0)
-
   get open(): boolean {
     return workspace.settingsShown
   }
-
   set open(on: boolean) {
     if (on) workspace.openSettings()
     else workspace.closeSettings()
   }
-
   show(section?: SettingsSectionId, space: string | null = null, landsOnField = false) {
     if (!landsOnField) this.asked++
     this.error = null
@@ -38,5 +35,4 @@ class SettingsWindow {
     workspace.openSettings()
   }
 }
-
 export const settings = new SettingsWindow()

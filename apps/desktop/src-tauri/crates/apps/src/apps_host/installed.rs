@@ -21,7 +21,6 @@ pub struct Listed {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub icon: Option<String>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entry {
     pub listed: Listed,
@@ -29,7 +28,6 @@ pub struct Entry {
     pub cwd: Option<String>,
     pub packaged: bool,
 }
-
 impl Entry {
     #[cfg(any(target_os = "linux", target_os = "macos", test))]
     fn program(listed: Listed, argv: Vec<String>) -> Entry {
@@ -41,39 +39,32 @@ impl Entry {
         }
     }
 }
-
 pub fn installed() -> Vec<Listed> {
     let mut all: Vec<Listed> = entries(true).into_iter().map(|one| one.listed).collect();
     all.sort_by_key(|one| one.name.to_lowercase());
     all
 }
-
 pub fn find(id: &str) -> Option<Entry> {
     entries(false).into_iter().find(|one| one.listed.id == id)
 }
-
 #[cfg(target_os = "linux")]
 fn entries(icons: bool) -> Vec<Entry> {
     let folders = linux::data_dirs();
     let reading = linux::Reading::here(&folders, icons);
     linux::entries(&folders, &reading)
 }
-
 #[cfg(target_os = "windows")]
 fn entries(icons: bool) -> Vec<Entry> {
     windows::entries(icons)
 }
-
 #[cfg(target_os = "macos")]
 fn entries(icons: bool) -> Vec<Entry> {
     macos::entries(icons)
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn entries(_icons: bool) -> Vec<Entry> {
     Vec::new()
 }
-
 pub fn program_of(path: &str) -> Option<String> {
     #[cfg(target_os = "macos")]
     {
@@ -87,11 +78,9 @@ pub fn program_of(path: &str) -> Option<String> {
     }
     on_path(path).then(|| path.to_owned())
 }
-
 pub fn on_path(program: &str) -> bool {
     which(program).is_some()
 }
-
 pub fn which(program: &str) -> Option<std::path::PathBuf> {
     let named = Path::new(program);
     let candidates = |at: std::path::PathBuf| {
@@ -108,7 +97,6 @@ pub fn which(program: &str) -> Option<std::path::PathBuf> {
     }
     orden_base::program::which(program)
 }
-
 #[cfg(any(target_os = "linux", test))]
 pub(crate) mod desktop {
     use std::collections::HashMap;
@@ -120,7 +108,6 @@ pub(crate) mod desktop {
             .map(|(_, keys)| keys)
             .unwrap_or_default()
     }
-
     pub fn groups(text: &str) -> Vec<(String, HashMap<String, String>)> {
         let mut groups: Vec<(String, HashMap<String, String>)> = Vec::new();
         for line in text.lines() {
@@ -145,7 +132,6 @@ pub(crate) mod desktop {
         }
         groups
     }
-
     pub fn localized<'a>(
         keys: &'a HashMap<String, String>,
         key: &str,
@@ -157,7 +143,6 @@ pub(crate) mod desktop {
             .or_else(|| keys.get(key))
             .filter(|one| !one.is_empty())
     }
-
     fn unescape(value: &str) -> String {
         let mut out = String::with_capacity(value.len());
         let mut chars = value.chars();
@@ -182,7 +167,6 @@ pub(crate) mod desktop {
         }
         out
     }
-
     pub fn exec(line: &str, name: &str, file: &str) -> Option<Vec<String>> {
         let mut words: Vec<(String, bool)> = Vec::new();
         let mut word = String::new();
@@ -224,7 +208,6 @@ pub(crate) mod desktop {
         if started {
             words.push((word, was_quoted));
         }
-
         let mut argv = Vec::new();
         for (word, quoted) in words {
             if quoted {
@@ -240,7 +223,6 @@ pub(crate) mod desktop {
         }
         (!argv.is_empty()).then_some(argv)
     }
-
     fn codes(word: &str, name: &str, file: &str) -> String {
         let mut out = String::new();
         let mut chars = word.chars();
@@ -258,12 +240,10 @@ pub(crate) mod desktop {
         }
         out
     }
-
     pub fn yes(keys: &HashMap<String, String>, key: &str) -> bool {
         keys.get(key).is_some_and(|value| value == "true")
     }
 }
-
 #[cfg(any(target_os = "linux", test))]
 pub(crate) mod linux {
     use super::{desktop, icons, on_path, Entry, Listed, Path};
@@ -306,13 +286,11 @@ pub(crate) mod linux {
         }
         folders
     }
-
     pub struct Reading {
         pub desktops: Vec<String>,
         pub languages: Vec<String>,
         pub icons: Option<Icons>,
     }
-
     impl Reading {
         #[cfg(target_os = "linux")]
         pub fn here(folders: &[PathBuf], icons: bool) -> Reading {
@@ -333,7 +311,6 @@ pub(crate) mod linux {
             }
         }
     }
-
     pub fn languages(locale: &str) -> Vec<String> {
         let bare = locale.split(['.', '@']).next().unwrap_or_default();
         if bare.is_empty() || bare == "C" || bare == "POSIX" {
@@ -345,7 +322,6 @@ pub(crate) mod linux {
         }
         all
     }
-
     #[cfg(target_os = "linux")]
     pub fn current_theme() -> String {
         let config = dirs::config_dir();
@@ -393,20 +369,17 @@ pub(crate) mod linux {
         };
         found.unwrap_or_else(|| "hicolor".to_owned())
     }
-
     #[derive(Clone, Debug, PartialEq)]
     struct ThemeDir {
         path: String,
         size: u32,
         scalable: bool,
     }
-
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub enum Context {
         Apps,
         Kinds,
     }
-
     impl Context {
         fn holds(self, context: &str, path: &str) -> bool {
             match self {
@@ -416,7 +389,6 @@ pub(crate) mod linux {
                 Context::Kinds => context == "MimeTypes" || path.contains("mimetypes"),
             }
         }
-
         fn folder(self) -> &'static str {
             match self {
                 Context::Apps => "apps",
@@ -424,19 +396,16 @@ pub(crate) mod linux {
             }
         }
     }
-
     pub struct Icons {
         bases: Vec<PathBuf>,
         themes: Vec<(String, Vec<ThemeDir>)>,
         pixmaps: Vec<PathBuf>,
         side: u32,
     }
-
     impl Icons {
         pub fn new(folders: &[PathBuf], theme: &str) -> Icons {
             Icons::within(folders, &[theme], Context::Apps, icons::SIDE)
         }
-
         pub fn kinds(folders: &[PathBuf], theme: &str) -> Icons {
             Icons::within(
                 folders,
@@ -445,7 +414,6 @@ pub(crate) mod linux {
                 icons::KIND_SIDE,
             )
         }
-
         fn within(folders: &[PathBuf], named: &[&str], context: Context, side: u32) -> Icons {
             let mut bases: Vec<PathBuf> = Vec::new();
             if let Some(home) = dirs::home_dir() {
@@ -491,7 +459,6 @@ pub(crate) mod linux {
                 side,
             }
         }
-
         pub fn find(&self, icon: &str) -> Option<String> {
             let named = Path::new(icon);
             if named.is_absolute() {
@@ -531,7 +498,6 @@ pub(crate) mod linux {
             })
         }
     }
-
     fn hicolor_fallback(context: Context, side: u32) -> Vec<ThemeDir> {
         let folder = context.folder();
         let mut dirs: Vec<ThemeDir> = [32, 48, 64, 128, 256, 24, 16]
@@ -550,7 +516,6 @@ pub(crate) mod linux {
         sort_dirs(&mut dirs, side);
         dirs
     }
-
     fn theme_dirs(index: &str, context: Context, fit: u32) -> (Vec<ThemeDir>, Vec<String>) {
         let groups = desktop::groups(index);
         let head = groups
@@ -609,7 +574,6 @@ pub(crate) mod linux {
             .unwrap_or_default();
         (dirs, inherits)
     }
-
     fn sort_dirs(dirs: &mut [ThemeDir], side: u32) {
         dirs.sort_by_key(|one| {
             if one.scalable {
@@ -621,7 +585,6 @@ pub(crate) mod linux {
             }
         });
     }
-
     fn picture(path: &Path, side: u32) -> Option<String> {
         let kind = path.extension()?.to_str()?.to_ascii_lowercase();
         if std::fs::metadata(path).ok()?.len() > icons::MOST_FILE {
@@ -636,7 +599,6 @@ pub(crate) mod linux {
             _ => None,
         }
     }
-
     pub fn entries(folders: &[PathBuf], reading: &Reading) -> Vec<Entry> {
         let mut seen = HashSet::new();
         let mut found = Vec::new();
@@ -656,7 +618,6 @@ pub(crate) mod linux {
         }
         found
     }
-
     fn walk(root: &Path, folder: &Path, depth: usize, files: &mut Vec<(String, PathBuf)>) {
         let Ok(read) = std::fs::read_dir(folder) else {
             return;
@@ -679,7 +640,6 @@ pub(crate) mod linux {
             files.push((id, path));
         }
     }
-
     fn shown_here(keys: &HashMap<String, String>, desktops: &[String]) -> bool {
         let names = |key: &str| -> Vec<String> {
             keys.get(key)
@@ -697,7 +657,6 @@ pub(crate) mod linux {
         }
         !names("NotShowIn").iter().any(|one| desktops.contains(one))
     }
-
     fn read(id: &str, path: &Path, reading: &Reading) -> Option<Entry> {
         let text = std::fs::read_to_string(path).ok()?;
         let keys = desktop::keys(&text);
@@ -732,7 +691,6 @@ pub(crate) mod linux {
             argv,
         ))
     }
-
     #[cfg(test)]
     pub(super) fn dirs_of(index: &str) -> (Vec<(String, u32, bool)>, Vec<String>) {
         let (dirs, inherits) = theme_dirs(index, Context::Apps, icons::SIDE);
@@ -744,7 +702,6 @@ pub(crate) mod linux {
         )
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::desktop::{exec, keys};
@@ -761,7 +718,6 @@ mod tests {
         assert_eq!(read.get("Exec").map(String::as_str), Some("gimp %U"));
         assert_eq!(read.get("Comment").map(String::as_str), Some("Edit images"));
     }
-
     #[test]
     fn splits_an_exec_line_and_takes_the_field_codes_out() {
         let argv = |line: &str| exec(line, "GIMP", "/x/gimp.desktop");
@@ -787,7 +743,6 @@ mod tests {
         assert_eq!(argv(r#"broken "quote"#), None);
         assert_eq!(argv("%f"), None);
     }
-
     fn tiny_png() -> Vec<u8> {
         let mut out = Vec::new();
         let mut encoder = png::Encoder::new(&mut out, 1, 1);
@@ -798,7 +753,6 @@ mod tests {
         writer.finish().unwrap();
         out
     }
-
     #[test]
     fn reads_the_readers_languages_off_the_locale() {
         assert_eq!(linux::languages("de_CH.UTF-8@euro"), vec!["de_CH", "de"]);
@@ -806,7 +760,6 @@ mod tests {
         assert!(linux::languages("C.UTF-8").is_empty());
         assert!(linux::languages("").is_empty());
     }
-
     #[test]
     fn finds_an_icon_in_the_readers_theme_the_ones_it_inherits_and_hicolor() {
         let root = folder("themes");
@@ -841,7 +794,6 @@ mod tests {
                 ("16x16/apps".to_owned(), 16, false),
             ]
         );
-
         let png = tiny_png();
         icon("Mine/16x16/apps/both.png", &png);
         icon("Mine/scalable/apps/both.svg", b"<svg/>");
@@ -866,14 +818,12 @@ mod tests {
         assert_eq!(kinds.find("both"), None);
         let _ = std::fs::remove_dir_all(root);
     }
-
     fn folder(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!("orden-apps-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(root.join("applications/kde")).unwrap();
         root
     }
-
     #[test]
     fn lists_what_is_shown_with_the_first_folder_winning() {
         let mine = folder("mine");
@@ -909,7 +859,6 @@ mod tests {
         write(&mine, "kde-okular.desktop", &app("okular", "Hidden=true\n"));
         std::fs::create_dir_all(system.join("icons/hicolor/48x48/apps")).unwrap();
         std::fs::write(system.join("icons/hicolor/48x48/apps/gimp.png"), tiny_png()).unwrap();
-
         let folders = [mine.clone(), system.clone()];
         let reading = linux::Reading {
             desktops: vec!["GNOME".to_owned()],
@@ -927,7 +876,6 @@ mod tests {
             Some(super::icons::data_url("image/png", &tiny_png()).as_str())
         );
         assert_eq!(found[0].listed.icon, None);
-
         let _ = std::fs::remove_dir_all(mine);
         let _ = std::fs::remove_dir_all(system);
     }

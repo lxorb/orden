@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-
 import subprocess
 import sys
 import time
 from pathlib import Path
-
 from PIL import Image
 from linux_app import CONFIG, run
 
 WHAT, OUT = sys.argv[1], Path(sys.argv[2])
 SITE = (255, 0, 255)
 failures = []
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 def until(code, what, patience=20.0):
     ends = time.monotonic() + patience
     while time.monotonic() < ends:
@@ -25,10 +21,8 @@ def until(code, what, patience=20.0):
         time.sleep(0.2)
     fail(f"gave up waiting for {what}")
     return None
-
 def xdo(*words):
     subprocess.run(["xdotool", *map(str, words)], capture_output=True, check=False)
-
 def ours():
     found = subprocess.run(
         ["xdotool", "search", "--onlyvisible", "--name", "Orden"], capture_output=True, text=True, check=False
@@ -43,17 +37,14 @@ def ours():
         if size > area:
             best, area = one, size
     return best
-
 def origin():
     said = subprocess.run(["xwininfo", "-id", ours()], capture_output=True, text=True, check=False).stdout
     x = said.split("Absolute upper-left X:")[1].split()[0]
     y = said.split("Absolute upper-left Y:")[1].split()[0]
     return int(x), int(y)
-
 def move(x, y):
     left, top = origin()
     xdo("mousemove", int(x + left), int(y + top))
-
 def picture(name):
     path = OUT / f"{name}.png"
     raw = subprocess.run(["xwd", "-root", "-silent"], capture_output=True, check=False).stdout
@@ -63,12 +54,10 @@ def picture(name):
         check=False,
     )
     return Image.open(path).convert("RGB")
-
 ROWS = """[...document.querySelectorAll('aside:not(.right) .row')].map((row) => {
   const box = row.getBoundingClientRect()
   return { name: row.querySelector('.orden-row-label')?.textContent.trim(), x: box.x, y: box.y, height: box.height }
 }).sort((a, b) => a.y - b.y)"""
-
 def dragged(start, end, y):
     ratio = run("devicePixelRatio") or 1
     x = (start["x"] + 40) * ratio
@@ -82,7 +71,6 @@ def dragged(start, end, y):
     time.sleep(0.5)
     picture(f"over-{end['name']}")
     xdo("mouseup", 1)
-
 def tree():
     run("""(async () => {
       const ws = orden.workspace
@@ -103,7 +91,6 @@ def tree():
     print("reordered", names)
     if names[1:2] != [moving["name"]]:
         fail(f"{moving['name']} let go above {under['name']} did not stand there: {names}")
-
     dragged(now[1], now[2], 0.5)
     paths = until(
         f"""(() => {{
@@ -117,14 +104,12 @@ def tree():
     stale()
     chord()
     words()
-
 HEAR = """(() => {
   window.__heard = []
   for (const type of ['dragover', 'drop', 'dragend'])
     window.addEventListener(type, () => window.__heard.push(type), true)
   return true
 })()"""
-
 def lifted(start, end):
     x = (start["x"] + 40)
     y0 = start["y"] + start["height"] / 2
@@ -135,7 +120,6 @@ def lifted(start, end):
         move(x, y0 + (y1 - y0) * step / 12)
         time.sleep(0.05)
     time.sleep(0.5)
-
 def stale():
     wm = subprocess.run(["xprop", "-root", "_NET_SUPPORTING_WM_CHECK"], capture_output=True, text=True, check=False)
     if "window id" not in wm.stdout:
@@ -182,7 +166,6 @@ def stale():
     if "drop" in (run("window.__heard.splice(0)") or []):
         fail("a drag that lost its pointer dropped")
     print("stale: ended with the focus, nothing moved")
-
 def chord():
     run(HEAR)
     rows = run(ROWS) or []
@@ -201,7 +184,6 @@ def chord():
     if "dragend" not in (run("window.__heard.splice(0)") or []):
         fail("Escape did not end the drag")
     print("chord: went on, Escape ended it")
-
 WORD = """((word) => {
   const walker = document.createTreeWalker(document.querySelector('.cm-content'), NodeFilter.SHOW_TEXT)
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -215,7 +197,6 @@ WORD = """((word) => {
   }
   return null
 })"""
-
 def words():
     run("""(async () => {
       const ws = orden.workspace
@@ -249,7 +230,6 @@ def words():
     second = next((one for one in text if "delta" in one), "")
     if "beta" in first or "beta" not in second:
         fail(f"the word did not move: {text}")
-
 HOLE = """(() => {
   const hole = document.querySelector('.hole')
   const aside = document.querySelector('aside:not(.right)')
@@ -260,7 +240,6 @@ HOLE = """(() => {
     sidebar: aside.getBoundingClientRect().width, inner: innerWidth, overflow: document.documentElement.scrollWidth - innerWidth,
   }
 })()"""
-
 def corners(shot, hole, label):
     ratio = hole["ratio"]
     at_x, at_y = origin()
@@ -279,7 +258,6 @@ def corners(shot, hole, label):
         pixel = shot.getpixel((int(x), int(y)))
         if pixel == SITE:
             fail(f"{label}: the page is drawn {name} its hole, at ({int(x)}, {int(y)})")
-
 def zoom():
     front = run("""(() => {
       const ws = orden.workspace
@@ -324,7 +302,6 @@ def zoom():
     kept = (CONFIG / "interface-zoom").read_text().strip()
     if float(kept) != 1:
         fail(f"the file keeps {kept}, not the last chosen")
-
 def back():
     other = subprocess.Popen(["xterm", "-geometry", "20x5+1300+800", "-title", "another app"])
     found = ""
@@ -354,7 +331,6 @@ def back():
         if not here or not keys:
             fail(f"round {round}: a key pressed once the window came back did not reach it: {keys}")
     other.kill()
-
 {"tree": tree, "zoom": zoom, "back": back}[WHAT]()
 print(f"{WHAT}: {len(failures)} failures")
 sys.exit(1 if failures else 0)

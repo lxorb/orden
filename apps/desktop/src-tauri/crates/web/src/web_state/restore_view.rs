@@ -10,16 +10,12 @@ use tauri::{
 use super::PATIENCE;
 
 pub const PATH: &str = "/__orden_restore";
-
 const VISIT: Duration = Duration::from_secs(15);
-
 static MADE: AtomicU64 = AtomicU64::new(0);
-
 pub struct Hidden {
     view: Webview,
     loads: Receiver<String>,
 }
-
 impl Hidden {
     pub async fn open(window: &Window, store: Option<&str>) -> Result<Self, String> {
         let app = window.app_handle().clone();
@@ -28,7 +24,6 @@ impl Hidden {
         let blank: Url = "about:blank"
             .parse()
             .map_err(|_| "no blank page to start from".to_owned())?;
-
         let builder = WebviewBuilder::new(label, WebviewUrl::External(blank))
             .focused(false)
             .disable_drag_drop_handler()
@@ -38,7 +33,6 @@ impl Hidden {
                 }
             });
         let builder = crate::engine::web_store(builder, &app, store)?;
-
         let (made, mut waiting) = channel(1);
         let holder = window.clone();
         app.run_on_main_thread(move || {
@@ -55,7 +49,6 @@ impl Hidden {
             let _ = made.try_send(built);
         })
         .map_err(|error| error.to_string())?;
-
         let view = match tokio::time::timeout(PATIENCE, waiting.recv()).await {
             Ok(Some(built)) => built?,
             _ => return Err("no page could be made to restore into".to_owned()),
@@ -64,11 +57,9 @@ impl Hidden {
         engine::prepared(&hidden.view).await?;
         Ok(hidden)
     }
-
     pub fn view(&self) -> &Webview {
         &self.view
     }
-
     pub async fn visit(&mut self, origin: &str) -> Result<(), String> {
         let address = format!("{origin}{PATH}");
         engine::show(&self.view, &address)?;
@@ -81,13 +72,11 @@ impl Hidden {
         }
     }
 }
-
 impl Drop for Hidden {
     fn drop(&mut self) {
         let _ = self.view.close();
     }
 }
-
 mod engine {
     use serde_json::{json, Value};
     use tauri::{Url, Webview};
@@ -128,7 +117,6 @@ mod engine {
         .await
         .map(|_| ())
     }
-
     pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {
         let url: Url = address
             .parse()

@@ -9,7 +9,6 @@ export interface MessageGestures {
   quote: () => void
   edit: () => void
 }
-
 export function messageMenu(
   page: ChatPage,
   message: Message,

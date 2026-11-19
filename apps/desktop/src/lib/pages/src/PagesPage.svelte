@@ -50,12 +50,10 @@
     current?: number | null
     onfound?: (box: { x: number; y: number; width: number; height: number }) => void
   } = $props()
-
   interface Sought {
     at: number
     length: number
   }
-
   const LINES = 30
   const GRID = 19
   let paper = $state.raw<ImageBitmap | null>(null)
@@ -73,7 +71,6 @@
   let paperWide = $state(0)
   let closeUp = $state.raw<Part | null>(null)
   let lastPart: Part | null = null
-
   const part = $derived.by((): Part | null => {
     const found = partSeen()
     if (
@@ -88,17 +85,14 @@
     lastPart = found
     return found
   })
-
   function partSeen(): Part | null {
     if (!backed || !paperWide || !seen || !page.width || !page.height) return null
     if (wanted <= (paperWide / page.width) * STRETCH) return null
-
     const left = Math.max(0, Math.floor(seen.x - page.x))
     const top = Math.max(0, Math.floor(seen.y - page.y))
     const right = Math.min(page.width, Math.ceil(seen.x + seen.width - page.x))
     const bottom = Math.min(page.height, Math.ceil(seen.y + seen.height - page.y))
     if (right <= left || bottom <= top) return null
-
     return {
       x: left / page.width,
       y: top / page.height,
@@ -106,18 +100,15 @@
       height: (bottom - top) / page.height,
     }
   }
-
   $effect(() => {
     const want = part
     if (!want) {
       closeUp = null
       return
     }
-
     const file = paperFile
     const at = paperNumber
     if (!file || !at) return
-
     const across = sheetWide * wanted
     paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
@@ -128,7 +119,6 @@
           image.close()
           return
         }
-
         close.width = image.width
         close.height = image.height
         close.getContext('2d')?.drawImage(image, 0, 0)
@@ -136,59 +126,47 @@
         closeUp = want
       })
     }, CLOSE_UP)
-
     return () => {
       clearTimeout(timer)
       leaving.abort()
     }
   })
-
   $effect(() => {
     if (!backed) return
-
     const file = paperFile
     const at = paperNumber
     if (!file || !at) return
-
     const asking = tries
     paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
     void paperOf({ file, note: notePath, root, shared }, at, leaving.signal, false, density).then((drawn) => {
       if (leaving.signal.aborted || asking !== tries) return
-
       if (drawn?.image.width) paper = drawn.image
       else if (!drawn) paper = null
       lost = !drawn
     })
-
     return () => leaving.abort()
   })
-
   let tries = $state(0)
   const RETRY = 5000
   const MOST_TRIES = 60
-
   $effect(() => {
     if (!lost || tries >= MOST_TRIES) return
     const timer = setTimeout(() => (tries += 1), RETRY)
     return () => clearTimeout(timer)
   })
-
   $effect(() => {
     const element = sheet
     const image = paper
     if (!element || !image?.width) return
-
     element.width = image.width
     element.height = image.height
     element.getContext('2d')?.drawImage(image, 0, 0)
     paperWide = image.width
   })
-
   $effect(() => {
     const element = sheet
     if (!element) return
-
     const again = () => {
       const image = paper
       if (image?.width) element.getContext('2d')?.drawImage(image, 0, 0)
@@ -197,13 +175,10 @@
     element.addEventListener('contextrestored', again)
     return () => element.removeEventListener('contextrestored', again)
   })
-
   onDestroy(() => (paper = null))
-
   const WORDS_AFTER = 200
   let words = $state<HTMLDivElement>()
   let read = $state.raw<Words | null>(null)
-
   const inView = $derived(
     !seen ||
       (page.x < seen.x + seen.width &&
@@ -211,13 +186,10 @@
         page.y < seen.y + seen.height &&
         page.y + page.height > seen.y),
   )
-
   let wordsWanted = $state(false)
-
   $effect(() => {
     if (still && inView) wordsWanted = true
   })
-
   $effect(() => {
     const layer = words
     const file = paperFile
@@ -225,14 +197,12 @@
     const wide = sheetWide
     if (!wordsWanted || !layer || !file || !at || !wide) return
     paperEdition({ file, note: notePath, root, shared })
-
     const leaving = new AbortController()
     const timer = setTimeout(() => {
       void wordsInto({ file, note: notePath, root, shared }, at, wide, layer, leaving.signal).then((found) => {
         if (!leaving.signal.aborted) read = found
       })
     }, WORDS_AFTER)
-
     return () => {
       clearTimeout(timer)
       leaving.abort()
@@ -240,20 +210,16 @@
       read = null
     }
   })
-
   $effect(() => {
     const layer = words
     if (layer && read) return wordsEnd(layer)
   })
-
   const hits = $derived.by(() => {
     const layer = words
     if (!read || !layer || !sought.length) return []
-
     const found = wordsOfRuns(read.runs, read.divs)
     const whole = layer.getBoundingClientRect()
     if (!whole.width || !whole.height) return []
-
     return sought.flatMap((one) =>
       spansOver(found.pieces, one.at, one.length).flatMap(({ node, from, to }) => {
         const range = document.createRange()
@@ -269,11 +235,9 @@
       }),
     )
   })
-
   $effect(() => {
     const shown = hits.find((one) => one.current)
     if (!shown) return
-
     onfound?.({
       x: page.x + (shown.left / 100) * page.width,
       y: page.y + (shown.top / 100) * page.height,
@@ -281,14 +245,11 @@
       height: (shown.height / 100) * page.height,
     })
   })
-
   let view = $state.raw<PaperView | null>(null)
-
   $effect(() => {
     const file = paperFile
     const at = paperNumber
     if (!marks.length || !file || !at) return
-
     let mine = true
     void viewOf({ file, note: notePath, root, shared }, at).then((found) => {
       if (mine) view = found
@@ -297,7 +258,6 @@
       mine = false
     }
   })
-
   const shownMarks = $derived.by(() => {
     if (!view?.width || !view.height) return []
     const { width, height } = view
@@ -315,7 +275,6 @@
       }),
     )
   })
-
   const ruling = $derived.by(() => {
     switch (page.pattern) {
       case 'lines':
@@ -331,7 +290,6 @@
         return 'none'
     }
   })
-
   const ruled = $derived(page.pattern === 'dots' ? `${GRID}px ${GRID}px` : 'auto')
 </script>
 
@@ -402,7 +360,6 @@
     pointer-events: none;
     overflow: hidden;
   }
-
   .sheet canvas {
     position: absolute;
     inset: 0;
@@ -411,16 +368,13 @@
     opacity: 0;
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   .sheet canvas.there {
     opacity: 1;
   }
-
   .sheet canvas.close {
     inset: auto;
     transition: none;
   }
-
   .words {
     position: absolute;
     inset: 0;
@@ -435,7 +389,6 @@
     --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
     --min-font-size-inv: calc(1 / var(--min-font-size));
   }
-
   .words :global(span),
   .words :global(br) {
     position: absolute;
@@ -444,7 +397,6 @@
     white-space: pre;
     transform-origin: 0 0;
   }
-
   .words > :global(:not(.markedContent)),
   .words :global(.markedContent span:not(.markedContent)) {
     --font-height: 0;
@@ -453,18 +405,15 @@
     font-size: calc(var(--text-scale-factor) * var(--font-height));
     transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
   }
-
   .words :global(.markedContent) {
     display: contents;
   }
-
   .words.live :global(span) {
     pointer-events: auto;
     cursor: text;
     user-select: text;
     -webkit-user-select: text;
   }
-
   .words :global(.end) {
     position: absolute;
     inset: 100% 0 0;
@@ -473,33 +422,27 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .words.live:global(.selecting) :global(.end) {
     top: 0;
     pointer-events: auto;
   }
-
   .words :global(::selection) {
     background: color-mix(in srgb, var(--accent) 35%, transparent);
   }
-
   .hit {
     position: absolute;
     border-radius: calc(1px * var(--unit));
     background: color-mix(in srgb, var(--accent) 22%, transparent);
   }
-
   .hit.current {
     background: color-mix(in srgb, var(--accent) 45%, transparent);
     outline: calc(1px * var(--unit)) solid var(--accent);
   }
-
   .mark {
     position: absolute;
     border-radius: calc(1px * var(--unit));
     opacity: 0.3;
   }
-
   .missing {
     position: absolute;
     inset-inline: 0;
@@ -510,7 +453,6 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .number {
     position: absolute;
     inset-inline-end: calc(10px * var(--unit));

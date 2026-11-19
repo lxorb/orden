@@ -3,26 +3,20 @@ import { EditorSelection, type EditorState, type StateCommand } from '@codemirro
 import { blockIdOf } from '@orden/markdown/links'
 
 const WORD_START = /(^|[^\p{L}\p{N}'’])(\p{L})/gu
-
 const titled = (text: string): string =>
   text
     .toLocaleLowerCase()
     .replace(WORD_START, (_, before: string, letter: string) => before + letter.toLocaleUpperCase())
-
 interface Span {
   from: number
   to: number
 }
-
 const ADDRESSES = new Set(['URL', 'WikilinkMark'])
-
 const BLOCK_TARGET = /#\^[^|\]]*/
-
 function blockTarget(state: EditorState, from: number, to: number): Span[] {
   const found = BLOCK_TARGET.exec(state.sliceDoc(from, to))
   return found ? [{ from: from + found.index, to: from + found.index + found[0].length }] : []
 }
-
 function keptSpans(state: EditorState, from: number, to: number): Span[] {
   const kept: Span[] = []
   syntaxTree(state).iterate({
@@ -33,7 +27,6 @@ function keptSpans(state: EditorState, from: number, to: number): Span[] {
       if (node.name === 'Wikilink') kept.push(...blockTarget(state, node.from, node.to))
     },
   })
-
   const last = state.doc.lineAt(to).number
   for (let number = state.doc.lineAt(from).number; number <= last; number++) {
     const line = state.doc.line(number)
@@ -44,7 +37,6 @@ function keptSpans(state: EditorState, from: number, to: number): Span[] {
   }
   return kept.sort((one, other) => one.from - other.from)
 }
-
 function changedAround(state: EditorState, from: number, to: number, change: (text: string) => string): string {
   let out = ''
   let at = from
@@ -57,7 +49,6 @@ function changedAround(state: EditorState, from: number, to: number, change: (te
   }
   return out + change(state.sliceDoc(at, to))
 }
-
 function recased(change: (text: string) => string): StateCommand {
   return ({ state, dispatch }) => {
     const { ranges, mainIndex } = state.selection
@@ -71,7 +62,6 @@ function recased(change: (text: string) => string): StateCommand {
       }),
     )
     if (changes.empty) return true
-
     const selection = ranges.map((range, i) => {
       const word = words[i]
       if (!word) return range.map(changes)
@@ -91,7 +81,6 @@ function recased(change: (text: string) => string): StateCommand {
     return true
   }
 }
-
 export const upperCase = recased((text) => text.toLocaleUpperCase())
 export const lowerCase = recased((text) => text.toLocaleLowerCase())
 export const titleCase = recased(titled)

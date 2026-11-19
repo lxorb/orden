@@ -1,19 +1,15 @@
 import { isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 export const ROOTS_MOVED = 'orden:roots-moved'
-
 export interface RootMoved {
   from: string
   to: string
 }
-
 const isMove = (one: unknown): one is RootMoved => isRecord(one) && isString(one.from) && isString(one.to)
-
 export function rootsMoved(): RootMoved[] {
   const said = stored(ROOTS_MOVED)
   return Array.isArray(said) ? said.filter(isMove) : []
 }
-
 export function noteRootsMoved(moves: readonly RootMoved[]): void {
   if (!moves.length) return
   const kept = rootsMoved().filter((one) => !moves.some((move) => move.from === one.from))

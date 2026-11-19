@@ -1,8 +1,6 @@
 import json
 import time
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -10,7 +8,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 PLAN = """---
 tags: [work/orden]
 ---
@@ -25,7 +22,6 @@ Write it all down.
 
 Something already named ^a1b2c3
 """
-
 IDEAS = """# Sparks
 
 A spark about the deepest kind of idea. #reading
@@ -34,14 +30,12 @@ A spark about the deepest kind of idea. #reading
 
 Something for later. #work
 """
-
 SCRATCH = """---
 tags: work
 ---
 
 Scratch.
 """
-
 SEED = """
 async ([plan, ideas, scratch]) => {
   const ws = window.ordenApp.workspace
@@ -54,13 +48,11 @@ async ([plan, ideas, scratch]) => {
   return paths
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('.cm-tooltip-autocomplete li')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
-
 ANOTHER_SPACE = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -79,11 +71,9 @@ async () => {
   return { at_once, path, after: links.index(null).notes.map((one) => one.path) }
 }
 """
-
 TAGS = """
 () => (window.ordenApp.links.index(null).tags ?? []).map((one) => `${one.tag} ${one.notes}`)
 """
-
 FRESH_LINE = """
 () => {
   const doc = window.orden.state.doc
@@ -94,19 +84,15 @@ FRESH_LINE = """
   window.orden.focus()
 }
 """
-
 def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
-
 def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
     until = time.monotonic() + patience
     again = False
-
     while time.monotonic() < until:
         found = rows(page)
         if any(holds in one for one in found):
             return found
-
         if not found and not again and time.monotonic() > until - patience + 4:
             say("[asked again] the popup came back empty; asking the space once more")
             last = page.evaluate(
@@ -116,17 +102,12 @@ def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
             page.keyboard.press("Backspace")
             page.keyboard.type(last)
             again = True
-
         page.wait_for_timeout(200)
-
     return rows(page)
-
 def doc(page: Page) -> str:
     return page.evaluate("() => window.orden.state.doc.toString()")
-
 def note_text(page: Page, path: str) -> str:
     return page.evaluate("(path) => window.ordenApp.workspace.noteText(path)", path)
-
 def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
     context = browser.new_context(
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
@@ -155,24 +136,19 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
     say(f"the space holds {json.dumps([one.split('/')[-1] for one in paths])}")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
-
     open_note(page, paths[2])
     return page, paths
-
 def open_note(page: Page, path: str) -> None:
     page.evaluate(
         "(path) => window.ordenApp.workspace.openEntry(path, { activate: true })",
         path,
     )
     page.wait_for_timeout(800)
-
 def line(page: Page) -> None:
     page.evaluate(FRESH_LINE)
     page.wait_for_timeout(250)
-
 def name_of(path: str) -> str:
     return path.replace("\\", "/").split("/")[-1].removesuffix(".md")
-
 def headings_of(names: list[str]) -> list[tuple[str, str]]:
     return [
         (names[0], "Today"),
@@ -180,20 +156,16 @@ def headings_of(names: list[str]) -> list[tuple[str, str]]:
         (names[1], "Sparks"),
         (names[1], "Later"),
     ]
-
 def drive_headings(page: Page, names: list[str]) -> None:
     line(page)
     page.keyboard.type("[[##", delay=40)
     page.wait_for_timeout(700)
-
     every = rows_holding(page, "The plan for Monday")
     say(f"[[[##] {len(every)} rows: {json.dumps(every[:6])}")
     shot(page, "01-every-heading")
-
     for note, heading in headings_of(names):
         if not any(one.startswith(heading) and one.endswith(note) for one in every):
             wrong(f"the space's headings are not all offered: no {heading!r} in {note!r}: {every}")
-
     page.keyboard.type("pln", delay=60)
     page.wait_for_timeout(600)
     narrowed = rows(page)
@@ -201,7 +173,6 @@ def drive_headings(page: Page, names: list[str]) -> None:
     shot(page, "02-heading-narrowed")
     if len(narrowed) != 1 or "The plan for Monday" not in narrowed[0]:
         wrong(f"three letters did not narrow to the one heading: {narrowed}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
     written = doc(page)
@@ -211,18 +182,15 @@ def drive_headings(page: Page, names: list[str]) -> None:
         wrong(f"the link is not the whole link: {json.dumps(written[-50:])}")
     if "##" in written:
         wrong("the two hashes are still in the note")
-
 def drive_blocks(page: Page, names: list[str]) -> None:
     line(page)
     page.keyboard.type("[[^^", delay=40)
     page.wait_for_timeout(800)
-
     named = rows_holding(page, "a1b2c3")
     say(f"[[[^^] {json.dumps(named)}")
     shot(page, "04-named-blocks")
     if not any("a1b2c3" in one for one in named):
         wrong(f"the blocks that already have a name are not offered: {named}")
-
     page.keyboard.type("deepest", delay=60)
     found = rows_holding(page, "deepest kind of idea")
     say(f"[[[^^deepest] {json.dumps(found)}")
@@ -231,18 +199,15 @@ def drive_blocks(page: Page, names: list[str]) -> None:
         wrong(f"the words of an unnamed block found nothing: {found}")
     if not any(names[1] in one for one in found):
         wrong(f"the rows do not say which note the block is in: {found}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(1200)
     written = doc(page)
     say(f"[written] {json.dumps(written[-50:])}")
     shot(page, "06-block-written")
-
     link = [one for one in written.split("\n") if one.startswith(f"[[{names[1]}#^")]
     if not link:
         wrong(f"the link does not point at a named block: {json.dumps(written[-50:])}")
         return
-
     id = link[0].split("#^")[1].rstrip("]")
     body = note_text(page, page.evaluate("() => window.ordenApp.workspace.notes.map((o) => o.path)")[1])
     say(f"[the other note] {json.dumps(body)}")
@@ -250,14 +215,11 @@ def drive_blocks(page: Page, names: list[str]) -> None:
         wrong(f"the block was never given the name the link points at: ^{id}")
     if "deepest kind of idea" not in (body or ""):
         wrong("the note the name was written into no longer says what it said")
-
 def drive_tags(page: Page) -> None:
     say(f"[the tag index] {json.dumps(page.evaluate(TAGS))}")
-
     line(page)
     page.keyboard.type("Filed under #", delay=40)
     page.wait_for_timeout(700)
-
     every = rows_holding(page, "reading")
     say(f"[#] {json.dumps(every)}")
     shot(page, "07-every-tag")
@@ -267,7 +229,6 @@ def drive_tags(page: Page) -> None:
         wrong(f"a tag only one note carries is missing: {every}")
     if not any(one.endswith("3") for one in every):
         wrong(f"the rows do not count the notes under each tag: {every}")
-
     page.keyboard.type("work/", delay=60)
     page.wait_for_timeout(600)
     nested = rows(page)
@@ -275,7 +236,6 @@ def drive_tags(page: Page) -> None:
     shot(page, "08-nested-tag")
     if not nested or not all("work/orden" in one for one in nested):
         wrong(f"a slash did not narrow to the tags under it: {nested}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
     written = doc(page)
@@ -283,7 +243,6 @@ def drive_tags(page: Page) -> None:
     shot(page, "09-tag-written")
     if "#work/orden" not in written:
         wrong(f"the tag is not the whole tag: {json.dumps(written[-40:])}")
-
 def drive_quiet(page: Page) -> None:
     line(page)
     page.keyboard.type("#", delay=40)
@@ -292,12 +251,10 @@ def drive_quiet(page: Page) -> None:
     shot(page, "10-a-hash-opening-a-line")
     if opening:
         wrong(f"a hash opening a line offered tags on the way to a heading: {opening}")
-
     page.keyboard.type(" A heading", delay=20)
     page.wait_for_timeout(400)
     if rows(page):
         wrong("a heading being typed offered tags")
-
     line(page)
     page.keyboard.type("```py", delay=30)
     page.keyboard.press("Enter")
@@ -308,7 +265,6 @@ def drive_quiet(page: Page) -> None:
     shot(page, "11-a-hash-in-a-fence")
     if fenced:
         wrong(f"a hash in a fence offered tags: {fenced}")
-
     line(page)
     page.keyboard.type("written in C#", delay=30)
     page.wait_for_timeout(500)
@@ -316,10 +272,8 @@ def drive_quiet(page: Page) -> None:
     shot(page, "12-a-hash-in-a-word")
     if inside:
         wrong(f"a hash in the middle of a word offered tags: {inside}")
-
 def drive_front_matter(page: Page, paths: list[str]) -> None:
     open_note(page, paths[2])
-
     page.evaluate(
         """() => {
           const doc = window.orden.state.doc
@@ -331,13 +285,11 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
     page.wait_for_timeout(400)
     page.keyboard.type(", rea", delay=60)
     page.wait_for_timeout(700)
-
     listed = rows_holding(page, "reading")
     say(f"[front matter] {json.dumps(listed)}")
     shot(page, "13-front-matter")
     if not listed or not any("reading" in one for one in listed):
         wrong(f"a `tags:` list offered nothing: {listed}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
     written = doc(page)
@@ -347,19 +299,16 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
         wrong(f"the tag was not written into the list: {json.dumps(written[:60])}")
     if "#reading" in written.split("---")[1]:
         wrong("a hash was written into the front matter, where YAML reads one as a comment")
-
 def drive_finger(browser: Browser) -> None:
     page, names = fresh(browser, finger=True)
     line(page)
     page.keyboard.type("[[##", delay=40)
     page.wait_for_timeout(900)
-
     every = rows_holding(page, "The plan for Monday")
     say(f"[phone] {len(every)} rows")
     shot(page, "20-phone")
     if not every:
         wrong("the space's headings do not open on a phone")
-
     box = page.evaluate(
         """() => {
           const menu = document.querySelector('.cm-tooltip-autocomplete')
@@ -371,25 +320,19 @@ def drive_finger(browser: Browser) -> None:
     say(f"[phone] the popup sits at {json.dumps(box)}")
     if not box or box["left"] < 0 or box["width"] < 80:
         wrong(f"the popup is not where a thumb can reach it: {box}")
-
     page.context.close()
-
 def drive_another_space(page: Page, names: list[str]) -> None:
     seen = page.evaluate(ANOTHER_SPACE)
     say(f"[another space] {json.dumps(seen)}")
-
     at_once = seen["at_once"]
     if not at_once["reading"]:
         say("[another space] the space was read before this could look; nothing to say")
         return
-
     stale = [one for one in at_once["notes"] if name_of(one) in names]
     if stale:
         wrong(f"a space still being read offered the last space's notes: {stale}")
-
     if "Over here.md" not in seen["after"]:
         wrong(f"a note written while the space was read is not in it: {seen['after']}")
-
     open_note(page, seen["path"])
     line(page)
     page.keyboard.type("[[##", delay=40)
@@ -397,31 +340,24 @@ def drive_another_space(page: Page, names: list[str]) -> None:
     every = rows_holding(page, "Over here")
     say(f"[[[## next door] {json.dumps(every)}")
     shot(page, "15-another-space")
-
     if not any(one.startswith("Over here") for one in every):
         wrong(f"the new space's own heading is not offered: {every}")
     for note, heading in headings_of(names):
         if any(one.startswith(heading) and one.endswith(note) for one in every):
             wrong(f"a heading of another space is offered here: {heading!r} in {note!r}")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
-
 def drive(browser: Browser) -> None:
     page, paths = fresh(browser)
     names = [name_of(one) for one in paths]
     say(f"the notes are {json.dumps(names)}")
-
     drive_headings(page, names)
     drive_blocks(page, names)
     drive_tags(page)
     drive_quiet(page)
     drive_front_matter(page, paths)
     drive_another_space(page, names)
-
     page.context.close()
-
 def main() -> int:
     return DRIVE.run(drive, "the space's headings, blocks and tags all finish themselves")
-
 raise SystemExit(main())

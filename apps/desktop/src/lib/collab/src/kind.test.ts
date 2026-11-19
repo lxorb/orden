@@ -9,16 +9,13 @@ describe('roomKindOf', () => {
     )
     expect(roomKindOf({ path: '/Notes/plan.md', shared: null, kind: 'canvas' })).toBe('words')
   })
-
   test('a canvas somebody shared on its own is a plane', () => {
     expect(roomKindOf({ path: null, shared: 'note-1', kind: 'canvas' })).toBe('plane')
   })
-
   test('so is a page note, and a shared note is words', () => {
     expect(roomKindOf({ path: null, shared: 'note-1', kind: 'pages' })).toBe('plane')
     expect(roomKindOf({ path: null, shared: 'note-1', kind: 'note' })).toBe('words')
   })
-
   test('a draft nobody shared is words, as a file with no name always was', () => {
     expect(roomKindOf({ path: null, shared: null, kind: 'canvas' })).toBe('words')
   })

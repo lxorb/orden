@@ -44,25 +44,19 @@ import { providePort } from '@orden/contracts'
 if (!__EVEN_PLUGIN__) {
   providePort('quit.ask', { mayStop: async (why) => (await import('./quit-ports')).mayStop(why) })
 }
-
 const DAY = 24 * 60 * 60 * 1000
-
 async function openPdfs(paths: readonly string[]) {
   const { showPdfs } = await (await import('./pdf/src/api')).handed()
   await showPdfs(paths)
 }
-
 async function listenForAgents(): Promise<() => void> {
   if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
-
   const { listen } = await import('@tauri-apps/api/event')
   const heard = door(() => import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()))
-
   return listen<unknown>('orden://agent', ({ payload }) => {
     void heard().then((hear) => hear(payload))
   })
 }
-
 export function start(): () => void {
   mark('start')
   collectErrors()
@@ -93,13 +87,9 @@ export function start(): () => void {
   recovery.restore()
   record.restore()
   account.forgetWithSession(() => record.forgetEverything())
-
   mark('stores restored')
-
   if (theme.offerContrast) settings.show('appearance')
-
   const stops = new Stops()
-
   void workspace
     .restore()
     .then(async () => {
@@ -117,30 +107,21 @@ export function start(): () => void {
     .catch((error: unknown) => {
       log('error', `restore: ${error instanceof Error ? error.message : String(error)}`)
     })
-
   void trash.sweep()
   const sweeper = setInterval(() => void trash.sweep(), DAY)
-
   const stopRecovery = recovery.start()
-
   const stopStrayDrops = guardDrops((paths) => void openPdfs(paths))
-
   void (async () => (await closing()).guardClose(() => import('./quit-ports')))()
-
   const stopReloading = reloading.watch(async () => {
     ;(await closing()).settle()
     await workspace.writesSettled()
     return !workspace.writing && !busy.active
   })
-
   const stopLooking = updates.start()
-
   void account.restore().then(() => joining.start())
-
   void warmDoors().catch(() => {
     // Answered by reloading.svelte.ts.
   })
-
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
@@ -220,7 +201,6 @@ export function start(): () => void {
       .then(stops.keep)
     void import('./ui-controls/src/api').then((one) => stops.keep(one.hidePointerWhileTyping()))
   }
-
   return () => {
     stops.end()
     clearInterval(sweeper)

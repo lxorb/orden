@@ -6,17 +6,13 @@
   import { workspace } from '../../workspace/src/api'
 
   const kept = $derived(firstScreen.showing)
-
   const MOST_FRAMES = 60
-
   function drawn(node: HTMLElement, what: Kept) {
     const area = node.parentElement
     if (!area) return
-
     const style = document.createElement('style')
     style.textContent = what.css
     document.head.prepend(style)
-
     const [surface, editor, scroller, content] = what.levels.map((one) => {
       const element = document.createElement(one.tag)
       element.className = one.className
@@ -24,7 +20,6 @@
       return element
     })
     if (!surface || !editor || !scroller || !content) return
-
     const spacer = document.createElement('div')
     spacer.style.height = `${String(what.inset)}px`
     content.style.transform = `translateY(${String(what.shift)}px)`
@@ -35,7 +30,6 @@
     surface.append(editor)
     surface.style.height = '100%'
     node.append(surface)
-
     const now = getComputedStyle(content)
     const same =
       Math.abs(area.clientWidth - what.area.width) < 1 &&
@@ -51,17 +45,14 @@
       firstScreen.drop()
       return
     }
-
     if (firstScreen.rise()) surface.classList.add('rise')
     mark('first screen drawn')
-
     const resized = new ResizeObserver(() => {
       if (Math.abs(area.clientWidth - what.area.width) >= 1 || Math.abs(area.clientHeight - what.area.height) >= 1) {
         firstScreen.drop()
       }
     })
     resized.observe(area)
-
     return {
       destroy() {
         resized.disconnect()
@@ -69,11 +60,9 @@
       },
     }
   }
-
   $effect(() => {
     const what = firstScreen.showing
     if (!what) return
-
     const active = workspace.active
     if (!active) {
       if (workspace.restored) firstScreen.drop()
@@ -83,10 +72,8 @@
       firstScreen.drop()
       return
     }
-
     const view = views.of(workspace.panes.focusedId)
     if (!view || documentOf(view) !== active.note.live) return
-
     let frame = 0
     let waited = 0
     const settle = () => {
@@ -104,14 +91,11 @@
     frame = requestAnimationFrame(settle)
     return () => cancelAnimationFrame(frame)
   })
-
   function typing(event: KeyboardEvent) {
     if (!firstScreen.showing || event.target !== document.body) return
     if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return
-
     const typed = event.key === 'Enter' ? '\n' : event.key.length === 1 ? event.key : null
     if (typed === null) return
-
     event.preventDefault()
     event.stopPropagation()
     firstScreen.typed += typed

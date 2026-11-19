@@ -3,7 +3,6 @@ import { isRecord } from '../../../platform/src/api'
 
 function strings(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
-
   const out: string[] = []
   for (const one of value as unknown[]) {
     if (typeof one !== 'string') return null
@@ -11,10 +10,8 @@ function strings(value: unknown): string[] | null {
   }
   return out
 }
-
 function readApproval(value: unknown): Approval | null {
   if (!isRecord(value)) return null
-
   const { id, agent, name, category, summary, asked, answer } = value
   return typeof id === 'string' &&
     typeof agent === 'string' &&
@@ -26,17 +23,14 @@ function readApproval(value: unknown): Approval | null {
     ? (value as unknown as Approval)
     : null
 }
-
 export function readEvent(value: unknown): AgentEvent | null {
   if (!isRecord(value)) return null
-
   const text = (key: string): string | null => {
     const one = value[key]
     return typeof one === 'string' ? one : null
   }
   const agent = text('agent')
   const tab = text('tab')
-
   switch (value.kind) {
     case 'acting': {
       const verb = text('verb')

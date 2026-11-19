@@ -1,7 +1,6 @@
 import type { Action } from 'svelte/action'
 
 const SIZES_ITSELF = typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content')
-
 export const grow: Action<HTMLTextAreaElement, unknown> = (field) => {
   if (SIZES_ITSELF) return {}
   const fit = () => {

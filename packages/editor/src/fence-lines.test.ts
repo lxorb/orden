@@ -15,7 +15,6 @@ function stateOf(doc: string): EditorState {
     }),
   )
 }
-
 describe('fence code of several lines', () => {
   test('in a list item', () => {
     const doc = '- ```js\n  let a = 1\n  let b = 2\n  ```\n'

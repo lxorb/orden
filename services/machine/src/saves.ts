@@ -12,25 +12,20 @@ export interface Saved {
   program: string | null
   folder: string | null
 }
-
 export function isSessionId(id: string): boolean {
   return /^[A-Za-z0-9_-]{1,200}$/.test(id)
 }
-
 export class Saves {
   private readonly dir: string
-
   constructor(state: string) {
     this.dir = join(state, 'sessions')
   }
-
   write(saved: Saved): void {
     mkdirSync(this.dir, { recursive: true })
     const file = join(this.dir, `${saved.session}.json`)
     writeFileSync(`${file}.tmp`, JSON.stringify(saved))
     renameSync(`${file}.tmp`, file)
   }
-
   all(): Saved[] {
     let names: string[]
     try {
@@ -45,12 +40,10 @@ export class Saves {
     }
     return out.sort((a, b) => a.at - b.at)
   }
-
   forget(session: string): void {
     rmSync(join(this.dir, `${session}.json`), { force: true })
   }
 }
-
 function readJson(file: string): unknown {
   try {
     return JSON.parse(readFileSync(file, 'utf8'))
@@ -58,7 +51,6 @@ function readJson(file: string): unknown {
     return null
   }
 }
-
 function savedOf(value: unknown): Saved | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Partial<Saved>

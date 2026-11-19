@@ -5,7 +5,6 @@ import { hubs } from './hub-fakes'
 
 const T0 = Date.UTC(2026, 9, 7, 12)
 const at = (ms: number) => vi.setSystemTime(T0 + ms)
-
 let env: TestEnv
 let owner: string
 let lucile: string
@@ -15,14 +14,12 @@ let chat: string
 let thesis: string
 let notes: string
 let note: string
-
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   at(0)
   env = testEnv()
   env.CHATS = chatLogs(env).CHATS
   env.HUB = hubs(env).HUB
-
   owner = await signIn(env, 'owner@example.com')
   thesis = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Thesis' } })).json.space.id
   notes = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
@@ -45,7 +42,6 @@ beforeEach(async () => {
     body: { email: 'mia@example.com', role: 'read' },
   })
   at(100_000)
-
   chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space: thesis } })).json.chat
   note = (
     await call(env, `/v1/spaces/${notes}/notes`, {
@@ -54,26 +50,22 @@ beforeEach(async () => {
     })
   ).json.note.id
 })
-
 afterEach(() => {
   vi.useRealTimers()
   env.close()
 })
-
 const ask = (token: string) =>
   call<{ missing: { who: string; name: string | null }[]; share: boolean; error?: string }>(
     env,
     `/v2/chats/${chat}/note?space=${notes}&note=${note}`,
     { token },
   )
-
 describe('a note dropped into a chat', () => {
   test('names those in the chat who cannot open it, and that the owner may share it', async () => {
     const { json } = await ask(owner)
     expect(json).toEqual({ missing: [{ who: `user:${lucileId}`, name: 'Lucile' }], share: true })
     expect((await ask(mia)).json.share).toBe(false)
   })
-
   test('is shared to read with them in one press, and with nobody else', async () => {
     const shared = await call(env, `/v2/chats/${chat}/note`, {
       token: owner,
@@ -89,7 +81,6 @@ describe('a note dropped into a chat', () => {
       { email: 'mia@example.com', item: '', role: 'read' },
     ])
   })
-
   test('is asked about only by somebody who reaches it, and shared only by its owner', async () => {
     expect((await ask(lucile)).status).toBe(404)
     const refused = await call(env, `/v2/chats/${chat}/note`, {

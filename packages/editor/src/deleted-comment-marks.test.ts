@@ -3,9 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { ordenMarkdownParser } from './markdown/extensions'
 
 const TOP = Array.from({ length: 40 }, (_, at) => `Paragraph ${at} of the note above.`).join('\n\n')
-
 const BELOW = '\n\nMore words.\n\n%%\nhidden one\n%%\n\nMiddle.\n\n%%\nhidden two\n%%\n\nEnd.\n'
-
 function blocksIn(doc: string, tree: Tree): string[] {
   const found: string[] = []
   tree.iterate({
@@ -15,7 +13,6 @@ function blocksIn(doc: string, tree: Tree): string[] {
   })
   return found
 }
-
 function reparsedAfterDeleting(before: string, from: number, to: number) {
   const tree = ordenMarkdownParser.parse(before)
   const doc = before.slice(0, from) + before.slice(to)
@@ -27,7 +24,6 @@ function reparsedAfterDeleting(before: string, from: number, to: number) {
     fresh: blocksIn(doc, ordenMarkdownParser.parse(doc)),
   }
 }
-
 describe('deleting text above %% comment blocks', () => {
   test('deleting one % of an inline comment reads as a fresh parse of the note', () => {
     const before = `${TOP}\n\nWords %% inline %% more.${BELOW}`
@@ -35,7 +31,6 @@ describe('deleting text above %% comment blocks', () => {
     const { typed, fresh } = reparsedAfterDeleting(before, at, at + 1)
     expect(typed).toEqual(fresh)
   })
-
   test('cutting the closing %% of an inline comment in a list item reads as a fresh parse', () => {
     const before = `${TOP}\n\n- item %%note%% done${BELOW}`
     const at = before.indexOf('%% done')

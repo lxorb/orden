@@ -8,7 +8,6 @@ export function taskHash(text: string): string {
   }
   return (hash >>> 0).toString(36)
 }
-
 export function lineOfTask(text: string, anchor: { line: number; hash: string }): { from: number; to: number } | null {
   const lines: { from: number; to: number }[] = []
   for (let from = 0; from <= text.length;) {
@@ -18,14 +17,12 @@ export function lineOfTask(text: string, anchor: { line: number; hash: string })
     if (end === -1) break
     from = end + 1
   }
-
   const names = (at: number) => {
     const line = lines[at]
     if (!line) return false
     const fields = readTask(text.slice(line.from, line.to))
     return fields !== null && taskHash(fields.text) === anchor.hash
   }
-
   for (let distance = 0; distance < lines.length; distance++) {
     if (names(anchor.line - distance)) return lines[anchor.line - distance] ?? null
     if (distance && names(anchor.line + distance)) return lines[anchor.line + distance] ?? null

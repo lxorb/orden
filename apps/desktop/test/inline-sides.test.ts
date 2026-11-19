@@ -5,22 +5,18 @@ import { SOURCE } from './files'
 
 function componentFiles(dir: string): string[] {
   const out: string[] = []
-
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) out.push(...componentFiles(path))
     else if (name.endsWith('.svelte')) out.push(path)
   }
-
   return out
 }
-
 const PHYSICAL: Record<string, string> = {
   'lib/titlebar/src/Titlebar.svelte': 'the traffic lights sit on the left of a Mac window in every language',
   'lib/canvas/src/CanvasBar.svelte': 'the bar is placed where it was dropped, at a point on the screen',
   'lib/ai-sidebar/src/Conversation.svelte': 'half its own width back, to centre it on 50%',
 }
-
 test('a margin or padding beside the words follows the reading direction', () => {
   const physical = componentFiles(SOURCE).flatMap((path) => {
     const name = path.slice(SOURCE.length).replace(/\\/g, '/')
@@ -30,6 +26,5 @@ test('a margin or padding beside the words follows the reading direction', () =>
       .join('\n')
     return [...style.matchAll(/\b(?:margin|padding)-(?:left|right)\s*:/g)].map((one) => `${name}: ${one[0]}`)
   })
-
   expect(physical).toEqual([])
 })

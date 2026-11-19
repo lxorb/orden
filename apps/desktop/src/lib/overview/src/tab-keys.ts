@@ -5,7 +5,6 @@ export interface Keyed {
   shown: string
   inPrivate?: boolean
 }
-
 export function lastingKeys(tabs: readonly Keyed[]): Map<string, string> {
   const seen = new Map<string, number>()
   const out = new Map<string, string>()

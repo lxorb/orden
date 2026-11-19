@@ -14,10 +14,8 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
   account: { accountToken: null },
   api: {},
 }))
-
 const { doublesOf } = await import('./doubles')
 type Item = Parameters<typeof doublesOf>[0][number]
-
 describe('a device’s trash entry the account holds too', () => {
   const item = (id: string, from: string, deletedAt: number, kind: Item['kind'] = 'note', arrived = true): Item => ({
     id,
@@ -33,19 +31,15 @@ describe('a device’s trash entry the account holds too', () => {
   })
   const account = [{ spaceId: 'sp1', path: 'Journal/2026-10-20.md', deletedAt: 1000 }]
   const folderOf = (id: string) => (id === 'sp1' ? 'Notes' : null)
-
   test('is the same note at the same place, gone from here after the account had it', () => {
     expect(doublesOf([item('d1', 'Notes/Journal/2026-10-20.md', 5000)], account, folderOf)).toEqual(['d1'])
   })
-
   test('is not a note deleted here before the account’s went, which is the reader’s own', () => {
     expect(doublesOf([item('d1', 'Notes/Journal/2026-10-20.md', 500)], account, folderOf)).toEqual([])
   })
-
   test('is not a note the reader deleted here, even at the same place after the account’s went', () => {
     expect(doublesOf([item('d1', 'Notes/Journal/2026-10-20.md', 5000, 'note', false)], account, folderOf)).toEqual([])
   })
-
   test('is not anything at another place, a folder, or a space this device does not hold', () => {
     expect(
       doublesOf(

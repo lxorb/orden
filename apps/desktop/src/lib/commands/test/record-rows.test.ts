@@ -3,9 +3,7 @@ import { commandRowsLoaded, registerCommandRows } from '@orden/contracts'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { blockCommands, blockRows } = await import('../src/api')
-
 test('Dictate typed after a slash starts in the note it was typed in, as it does from the palette', async () => {
   const seen: unknown[] = []
   registerCommandRows('record', () =>
@@ -21,6 +19,5 @@ test('Dictate typed after a slash starts in the note it was typed in, as it does
   blockRows()
     .find((one) => one.label === 'Dictate')
     ?.run(view)
-
   expect(seen).toEqual([view, view])
 })

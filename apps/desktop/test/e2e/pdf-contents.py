@@ -1,13 +1,10 @@
 import base64
 import json
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for, waited = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for, DRIVE.waited
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -27,11 +24,7 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
-
 HEADINGS = [("Intro", 1, 0), ("Methods", 2, 0), ("Data", 3, 1)]
-
-
 def paper() -> bytes:
     w, h = 595, 842
     count = 3
@@ -59,8 +52,6 @@ def paper() -> bytes:
         out += (b"%010d 00000 n \n" % places[number]) if number in places else b"0000000000 65535 f \n"
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
-
 MARKS = {
     "version": 1,
     "highlights": [
@@ -68,11 +59,8 @@ MARKS = {
         {"id": "m2", "page": 3, "text": "Page 3", "quads": [[50, 815, 250, 815, 250, 775, 50, 775]], "colour": 1, "created": 2},
     ],
 }
-
 SHOWING = "() => window.ordenApp.pages.current?.store.showing ?? null"
-
 ROWS = "() => [...(document.querySelector('.navigator')?.querySelectorAll('.contents .row .orden-row-label') ?? [])].map((one) => one.textContent.trim())"
-
 MARKED = """
 () => {
   const sheet = document.querySelector('.sheet')
@@ -88,8 +76,6 @@ MARKED = """
   }
 }
 """
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1200, "height": 820})
     page = context.new_page()
@@ -105,24 +91,20 @@ def drive(browser: Browser) -> None:
         "async ([path, text]) => { await window.ordenApp.tasks().then((t) => t.writeFile(path, text)) }",
         [f"{pdf}.highlights.json", json.dumps(MARKS)],
     )
-
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
     wait_for(page, "window.ordenApp.pages.current?.store.count === 3", "the page note")
     page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
-
     want = [title for title, _, _ in HEADINGS]
     if waited(page, f"JSON.stringify(({ROWS})()) === {json.dumps(json.dumps(want, separators=(',', ':')))}", "the PDF's contents beside its pages", patience=15):
         say(f"ok   the outline lists {page.evaluate(ROWS)}")
     else:
         say(f"  it lists {page.evaluate(ROWS)}, the store holds {page.evaluate('() => window.ordenApp.pages.current?.store.outline.length')} rows, panel {page.evaluate('() => window.ordenApp.workspace.panel')}")
         shot(page, "no-contents")
-
     page.locator(".navigator .contents .row", has_text="Data").first.click()
     if waited(page, f"({SHOWING})() === 3", "pressing Data to turn to page 3", patience=10):
         say("ok   Data turns to page 3")
     else:
         say(f"  it shows page {page.evaluate(SHOWING)}")
-
     page.evaluate("() => window.ordenApp.pages.current.store.turnTo(1)")
     if waited(page, f"!!({MARKED})()", "the PDF's highlight on page 1", patience=15):
         box = page.evaluate(MARKED)
@@ -131,7 +113,6 @@ def drive(browser: Browser) -> None:
             wrong(f"the highlight is not where the PDF says: {box}")
     else:
         shot(page, "no-mark")
-
     page.evaluate("() => { window.ordenApp.pages.current.store.readOnly = true }")
     page.wait_for_timeout(300)
     nav = page.locator(".navigator").first
@@ -143,6 +124,4 @@ def drive(browser: Browser) -> None:
     else:
         say("ok   [read-only] the page thumbnails offer no edits")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a PDF's contents and highlights show beside and on its pages"))

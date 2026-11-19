@@ -20,7 +20,6 @@ function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
     ...extra,
   }
 }
-
 export function noteRow(
   path: string,
   note: string | Record<string, Value> = {},
@@ -35,7 +34,6 @@ export function noteRow(
     note: typeof note === 'string' ? noteValues(note) : note,
   }
 }
-
 export function taskRow(
   path: string,
   line: string,
@@ -60,7 +58,6 @@ export function taskRow(
     task,
   }
 }
-
 export const contextAt = (extra: Partial<Context> = {}): Context => ({
   today: '2026-10-04',
   now: '2026-10-04T10:00:00',

@@ -7,14 +7,12 @@ interface Fake {
   nudged: number
   user: { id: string } | null
 }
-
 const fake = vi.hoisted((): Fake => ({
   saved: null,
   deleted: [],
   nudged: 0,
   user: { id: 'u1' },
 }))
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   stored: () => fake.saved,
@@ -39,12 +37,9 @@ serveSyncStore({
     fake.nudged++
   },
 })
-
 const { syncedCopies } = await import('./synced')
-
 const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
 const tracked = (id: string) => ({ id, version: 1, hash: 'h' })
-
 beforeEach(() => {
   fake.deleted.length = 0
   fake.nudged = 0
@@ -64,26 +59,20 @@ beforeEach(() => {
     },
   }
 })
-
 describe('under v1', () => {
   test('counts the copies the mirrors track, in every space', () => {
     expect(syncedCopies(null).count).toBe(3)
   })
-
   test('takes each off the account and nothing else, then asks for a pass', async () => {
     await syncedCopies(null).remove()
-
     expect(fake.deleted).toEqual(['n2', 'n3', 'n4'])
     expect(fake.nudged).toBe(1)
   })
-
   test('counts none of another account’s', () => {
     fake.user = { id: 'u2' }
-
     expect(syncedCopies(null).count).toBe(0)
   })
 })
-
 describe('under v2', () => {
   test('asks the engine, which knows its tree', async () => {
     const unsync = vi.fn(() => Promise.resolve(2))
@@ -93,11 +82,9 @@ describe('under v2', () => {
       on: () => () => undefined,
       copies: { foreignCopies: () => [{}, {}], unsync },
     }
-
     const copies = syncedCopies(engine)
     expect(copies.count).toBe(2)
     await copies.remove()
-
     expect(unsync).toHaveBeenCalledOnce()
     expect(fake.deleted).toEqual([])
     expect(fake.nudged).toBe(1)

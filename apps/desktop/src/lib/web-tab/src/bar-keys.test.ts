@@ -16,7 +16,6 @@ const DEFAULTS: Record<string, string> = {
   'app.zoom-out': 'Mod--',
   'app.zoom-reset': 'Mod-0',
 }
-
 function bindings(keys: Record<string, string> = DEFAULTS): Bindings {
   return {
     platform: 'win',
@@ -26,7 +25,6 @@ function bindings(keys: Record<string, string> = DEFAULTS): Bindings {
     },
   }
 }
-
 function press(key: string, held: Partial<KeyboardEvent> = {}): KeyboardEvent {
   const code = /^\d$/.test(key) ? `Digit${key}` : key.length === 1 ? `Key${key.toUpperCase()}` : key
   return {
@@ -40,9 +38,7 @@ function press(key: string, held: Partial<KeyboardEvent> = {}): KeyboardEvent {
     ...held,
   } as KeyboardEvent
 }
-
 const CTRL = { ctrlKey: true }
-
 describe('a key in front of a page', () => {
   test('reloads on F5 and Ctrl+R, and past the cache with Shift', () => {
     const keys = bindings()
@@ -54,7 +50,6 @@ describe('a key in front of a page', () => {
     })
     expect(barKey(press('F5', CTRL), keys)).toEqual({ to: 'step', step: 'fresh' })
   })
-
   test("opens Chrome's History on Ctrl+H and its Delete browsing data on Ctrl+Shift+Delete", () => {
     const keys = bindings()
     expect(barKey(press('h', CTRL), keys)).toEqual({ to: 'history' })
@@ -63,24 +58,20 @@ describe('a key in front of a page', () => {
     })
     expect(barKey(press('Delete', CTRL), keys)).toBeNull()
   })
-
   test('goes to the address field on Ctrl+L and Alt+D', () => {
     const keys = bindings()
     expect(barKey(press('l', CTRL), keys)).toEqual({ to: 'address' })
     expect(barKey(press('d', { altKey: true }), keys)).toEqual({ to: 'address' })
   })
-
   test('jumps along the strip on Ctrl and a digit, the ninth being the last', () => {
     const keys = bindings()
     expect(barKey(press('1', CTRL), keys)).toEqual({ to: 'tab', at: 0 })
     expect(barKey(press('9', CTRL), keys)).toEqual({ to: 'tab', at: 'last' })
     expect(barKey(press('1', { ctrlKey: true, altKey: true }), keys)).toBeNull()
   })
-
   test("zooms the page on Chrome's keys, which size a note's words elsewhere", () => {
     const keys = bindings()
     const zoom = (step: string) => ({ to: 'zoom', step })
-
     expect(barKey(press('=', { ...CTRL, code: 'Equal' }), keys)).toEqual(zoom('in'))
     expect(barKey(press('-', { ...CTRL, code: 'Minus' }), keys)).toEqual(zoom('out'))
     expect(barKey(press('0', CTRL), keys)).toEqual(zoom('reset'))
@@ -90,7 +81,6 @@ describe('a key in front of a page', () => {
     expect(barKey(press('-', { ...CTRL, code: 'NumpadSubtract' }), keys)).toEqual(zoom('out'))
     expect(barKey(press('0', { ...CTRL, code: 'Numpad0' }), keys)).toEqual(zoom('reset'))
   })
-
   test('leaves a sign typed with AltGr, or with no Ctrl, to whatever has the keyboard', () => {
     const keys = bindings()
     expect(barKey(press('+', { ctrlKey: true, altKey: true, code: 'Equal' }), keys)).toBeNull()
@@ -98,7 +88,6 @@ describe('a key in front of a page', () => {
     expect(barKey(press('=', { code: 'Equal' }), keys)).toBeNull()
     expect(barKey(press('+', { metaKey: true, code: 'NumpadAdd' }), keys)).toBeNull()
   })
-
   test('zooms on Cmd and + on a Mac, and not on Ctrl', () => {
     const mac: Bindings = { platform: 'mac', pressed: () => false }
     expect(barKey(press('+', { metaKey: true, shiftKey: true, code: 'Equal' }), mac)).toEqual({
@@ -107,14 +96,12 @@ describe('a key in front of a page', () => {
     })
     expect(barKey(press('+', { ...CTRL, code: 'NumpadAdd' }), mac)).toBeNull()
   })
-
   test("follows a reader's own bindings", () => {
     const keys = bindings({ ...DEFAULTS, 'web.reload': 'F9', 'web.reload.alt': '' })
     expect(barKey(press('F5'), keys)).toBeNull()
     expect(barKey(press('r', CTRL), keys)).toBeNull()
     expect(barKey(press('F9'), keys)).toEqual({ to: 'step', step: 'reload' })
   })
-
   test("zooms on the reader's own keys for the words' size", () => {
     const keys = bindings({ ...DEFAULTS, 'app.zoom-out': 'Mod-Shift-j', 'app.zoom-reset': '' })
     expect(barKey(press('-', { ...CTRL, code: 'Minus' }), keys)).toBeNull()
@@ -124,7 +111,6 @@ describe('a key in front of a page', () => {
       step: 'out',
     })
   })
-
   test('leaves every other key alone', () => {
     const keys = bindings()
     for (const one of [press('a'), press('F6'), press('Escape'), press('t', CTRL)]) {
@@ -132,7 +118,6 @@ describe('a key in front of a page', () => {
     }
   })
 })
-
 describe('F6', () => {
   test('from inside the page is the address field', () => {
     let played: Event | undefined
@@ -148,7 +133,6 @@ describe('F6', () => {
       },
     )
     vi.stubGlobal('document', { body: { dispatchEvent: (event: Event) => (played = event) } })
-
     replay({
       key: 'F6',
       code: 'F6',
@@ -159,20 +143,17 @@ describe('F6', () => {
       down: true,
     })
     vi.unstubAllGlobals()
-
     expect(played).toBeDefined()
     if (played) expect(barKey(played as KeyboardEvent, bindings())).toEqual({ to: 'address' })
     expect(barKey(press('F6'), bindings())).toBeNull()
   })
 })
-
 describe('Escape', () => {
   test('stops a page on its way, and only then', () => {
     const keys = bindings()
     expect(stops(press('Escape'), true, keys)).toBe(true)
     expect(stops(press('Escape'), false, keys)).toBe(false)
   })
-
   test('is not taken from whatever answered it first', () => {
     expect(stops(press('Escape', { defaultPrevented: true }), true, bindings())).toBe(false)
   })

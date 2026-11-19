@@ -43,7 +43,6 @@ const VOICE: FileRef = {
   seconds: 42,
   wave: Array.from({ length: WAVE_BARS }, (_, i) => i * 4),
 }
-
 const EVENTS: Event[] = [
   { kind: 'post', id: 'e1', message: 'm1', body: 'Draft is up' },
   {
@@ -83,14 +82,11 @@ const EVENTS: Event[] = [
     post: { kind: 'post', id: 'e14', message: 'm3', body: 'later' },
   },
 ]
-
 const wired = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
-
 describe('events', () => {
   it.each(EVENTS.map((event) => [event.kind, event] as const))('a %s reads back as it was sent', (_, event) => {
     expect(eventOf(wired(event))).toEqual(event)
   })
-
   it('drops fields it does not know', () => {
     expect(eventOf({ kind: 'delete', id: 'e', target: 'm', admin: true })).toEqual({
       kind: 'delete',
@@ -99,13 +95,11 @@ describe('events', () => {
     })
     expect(fileRefOf({ ...PICTURE, exif: 'gps' })).toEqual(PICTURE)
   })
-
   it('names each mention once', () => {
     expect(eventOf({ kind: 'post', id: 'e', message: 'm', body: 'hi', mentions: ['here', 'here'] })).toMatchObject({
       mentions: ['here'],
     })
   })
-
   it.each([
     ['no kind', { id: 'e', target: 'm' }],
     ['a kind nobody sends', { kind: 'shout', id: 'e', target: 'm' }],
@@ -195,7 +189,6 @@ describe('events', () => {
     expect(eventOf(value)).toBeNull()
   })
 })
-
 describe('logged events', () => {
   const placed = {
     seq: 4,
@@ -204,12 +197,10 @@ describe('logged events', () => {
     device: 'd-laptop',
     madeAt: 1_759_833_500_000,
   }
-
   it('carry their place', () => {
     const logged = { ...EVENTS[0], ...placed }
     expect(loggedOf(wired(logged))).toEqual(logged)
   })
-
   it.each([
     ['no place', { seq: 0 }],
     ['no author', { author: 'emil' }],
@@ -219,7 +210,6 @@ describe('logged events', () => {
     expect(loggedOf({ ...EVENTS[0], ...placed, ...change })).toBeNull()
   })
 })
-
 describe('messages as they stand', () => {
   it('read back as the reducer made them', () => {
     const state = chatState()
@@ -234,7 +224,6 @@ describe('messages as they stand', () => {
     expect(messages.length).toBeGreaterThan(1)
     for (const message of messages) expect(messageOf(wired(message))).toEqual(message)
   })
-
   it('refuse one whose reactions name somebody who is nobody', () => {
     const message: Message = {
       id: 'm1',
@@ -261,12 +250,10 @@ describe('messages as they stand', () => {
     ).toBeNull()
   })
 })
-
 describe('the socket', () => {
   it('is the chat’s own address', () => {
     expect(socketPath(CHAT)).toBe(`/v2/chats/${CHAT}/socket`)
   })
-
   const client: ClientFrame[] = [
     { t: 'hello' },
     { t: 'hello', since: 41 },
@@ -275,11 +262,9 @@ describe('the socket', () => {
     { t: 'typing', parent: 'm1' },
     { t: 'read', seq: 41 },
   ]
-
   it.each(client.map((frame) => [frame.t, frame] as const))('carries a device’s %s', (_, frame) => {
     expect(clientFrameOf(text(frame))).toEqual(frame)
   })
-
   const logged: Logged = {
     kind: 'pin',
     id: 'e',
@@ -301,11 +286,9 @@ describe('the socket', () => {
     { t: 'here', who: ['user:lucile', 'program:ci'] },
     { t: 'profile', who: 'user:lucile' },
   ]
-
   it.each(server.map((frame) => [frame.t, frame] as const))('carries the object’s %s', (_, frame) => {
     expect(serverFrameOf(text(frame))).toEqual(frame)
   })
-
   it.each([
     'not json',
     '[]',
@@ -317,7 +300,6 @@ describe('the socket', () => {
   ])('drops a device frame %s', (raw) => {
     expect(clientFrameOf(raw)).toBeNull()
   })
-
   it.each([
     '{"t":"events","events":[{"kind":"pin"}]}',
     '{"t":"refused","id":"e","error":"angry"}',
@@ -328,22 +310,18 @@ describe('the socket', () => {
     expect(serverFrameOf(raw)).toBeNull()
   })
 })
-
 describe('the hub', () => {
   const poke: ChatPoke = { t: 'chat', chat: CHAT, seq: 9, at: 90, by: 'user:mia', mention: true }
-
   it('pokes with no words', () => {
     expect(chatPokeOf(wired(poke))).toEqual(poke)
     expect(chatPokeOf({ ...poke, body: 'secret' })).toEqual(poke)
   })
-
   it('drops a poke that is not one', () => {
     expect(chatPokeOf({ ...poke, t: 'poke' })).toBeNull()
     expect(chatPokeOf({ ...poke, chat: 'c_1' })).toBeNull()
     expect(chatPokeOf({ ...poke, mention: 'yes' })).toBeNull()
   })
 })
-
 describe('HTTP', () => {
   const row = {
     id: CHAT,
@@ -359,19 +337,16 @@ describe('HTTP', () => {
     mutedUntil: null,
     meta: { topic: '', posting: 'writers', slowmode: 0 },
   }
-
   it('lists chats, leaving out a row that does not read', () => {
     expect(chatListOf(wired({ chats: [row, { ...row, id: 'nope' }, { ...row, role: 'admin' }] }))).toEqual({
       chats: [row],
     })
     expect(chatListOf({ chats: 'all' })).toBeNull()
   })
-
   it('reads a new chat’s space', () => {
     expect(newChatOf({ space: 'space-1' })).toEqual({ space: 'space-1' })
     expect(newChatOf({ space: '' })).toBeNull()
   })
-
   it('reads pages of events and of messages', () => {
     const logged = { ...EVENTS[0], seq: 1, at: 10, author: 'user:emil' }
     expect(eventsPageOf(wired({ events: [logged], more: true }))).toEqual({
@@ -379,7 +354,6 @@ describe('HTTP', () => {
       more: true,
     })
     expect(eventsPageOf({ events: [logged] })).toBeNull()
-
     const state = chatState()
     apply(state, {
       kind: 'post',
@@ -394,7 +368,6 @@ describe('HTTP', () => {
     expect(statePageOf(wired(page))).toEqual(page)
     expect(statePageOf({ ...page, meta: {} })).toBeNull()
   })
-
   it('reads an outbox’s events whole or not at all', () => {
     expect(postEventsOf(wired({ events: EVENTS }))).toEqual({ events: EVENTS })
     expect(postEventsOf({ events: [] })).toBeNull()
@@ -402,7 +375,6 @@ describe('HTTP', () => {
     const many = Array.from({ length: MOST_POSTED + 1 }, () => EVENTS[0])
     expect(postEventsOf({ events: many })).toBeNull()
   })
-
   it('reads each event’s answer', () => {
     const results = {
       results: [
@@ -414,17 +386,14 @@ describe('HTTP', () => {
     expect(resultsOf({ results: [{ id: 'e2', refused: 'sad' }] })).toBeNull()
   })
 })
-
 describe('who', () => {
   it.each(['user:emil', 'guest:g_1', 'program:ci-bot'])('%s is somebody', (value) => {
     expect(isWho(value)).toBe(true)
   })
-
   it.each(['emil', 'user:', 'admin:emil', 'user:emil smith', 7])('%s is nobody', (value) => {
     expect(isWho(value)).toBe(false)
   })
 })
-
 describe('a reaction named after what every object holds', () => {
   it('reads back as that reaction', () => {
     const state = chatState()

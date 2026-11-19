@@ -15,12 +15,9 @@
   import { Hint, Switch } from '../../../ui-controls/src/api'
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
-
   const CHOICE_KEY = 'orden:access-choice'
-
   const local = !__EVEN_PLUGIN__ && reach.offered
   const pane = local ? new AgentsPane(reach.standIn ?? tauriCrate) : null
-
   $effect(() => {
     if (!pane) return
     void pane.open()
@@ -28,19 +25,16 @@
       pane.close()
     }
   })
-
   $effect(() => {
     if (!account.user) return
     return connectors.watch()
   })
-
   let chosen = $state<string | null>(null)
   const agent = $derived(pane?.grants.find((one) => one.id === chosen) ?? null)
   $effect(() => closeOnBack(agent !== null, () => (chosen = null)))
   $effect(() => {
     ondetail?.(agent !== null)
   })
-
   const listed = $derived(
     pane
       ? [...pane.grants].sort(
@@ -48,11 +42,9 @@
         )
       : [],
   )
-
   const offered = $derived(choices(local, !!account.user))
   let picked = $state<Choice | null>(null)
   const choice = $derived(picked ?? shownFirst(offered, storedText(CHOICE_KEY)))
-
   const LABELS: Record<Choice, () => string> = {
     'claude-code': () => 'Claude Code',
     codex: () => 'Codex',
@@ -61,27 +53,20 @@
     chatgpt: () => 'ChatGPT',
     other: () => 'Other',
   }
-
   function pick(one: Choice) {
     picked = one
     keep(CHOICE_KEY, one)
   }
-
   const when = (at: number | null | undefined) =>
     at === null || at === undefined
       ? 'Not used yet.'
       : `Last used ${localDate(at, { dateStyle: 'short', timeStyle: 'medium' })}.`
-
   const access = (readOnly: boolean) => (readOnly ? 'Reads your notes.' : 'Reads and writes your notes.')
-
   const anything = $derived(
     listed.length > 0 || (!!account.user && (connectors.clients.length > 0 || !!connectors.token?.exists)),
   )
-
   let root = $state<HTMLElement>()
-
   let enrolled = $state<boolean | null>(null)
-
   onMount(() => {
     if (!isDesktop) return
     void invoke<unknown>('ai_cli_enroll_read').then(
@@ -92,9 +77,7 @@
       () => undefined,
     )
   })
-
   let shortcuts = $state(false)
-
   onMount(() => {
     if (!isDesktop || platform() !== 'macos') return
     void invoke<boolean>('shortcuts_offered').then(
@@ -102,13 +85,11 @@
       () => undefined,
     )
   })
-
   function enroll() {
     if (enrolled === null) return
     enrolled = !enrolled
     void invoke('ai_cli_enroll_write', { on: enrolled }).catch(() => undefined)
   }
-
   onMount(() => {
     if (settingsWindow().at !== 'access') return
     settingsWindow().at = null
@@ -234,11 +215,9 @@
     gap: var(--space-4);
     width: 100%;
   }
-
   .agents {
     margin-top: var(--space-4);
   }
-
   .agents :global(h3) {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
@@ -246,25 +225,21 @@
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .agents :global(.card) {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .agents :global(.orden-setting .name) {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
-
   .agents :global(.orden-setting .name small) {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .agents :global(.chevron) {
     flex: none;
     width: 14px;
@@ -275,7 +250,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .agents :global(pre) {
     width: 100%;
     margin: 0;
@@ -289,25 +263,21 @@
     overflow-x: auto;
     color: var(--muted-strong);
   }
-
   .agents :global(.hint) {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .agents :global(.hint.bad) {
     color: var(--danger);
   }
-
   @media (hover: hover) {
     .agents :global(button.orden-setting:hover),
     .agents :global(.orden-setting.pressable:hover) {
       color: var(--text-strong);
     }
   }
-
   .agents :global(button.orden-setting:focus-visible),
   .agents :global(.orden-setting.pressable:focus-visible) {
     outline-offset: 2px;

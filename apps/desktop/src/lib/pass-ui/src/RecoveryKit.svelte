@@ -8,7 +8,6 @@
   import Glyph from './Glyph.svelte'
 
   const { code, ondone }: { code: string; ondone: () => void } = $props()
-
   function saved() {
     const text = `Orden Pass recovery key\n\n${code}\n`
     void deliver('Orden Pass recovery key', 'txt', 'Text', { text, mime: 'text/plain' })
@@ -47,7 +46,6 @@
     -webkit-user-select: all;
     user-select: all;
   }
-
   .row {
     display: grid;
     grid-template-columns: 1fr 1fr;

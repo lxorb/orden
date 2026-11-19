@@ -18,13 +18,11 @@ export type Step =
   | { role: 'native'; messages: unknown[] }
   | { role: 'compacted'; block: unknown }
   | { role: 'effort'; effort: Effort }
-
 export interface Call {
   id: string
   name: string
   args: unknown
 }
-
 export function modelTurn({ provider, model, effort }: Thread): Turn {
   return {
     id: crypto.randomUUID(),
@@ -36,16 +34,12 @@ export function modelTurn({ provider, model, effort }: Thread): Turn {
     effort,
   }
 }
-
 export function youTurn(thread: Thread, draft: Draft, more: Partial<Turn> = {}): Turn {
   const { effort } = thread
   return { id: crypto.randomUUID(), role: 'you', at: Date.now(), draft, parts: [], effort, ...more }
 }
-
 export const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error))
-
 const MARK = 'untrusted'
-
 function attribute(label: string): string {
   return label
     .slice(0, 300)
@@ -55,13 +49,9 @@ function attribute(label: string): string {
     .replace(/>/g, '&gt;')
     .replace(/[\p{Cc}\p{Zl}\p{Zp}]/gu, ' ')
 }
-
 export { untrusted }
-
 const OPENED = `<${MARK} source="`
-
 export const SUMMED_OUTSIDE = 'outside'
-
 export function readOutside(turns: readonly Turn[]): boolean {
   return (
     turns.some((turn) =>
@@ -79,13 +69,11 @@ export function readOutside(turns: readonly Turn[]): boolean {
     ) || turns.some((turn) => turn.context?.includes(OPENED) ?? false)
   )
 }
-
 function attached(one: Attachment): string {
   if (!one.text) return ''
   if (one.untrusted) return untrusted(one.label, one.text)
   return `<attached label="${attribute(one.label)}">\n${defused(one.text)}\n</attached>`
 }
-
 export function userStep(draft: Draft, context = ''): Extract<Step, { role: 'user' }> {
   const texts = draft.attachments.map(attached).filter(Boolean)
   const where = context ? [`<reader-context>\n${defused(context)}\n</reader-context>`] : []
@@ -95,18 +83,15 @@ export function userStep(draft: Draft, context = ''): Extract<Step, { role: 'use
     images: draft.attachments.flatMap((one) => (one.image ? [one.image] : [])),
   }
 }
-
 const UNANSWERED: ToolOutput = {
   text: 'The call was stopped before it answered.',
   images: [],
   error: true,
 }
-
 export function partsAsSteps(parts: readonly Part[]): Step[] {
   const steps: Step[] = []
   let words = ''
   let calls: Extract<Part, { kind: 'tool' }>[] = []
-
   const flush = () => {
     if (!words && !calls.length) return
     steps.push({
@@ -127,7 +112,6 @@ export function partsAsSteps(parts: readonly Part[]): Step[] {
     words = ''
     calls = []
   }
-
   for (const part of parts) {
     if (part.kind === 'text') {
       if (calls.length) flush()
@@ -139,17 +123,14 @@ export function partsAsSteps(parts: readonly Part[]): Step[] {
   flush()
   return steps
 }
-
 function replays(turn: Turn, api: Api, model: string): boolean {
   return !!turn.replay && turn.replay.api === api && turn.replay.model === model
 }
-
 export function sinceCompaction(turns: readonly Turn[], compaction: Compaction | undefined): Turn[] {
   if (!compaction) return [...turns]
   const at = turns.findIndex((one) => one.id === compaction.upTo)
   return at < 0 ? [...turns] : turns.slice(at + 1)
 }
-
 function compactionStep(compaction: Compaction, api: Api, model: string, outside: boolean): Step | null {
   if (compaction.kind === api && compaction.model === model && compaction.block !== undefined) {
     return { role: 'compacted', block: compaction.block }
@@ -164,7 +145,6 @@ function compactionStep(compaction: Compaction, api: Api, model: string, outside
     images: [],
   }
 }
-
 export function stepsOf(
   thread: Pick<Thread, 'turns' | 'compaction'>,
   api: Api,
@@ -175,7 +155,6 @@ export function stepsOf(
   const turns = head ? sinceCompaction(thread.turns, thread.compaction) : thread.turns
   const steps: Step[] = head ? [head] : []
   let effort: Effort | undefined
-
   for (const turn of turns) {
     if (turn.role === 'you') {
       if (perMessage && turn.effort && effort && turn.effort !== effort) {
@@ -191,12 +170,10 @@ export function stepsOf(
   }
   return steps
 }
-
 export function baseEffort(thread: Pick<Thread, 'turns' | 'compaction'>, current: Effort): Effort {
   const turns = sinceCompaction(thread.turns, thread.compaction)
   return turns.find((one) => one.role === 'you' && one.effort)?.effort ?? current
 }
-
 export function outputText(output: ToolOutput): string {
   const pictures = output.images.length ? `\n[${output.images.length} picture(s)]` : ''
   return output.text + pictures

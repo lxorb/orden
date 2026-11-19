@@ -2,15 +2,12 @@ import { expect, test, vi } from 'vitest'
 
 const chat = vi.hoisted(() => ({ chips: [] as unknown[], focus: () => undefined }))
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({ chat }))
-
 const { workspace } = await import('../../workspace/src/api')
 const { dropRows } = await import('./drop')
-
 const entry = (path: string, is_dir = false) => {
   const name = path.split('/').pop() ?? path
   return { name, path, is_dir, modified: 0, created: 0, children: [] }
 }
-
 function drop(paths: string[]) {
   const words: Record<string, string> = { 'text/orden-paths': JSON.stringify(paths) }
   const transfer = {
@@ -21,7 +18,6 @@ function drop(paths: string[]) {
   dropRows(event as unknown as DragEvent)
   return event.preventDefault.mock.calls.length > 0
 }
-
 test('a note and a folder dropped on the panel are chips, each once', () => {
   workspace.tree = {
     ...entry('/s', true),
@@ -35,7 +31,6 @@ test('a note and a folder dropped on the panel are chips, each once', () => {
   ])
   expect(drop([])).toBe(false)
 })
-
 test('a web tab let go of on the panel is its page', () => {
   workspace.tabs = [{ id: 'w', shown: 'Svelte' }] as never
   const getData = (one: string) => (one === 'text/orden-tab' ? 'w' : '')

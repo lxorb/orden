@@ -23,27 +23,22 @@ const VERBATIM = new Set([
   'LinkLabel',
   'LinkReference',
 ])
-
 export function reformat(source: string): string {
   const lines = source.split('\n')
   const out: string[] = []
   const tree = ordenMarkdownParser.parse(source)
   const kept = verbatim(tree, lines)
   const tables = tableStarts(tree, lines)
-
   let index = 0
   let blanks = 0
-
   const matter = readFrontMatter(source)
   if (matter) {
     for (const line of lines.slice(0, matter)) out.push(line)
     index = matter
   }
-
   while (index < lines.length) {
     const line = lines[index] ?? ''
     const stretches = kept[index] ?? []
-
     const mark = fenceMark(line)
     if (mark) {
       out.push(line)
@@ -57,7 +52,6 @@ export function reformat(source: string): string {
       blanks = 0
       continue
     }
-
     const tableEnd = tables.get(index)
     const table = tableEnd === undefined ? null : readTable(lines, index, tableEnd)
     if (table) {
@@ -66,28 +60,23 @@ export function reformat(source: string): string {
       blanks = 0
       continue
     }
-
     if (!line.trim() && !stretches.length) {
       blanks += 1
       if (blanks <= 1) out.push('')
       index += 1
       continue
     }
-
     blanks = 0
     out.push(tidyAround(line, stretches))
     index += 1
   }
-
   while (out.length && !(out.at(-1) ?? '').trim()) out.pop()
   return `${out.join('\n')}\n`
 }
-
 function readFrontMatter(source: string): number | null {
   const block = frontMatterBlock(source)
   return block && source.slice(0, block.close).split('\n').length
 }
-
 function tableStarts(tree: Tree, lines: readonly string[]): Map<number, number> {
   const spans = new Map<number, number>()
   tree.iterate({
@@ -98,7 +87,6 @@ function tableStarts(tree: Tree, lines: readonly string[]): Map<number, number> 
       return false
     },
   })
-
   const found = new Map<number, number>()
   const starts: number[] = []
   let start = 0
@@ -106,28 +94,22 @@ function tableStarts(tree: Tree, lines: readonly string[]): Map<number, number> 
     starts.push(start)
     start += line.length + 1
   }
-
   for (const [index, line] of lines.entries()) {
     const to = spans.get((starts[index] ?? 0) + line.length - line.trimStart().length)
     if (to === undefined) continue
-
     let end = index + 1
     while (end < lines.length && (starts[end] ?? 0) < to) end += 1
     found.set(index, end)
   }
   return found
 }
-
 function readTable(lines: string[], start: number, end: number): { text: string; next: number } | null {
   if (!lines[start]?.includes('|')) return null
-
   const block = lines.slice(start, end).join('\n')
   const model = parseTable(block)
   if (!model) return null
-
   return { text: serializeTable(model), next: end }
 }
-
 function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
   const ranges: [number, number][] = []
   tree.iterate({
@@ -138,7 +120,6 @@ function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
       return false
     },
   })
-
   let start = 0
   return lines.map((line) => {
     const end = start + line.length
@@ -149,22 +130,18 @@ function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
     return within
   })
 }
-
 function markersOfNeighbours(list: SyntaxNode, ranges: [number, number][]) {
   if (list.prevSibling?.name !== 'BulletList' && list.nextSibling?.name !== 'BulletList') return
-
   for (let item = list.firstChild; item; item = item.nextSibling) {
     const mark = item.getChild('ListMark')
     if (mark) ranges.push([mark.from, mark.to])
   }
 }
-
 function tidyAround(line: string, kept: readonly [number, number][]): string {
   const isKept = (at: number) => kept.some(([from, to]) => at >= from && at < to)
   const tidied = tidy(line.replace(/\S/g, (char, at: number) => (isKept(at) ? 'x' : char)))
   return line.replace(/[^]/g, (char, at: number) => (isKept(at) ? char : tidied.charAt(at)))
 }
-
 const tidy = (line: string): string =>
   line
     .replace(/^(\s*)\*(\s+)/, '$1-$2')
@@ -172,12 +149,10 @@ const tidy = (line: string): string =>
     .replace(/(^|[\s(])_(\S(?:[^_]*\S)?)_(?=[\s).,;:!?]|$)/g, '$1*$2*')
     .replace(/^(#{1,6}\s+.*?)\s+#+\s*$/, '$1')
     .replace(/[ \t]+$/, '')
-
 export const reformatDocument: StateCommand = ({ state, dispatch }) => {
   const source = state.doc.toString()
   const tidied = reformat(source)
   if (tidied === source) return false
-
   const caret = Math.min(state.selection.main.head, tidied.length)
   dispatch(
     state.update({

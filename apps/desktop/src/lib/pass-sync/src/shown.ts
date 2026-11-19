@@ -7,15 +7,12 @@ export interface Shown {
   items: Item[]
   goneItems: ItemRef[]
 }
-
 export function nothingShown(): Shown {
   return { vaults: [], goneVaults: [], items: [], goneItems: [] }
 }
-
 export function isShown(update: Shown): boolean {
   return update.vaults.length + update.goneVaults.length + update.items.length + update.goneItems.length > 0
 }
-
 export function shownAfter(
   vaults: readonly Vault[],
   items: readonly Item[],

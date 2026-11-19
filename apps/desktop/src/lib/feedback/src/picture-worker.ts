@@ -4,7 +4,6 @@ interface Asked {
   id: number
   file: Blob
 }
-
 function drawsHere(): boolean {
   try {
     return (
@@ -16,9 +15,7 @@ function drawsHere(): boolean {
     return false
   }
 }
-
 const able = drawsHere()
-
 self.onmessage = (event: MessageEvent<Asked>) => {
   const { id, file } = event.data
   if (!able) {

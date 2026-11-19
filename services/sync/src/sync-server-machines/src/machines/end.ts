@@ -17,7 +17,6 @@ export async function endTerms(env: Env, terms: readonly string[], who: string |
   }
   await tellEnded(env, ended, who)
 }
-
 export function endingTerm(env: Env, term: string, at: number): D1PreparedStatement {
   return env.DB.prepare(
     `update term_sessions set ended_at = ?
@@ -25,7 +24,6 @@ export function endingTerm(env: Env, term: string, at: number): D1PreparedStatem
      returning machine, session, user_id`,
   ).bind(at, term)
 }
-
 export async function tellEnded(env: Env, ended: readonly Ended[], who: string | null): Promise<void> {
   for (const one of ended) {
     await audit(env, one.machine, 'ended', { who })

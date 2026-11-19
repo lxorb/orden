@@ -6,11 +6,9 @@ const native = vi.hoisted(() => ({
   fails: false,
   answer: '',
 }))
-
 function base64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
 }
-
 vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
@@ -20,26 +18,21 @@ vi.mock('../../platform/src/tauri', () => ({
     return await Promise.resolve(native.answer)
   },
 }))
-
 const { stretcherHere, useNativeStretcher } = await import('./stretcher')
-
 const SALT = new Uint8Array(16).map((_, at) => at * 7 + 1)
 const PARAMS = { m: 64, t: 2, p: 1 }
 const SECRET = 'Café horse'
-
 afterEach(() => {
   useStretcher(null)
   native.asked = []
   native.fails = false
 })
-
 async function byNoble(): Promise<Uint8Array> {
   useStretcher(null)
   const key = await stretch(SECRET, SALT, PARAMS)
   native.answer = base64(key)
   return key
 }
-
 describe('the native stretcher', () => {
   test('asks the app with the same secret, salt and cost noble is given', async () => {
     const expected = await byNoble()
@@ -57,7 +50,6 @@ describe('the native stretcher', () => {
     ])
     expect(base64(given)).toBe(base64(expected))
   })
-
   test('falls back to noble when the app cannot stretch', async () => {
     const expected = await byNoble()
     native.fails = true
@@ -67,7 +59,6 @@ describe('the native stretcher', () => {
     await stretch(SECRET, SALT, PARAMS)
     expect(native.asked).toHaveLength(1)
   })
-
   test('is there on the app', () => {
     expect(stretcherHere()).not.toBeNull()
   })

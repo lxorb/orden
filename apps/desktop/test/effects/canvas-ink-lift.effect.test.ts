@@ -16,7 +16,6 @@ Element.prototype.hasPointerCapture = () => false
 let host: HTMLElement
 let tab: Tab
 let close: () => void
-
 const points = [0, 1, 2, 3, 4].map((step) => ({
   x: 100 + step * 10,
   y: 100,
@@ -25,7 +24,6 @@ const points = [0, 1, 2, 3, 4].map((step) => ({
   tiltY: 0,
   t: step,
 }))
-
 beforeEach(() => {
   tools.choose('lasso')
   const ink = [{ id: 's', tool: 'pen' as const, color: '#000000', size: 4, points }]
@@ -46,18 +44,15 @@ beforeEach(() => {
   close = () => void unmount(shown)
   flushSync()
 })
-
 afterEach(() => {
   close()
   host.remove()
 })
-
 function store(): CanvasStore {
   const found = CanvasStore.drawing(tab.note, [tab])
   if (!found) throw new Error('no canvas store')
   return found
 }
-
 function pointer(type: string, id: number, kind: string, x: number, y: number, buttons: number) {
   const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, buttons })
   Object.defineProperties(event, {
@@ -68,11 +63,9 @@ function pointer(type: string, id: number, kind: string, x: number, y: number, b
   host.querySelector('.canvas')?.dispatchEvent(event)
   flushSync()
 }
-
 test('picked ink dragged moves by as much as dragged, though a palm or a second finger lifts on the way', () => {
   store().pickAll(['s'])
   flushSync()
-
   pointer('pointerdown', 1, 'pen', 120, 100, 1)
   pointer('pointermove', 1, 'pen', 135, 100, 1)
   pointer('pointermove', 1, 'pen', 150, 100, 1)
@@ -81,7 +74,6 @@ test('picked ink dragged moves by as much as dragged, though a palm or a second 
   pointer('pointermove', 1, 'pen', 165, 100, 1)
   pointer('pointermove', 1, 'pen', 180, 100, 1)
   pointer('pointerup', 1, 'pen', 180, 100, 0)
-
   const first = store().canvas.ink[0]?.points[0]
   expect(first?.x).toBeCloseTo(160)
   expect(first?.y).toBeCloseTo(100)

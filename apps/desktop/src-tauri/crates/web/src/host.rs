@@ -14,7 +14,6 @@ pub fn system() -> &'static dyn WindowSystem {
         &orden_web_engine::Plain
     }
 }
-
 #[allow(clippy::cast_sign_loss, clippy::useless_conversion)]
 pub fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWindow> {
     use raw_window_handle::{HasWindowHandle as _, RawWindowHandle};
@@ -29,13 +28,11 @@ pub fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWin
     };
     (raw != 0).then_some(NativeWindow(raw))
 }
-
 pub fn page_id(webview: &tauri::webview::PlatformWebview) -> Option<NativeWindow> {
     crate::engine::engine()
         .ok()
         .and_then(|engine| (engine.page_id)(webview))
 }
-
 pub fn x11_page(webview: &tauri::webview::PlatformWebview) -> Option<u32> {
     page_id(webview).and_then(NativeWindow::as_x11)
 }

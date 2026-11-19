@@ -10,7 +10,6 @@ export interface ContextStart {
   search?: string
   me?: string | undefined
 }
-
 export function contextFor(start: ContextStart): Context {
   const context: Context = { today: start.today, now: start.now, ...linkContext(start.rows) }
   if (start.this) context.this = start.this

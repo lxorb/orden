@@ -8,11 +8,8 @@ const MOST_COMING = 4
 const STALLED = 60_000
 const KEPT = 24 * 60 * 60_000
 const WRITE_WITHIN = 15_000
-
 const ENDS: Record<ImageKind, string> = { png: 'png', jpeg: 'jpg', gif: 'gif', webp: 'webp' }
-
 export const NAMED = /^[a-z0-9]{16,64}\.(png|jpg|gif|webp)$/
-
 export const AS_USER_SCRIPT = [
   'umask 077',
   'd="$HOME/.cache/orden/images"',
@@ -22,14 +19,12 @@ export const AS_USER_SCRIPT = [
   'cat > "$d/$1" || exit 1',
   'printf %s "$d/$1"',
 ].join('\n')
-
 export type Run = (
   file: string,
   args: string[],
   env: Record<string, string>,
   input: Uint8Array,
 ) => Promise<{ code: number | null; out: string }>
-
 export const runChild: Run = (file, args, env, input) =>
   new Promise((settle) => {
     const child = spawn(file, args, { env, stdio: ['pipe', 'pipe', 'ignore'] })
@@ -47,26 +42,22 @@ export const runChild: Run = (file, args, env, input) =>
     child.stdin.on('error', () => undefined)
     child.stdin.end(input)
   })
-
 interface Coming {
   kind: ImageKind
   parts: Uint8Array[]
   size: number
   at: number
 }
-
 export interface Options {
   now?: () => number
   run?: Run
   has?: (path: string) => boolean
 }
-
 export class Images {
   private readonly coming = new Map<string, Coming>()
   private readonly now: () => number
   private readonly run: Run
   private readonly has: (path: string) => boolean
-
   constructor(
     private readonly home: string,
     private readonly user: User | null,
@@ -76,12 +67,10 @@ export class Images {
     this.run = options.run ?? runChild
     this.has = options.has ?? existsSync
   }
-
   async part(id: string, kind: ImageKind, data: Uint8Array, last: boolean): Promise<string | null | undefined> {
     if (!isImageId(id)) return null
     const now = this.now()
     this.forgetStalled(now)
-
     let coming = this.coming.get(id)
     if (!coming) {
       if (this.coming.size >= MOST_COMING) {
@@ -94,13 +83,11 @@ export class Images {
     coming.parts.push(data)
     coming.size += data.length
     coming.at = now
-
     if (coming.size > MOST_IMAGE) {
       this.coming.delete(id)
       return null
     }
     if (!last) return undefined
-
     this.coming.delete(id)
     const name = `${id}.${ENDS[coming.kind]}`
     const bytes = Buffer.concat(coming.parts)
@@ -110,7 +97,6 @@ export class Images {
       return null
     }
   }
-
   private async writtenAs(user: User, name: string, bytes: Uint8Array): Promise<string | null> {
     if (!this.has(SETPRIV)) return null
     const command = asUser(user, ['/bin/sh', '-c', AS_USER_SCRIPT, 'orden-image', name])
@@ -120,7 +106,6 @@ export class Images {
     const path = join(user.home, '.cache', 'orden', 'images', name)
     return code === 0 && out === path ? path : null
   }
-
   private written(name: string, bytes: Uint8Array): string {
     const folder = join(this.home, '.cache', 'orden', 'images')
     mkdirSync(folder, { recursive: true, mode: 0o700 })
@@ -130,7 +115,6 @@ export class Images {
     writeFileSync(path, bytes, { mode: 0o600, flag: 'wx' })
     return path
   }
-
   private clear(folder: string): void {
     const before = this.now() - KEPT
     let names: string[]
@@ -150,7 +134,6 @@ export class Images {
       }
     }
   }
-
   private forgetStalled(now: number): void {
     for (const [id, coming] of this.coming) {
       if (now - coming.at > STALLED) this.coming.delete(id)

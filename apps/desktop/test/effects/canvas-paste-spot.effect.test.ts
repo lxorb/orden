@@ -17,7 +17,6 @@ let host: HTMLElement
 let tab: Tab
 let note: NoteDoc
 let close: () => void
-
 beforeEach(() => {
   vi.useFakeTimers()
   tools.choose('select')
@@ -38,26 +37,22 @@ beforeEach(() => {
   close = () => void unmount(shown)
   flushSync()
 })
-
 afterEach(() => {
   close()
   host.remove()
   vi.useRealTimers()
 })
-
 function plane(): HTMLElement {
   const found = host.querySelector<HTMLElement>('.canvas')
   if (!found) throw new Error('no canvas')
   return found
 }
-
 function pointed(type: string, x: number, y: number) {
   const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, buttons: 0 })
   Object.defineProperties(event, { pointerType: { value: 'mouse' }, pointerId: { value: 1 } })
   plane().dispatchEvent(event)
   flushSync()
 }
-
 function pasted(text: string): { x: number; y: number } {
   const event = new Event('paste', { bubbles: true, cancelable: true })
   Object.defineProperty(event, 'clipboardData', {
@@ -70,12 +65,10 @@ function pasted(text: string): { x: number; y: number } {
   if (!card) throw new Error('nothing pasted')
   return { x: card.x + card.width / 2, y: card.y + card.height / 2 }
 }
-
 function near(one: { x: number; y: number }, other: { x: number; y: number }) {
   expect(Math.abs(one.x - other.x)).toBeLessThan(40)
   expect(Math.abs(one.y - other.y)).toBeLessThan(40)
 }
-
 test('a paste lands under the arrow after the wheel scrolled the canvas beneath it', () => {
   pointed('pointermove', 100, 100)
   plane().dispatchEvent(
@@ -91,7 +84,6 @@ test('a paste lands under the arrow after the wheel scrolled the canvas beneath 
   const under = graphPoint(tab.camera ?? { x: 0, y: 0, scale: 1 }, 0, 0, 100, 100)
   near(pasted('hello'), under)
 })
-
 test('a paste with the arrow away from the canvas lands in the middle of the view', () => {
   pointed('pointermove', 100, 100)
   pointed('pointerleave', 100, 100)

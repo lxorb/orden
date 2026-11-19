@@ -7,7 +7,6 @@ const { search } = await import('./panel.svelte')
 const { workspace } = await import('../../workspace/src/api')
 const SearchPanel = (await import('./SearchPanel.svelte')).default
 const PAPER = '/space/Paper.pdf'
-
 const page = (page: number): Hit => ({
   path: PAPER,
   name: 'Paper.pdf',
@@ -16,17 +15,14 @@ const page = (page: number): Hit => ({
   text: `tulip on page ${page}`,
   ranges: [],
 })
-
 let target: HTMLElement | undefined
 let shown: ReturnType<typeof mount> | undefined
-
 afterEach(() => {
   if (shown) void unmount(shown)
   target?.remove()
   search.found = []
   vi.restoreAllMocks()
 })
-
 function panel(): HTMLElement {
   const into = document.createElement('div')
   document.body.append(into)
@@ -34,24 +30,19 @@ function panel(): HTMLElement {
   shown = mount(SearchPanel, { target: into, props: {} })
   return into
 }
-
 test('a paper found on more than one page shows a row for each page', () => {
   const into = panel()
   search.found = [page(1), page(2)]
   flushSync()
-
   const rows = [...into.querySelectorAll('.orden-row-meta')].map((row) => row.textContent)
   expect(rows).toEqual(['Page 1', 'Page 2'])
 })
-
 test('ticking a task in the results names the task it showed, so a note edited since ticks that task or none', async () => {
   const ticks = vi.spyOn(workspace, 'toggleTaskAt').mockResolvedValue(false)
   const into = panel()
   search.found = [{ path: '/space/List.md', name: 'List.md', line: 3, text: '- [ ] buy milk', ranges: [] }]
   flushSync()
-
   into.querySelector<HTMLInputElement>('input.orden-checkbox')?.click()
   await vi.waitFor(() => expect(ticks).toHaveBeenCalled())
-
   expect(ticks).toHaveBeenCalledWith('/space/List.md', 3, taskHash('buy milk'))
 })

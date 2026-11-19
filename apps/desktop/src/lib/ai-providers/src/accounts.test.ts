@@ -5,11 +5,9 @@ import { NONE, OPENAI, removed, resolve, updated, used, vendorOf, vendors } from
 import type { ProviderKind } from './providers'
 
 const ids = (state: Accounts) => state.accounts.map((one) => one.id).join(' ')
-
 function made(...kinds: ProviderKind[]): Accounts {
   return kinds.reduce((state, kind) => added(state, kind).state, NONE)
 }
-
 describe('who serves an account', () => {
   test('Claude Code and a key are Claude, the three OpenAI roads are OpenAI', () => {
     expect(vendorOf({ id: 'claude-code', kind: 'claude-code' })).toBe(CLAUDE)
@@ -18,7 +16,6 @@ describe('who serves an account', () => {
       expect(vendorOf({ id: kind, kind })).toBe(OPENAI)
     }
   })
-
   test('a Gemini key and the Gemini CLI are Gemini, ranked after OpenAI', () => {
     expect(vendorOf({ id: 'gemini', kind: 'gemini' })).toBe(GEMINI)
     expect(vendorOf({ id: 'gemini-cli', kind: 'gemini-cli' })).toBe(GEMINI)
@@ -32,35 +29,29 @@ describe('who serves an account', () => {
     ])
     expect(accountsIn(JSON.parse(accountsText(two)) as unknown).accounts).toEqual(two.accounts)
   })
-
   test('each compatible server is a provider of its own', () => {
     expect(vendorOf({ id: 'compatible-2', kind: 'compatible' })).toBe('compatible-2')
   })
 })
-
 describe('adding accounts', () => {
   test('the first of a kind keeps the id it always had, the next are counted', () => {
     const state = made('claude-code', 'anthropic', 'openai', 'anthropic', 'compatible', 'openai')
     expect(ids(state)).toBe('claude-code anthropic openai anthropic-2 compatible-1 openai-2')
   })
-
   test('a provider with none takes the first as its active one and the default', () => {
     const state = made('anthropic')
     expect(state.active).toEqual({ [CLAUDE]: 'anthropic' })
     expect(state.defaultVendor).toBe(CLAUDE)
   })
-
   test('a later account does not take over from the one that works', () => {
     const state = made('claude-code', 'anthropic')
     expect(activeOf(state, CLAUDE)?.id).toBe('claude-code')
   })
-
   test('a second Claude Code or Codex is a home of its own, the first is the reader’s', () => {
     const state = made('claude-code', 'claude-code', 'codex', 'codex')
     expect(ids(state)).toBe('claude-code claude-code-2 codex codex-2')
     expect(state.accounts.map((one) => one.own ?? false)).toEqual([false, true, false, true])
   })
-
   test('a ChatGPT sign-in is one per installation', () => {
     const once = added(NONE, 'chatgpt')
     const twice = added(once.state, 'chatgpt')
@@ -68,34 +59,28 @@ describe('adding accounts', () => {
     expect(twice.account.id).toBe('chatgpt')
   })
 })
-
 describe('one active account per provider', () => {
   const state = activated(made('claude-code', 'anthropic', 'codex', 'openai'), 'openai')
-
   test('Claude and OpenAI are active side by side', () => {
     expect(actives(state).map((one) => one.id)).toEqual(['claude-code', 'openai'])
   })
-
   test('making one active leaves the other provider alone', () => {
     const next = activated(state, 'anthropic')
     expect(next.active).toEqual({ [CLAUDE]: 'anthropic', [OPENAI]: 'openai' })
     expect(isActive(next, 'anthropic')).toBe(true)
     expect(isActive(next, 'claude-code')).toBe(false)
   })
-
   test('any id of a provider answers with its active account', () => {
     expect(resolve(state, 'codex')?.id).toBe('openai')
     expect(resolve(state, OPENAI)?.id).toBe('openai')
     expect(resolve(state, 'anthropic')?.id).toBe('claude-code')
     expect(resolve(state, 'gone')).toBeNull()
   })
-
   test('taking the active one away hands its provider to the next', () => {
     const next = removed(state, 'claude-code')
     expect(activeOf(next, CLAUDE)?.id).toBe('anthropic')
     expect(next.active[CLAUDE]).toBe('anthropic')
   })
-
   test('taking the last one away forgets the provider everywhere', () => {
     const local = added(state, 'compatible').state
     const chosen = used(defaulted(local, 'compatible-1'), 'rewrite', 'compatible-1')
@@ -105,16 +90,13 @@ describe('one active account per provider', () => {
     expect(next.defaultVendor).toBe(CLAUDE)
   })
 })
-
 describe('the default and the features', () => {
   const state = made('claude-code', 'anthropic', 'codex')
-
   test('an account made the default is its provider’s active one too', () => {
     const next = defaulted(state, 'anthropic')
     expect(next.defaultVendor).toBe(CLAUDE)
     expect(next.active[CLAUDE]).toBe('anthropic')
   })
-
   test('exactly one account is the default, whichever is made it', () => {
     const all = made('claude-code', 'claude-code', 'anthropic', 'codex', 'gemini')
     expect(defaultOf(all)?.id).toBe('claude-code')
@@ -124,26 +106,22 @@ describe('the default and the features', () => {
       expect(next.accounts.filter((other) => defaultOf(next)?.id === other.id)).toHaveLength(1)
     }
   })
-
   test('removing the default hands it to another account', () => {
     const next = removed(defaulted(state, 'codex'), 'codex')
     expect(defaultOf(next)?.id).toBe('claude-code')
     expect(defaultOf(NONE)).toBeNull()
   })
-
   test('a feature asks a provider, by any of its ids', () => {
     expect(used(state, 'rewrite', 'codex').uses).toEqual({ rewrite: OPENAI })
     expect(used(used(state, 'rewrite', 'codex'), 'rewrite', '').uses).toEqual({})
   })
 })
-
 describe('kept and read back', () => {
   test('what is written reads back the same', () => {
     const state = used(activated(made('anthropic', 'anthropic', 'openai'), 'anthropic-2'), 'block', 'openai')
     const changed = updated(state, 'anthropic-2', { name: 'Work', model: 'opus' })
     expect(accountsIn(JSON.parse(accountsText(changed)))).toEqual(changed)
   })
-
   test('nothing that is not an account is let in', () => {
     const read = accountsIn({
       accounts: [
@@ -164,13 +142,11 @@ describe('kept and read back', () => {
     expect(read.active).toEqual({ [CLAUDE]: 'anthropic', [OPENAI]: 'openai' })
     expect(read.defaultVendor).toBe(CLAUDE)
   })
-
   test('nothing at all is no accounts', () => {
     expect(accountsIn(null)).toEqual(NONE)
     expect(accountsIn('[]')).toEqual(NONE)
   })
 })
-
 describe('from what the window kept before', () => {
   const old = {
     providers: [
@@ -188,11 +164,9 @@ describe('from what the window kept before', () => {
     defaultId: 'anthropic',
     uses: { ask: 'claude-code', rewrite: 'compatible-1', quick: 'codex' },
   }
-
   test('every row keeps its id, so its key and its threads are found', () => {
     expect(ids(migrated(old))).toBe('claude-code anthropic codex compatible-1')
   })
-
   test('the default row is its provider’s active one, and the others’ first', () => {
     const state = migrated(old)
     expect(state.active).toEqual({
@@ -202,15 +176,12 @@ describe('from what the window kept before', () => {
     })
     expect(state.defaultVendor).toBe(CLAUDE)
   })
-
   test('each feature asks the provider its row was', () => {
     expect(migrated(old).uses).toEqual({ ask: CLAUDE, rewrite: 'compatible-1', quick: OPENAI })
   })
-
   test('nobody’s rows are no accounts', () => {
     expect(migrated(undefined)).toEqual(NONE)
   })
-
   test('the other profile brings only the rows that are not there yet', () => {
     const kept = migrated(old)
     const other = migrated({

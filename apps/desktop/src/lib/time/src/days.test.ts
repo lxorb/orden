@@ -20,7 +20,6 @@ import type { Span } from './records'
 import { midnightOf } from '../../platform/src/api'
 
 const at = (day: number, hours: number, minutes = 0) => new Date(2026, 10, day, hours, minutes).getTime()
-
 const span = (id: string, start: number, end: number | null, activity: string | null = 'uni') =>
   ({
     id,
@@ -34,7 +33,6 @@ const span = (id: string, start: number, end: number | null, activity: string | 
     label: null,
     device: null,
   }) satisfies Span
-
 describe('the days time is counted in', () => {
   test('a week starts on Monday and a month on its first', () => {
     const thursday = at(5, 15)
@@ -43,7 +41,6 @@ describe('the days time is counted in', () => {
     expect(new Date(startOf('month', thursday)).getDate()).toBe(1)
     expect(startOf('day', thursday)).toBe(at(5, 0))
   })
-
   test('a range ends where the next one starts, and steps by its own length', () => {
     const week = startOf('week', at(5, 15))
     expect(endOf('week', week)).toBe(stepped('week', week, 1))
@@ -51,14 +48,12 @@ describe('the days time is counted in', () => {
     expect(new Date(endOf('month', startOf('month', at(5, 1)))).getMonth()).toBe(11)
     expect(stepped('month', startOf('month', at(5, 1)), -1)).toBe(new Date(2026, 9, 1).getTime())
   })
-
   test('a day after a day is the next midnight, whatever the clock did between', () => {
     for (let day = 0; day < 400; day += 1) {
       const next = daysAfter(at(1, 0), day)
       expect(midnightOf(next)).toBe(next)
     }
   })
-
   test('a clock typed in lands on that day, and nonsense is nothing', () => {
     expect(atClock(at(5, 0), '9:30')).toBe(at(5, 9, 30))
     expect(atClock(at(5, 0), '24:00')).toBe(at(6, 0))
@@ -67,25 +62,21 @@ describe('the days time is counted in', () => {
     expect(clockOf(at(5, 7, 5))).toBe('07:05')
   })
 })
-
 describe('the time spans add up to', () => {
   test('cuts a span at the edges of the range, across midnight', () => {
     const late = span('a', at(4, 23), at(5, 1))
     const pieces = piecesIn([late], at(5, 0), at(6, 0), at(6, 0))
     expect(pieces.map((one) => [one.from, one.to])).toEqual([[at(5, 0), at(5, 1)]])
   })
-
   test('a running span counts up to now', () => {
     const running = span('a', at(5, 9), null)
     const pieces = piecesIn([running], at(5, 0), at(6, 0), at(5, 10))
     expect(wholeOf(pieces)).toBe(HOUR)
   })
-
   test('a running span just started is still shown', () => {
     const running = span('a', at(5, 9), null)
     expect(piecesIn([running], at(5, 0), at(6, 0), at(5, 9))).toHaveLength(1)
   })
-
   test('overlapping spans of one activity count once, of two activities each', () => {
     const spans = [
       span('a', at(5, 9), at(5, 11)),
@@ -99,13 +90,11 @@ describe('the time spans add up to', () => {
     ])
     expect(wholeOf(pieces)).toBe(3 * HOUR)
   })
-
   test('leaves out what is outside the range', () => {
     const pieces = piecesIn([span('a', at(3, 9), at(3, 10))], at(5, 0), at(6, 0), at(6, 0))
     expect(pieces).toEqual([])
     expect(totalsOf(pieces)).toEqual([])
   })
-
   test('is written as hours and minutes, and a timer with seconds', () => {
     expect(lasting(0)).toBe('0:00')
     expect(lasting(90 * MINUTE)).toBe('1:30')
@@ -113,7 +102,6 @@ describe('the time spans add up to', () => {
     expect(ticking(HOUR + 61_000)).toBe('1:01:01')
   })
 })
-
 describe('a long history of recorded time', () => {
   const plainly = (spans: readonly Span[], from: number, to: number, now: number) =>
     spans
@@ -124,7 +112,6 @@ describe('a long history of recorded time', () => {
         return kept ? [cut] : []
       })
       .sort((one, other) => one.from - other.from)
-
   test('finds the same pieces as looking at every span', () => {
     let seed = 7
     const next = (most: number) => {
@@ -148,7 +135,6 @@ describe('a long history of recorded time', () => {
       }
     }
   })
-
   test('looking at one day costs the same after a year as after a week', () => {
     const now = at(20, 12)
     const histories = new Map<number, Span[]>()

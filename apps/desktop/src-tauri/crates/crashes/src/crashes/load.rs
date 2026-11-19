@@ -9,7 +9,6 @@ pub fn resources(uptime: u64) -> Resources {
         uptime: Some(uptime),
     }
 }
-
 pub fn cpu() -> Option<Duration> {
     #[cfg(windows)]
     {
@@ -25,14 +24,12 @@ pub fn cpu() -> Option<Duration> {
         Some(spent(used.ru_utime) + spent(used.ru_stime))
     }
 }
-
 #[cfg(unix)]
 #[allow(unsafe_code)]
 fn usage() -> Option<libc::rusage> {
     let mut used: libc::rusage = unsafe { std::mem::zeroed() };
     (unsafe { libc::getrusage(libc::RUSAGE_SELF, &raw mut used) } == 0).then_some(used)
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn memory() -> Option<u64> {
@@ -46,25 +43,21 @@ fn memory() -> Option<u64> {
     unsafe { GetProcessMemoryInfo(GetCurrentProcess(), &raw mut counters, counters.cb) }.ok()?;
     u64::try_from(counters.WorkingSetSize).ok()
 }
-
 #[cfg(target_os = "linux")]
 fn memory() -> Option<u64> {
     let statm = std::fs::read_to_string("/proc/self/statm").ok()?;
     let pages: u64 = statm.split_whitespace().nth(1)?.parse().ok()?;
     Some(pages * page_size())
 }
-
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 fn page_size() -> u64 {
     u64::try_from(unsafe { libc::sysconf(libc::_SC_PAGESIZE) }).unwrap_or(4096)
 }
-
 #[cfg(target_os = "macos")]
 fn memory() -> Option<u64> {
     u64::try_from(usage()?.ru_maxrss).ok()
 }
-
 #[cfg(test)]
 mod tests {
     use super::resources;

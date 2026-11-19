@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import socket
@@ -10,19 +9,15 @@ import time
 
 FIFO = sys.argv[1]
 LEFT = 0x110
-
 wire = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 wire.connect(os.path.join(os.environ["XDG_RUNTIME_DIR"], os.environ["WAYLAND_DISPLAY"]))
 ids = iter(range(2, 1 << 31))
 unread = b""
-
 def text(value):
     raw = value.encode() + b"\0"
     return struct.pack("<I", len(raw)) + raw + b"\0" * (-len(raw) % 4)
-
 def send(obj, opcode, args=b""):
     wire.sendall(struct.pack("<II", obj, ((8 + len(args)) << 16) | opcode) + args)
-
 def until(callback, registry):
     global unread
     names = {}
@@ -41,7 +36,6 @@ def until(callback, registry):
             names[body[8 : 8 + length - 1].decode()] = name
         if obj == callback:
             return names
-
 registry = next(ids)
 send(1, 1, struct.pack("<I", registry))
 synced = next(ids)
@@ -63,7 +57,6 @@ synced = next(ids)
 send(1, 0, struct.pack("<I", synced))
 until(synced, registry)
 print("a pointer is on the seat", flush=True)
-
 keyboard = None
 KEY_MAP = os.environ.get("KEY_MAP")
 if KEY_MAP and "zwp_virtual_keyboard_manager_v1" in globals_ and "wl_seat" in globals_:
@@ -92,19 +85,15 @@ if KEY_MAP and "zwp_virtual_keyboard_manager_v1" in globals_ and "wl_seat" in gl
     send(1, 0, struct.pack("<I", synced))
     until(synced, registry)
     print("and a keyboard", flush=True)
-
 MODIFIERS = {"shift": 1, "ctrl": 4, "alt": 8}
-
 def now():
     return int(time.monotonic() * 1000) & 0xFFFFFFFF
-
 def layout():
     outputs = json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_outputs"]))
     return (
         max(one["rect"]["x"] + one["rect"]["width"] for one in outputs),
         max(one["rect"]["y"] + one["rect"]["height"] for one in outputs),
     )
-
 def key(held, code):
     mask = 0
     for one in held:
@@ -114,9 +103,7 @@ def key(held, code):
     time.sleep(0.03)
     send(keyboard, 1, struct.pack("<III", now(), code, 0))
     send(keyboard, 2, struct.pack("<IIII", 0, 0, 0, 0))
-
 MODIFIER_KEYS = {"shift": 42, "ctrl": 29, "alt": 56}
-
 def chord(held, code):
     mask = 0
     for one in held:
@@ -133,11 +120,9 @@ def chord(held, code):
         send(keyboard, 1, struct.pack("<III", now(), MODIFIER_KEYS[one], 0))
         send(keyboard, 2, struct.pack("<IIII", mask, 0, 0, 0))
         time.sleep(0.03)
-
 def button(state):
     send(pointer, 2, struct.pack("<III", now(), LEFT, state))
     send(pointer, 4)
-
 if not os.path.exists(FIFO):
     os.mkfifo(FIFO)
 while True:

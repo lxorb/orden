@@ -12,20 +12,16 @@ vi.mock('../../src/lib/plane/src/render', async (actual) => {
     },
   }
 })
-
 const Canvas = (await import('../../src/lib/canvas/src/Canvas.svelte')).default
 const { emptyCanvas, writeCanvas } = await import('@orden/markdown/canvas')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
-
 let close: (() => void) | undefined
-
 afterEach(() => {
   close?.()
   close = undefined
   document.body.replaceChildren()
   made.length = 0
 })
-
 function opened(count: number) {
   const nodes = Array.from({ length: count }, (_, at) => ({
     id: `n${String(at)}`,
@@ -59,26 +55,21 @@ function opened(count: number) {
   if (!host) throw new Error('no plane')
   return { target, host }
 }
-
 const press = (host: HTMLElement, key: string, ctrlKey = false) => {
   host.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey, bubbles: true, cancelable: true }))
   flushSync()
 }
-
 test('far away, draws its cards on one canvas: no card an element, no markdown made', () => {
   const { target, host } = opened(400)
-
   expect(target.querySelector('canvas[data-far]')).not.toBeNull()
   expect(target.querySelectorAll('.node')).toHaveLength(0)
   expect(target.querySelectorAll('.edge')).toHaveLength(0)
   expect(made).toEqual([])
-
   press(host, 'a', true)
   press(host, 'ArrowRight')
   expect(target.querySelectorAll('.node')).toHaveLength(0)
   expect(made).toEqual([])
 })
-
 test('paints the boxes the moment it comes up, not a frame later', () => {
   const frames = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0)
   const painted = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
@@ -92,15 +83,12 @@ test('paints the boxes the moment it comes up, not a frame later', () => {
     painted.mockRestore()
   }
 })
-
 test('near, draws them as cards, and an undo makes none of them again', () => {
   const { target, host } = opened(6)
-
   expect(target.querySelector('canvas[data-far]')).toBeNull()
   const cards = () => [...target.querySelectorAll<HTMLElement>('.node')]
   const before = cards()
   expect(before).toHaveLength(6)
-
   const left = () => before[0]?.style.left
   expect(left()).toBe('0px')
   press(host, 'a', true)
@@ -108,12 +96,10 @@ test('near, draws them as cards, and an undo makes none of them again', () => {
   expect(left()).toBe('1px')
   press(host, 'z', true)
   expect(left()).toBe('0px')
-
   const after = cards()
   expect(after).toHaveLength(6)
   for (const [at, card] of after.entries()) expect(card).toBe(before[at])
 })
-
 test('zoomed far out, a board of a few cards still shows their words, not boxes', () => {
   const { target, host } = opened(6)
   for (let step = 0; step < 16; step += 1) {
@@ -129,7 +115,6 @@ test('zoomed far out, a board of a few cards still shows their words, not boxes'
     )
     flushSync()
   }
-
   expect(target.querySelector('canvas[data-far]')).toBeNull()
   expect(target.querySelectorAll('.node')).toHaveLength(6)
   expect(target.querySelector('.node')?.textContent).toContain('card')

@@ -6,12 +6,9 @@ const BURIED_KEY = 'orden:protected-buried'
 const MOST_BURIED = 1000
 const HISTORY_KEY = 'orden:protected-buried-history'
 const HISTORY_AWAY = '/.orden-locked-history'
-
 type Buried = Record<string, Record<string, Way>>
-
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 const inSpace = (at: string) => at === '' || lockable(fitted(at))
-
 function readBuried(): Buried {
   const saved = stored(BURIED_KEY)
   if (!isRecord(saved)) return {}
@@ -25,44 +22,34 @@ function readBuried(): Buried {
   }
   return out
 }
-
 function placeOf(root: string, at: string): string {
   return `${root}\n${at}`
 }
-
 function folderIn(name: string, root: string): string | null {
   if (!name.startsWith(`${root}\n`)) return null
   const rest = name.slice(root.length + 1)
   const end = rest.lastIndexOf('\n')
   return end < 0 ? null : rest.slice(0, end)
 }
-
 function keepBuried(back: string, ways: Record<string, Way>): void {
   const buried = Object.entries({ ...without(readBuried(), back), [back]: ways })
   keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
 }
-
 function readHistories(): Record<string, string> {
   const saved = stored(HISTORY_KEY)
   if (!isRecord(saved)) return {}
   return Object.fromEntries(Object.entries(saved).filter((one): one is [string, string] => typeof one[1] === 'string'))
 }
-
 function keepHistory(name: string, away: string): void {
   const kept = Object.entries({ ...without(readHistories(), name), [name]: away })
   keepJson(HISTORY_KEY, Object.fromEntries(kept.slice(-MOST_BURIED)))
 }
-
 const pathOf = (root: string, at: string) => (at ? insideSpace(root, at) : root)
-
 const rehome = (from: string, to: string) => invoke<number>('rehome_snapshots', { from, to }).catch(() => 0)
-
 const aliases = new Map<string, string>()
-
 export function alsoCalled(back: string, id: string): void {
   aliases.set(back, id)
 }
-
 export async function bury(
   root: string,
   at: string,
@@ -87,11 +74,9 @@ export async function bury(
   }
   await rehome(pathOf(root, at), away)
 }
-
 function landedAt(at: string, rest: string): string {
   return at && rest ? `${at}/${rest}` : at || rest
 }
-
 async function exactly(
   named: string,
   root: string,
@@ -114,7 +99,6 @@ async function exactly(
   }
   return came
 }
-
 async function under(root: string, was: string, at: string, held: Record<string, Way>): Promise<Record<string, Way>> {
   const came: Record<string, Way> = {}
   const histories = readHistories()
@@ -135,7 +119,6 @@ async function under(root: string, was: string, at: string, held: Record<string,
   }
   return came
 }
-
 export async function unburied(
   back: string | null,
   root: string,
@@ -157,7 +140,6 @@ export async function unburied(
   }
   return Object.keys(came).length ? came : null
 }
-
 export function moveSpace(from: string, to: string): void {
   const moved = <T>(record: Record<string, T>) =>
     Object.fromEntries(
@@ -169,7 +151,6 @@ export function moveSpace(from: string, to: string): void {
   keepJson(BURIED_KEY, moved(readBuried()))
   keepJson(HISTORY_KEY, moved(readHistories()))
 }
-
 export function waits(back: string | null, root: string | null, at: string): boolean {
   return Object.keys(readBuried()).some((name) => {
     if (back === null || name === back) return true
@@ -177,7 +158,6 @@ export function waits(back: string | null, root: string | null, at: string): boo
     return folder !== null && within(folder, at, root ?? undefined) !== null
   })
 }
-
 export function buriedWithin(root: string, at: string): boolean {
   return Object.keys(readBuried()).some((name) => {
     const gone = folderIn(name, root)

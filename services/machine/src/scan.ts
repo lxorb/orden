@@ -4,18 +4,15 @@ const CSI = 2
 const TEXT = 3
 const TEXT_ESCAPE = 4
 type State = typeof GROUND | typeof ESCAPE | typeof CSI | typeof TEXT | typeof TEXT_ESCAPE
-
 const ESC = 0x1b
 const BEL = 0x07
 const CAN = 0x18
 const SUB = 0x1a
-
 export class Scanner {
   private state: State = GROUND
   private more = 0
   safe = 0
   private at = 0
-
   feed(bytes: Uint8Array): void {
     for (const byte of bytes) {
       this.step(byte)
@@ -23,7 +20,6 @@ export class Scanner {
       if (this.state === GROUND && this.more === 0) this.safe = this.at
     }
   }
-
   private step(byte: number): void {
     if (byte === CAN || byte === SUB) {
       this.state = GROUND

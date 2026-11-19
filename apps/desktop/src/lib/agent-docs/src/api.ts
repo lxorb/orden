@@ -8,6 +8,5 @@ export { revOf } from './rev'
 export { touchedBy } from './touched'
 export { undoRows } from './undo-rows'
 export { inTurn, startsBefore } from './turns'
-
 export const agentDocs = () =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('no agent docs in the Even Realities plugin')) : import('./index')

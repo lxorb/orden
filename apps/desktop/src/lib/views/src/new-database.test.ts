@@ -14,7 +14,6 @@ describe('a new database', () => {
     noteRow('Plans/Idea.md', ''),
     noteRow('Other/Else.md', 'status: Done'),
   ]
-
   test('is a board over the notes beside its own note, and not that note', () => {
     const shown = answer(base, 0, rows, {
       today: '2026-10-19',
@@ -24,7 +23,6 @@ describe('a new database', () => {
     const names = shown.groups.flatMap((group) => group.rows.map((row) => row.file.basename))
     expect(names.sort()).toEqual(['Idea', 'Ship', 'Write'])
   })
-
   test('opens on its status, the column of no status first, medium cards', () => {
     const shown = answer(base, 0, rows, {
       today: '2026-10-19',
@@ -37,13 +35,11 @@ describe('a new database', () => {
     expect(base.orden.properties.status?.options?.map((one) => one.tone)).toEqual([undefined, '5', '4'])
   })
 })
-
 describe('a new database’s name', () => {
   test('is the one typed, without the ending the name field adds', () => {
     expect(databaseName('Plans.md')).toBe('Plans')
     expect(databaseName('a/b')).toBe('a-b')
   })
-
   test('is never a folder above or the folder itself', () => {
     expect(databaseName('...md')).toBe('Board')
     expect(databaseName('..')).toBe('Board')

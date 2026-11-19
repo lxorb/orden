@@ -5,7 +5,6 @@ export function whileHere(): <T>(asked: Promise<T>) => Promise<T> {
   onDestroy(() => {
     here = false
   })
-
   return <T>(asked: Promise<T>) =>
     new Promise<T>((resolve, reject) => {
       asked.then(

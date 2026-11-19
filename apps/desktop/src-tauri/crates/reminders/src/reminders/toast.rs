@@ -4,11 +4,9 @@ use super::link::{link, Act};
 use super::{Planned, Words};
 
 const SNOOZES: [u32; 2] = [15, 60];
-
 pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
     let open = escaped(&link(Act::Open, &one.id, nonce));
     let done = escaped(&link(Act::Done, &one.id, nonce));
-
     let mut choices = String::new();
     let mut add = |minutes: u32, label: &str| {
         if !choices.contains(&format!("id=\"{minutes}\"")) {
@@ -24,7 +22,6 @@ pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
     if let Some(minutes) = one.tomorrow.filter(|minutes| *minutes > 0) {
         add(minutes, &words.tomorrow);
     }
-
     format!(
         concat!(
             "<toast launch=\"{open}\" activationType=\"protocol\" scenario=\"reminder\">",
@@ -48,11 +45,9 @@ pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
         done_word = escaped(&words.done),
     )
 }
-
 fn escaped(text: &str) -> String {
     escaped_keeping(text, false)
 }
-
 pub(crate) fn escaped_keeping(text: &str, lines: bool) -> String {
     let mut out = String::with_capacity(text.len());
     for character in text.chars() {
@@ -69,7 +64,6 @@ pub(crate) fn escaped_keeping(text: &str, lines: bool) -> String {
     }
     out
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -81,7 +75,6 @@ mod tests {
         one.title = "Pay <rent> & \"bills\"".into();
         one.tomorrow = Some(900);
         let made = xml(&one, "0123", &Words::default());
-
         assert!(made.starts_with(
             "<toast launch=\"orden://reminder?act=open&amp;id=00ff00ff00ff00ff&amp;n=0123\""
         ));
@@ -94,12 +87,10 @@ mod tests {
         ));
         assert!(made.contains("arguments=\"orden://reminder?act=done&amp;id=00ff00ff00ff00ff&amp;n=0123\" content=\"Done\""));
     }
-
     #[test]
     fn the_two_noncharacters_are_not_handed_to_the_toast() {
         assert_eq!(escaped("a\u{FFFE}b\u{FFFF}c"), "a b c");
     }
-
     #[test]
     fn tomorrow_morning_an_hour_away_is_offered_once() {
         let mut one = planned("aa", 1);
@@ -108,7 +99,6 @@ mod tests {
         assert_eq!(made.matches("id=\"60\"").count(), 1);
         assert!(!made.contains("Tomorrow"));
     }
-
     #[test]
     fn a_control_character_in_a_task_is_a_space() {
         assert_eq!(escaped("a\u{0}b\tc"), "a b\tc");

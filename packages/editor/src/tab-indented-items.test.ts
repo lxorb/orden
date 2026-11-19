@@ -14,7 +14,6 @@ function pressed(command: StateCommand, doc: string, words: string): EditorState
   command({ state, dispatch: (one: Transaction) => (next = parsed(one.state)) })
   return next
 }
-
 function itemsAround(state: EditorState, words: string): number {
   const at = state.doc.toString().indexOf(words)
   let depth = 0
@@ -24,21 +23,17 @@ function itemsAround(state: EditorState, words: string): number {
   }
   return depth
 }
-
 const NESTED = '- Trip\n\t- Packing\n\t\t- [ ] passport\n- Home\n'
-
 describe('Shift-Tab on a tab-indented item, as Obsidian writes nested lists', () => {
   test('takes its sub-task out with it, still a task', () => {
     const after = pressed(outdentItems, NESTED, 'Packing').doc.toString()
     expect(renderMarkdown(after)).toContain('<input disabled="" type="checkbox"> passport')
   })
-
   test('brings the item out of its parent', () => {
     const after = pressed(outdentItems, NESTED, 'Packing').doc.toString()
     expect(renderMarkdown(after)).not.toMatch(/Trip<ul>/)
   })
 })
-
 describe('Tab on a tab-indented item', () => {
   test('nests it under the item above in the editor too', () => {
     const doc = '- Trip\n\t- Packing\n\t- Tickets\n'

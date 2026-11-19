@@ -3,16 +3,13 @@ import { type Change, changesSince, checkpoints } from './changes'
 import { answerOf, type FileChange, fileChangeOf, spaceOfCall, verbOf } from './files'
 
 export type Choice = 'both' | 'conversation' | 'notes' | 'summarize-from' | 'summarize-to'
-
 export interface Made {
   id: string
   path: string
   space?: string
 }
-
 export type Step =
   { kind: 'edits'; changes: Change[] } | { kind: 'file'; file: FileChange } | { kind: 'made'; made: Made }
-
 export interface Plan {
   turn: Turn
   changes: Change[]
@@ -22,14 +19,10 @@ export interface Plan {
   lasting: boolean
   choices: Choice[]
 }
-
 const LOOKS =
   /^(read_|list_|search_|get_|pdf_highlights$|approval_status$|agent_status$|browser_(snapshot|read|find|screenshot|console|network|tabs|wait|downloads)$)/
-
 const EDITS = new Set(['edit_note', 'write_note', 'append_note', 'set_property', 'set_task'])
-
 const MOVES = new Set(['move_file', 'trash_file'])
-
 function madeBy(part: Extract<Part, { kind: 'tool' }>): Made | null {
   if (verbOf(part.verb) !== 'create_note') return null
   const said = answerOf(part)
@@ -39,7 +32,6 @@ function madeBy(part: Extract<Part, { kind: 'tool' }>): Made | null {
   const space = spaceOfCall(part)
   return space ? { id: part.id, path, space } : { id: part.id, path }
 }
-
 function callsSince(turns: readonly Turn[], turn: string): Extract<Part, { kind: 'tool' }>[] {
   const at = turns.findIndex((one) => one.id === turn)
   if (at < 0) return []
@@ -49,7 +41,6 @@ function callsSince(turns: readonly Turn[], turn: string): Extract<Part, { kind:
     .filter((part): part is Extract<Part, { kind: 'tool' }> => part.kind === 'tool')
     .filter((part) => part.state === 'ok')
 }
-
 export function planFor(
   thread: Pick<Thread, 'turns'>,
   turn: string,
@@ -60,7 +51,6 @@ export function planFor(
   const at = marks.findIndex((one) => one.id === turn)
   const found = marks[at]
   if (!found) return null
-
   const since = changesSince(changes, thread.turns, turn)
   const made: Made[] = []
   const files: FileChange[] = []
@@ -84,7 +74,6 @@ export function planFor(
       }
     } else if (!MOVES.has(verb)) lasting = true
   }
-
   const notes = since.length > 0 || made.length > 0 || files.length > 0
   const choices: Choice[] = [
     ...(notes ? (['both'] as const) : []),
@@ -103,7 +92,6 @@ export function planFor(
     choices,
   }
 }
-
 function stepsBack(acts: readonly { at: number; step: Step }[], changes: readonly Change[]): Step[] {
   const steps: Step[] = []
   let left = [...changes]

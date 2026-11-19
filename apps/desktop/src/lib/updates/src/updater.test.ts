@@ -16,14 +16,12 @@ const world = vi.hoisted(() => ({
   mayStop: true,
   relaunched: 0,
 }))
-
 vi.mock('@tauri-apps/plugin-process', () => ({
   relaunch: () => {
     world.relaunched++
     return Promise.resolve()
   },
 }))
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
@@ -51,7 +49,6 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-
 vi.mock('@tauri-apps/plugin-updater', () => ({
   Update: class {
     version: string
@@ -72,9 +69,7 @@ vi.mock('@tauri-apps/plugin-updater', () => ({
     }
   },
 }))
-
 let updater: typeof import('./updater')
-
 beforeEach(async () => {
   world.manager = null
   world.version = '1.4.0'
@@ -94,11 +89,9 @@ beforeEach(async () => {
   providePort('quit.ask', { mayStop: () => Promise.resolve(world.mayStop) })
   updater = await import('./updater')
 })
-
 describe('where a package manager keeps the install', () => {
   test('finds the version and fetches nothing', async () => {
     world.manager = 'scoop'
-
     expect(await updater.stageUpdate('stable')).toBe('1.4.0')
     expect(world.downloads).toBe(0)
     expect(world.closes).toBe(1)
@@ -106,26 +99,20 @@ describe('where a package manager keeps the install', () => {
     expect(updater.stagedVersion()).toBe(null)
     expect(updater.announcedVersion()).toBe('1.4.0')
   })
-
   test('answers nothing for the version it found already, and the next one again', async () => {
     world.manager = 'brew'
     await updater.stageUpdate('stable')
-
     expect(await updater.stageUpdate('stable')).toBe(null)
-
     world.version = '1.5.0'
     expect(await updater.stageUpdate('stable')).toBe('1.5.0')
   })
-
   test('asks which manager once', async () => {
     world.manager = 'apt'
     await updater.stageUpdate('stable')
     await updater.stageUpdate('stable')
-
     expect(world.asked.filter((command) => command === 'install_manager')).toHaveLength(1)
   })
 })
-
 describe('where the system updates the install', () => {
   test('is apt and dnf, and no other manager', () => {
     expect(['apt', 'dnf', 'aur', 'flatpak', 'snap', 'nix', 'brew', null].map(updater.updatedBySystem)).toEqual([
@@ -139,20 +126,17 @@ describe('where the system updates the install', () => {
       false,
     ])
   })
-
   test('installs the version on the channel, then restarts', async () => {
     expect(await (await import('./system-update')).updateBySystem('1.4.0', 'unstable')).toBe(null)
     expect(world.systemUpdates).toEqual([{ channel: 'unstable', version: '1.4.0' }])
     expect(world.relaunched).toBe(1)
   })
-
   test('installs nothing when what runs may not stop', async () => {
     world.mayStop = false
     expect(await (await import('./system-update')).updateBySystem('1.4.0', 'stable')).toBe(null)
     expect(world.systemUpdates).toEqual([])
     expect(world.relaunched).toBe(0)
   })
-
   test('answers the command for a terminal where it could not, and stays', async () => {
     world.notUpdated = {
       refused: false,
@@ -164,14 +148,12 @@ describe('where the system updates the install', () => {
     )
     expect(world.relaunched).toBe(0)
   })
-
   test('says nothing when the password was turned down', async () => {
     world.notUpdated = { refused: true, command: null, reason: 'the password was not given' }
     expect(await (await import('./system-update')).updateBySystem('1.4.0', 'stable')).toBe(null)
     expect(world.relaunched).toBe(0)
   })
 })
-
 describe('where the app updates itself', () => {
   test('downloads the update, as it always has', async () => {
     expect(await updater.stageUpdate('stable')).toBe('1.4.0')
@@ -180,17 +162,14 @@ describe('where the app updates itself', () => {
     expect(updater.announcedVersion()).toBe(null)
   })
 })
-
 describe('the installer on the way out', () => {
   test('a window told no leaves the update alone', async () => {
     await updater.stageUpdate('stable')
     world.mayInstall = false
-
     expect(await updater.installStaged(true)).toBe(false)
     expect(world.installs).toBe(0)
     expect(world.askedToInstall).toEqual([{ closing: true }])
   })
-
   test('a window told no tells the others to look', async () => {
     await updater.stageUpdate('stable')
     world.mayInstall = false
@@ -198,57 +177,45 @@ describe('the installer on the way out', () => {
     const heard = new Promise<void>((resolve) => {
       stop = updater.hearHandedOn(resolve)
     })
-
     await updater.installStaged(true)
     await heard
     stop()
   })
-
   test('an installer that did not start lets another window try', async () => {
     await updater.stageUpdate('stable')
     world.installFails = true
-
     expect(await updater.installStaged()).toBe(false)
     expect(world.asked).toContain('update_install_failed')
   })
-
   test('a window told yes runs it, once', async () => {
     await updater.stageUpdate('stable')
-
     expect(await updater.installStaged(true)).toBe(true)
     expect(await updater.installStaged(true)).toBe(false)
     expect(world.installs).toBe(1)
   })
-
   test('a restart asks as the whole app, not as a window closing', async () => {
     await updater.stageUpdate('stable')
-
     expect(await updater.installStaged()).toBe(true)
     expect(world.askedToInstall).toEqual([{ closing: false }])
   })
 })
-
 describe('settling for another window s installer', () => {
   test('says so once what is owed has landed', async () => {
     let landed: () => void = () => undefined
     const owed = new Promise<void>((resolve) => (landed = resolve))
-
     const settling = updater.settledForInstaller(() => owed)
     await Promise.resolve()
     expect(world.asked).not.toContain('update_settled')
-
     landed()
     await settling
     expect(world.asked).toContain('update_settled')
   })
-
   test('says so anyway once it has waited as long as a window going does', async () => {
     vi.useFakeTimers()
     try {
       const settling = updater.settledForInstaller(() => new Promise(() => undefined))
       await vi.advanceTimersByTimeAsync(GIVE_UP - 1)
       expect(world.asked).not.toContain('update_settled')
-
       await vi.advanceTimersByTimeAsync(1)
       await settling
       expect(world.asked).toContain('update_settled')

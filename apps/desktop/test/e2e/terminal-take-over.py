@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 OPEN = """async () => {
   const ws = window.ordenApp.workspace
   const spec = JSON.stringify({ shell: 'bash', folder: null, key: 'take-over' })
@@ -12,20 +10,17 @@ OPEN = """async () => {
   ws.showPanel(null)
   return ws.active?.kind
 }"""
-
 READY = """async () => {
   const { sessionOf } = await window.ordenApp.terminals()
   const session = sessionOf(window.ordenApp.workspace.active)
   return !!session?.term.element?.getElementsByClassName('xterm-screen')[0]?.getBoundingClientRect().width
 }"""
-
 WATCH = """async (writer) => {
   const { sessionOf } = await window.ordenApp.terminals()
   const session = sessionOf(window.ordenApp.workspace.active)
   session.writer = writer
   await new Promise((done) => session.term.write('$ npm run dev\\r\\nready on port 5173\\r\\n', done))
 }"""
-
 BAR = """() => {
   const bar = document.querySelector('.terminal .bar')
   if (!bar) return null
@@ -38,8 +33,6 @@ BAR = """() => {
     height: box.height,
   }
 }"""
-
-
 def drive(browser: Browser) -> None:
     for name, width, height in (("wide", 1280, 820), ("phone", 390, 844)):
         page = DRIVE.page(browser, viewport={"width": width, "height": height})
@@ -63,6 +56,4 @@ def drive(browser: Browser) -> None:
         if page.evaluate(BAR) is not None:
             wrong(f"[{name}] the bar stayed once the tab types again")
         page.context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a terminal another window types in shows Take over"))

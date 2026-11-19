@@ -45,5 +45,4 @@ export { deviceActivity, startHere } from './here'
 export { unsynced } from './unsynced.svelte'
 export { watchFolders } from './watching'
 export type { Disk, FileKind, World } from './world'
-
 export const papersCarrying = () => import('./papers-carrying')

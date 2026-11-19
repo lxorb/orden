@@ -21,7 +21,6 @@ describe('where a new application runs', () => {
     ])
   })
 })
-
 describe('what an application runs', () => {
   test('splits a program line as a shell would, and runs no shell', () => {
     expect(programOf('/usr/bin/gimp')).toEqual({ path: '/usr/bin/gimp', args: [] })
@@ -39,13 +38,11 @@ describe('what an application runs', () => {
     })
     expect(programOf('x ""')).toEqual({ path: 'x', args: [''] })
   })
-
   test('is nothing for an empty line or an open quote', () => {
     expect(programOf('')).toBeNull()
     expect(programOf('   ')).toBeNull()
     expect(programOf('app "unclosed')).toBeNull()
   })
-
   test('runs on a computer only', () => {
     expect(['linux', 'windows', 'macos', 'android', 'ios', 'web'].filter(mayHost)).toEqual([
       'linux',
@@ -53,13 +50,11 @@ describe('what an application runs', () => {
       'macos',
     ])
   })
-
   test('is called by its file’s name', () => {
     expect(appName('/notes/GIMP.application')).toBe('GIMP')
     expect(appName('/notes/.application')).toBe('.application')
   })
 })
-
 function world() {
   const sockets: {
     url: string
@@ -92,10 +87,8 @@ function world() {
   }
   return { made, sockets }
 }
-
 describe('an application’s socket', () => {
   const view = { width: 800, height: 600, dpr: 2, hz: 60 }
-
   test('says hello with its view and the lock, takes over, and says hello again once it holds it', async () => {
     const { made, sockets } = world()
     const heard: AppHeard[] = []
@@ -109,7 +102,6 @@ describe('an application’s socket', () => {
     socket.open = true
     socket.events.opened()
     expect(socket.sent).toEqual([JSON.stringify({ t: 'hello', hold: true, view })])
-
     socket.events.heard(JSON.stringify({ t: 'held', by: 'Laptop', since: 1, taken: false }))
     expect(heard.at(-1)).toEqual({ t: 'held', by: 'Laptop', since: 1, taken: false })
     link.take()
@@ -118,7 +110,6 @@ describe('an application’s socket', () => {
       JSON.stringify({ t: 'take' }),
       JSON.stringify({ t: 'hello', hold: true, view }),
     ])
-
     link.resize({ ...view, width: 1024 })
     expect(socket.sent.at(-1)).toBe(JSON.stringify({ t: 'view', view: { ...view, width: 1024 } }))
     link.close()

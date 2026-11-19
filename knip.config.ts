@@ -5,7 +5,6 @@ const STYLE = /<style\b[^>]*>[\s\S]*?<\/style>/g
 const NOTE = /<!--[\s\S]*?-->/g
 const LOADED = /(?<![.\w$#])import\(\s*(['"])([^'"]+)\1\s*\)/g
 const OWN = /^(\s*)export\s+(?=(?:async\s+)?function\b|const\b|let\b|class\b)/gm
-
 function svelte(text: string): string {
   const scripts = [...text.matchAll(SCRIPT)].map(([, how = '', code = '']) =>
     /\bmodule\b/.test(how) ? code : code.replace(OWN, '$1'),
@@ -14,7 +13,6 @@ function svelte(text: string): string {
   const loaded = [...markup.matchAll(LOADED)].map(([, , path = '']) => `void import('${path}').then(Object.keys)`)
   return [...scripts, ...loaded].join(';\n')
 }
-
 export default {
   compilers: { svelte },
   ignore: [

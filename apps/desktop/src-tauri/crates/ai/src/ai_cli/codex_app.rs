@@ -14,7 +14,6 @@ use super::run::{self, Ended, Heard, Running};
 use super::say::{GoalSay, Image, Message, Say};
 
 pub type Output = Arc<dyn Fn(Message) + Send + Sync>;
-
 struct Route {
     output: Output,
     thread: Option<String>,
@@ -24,7 +23,6 @@ struct Route {
     fast: bool,
     queued: Vec<Say>,
 }
-
 enum Waiter {
     Init,
     Started(String),
@@ -32,7 +30,6 @@ enum Waiter {
     Crate(mpsc::Sender<Result<Value, String>>),
     Nobody,
 }
-
 #[derive(Default)]
 struct State {
     next: u64,
@@ -42,14 +39,12 @@ struct State {
     routes: HashMap<String, Route>,
     threads: HashMap<String, String>,
 }
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct From<'a> {
     pub fork_of: Option<&'a str>,
     pub thread: Option<&'a str>,
     pub without: &'a [String],
 }
-
 pub struct Host {
     running: Running,
     state: Arc<Mutex<State>>,
@@ -57,11 +52,9 @@ pub struct Host {
     orden: PathBuf,
     folder: PathBuf,
 }
-
 fn locked(state: &Mutex<State>) -> MutexGuard<'_, State> {
     state.held()
 }
-
 impl Host {
     pub fn start(
         command: Command,
@@ -72,7 +65,6 @@ impl Host {
         let state: Arc<Mutex<State>> = Arc::default();
         let ended = Arc::new(AtomicBool::new(false));
         let writer: Arc<Mutex<Option<Running>>> = Arc::default();
-
         let heard_state = Arc::clone(&state);
         let heard_ended = Arc::clone(&ended);
         let heard_writer = Arc::clone(&writer);
@@ -91,7 +83,6 @@ impl Host {
             }
         })?;
         *writer.held() = Some(running.clone());
-
         let host = Self {
             running,
             state,
@@ -119,15 +110,12 @@ impl Host {
         host.running.write_line(&introduce)?;
         Ok(host)
     }
-
     pub fn alive(&self) -> bool {
         !self.ended.load(Ordering::SeqCst)
     }
-
     pub fn stop(&self) {
         self.running.stop();
     }
-
     pub fn open(
         &self,
         id: &str,
@@ -177,7 +165,6 @@ impl Host {
             Waiter::Started(id.to_owned()),
         )
     }
-
     pub fn say(&self, id: &str, say: Say) -> Result<(), String> {
         let mut state = locked(&self.state);
         let route = state
@@ -190,7 +177,6 @@ impl Host {
         }
         say_now(&mut state, &self.running, id, say)
     }
-
     pub fn close(&self, id: &str) {
         let mut state = locked(&self.state);
         let Some(route) = state.routes.remove(id) else {
@@ -212,15 +198,12 @@ impl Host {
             ..Ended::default()
         }));
     }
-
     pub fn models(&self, patience: Duration) -> Result<Value, String> {
         self.ask("model/list", &json!({ "includeHidden": false }), patience)
     }
-
     pub fn limits(&self, patience: Duration) -> Result<Value, String> {
         self.ask("account/rateLimits/read", &Value::Null, patience)
     }
-
     fn ask(&self, method: &str, params: &Value, patience: Duration) -> Result<Value, String> {
         let (sent, answer) = mpsc::channel();
         {
@@ -238,11 +221,9 @@ impl Host {
             .map_err(|_| "Codex did not answer".to_owned())?
     }
 }
-
 fn request_line(id: u64, method: &str, params: &Value) -> String {
     json!({ "id": id, "method": method, "params": params }).to_string()
 }
-
 fn send(
     state: &mut State,
     running: &Running,
@@ -263,7 +244,6 @@ fn send(
         format!("Codex is not listening: {error}")
     })
 }
-
 fn input(text: &str, images: &[Image]) -> Value {
     let mut items: Vec<Value> = images
         .iter()
@@ -274,7 +254,6 @@ fn input(text: &str, images: &[Image]) -> Value {
     items.push(json!({ "type": "text", "text": text, "text_elements": [] }));
     Value::Array(items)
 }
-
 fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(), String> {
     let route = state
         .routes
@@ -361,7 +340,6 @@ fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(
     };
     send(state, running, method, &params, waiter)
 }
-
 fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
     let Ok(message) = serde_json::from_str::<Value>(line) else {
         return;
@@ -395,12 +373,10 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
         (None, None) => {}
     }
 }
-
 fn orden_of(state: &State, params: &Value) -> Option<String> {
     let thread = params["threadId"].as_str()?;
     state.threads.get(thread).cloned()
 }
-
 fn route_line(state: &State, params: &Value, line: &str) {
     let message = || Message::Line {
         line: line.to_owned(),
@@ -415,7 +391,6 @@ fn route_line(state: &State, params: &Value, line: &str) {
         }
     }
 }
-
 fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     let Some(waiter) = state.waiting.remove(&id) else {
         return;
@@ -454,7 +429,6 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
         Waiter::Nobody => {}
     }
 }
-
 fn started(
     state: &mut State,
     running: &Running,
@@ -495,7 +469,6 @@ fn started(
         }
     }
 }
-
 fn refusal(id: &Value, method: &str) -> String {
     let result = match method {
         "item/commandExecution/requestApproval" | "item/fileChange/requestApproval" => {
@@ -516,7 +489,6 @@ fn refusal(id: &Value, method: &str) -> String {
     };
     json!({ "id": id, "result": result }).to_string()
 }
-
 fn ending(state: &Mutex<State>, ended: &Ended) {
     let mut state = locked(state);
     for (_, waiter) in state.waiting.drain() {
@@ -529,7 +501,6 @@ fn ending(state: &Mutex<State>, ended: &Ended) {
         (route.output)(Message::End(ended.clone()));
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -561,7 +532,6 @@ mod tests {
             assert!(answer.get("result").is_none());
         }
     }
-
     #[test]
     fn a_message_is_text_after_its_pictures() {
         let items = input(

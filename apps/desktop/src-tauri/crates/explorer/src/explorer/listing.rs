@@ -9,9 +9,7 @@ use tauri::{AppHandle, Manager as _};
 use super::reach::{judged, Explored, Fences, Use};
 
 const MOST_LISTED: usize = 100_000;
-
 const MOST_PEEKED: u64 = 48 * 1024 * 1024;
-
 #[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Kind {
@@ -19,7 +17,6 @@ pub enum Kind {
     Folder,
     Link,
 }
-
 #[derive(Serialize, Clone, Debug)]
 pub struct Entry {
     pub name: String,
@@ -30,7 +27,6 @@ pub struct Entry {
     pub created: u64,
     pub hidden: bool,
 }
-
 #[derive(Serialize)]
 pub struct Listing {
     pub path: String,
@@ -40,13 +36,11 @@ pub struct Listing {
     pub spaces: bool,
     pub cut: bool,
 }
-
 pub(super) fn millis(at: SystemTime) -> u64 {
     at.duration_since(UNIX_EPOCH).map_or(0, |since| {
         u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
     })
 }
-
 fn is_hidden(name: &str, meta: &fs::Metadata) -> bool {
     if name.starts_with('.') {
         return true;
@@ -69,15 +63,12 @@ fn is_hidden(name: &str, meta: &fs::Metadata) -> bool {
         false
     }
 }
-
 pub(super) fn entry(path: &Path) -> Option<Entry> {
     described(path, &fs::symlink_metadata(path).ok()?)
 }
-
 pub(super) fn listed(one: &fs::DirEntry) -> Option<Entry> {
     described(&one.path(), &one.metadata().ok()?)
 }
-
 fn described(path: &Path, meta: &fs::Metadata) -> Option<Entry> {
     let name = path.file_name()?.to_string_lossy().into_owned();
     let link = meta.file_type().is_symlink();
@@ -104,7 +95,6 @@ fn described(path: &Path, meta: &fs::Metadata) -> Option<Entry> {
         created: meta.created().map_or(modified, millis),
     })
 }
-
 pub(super) fn entries(folder: &Path, most: usize) -> Result<(Vec<Entry>, bool), String> {
     let mut out = Vec::new();
     for one in fs::read_dir(folder)
@@ -120,7 +110,6 @@ pub(super) fn entries(folder: &Path, most: usize) -> Result<(Vec<Entry>, bool), 
     }
     Ok((out, false))
 }
-
 pub(super) fn asked(app: &AppHandle, path: &str, using: Use) -> Result<PathBuf, String> {
     let explored = app.state::<Explored>();
     judged(
@@ -131,7 +120,6 @@ pub(super) fn asked(app: &AppHandle, path: &str, using: Use) -> Result<PathBuf, 
         using,
     )
 }
-
 #[tauri::command]
 pub async fn explorer_list(app: AppHandle, path: String) -> Result<Listing, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Listing, String> {
@@ -150,14 +138,12 @@ pub async fn explorer_list(app: AppHandle, path: String) -> Result<Listing, Stri
     })
     .await
 }
-
 #[derive(Serialize)]
 pub struct Place {
     pub kind: &'static str,
     pub path: String,
     pub name: Option<String>,
 }
-
 #[tauri::command]
 pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
     orden_base::lane::off_the_runtime(move || -> Vec<Place> {
@@ -203,13 +189,11 @@ pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
     })
     .await
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn drive_letters() -> u32 {
     unsafe { windows::Win32::Storage::FileSystem::GetLogicalDrives() }
 }
-
 #[cfg_attr(not(windows), allow(dead_code))]
 fn lettered(letters: u32) -> Vec<PathBuf> {
     (b'A'..=b'Z')
@@ -218,7 +202,6 @@ fn lettered(letters: u32) -> Vec<PathBuf> {
         .map(|(letter, _)| PathBuf::from(format!("{}:\\", char::from(letter))))
         .collect()
 }
-
 fn disks() -> Vec<PathBuf> {
     #[cfg(windows)]
     {
@@ -246,7 +229,6 @@ fn disks() -> Vec<PathBuf> {
         found
     }
 }
-
 #[derive(Serialize)]
 pub struct Facts {
     #[serde(flatten)]
@@ -258,7 +240,6 @@ pub struct Facts {
     pub mode: Option<String>,
     pub link: Option<String>,
 }
-
 #[tauri::command]
 pub async fn explorer_facts(app: AppHandle, path: String) -> Result<Facts, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Facts, String> {
@@ -282,7 +263,6 @@ pub async fn explorer_facts(app: AppHandle, path: String) -> Result<Facts, Strin
     })
     .await
 }
-
 #[cfg(unix)]
 fn letters(meta: &fs::Metadata) -> String {
     use std::os::unix::fs::PermissionsExt as _;
@@ -299,7 +279,6 @@ fn letters(meta: &fs::Metadata) -> String {
         })
         .collect()
 }
-
 #[tauri::command]
 pub async fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Response, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Response, String> {
@@ -315,14 +294,12 @@ pub async fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Re
     })
     .await
 }
-
 fn peeked(mut bytes: Vec<u8>, most: u64) -> Vec<u8> {
     let cut = bytes.len() as u64 > most;
     bytes.truncate(usize::try_from(most).unwrap_or(usize::MAX));
     bytes.push(u8::from(cut));
     bytes
 }
-
 #[tauri::command]
 pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -331,12 +308,10 @@ pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
     })
     .await
 }
-
 #[tauri::command]
 pub async fn explorer_icon(ending: String) -> Option<String> {
     orden_base::lane::off_the_runtime(move || orden_apps::apps_host::kinds::icon(&ending)).await
 }
-
 #[cfg(test)]
 mod tests {
     use super::{entries, peeked, Kind};
@@ -349,7 +324,6 @@ mod tests {
         assert_eq!(peeked(b"fours".to_vec(), 4), b"four\x01");
         assert_eq!(peeked(Vec::new(), 4), b"\0");
     }
-
     #[test]
     fn a_folder_lists_what_it_holds_and_says_what_each_is() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -368,7 +342,6 @@ mod tests {
         );
         assert_eq!((found[2].kind, found[2].folder), (Kind::Folder, true));
     }
-
     #[test]
     fn an_entry_says_when_it_was_made_or_else_when_it_was_changed() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -380,7 +353,6 @@ mod tests {
         assert_eq!(found[0].created, made);
         assert!(found[0].created > 0);
     }
-
     #[test]
     fn a_listing_past_its_bound_says_so() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -391,7 +363,6 @@ mod tests {
         assert_eq!(found.len(), 3);
         assert!(cut);
     }
-
     #[cfg(unix)]
     #[test]
     fn a_link_is_a_link_and_says_where_it_leads() {
@@ -403,7 +374,6 @@ mod tests {
         let found = entry(&dir.path().join("to")).expect("an entry");
         assert_eq!((found.kind, found.folder), (Kind::Link, true));
     }
-
     #[test]
     fn a_listed_entry_says_what_a_look_at_its_path_says() {
         use super::{entry, listed};
@@ -431,7 +401,6 @@ mod tests {
         }
         assert!(seen >= 3);
     }
-
     #[test]
     fn the_disks_windows_says_it_has_are_named_without_being_touched() {
         let named = super::lettered(0b101 | (1 << 25));

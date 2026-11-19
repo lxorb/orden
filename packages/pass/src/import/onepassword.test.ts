@@ -5,7 +5,6 @@ import { parseOnePassword } from './onepassword'
 import { as, find } from './found'
 
 const URI = 'otpauth://totp/Dropbox:me?secret=JBSWY3DPEHPK3PXP'
-
 const pux = (
   category: string,
   title: string,
@@ -22,7 +21,6 @@ const pux = (
   details: { loginFields: [], notesPlain: '', sections: [], passwordHistory: [], ...details },
   ...extra,
 })
-
 const EXPORT = {
   accounts: [
     {
@@ -223,17 +221,14 @@ const EXPORT = {
     },
   ],
 }
-
 describe('parseOnePassword 1PUX', () => {
   const result = parseOnePassword({
     'export.attributes': new Uint8Array(),
     'export.data': new TextEncoder().encode(JSON.stringify(EXPORT)),
   })
-
   it('keeps the vaults', () => {
     expect(result.vaults.map((vault) => vault.name)).toEqual(['Private', 'Shared'])
   })
-
   it('reads a login', () => {
     const dropbox = find(result, 'Dropbox')
     const login = as(dropbox.content, 'login')
@@ -261,7 +256,6 @@ describe('parseOnePassword 1PUX', () => {
       title: 'Dropbox',
     })
   })
-
   it('reads a card, an archived note, an identity, a password, wifi, ssh and other kinds', () => {
     expect(as(find(result, 'Visa').content, 'card')).toMatchObject({
       holder: 'Jö Doe',
@@ -301,13 +295,11 @@ describe('parseOnePassword 1PUX', () => {
     expect(find(result, 'Odd').content.kind).toBe('note')
     expect(result.skipped).toContainEqual({ reason: expect.stringContaining('999'), title: 'Odd' })
   })
-
   it('reads export.data unzipped too', () => {
     expect(parseOnePassword(JSON.stringify(EXPORT)).vaults).toHaveLength(2)
     expect(() => parseOnePassword({ 'nothing.txt': new Uint8Array() })).toThrow()
   })
 })
-
 describe('parseOnePassword 1PIF', () => {
   const SEP = '***5642bee8-a5ff-11dc-8314-0800200c9a66***'
   const records = [
@@ -396,7 +388,6 @@ describe('parseOnePassword 1PIF', () => {
     { uuid: 't1', typeName: 'system.Tombstone', title: 'gone', createdAt: 1, updatedAt: 1 },
   ]
   const result = parseOnePassword(records.map((one) => `${JSON.stringify(one)}\n${SEP}`).join('\n'))
-
   it('reads logins with folders, totp and favourites', () => {
     const mail = find(result, 'Webmail')
     const login = as(mail.content, 'login')
@@ -407,7 +398,6 @@ describe('parseOnePassword 1PIF', () => {
     expect(login.note).toBe('Notiz "1"')
     expect(mail).toMatchObject({ folder: 'Arbeit/Kunden', pinned: true, created: 1500000000000 })
   })
-
   it('reads cards, notes, other wallet kinds and drops tombstones', () => {
     const card = find(result, 'Karte')
     expect(card.trashed).toBe(true)
@@ -422,7 +412,6 @@ describe('parseOnePassword 1PIF', () => {
     expect(result.vaults.flatMap((vault) => vault.items).map((one) => one.content.title)).not.toContain('gone')
   })
 })
-
 describe('parseOnePassword CSV', () => {
   it('reads the 1Password 8 CSV', () => {
     const csv = [

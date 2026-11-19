@@ -5,11 +5,9 @@ import { sameSheet, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
 const A4 = { width: 794, height: 1123 }
 const WIDE = { width: 1123, height: 794 }
 const SHELF = { least: 88, gap: 8, edge: 1 }
-
 describe('the page list of a long page note', () => {
   test('lays its thumbnails out as the grid does, two to a row in a sidebar', () => {
     const shelves = shelvesOf([A4, WIDE, WIDE, WIDE, A4], 192, SHELF)
-
     expect(shelves.columns).toBe(2)
     const tall = 90 * (1123 / 794) + 2
     const flat = 90 * (794 / 1123) + 2
@@ -21,16 +19,13 @@ describe('the page list of a long page note', () => {
     shelves.tops.forEach((top, at) => expect(top).toBeCloseTo(tops[at] ?? Number.NaN))
     expect(shelves.total).toBeCloseTo(2 * tall + flat + 16)
   })
-
   test('mounts only the rows near the screen, however many pages there are', () => {
     const sheets = Array.from({ length: 5000 }, () => A4)
     const shelves = shelvesOf(sheets, 192, SHELF)
-
     const top = shownOf(shelves, sheets.length, 0, 600)
     expect(top.from).toBe(0)
     expect(top.above).toBe(0)
     expect(top.to).toBeLessThan(24)
-
     const deep = shownOf(shelves, sheets.length, 200_000, 600)
     expect(deep.to - deep.from).toBeLessThan(24)
     const row = deep.from / shelves.columns
@@ -41,18 +36,15 @@ describe('the page list of a long page note', () => {
     const end = (shelves.tops[Math.floor(last)] ?? 0) + (shelves.heights[Math.floor(last)] ?? 0)
     expect(end).toBeGreaterThanOrEqual(200_000 + 900)
     expect(deep.above + deep.below).toBeLessThan(shelves.total)
-
     const bottom = shownOf(shelves, sheets.length, shelves.total, 600)
     expect(bottom.to).toBe(5000)
     expect(bottom.below).toBe(0)
   })
-
   test('keeps every page on its own row of the grid where the list is narrow', () => {
     const shelves = shelvesOf([A4, A4, A4], 60, SHELF)
     expect(shelves.columns).toBe(1)
     expect(shownOf(shelves, 3, 0, 10_000)).toMatchObject({ from: 0, to: 3, above: 0, below: 0 })
   })
-
   test('has nothing to show for no pages', () => {
     expect(shownOf(shelvesOf([], 192, SHELF), 0, 0, 600)).toEqual({
       from: 0,
@@ -62,7 +54,6 @@ describe('the page list of a long page note', () => {
     })
   })
 })
-
 describe('a page thumbnail drawn again', () => {
   const page = (id: string, y: number): PageNode => ({
     id,
@@ -88,32 +79,27 @@ describe('a page thumbnail drawn again', () => {
   const one = page('one', 0)
   const two = page('two', 1200)
   const ink = [stroke('a', 100), stroke('b', 1300), stroke('c', 500)]
-
   test('is the same sheet when only another page was written on', () => {
     const more = [...ink, stroke('d', 1500)]
     expect(sameSheet(sheetDrawn(one, ink, palette), sheetDrawn(one, more, palette))).toBe(true)
     expect(sameSheet(sheetDrawn(two, ink, palette), sheetDrawn(two, more, palette))).toBe(false)
   })
-
   test('and another sheet when a stroke on it is rubbed out, moved or recoloured', () => {
     const drawn = sheetDrawn(one, ink, palette)
     expect(sameSheet(drawn, sheetDrawn(one, [ink[1]!, ink[2]!], palette))).toBe(false)
     expect(sameSheet(drawn, sheetDrawn(one, [stroke('a', 140), ink[1]!, ink[2]!], palette))).toBe(false)
     expect(sameSheet(drawn, sheetDrawn(one, ink, { ink: '#fff' }))).toBe(false)
   })
-
   test('and another sheet when the page itself moved or changed its paper', () => {
     const drawn = sheetDrawn(one, ink, palette)
     expect(sameSheet(drawn, sheetDrawn({ ...one, y: 20 }, ink, palette))).toBe(false)
     expect(sameSheet(drawn, sheetDrawn({ ...one, file: 'X.pdf', page: 2 }, ink, palette))).toBe(false)
   })
 })
-
 describe('the thumbnail of a page', () => {
   test('is drawn at the sharpness asked for when the page is of usual size', () => {
     expect(thumbSize(A4, 104, 2)).toMatchObject({ ratio: 2, width: 208, height: 294 })
   })
-
   test('of an endless page stays within what a canvas can hold, shrunk in proportion', () => {
     for (const height of [125_000, 200_000, 1_000_000, 10_000_000]) {
       const size = thumbSize({ width: 794, height }, 104, 2)
@@ -124,7 +110,6 @@ describe('the thumbnail of a page', () => {
       if (size.width > 4) expect(size.height / size.width).toBeCloseTo(height / 794, -1)
     }
   })
-
   test('of a page wider than it is tall keeps its width in bounds too', () => {
     const size = thumbSize({ width: 1, height: 1 }, 40_000, 2)
     expect(size.width).toBeLessThanOrEqual(16384)

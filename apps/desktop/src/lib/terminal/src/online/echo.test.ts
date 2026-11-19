@@ -6,15 +6,12 @@ class Screen implements EchoScreen {
   private readonly lines: string[][] = [[]]
   x = 0
   y = 0
-
   cursor() {
     return { x: this.x, y: this.y }
   }
-
   char(x: number, y: number) {
     return this.lines[y]?.[x] ?? ''
   }
-
   print(text: string) {
     for (const char of text) {
       if (char === '\n') {
@@ -27,13 +24,11 @@ class Screen implements EchoScreen {
       this.x += 1
     }
   }
-
   ahead(text: string) {
     const line = (this.lines[this.y] ??= [])
     for (let at = 0; at < text.length; at++) line[this.x + at] = text.charAt(at)
   }
 }
-
 function world() {
   let now = 0
   const screen = new Screen()
@@ -50,7 +45,6 @@ function world() {
   }
   return { screen, predictor, pass, shown, typeEchoed }
 }
-
 function slow(latency = 120) {
   const it = world()
   it.screen.print('$ ')
@@ -61,7 +55,6 @@ function slow(latency = 120) {
   it.predictor.check(it.screen, true)
   return it
 }
-
 describe('predictive echo', () => {
   test('a fast link is never guessed ahead of', () => {
     const { predictor, screen, shown, typeEchoed } = world()
@@ -69,16 +62,13 @@ describe('predictive echo', () => {
     predictor.typed('abc', screen, true)
     expect(shown()).toBe('')
   })
-
   test('on a slow link the first key after Enter is a hidden probe, then keys show at once', () => {
     const { predictor, screen, pass, shown } = slow()
     expect(predictor.latency).toBe(120)
-
     predictor.typed('l', screen, true)
     expect(shown()).toBe('')
     predictor.typed('s', screen, true)
     expect(shown()).toBe('')
-
     pass(120)
     screen.print('l')
     predictor.check(screen, true)
@@ -86,7 +76,6 @@ describe('predictive echo', () => {
     predictor.typed(' -la', screen, true)
     expect(shown()).toBe('s -la')
     expect(predictor.shown.map((guess) => guess.x)).toEqual([3, 4, 5, 6, 7])
-
     screen.print('s -')
     predictor.check(screen, true)
     expect(shown()).toBe('la')
@@ -94,7 +83,6 @@ describe('predictive echo', () => {
     predictor.check(screen, true)
     expect(shown()).toBe('')
   })
-
   test('a prompt that echoes nothing, a password, never shows a key', () => {
     const { predictor, screen, pass, shown } = slow()
     screen.print('Password: ')
@@ -109,23 +97,19 @@ describe('predictive echo', () => {
     predictor.typed('x', screen, true)
     expect(shown()).toBe('')
   })
-
   test('a wrong guess drops every guess, and the next key is a probe again', () => {
     const { predictor, screen, pass, shown, typeEchoed } = slow()
     typeEchoed('g', 120)
     predictor.typed('it', screen, true)
     expect(shown()).toBe('it')
-
     pass(120)
     screen.print('X')
     predictor.check(screen, true)
     expect(shown()).toBe('')
     expect(predictor.deadline).toBeNull()
-
     predictor.typed('y', screen, true)
     expect(shown()).toBe('')
   })
-
   test('nothing is guessed ahead of Enter until what came before it settles', () => {
     const { predictor, screen, pass, shown, typeEchoed } = slow()
     typeEchoed('l', 120)
@@ -138,7 +122,6 @@ describe('predictive echo', () => {
     predictor.typed('x', screen, true)
     expect(shown()).toBe('')
   })
-
   test('nothing is guessed where no prompt is in front, and what was is dropped', () => {
     const { predictor, screen, shown, typeEchoed } = slow()
     typeEchoed('v', 120)
@@ -149,7 +132,6 @@ describe('predictive echo', () => {
     predictor.typed('jj', screen, false)
     expect(predictor.deadline).toBeNull()
   })
-
   test('the last column is the line editor’s, never guessed', () => {
     const { predictor, screen, shown, typeEchoed } = slow()
     screen.print('x'.repeat(screen.cols - screen.x - 3))
@@ -157,21 +139,18 @@ describe('predictive echo', () => {
     predictor.typed('bcd', screen, true)
     expect(shown()).toBe('b')
   })
-
   test('typing out a suggestion guesses over it; typing into a line does not', () => {
     const { predictor, screen, shown, typeEchoed } = slow()
     typeEchoed('g', 120)
     screen.ahead('it status')
     predictor.typed('it', screen, true)
     expect(shown()).toBe('it')
-
     const other = slow()
     other.typeEchoed('g', 120)
     other.screen.ahead('rep')
     other.predictor.typed('it', other.screen, true)
     expect(other.shown()).toBe('')
   })
-
   test('the link getting fast again stops the guessing, slow again starts it', () => {
     const { predictor, screen, shown, typeEchoed } = slow()
     const line = (latency: number) => {
@@ -184,12 +163,10 @@ describe('predictive echo', () => {
     line(HIDE_UNDER - 15)
     predictor.typed('b', screen, true)
     expect(shown()).toBe('')
-
     line(SHOW_FROM + 10)
     predictor.typed('b', screen, true)
     expect(shown()).toBe('b')
   })
-
   test('a reset forgets the guesses, not what was measured', () => {
     const { predictor, screen, shown, typeEchoed } = slow()
     typeEchoed('a', 120)

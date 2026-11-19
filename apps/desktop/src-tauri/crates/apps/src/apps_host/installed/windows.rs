@@ -21,12 +21,10 @@ use windows::Win32::UI::Shell::{
 use super::{icons, Entry, Listed};
 
 pub const PACKAGED: &str = "shell:AppsFolder\\";
-
 const FILE_DESCRIPTION: PROPERTYKEY = PROPERTYKEY {
     fmtid: windows::core::GUID::from_u128(0x0cef_7d53_fa64_11d1_a203_0000_f81f_edee),
     pid: 3,
 };
-
 pub fn entries(with_icons: bool) -> Vec<Entry> {
     std::thread::spawn(move || {
         let _com = Com::start();
@@ -35,16 +33,13 @@ pub fn entries(with_icons: bool) -> Vec<Entry> {
     .join()
     .unwrap_or_default()
 }
-
 pub(super) struct Com(bool);
-
 impl Com {
     #[allow(unsafe_code)]
     pub(super) fn start() -> Com {
         Com(unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.is_ok())
     }
 }
-
 impl Drop for Com {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
@@ -53,13 +48,11 @@ impl Drop for Com {
         }
     }
 }
-
 #[derive(Default)]
 struct Seen {
     programs: HashSet<String>,
     names: HashSet<String>,
 }
-
 impl Seen {
     fn first(&mut self, program: &str, args: &str, name: &str) -> bool {
         let program = format!(
@@ -76,7 +69,6 @@ impl Seen {
         true
     }
 }
-
 fn gather(with_icons: bool) -> Vec<Entry> {
     let mut seen = Seen::default();
     let mut found = Vec::new();
@@ -106,7 +98,6 @@ fn gather(with_icons: bool) -> Vec<Entry> {
     }
     found
 }
-
 fn start_menus() -> Vec<PathBuf> {
     ["ProgramData", "APPDATA"]
         .iter()
@@ -114,7 +105,6 @@ fn start_menus() -> Vec<PathBuf> {
         .map(|base| PathBuf::from(base).join("Microsoft\\Windows\\Start Menu\\Programs"))
         .collect()
 }
-
 fn shortcuts(folder: &Path, depth: usize, found: &mut Vec<PathBuf>) {
     let Ok(read) = std::fs::read_dir(folder) else {
         return;
@@ -133,7 +123,6 @@ fn shortcuts(folder: &Path, depth: usize, found: &mut Vec<PathBuf>) {
         }
     }
 }
-
 pub fn not_an_application(name: &str, program: &str) -> bool {
     const NAMES: [&str; 8] = [
         "uninstall",
@@ -156,13 +145,11 @@ pub fn not_an_application(name: &str, program: &str) -> bool {
         || PROGRAMS.contains(&file.as_str())
         || STARTS.iter().any(|one| file.starts_with(one))
 }
-
 fn is_program(path: &Path) -> bool {
     path.extension()
         .is_some_and(|extension| extension.eq_ignore_ascii_case("exe"))
         && path.is_file()
 }
-
 #[allow(unsafe_code)]
 fn taken(text: PWSTR) -> Option<String> {
     if text.is_null() {
@@ -172,7 +159,6 @@ fn taken(text: PWSTR) -> Option<String> {
     unsafe { CoTaskMemFree(Some(text.0 as *const _)) };
     read.filter(|one| !one.is_empty())
 }
-
 fn written(buffer: &[u16]) -> String {
     let end = buffer
         .iter()
@@ -180,7 +166,6 @@ fn written(buffer: &[u16]) -> String {
         .unwrap_or(buffer.len());
     String::from_utf16_lossy(&buffer[..end])
 }
-
 #[allow(unsafe_code)]
 fn shortcut(link: &Path, with_icons: bool) -> Option<Entry> {
     let shell: IShellLinkW =
@@ -222,7 +207,6 @@ fn shortcut(link: &Path, with_icons: bool) -> Option<Entry> {
         packaged: false,
     })
 }
-
 #[allow(unsafe_code)]
 pub fn arguments(line: &str) -> Vec<String> {
     use windows::Win32::Foundation::{LocalFree, HLOCAL};
@@ -246,18 +230,15 @@ pub fn arguments(line: &str) -> Vec<String> {
     }
     words
 }
-
 #[allow(unsafe_code)]
 fn shell_item(path: &Path) -> Option<IShellItem> {
     let path = HSTRING::from(path.as_os_str());
     unsafe { SHCreateItemFromParsingName(&path, None) }.ok()
 }
-
 #[allow(unsafe_code)]
 fn display_name(item: &IShellItem) -> Option<String> {
     taken(unsafe { item.GetDisplayName(SIGDN_NORMALDISPLAY) }.ok()?)
 }
-
 #[allow(unsafe_code)]
 fn icon(item: &IShellItem) -> Option<String> {
     let factory: IShellItemImageFactory = item.cast().ok()?;
@@ -279,7 +260,6 @@ fn icon(item: &IShellItem) -> Option<String> {
         &icons::rgba_png(&rgba, width, height)?,
     ))
 }
-
 #[allow(unsafe_code)]
 pub(super) fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
     let mut about = BITMAP::default();
@@ -328,7 +308,6 @@ pub(super) fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
         u32::try_from(height).ok()?,
     ))
 }
-
 pub fn straight(bgra: &[u8]) -> Vec<u8> {
     let pixels = bgra.as_chunks::<4>().0;
     let no_alpha = pixels.iter().all(|one| one[3] == 0);
@@ -350,7 +329,6 @@ pub fn straight(bgra: &[u8]) -> Vec<u8> {
     }
     out
 }
-
 #[allow(unsafe_code)]
 fn packaged(with_icons: bool) -> Vec<Entry> {
     let mut found = Vec::new();
@@ -397,13 +375,11 @@ fn packaged(with_icons: bool) -> Vec<Entry> {
     }
     found
 }
-
 pub fn is_package_id(id: &str) -> bool {
     id.split_once('!').is_some_and(|(family, app)| {
         family.contains('_') && !app.is_empty() && !family.contains('\\') && !family.contains('{')
     })
 }
-
 fn app_paths(with_icons: bool) -> Vec<Entry> {
     const KEY: &str = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
     let system = std::env::var("SystemRoot")
@@ -458,7 +434,6 @@ fn app_paths(with_icons: bool) -> Vec<Entry> {
     }
     found
 }
-
 pub fn inside(path: &str, folder: &str) -> bool {
     let path = path.to_lowercase().replace('/', "\\");
     let folder = folder.to_lowercase().replace('/', "\\");
@@ -466,13 +441,11 @@ pub fn inside(path: &str, folder: &str) -> bool {
     path.strip_prefix(folder)
         .is_some_and(|rest| rest.starts_with('\\'))
 }
-
 #[allow(unsafe_code)]
 fn description(item: &IShellItem) -> Option<String> {
     let item: IShellItem2 = item.cast().ok()?;
     taken(unsafe { item.GetString(&FILE_DESCRIPTION) }.ok()?)
 }
-
 pub fn expanded(path: &str) -> String {
     let mut out = String::new();
     let mut rest = path;
@@ -497,7 +470,6 @@ pub fn expanded(path: &str) -> String {
     out.push_str(rest);
     out
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -520,7 +492,6 @@ mod tests {
             "C:\\x\\installer.exe"
         ));
     }
-
     #[test]
     fn knows_a_path_inside_a_folder_whatever_its_case() {
         assert!(inside("C:\\Windows\\System32\\wabmig.exe", "c:\\windows"));
@@ -528,7 +499,6 @@ mod tests {
         assert!(!inside("C:\\WindowsApps\\x.exe", "C:\\Windows"));
         assert!(!inside("D:\\Tools\\x.exe", "C:\\Windows"));
     }
-
     #[test]
     fn knows_a_package_id_from_a_desktop_programs() {
         assert!(is_package_id(
@@ -540,7 +510,6 @@ mod tests {
         ));
         assert!(!is_package_id("Chrome"));
     }
-
     #[test]
     fn splits_a_shortcuts_arguments_as_windows_does() {
         assert_eq!(
@@ -549,7 +518,6 @@ mod tests {
         );
         assert!(arguments("  ").is_empty());
     }
-
     #[test]
     fn expands_the_environment_in_a_path() {
         let root = std::env::var("SystemRoot").unwrap();
@@ -560,7 +528,6 @@ mod tests {
         assert_eq!(expanded("%NOT_SET_HERE_1063%\\x"), "%NOT_SET_HERE_1063%\\x");
         assert_eq!(expanded("100% sure"), "100% sure");
     }
-
     #[test]
     fn reads_the_shells_pixels_straight() {
         assert_eq!(straight(&[128, 128, 128, 128]), vec![255, 255, 255, 128]);
@@ -570,7 +537,6 @@ mod tests {
             vec![0, 0, 200, 100, 0, 0, 0, 255]
         );
     }
-
     #[test]
     fn lists_this_computers_applications_once_each_with_icons() {
         let found = entries(true);

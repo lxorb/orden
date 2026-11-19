@@ -20,16 +20,11 @@ import { workspace } from './lib/workspace/src/api'
 
 serveAssets()
 holdComposingKeys()
-
 const target = document.getElementById('app')
 if (!target) throw new Error('even.html has no #app to mount into')
-
 document.getElementById('boot')?.remove()
-
 account.alsoKeepIn(everywhere)
-
 rememberSeedIn(seedFlag)
-
 void filling.then(() => {
   workspace.device.reread()
   workspace.folderIcons.reread()
@@ -41,9 +36,7 @@ void filling.then(() => {
   sync.reread()
   recovery.restore()
 })
-
 const app = mount(App, { target })
 const frame = mount(Glasses, { target })
 bridge.startWhile(glassesOn)
-
 export default { app, frame }

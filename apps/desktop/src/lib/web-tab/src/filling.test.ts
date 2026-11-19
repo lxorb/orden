@@ -12,30 +12,24 @@ const frame = {
     return Promise.resolve()
   },
 }
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   currentWindow: () => Promise.resolve(frame),
 }))
-
 const { filling } = await import('./filling.svelte')
-
 beforeEach(async () => {
   if (filling.by !== null) await filling.give(filling.by)
   frame.full = false
   frame.asked = []
 })
-
 test('a page taking the screen takes the window with it, and gives both back', async () => {
   await filling.take('a')
   expect(filling.by).toBe('a')
   expect(frame.full).toBe(true)
-
   await filling.give('a')
   expect(filling.by).toBe(null)
   expect(frame.full).toBe(false)
 })
-
 test('a window already full screen stays so', async () => {
   frame.full = true
   await filling.take('a')
@@ -43,23 +37,19 @@ test('a window already full screen stays so', async () => {
   expect(frame.full).toBe(true)
   expect(frame.asked).toEqual([true])
 })
-
 test('only the page holding the screen can give it back', async () => {
   await filling.take('a')
   await filling.give('b')
   expect(filling.by).toBe('a')
   expect(frame.full).toBe(true)
 })
-
 test('a second say of the same thing changes nothing', async () => {
   await filling.take('a')
   await filling.take('a')
   expect(frame.asked).toEqual([true])
 })
-
 test('a page that gives the screen back before it has it ends up holding nothing', async () => {
   await Promise.all([filling.take('a'), filling.give('a')])
-
   expect(filling.by).toBe(null)
   expect(frame.full).toBe(false)
 })

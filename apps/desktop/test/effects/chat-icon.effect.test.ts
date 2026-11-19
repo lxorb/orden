@@ -2,9 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
-
 const files: Record<string, string> = {}
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args: { path?: string; content?: string } = {}) => {
@@ -15,7 +13,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return held === undefined ? Promise.reject(new Error('no such file')) : Promise.resolve(held)
   },
 }))
-
 const ChatMark = (await import('../../src/lib/chats-client/src/view/ChatMark.svelte')).default
 const { GLYPHS } = await import('../../src/lib/chat-kit/src/api')
 const { elsewhere } = await import('../../src/lib/link-index/src/api')
@@ -27,44 +24,34 @@ const { iconEntries } = await import('../../src/lib/row-menu/src/api')
 const { FileMark, TabMark } = await import('../../src/lib/marks/src/api')
 const { iconLibrary } = await import('../../src/lib/glyphs/src/api')
 const { loadIcons } = await import('../../src/lib/ui-kit/src/api')
-
 iconLibrary.set = await loadIcons()
-
 let target: HTMLElement
 const mounted: ReturnType<typeof mount>[] = []
-
 beforeEach(() => {
   hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
   target = document.createElement('div')
   document.body.append(target)
   elsewhere.clear()
 })
-
 afterEach(() => {
   for (const one of mounted.splice(0)) void unmount(one)
   target.remove()
   workspace.tabs = []
 })
-
 function drawChat(path: string | null) {
   mounted.push(mount(ChatMark, { target, props: { path } }))
   flushSync()
 }
-
 function drawRow(path: string) {
   mounted.push(mount(FileMark, { target, props: { mark: 'chat', path } }))
   flushSync()
 }
-
 const emoji = () => [...target.querySelectorAll('.emoji')].map((one) => one.textContent)
-
 const hashes = () => target.querySelectorAll(`path[d="${GLYPHS.hash}"]`).length
-
 test('a chat that chose an icon wears it in the panel, the head and the file list', async () => {
   files['/space/Team.chat'] = `{"v":1,"chat":"${CHAT}","icon":"🚀"}\n`
   drawChat('/space/Team.chat')
   drawRow('/space/Team.chat')
-
   expect(hashes()).toBe(1)
   await vi.waitFor(() => {
     flushSync()
@@ -72,18 +59,15 @@ test('a chat that chose an icon wears it in the panel, the head and the file lis
   })
   expect(hashes()).toBe(0)
 })
-
 test('one that chose nothing keeps the mark every chat wears', async () => {
   files['/space/Plain.chat'] = `{"v":1,"chat":"${CHAT}"}\n`
   drawChat('/space/Plain.chat')
   drawChat(null)
-
   await vi.waitFor(() => expect(elsewhere.of('/space/Plain.chat')).not.toBeNull())
   flushSync()
   expect(emoji()).toEqual([])
   expect(hashes()).toBe(2)
 })
-
 test('a pointer written again is what the mark wears next', async () => {
   files['/space/Team.chat'] = `{"v":1,"chat":"${CHAT}","icon":"🚀"}\n`
   drawChat('/space/Team.chat')
@@ -91,24 +75,20 @@ test('a pointer written again is what the mark wears next', async () => {
     flushSync()
     expect(emoji()).toEqual(['🚀'])
   })
-
   elsewhere.saved('/space/Team.chat', `{"v":1,"chat":"${CHAT}","icon":"🌱"}\n`)
   await vi.waitFor(() => {
     flushSync()
     expect(emoji()).toEqual(['🌱'])
   })
-
   elsewhere.saved('/space/Team.chat', `{"v":1,"chat":"${CHAT}"}\n`)
   await vi.waitFor(() => {
     flushSync()
     expect(hashes()).toBe(1)
   })
 })
-
 const ROCKET = new Set(
   (iconLibrary.shape('rocket') ?? []).flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : [])),
 )
-
 function wornBy(host: Element): string {
   const emoji = host.querySelector('.emoji')
   if (emoji) return emoji.textContent
@@ -119,7 +99,6 @@ function wornBy(host: Element): string {
   if (!rocket) return 'kind'
   return svg?.style.color ? 'rocket, coloured' : 'rocket'
 }
-
 test('an icon chosen for an open chat is written into its pointer and worn everywhere', async () => {
   const path = '/space/Team.chat'
   const bare = `{"v":1,"chat":"${CHAT}"}\n`
@@ -127,7 +106,6 @@ test('an icon chosen for an open chat is written into its pointer and worn every
   openChat(path)
   const tab = workspace.tabs.find((one) => one.kind === 'channel')
   if (!tab) throw new Error('the chat did not open in a tab')
-
   const draw = () => {
     const box = () => target.appendChild(document.createElement('p'))
     const [row, inTab, chat] = [box(), box(), box()]
@@ -142,24 +120,19 @@ test('an icon chosen for an open chat is written into its pointer and worn every
       flushSync()
       expect(marks()).toEqual(expected)
     })
-
   let marks = draw()
   await wearing(['kind', 'kind', '#'], marks)
   expect(iconEntries(path).map((one) => one?.label)).toEqual(['Choose an icon'])
-
   await setFileIcon(path, '🚀')
   expect(files[path]).toBe(`{"v":1,"chat":"${CHAT}","icon":"🚀"}\n`)
   await wearing(['🚀', '🚀', '🚀'], marks)
-
   await setFileIcon(path, 'rocket', 'orange')
   expect(files[path]).toBe(`{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"orange"}\n`)
   await wearing(['rocket, coloured', 'rocket, coloured', 'rocket, coloured'], marks)
-
   expect(iconEntries(path).map((one) => one?.label)).toEqual(['Choose an icon'])
   await setFileIcon(path, null)
   await vi.waitFor(() => expect(files[path]).toBe(bare))
   await wearing(['kind', 'kind', '#'], marks)
-
   await setFileIcon(path, 'rocket', 'orange')
   for (const one of mounted.splice(0)) void unmount(one)
   target.replaceChildren()

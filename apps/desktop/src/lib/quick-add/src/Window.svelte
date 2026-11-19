@@ -11,7 +11,6 @@
   const channel = new BroadcastChannel(CHANNEL)
   const say = (said: Said) => channel.postMessage(said)
   const asked = asking(say, 10_000)
-
   channel.onmessage = (event: MessageEvent) => {
     const said = heard(event.data)
     if (said?.kind === 'added') {
@@ -22,11 +21,9 @@
     langs = [said.lang]
     smart = said.smart
   }
-
   const hide = (raise = false) => void invoke('quick_add_hide', { raise }).catch(() => undefined)
   let sending = 0
   let failed = false
-
   async function added(entry: Entry, open: boolean): Promise<boolean> {
     sending++
     try {
@@ -38,12 +35,10 @@
       sending--
     }
   }
-
   function closed() {
     failed = false
     hide()
   }
-
   onMount(() => {
     const again = () => {
       if (document.visibilityState !== 'visible') return
@@ -83,7 +78,6 @@
     overflow: hidden;
     background: var(--surface);
   }
-
   main {
     height: 100%;
   }

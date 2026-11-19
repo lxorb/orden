@@ -11,9 +11,7 @@ const asker = (): Asker | null => {
   if (!provider) return null
   return (messages) => complete({ provider, model: provider.model, messages })
 }
-
 let started = false
-
 export function startPriorities(): void {
   if (started) return
   started = true
@@ -27,7 +25,6 @@ export function startPriorities(): void {
     void consider(chat).catch(() => undefined)
   })
 }
-
 export function heardOf(messages: readonly Message[], me: Who | null): Heard[] {
   return messages.map((one) => ({
     from: one.author,
@@ -36,9 +33,7 @@ export function heardOf(messages: readonly Message[], me: Who | null): Heard[] {
     at: one.at,
   }))
 }
-
 const considering = new Map<string, { again: boolean }>()
-
 async function consider(chat: string): Promise<void> {
   const busy = considering.get(chat)
   if (busy) {
@@ -56,7 +51,6 @@ async function consider(chat: string): Promise<void> {
     considering.delete(chat)
   }
 }
-
 async function considered(chat: string): Promise<void> {
   const title = store().entry(chat)?.name ?? ''
   const heard = heardOf(await store().history(chat, { limit: 30 }), store().me)

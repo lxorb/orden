@@ -4,20 +4,16 @@ interface Fork {
   tails: Turn[][]
   at: number
 }
-
 export type Branched = Thread & { branches?: Record<string, Fork> }
-
 function keyAt(turns: readonly Turn[], index: number): string {
   return turns[index - 1]?.id ?? ''
 }
-
 export function forkAt(thread: Branched, turn: string): { count: number; at: number } | null {
   const index = thread.turns.findIndex((one) => one.id === turn)
   if (index < 0) return null
   const fork = thread.branches?.[keyAt(thread.turns, index)]
   return fork && fork.tails.length > 1 ? { count: fork.tails.length, at: fork.at } : null
 }
-
 export function cutForEdit(thread: Branched, turn: string): Turn[] | null {
   const index = thread.turns.findIndex((one) => one.id === turn)
   if (index < 0) return null
@@ -34,7 +30,6 @@ export function cutForEdit(thread: Branched, turn: string): Turn[] | null {
   }
   return tail
 }
-
 export function switchBranch(thread: Branched, turn: string, step: number): boolean {
   const index = thread.turns.findIndex((one) => one.id === turn)
   if (index < 0) return false
@@ -42,7 +37,6 @@ export function switchBranch(thread: Branched, turn: string, step: number): bool
   const to = (fork?.at ?? 0) + step
   const next = fork?.tails[to]
   if (!fork || !next) return false
-
   fork.tails[fork.at] = thread.turns.splice(index)
   thread.turns.push(...next)
   fork.at = to

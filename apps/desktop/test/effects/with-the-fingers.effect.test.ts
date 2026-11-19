@@ -8,10 +8,8 @@ import base from '../../../../packages/themes/src/base.css?raw'
 vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: { showing: (pane: string) => (pane === 'p' ? { id: 't' } : null) },
 }))
-
 const SwipeArrow = (await import('../../src/lib/back-swipe/src/SwipeArrow.svelte')).default
 const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
-
 const MOVES = new Set([
   'all',
   'transform',
@@ -29,7 +27,6 @@ const MOVES = new Set([
 ])
 const TIMING =
   /^(?:[\d.]+m?s|ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end|normal|allow-discrete|none|initial|inherit|unset)$/
-
 function eased(transition: string): string[] {
   if (!transition.trim()) return []
   const flat = transition.replace(/[a-z-]+\([^()]*(?:\([^()]*\)[^()]*)*\)/g, ' ')
@@ -40,12 +37,10 @@ function eased(transition: string): string[] {
     return named.length ? named : ['all']
   })
 }
-
 function sheetOf(source: string): string {
   const css = /<style>([\s\S]*?)<\/style>/.exec(source)?.[1] ?? ''
   return css.replace(/:global\(((?:[^()]|\([^()]*\))*)\)/g, '$1')
 }
-
 function wear(...sheets: string[]) {
   const worn: HTMLStyleElement[] = []
   beforeAll(() => {
@@ -60,7 +55,6 @@ function wear(...sheets: string[]) {
     for (const one of worn) one.remove()
   })
 }
-
 function easing(element: Element, top: Element): string[] {
   const found: string[] = []
   const look = (at: Element) => {
@@ -75,7 +69,6 @@ function easing(element: Element, top: Element): string[] {
   for (let at: Element | null = element; at && at !== top.parentElement; at = at.parentElement) look(at)
   return found
 }
-
 describe('reading what a transition eases', () => {
   test('names what it eases, and `all` where it names nothing', () => {
     expect(eased('transform var(--dur-instant) var(--ease-out), color 1s')).toEqual(['transform', 'color'])
@@ -85,11 +78,9 @@ describe('reading what a transition eases', () => {
     expect(eased('')).toEqual([])
   })
 })
-
 describe("the swipe's arrow, while the fingers are on", () => {
   wear(base, sheetOf(arrowSource))
   const room = { x: 0, y: 40, width: 800, height: 560 }
-
   const RUNS: { name: string; before: ('went' | 'stayed')[]; progress: number }[] = [
     { name: 'coming in', before: [], progress: 0.3 },
     { name: 'full', before: [], progress: 1 },
@@ -98,7 +89,6 @@ describe("the swipe's arrow, while the fingers are on", () => {
     { name: 'full straight after one that stayed', before: ['stayed'], progress: 1.2 },
     { name: 'straight after one that went', before: ['went'], progress: 0.2 },
   ]
-
   for (const side of ['left', 'right'] as const) {
     for (const run of RUNS) {
       test(`${run.name}, from the ${side}: nothing on it eases`, () => {
@@ -146,7 +136,6 @@ describe("the swipe's arrow, while the fingers are on", () => {
     }
   }
 })
-
 describe('a drawer under the thumb', () => {
   wear(sheetOf(appSource))
   test.each([
@@ -178,7 +167,6 @@ describe('a drawer under the thumb', () => {
     }
   })
 })
-
 describe("the pull's mark", () => {
   wear(sheetOf(pullSource))
   test.each(['', 'ready'])('%s: nothing eases', (state) => {

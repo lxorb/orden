@@ -17,7 +17,6 @@ const decorated = (doc: string, cursor: number, quiet: boolean) =>
       }),
     ),
   )
-
 function lineClasses(doc: string, cursor: number, quiet: boolean): string[] {
   const out: string[] = []
   decorated(doc, cursor, quiet).decorations.between(0, doc.length, (_from, _to, value) => {
@@ -26,7 +25,6 @@ function lineClasses(doc: string, cursor: number, quiet: boolean): string[] {
   })
   return out
 }
-
 function concealed(doc: string, cursor: number, quiet: boolean): string[] {
   const state = parsed(
     EditorState.create({
@@ -41,7 +39,6 @@ function concealed(doc: string, cursor: number, quiet: boolean): string[] {
   })
   return out
 }
-
 describe('quiet marks', () => {
   test.each([
     ['a **bold** b', [], 5, false],
@@ -49,7 +46,6 @@ describe('quiet marks', () => {
     ['# Title', [], 4, false],
     ['# Title', ['# '], 4, true],
   ])('%j', (input, wanted, extra, last) => expect(concealed(input, extra, last)).toEqual(wanted))
-
   test('a # becomes a heading only once a space follows it', () => {
     for (const quiet of [true, false]) {
       expect(concealed('#', 1, quiet)).toEqual([])
@@ -61,7 +57,6 @@ describe('quiet marks', () => {
     expect(concealed('# ', 2, true)).toEqual(['# '])
     expect(concealed('a\n#', 0, false)).toEqual([])
   })
-
   test('a list mark becomes a bullet only once a space follows it', () => {
     for (const quiet of [true, false]) {
       expect(concealed('-', 1, quiet)).toEqual([])
@@ -69,13 +64,11 @@ describe('quiet marks', () => {
       expect(concealed('a\n\n- ', 0, quiet)).toEqual(['-'])
     }
   })
-
   test('inline code hides its backticks, a fence does not', () => {
     expect(concealed('a `x` b', 3, true)).toEqual(['`', '`'])
     const fence = '```js\nx\n```'
     expect(concealed(fence, 7, true)).toEqual([])
   })
-
   test('a link still opens its target under the caret', () => {
     const doc = '[label](https://example.com)'
     expect(concealed(doc, 3, true)).toEqual([])

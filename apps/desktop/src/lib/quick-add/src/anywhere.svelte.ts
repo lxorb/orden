@@ -18,7 +18,6 @@ export function listen(): () => void {
       return false
     }
   })
-
   const answer = (said: Said) => {
     if (said.kind === 'hello') {
       channel?.postMessage({
@@ -32,7 +31,6 @@ export function listen(): () => void {
       )
     }
   }
-
   const answering = () => {
     channel = new BroadcastChannel(CHANNEL)
     channel.onmessage = (event: MessageEvent) => {
@@ -51,9 +49,7 @@ export function listen(): () => void {
     })
     return new Promise<void>((resolve) => stopping.signal.addEventListener('abort', () => resolve()))
   }
-
   heldForLife(ANSWERING, answering, stopping.signal)
-
   return () => {
     stopping.abort()
     stopKey?.()

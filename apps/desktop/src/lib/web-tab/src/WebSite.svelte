@@ -22,12 +22,10 @@
     onclose: () => void
     privately?: boolean
   } = $props()
-
   interface Party {
     name: string
     organization: string[]
   }
-
   interface Link {
     to: Party
     by: Party
@@ -37,13 +35,11 @@
     sha256: string
     root: boolean
   }
-
   interface Certificate {
     secure: boolean
     separately: boolean
     chain: Link[]
   }
-
   type Role = 'site' | 'intermediate' | 'root'
   const ROLES: Record<Role, () => string> = {
     site: () => 'Site',
@@ -51,7 +47,6 @@
     root: () => 'Root',
   }
   const role = (link: Link, index: number): Role => (index === 0 ? 'site' : link.root ? 'root' : 'intermediate')
-
   const NAMES: Record<Ask, () => string> = {
     camera: () => 'Camera',
     microphone: () => 'Microphone',
@@ -64,7 +59,6 @@
     midi: () => 'MIDI devices',
     windows: () => 'Window management',
   }
-
   const https = $derived(url?.startsWith('https:') === true)
   let certificate = $state<Certificate | null>(null)
   let asked = $state(false)
@@ -209,7 +203,6 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .how {
     margin: 0;
     display: flex;
@@ -219,7 +212,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .how > svg {
     flex: none;
     width: var(--icon-md);
@@ -230,7 +222,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   button.how {
     min-height: 0;
     margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
@@ -240,33 +231,27 @@
     font-size: var(--text-row);
     text-align: start;
   }
-
   .how > .said {
     flex: 1;
   }
-
   .how > .chevron {
     width: var(--icon-sm);
     height: var(--icon-sm);
     color: var(--text-muted);
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .how > .chevron.open {
     transform: rotate(90deg);
   }
-
   .risky,
   button.how.risky {
     color: var(--callout-warning);
   }
-
   .certificate {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .chain {
     margin: 0;
     padding: 0;
@@ -275,11 +260,9 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .chain > li {
     padding-inline-start: calc(var(--depth) * var(--space-2));
   }
-
   .chain button {
     width: 100%;
     min-height: 0;
@@ -289,29 +272,24 @@
     font-size: var(--text-sm);
     text-align: start;
   }
-
   .chain button.chosen {
     background: var(--surface-2);
     color: var(--text-strong);
   }
-
   .chain .role {
     flex: none;
     color: var(--text-muted);
   }
-
   .chain .name {
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
   .note {
     margin: 0;
     color: var(--text-muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .details {
     margin: 0;
     display: flex;
@@ -320,21 +298,17 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .details > dt {
     color: var(--text-muted);
   }
-
   .details > dd {
     margin: 0 0 var(--space-1);
     color: var(--text);
     overflow-wrap: anywhere;
   }
-
   .details > .hex {
     font-family: var(--font-mono);
   }
-
   .grants {
     margin: 0;
     padding: 0;
@@ -343,7 +317,6 @@
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .grants > li {
     display: flex;
     align-items: center;
@@ -353,7 +326,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .reset {
     align-self: flex-start;
   }

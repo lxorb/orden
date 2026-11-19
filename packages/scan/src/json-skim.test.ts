@@ -5,16 +5,12 @@ function both(text: string, keys: string[]) {
   const whole = JSON.parse(text) as Record<string, unknown>
   const spans = skim(text, keys)
   if (!spans) throw new Error('not skimmed')
-
   const skimmed: Record<string, unknown> = {}
   for (const [key, at] of spans) skimmed[key] = JSON.parse(text.slice(at.from, at.to)) as unknown
-
   const parsed: Record<string, unknown> = {}
   for (const key of keys) if (Object.hasOwn(whole, key)) parsed[key] = whole[key]
-
   return { skimmed, parsed }
 }
-
 describe('a few keys of a JSON object', () => {
   test('are found where JSON.parse finds them, whatever is written around them', () => {
     const texts = [
@@ -26,24 +22,20 @@ describe('a few keys of a JSON object', () => {
       '{"\\u006eodes":["escaped key"]}',
       '{}',
     ]
-
     for (const text of texts) {
       const { skimmed, parsed } = both(text, ['nodes', 'orden'])
       expect(skimmed).toEqual(parsed)
     }
   })
-
   test('look inside a value the same way, given where it is', () => {
     const text = '{"orden":{"version":1,"ink":[{"id":"s","points":[1,2,3]}],"icon":"pen","iconColor":"red"}}'
     const orden = skim(text, ['orden'])?.get('orden')
     const inner = orden && skim(text, ['icon', 'iconColor'], orden)
-
     expect(inner && Object.fromEntries([...inner].map(([key, at]) => [key, text.slice(at.from, at.to)]))).toEqual({
       icon: '"pen"',
       iconColor: '"red"',
     })
   })
-
   test('is nothing at all for text that is not one object', () => {
     for (const text of [
       '',
@@ -60,7 +52,6 @@ describe('a few keys of a JSON object', () => {
       expect(skim(text, ['nodes'])).toBeNull()
     }
   })
-
   test('walks megabytes of what it skips without parsing any of it', () => {
     const ink = Array.from({ length: 25_000 }, (_, one) => ({
       id: `s${one}`,
@@ -68,12 +59,10 @@ describe('a few keys of a JSON object', () => {
     }))
     const text = JSON.stringify({ orden: { ink, icon: 'rocket' }, nodes: [{ id: 'a' }] })
     expect(text.length).toBeGreaterThan(7_000_000)
-
     const parse = vi.spyOn(JSON, 'parse')
     const top = skim(text, ['nodes', 'orden'])
     const orden = top?.get('orden')
     const icon = orden && skim(text, ['icon'], orden)?.get('icon')
-
     expect(icon && text.slice(icon.from, icon.to)).toBe('"rocket"')
     expect(parse).not.toHaveBeenCalled()
     parse.mockRestore()

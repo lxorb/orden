@@ -8,7 +8,6 @@ import { dayIn } from './values'
 
 export const LAYOUTS = ['table', 'cards', 'kanban', 'timeline', 'chart', 'form'] as const
 export type Layout = (typeof LAYOUTS)[number]
-
 const LAYOUT_NAMES: Record<Layout, string> = {
   table: 'Table',
   cards: 'Cards',
@@ -17,14 +16,11 @@ const LAYOUT_NAMES: Record<Layout, string> = {
   chart: 'Chart',
   form: 'Form',
 }
-
 export function layoutOf(type: string): Layout {
   if (type === 'board') return 'kanban'
   return LAYOUTS.find((one) => one === type) ?? 'table'
 }
-
 export const layoutName = (layout: Layout): string => LAYOUT_NAMES[layout]
-
 const STATUS_NAMES: Record<string, string> = {
   ' ': 'To do',
   '/': 'Doing',
@@ -32,7 +28,6 @@ const STATUS_NAMES: Record<string, string> = {
   X: 'Done',
   '-': 'Cancelled',
 }
-
 const FIELD_NAMES: Record<string, string> = {
   'file.name': 'Name',
   'file.basename': 'Note',
@@ -60,20 +55,15 @@ const FIELD_NAMES: Record<string, string> = {
   'task.recurrence': 'Repeat',
   'task.completed': 'Done',
 }
-
 export function propertyName(property: string, displayName?: string): string {
   if (displayName) return displayName
   const known = FIELD_NAMES[property]
   if (known) return known
   return bare(property).replace(/^(formula|button)\./, '')
 }
-
 const priorityName = (priority: number): string => `p${priority}`
-
 export type NoteNames = ReadonlyMap<string, number>
-
 const nameOf = (path: string) => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
-
 export function noteNames(keys: readonly Value[]): NoteNames {
   const counts = new Map<string, number>()
   for (const key of keys) {
@@ -83,7 +73,6 @@ export function noteNames(keys: readonly Value[]): NoteNames {
   }
   return counts
 }
-
 export function groupLabel(property: string | undefined, value: Value, today: string, names?: NoteNames): string {
   if (property === 'formula.overdue') return value === true ? 'Overdue' : 'Today'
   if (value === 'overdue') return 'Overdue'
@@ -106,7 +95,6 @@ export function groupLabel(property: string | undefined, value: Value, today: st
   if (day !== null && (typeof value !== 'string' || value.length === 10)) return dayWords(day, today)
   return groupName(value)
 }
-
 function noteLabel(key: string, names: NoteNames | undefined): string {
   const { space, path } = placeOfKey(key)
   const name = nameOf(path)
@@ -115,7 +103,6 @@ function noteLabel(key: string, names: NoteNames | undefined): string {
   if (space === null) return `${name} (${folder ?? '/'})`
   return `${name} (${folder === null ? space : `${space}/${folder}`})`
 }
-
 export function dayHead(value: Value, today: string): string {
   const day = dayIn(value)
   if (day === null) return value === 'overdue' ? 'Overdue' : groupName(value)
@@ -123,7 +110,6 @@ export function dayHead(value: Value, today: string): string {
   const near = dayWords(day, today)
   return day === today || day === addDays(today, 1) ? `${near}, ${date}` : date
 }
-
 const CHART_NAMES: Record<ChartKind, string> = {
   bar: 'Bars',
   hbar: 'Bars across',
@@ -131,9 +117,7 @@ const CHART_NAMES: Record<ChartKind, string> = {
   donut: 'Donut',
   number: 'A number',
 }
-
 export const chartName = (kind: ChartKind): string => CHART_NAMES[kind]
-
 const MEASURE_NAMES: Record<Measure, string> = {
   count: 'Count',
   sum: 'Sum',
@@ -141,9 +125,7 @@ const MEASURE_NAMES: Record<Measure, string> = {
   earliest: 'Earliest',
   latest: 'Latest',
 }
-
 export const measureName = (measure: Measure): string => MEASURE_NAMES[measure]
-
 const SUMMARY_NAMES: Record<string, string> = {
   Average: 'Average',
   Min: 'Min',
@@ -160,7 +142,6 @@ const SUMMARY_NAMES: Record<string, string> = {
   Filled: 'With a value',
   Unique: 'Unique',
 }
-
 export const summaryName = (name: string): string => {
   const known = SUMMARY_NAMES[name]
   return known ?? name

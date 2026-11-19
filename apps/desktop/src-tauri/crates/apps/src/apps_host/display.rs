@@ -18,22 +18,18 @@ const ROOM: u32 = 4096;
 const MOST: u32 = 8192;
 const LEAST: u32 = 64;
 const LOSSES: usize = 8;
-
 static STARTING: Mutex<()> = Mutex::new(());
-
 enum Starting {
     Taken,
     Lost(String),
     Failed(String),
 }
-
 pub struct Display {
     pub number: u32,
     server: Child,
     room: (u32, u32),
     desk: Option<Desk>,
 }
-
 pub fn free_number(root: &Path, from: u32) -> Option<u32> {
     (from.max(NUMBERS.start)..NUMBERS.end).find(|number| {
         !root.join(format!(".X{number}-lock")).exists()
@@ -41,7 +37,6 @@ pub fn free_number(root: &Path, from: u32) -> Option<u32> {
             && !root.join(format!(".X11-unix/X{number}")).exists()
     })
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     let side = |css: f64| {
@@ -50,21 +45,17 @@ pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     };
     (side(width), side(height))
 }
-
 pub fn room(width: u32, height: u32) -> (u32, u32) {
     (width.clamp(ROOM, MOST), height.clamp(ROOM, MOST))
 }
-
 pub fn within(size: (u32, u32), room: (u32, u32)) -> (u32, u32) {
     let even = |one: u32, most: u32| one.clamp(LEAST, most) & !1;
     (even(size.0, room.0), even(size.1, room.1))
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn dpi(dpr: f64) -> u32 {
     (96.0 * ratio(dpr)).round() as u32
 }
-
 pub fn ratio(dpr: f64) -> f64 {
     if dpr.is_finite() {
         dpr.clamp(0.5, 8.0)
@@ -72,16 +63,13 @@ pub fn ratio(dpr: f64) -> f64 {
         1.0
     }
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn millimetres(pixels: u32, dpr: f64) -> u32 {
     (f64::from(pixels) * 25.4 / f64::from(dpi(dpr))).round() as u32
 }
-
 pub fn available() -> bool {
     super::installed::on_path("Xvfb")
 }
-
 impl Display {
     pub fn start(width: u32, height: u32, dpr: f64) -> Result<Display, String> {
         let _alone = STARTING.lock().unwrap_or_else(PoisonError::into_inner);
@@ -103,7 +91,6 @@ impl Display {
         }
         Err("no display number is free".to_owned())
     }
-
     fn start_on(number: u32, width: u32, height: u32, dpr: f64) -> Result<Display, Starting> {
         let root = Path::new("/tmp");
         let largest = room(width, height);
@@ -163,15 +150,12 @@ impl Display {
         display.fit(width, height, dpr).map_err(Starting::Failed)?;
         Ok(display)
     }
-
     pub fn name(&self) -> String {
         format!(":{}", self.number)
     }
-
     pub fn clipboard(&self) -> Option<Arc<Clipboard>> {
         self.desk.as_ref().map(|desk| desk.clipboard().clone())
     }
-
     pub fn fit(&self, width: u32, height: u32, dpr: f64) -> Result<(), String> {
         let desk = self
             .desk
@@ -182,7 +166,6 @@ impl Display {
         desk.scale(dpr);
         Ok(())
     }
-
     pub fn end(&mut self) {
         if let Ok(None) = self.server.try_wait() {
             let _ = self.server.kill();
@@ -194,13 +177,11 @@ impl Display {
         }
     }
 }
-
 impl Drop for Display {
     fn drop(&mut self) {
         self.end();
     }
 }
-
 fn resize(
     desk: &Desk,
     width: u32,
@@ -240,7 +221,6 @@ fn resize(
             .mode
     };
     let _ = checked(x, x.randr_add_output_mode(output, mode)?);
-
     let now = x.get_geometry(root)?.reply()?;
     let (millis_wide, millis_high) = (millimetres(width, dpr), millimetres(height, dpr));
     let grown = (wide.max(now.width), high.max(now.height));
@@ -271,7 +251,6 @@ fn resize(
         x,
         x.randr_set_screen_size(root, wide, high, millis_wide, millis_high)?,
     )?;
-
     let made_at = x
         .setup()
         .roots
@@ -287,14 +266,12 @@ fn resize(
     }
     Ok(())
 }
-
 pub fn checked<C: RequestConnection>(x: &C, cookie: VoidCookie<'_, C>) -> Result<(), ReplyError> {
     let after = x.get_input_focus()?;
     let said = cookie.check();
     drop(after);
     said
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -336,7 +313,6 @@ mod tests {
             checked(&x, asked).unwrap();
         });
     }
-
     #[test]
     fn takes_the_first_number_with_no_lock_and_no_socket() {
         let root = std::env::temp_dir().join(format!("orden-display-{}", std::process::id()));
@@ -352,7 +328,6 @@ mod tests {
         assert_eq!(free_number(&root, NUMBERS.end), None);
         let _ = std::fs::remove_dir_all(root);
     }
-
     #[test]
     fn starts_every_display_asked_for_at_once() {
         super::super::in_time(|| {
@@ -375,7 +350,6 @@ mod tests {
             }
         });
     }
-
     #[test]
     fn steps_past_a_number_another_server_holds() {
         super::super::in_time(|| {
@@ -389,7 +363,6 @@ mod tests {
             assert_ne!(other.number, held.number);
         });
     }
-
     #[test]
     fn makes_the_screen_in_even_device_pixels() {
         assert_eq!(screen(1200.0, 800.0, 2.0), (2400, 1600));
@@ -397,7 +370,6 @@ mod tests {
         assert_eq!(screen(10.0, 10.0, 1.0), (64, 64));
         assert_eq!(screen(9000.0, 100.0, 2.0), (8192, 200));
     }
-
     #[test]
     fn makes_room_for_a_4k_monitor_either_way_up_and_never_grows_past_it() {
         assert_eq!(room(1280, 800), (4096, 4096));
@@ -405,7 +377,6 @@ mod tests {
         assert_eq!(within((5000, 801), (4096, 4096)), (4096, 800));
         assert_eq!(within((10, 3), (4096, 4096)), (64, 64));
     }
-
     #[test]
     fn reads_a_ratio_as_dots_an_inch() {
         assert_eq!(dpi(1.0), 96);
@@ -414,7 +385,6 @@ mod tests {
         assert_eq!(dpi(f64::NAN), 96);
         assert_eq!(millimetres(1920, 1.0), 508);
     }
-
     #[test]
     fn fits_the_screen_to_the_view_as_it_changes() {
         super::super::in_time(|| {

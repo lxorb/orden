@@ -6,13 +6,11 @@ let stops = 0
 const halts = new Map<string, number>()
 const heeding = new Set<{ agent: string; halt: () => void }>()
 let hearing: Promise<unknown> | null = null
-
 export function readerPort(): AgentReaderPort {
   const port = portOf('agents.reader')
   if (!port.ok) throw new Refused('failed', 'the agents are not running')
   return port.value
 }
-
 function heedStops(): Promise<unknown> {
   hearing ??= Promise.resolve()
     .then(() =>
@@ -32,11 +30,9 @@ function heedStops(): Promise<unknown> {
     })
   return hearing
 }
-
 export function stopRefused(done: string): Refused {
   return new Refused('stopped', `the reader pressed the stop: ${done}`)
 }
-
 export async function stopWatch(call: Call): Promise<(done: string) => void> {
   const agent = call.caller.agent?.id
   if (agent === undefined) return () => undefined
@@ -47,12 +43,10 @@ export async function stopWatch(call: Call): Promise<(done: string) => void> {
     if (stops !== stopped || (halts.get(agent) ?? 0) !== halted) throw stopRefused(done)
   }
 }
-
 export interface Halting {
   signal: AbortSignal
   end: () => void
 }
-
 export async function stopSignal(call: Call): Promise<Halting> {
   const halting = new AbortController()
   const agent = call.caller.agent?.id

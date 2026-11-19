@@ -9,7 +9,6 @@
     overflow: hidden;
     border-radius: 1px;
   }
-
   .run {
     width: 34%;
     height: 100%;
@@ -17,7 +16,6 @@
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
     animation: sweep 1150ms var(--ease-in-out) infinite;
   }
-
   @keyframes sweep {
     from {
       transform: translateX(-100%);
@@ -26,7 +24,6 @@
       transform: translateX(300%);
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .run {
       width: 100%;

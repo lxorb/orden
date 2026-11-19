@@ -4,7 +4,6 @@ const ENOUGH = 0.22
 const LET_GO = 140
 const SLOP = 10
 const STIFF = 0.25
-
 function scrollsSideways(target: EventTarget | null, node: HTMLElement, dx: number): boolean {
   for (let at = target instanceof Element ? target : null; at && at !== node;) {
     if (at instanceof HTMLElement && at.scrollWidth > at.clientWidth + 1) {
@@ -15,12 +14,10 @@ function scrollsSideways(target: EventTarget | null, node: HTMLElement, dx: numb
   }
   return false
 }
-
 export interface Slides {
   can(step: 1 | -1): boolean
   go(step: 1 | -1): void
 }
-
 export function slides(node: HTMLElement, said: Slides) {
   let ways = said
   let offset = 0

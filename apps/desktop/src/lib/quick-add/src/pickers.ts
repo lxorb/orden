@@ -7,9 +7,7 @@ export interface When {
   due?: string | undefined
   time?: string | undefined
 }
-
 const weekendOf = (today: string) => addDays(today, (6 - weekday(today) + 7) % 7)
-
 const askNative = (type: 'date' | 'time', value: string | undefined, anchor: DOMRect): Promise<string | null> =>
   new Promise((resolve) => {
     const field = document.createElement('input')
@@ -43,7 +41,6 @@ const askNative = (type: 'date' | 'time', value: string | undefined, anchor: DOM
       done(null)
     }
   })
-
 export function dayRows(
   current: When,
   today: string,
@@ -83,14 +80,12 @@ export function dayRows(
     ...(current.due ? [DIVIDER, { label: 'No date', run: () => set({ due: null, time: null }) }] : []),
   ]
 }
-
 export const priorityRows = (current: Priority, set: (priority: Priority) => void): MenuEntry[] =>
   ([1, 2, 3, 4] as const).map((level) => ({
     label: `Priority ${level}`,
     checked: current === level,
     run: () => set(level),
   }))
-
 export function remindRows(
   current: readonly Remind[],
   when: When,
@@ -114,7 +109,6 @@ export function remindRows(
     ...(current.length ? [DIVIDER, { label: 'Remove', run: () => set([]) }] : []),
   ]
 }
-
 export const durationRows = (current: number | undefined, set: (minutes: number | null) => void): MenuEntry[] => [
   ...[15, 30, 45, 60, 90, 120].map((minutes) => ({
     label: durationLabel(minutes),
@@ -123,7 +117,6 @@ export const durationRows = (current: number | undefined, set: (minutes: number 
   })),
   ...(current === undefined ? [] : [DIVIDER, { label: 'Remove', run: () => set(null) }]),
 ]
-
 export function tagRows(
   current: readonly string[],
   known: readonly string[],

@@ -5,17 +5,14 @@ export interface Cell {
   key: string
   box: Box
 }
-
 export const REACH = 72
 const HOLD = 24
-
 function from(box: Box, x: number, y: number): number {
   const dx = Math.max(box.x - x, x - (box.x + box.w))
   const dy = Math.max(box.y - y, y - (box.y + box.h))
   if (dx <= 0 && dy <= 0) return Math.max(dx, dy)
   return Math.hypot(Math.max(dx, 0), Math.max(dy, 0))
 }
-
 export function cellAt(cells: readonly Cell[], now: string, x: number, y: number, zoom = 1): string {
   const reach = REACH / zoom
   const hold = HOLD / zoom

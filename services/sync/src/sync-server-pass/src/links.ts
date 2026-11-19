@@ -15,14 +15,11 @@ import { NO_SUCH_ITEM, NO_SUCH_LINK, NO_SUCH_VAULT, NOT_A_LINK, NOT_YOUR_ROLE, T
 import { LINK_COLUMNS, type LinkDb, linkRowOf } from './rows'
 
 export const links = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 const USED_UP = 'max_views is not null and views >= max_views'
-
 function viewsIn(value: unknown): number | null | undefined {
   if (value === null) return null
   return isCount(value) && value >= 1 && value <= MOST_LINK_VIEWS ? value : undefined
 }
-
 links.post('/links', async (context) => {
   const user = context.get('user')
   const sent = await objectBody(context)
@@ -41,13 +38,11 @@ links.post('/links', async (context) => {
     views === undefined
   )
     return context.json({ error: NOT_A_LINK }, 400)
-
   const held = await activeIn(context.env, vault, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
   const target = await itemOf(context.env, vault, item)
   if (target?.deleted_at !== null) return context.json({ error: NO_SUCH_ITEM }, 404)
-
   const written = await context.env.DB.prepare(
     `insert into pass_links
        (id, user_id, vault_id, item_id, body, expires_at, max_views, views, created_at)
@@ -83,7 +78,6 @@ links.post('/links', async (context) => {
     }),
   })
 })
-
 links.get('/links', async (context) => {
   const user = context.get('user')
   const { results } = await context.env.DB.prepare(
@@ -93,7 +87,6 @@ links.get('/links', async (context) => {
     .all<LinkDb>()
   return context.json({ links: results.map(linkRowOf) })
 })
-
 links.delete('/links/:id', async (context) => {
   const user = context.get('user')
   const gone = await context.env.DB.prepare('delete from pass_links where id = ? and user_id = ?')
@@ -102,7 +95,6 @@ links.delete('/links/:id', async (context) => {
   if (!gone.meta.changes) return context.json({ error: NO_SUCH_LINK }, 404)
   return context.json({ ok: true })
 })
-
 links.delete('/links', async (context) => {
   const user = context.get('user')
   if (context.req.query('expired') !== '1') return context.json({ error: NOT_A_LINK }, 400)
@@ -113,7 +105,6 @@ links.delete('/links', async (context) => {
     .run()
   return context.json({ deleted: gone.meta.changes })
 })
-
 export async function sweepPassLinks(env: Env, at: number): Promise<void> {
   await env.DB.prepare(`update pass_links set body = '' where body <> '' and (expires_at <= ? or (${USED_UP}))`)
     .bind(at)

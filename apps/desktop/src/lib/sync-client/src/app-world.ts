@@ -17,14 +17,11 @@ export interface Telling {
   written(path: string, fresh: boolean): void
   writing?(path: string, text: string, write: () => Promise<unknown>): Promise<unknown>
 }
-
 function parentOf(path: string): string {
   const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
   return at > 0 ? path.slice(0, at) : path
 }
-
 const raw = () => (isNative() ? {} : { raw: true })
-
 const stamped = (path: string) =>
   isNative()
     ? onDisk(path)
@@ -32,10 +29,8 @@ const stamped = (path: string) =>
         (there) => there === true,
         () => false,
       )
-
 const thereOrUnsure = (path: string): Promise<boolean> =>
   isNative() ? invoke<boolean>('file_there', { path }).catch(() => true) : stamped(path)
-
 function diskOf(telling: Telling): Disk {
   return {
     read: (path) => invoke<string>('read_note', { path, ...raw() }).catch(() => null),
@@ -95,18 +90,15 @@ function diskOf(telling: Telling): Disk {
     evicted: async (path) => (await iCloud()).evictedHere(path),
   }
 }
-
 export const lettingGo = {
   drop: (path: string) => invoke('let_go_note', { path }).then(() => undefined),
 }
-
 interface Listed {
   path: string
   is_dir: boolean
   unlisted?: boolean
   children?: Listed[]
 }
-
 async function holds(folder: string): Promise<readonly string[] | null> {
   const tree = await invoke<Listed>('read_tree', {
     root: folder,
@@ -122,7 +114,6 @@ async function holds(folder: string): Promise<readonly string[] | null> {
     })
   return walk(tree) ? out : null
 }
-
 async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {
   const slashed = (path: string) => (windowsPath(root) ? path.replace(/\\/g, '/') : path)
   const base = slashed(root).replace(/\/+$/, '')
@@ -163,9 +154,7 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   }
   return out
 }
-
 const BYTES = /^\/v2\/(blobs|files)\//
-
 function reachingOf(token: () => string | null) {
   return {
     base: remote().base,
@@ -175,11 +164,9 @@ function reachingOf(token: () => string | null) {
       remote().fetchInTime(request, {}, BYTES.test(new URL(request.url).pathname) ? remote().bytesWithin : undefined),
   }
 }
-
 export function readingFor(token: () => string | null): Reading {
   return readingOver(reachingOf(token))
 }
-
 export function appWorld(token: () => string | null, telling: Telling): World {
   const os = platform()
   const reaching = reachingOf(token)

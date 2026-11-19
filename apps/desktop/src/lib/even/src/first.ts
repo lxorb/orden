@@ -2,7 +2,5 @@ import { markPlugin } from '../../platform/src/api'
 import { fillLocal, installLocal } from './local'
 
 markPlugin()
-
 const local = installLocal()
-
 export const filling: Promise<void> = fillLocal(local).catch(() => undefined)

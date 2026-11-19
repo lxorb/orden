@@ -13,11 +13,9 @@ const world = vi.hoisted(() => ({
   typed: [] as string[],
   tasks: [] as { root?: string; typed?: boolean }[],
 }))
-
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),
 }))
-
 const imported: { target: { root: string } }[] = []
 providePort('import.bring', {
   here: () => Promise.resolve(new Set()),
@@ -29,7 +27,6 @@ providePort('import.bring', {
     return Promise.resolve(null)
   },
 })
-
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   onTheActivity: () => true,
@@ -84,18 +81,14 @@ vi.mock('../../workspace/src/api', () => ({
     openEntry: () => Promise.resolve(),
   },
 }))
-
 const { startHanded } = await import('./handed')
-
 async function share() {
   const stop = startHanded()
   await new Promise((done) => setTimeout(done, 20))
   stop()
 }
-
 const THEIRS = { id: 'theirs', name: 'Theirs', root: '/theirs' }
 const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
-
 beforeEach(() => {
   imported.length = 0
   world.readOnly = ['/theirs']
@@ -108,7 +101,6 @@ beforeEach(() => {
   world.typed = []
   world.tasks = []
 })
-
 describe('a share while the open space is shared to be read', () => {
   test('makes its note in the first space that may be written in', async () => {
     await share()
@@ -116,13 +108,11 @@ describe('a share while the open space is shared to be read', () => {
     expect(imported[0]?.target.root).toBe('/mine')
     expect(world.done).toBe(1)
   })
-
   test("makes its task in the reader's one inbox, naming no space (#1157)", async () => {
     world.answer = 'task'
     await share()
     await vi.waitFor(() => expect(world.tasks).toEqual([{ typed: false }]))
   })
-
   test("in the reader's own space, stays there", async () => {
     world.readOnly = []
     await share()
@@ -130,7 +120,6 @@ describe('a share while the open space is shared to be read', () => {
     expect(imported[0]?.target.root).toBe('/theirs')
   })
 })
-
 describe('a share with no space that may be written in', () => {
   test('makes nothing and is kept, not let go of', async () => {
     world.spaces = [THEIRS]
@@ -140,7 +129,6 @@ describe('a share with no space that may be written in', () => {
     expect(world.asked).toEqual([])
     expect(world.done).toBe(0)
   })
-
   test('is offered only for the note open to write in', async () => {
     world.spaces = [THEIRS]
     world.open = true
@@ -151,7 +139,6 @@ describe('a share with no space that may be written in', () => {
     expect(world.done).toBe(1)
   })
 })
-
 describe('words shared into the open note', () => {
   test('open no markup there', async () => {
     world.readOnly = []

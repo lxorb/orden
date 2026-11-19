@@ -5,7 +5,6 @@ import { live } from './sync2'
 let env: TestEnv
 let token: string
 let alone: string[]
-
 beforeEach(async () => {
   env = testEnv()
   live(env)
@@ -13,15 +12,12 @@ beforeEach(async () => {
   alone = []
   watch(env)
 })
-
 afterEach(() => env.close())
-
 function watch(on: TestEnv) {
   const db = on.DB
   const prepare = db.prepare.bind(db)
   const batch = db.batch.bind(db)
   let batching = 0
-
   const watched = {
     batch: async (statements: D1PreparedStatement[]) => {
       batching += 1
@@ -49,13 +45,11 @@ function watch(on: TestEnv) {
       key in watched ? watched[key as keyof typeof watched] : (Reflect.get(target, key) as unknown),
   })
 }
-
 async function newSpace(name: string, prepared: boolean): Promise<string> {
   const space = (await call(env, '/v1/spaces', { token, body: { name } })).json.space.id
   if (prepared) await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
   return space
 }
-
 function numbered(space: string) {
   const rows = env.db.prepare('select seq from notes where space_id = ?1').all(space) as {
     seq: number
@@ -67,7 +61,6 @@ function numbered(space: string) {
   ).next
   return { seqs: rows.map((one) => one.seq), next }
 }
-
 describe('the cursor of a space', () => {
   test('moves with the row in a v1 space: a note made, saved, deleted and put back', async () => {
     const space = await newSpace('One', false)
@@ -84,18 +77,15 @@ describe('the cursor of a space', () => {
     expect(saved.status).toBe(200)
     expect((await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
     expect((await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status).toBe(200)
-
     expect(alone).toEqual([])
     const { seqs, next } = numbered(space)
     expect(seqs).toHaveLength(1)
     expect(Math.max(...seqs)).toBe(next - 1)
   })
-
   test("stays put when a space's settings are written (#2183)", async () => {
     const space = await newSpace('Settings', true)
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'a.md', content: 'one' } })
     const before = numbered(space).next
-
     const writes: [string, Record<string, unknown>][] = [
       ['bookmarks', { bookmarks: [{ kind: 'note', path: 'a.md', text: '' }] }],
       ['icons', { icons: { Work: 'Folder' } }],
@@ -107,10 +97,8 @@ describe('the cursor of a space', () => {
       const said = await call(env, `/v1/spaces/${space}/${route}`, { method: 'PUT', token, body })
       expect(said.status).toBe(200)
     }
-
     expect(numbered(space).next).toBe(before)
   })
-
   test('moves with the row when a file is replaced (sync v2)', async () => {
     const space = await newSpace('Two', true)
     const bytes = (seed: number) => Uint8Array.from({ length: 64 }, (_, at) => (at + seed) % 251)
@@ -139,14 +127,12 @@ describe('the cursor of a space', () => {
         ],
       },
     })
-
     const replaced = await call<{ ok: boolean; seq: number }>(env, `/v2/files/${space}/file-1`, {
       method: 'PUT',
       token,
       body: { hash: await hashOf(second), base: await hashOf(first) },
     })
     expect(replaced.json.ok).toBe(true)
-
     expect(alone).toEqual([])
     const { seqs, next } = numbered(space)
     expect(new Set(seqs).size).toBe(seqs.length)

@@ -6,10 +6,8 @@ export interface AliasAccount {
   mailbox: string | null
   suffix: string | null
 }
-
 const SERVICES: readonly string[] = ['simplelogin', 'addy']
 const textOrNull = (value: unknown) => (typeof value === 'string' && value !== '' ? value : null)
-
 export function aliasAccountIn(text: string): AliasAccount | null {
   let raw: unknown
   try {

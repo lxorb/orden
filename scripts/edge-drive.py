@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -13,49 +12,39 @@ import tempfile
 import threading
 import time
 from typing import Any
-
 from fresh_app import ended, fresh
 from native_app import INNER, App, config_of, endpoint, forward
 
 PAGE = b"""<!doctype html><title>edges</title>
 <body style="margin:0;height:100vh;font:24px sans-serif">a page from edge to edge</body>"""
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
 PANE = (
     "(() => { const all = orden.pages.each().filter(([, one]) => one.sent && one.sent.visible);"
     " return all[0] ? all[0][1].sent.pane : null })()"
 )
-
 PEEKS = "!!document.querySelector('.column.peek')"
 BAR = "!!document.querySelector('.bar.shown[data-covers]')"
-
 def moved_to(x: float, y: float) -> None:
     x, y = round(x), round(y)
     if sys.platform == "win32":
         import ctypes
-
         ctypes.WinDLL("user32", use_last_error=True).SetCursorPos(x, y)
     else:
         import Quartz
-
         made = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, (x, y), Quartz.kCGMouseButtonLeft)
         Quartz.CGEventPost(Quartz.kCGHIDEventTap, made)
-
 def screen(inner: dict[str, float], x: float, y: float) -> tuple[float, float]:
     if sys.platform == "darwin":
         return inner["x"] / inner["scale"] + x, inner["y"] / inner["scale"] + y
     return inner["x"] + x * inner["ratio"], inner["y"] + y * inner["ratio"]
-
 def glided(app: App, pid: int, path: list[tuple[float, float]]) -> None:
     forward(app, pid)
     time.sleep(0.5)
@@ -63,10 +52,8 @@ def glided(app: App, pid: int, path: list[tuple[float, float]]) -> None:
     for x, y in path:
         moved_to(*screen(inner, x, y))
         time.sleep(0.12)
-
 def toward(start: tuple[float, float], end: tuple[float, float], steps: int = 8) -> list[tuple[float, float]]:
     return [(start[0] + (end[0] - start[0]) * one / steps, start[1] + (end[1] - start[1]) * one / steps) for one in range(steps + 1)]
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -74,11 +61,9 @@ def main() -> int:
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
-
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/edges"
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -96,7 +81,6 @@ def main() -> int:
         app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         if app.until(PANE, 40) is None:
             raise SystemExit("the page was never shown")
-
         app.eval("if (orden.workspace.panel) orden.workspace.toggleSidebar('left'); return true")
         pane = app.until(f"(() => {{ const pane = {PANE}; return pane && pane.x < 1 ? pane : null }})()")
         if pane is None:
@@ -113,7 +97,6 @@ def main() -> int:
             wrong.append("the pointer at the left edge over a web page did not bring the shut sidebar out")
         glided(app, process.pid, toward((1, middle[1]), middle))
         time.sleep(1)
-
         app.eval("orden.workspace.panes.fills = orden.workspace.panes.focusedId; return true")
         if app.until("!!document.querySelector('.bar[data-covers]')") is not True:
             raise SystemExit("the page never filled the window")
@@ -133,10 +116,8 @@ def main() -> int:
         ended(process)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

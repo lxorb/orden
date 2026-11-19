@@ -9,28 +9,21 @@ use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
 const SCRIPT: &str = include_str!("kept.js");
-
 const EMPTY: &str = "/* kept */ { values: {}, gone: [] }";
-
 pub(crate) const FOLDER: &str = "kept";
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 enum Said {
     Value(String),
     Gone,
 }
-
 struct Write {
     folder: PathBuf,
     key: String,
     said: Said,
 }
-
 static WRITER: OnceLock<Mutex<Sender<Write>>> = OnceLock::new();
-
 static READ: Mutex<Option<Kept>> = Mutex::new(None);
-
 fn kept_writer() -> &'static Mutex<Sender<Write>> {
     WRITER.get_or_init(|| {
         let (sending, writes) = channel::<Write>();
@@ -44,7 +37,6 @@ fn kept_writer() -> &'static Mutex<Sender<Write>> {
         Mutex::new(sending)
     })
 }
-
 fn kept_file(folder: &Path, key: &str) -> PathBuf {
     let mut name = String::with_capacity(key.len() * 2);
     for byte in key.bytes() {
@@ -52,7 +44,6 @@ fn kept_file(folder: &Path, key: &str) -> PathBuf {
     }
     folder.join(name)
 }
-
 fn kept_key(name: &str) -> Option<String> {
     if !name.len().is_multiple_of(2) || name.is_empty() {
         return None;
@@ -63,17 +54,14 @@ fn kept_key(name: &str) -> Option<String> {
         .collect();
     String::from_utf8(bytes?).ok()
 }
-
 fn write_down(one: &Write) -> Result<(), String> {
     orden_base::paths::made(&one.folder)?;
     let bytes = serde_json::to_vec(&one.said).map_err(|error| error.to_string())?;
     orden_base::paths::write_atomically(&kept_file(&one.folder, &one.key), &bytes)
 }
-
 fn kept_folder(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(orden_base::paths::config_dir(app)?.join(FOLDER))
 }
-
 fn to_writer(app: &AppHandle, key: String, said: Said) -> Result<(), String> {
     let folder = kept_folder(app)?;
     kept_writer()
@@ -82,17 +70,14 @@ fn to_writer(app: &AppHandle, key: String, said: Said) -> Result<(), String> {
         .send(Write { folder, key, said })
         .map_err(|_| "the writer is gone".to_string())
 }
-
 #[tauri::command]
 pub fn kept_write(app: AppHandle, key: String, value: String) -> Result<(), String> {
     to_writer(&app, key, Said::Value(value))
 }
-
 #[tauri::command]
 pub fn kept_forget(app: AppHandle, key: String) -> Result<(), String> {
     to_writer(&app, key, Said::Gone)
 }
-
 pub(crate) fn keep_unless_said(folder: &Path, key: &str, value: String) -> Result<(), String> {
     if key.is_empty() || kept_file(folder, key).exists() {
         return Ok(());
@@ -103,7 +88,6 @@ pub(crate) fn keep_unless_said(folder: &Path, key: &str, value: String) -> Resul
         said: Said::Value(value),
     })
 }
-
 #[cfg(test)]
 pub(crate) fn forget_now(folder: &Path, key: &str) -> Result<(), String> {
     write_down(&Write {
@@ -112,13 +96,11 @@ pub(crate) fn forget_now(folder: &Path, key: &str) -> Result<(), String> {
         said: Said::Gone,
     })
 }
-
 #[derive(Serialize, Default, Debug, PartialEq, Eq)]
 pub(crate) struct Kept {
     pub(crate) values: BTreeMap<String, String>,
     gone: Vec<String>,
 }
-
 pub(crate) fn read_back(folder: &Path) -> Kept {
     let mut kept = Kept::default();
     let Ok(entries) = std::fs::read_dir(folder) else {
@@ -141,25 +123,21 @@ pub(crate) fn read_back(folder: &Path) -> Kept {
     }
     kept
 }
-
 pub fn read_kept(app: &AppHandle) {
     let kept = kept_folder(app)
         .map(|folder| read_back(&folder))
         .unwrap_or_default();
     *READ.held() = Some(kept);
 }
-
 pub fn kept_script() -> String {
     kept_script_of(READ.held().take().unwrap_or_default())
 }
-
 pub(crate) fn kept_script_of(kept: Kept) -> String {
     let json = serde_json::to_string(&kept)
         .unwrap_or_else(|_| r#"{"values":{},"gone":[]}"#.to_string())
         .replace('<', "\\u003c");
     SCRIPT.replace(EMPTY, &json)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{kept_file, kept_key, read_back, write_down, Kept, Said, Write, EMPTY, SCRIPT};
@@ -183,7 +161,6 @@ mod tests {
         assert_eq!(kept_key("zz"), None);
         assert_eq!(kept_key("abc"), None);
     }
-
     #[test]
     fn what_was_written_and_taken_away_is_read_back() {
         let folder = std::env::temp_dir().join(format!("orden-kept-{}", std::process::id()));
@@ -218,7 +195,6 @@ mod tests {
         assert_eq!(kept.gone, vec!["orden:old".to_string()]);
         let _ = std::fs::remove_dir_all(&folder);
     }
-
     #[test]
     fn the_script_puts_back_and_follows() {
         assert!(SCRIPT.contains(EMPTY));

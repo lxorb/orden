@@ -9,15 +9,12 @@ function flaky<T>(value: T, failures: number) {
   )
   return load
 }
-
 beforeEach(() => {
   vi.useFakeTimers()
 })
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 describe('a door', () => {
   test('fetches once however many ask', async () => {
     const load = flaky('palette', 0)
@@ -27,7 +24,6 @@ describe('a door', () => {
     expect([first, second]).toEqual(['palette', 'palette'])
     expect(load).toHaveBeenCalledTimes(1)
   })
-
   test('tries a second time before it gives up', async () => {
     const load = flaky('palette', 1)
     const asked = door(load)()
@@ -35,7 +31,6 @@ describe('a door', () => {
     await expect(asked).resolves.toBe('palette')
     expect(load).toHaveBeenCalledTimes(2)
   })
-
   test('forgets a fetch that failed twice, so the next ask fetches again', async () => {
     const load = flaky('palette', 2)
     const open = door(load)
@@ -47,7 +42,6 @@ describe('a door', () => {
     await expect(open()).resolves.toBe('palette')
     expect(load).toHaveBeenCalledTimes(3)
   })
-
   test('keeps what arrived: a success is never fetched again', async () => {
     const load = flaky('palette', 1)
     const open = door(load)
@@ -57,7 +51,6 @@ describe('a door', () => {
     await open()
     expect(load).toHaveBeenCalledTimes(2)
   })
-
   test('takes a load that throws before it has a promise as a failed one', async () => {
     let calls = 0
     const open = door(() => {

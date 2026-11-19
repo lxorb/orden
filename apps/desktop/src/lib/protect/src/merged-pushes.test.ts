@@ -2,18 +2,15 @@ import { expect, test, vi } from 'vitest'
 import '../test/storage'
 
 type Ways = Record<string, string>
-
 const server = vi.hoisted(() => ({
   held: {},
   puts: [] as { body: { protected: Ways; base?: Ways }; land: () => void }[],
 }))
-
 const merged = (held: Ways, base: Ways, sent: Ways) => {
   const out = Object.fromEntries(Object.entries(held).filter(([key]) => !(key in base) || key in sent))
   for (const [key, way] of Object.entries(sent)) if (base[key] !== way) out[key] = way
   return out
 }
-
 vi.mock('../../accounts/src/api', () => ({
   account: { token: 'token', user: { id: 'u1' } },
   request: (_path: string, options: { method?: string; body?: unknown } = {}) => {
@@ -32,21 +29,17 @@ vi.mock('../../accounts/src/api', () => ({
     return Promise.resolve({ password: null, spaces: { s1: server.held } })
   },
 }))
-
 vi.mock('@orden/contracts', async (original) => ({
   ...(await original<typeof import('@orden/contracts')>()),
   syncStore: () => ({ remoteIdFor: () => 's1' }),
 }))
-
 const { protection } = await import('./protection.svelte')
 const { pulled } = await import('./synced')
-
 const ROOT = '/space'
 const PAIRS = [{ root: ROOT, spaceId: 's1' }]
 const settle = async () => {
   for (let i = 0; i < 20; i++) await new Promise((go) => setTimeout(go, 0))
 }
-
 test('a lock another device added stays when this device changes its locks while a push is out', async () => {
   await pulled('token', 'u1', PAIRS)
   await settle()

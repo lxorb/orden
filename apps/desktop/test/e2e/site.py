@@ -7,7 +7,6 @@ import urllib.request
 import uuid
 from pathlib import Path
 from xml.etree import ElementTree
-
 import harness
 from harness import Drive
 
@@ -15,14 +14,11 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 BLOG_ROOT = "localhost"
 BLOG_HOST = f"field.{BLOG_ROOT}"
 BLOG = f"http://{BLOG_HOST}:{harness.worker_port()}"
-
 EMAIL = "site-drive@example.com"
 PASSWORD = "the quiet part"
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -31,7 +27,6 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 NOTES = {
     "Public/One.md": (
         "---\norder: 1\ntags:\n  - fieldwork\n---\n\n# One\n\n"
@@ -58,21 +53,15 @@ NOTES = {
         "  - * Your name\n  - Your email: email\n  - What you want to say: lines\n```\n"
     ),
 }
-
 request = functools.partial(harness.request, refused=True)
-
 class Answer:
-
     def __init__(self, status: int, text: str, headers) -> None:
         self.status = status
         self.text = text
         self.headers = headers
-
 class Straight(urllib.request.HTTPRedirectHandler):
-
     def redirect_request(self, *_args):
         return None
-
 def site(
     path: str,
     data: bytes | None = None,
@@ -85,28 +74,22 @@ def site(
         ask.add_header("content-type", "application/x-www-form-urlencoded")
     if cookie:
         ask.add_header("cookie", cookie)
-
     if opener is None and not follow:
         opener = urllib.request.build_opener(Straight)
-
     open_it = opener.open if opener else urllib.request.urlopen
     try:
         with open_it(ask, timeout=30) as answer:
             return Answer(answer.status, answer.read().decode("utf-8", "replace"), answer.headers)
     except urllib.error.HTTPError as refused:
         return Answer(refused.code, refused.read().decode("utf-8", "replace"), refused.headers)
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"BLOG_ROOT": BLOG_ROOT})
-
     def account(self) -> str:  # type: ignore[override]
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
-
         self.sql(
             f"insert into users (id, email, name, created_at)"
             f" values ('{user}', '{EMAIL}', 'Ada Lovelace', {now});"
@@ -114,14 +97,11 @@ class Worker(harness.Worker):
             f" last_used_at) values ('{digest}', '{user}', {now}, {now + 86400000},"
             f" '{uuid.uuid4().hex[:16]}', 'the drive', {now});"
         )
-
         return token
-
 ERASE = """async () => {
   const ws = window.ordenApp.workspace
   for (const one of [...ws.spaces]) await ws.deleteSpace(one.id)
 }"""
-
 def opened(browser, name: str, width: int, height: int, agent: str, finger: bool, token: str):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -137,23 +117,18 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=60000)
     page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=60000)
-
     page.evaluate(ERASE)
     page.wait_for_function("() => window.ordenApp.workspace.spaces.length === 0", timeout=60000)
     page.evaluate("(token) => localStorage.setItem('orden:session', token)", token)
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=60000)
     page.wait_for_function("() => !!window.ordenApp.account.user", timeout=60000)
-
     return context, page
-
 def sheet(browser, out: Path, token: str, name: str, width, height, agent, finger) -> None:
     context, page = opened(browser, name, width, height, agent, finger, token)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(out / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
-
     try:
         page.wait_for_function(
             f"() => window.ordenApp.workspace.notes.length >= {len(NOTES)}", timeout=60000
@@ -168,19 +143,15 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
         raise
     space = page.evaluate("() => window.ordenApp.workspace.spaces[0]")
     say(f"[{name}] the device holds {space['name']} with its notes")
-
     page.evaluate("() => window.ordenApp.publish.show(window.ordenApp.workspace.spaces[0])")
     page.wait_for_timeout(600)
     page.evaluate("() => (window.ordenApp.publish.confirmed = true)")
     page.evaluate("() => window.ordenApp.publish.typeSubdomain('field')")
-
     page.evaluate("() => window.ordenApp.publish.rule('exclude', 'Drafts', true)")
     page.evaluate("async () => await window.ordenApp.publish.askChanges()")
     page.wait_for_timeout(500)
-
     changes = page.evaluate("() => window.ordenApp.publish.changes")
     say(f"[{name}] the sheet says: {changes}")
-
     rows = page.evaluate(
         """() => [...document.querySelectorAll('.changed li')].map((one) => one.textContent.trim())"""
     )
@@ -189,7 +160,6 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     )
     say(f"[{name}] and shows {said} {rows}")
     shot("sheet")
-
     where = page.evaluate(
         """() => {
           const sheet = document.querySelector('[role=dialog]')
@@ -207,15 +177,12 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     say(f"[{name}] the Publish button sits at {where}")
     if not where or not where["inSheet"] or not where["inWindow"] or where["height"] < 20:
         say(f"FAILED: [{name}] the Publish button is not in view: {where}")
-
     page.evaluate("() => window.ordenApp.publish.description = 'Notes from the field.'")
     page.click("button.go")
     page.wait_for_timeout(2500)
-
     live = page.evaluate("() => window.ordenApp.publish.blog")
     say(f"[{name}] published: enabled={live['enabled']} at {live['subdomain']} rules={live['site']['rules']}")
     shot("published")
-
     drawn = []
     until = time.monotonic() + 40
     while time.monotonic() < until:
@@ -228,16 +195,13 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
         if drawn:
             break
         page.wait_for_timeout(500)
-
     say(f"[{name}] the app drew and sent {len(drawn)} pictures for its one diagram")
-
     for section in ["sync", "account"]:
         page.evaluate("() => window.ordenApp.publish.close()")
         page.evaluate(f"() => window.ordenApp.settings.show('{section}')")
         page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
-
         if finger:
             small = page.evaluate(
                 """() => {
@@ -253,14 +217,11 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
                 }"""
             )
             say(f"[{name}] {section}: {len(small)} targets under the floor {small[:4]}")
-
     context.close()
-
 def pages(worker: Worker, token: str, space: str) -> None:
     index = site("/")
     listed = sorted(set(re.findall(r"<span>([^<]+)</span>", index.text)))
     say(f"the index lists: {listed}")
-
     for path, wanted in [
         ("/public/one", 200),
         ("/public/two", 200),
@@ -272,11 +233,9 @@ def pages(worker: Worker, token: str, space: str) -> None:
     ]:
         answer = site(path)
         say(f"{path} answers {answer.status} (wanted {wanted})")
-
     head = site("/public/one").text
     for what in ['<meta name="description"', 'property="og:image"', 'rel="canonical"', 'rel="alternate"']:
         say(f"the head of /public/one has {what}: {what in head}")
-
     notes = request(f"/v1/spaces/{space}/changes?since=0", token).get("notes", [])
     moved = next((one for one in notes if one["path"] == "Moved.md"), None)
     if moved:
@@ -289,43 +248,34 @@ def pages(worker: Worker, token: str, space: str) -> None:
         was = site("/moved", follow=False)
         say(f"after the rename /moved answers {was.status} to {was.headers.get('location')}")
         say(f"and /moved-along answers {site('/moved-along').status}")
-
     feed = site("/feed.xml")
     order = [one for one in ["<title>Two</title>", "<title>One</title>"] if one in feed.text]
     say(f"the feed is {feed.headers.get('content-type')} and reads {order}")
     say(f"it carries the summaries: {'<summary>The second one.</summary>' in feed.text}")
-
     rss = site("/rss.xml")
     order = [one for one in ["<title>Two</title>", "<title>One</title>"] if one in rss.text]
     say(f"the RSS feed is {rss.headers.get('content-type')} and reads {order}")
     say(f"it carries the summaries: {'<description>The second one.</description>' in rss.text}")
-
     for what, said in (("the feed", feed.text), ("the RSS feed", rss.text)):
         try:
             ElementTree.fromstring(said)
             say(f"{what} parses as XML")
         except ElementTree.ParseError as why:
             say(f"{what} does NOT parse: {why}")
-
     one = site("/public/one")
     say(
         "a page names both feeds:"
         f" {'type=\"application/atom+xml\"' in one.text and 'href=\"/rss.xml\"' in one.text}"
     )
-
     sitemap = site("/sitemap.xml")
     say(f"the sitemap lists {sitemap.text.count('<loc>')} pages and no drafts: {'/drafts/' not in sitemap.text}")
     say(f"and both feeds: {'/feed.xml</loc>' in sitemap.text and '/rss.xml</loc>' in sitemap.text}")
-
     robots = site("/robots.txt")
     say(f"robots says: {robots.text.strip().splitlines()}")
-
     icon = site("/favicon.svg")
     say(f"the favicon is {icon.headers.get('content-type')}, {len(icon.text)} bytes")
-
 def furniture() -> None:
     one = site("/public/one")
-
     for what, wanted in [
         ("the search box", 'name="q"'),
         ("the theme button", 'class="theme"'),
@@ -338,22 +288,16 @@ def furniture() -> None:
         ("the site script", "/s/"),
     ]:
         say(f"a page carries {what}: {wanted in one.text}")
-
     say(f"the tree marks the page: {'aria-current' in one.text}")
     say(f"and opens the folder it is in: {'<details open><summary>Public' in one.text}")
-
     headings = re.findall(r'<a href="#([^"]+)"', one.text)
     say(f"the contents list: {headings[:4]}")
-
     linked = re.search(r'class="linked".*?</nav>', one.text, re.S)
     say(f"linked from: {sorted(set(re.findall(r'>([^<>]+)</a>', linked.group(0) if linked else '')))}")
-
     say(f"previous and next: {re.findall(r'class=.(before|after). href=.([^\"]+).', one.text)}")
-
     graph = site("/graph")
     nodes = re.findall(r'"name":"([^"]+)"', graph.text)
     say(f"the graph page names: {sorted(set(nodes))}")
-
 def searching() -> None:
     for query, what in [
         ("mycology", "a word two pages share"),
@@ -366,16 +310,13 @@ def searching() -> None:
         answer = site(f"/search?q={query}")
         found = re.findall(r'class="what">([^<]+)<', answer.text)
         say(f"{what} ({query}): {found}")
-
     say(f"a private note is never an answer: {'Three' not in site('/search?q=mycology').text}")
-
 def forms(token: str, space: str) -> None:
     page = site("/say-hello")
     action = re.search(r'action="/form/([^"]+)"', page.text)
     say(f"the form posts to the note that asked: {bool(action)}")
     if not action:
         return
-
     note = action.group(1)
     sent = site(
         f"/form/{note}",
@@ -384,27 +325,21 @@ def forms(token: str, space: str) -> None:
     )
     say(f"an answer lands: {sent.status} to {sent.headers.get('location')}")
     say(f"and the page says so: {'Thank you' in site(f'/say-hello?sent={note}').text}")
-
     refused = site(f"/form/{note}", data=b"your-email=ada%40example.com", follow=False)
     say(f"a question it needs is refused: {'wrong=' in (refused.headers.get('location') or '')}")
-
     held = request(f"/v1/spaces/{space}/answers", token)
     say(f"the account holds: {[row['answers'] for row in held.get('answers', [])]}")
-
 def diagrams() -> list[str]:
     page = site("/public/diagram")
     figure = re.search(r'<figure class="diagram"[^>]*>(.*?)</figure>', page.text, re.S)
     say(f"the page carries a figure rather than a fence: {bool(figure)}")
     say(f"and nothing is left as code: {'language-mermaid' not in page.text}")
-
     if not figure:
         return []
-
     inside = figure.group(1)
     sources = re.findall(r'src="([^"]+)"', inside)
     say(f"it names {len(sources)} pictures, for {re.findall(r'data-scheme="([^"]+)"', inside)}")
     say(f"with alt text: {re.findall(r'alt="([^"]*)"', inside)}")
-
     for src in sources:
         answer = site(src)
         say(
@@ -414,17 +349,13 @@ def diagrams() -> list[str]:
         say(f"  and is allowed: {answer.headers.get('content-security-policy')}")
         say(f"  it has a size of its own: {re.findall(r'<svg[^>]*?(width=\"[^\"]+\")', answer.text)}")
         say(f"  and no script in it: {'<script' not in answer.text}")
-
     policy = page.headers.get("content-security-policy") or ""
     allowed = "img-src 'self'" in policy
     say(f"and the policy lets the page show its own pictures: {allowed}")
-
     return sources
-
 def dressing(token: str, space: str) -> None:
     css = b"#write{--orden-drive:1}"
     digest = hashlib.sha256(css).hexdigest()
-
     put = urllib.request.Request(
         f"{ORIGIN}/v1/blobs/{digest}",
         data=css,
@@ -432,7 +363,6 @@ def dressing(token: str, space: str) -> None:
         headers={"authorization": f"Bearer {token}", "content-type": "text/css"},
     )
     harness.opened(put)
-
     request(
         f"/v1/spaces/{space}/files",
         token,
@@ -445,14 +375,12 @@ def dressing(token: str, space: str) -> None:
         {"analytics": {"url": "https://plausible.io/js/script.js", "domain": BLOG_HOST}},
         method="PUT",
     )
-
     one = site("/public/one")
     policy = one.headers.get("content-security-policy") or ""
     say(f"the author's own stylesheet is linked: {f'/i/{digest}.css' in one.text}")
     say(f"the counter is loaded: {'plausible.io/js/script.js' in one.text}")
     say(f"and named in the policy: {'https://plausible.io' in policy}")
     say(f"the scripts are the site's own: {'script-src ' in policy}")
-
 def drawn(browser, out: Path) -> None:
     context = browser.new_context(
         viewport={"width": 1000, "height": 900},
@@ -461,41 +389,32 @@ def drawn(browser, out: Path) -> None:
     )
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[drawn] page error: {error}"))
-
     asked: list[str] = []
     page.on("request", lambda one: asked.append(one.url))
-
     SHOWING = """() => [...document.querySelectorAll('.diagram img')].map((one) => ({
       scheme: one.dataset.scheme ?? 'both',
       shown: getComputedStyle(one).display !== 'none',
       width: one.naturalWidth,
       height: one.naturalHeight,
     }))"""
-
     for scheme in ["light", "dark"]:
         page.emulate_media(color_scheme=scheme)
         page.goto(f"{ORIGIN}/public/diagram", wait_until="load")
         page.wait_for_timeout(800)
-
         say(f"[drawn] with the system on {scheme}: {page.evaluate(SHOWING)}")
         page.screenshot(path=str(out / f"site-diagram-{scheme}.png"))
         say(f"shot site-diagram-{scheme}.png")
-
     page.click("button.theme")
     page.wait_for_timeout(300)
     while page.evaluate("() => document.documentElement.dataset.theme") != "light":
         page.click("button.theme")
         page.wait_for_timeout(300)
-
     say(f"[drawn] with the system on dark and the button on light: {page.evaluate(SHOWING)}")
     page.screenshot(path=str(out / "site-diagram-chosen.png"))
     say("shot site-diagram-chosen.png")
-
     elsewhere = sorted({one for one in asked if not one.startswith(ORIGIN)})
     say(f"[drawn] it asked {len(asked)} times, and nobody but this site: {elsewhere or 'nobody'}")
-
     context.close()
-
 def looking(browser, out: Path) -> None:
     for name, width, height, agent, finger in [
         ("site-desktop", 1440, 900, DESKTOP_AGENT, False),
@@ -513,10 +432,8 @@ def looking(browser, out: Path) -> None:
         page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
         page.goto(f"{ORIGIN}/public/one", wait_until="load")
         page.wait_for_timeout(1200)
-
         page.screenshot(path=str(out / f"{name}-page.png"))
         say(f"shot {name}-page.png")
-
         page.goto(f"{ORIGIN}/graph", wait_until="load")
         page.wait_for_timeout(2500)
         drawn = page.evaluate(
@@ -533,13 +450,11 @@ def looking(browser, out: Path) -> None:
         say(f"[{name}] the graph painted: {drawn}")
         page.screenshot(path=str(out / f"{name}-graph.png"))
         say(f"shot {name}-graph.png")
-
         page.goto(f"{ORIGIN}/", wait_until="load")
         page.wait_for_timeout(600)
         page.keyboard.press("/")
         focused = page.evaluate("() => document.activeElement?.getAttribute('name')")
         say(f"[{name}] slash focuses: {focused}")
-
         page.fill('input[name="q"]', "mycology")
         page.keyboard.press("Enter")
         page.wait_for_timeout(1200)
@@ -549,7 +464,6 @@ def looking(browser, out: Path) -> None:
         say(f"[{name}] searching for mycology found: {rows}")
         page.screenshot(path=str(out / f"{name}-search.png"))
         say(f"shot {name}-search.png")
-
         page.goto(f"{ORIGIN}/public/one", wait_until="load")
         page.wait_for_timeout(600)
         ground = "() => getComputedStyle(document.body).backgroundColor"
@@ -562,14 +476,12 @@ def looking(browser, out: Path) -> None:
         page.wait_for_timeout(400)
         chosen = page.evaluate(themed)
         first = page.evaluate(ground)
-
         page.click("button.theme")
         page.wait_for_timeout(400)
         say(f"[{name}] the theme button says: {chosen} then {page.evaluate(themed)}")
         say(f"[{name}] and the page turns: {was} -> {first} -> {page.evaluate(ground)}")
         page.screenshot(path=str(out / f"{name}-theme.png"))
         say(f"shot {name}-theme.png")
-
         if not finger:
             page.hover('.pages a[href="/public/two"]')
             page.wait_for_timeout(1400)
@@ -579,20 +491,15 @@ def looking(browser, out: Path) -> None:
             say(f"[{name}] the hover card shows: {card!r}")
             page.screenshot(path=str(out / f"{name}-hover.png"))
             say(f"shot {name}-hover.png")
-
         context.close()
-
 def password(worker: Worker, token: str, space: str) -> None:
     request(f"/v1/spaces/{space}/site", token, {"password": PASSWORD}, method="PUT")
-
     asked = site("/public/one")
     say(f"with a password set, the page answers {asked.status} with a form: {'type=\"password\"' in asked.text}")
     say(f"and nothing of the note: {'The first words of it' not in asked.text}")
     say(f"robots now says: {site('/robots.txt').text.strip().splitlines()}")
-
     wrong = site("/public/one", data=b"password=nope")
     say(f"a wrong word answers {wrong.status}: {'not the password' in wrong.text}")
-
     right = site(
         "/public/one",
         data=f"password={PASSWORD.replace(' ', '+')}".encode(),
@@ -600,18 +507,14 @@ def password(worker: Worker, token: str, space: str) -> None:
     )
     ticket = (right.headers.get("set-cookie") or "").split(";")[0]
     say(f"the right one answers {right.status} to {right.headers.get('location')}, holding {ticket[:14]}…")
-
     read = site("/public/one", cookie=ticket)
     say(f"behind it, the note: {'The first words of it' in read.text} ({read.status})")
-
     request(f"/v1/spaces/{space}/site", token, {"password": None}, method="PUT")
     say(f"with the password off, the page answers {site('/public/one').status} again")
-
 def main() -> int:
     worker = Worker()
     token = ""
     space = ""
-
     with DRIVE.session() as browser:
         worker.start()
         token = worker.account()
@@ -619,17 +522,14 @@ def main() -> int:
         space = made["space"]["id"]
         for path, content in NOTES.items():
             request(f"/v1/spaces/{space}/notes", token, {"path": path, "content": content})
-
         worker.sql(f"update spaces set icon = 'FileText' where id = '{space}';")
         say(f"the account holds {len(NOTES)} notes in Field notes, marked FileText")
-
         for one in [
             ("desktop", 1440, 900, DESKTOP_AGENT, False),
             ("phone", 390, 844, PHONE_AGENT, True),
         ]:
             say(f"--- the sheet, {one[0]} ---")
             sheet(browser, SHOTS, token, *one)
-
         worker.stop()
         worker.start(upstream=BLOG_HOST)
         say("--- what the hostname serves ---")
@@ -642,18 +542,12 @@ def main() -> int:
         forms(token, space)
         say("--- a diagram the app drew ---")
         diagrams()
-
         drawn(browser, SHOTS)
-
         say("--- the author's own dressing ---")
         dressing(token, space)
-
         say("--- the site in a browser ---")
         looking(browser, SHOTS)
-
         say("--- behind a password ---")
         password(worker, token, space)
-
     return DRIVE.verdict(f"shots in {SHOTS}")
-
 raise SystemExit(main())

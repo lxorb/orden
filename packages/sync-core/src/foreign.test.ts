@@ -26,7 +26,6 @@ describe('foreignCopy', () => {
   ])('%s is a %s copy of %s', (name, tool, original) => {
     expect(foreignCopy(name)).toEqual({ tool, original })
   })
-
   test.each([
     'Plan.md',
     'Plan (1).md',
@@ -60,11 +59,9 @@ describe('foreignCopy', () => {
   ])('%s is somebody’s own', (name) => {
     expect(foreignCopy(name)).toBeNull()
   })
-
   test('a name of words, digits and brackets is never taken for one', () => {
     fc.assert(fc.property(fc.stringMatching(/^[A-Za-z0-9 ()'\-_.]{1,40}$/), (name) => foreignCopy(name) === null))
   })
-
   test('the original is the name without the mark, whatever was around it', () => {
     fc.assert(
       fc.property(
@@ -78,14 +75,12 @@ describe('foreignCopy', () => {
     )
   })
 })
-
 describe('inForeignCopy', () => {
   test('a copy, or anything inside one, either separator', () => {
     expect(inForeignCopy('Work/Plan (# Name clash 2026-10-05 a1b2c3C #).md')).toBe(true)
     expect(inForeignCopy('Work (# Name clash 2026-10-05 a1b2c3C #)/Plan.md')).toBe(true)
     expect(inForeignCopy('C:\\Orden\\Work (# Name clash 2026-10-05 a1b2c3C #)\\Plan.md')).toBe(true)
   })
-
   test('a note of somebody’s own, at any depth', () => {
     expect(inForeignCopy('Work/Plan (1)/Plan 2.md')).toBe(false)
     expect(inForeignCopy('')).toBe(false)

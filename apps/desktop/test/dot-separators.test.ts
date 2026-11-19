@@ -5,13 +5,10 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url))
-
 const PLACES = ['apps/desktop/src/', 'packages/', 'services/sync/src/', 'services/machine/src/']
 const EXTENSIONS = ['.ts', '.svelte', '.css', '.html', '.js']
 const NOT_SHOWN = [/\.test\.ts$/, /\.fixture\.ts$/, /\/fixtures\//, /\/test\//, /\.d\.ts$/]
-
 const DOTS = /[\u00b7\u2022\u2219\u2027\u30fb\u22c5]|\\u00b7|\\u2022|&middot;|&bull;/iu
-
 const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
   {
     path: 'apps/desktop/src/lib/shortcuts/src/toolbar.svelte.ts',
@@ -90,7 +87,6 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'words written for AI agents, never shown in the app',
   },
 ]
-
 function sources(): string[] {
   const listed = execFileSync('git', ['ls-files', '-c', '-o', '--exclude-standard', '-z'], {
     cwd: ROOT,
@@ -104,21 +100,18 @@ function sources(): string[] {
     .filter((path) => !NOT_SHOWN.some((pattern) => pattern.test(path)))
     .filter((path) => existsSync(join(ROOT, path)))
 }
-
 describe('pieces of text are set apart by layout', () => {
   const found = sources().flatMap((path) =>
     readFileSync(join(ROOT, path), 'utf8')
       .split('\n')
       .flatMap((line, at) => (DOTS.test(line) ? [{ path, line, at: at + 1 }] : [])),
   )
-
   test('never by a middle dot or a bullet', () => {
     const wrong = found
       .filter(({ path, line }) => !ALLOWED.some((one) => one.path === path && line.includes(one.holds)))
       .map(({ path, line, at }) => `${path}:${String(at)}: ${line.trim()}`)
     expect(wrong).toEqual([])
   })
-
   test('each allowed dot is still there', () => {
     const stale = ALLOWED.filter(
       (one) => !found.some(({ path, line }) => one.path === path && line.includes(one.holds)),

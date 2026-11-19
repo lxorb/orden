@@ -1,12 +1,9 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for, shot = DRIVE.say, DRIVE.wrong, DRIVE.wait_for, DRIVE.shot
-
 DOC = "# Kestrel\n\nA kestrel hangs on the wind, **still** above the field.\n\n- one\n- two\n"
-
 EACH = [
     ("docx", False, (".docx",)),
     ("rtf", False, (".rtf",)),
@@ -20,7 +17,6 @@ EACH = [
     ("png", False, (".png",)),
     ("jpg", False, (".jpg", ".jpeg")),
 ]
-
 def the_picker(page: Page) -> None:
     DRIVE.pick_export(page, "pdf")
     shelves = page.evaluate(
@@ -45,7 +41,6 @@ def the_picker(page: Page) -> None:
     shot(page, "picker")
     page.keyboard.press("Escape")
     page.wait_for_selector('[role="dialog"] .tile', state="detached")
-
 def printed_pdf(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -69,7 +64,6 @@ def printed_pdf(page: Page) -> None:
     say("pdf: the note went to the print sheet that saves a PDF")
     page.wait_for_timeout(1500)
     page.locator(".cm-content").first.click()
-
 def each_format(page: Page) -> None:
     printed_pdf(page)
     for format, option, endings in EACH:
@@ -84,7 +78,6 @@ def each_format(page: Page) -> None:
         if size < 20:
             wrong(f"{format}: only {size} bytes")
         page.wait_for_timeout(300)
-
 def remembered(page: Page) -> None:
     DRIVE.pick_export(page, "png")
     page.locator('[role="dialog"]').press("Escape")
@@ -105,7 +98,6 @@ def remembered(page: Page) -> None:
     if first["tile"] != "jpg" or first["on"] != "jpg":
         wrong(f"the last format is not shown first: {first}")
     page.keyboard.press("Escape")
-
 def no_palette_rows(page: Page) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector(".palette input")
@@ -118,7 +110,6 @@ def no_palette_rows(page: Page) -> None:
     if not rows or not rows[0].startswith("Export…"):
         wrong("Export… is not the first row for pdf")
     page.keyboard.press("Escape")
-
 def settings_export(page: Page) -> None:
     page.evaluate("() => window.ordenApp.settings.show('export')")
     page.wait_for_timeout(600)
@@ -136,7 +127,6 @@ def settings_export(page: Page) -> None:
         wrong("Settings still has the This note section")
     if any(one.startswith("Export as") for one in seen["actions"]):
         wrong(f"Settings still exports the note: {seen['actions']}")
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         context = DRIVE.context(browser, color_scheme=scheme, viewport={"width": 1200, "height": 820})
@@ -151,5 +141,4 @@ def drive(browser: Browser) -> None:
             no_palette_rows(page)
             settings_export(page)
         context.close()
-
 raise SystemExit(DRIVE.run(drive, "Export… picks every format from one picker"))

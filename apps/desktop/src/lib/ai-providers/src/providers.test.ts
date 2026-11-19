@@ -5,7 +5,6 @@ import { reachable, transcribes, troubleIn, usable } from './providers'
 
 const claude: Provider = { id: 'anthropic', kind: 'anthropic', name: '', model: 'claude-test' }
 const openai: Provider = { id: 'openai', kind: 'openai', name: '', model: 'gpt-test' }
-
 const local = (baseUrl: string, model = 'llama'): Provider => ({
   id: 'compatible-1',
   kind: 'compatible',
@@ -13,13 +12,11 @@ const local = (baseUrl: string, model = 'llama'): Provider => ({
   baseUrl,
   model,
 })
-
 describe('where a provider lives', () => {
   test('the two fixed kinds know their own address', () => {
     expect(apiRoot(claude)).toBe('https://api.anthropic.com/v1')
     expect(apiRoot(openai)).toBe('https://api.openai.com/v1')
   })
-
   test('a typed address gets exactly one /v1', () => {
     for (const typed of [
       'http://localhost:11434',
@@ -31,29 +28,24 @@ describe('where a provider lives', () => {
       expect(apiRoot(local(typed)), typed).toBe('http://localhost:11434/v1')
     }
   })
-
   test('a version the server numbered itself is left alone', () => {
     expect(apiRoot(local('https://gateway.example/v2'))).toBe('https://gateway.example/v2')
   })
-
   test('every way of writing this machine becomes the one the policy allows', () => {
     expect(apiRoot(local('http://127.0.0.1:11434'))).toBe('http://localhost:11434/v1')
     expect(apiRoot(local('http://127.0.0.1:11434/v1'))).toBe('http://localhost:11434/v1')
     expect(apiRoot(local('http://[::1]:1234'))).toBe('http://localhost:1234/v1')
     expect(apiRoot(local('HTTP://127.0.0.1:1234'))).toBe('http://localhost:1234/v1')
   })
-
   test('leaves an address that only begins like one alone', () => {
     expect(apiRoot(local('http://127.0.0.100:80'))).toBe('http://127.0.0.100:80/v1')
     expect(apiRoot(local('https://127.0.0.1:8443'))).toBe('https://127.0.0.1:8443/v1')
   })
-
   test('no address is no provider', () => {
     expect(apiRoot(local(''))).toBe('')
     expect(apiRoot(local('   '))).toBe('')
   })
 })
-
 describe('whether a provider can be asked', () => {
   test('needs an address and a model', () => {
     expect(usable(claude)).toBe(true)
@@ -62,7 +54,6 @@ describe('whether a provider can be asked', () => {
     expect(usable(local(''))).toBe(false)
   })
 })
-
 describe('whether there is any point asking for the models', () => {
   test('the hosted two want a key first', () => {
     expect(reachable(claude, false)).toBe(false)
@@ -70,26 +61,22 @@ describe('whether there is any point asking for the models', () => {
     expect(reachable(claude, true)).toBe(true)
     expect(reachable(openai, true)).toBe(true)
   })
-
   test('a model on this machine wants an address and nothing else', () => {
     expect(reachable(local('http://localhost:11434'), false)).toBe(true)
     expect(reachable(local(''), true)).toBe(false)
   })
 })
-
 describe('the two addresses a provider answers on', () => {
   test('Anthropic has messages and the others have completions', () => {
     expect(askUrl(claude)).toBe('https://api.anthropic.com/v1/messages')
     expect(askUrl(openai)).toBe('https://api.openai.com/v1/chat/completions')
     expect(askUrl(local('http://localhost:1234'))).toBe('http://localhost:1234/v1/chat/completions')
   })
-
   test('the model list is in the same place for all three', () => {
     expect(modelsUrl(openai)).toBe('https://api.openai.com/v1/models')
     expect(modelsUrl(local('http://localhost:1234'))).toBe('http://localhost:1234/v1/models')
   })
 })
-
 describe('what a request carries', () => {
   test('Anthropic wants its own header, its version and the browser opt-in', () => {
     const headers = headersFor(claude, 'sk-ant-x')
@@ -98,23 +85,19 @@ describe('what a request carries', () => {
     expect(headers['anthropic-dangerous-direct-browser-access']).toBe('true')
     expect(headers.authorization).toBeUndefined()
   })
-
   test('OpenAI wants a bearer token', () => {
     expect(headersFor(openai, 'sk-x').authorization).toBe('Bearer sk-x')
   })
-
   test('a local model with no key gets no authorisation header at all', () => {
     expect(headersFor(local('http://localhost:11434'), '')).not.toHaveProperty('authorization')
   })
 })
-
 describe('the body one question is asked with', () => {
   const messages: Message[] = [
     { role: 'system', content: 'Be brief.' },
     { role: 'system', content: 'The note says herons.' },
     { role: 'user', content: 'Why?' },
   ]
-
   test('Anthropic keeps the system prompt out of the conversation', () => {
     const body = JSON.parse(bodyFor(claude, messages, true)) as Record<string, unknown>
     expect(body.system).toBe('Be brief.\n\nThe note says herons.')
@@ -123,20 +106,17 @@ describe('the body one question is asked with', () => {
     expect(body.stream).toBe(true)
     expect(body.model).toBe('claude-test')
   })
-
   test('the OpenAI shape keeps it in', () => {
     const body = JSON.parse(bodyFor(openai, messages, false)) as Record<string, unknown>
     expect(body.messages).toEqual(messages)
     expect(body.stream).toBe(false)
     expect(body).not.toHaveProperty('system')
   })
-
   test('a question with no system prompt sends no empty one', () => {
     const body = JSON.parse(bodyFor(claude, [{ role: 'user', content: 'Hello' }], true)) as Record<string, unknown>
     expect(body).not.toHaveProperty('system')
   })
 })
-
 describe('the words one event carries', () => {
   test('Anthropic sends them as a typed delta', () => {
     expect(
@@ -146,12 +126,10 @@ describe('the words one event carries', () => {
       }),
     ).toBe('a')
   })
-
   test('the OpenAI shape sends them on a choice', () => {
     expect(deltaIn('openai', { choices: [{ delta: { content: 'b' } }] })).toBe('b')
     expect(deltaIn('compatible', { choices: [{ delta: { content: 'c' } }] })).toBe('c')
   })
-
   test('an event with no words in it carries none', () => {
     for (const event of [
       {},
@@ -168,13 +146,11 @@ describe('the words one event carries', () => {
     }
   })
 })
-
 describe('what a provider says went wrong', () => {
   test('reads the message out of either shape', () => {
     expect(troubleIn({ error: { message: 'no such model' } })).toBe('no such model')
     expect(troubleIn({ error: 'invalid_api_key' })).toBe('invalid_api_key')
   })
-
   test('finds no complaint in an ordinary answer', () => {
     expect(troubleIn({ choices: [] })).toBeNull()
     expect(troubleIn(null)).toBeNull()
@@ -182,19 +158,16 @@ describe('what a provider says went wrong', () => {
     expect(troubleIn({ error: { message: '' } })).toBeNull()
   })
 })
-
 describe('the models a provider listed', () => {
   test('are the ids, sorted, without repeats', () => {
     expect(modelsIn({ data: [{ id: 'b' }, { id: 'a' }, { id: 'b' }] })).toEqual(['a', 'b'])
   })
-
   test('are nothing at all when the answer is not a list of them', () => {
     for (const body of [null, {}, { data: 'nope' }, { data: [{}, { id: 5 }, { id: '' }] }]) {
       expect(modelsIn(body), JSON.stringify(body)).toEqual([])
     }
   })
 })
-
 describe('the model a provider starts on', () => {
   const OPENAI = [
     'babbage-002',
@@ -215,13 +188,11 @@ describe('the model a provider starts on', () => {
     'tts-1',
     'whisper-1',
   ]
-
   test('is OpenAI’s newest GPT, its full model, never babbage', () => {
     expect(firstModel('openai', OPENAI)).toBe('gpt-5.5')
     expect(firstModel('openai', ['babbage-002', 'gpt-5.4-mini', 'gpt-4.1'])).toBe('gpt-5.4-mini')
     expect(firstModel('openai', ['babbage-002', 'davinci-002', 'tts-1'])).toBeNull()
   })
-
   test('is Anthropic’s newest Sonnet, its alias before a dated one', () => {
     expect(
       firstModel('anthropic', [
@@ -233,7 +204,6 @@ describe('the model a provider starts on', () => {
       ]),
     ).toBe('claude-sonnet-5')
   })
-
   test('is Google’s newest Gemini that talks, Pro before Flash, stable before preview', () => {
     const listed = [
       'gemini-2.5-flash',
@@ -256,17 +226,14 @@ describe('the model a provider starts on', () => {
     expect(firstModel('gemini', ['gemini-3-flash', 'gemini-3-pro-preview', 'gemini-3-pro'])).toBe('gemini-3-pro')
     expect(firstModel('gemini', ['gemini-embedding-2', 'imagen-4.0-generate'])).toBeNull()
   })
-
   test('is another server’s first, Orden knowing nothing of its names', () => {
     expect(firstModel('compatible', ['llama3', 'babbage-like'])).toBe('llama3')
     expect(firstModel('compatible', [])).toBeNull()
   })
 })
-
 describe('the plans', () => {
   const plan: Provider = { id: 'chatgpt', kind: 'chatgpt', name: '', model: 'gpt-plan' }
   const program: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
-
   test('are offered on a desktop only, first, and Claude Code only where the build has it', () => {
     expect(offeredKinds(false, true)).toEqual(['anthropic', 'openai', 'gemini', 'compatible'])
     expect(offeredKinds(true, true).slice(0, 4)).toEqual(['claude-code', 'chatgpt', 'codex', 'gemini-cli'])
@@ -274,7 +241,6 @@ describe('the plans', () => {
     expect(isLocal('gemini')).toBe(false)
     expect(offeredKinds(true, false)).not.toContain('claude-code')
   })
-
   test('a ChatGPT plan is spent through the Responses API alone', () => {
     expect(askUrl(plan)).toBe('https://api.openai.com/v1/responses')
     expect(deltaIn('chatgpt', { type: 'response.output_text.delta', delta: 'hi' })).toBe('hi')
@@ -282,7 +248,6 @@ describe('the plans', () => {
     expect(troubleIn({ type: 'response.failed', response: { error: { message: 'no' } } })).toBe('no')
     expect(troubleIn({ type: 'error', message: 'rate limited' })).toBe('rate limited')
   })
-
   test('a plan’s catalogue offers the models meant to be listed, by their slugs', () => {
     expect(
       modelsIn({
@@ -294,7 +259,6 @@ describe('the plans', () => {
       }),
     ).toEqual(['gpt-a', 'gpt-b'])
   })
-
   test('a program on this machine has no address and hears nothing; no plan transcribes', () => {
     expect(isLocal('codex')).toBe(true)
     expect(isLocal('chatgpt')).toBe(false)
@@ -306,10 +270,8 @@ describe('the plans', () => {
     expect(transcribes(openai)).toBe(true)
   })
 })
-
 describe('a Gemini key', () => {
   const gemini: Provider = { id: 'gemini', kind: 'gemini', name: '', model: 'gemini-3-flash' }
-
   test('asks Google’s address with the key in its own header, streaming', () => {
     const root = 'https://generativelanguage.googleapis.com/v1beta'
     expect(apiRoot(gemini)).toBe(root)
@@ -322,7 +284,6 @@ describe('a Gemini key', () => {
     expect(reachable(gemini, false)).toBe(false)
     expect(transcribes(gemini)).toBe(false)
   })
-
   test('lists the models that answer by their names, not the ones that embed', () => {
     expect(
       modelsIn({
@@ -333,7 +294,6 @@ describe('a Gemini key', () => {
       }),
     ).toEqual(['gemini-3-flash'])
   })
-
   test('the words of an event are its parts’ text, never its thoughts', () => {
     const event = {
       candidates: [{ content: { parts: [{ text: 'hmm', thought: true }, { text: 'Herons' }] } }],
@@ -341,7 +301,6 @@ describe('a Gemini key', () => {
     expect(deltaIn('gemini', event)).toBe('Herons')
     expect(deltaIn('gemini', { candidates: [] })).toBe('')
   })
-
   test('the system goes apart and the answer is the model’s', () => {
     const asked: Message[] = [
       { role: 'system', content: 'Brief.' },
@@ -356,7 +315,6 @@ describe('a Gemini key', () => {
       ],
     })
   })
-
   test('a trouble said as a list is its first error’s words', () => {
     expect(troubleIn([{ error: { code: 429, message: 'Quota exceeded.' } }])).toBe('Quota exceeded.')
   })

@@ -4,15 +4,12 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
 const source = readFileSync(join(import.meta.dirname, '../../../../src-tauri/crates/agent-web/src/page.rs'), 'utf8')
-
 function constant(name: string): string {
   const found = new RegExp(`const ${name}: &str = r"([\\s\\S]*?)";`).exec(source)?.[1]
   if (found === undefined) throw new Error(`no ${name} in page.rs`)
   return found
 }
-
 const script = constant('FIELDS') + constant('FACTS_BODY')
-
 interface Said {
   tag: string
   default_button: string
@@ -27,7 +24,6 @@ interface Said {
   fields: { type: string; autocomplete: string; said: string }[]
   at: string[]
 }
-
 function page(html: string): Document {
   const { window } = new JSDOM(`<!doctype html><body>${html}`, { url: 'https://shop.example/a' })
   Object.defineProperty(window.HTMLElement.prototype, 'innerText', {
@@ -41,12 +37,10 @@ function page(html: string): Document {
   }
   return window.document
 }
-
 function factsOf(element: unknown, heard?: Element): Said {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
   return new Function('heard', script).call(element, heard) as Said
 }
-
 function maskedText(document: Document, hidden: number[]): string {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script under test is a string in the crate
   const run = new Function('document', 'hidden', constant('MASKED_TEXT')) as (
@@ -55,13 +49,11 @@ function maskedText(document: Document, hidden: number[]): string {
   ) => string
   return run(document, hidden)
 }
-
 function pressOn(document: Document): Said {
   const button = document.querySelector('button')
   if (!button) throw new Error('no button')
   return factsOf(button)
 }
-
 function rooted(document: Document, html: string, mode: 'open' | 'closed' = 'open'): ShadowRoot {
   const host = document.querySelector('#host')
   if (!host) throw new Error('no host')
@@ -69,7 +61,6 @@ function rooted(document: Document, html: string, mode: 'open' | 'closed' = 'ope
   root.innerHTML = html
   return root
 }
-
 describe('a button named by what is inside it', () => {
   test.each([
     ['a picture', '<button><img alt="Pay now" src="x.png"></button>'],
@@ -81,20 +72,17 @@ describe('a button named by what is inside it', () => {
   ])('%s', (_how, html) => {
     expect(pressOn(page(html)).name).toContain('Pay now')
   })
-
   test('its own words stand as they are', () => {
     expect(pressOn(page('<button>Continue</button>')).name).toBe('Continue')
     expect(pressOn(page('<button aria-label="Continue"><b>x</b></button>')).name).toBe('Continue')
   })
 })
-
 describe('a form with its fields in a shadow root', () => {
   test('a password in one is a field of the form', () => {
     const document = page('<form><div id="host"></div><button>Log in</button></form>')
     rooted(document, '<input type="password" name="pw">')
     expect(pressOn(document).fields.map((one) => one.type)).toContain('password')
   })
-
   test('a card in one, deeper down, is a field of the form', () => {
     const document = page('<form><div id="host"></div><button>Continue</button></form>')
     const root = rooted(document, '<div id="inner"></div>')
@@ -103,7 +91,6 @@ describe('a form with its fields in a shadow root', () => {
     if (deeper) deeper.innerHTML = '<input autocomplete="cc-number">'
     expect(pressOn(document).fields.map((one) => one.autocomplete)).toContain('cc-number')
   })
-
   test('a button in one is still in the form around its host', () => {
     const document = page('<form><input type="password"><div id="host"></div></form>')
     const root = rooted(document, '<button>Log in</button>')
@@ -113,32 +100,27 @@ describe('a form with its fields in a shadow root', () => {
     expect(facts.in_form).toBe(true)
     expect(facts.fields.map((one) => one.type)).toContain('password')
   })
-
   test('with no form, the page has them', () => {
     const document = page('<div id="host"></div><button>Send</button>')
     rooted(document, '<textarea name="message"></textarea>')
     expect(pressOn(document).fields.map((one) => one.type)).toContain('textarea')
   })
-
   test('a field outside the form stays out of it', () => {
     const document = page('<div id="host"></div><form><input name="q"><button>Search</button></form>')
     rooted(document, '<input type="password">')
     expect(pressOn(document).fields.map((one) => one.type)).not.toContain('password')
   })
 })
-
 describe('where an element is', () => {
   test('its document says, for the frame it is in', () => {
     expect(pressOn(page('<button>Go</button>')).at[0]).toBe('https://shop.example/a')
   })
 })
-
 function hit(html: string, at = '#hit'): Said {
   const element = page(html).querySelector(at)
   if (!element) throw new Error(`no ${at}`)
   return factsOf(element)
 }
-
 describe('what is no control is not named by all it holds', () => {
   test('a column of cards', () => {
     const facts = hit(
@@ -149,7 +131,6 @@ describe('what is no control is not named by all it holds', () => {
     expect(facts.name).not.toContain('Pay')
     expect(facts.name).not.toContain('Buy')
   })
-
   test('a mail row with an icon labelled Delete', () => {
     for (const icon of [
       '<button aria-label="Delete"></button>',
@@ -161,12 +142,10 @@ describe('what is no control is not named by all it holds', () => {
       expect(facts.name, icon).toContain('Lunch')
     }
   })
-
   test('a long stretch of words is no name', () => {
     const words = 'Pay attention to this long paragraph of writing about nothing much at all, please'
     expect(hit(`<div id="p">${words}</div>`, '#p').name).toBe('')
   })
-
   test.each([
     ['its own words', '<div id="x" onclick="pay()">Pay now</div>'],
     ['a span in it', '<div id="x"><span>Pay now</span></div>'],
@@ -176,7 +155,6 @@ describe('what is no control is not named by all it holds', () => {
   ])('and the true asks stay: %s', (_how, html) => {
     expect(hit(html, '#x').name).toContain('Pay now')
   })
-
   test('a control says it is one', () => {
     for (const html of [
       '<button id="x">a</button>',
@@ -187,13 +165,11 @@ describe('what is no control is not named by all it holds', () => {
     }
     expect(hit('<div id="x">a</div>', '#x').control).toBe(false)
   })
-
   test('a link around a picture is a link', () => {
     const facts = hit('<a id="x" href="/h"><img alt="How to delete things"></a>', '#x')
     expect(facts.link).toBe(true)
   })
 })
-
 describe('a name from round a shadow root', () => {
   test('the inner button of a host with a label', () => {
     const document = page('<div id="host" aria-label="Pay now"></div>')
@@ -201,7 +177,6 @@ describe('a name from round a shadow root', () => {
     if (!button) throw new Error('no button')
     expect(factsOf(button).name).toContain('Pay now')
   })
-
   test('aria-labelledby inside the root', () => {
     const document = page('<div id="host"></div>')
     const button = rooted(document, '<span id="n">Pay now</span><button aria-labelledby="n"></button>').querySelector(
@@ -211,7 +186,6 @@ describe('a name from round a shadow root', () => {
     expect(factsOf(button).name).toContain('Pay now')
   })
 })
-
 describe('a huge page', () => {
   test('is walked only so far', () => {
     const document = page('<div id="x">a</div><button>Go</button>')
@@ -224,7 +198,6 @@ describe('a huge page', () => {
     expect(facts as unknown as { cut: boolean }).toMatchObject({ cut: true })
   })
 })
-
 describe('a press no control holds goes to what acts for it', () => {
   test.each([
     ['a handler', '<div onclick="pay()"><div>Pay now</div><div id=hit>20.00 EUR</div></div>'],
@@ -238,7 +211,6 @@ describe('a press no control holds goes to what acts for it', () => {
     expect(facts.name).toContain('EUR')
     expect(facts.control).toBe(false)
   })
-
   test('a listener only the engine can see', () => {
     const document = page('<div id=round><div>Pay now</div><div id=hit>20.00 EUR</div></div>')
     const facts = factsOf(document.querySelector('#hit')!, document.querySelector('#round')!)
@@ -246,15 +218,12 @@ describe('a press no control holds goes to what acts for it', () => {
     expect(facts.name).toBe('20.00 EUR')
     expect(factsOf(document.querySelector('#hit')!).held).toEqual([])
   })
-
   test('a label on it', () => {
     expect(hit('<div onclick="pay()" aria-label="Pay now"><div id=hit>20 EUR</div></div>').name).toContain('Pay now')
   })
-
   test('the words of one', () => {
     expect(hit('<div onclick="go()"><div>Pay now</div><span id=hit></span></div>').held).toContain('Pay now')
   })
-
   test.each([
     [
       'a row is not called what its button is',
@@ -281,26 +250,22 @@ describe('a press no control holds goes to what acts for it', () => {
   ])('%s', (_, html, name) => {
     expect(hit(html).name).toBe(name)
   })
-
   test('a field and a control are their own', () => {
     expect(hit('<div onclick="go()"><input id=hit aria-label="Qty"><b>Delete</b></div>').name).toBe('Qty')
     expect(hit('<div onclick="pay()"><b>Pay</b><button id=hit>Details</button></div>').name).toBe('Details')
   })
-
   test('words of a label press its button', () => {
     const facts = hit('<form><label><span id=hit>Confirm</span> <button>Pay now</button></label></form>')
     expect(facts.name).toContain('Pay now')
     expect(facts.control).toBe(true)
     expect(facts.submit).toBe(true)
   })
-
   test('a link keeps going where it goes', () => {
     const facts = hit('<a id=hit href="/guide">Delete account</a>')
     expect(facts.link).toBe(true)
     expect(facts.control).toBe(true)
   })
 })
-
 describe('what a press lands on that is no element', () => {
   test('a pseudo-element is the element it hangs on', () => {
     const button = page('<button>Pay now</button>').querySelector('button')
@@ -311,42 +276,35 @@ describe('what a press lands on that is no element', () => {
     }
     expect(factsOf(new Pseudo()).name).toBe('Pay now')
   })
-
   test('so is a shadow root, and a document its root', () => {
     const document = page('<div id="host"></div>')
     const root = rooted(document, '<button>Pay now</button>')
     expect(factsOf(root).tag).toBe('div')
     expect(factsOf(document).tag).toBe('html')
   })
-
   test('what is nothing says nothing, for the crate to ask about', () => {
     expect(factsOf({})).toEqual({})
   })
 })
-
 describe('what acts for a press, by its first line', () => {
   test('a long part under a short first line', () => {
     const terms = 'Your plan renews automatically every month until you cancel it in your account'
     const facts = hit(`<div onclick="pay()"><div>Pay now</div><div id=hit>${terms}</div></div>`)
     expect(facts.held).toContain('Pay now')
   })
-
   test('a price goes before it', () => {
     expect(hit('<div onclick="pay()"><div id=hit>20.00 EUR</div><div>Pay now</div></div>').held).toContain('Pay now')
   })
-
   test.each(['open', 'closed'] as const)('through a %s shadow root', (mode) => {
     const document = page('<div id="host" onclick="pay()"></div>')
     const root = rooted(document, '<div>Pay now</div><div id="hit">20.00 EUR</div>', mode)
     expect(factsOf(root.querySelector('#hit')).held).toContain('Pay now')
   })
-
   test('from outside an open one', () => {
     const document = page('<div onclick="pay()"><p id="hit">x</p><div id="host"></div></div>')
     rooted(document, '<div>Pay now</div>')
     expect(factsOf(document.querySelector('#hit')).name).toContain('x')
   })
-
   test.each([
     ['a listener round a short app', '<div id=root><span id=hit>Home</span><div>Delete account</div></div>', 'Home'],
     ['a row', '<table><tr tabindex=0 onclick="go()"><td id=hit>Stripe</td><td>Pay now</td></tr></table>', 'Stripe'],
@@ -363,19 +321,16 @@ describe('what acts for a press, by its first line', () => {
   ])('%s is not called its other lines', (_, html, name) => {
     expect(hit(html).name).toBe(name)
   })
-
   test('what holds many controls is no one control', () => {
     expect(
       hit('<div onclick="go()"><h3>Pay</h3><p id=hit>Open</p><a></a><button></button><button></button></div>').name,
     ).toBe('Open')
   })
 })
-
 describe('a link that goes somewhere, and one that does more', () => {
   test('a plain address is a link', () => {
     expect(hit('<a href="/delete-account">Delete account</a>', 'a').link).toBe(true)
   })
-
   test.each([
     '<a href="/users/1" data-method="delete">Delete account</a>',
     '<a href="/users/1" data-turbo-method="delete">Delete account</a>',
@@ -385,7 +340,6 @@ describe('a link that goes somewhere, and one that does more', () => {
     expect(hit(html, 'a').link).toBe(false)
   })
 })
-
 describe('a control in a dialog', () => {
   test.each([
     ['its label', '<div role=dialog aria-label="Delete your account?"><button>Confirm</button></div>'],
@@ -394,27 +348,22 @@ describe('a control in a dialog', () => {
   ])('says what the dialog says: %s', (_, html) => {
     expect(pressOn(page(html)).dialog).toBe('Delete your account?')
   })
-
   test('and anything else says nothing of one', () => {
     expect(pressOn(page('<button>Confirm</button>')).dialog).toBe('')
   })
 })
-
 describe('a control named by a label as well as by its words', () => {
   test('a label elsewhere does not hide them', () => {
     const facts = pressOn(page('<label for=b>Continue reading</label><button id=b>Pay now</button>'))
     expect(facts.name).toContain('Pay now')
     expect(facts.name).toContain('Continue reading')
   })
-
   test('a label that says them is not said twice', () => {
     expect(pressOn(page('<button aria-label="Pay now">Pay</button>')).name).toBe('Pay now')
   })
 })
-
 describe('a secret region in what is read', () => {
   const read = maskedText
-
   test('is a mark, and every other word stays', () => {
     const document = page(
       '<p>Total: 120.00 EUR, invoice 12-7712</p><div contenteditable aria-label="PIN">12</div><p>due 2031-12-01</p>',
@@ -425,14 +374,12 @@ describe('a secret region in what is read', () => {
     expect(text).toContain('[hidden]')
     expect(text.replace(/\[hidden\]/, '')).not.toMatch(/(^|\s)12(\s|$)/)
   })
-
   test('only the one the policy named', () => {
     const document = page('<div contenteditable>a draft</div><div contenteditable>4111</div>')
     const text = read(document, [1])
     expect(text).toContain('a draft')
     expect(text).not.toContain('4111')
   })
-
   test('from markup too', () => {
     const document = page('<p>not</p><div contenteditable>not</div><div contenteditable>4111</div>')
     const copy = document.body.cloneNode(true) as Element
@@ -444,19 +391,16 @@ describe('a secret region in what is read', () => {
     expect(copy.innerHTML).toContain('[hidden]')
   })
 })
-
 describe('what acts for a press offers its lines to the policy', () => {
   test('every short line of something built to be pressed', () => {
     const facts = hit('<div onclick="pay()"><div id=hit>Order summary</div><div>Pay now</div></div>')
     expect(facts.held).toEqual(['Order summary', 'Pay now'])
   })
-
   test('a line with a number is a line', () => {
     expect(hit('<div onclick="x()"><div>Delete 3 files</div><div id=hit>Cannot be undone</div></div>').held).toContain(
       'Delete 3 files',
     )
   })
-
   test('short ones past a long one, and the first ones of a long card', () => {
     const long = 'Your plan renews automatically every month until you cancel it in your account'
     expect(hit(`<div onclick="x()"><div id=hit>${long}</div><div>Pay now</div></div>`).held).toEqual(['Pay now'])
@@ -464,20 +408,17 @@ describe('what acts for a press offers its lines to the policy', () => {
       'Pay now',
     ])
   })
-
   test('only its first, of a row and of what only a listener round it says', () => {
     expect(hit('<table><tr onclick="x()"><td id=hit>Stripe</td><td>Pay now</td></tr></table>').held).toEqual(['Stripe'])
     const document = page('<div id=round><span id=hit>Home</span><div>Delete account</div></div>')
     expect(factsOf(document.querySelector('#hit'), document.querySelector('#round')!).held).toEqual(['Home'])
   })
-
   test('nothing of what is no one control, and nothing for a control', () => {
     expect(
       hit('<div onclick="x()"><h3>Pay</h3><p id=hit>Open</p><a></a><button></button><button></button></div>').held,
     ).toEqual([])
     expect(hit('<button id=hit>Pay now</button>').held).toEqual([])
   })
-
   test('the words of its pseudo-elements, which is all some labels are', () => {
     const document = page('<div id=hit onclick="x()"></div>')
     const element = document.querySelector('#hit')!
@@ -492,7 +433,6 @@ describe('what acts for a press offers its lines to the policy', () => {
     expect(factsOf(element).held).toEqual(['Pay now'])
   })
 })
-
 describe('what draws its own face asks', () => {
   test.each([
     ['a canvas with a handler', '<canvas id=hit onclick="x()"></canvas>'],
@@ -500,7 +440,6 @@ describe('what draws its own face asks', () => {
   ])('%s', (_, html) => {
     expect(hit(html).opaque).toBe(true)
   })
-
   test.each([
     ['a canvas nothing listens to', '<canvas id=hit></canvas>'],
     ['a canvas that says what it is', '<canvas id=hit onclick="x()" aria-label="Chart"></canvas>'],
@@ -510,34 +449,28 @@ describe('what draws its own face asks', () => {
     expect(hit(html).opaque).toBe(false)
   })
 })
-
 describe('a dialog is its words, for the policy', () => {
   const dialog = (html: string) => pressOn(page(html)).dialog
-
   test('its heading and its body', () => {
     expect(
       dialog('<dialog open><h2>Are you sure?</h2><p>This will delete your account.</p><button>OK</button></dialog>'),
     ).toBe('Are you sure? This will delete your account.')
   })
-
   test('its label first', () => {
     expect(dialog('<div role=dialog aria-label="Confirmation"><p>Pay 20.00 EUR?</p><button>OK</button></div>')).toBe(
       'Confirmation Pay 20.00 EUR?',
     )
   })
-
   test('a div built as its Confirm too', () => {
     const element = page(
       '<div role=dialog aria-label="Delete it?"><div id=hit onclick="x()">Confirm</div></div>',
     ).querySelector('#hit')
     expect(factsOf(element).dialog).toBe('Delete it?')
   })
-
   test('its controls are no part of what it says', () => {
     expect(dialog('<dialog open><p>Are you sure?</p><button>Delete</button></dialog>')).toBe('Are you sure?')
   })
 })
-
 describe('a read with a secret on the way', () => {
   test('leaves out what does not show round it', () => {
     const document = page(
@@ -547,27 +480,23 @@ describe('a read with a secret on the way', () => {
     expect(text).not.toContain('123456')
     expect(text).toContain('after')
   })
-
   test('counts a textbox built of a div as a region', () => {
     const document = page('<div role="textbox" aria-label="PIN">123456</div><p>after</p>')
     expect(maskedText(document, [0])).not.toContain('123456')
   })
 })
-
 describe('a form that names a field after what is read of it', () => {
   const clobbered = (form: Element, names: Record<string, unknown>) => {
     for (const [name, value] of Object.entries(names)) {
       Object.defineProperty(form, name, { value, configurable: true })
     }
   }
-
   test('`elements` does not hide its default button', () => {
     const document = page('<form><input id=b><button>Delete account</button></form>')
     const form = document.querySelector('form') as Element
     clobbered(form, { elements: document.querySelector('#b') })
     expect(factsOf(document.querySelector('#b')).default_button).toBe('Delete account')
   })
-
   test('`nodeType` does not send it to its parent', () => {
     const document = page('<div id=out><form onclick="pay()">Pay now<input id=h type=hidden></form></div>')
     const form = document.querySelector('form') as Element
@@ -575,7 +504,6 @@ describe('a form that names a field after what is read of it', () => {
     expect(factsOf(form).tag).toBe('form')
     expect(factsOf(form).name).toContain('Pay now')
   })
-
   test.each(['getRootNode', 'closest', 'matches', 'tagName'])('`%s` does not turn the walk round', (name) => {
     const document = page('<form><span id=hit>Open</span><input id=h></form>')
     const form = document.querySelector('form') as Element
@@ -583,7 +511,6 @@ describe('a form that names a field after what is read of it', () => {
     expect(factsOf(document.querySelector('#hit')).name).toBe('Open')
   })
 })
-
 describe('a line broken by hand', () => {
   test('is two', () => {
     const element = page(
@@ -592,7 +519,6 @@ describe('a line broken by hand', () => {
     expect(factsOf(element).held).toEqual(['Your file', 'Delete it'])
   })
 })
-
 describe('a long dialog', () => {
   test('is read to its end', () => {
     const long = 'Please read all of this. '.repeat(12)
@@ -604,7 +530,6 @@ describe('a long dialog', () => {
     expect(facts.dialog).toContain('permanently delete')
   })
 })
-
 describe('a dialog with a field in it', () => {
   test.each([
     ['an editable region', '<div contenteditable aria-label="Password">hunter2secret</div>'],
@@ -614,7 +539,6 @@ describe('a dialog with a field in it', () => {
     const facts = pressOn(page(`<div role=dialog><h2>Delete account</h2>${field}<button>Next</button></div>`))
     expect(facts.dialog).toBe('Delete account')
   })
-
   test('tells a field in it what it says, for the Enter that submits its form', () => {
     const element = page('<dialog open><p>Delete your account?</p><form><input id=hit></form></dialog>').querySelector(
       '#hit',
@@ -622,7 +546,6 @@ describe('a dialog with a field in it', () => {
     expect(factsOf(element).dialog).toBe('Delete your account?')
   })
 })
-
 describe('more fields than are described', () => {
   test('say so, as what is past them is unread', () => {
     const fields = Array.from({ length: 205 }, (_, at) => `<input name=a${String(at)}>`).join('')

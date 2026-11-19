@@ -16,17 +16,12 @@ const codeHighlighter = tagHighlighter([
   { tag: tags.inserted, class: 'hl-inserted' },
   { tag: tags.deleted, class: 'hl-deleted' },
 ])
-
 const IN_CODE: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
-
 const escapeCode = (text: string): string => text.replace(/[&<>]/g, (character) => IN_CODE[character] ?? character)
-
 const lastParsed = new WeakMap<Parser, { code: string; tree: Tree }>()
-
 function parsed(code: string, parser: Parser): Tree {
   const last = lastParsed.get(parser)
   if (last?.code === code) return last.tree
-
   const end = last?.code.length ?? 0
   const fragments =
     last && code.length > end && code.startsWith(last.code)
@@ -38,9 +33,7 @@ function parsed(code: string, parser: Parser): Tree {
   lastParsed.set(parser, { code, tree })
   return tree
 }
-
 const BLANK = /^\s*$/
-
 export function highlightCode(code: string, parser: Parser): string {
   const runs: { from: number; to: number; classes: string }[] = []
   highlightTree(parsed(code, parser), codeHighlighter, (from, to, classes) => {
@@ -48,7 +41,6 @@ export function highlightCode(code: string, parser: Parser): string {
     if (before?.classes === classes && BLANK.test(code.slice(before.to, from))) before.to = to
     else runs.push({ from, to, classes })
   })
-
   let out = ''
   let last = 0
   for (const { from, to, classes } of runs) {
@@ -58,7 +50,6 @@ export function highlightCode(code: string, parser: Parser): string {
   }
   return out + escapeCode(code.slice(last))
 }
-
 export function highlightedFence(code: string, language: string, parser: Parser): string {
   const name = language ? ` class="language-${escape(language)}"` : ''
   return `<pre><code${name}>${highlightCode(code, parser)}\n</code></pre>\n`

@@ -7,7 +7,6 @@ import type { Base, Context, Row, Value } from './types'
 import { text } from './expr/runtime'
 
 export type Trigger = { added: true } | { property: string; is?: string }
-
 export interface Automation {
   when: Trigger
   set: Record<string, string>
@@ -16,16 +15,11 @@ export interface Automation {
   off?: boolean
   kept: Record<string, unknown>
 }
-
 type Plain = Record<string, unknown>
-
 const isPlain = (value: unknown): value is Plain => value !== null && typeof value === 'object' && !Array.isArray(value)
-
 const word = (value: unknown): string | undefined =>
   typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : undefined
-
 const KNOWN = ['when', 'set', 'move', 'notify', 'off']
-
 function readTrigger(raw: unknown): Trigger | null {
   if (raw === 'added') return { added: true }
   if (!isPlain(raw)) return null
@@ -35,7 +29,6 @@ function readTrigger(raw: unknown): Trigger | null {
   const is = word(raw.is)
   return is === undefined ? { property } : { property, is }
 }
-
 export function readAutomations(base: Base): Automation[] {
   const raw = base.orden.kept.automations
   if (!Array.isArray(raw)) return []
@@ -58,7 +51,6 @@ export function readAutomations(base: Base): Automation[] {
     return [automation]
   })
 }
-
 function plainOf(automation: Automation): Plain {
   const when = 'added' in automation.when ? 'added' : { ...automation.when }
   return {
@@ -70,28 +62,23 @@ function plainOf(automation: Automation): Plain {
     ...automation.kept,
   }
 }
-
 export function withAutomations(base: Base, automations: readonly Automation[]): Base {
   const kept = { ...base.orden.kept }
   if (automations.length) kept.automations = automations.map(plainOf)
   else Reflect.deleteProperty(kept, 'automations')
   return { ...base, orden: { ...base.orden, kept } }
 }
-
 export interface Effect {
   set: Record<string, Value | null>
   move?: string
   notify: string[]
 }
-
 function wordsOf(value: Value | undefined): string[] {
   if (value === undefined || value === null) return []
   if (Array.isArray(value)) return value.flatMap(wordsOf)
   return [text(value).toLowerCase()]
 }
-
 const matches = (value: Value | undefined, is: string): boolean => wordsOf(value).includes(is.trim().toLowerCase())
-
 function triggered(when: Trigger, before: Row | undefined, after: Row): boolean {
   if ('added' in when) return before === undefined
   if (before === undefined) return false
@@ -101,12 +88,10 @@ function triggered(when: Trigger, before: Row | undefined, after: Row): boolean 
   if (when.is === undefined) return wordsOf(was).join('\n') !== wordsOf(now).join('\n')
   return matches(now, when.is) && !matches(was, when.is)
 }
-
 function settled(words: string): Value | null {
   if (words.trim() === '') return null
   return scalarValue(words.trim())
 }
-
 export function fired(
   automations: readonly Automation[],
   before: Row | undefined,
@@ -125,12 +110,10 @@ export function fired(
   }
   return effect
 }
-
 export function rowsInBase(base: Base, rows: readonly Row[], context: Context): { rows: Row[]; partial: boolean } {
   const { value, partial } = refusing(() => rows.filter((row) => inBase(base, row, context)))
   return { rows: value, partial }
 }
-
 export function inBase(base: Base, row: Row, context: Context): boolean {
   if (row.kind !== 'note') return false
   return underGuard(base.guarded, () => compileFilters(base.filters).test(scopeFor(row, context, base.formulas)))

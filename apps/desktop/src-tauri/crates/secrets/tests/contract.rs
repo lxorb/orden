@@ -1,5 +1,4 @@
 #![cfg(not(target_os = "android"))]
-
 use orden_secrets::pass_stretch::secret_stretched;
 use std::fmt::Write as _;
 
@@ -15,7 +14,6 @@ fn a_pass_stretches_to_the_key_every_side_derives() {
         "09316115d5cf24ed5a15a31a3ba326e5cf32edc24702987c02b6566f61913cf7"
     );
 }
-
 #[test]
 fn a_short_salt_is_refused() {
     assert!(secret_stretched(b"hunter2", b"short", 64, 1, 1).is_err());

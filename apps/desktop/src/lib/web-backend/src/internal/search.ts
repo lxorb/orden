@@ -6,7 +6,6 @@ import { joinPath } from '../../../platform/src/api'
 import { type Mounted, mountOf } from './roots'
 
 const following = new WeakSet<Mounted>()
-
 async function follow(mount: Mounted) {
   if (following.has(mount)) return
   following.add(mount)
@@ -23,7 +22,6 @@ async function follow(mount: Mounted) {
     }
   })
 }
-
 function addressOf(root: string): { mount: Mounted; web: string } | null {
   const found = mountOf(root)
   if (!found) return null
@@ -32,7 +30,6 @@ function addressOf(root: string): { mount: Mounted; web: string } | null {
     web: found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web,
   }
 }
-
 export async function searchInternal(
   root: string,
   query: Query,
@@ -61,7 +58,6 @@ export async function searchInternal(
   )
   return true
 }
-
 export async function warmInternal(root: string): Promise<Warmth | null> {
   const at = addressOf(root)
   if (!at) return null

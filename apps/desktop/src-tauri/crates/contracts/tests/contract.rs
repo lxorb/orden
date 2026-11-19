@@ -8,7 +8,6 @@ use orden_contracts::{
 
 #[derive(Default)]
 struct Memory(Mutex<HashMap<String, String>>);
-
 impl NoteStore for Memory {
     fn read(&self, path: &NotePath) -> Outcome<String> {
         self.0
@@ -18,7 +17,6 @@ impl NoteStore for Memory {
             .cloned()
             .ok_or_else(|| Failure::new("fake", FailureKind::Missing, "no such note"))
     }
-
     fn write(&self, path: &NotePath, words: &str) -> Outcome<()> {
         self.0
             .lock()
@@ -26,7 +24,6 @@ impl NoteStore for Memory {
             .insert(path.as_str().to_owned(), words.to_owned());
         Ok(())
     }
-
     fn write_bytes(&self, _path: &NotePath, _bytes: &[u8]) -> Outcome<()> {
         Err(Failure::new(
             "fake",
@@ -34,7 +31,6 @@ impl NoteStore for Memory {
             "the fake holds words only",
         ))
     }
-
     fn tree(&self, space: &SpaceId) -> Outcome<Entry> {
         Ok(Entry {
             name: space.to_string(),
@@ -46,7 +42,6 @@ impl NoteStore for Memory {
         })
     }
 }
-
 #[test]
 fn ids_take_what_the_wire_takes() {
     assert!(SpaceId::new("abc").is_some());
@@ -61,7 +56,6 @@ fn ids_take_what_the_wire_takes() {
     assert!(NotePath::new("Notes/One.md").is_some());
     assert!(NotePath::new("").is_none());
 }
-
 #[test]
 fn entry_kinds_round_trip() {
     for kind in EntryKind::ALL {
@@ -69,7 +63,6 @@ fn entry_kinds_round_trip() {
     }
     assert_eq!(EntryKind::parse("settings"), None);
 }
-
 #[test]
 fn a_store_answers_with_outcomes_not_panics() {
     let store = Memory::default();
@@ -82,7 +75,6 @@ fn a_store_answers_with_outcomes_not_panics() {
     let space = SpaceId::new("s1").expect("an id");
     assert!(store.tree(&space).expect("a tree").is_dir);
 }
-
 #[test]
 fn events_live_under_the_app_scheme() {
     assert!(is_event_name("orden://open-url"));

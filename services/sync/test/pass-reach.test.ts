@@ -12,16 +12,13 @@ let env: TestEnv
 let ada: Person
 let bob: Person
 let api: ReturnType<typeof pass>
-
 beforeEach(async () => {
   env = testEnv()
   ada = await person(env, 'ada@example.com')
   bob = await person(env, 'bob@example.com')
   api = pass(env)
 })
-
 afterEach(() => env.close())
-
 const PATHS: readonly (readonly [string, string])[] = [
   ['GET', '/v2/pass/changes'],
   ['PUT', '/v2/pass/keyring'],
@@ -38,7 +35,6 @@ const PATHS: readonly (readonly [string, string])[] = [
   ['POST', '/v2/pass/links'],
   ['GET', '/v2/pass/links'],
 ]
-
 describe('the Pass routes', () => {
   test('are nothing a guest or a program reaches', () => {
     for (const [method, path] of PATHS) {
@@ -47,7 +43,6 @@ describe('the Pass routes', () => {
       expect(programMayReach(method, path, true), path).toBe(false)
     }
   })
-
   test('refuse a program’s token', async () => {
     const minted = await call<{ token?: string }>(env, '/v1/mcp/token', {
       token: ada.token,
@@ -58,7 +53,6 @@ describe('the Pass routes', () => {
     expect((await api.keyring(program)).status).toBe(403)
     expect((await api.vault(program, anId())).status).toBe(403)
   })
-
   test('refuse a guest', async () => {
     const space = (await call(env, '/v1/spaces', { token: ada.token, body: { name: 'Plans' } })).json.space as {
       id: string
@@ -78,13 +72,11 @@ describe('the Pass routes', () => {
     expect((await passCall(env, guest, 'GET', '/changes')).status).toBe(403)
     expect((await api.vault(guest, anId())).status).toBe(403)
   })
-
   test('refuse anybody not signed in, except a secure link', async () => {
     expect((await call(env, '/v2/pass/changes')).status).toBe(401)
     expect((await call(env, `/v1/pass-link/${anId()}`)).status).toBe(404)
   })
 })
-
 describe('the hub', () => {
   test('tells the writer’s other devices and every member, and not the device that wrote', async () => {
     const running = hubs(env)
@@ -93,18 +85,15 @@ describe('the hub', () => {
     const here = connect(running.of(ada.id).hub, { device: 'device-here', who: ada.id })
     const there = connect(running.of(ada.id).hub, { device: 'device-there', who: ada.id })
     const bobs = connect(running.of(bob.id).hub, { device: 'device-bobs', who: bob.id })
-
     await call(env, `/v2/pass/items/${vault}/${anId()}?from=device-here`, {
       method: 'PUT',
       token: ada.token,
       body: { rev: 0, key: sealed(), body: sealed(), keyVersion: 1 },
     })
-
     expect(here.said).toEqual([])
     expect(there.said).toEqual([{ t: 'pass' }])
     expect(bobs.said).toEqual([{ t: 'pass' }])
   })
-
   test('is not told of a vault somebody else is in alone', async () => {
     const running = hubs(env)
     env.HUB = running.HUB
@@ -115,7 +104,6 @@ describe('the hub', () => {
     expect(running.asked.filter((one) => one.ask === 'pass').map((one) => one.id)).toEqual([ada.id])
   })
 })
-
 function rowsNaming(database: DatabaseSync, marks: readonly string[]): string[] {
   const tables = (
     database.prepare("select name from sqlite_master where type = 'table' and name like 'pass_%'").all() as {
@@ -131,7 +119,6 @@ function rowsNaming(database: DatabaseSync, marks: readonly string[]): string[] 
       .map((row) => `${table}: ${row}`),
   )
 }
-
 describe('deleting an account', () => {
   test('leaves no Pass row that names it, and its vaults gone for their members', async () => {
     await api.keyring(ada, 0, aKeyring())
@@ -150,9 +137,7 @@ describe('deleting an account', () => {
       views: null,
     })
     const before = (await api.changes(bob)).seq
-
     await eraseAccount(env, { id: ada.id, email: ada.email, name: null, created_at: 1 })
-
     expect(rowsNaming(env.db, [ada.id, ada.email])).toEqual([])
     const after = await api.changes(bob, before)
     expect(after.vaults).toEqual(
@@ -169,7 +154,6 @@ describe('deleting an account', () => {
     })
     expect(env.db.prepare('select count(*) as n from pass_links').get()).toEqual({ n: 0 })
   })
-
   test('leaves a nameless removed mark in the vaults it was in, so their managers renew the key', async () => {
     const theirs = await sharedVault(env, bob, ada, 'editor')
     await eraseAccount(env, { id: ada.id, email: ada.email, name: null, created_at: 1 })
@@ -182,7 +166,6 @@ describe('deleting an account', () => {
     expect(gone?.email).toMatch(/^erased-[0-9a-f]{24}$/)
     expect(rowsNaming(env.db, [ada.id, ada.email])).toEqual([])
   })
-
   test('takes a vault nobody else was in with it entirely', async () => {
     const alone = anId()
     await api.vault(ada, alone)
@@ -191,7 +174,6 @@ describe('deleting an account', () => {
     expect(env.db.prepare('select count(*) as n from pass_members').get()).toEqual({ n: 0 })
   })
 })
-
 describe('the nightly sweep', () => {
   test('forgets what an expired link held', async () => {
     const vault = anId()

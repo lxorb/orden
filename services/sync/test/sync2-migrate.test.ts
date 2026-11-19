@@ -11,24 +11,20 @@ interface Tracked {
   version: number
   hash: string
 }
-
 interface V1Space {
   cursor: number
   notes: Record<string, Tracked>
   untold?: Record<string, { from: string; to: string; tries: number }>
 }
-
 interface Entry {
   id: string
   local_path: string
 }
-
 interface SpaceState {
   id: string
   entries: Map<string, Entry>
   outbox: unknown[]
 }
-
 interface Core {
   spaces: Map<string, SpaceState>
   held: Map<string, unknown>
@@ -36,7 +32,6 @@ interface Core {
   addSpace(id: string, root: string, role: string): unknown[]
   commit(changes: unknown[]): Promise<void>
 }
-
 interface Device {
   root: string
   disk: {
@@ -59,7 +54,6 @@ interface Device {
   }
   asked: string[]
 }
-
 interface Listing {
   cursor: number
   notes: {
@@ -71,12 +65,10 @@ interface Listing {
     deleted: boolean
   }[]
 }
-
 interface Mirror {
   cursor: number
   notes: Record<string, Tracked>
 }
-
 interface Engine {
   testDevice(making: {
     fetch: (request: Request) => Promise<Response>
@@ -95,7 +87,6 @@ interface Engine {
   }
   mirrorsFrom(core: Core, listings: ReadonlyMap<string, Listing> | null): Promise<Record<string, Mirror>>
 }
-
 async function engine(): Promise<Engine> {
   const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, running] = await Promise.all([
@@ -105,12 +96,10 @@ async function engine(): Promise<Engine> {
   ])
   return { ...(device as object), ...(migrate as object), ...(running as object) } as Engine
 }
-
 let env: TestEnv
 let rooms: Live
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   rooms = live(env)
@@ -118,17 +107,13 @@ beforeEach(async () => {
   other = await signIn(env, 'mover@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Moving' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 async function v1Note(path: string, content: string): Promise<{ id: string; version: number }> {
   const made = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   expect(made.status).toBe(201)
   return { id: made.json.note.id, version: made.json.note.version }
 }
-
 let other: string
-
 async function v1Write(id: string, path: string, content: string, baseVersion: number) {
   const written = await call(env, `/v1/notes/${id}`, {
     token: other,
@@ -137,22 +122,18 @@ async function v1Write(id: string, path: string, content: string, baseVersion: n
   })
   expect(written.status).toBe(200)
 }
-
 async function textOnAccount(id: string): Promise<string> {
   return (await call(env, `/v1/notes/${id}`, { token })).json.content
 }
-
 async function liveNames(): Promise<string[]> {
   const rows = env.db.prepare('select path from notes where space_id = ? and deleted = 0 order by path').all(space) as {
     path: string
   }[]
   return rows.map((row) => row.path)
 }
-
 async function v1Cursor(): Promise<number> {
   return (await call(env, `/v1/spaces/${space}/changes?since=0`, { token })).json.cursor
 }
-
 async function oneDocAPull(request: Request): Promise<Response> {
   const answer = await app.fetch(request, env)
   if (!request.url.endsWith('/v2/docs/pull') || !answer.ok) return answer
@@ -162,7 +143,6 @@ async function oneDocAPull(request: Request): Promise<Response> {
     headers: answer.headers,
   })
 }
-
 async function migrated(
   files: Record<string, string>,
   notes: Record<string, Tracked>,
@@ -181,7 +161,6 @@ async function migrated(
   await core.commit(core.addSpace(space, device.root, 'owner'))
   const state = core.spaces.get(space)
   if (!state) throw new Error('the space was not added')
-
   const first = await kit.firstPass(core, state, { cursor, notes, ...(untold ? { untold } : {}) }, carried)
   expect(first).toBe(true)
   const asked = [...device.asked]
@@ -196,7 +175,6 @@ async function migrated(
     file: (path: string) => device.disk.files.get(`${device.root}/${path}`),
   }
 }
-
 describe('a device moving to v2', () => {
   test('a note v1 left as the account has it is seeded here, nothing downloaded', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
@@ -204,12 +182,10 @@ describe('a device moving to v2', () => {
       { 'Plan.md': 'We ship on Monday.\n' },
       { 'Plan.md': { ...note, hash: await sha256('We ship on Monday.\n') } },
     )
-
     expect(asked.some((one) => one.endsWith('/v2/docs/pull'))).toBe(false)
     expect(file('Plan.md')).toBe('We ship on Monday.\n')
     expect(await textOnAccount(note.id)).toBe('We ship on Monday.\n')
   })
-
   test('a note v1 left behind the account takes the account’s words', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
     await v1Write(note.id, 'Plan.md', 'We ship on Tuesday, after the review.\n', note.version)
@@ -217,11 +193,9 @@ describe('a device moving to v2', () => {
       { 'Plan.md': 'We ship on Monday.\n' },
       { 'Plan.md': { ...note, hash: await sha256('We ship on Monday.\n') } },
     )
-
     expect(file('Plan.md')).toBe('We ship on Tuesday, after the review.\n')
     expect(await liveNames()).toEqual(['Plan.md'])
   })
-
   test('notes moved on both sides all merge when the account answers a pull a few at a time', async () => {
     const base = 'First line.\n\nSecond line.\n'
     const notes: Record<string, Tracked> = {}
@@ -234,12 +208,10 @@ describe('a device moving to v2', () => {
       files[name] = 'First line.\n\nSecond line, edited here.\n'
     }
     const { file } = await migrated(files, notes, 0, undefined, undefined, oneDocAPull)
-
     for (const name of Object.keys(files)) {
       expect(file(name)).toBe('First line, edited elsewhere.\n\nSecond line, edited here.\n')
     }
   })
-
   test('a pull answered with none of its notes is a move to make again, and nothing written here is lost', async () => {
     const base = 'First line.\n\nSecond line.\n'
     const note = await v1Note('Plan.md', base)
@@ -262,31 +234,26 @@ describe('a device moving to v2', () => {
     const state = core.spaces.get(space)
     if (!state) throw new Error('the space was not added')
     const v1 = { cursor: 0, notes: { 'Plan.md': { ...note, hash: await sha256(base) } } }
-
     expect(await kit.firstPass(core, state, v1)).toBe(false)
     expect(await kit.firstPass(core, state, v1)).toBe(true)
     await rooms.settle()
     expect((await device.engine.pass(space))?.finished).toBe(true)
     await rooms.settle()
-
     expect(device.disk.files.get(`${device.root}/Plan.md`)).toBe(
       'First line, edited elsewhere.\n\nSecond line, edited here.\n',
     )
     expect(emptied).toBe(1)
   })
-
   test('words written under v1 that never went up go up, and nothing is copied', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
     const { file } = await migrated(
       { 'Plan.md': 'We ship on Monday.\n\n- written offline under v1\n' },
       { 'Plan.md': { ...note, hash: await sha256('We ship on Monday.\n') } },
     )
-
     expect(await textOnAccount(note.id)).toBe('We ship on Monday.\n\n- written offline under v1\n')
     expect(file('Plan.md')).toBe('We ship on Monday.\n\n- written offline under v1\n')
     expect(await liveNames()).toEqual(['Plan.md'])
   })
-
   test('both moved: merged against the version v1 last agreed on', async () => {
     const note = await v1Note('Plan.md', 'First line.\n\nSecond line.\n')
     await keepVersionNow(env, note.id, 'First line.\n\nSecond line.\n', 'one')
@@ -295,13 +262,11 @@ describe('a device moving to v2', () => {
       { 'Plan.md': 'First line.\n\nSecond line, edited here.\n' },
       { 'Plan.md': { ...note, hash: await sha256('First line.\n\nSecond line.\n') } },
     )
-
     const merged = 'First line, edited elsewhere.\n\nSecond line, edited here.\n'
     expect(await textOnAccount(note.id)).toBe(merged)
     expect(file('Plan.md')).toBe(merged)
     expect(await liveNames()).toEqual(['Plan.md'])
   })
-
   test('both moved with no ancestor to be had: the text holding the other whole wins', async () => {
     const note = await v1Note('Plan.md', 'One.\n')
     await v1Write(note.id, 'Plan.md', 'One.\nTwo.\n', note.version)
@@ -309,11 +274,9 @@ describe('a device moving to v2', () => {
       { 'Plan.md': 'One.\nTwo.\nThree.\n' },
       { 'Plan.md': { ...note, hash: 'a hash no version has' } },
     )
-
     expect(await textOnAccount(note.id)).toBe('One.\nTwo.\nThree.\n')
     expect(file('Plan.md')).toBe('One.\nTwo.\nThree.\n')
   })
-
   test('both rewrote it with no ancestor: held for the question, nothing written over', async () => {
     const note = await v1Note('Plan.md', 'The release goes out on Monday morning.\n')
     await v1Write(note.id, 'Plan.md', 'The release waits until every reviewer has signed off on it.\n', note.version)
@@ -321,13 +284,11 @@ describe('a device moving to v2', () => {
       { 'Plan.md': 'We hold the release until Friday, whatever the review says.\n' },
       { 'Plan.md': { ...note, hash: 'a hash no version has' } },
     )
-
     expect(device.engine.core.held.has(note.id)).toBe(true)
     expect(file('Plan.md')).toBe('We hold the release until Friday, whatever the review says.\n')
     expect(await textOnAccount(note.id)).toBe('The release waits until every reviewer has signed off on it.\n')
     expect(await liveNames()).toEqual(['Plan.md'])
   })
-
   test('a canvas that no longer reads is not taken for an empty one', async () => {
     const good = JSON.stringify({
       nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
@@ -338,22 +299,18 @@ describe('a device moving to v2', () => {
       { 'Board.canvas': good.slice(0, -12) },
       { 'Board.canvas': { ...note, hash: await sha256(good) } },
     )
-
     expect(await textOnAccount(note.id)).toContain('keep me')
     expect(file('Board.canvas')).toContain('keep me')
   })
-
   test('a file the account has never seen is made there', async () => {
     const note = await v1Note('Plan.md', 'Plan.\n')
     const { file } = await migrated(
       { 'Plan.md': 'Plan.\n', 'Ideas/New.md': 'A new idea.\n' },
       { 'Plan.md': { ...note, hash: await sha256('Plan.\n') } },
     )
-
     expect(await liveNames()).toEqual(['Ideas/New.md', 'Plan.md'])
     expect(file('Ideas/New.md')).toBe('A new idea.\n')
   })
-
   test('what was made signed out goes up under the ids it had here (#1068)', async () => {
     const note = await v1Note('Plan.md', 'Plan.\n')
     const folder = '0f'.repeat(16)
@@ -370,7 +327,6 @@ describe('a device moving to v2', () => {
       undefined,
       carried,
     )
-
     const ids = env.db
       .prepare('select id, path from notes where space_id = ? and deleted = 0 order by path')
       .all(space) as { id: string; path: string }[]
@@ -383,7 +339,6 @@ describe('a device moving to v2', () => {
     }[]
     expect(folders).toEqual([{ id: folder }])
   })
-
   test('a note v1 tracked whose file is gone is deleted, unless written in elsewhere', async () => {
     const gone = await v1Note('Gone.md', 'Delete me.\n')
     const kept = await v1Note('Kept.md', 'Keep me.\n')
@@ -397,15 +352,12 @@ describe('a device moving to v2', () => {
       },
       seen,
     )
-
     expect(await liveNames()).toEqual(['Kept.md'])
     expect(file('Kept.md')).toBe('Keep me, I was written in.\n')
   })
 })
-
 describe('a first pass that does not get through', () => {
   const offline = 'We ship on Monday.\n\n- written offline under v1\n'
-
   test('a window that dies after the feed: the next launch still sends the offline words', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
     const kit = await engine()
@@ -428,10 +380,8 @@ describe('a first pass that does not get through', () => {
     await before.commit(before.addSpace(space, device.root, 'owner'))
     const state = before.spaces.get(space)
     if (!state) throw new Error('the space was not added')
-
     reachable = false
     expect(await kit.firstPass(before, state, v1)).toBe(false)
-
     reachable = true
     device.engine.stop()
     const again = await kit.Engine.start(before.world, device.store.open(), { freshens: false })
@@ -443,11 +393,9 @@ describe('a first pass that does not get through', () => {
     await rooms.settle()
     await again.pass(space)
     await rooms.settle()
-
     expect(device.disk.files.get(`${device.root}/Plan.md`)).toBe(offline)
     expect(await textOnAccount(note.id)).toBe(offline)
   })
-
   test('what the caller writes when it is done is written with its last commit', async () => {
     const kit = await engine()
     const device = await kit.testDevice({
@@ -465,13 +413,10 @@ describe('a first pass that does not get through', () => {
       await commit(changes)
     }
     const done = { t: 'put', table: 'meta', row: { key: 'first:done', value: 1 } }
-
     expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
-
     expect(commits.at(-1)).toContain(done)
     expect(commits.slice(0, -1).flat()).not.toContain(done)
   })
-
   test('an engine stopped while its last commit lands still passed: the commit is the pass', async () => {
     const kit = await engine()
     const device = await kit.testDevice({
@@ -488,10 +433,8 @@ describe('a first pass that does not get through', () => {
       await commit(changes)
       if ((changes as readonly unknown[]).includes(done)) (core as unknown as { life: number }).life += 1
     }
-
     expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
   })
-
   test('a listing that failed sends no deletes', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
     const kit = await engine()
@@ -505,18 +448,15 @@ describe('a first pass that does not get through', () => {
     await core.commit(core.addSpace(space, device.root, 'owner'))
     const state = core.spaces.get(space)
     if (!state) throw new Error('the space was not added')
-
     const passed = await kit.firstPass(core, state, {
       cursor: 0,
       notes: { 'Plan.md': { ...note, hash: await sha256('We ship on Monday.\n') } },
     })
-
     expect(passed).toBe(false)
     expect(state.outbox).toEqual([])
     expect(await liveNames()).toEqual(['Plan.md'])
   })
 })
-
 describe('a first pass over what v1 left unsaid', () => {
   test('a note v1 renamed offline is that note, moved: its id and history kept', async () => {
     const note = await v1Note('Old name.md', 'Words that moved.\n')
@@ -525,12 +465,10 @@ describe('a first pass over what v1 left unsaid', () => {
       { 'Old name.md': { ...note, hash: await sha256('Words that moved.\n') } },
       await v1Cursor(),
     )
-
     expect(await liveNames()).toEqual(['Elsewhere/New name.md'])
     expect(idAt('Elsewhere/New name.md')).toBe(note.id)
     expect(file('Elsewhere/New name.md')).toBe('Words that moved.\n')
   })
-
   test('a held note v1 renamed and could not tell is that note, moved', async () => {
     const note = await v1Note('One.md', 'One.\n')
     await v1Write(note.id, 'One.md', 'One, there.\n', note.version)
@@ -540,7 +478,6 @@ describe('a first pass over what v1 left unsaid', () => {
       await v1Cursor(),
       { [note.id]: { from: 'One.md', to: 'Two.md', tries: 0 } },
     )
-
     expect(await liveNames()).toEqual(['One.md', 'Two.md'])
     expect(idAt('Two.md')).toBe(note.id)
     expect(idAt('One.md')).not.toBe(note.id)
@@ -548,7 +485,6 @@ describe('a first pass over what v1 left unsaid', () => {
     expect(file('Two.md')).toBe('One, here.\n')
     expect(device.engine.core.held.has(note.id)).toBe(true)
   })
-
   test('a folder v1 renamed offline takes its notes, and leaves no empty folder', async () => {
     const one = await v1Note('Before/One.md', 'One.\n')
     const two = await v1Note('Before/Two.md', 'Two.\n')
@@ -560,13 +496,11 @@ describe('a first pass over what v1 left unsaid', () => {
       },
       await v1Cursor(),
     )
-
     expect(await liveNames()).toEqual(['After/One.md', 'After/Two.md'])
     expect([idAt('After/One.md'), idAt('After/Two.md')]).toEqual([one.id, two.id])
     expect(liveFolders()).toEqual(['After'])
     expect(device.disk.folders.has(`${device.root}/Before`)).toBe(false)
   })
-
   test('words two files share name neither: both are new notes, nothing guessed', async () => {
     const note = await v1Note('Old.md', 'Same.\n')
     await migrated(
@@ -574,11 +508,9 @@ describe('a first pass over what v1 left unsaid', () => {
       { 'Old.md': { ...note, hash: await sha256('Same.\n') } },
       await v1Cursor(),
     )
-
     expect(await liveNames()).toEqual(['A.md', 'B.md'])
     expect([idAt('A.md'), idAt('B.md')]).not.toContain(note.id)
   })
-
   test('a note deleted elsewhere that v1 never heard of stays deleted', async () => {
     const note = await v1Note('Gone.md', 'Deleted on the other device.\n')
     const seen = await v1Cursor()
@@ -588,11 +520,9 @@ describe('a first pass over what v1 left unsaid', () => {
       { 'Gone.md': { ...note, hash: await sha256('Deleted on the other device.\n') } },
       seen,
     )
-
     expect(await liveNames()).toEqual([])
     expect(file('Gone.md')).toBeUndefined()
   })
-
   test('one written in here since it was deleted elsewhere stays, with the words', async () => {
     const note = await v1Note('Kept.md', 'Deleted on the other device.\n')
     const seen = await v1Cursor()
@@ -602,12 +532,10 @@ describe('a first pass over what v1 left unsaid', () => {
       { 'Kept.md': { ...note, hash: await sha256('Deleted on the other device.\n') } },
       seen,
     )
-
     expect(await liveNames()).toEqual(['Kept.md'])
     expect(file('Kept.md')).toBe('Deleted on the other device.\n\nBut written in here.\n')
   })
 })
-
 describe('the way back to v1', () => {
   test('v1 -> v2 -> v1: renames, moves, deletes and unsent edits meet v1 with no copy', async () => {
     const plan = await v1Note('Plan.md', 'Plan.\n')
@@ -638,7 +566,6 @@ describe('the way back to v1', () => {
     const { kit, device } = await migrated(files, tracked, await v1Cursor())
     const engine = device.engine
     const at = (path: string) => `${device.root}/${path}`
-
     await device.disk.move(at('Old.md'), at('Renamed.md'))
     await engine.moved(at('Old.md'), at('Renamed.md'))
     await device.disk.move(at('Folder/Inner.md'), at('Notes/Inner.md'))
@@ -648,15 +575,12 @@ describe('the way back to v1', () => {
     await device.disk.write(at('Plan.md'), 'Plan.\n\nEdited under v2.\n')
     await engine.saved(at('Plan.md'), 'Plan.\n\nEdited under v2.\n')
     await sentAll(device)
-
     await device.disk.write(at('Notes/Ideas.md'), 'Ideas.\n\nTyped and never sent.\n')
     await engine.saved(at('Notes/Ideas.md'), 'Ideas.\n\nTyped and never sent.\n')
     const now = noteRow(theirs.id)
     await v1Write(theirs.id, 'Theirs.md', 'Theirs, written on a v1 device.\n', now.version)
-
     const mirror = (await kit.mirrorsFrom(engine.core, new Map([[space, await v1Listing()]])))[device.root]
     if (!mirror) throw new Error('no mirror for the space')
-
     const first = await v1Pass(device, mirror)
     expect(first).toEqual({ copies: [], refused: [], deleted: [], created: [] })
     for (const path of Object.keys(mirror.notes)) {
@@ -664,7 +588,6 @@ describe('the way back to v1', () => {
     }
     const second = await v1Pass(device, mirror)
     expect(second).toEqual({ copies: [], refused: [], deleted: [], created: [] })
-
     expect(await liveNames()).toEqual(['Notes/Ideas.md', 'Notes/Inner.md', 'Plan.md', 'Renamed.md', 'Theirs.md'])
     expect(idAt('Renamed.md')).toBe(old.id)
     expect(idAt('Notes/Inner.md')).toBe(inner.id)
@@ -673,7 +596,6 @@ describe('the way back to v1', () => {
     expect(await textOnAccount(plan.id)).toBe('Plan.\n\nEdited under v2.\n\nOn v1.\n')
     expect(deletedNames()).toEqual(['Doomed.md'])
   })
-
   test('without the account, every note is left for v1 to judge from what was confirmed', async () => {
     const note = await v1Note('Plan.md', 'Plan.\n')
     const { kit, device } = await migrated(
@@ -682,7 +604,6 @@ describe('the way back to v1', () => {
     )
     await device.disk.write(`${device.root}/Plan.md`, 'Plan.\n\nUnsent.\n')
     await device.engine.saved(`${device.root}/Plan.md`, 'Plan.\n\nUnsent.\n')
-
     const mirror = (await kit.mirrorsFrom(device.engine.core, null))[device.root]
     expect(mirror?.cursor).toBe(0)
     expect(mirror?.notes['Plan.md']).toEqual({
@@ -700,35 +621,30 @@ describe('the way back to v1', () => {
     expect(await textOnAccount(note.id)).toBe('Plan.\n\nUnsent.\n')
   })
 })
-
 function idAt(path: string): string | undefined {
   const row = env.db
     .prepare('select id from notes where space_id = ? and path = ? and deleted = 0')
     .get(space, path) as { id: string } | undefined
   return row?.id
 }
-
 function noteRow(id: string): { version: number; hash: string } {
   return env.db.prepare('select version, hash from notes where id = ?').get(id) as {
     version: number
     hash: string
   }
 }
-
 function deletedNames(): string[] {
   const rows = env.db.prepare('select path from notes where space_id = ? and deleted = 1 order by path').all(space) as {
     path: string
   }[]
   return rows.map((row) => row.path)
 }
-
 function liveFolders(): string[] {
   const rows = env.db
     .prepare('select name from folders where space_id = ? and deleted = 0 order by name')
     .all(space) as { name: string }[]
   return rows.map((row) => row.name)
 }
-
 async function sentAll(device: Device) {
   for (let round = 0; round < 4; round++) {
     const passed = await device.engine.pass(space)
@@ -737,7 +653,6 @@ async function sentAll(device: Device) {
     if (!device.engine.waiting(space)) return
   }
 }
-
 async function v1Listing(): Promise<Listing> {
   const notes: Listing['notes'] = []
   let cursor = 0
@@ -752,7 +667,6 @@ async function v1Listing(): Promise<Listing> {
     if (!page.more) return { cursor, notes }
   }
 }
-
 async function v1Pass(device: Device, mirror: Mirror) {
   const at = (path: string) => `${device.root}/${path}`
   const out = {
@@ -761,7 +675,6 @@ async function v1Pass(device: Device, mirror: Mirror) {
     deleted: [] as string[],
     created: [] as string[],
   }
-
   for (;;) {
     const page = (
       await call(env, `/v1/spaces/${space}/changes?since=${String(mirror.cursor)}`, {
@@ -801,7 +714,6 @@ async function v1Pass(device: Device, mirror: Mirror) {
     mirror.cursor = page.cursor
     if (!page.more) break
   }
-
   const here = [...device.disk.files.keys()]
     .filter((path) => path.startsWith(`${device.root}/`) && path.endsWith('.md'))
     .map((path) => path.slice(device.root.length + 1))

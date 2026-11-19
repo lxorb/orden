@@ -4,24 +4,18 @@ import type { ScannedNote } from './scan-note'
 
 const ORDEN_LAST = { last: 'orden' }
 const ICON_FIRST = { ahead: ['version', 'icon', 'iconColor'] }
-
 function indexed(content: string): string {
   const top = skim(content, ['nodes', 'orden'], undefined, ORDEN_LAST)
   if (!top) return ''
-
   const nodes = top.get('nodes')
   const own = top.get('orden') ?? skim(content, ['nib'])?.get('nib')
   const marks = own ? skim(content, ['icon', 'iconColor'], own, ICON_FIRST) : null
   const worn = [...(marks ?? [])].map(([key, at]) => `"${key}":${content.slice(at.from, at.to)}`)
-
   return `{"nodes":${nodes ? content.slice(nodes.from, nodes.to) : '[]'},"orden":{${worn.join(',')}}}`
 }
-
 export type PlaneMarks = Pick<ScannedNote, 'icon' | 'iconColor' | 'links'>
-
 export function planeMarks(content: string): PlaneMarks {
   const canvas = readCanvas(indexed(content))
-
   return {
     icon: canvas.icon ?? null,
     iconColor: canvas.iconColor ?? null,
@@ -39,9 +33,7 @@ export function planeMarks(content: string): PlaneMarks {
       })),
   }
 }
-
 export const scanCanvas = (path: string, content: string): ScannedNote => markedPlane(path, planeMarks(content))
-
 export const markedPlane = (path: string, marks: PlaneMarks): ScannedNote => ({
   path,
   name: path.split('/').pop() ?? path,

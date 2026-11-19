@@ -5,7 +5,6 @@ import { random } from './test-account'
 
 const PEOPLE: Who[] = ['user:ana', 'user:ben', 'guest:cy']
 const EMOJI = ['👍', '❤️', '👀']
-
 function logOf(seed: number, length: number): Logged[] {
   const next = random(seed)
   const pick = <T>(list: readonly T[]): T => list[Math.floor(next() * list.length)] as T
@@ -57,21 +56,17 @@ function logOf(seed: number, length: number): Logged[] {
   }
   return log
 }
-
 function reduced(log: readonly Logged[]): Map<string, Message> {
   const state = chatState()
   for (const event of log) apply(state, event)
   return new Map([...state.messages].filter(([, message]) => keepsRow(message)))
 }
-
 class Store implements Lookup {
   readonly rows = new Map<string, Kept>()
   seq = 0
-
   get(id: string): Promise<Kept | undefined> {
     return Promise.resolve(this.rows.get(id))
   }
-
   newestReply(parent: string, except: ReadonlySet<string>): Promise<Message | undefined> {
     const replies = [...this.rows.values()]
       .map((one) => one.message)
@@ -79,19 +74,16 @@ class Store implements Lookup {
       .sort((a, b) => b.seq - a.seq)
     return Promise.resolve(replies[0])
   }
-
   async fold(events: readonly Logged[]): Promise<void> {
     const { kept, gone, seq } = await foldAll(events, this, this.seq)
     this.seq = seq
     for (const [id, one] of kept) this.rows.set(id, one)
     for (const id of gone) this.rows.delete(id)
   }
-
   messages(): Map<string, Message> {
     return new Map([...this.rows].map(([id, one]) => [id, one.message]))
   }
 }
-
 function settled(messages: Map<string, Message>): Map<string, Message> {
   return new Map(
     [...messages].map(([id, message]) => [
@@ -107,7 +99,6 @@ function settled(messages: Map<string, Message>): Map<string, Message> {
     ]),
   )
 }
-
 describe('folding in order is the reducer', () => {
   test('one event at a time, for many logs', async () => {
     for (let seed = 1; seed <= 200; seed++) {
@@ -117,7 +108,6 @@ describe('folding in order is the reducer', () => {
       expect(store.messages(), `seed ${String(seed)}`).toEqual(reduced(log))
     }
   })
-
   test('in pages of any size, and with a page said twice', async () => {
     for (let seed = 1; seed <= 100; seed++) {
       const log = logOf(seed, 120)
@@ -133,7 +123,6 @@ describe('folding in order is the reducer', () => {
       expect(store.messages(), `seed ${String(seed)}`).toEqual(reduced(log))
     }
   })
-
   test('after a first copy of the messages as they stood', async () => {
     for (let seed = 1; seed <= 100; seed++) {
       const log = logOf(seed, 120)
@@ -148,7 +137,6 @@ describe('folding in order is the reducer', () => {
     }
   })
 })
-
 describe('an emoji named after what every object holds', () => {
   test('folds as the reducer does', async () => {
     const log: Logged[] = [

@@ -1,21 +1,15 @@
 from typing import Any
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 WS = "window.ordenApp.workspace"
-
 TABLET_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 OTHERS_SEEN = "localStorage.setItem('orden:hints', JSON.stringify(['drawer', 'graph', 'palette']))"
-
 INSIDE = "localStorage.setItem('orden:side-toggles-inside', 'yes')"
-
 END_GAP = """
 () => {
   const bar = document.querySelector('header[data-chrome="top"]')
@@ -24,7 +18,6 @@ END_GAP = """
   return { lead, end: last ? bar.getBoundingClientRect().right - last.getBoundingClientRect().right : null }
 }
 """
-
 TOGGLES = """
 () => [...document.querySelectorAll('[data-side-toggle]')].map((one) => {
   const box = one.getBoundingClientRect()
@@ -37,26 +30,21 @@ TOGGLES = """
   }
 })
 """
-
 SIDES = f"""
 () => ({{
   left: {WS}.openOn('left') ? 'open' : document.querySelector('.column:not(.right).peek') ? 'out' : 'shut',
   right: {WS}.rightShows !== null ? 'open' : document.querySelector('.column.right.peek') ? 'out' : 'shut',
 }})
 """
-
 def toggles(page: Any) -> list[dict[str, Any]]:
     found: list[dict[str, Any]] = page.evaluate(TOGGLES)
     return found
-
 def sides(page: Any) -> dict[str, str]:
     found: dict[str, str] = page.evaluate(SIDES)
     return found
-
 def away(page: Any) -> None:
     page.mouse.move(640, 400)
     page.wait_for_timeout(400)
-
 def in_bar(page: Any, state: str) -> None:
     found = toggles(page)
     for side in ("left", "right"):
@@ -64,7 +52,6 @@ def in_bar(page: Any, state: str) -> None:
             wrong(f"[{state}] the {side} sidebar's button is not to be seen in the bar: {found}")
         if any(one["side"] == side and not one["bar"] for one in found):
             wrong(f"[{state}] the {side} sidebar has a button of its own: {found}")
-
 def in_the_bar(page: Any, state: str) -> None:
     in_bar(page, f"{state}-shut")
     gap = page.evaluate(END_GAP)
@@ -72,13 +59,11 @@ def in_the_bar(page: Any, state: str) -> None:
     if gap["end"] is None or abs(gap["end"] - gap["lead"]) > 0.5:
         wrong(f"[{state}] the bar's last button is not as far from its end as the first is from its start: {gap}")
     shot(page, f"{state}-01-shut")
-
     page.mouse.move(1279, 400)
     page.wait_for_timeout(300)
     if sides(page)["right"] != "shut":
         wrong(f"[{state}] the pointer at the end edge brought the right side out: {sides(page)}")
     away(page)
-
     page.mouse.move(400, 400)
     page.mouse.move(0, 400)
     page.wait_for_timeout(300)
@@ -86,7 +71,6 @@ def in_the_bar(page: Any, state: str) -> None:
         wrong(f"[{state}] the pointer at the start edge did not bring the file list out: {sides(page)}")
     shot(page, f"{state}-02-left-out")
     away(page)
-
     for side in ("left", "right"):
         button = next(one for one in toggles(page) if one["side"] == side and one["bar"])
         page.mouse.click(button["x"], button["y"])
@@ -101,7 +85,6 @@ def in_the_bar(page: Any, state: str) -> None:
         if sides(page)[side] != "shut":
             wrong(f"[{state}] the bar's {side} button did not put its side away: {sides(page)}")
     away(page)
-
 def as_left(browser: Any, stored: bool) -> None:
     state = "stored-inside" if stored else "default"
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 760})
@@ -114,15 +97,12 @@ def as_left(browser: Any, stored: bool) -> None:
     page.evaluate(f"() => {{ {WS}.split('row'); {WS}.closePanel(); {WS}.closeRight() }}")
     DRIVE.settled(page)
     page.wait_for_timeout(500)
-
     in_the_bar(page, state)
     if page.evaluate("() => !!document.querySelector('.orden-bubble.hint[role=status]')"):
         wrong(f"[{state}] an edge hint is up with the buttons in the bar")
-
 def drive(browser: Any) -> None:
     as_left(browser, stored=False)
     as_left(browser, stored=True)
-
     phone = DRIVE.page(
         browser,
         viewport={"width": 1280, "height": 800},
@@ -144,5 +124,4 @@ def drive(browser: Any) -> None:
     ):
         wrong(f"a touch screen's bar lost its file list button: {toggles(phone)}")
     shot(phone, "08-touch")
-
 raise SystemExit(DRIVE.run(drive))

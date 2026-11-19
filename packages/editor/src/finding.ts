@@ -31,10 +31,8 @@ interface Vetting {
   doc: Text
   slow: boolean
 }
-
 const vetted = StateEffect.define<Text>()
 const refused = StateEffect.define()
-
 const vetting = StateField.define<Vetting>({
   create: (state) => ({ doc: state.doc, slow: false }),
   update(was, transaction) {
@@ -47,12 +45,10 @@ const vetting = StateField.define<Vetting>({
     return now
   },
 })
-
 const NOTHING = new SearchQuery({ search: '' })
 const MULTILINE = /\\[sWDnr]|\n|\r|\[\^/
 const flagsOf = (query: SearchQuery): string => (query.caseSensitive ? 'gmu' : 'gmui')
 const tried = new WeakMap<Text, Map<string, Promise<number | null>>>()
-
 function costOn(query: SearchQuery, doc: Text): Promise<number | null> {
   const flags = flagsOf(query)
   const key = `${flags}\0${query.search}`
@@ -65,9 +61,7 @@ function costOn(query: SearchQuery, doc: Text): Promise<number | null> {
   }
   return verdict
 }
-
 const BLOCK = 4096
-
 function sameFromStart(was: Text, now: Text): number {
   const end = Math.min(was.length, now.length)
   for (let at = 0; at < end; at += BLOCK) {
@@ -80,7 +74,6 @@ function sameFromStart(was: Text, now: Text): number {
   }
   return end
 }
-
 function sameFromEnd(was: Text, now: Text, most: number): number {
   for (let at = 0; at < most; at += BLOCK) {
     const size = Math.min(most, at + BLOCK)
@@ -93,9 +86,7 @@ function sameFromEnd(was: Text, now: Text, most: number): number {
   }
   return most
 }
-
 const AROUND = 65_536
-
 function changedLines(was: Text, now: Text, around: number): string {
   const start = sameFromStart(was, now)
   const end = now.length - sameFromEnd(was, now, Math.min(was.length, now.length) - start)
@@ -103,12 +94,10 @@ function changedLines(was: Text, now: Text, around: number): string {
   const from = now.lineAt(Math.max(0, start - around)).from
   return now.sliceString(from, now.lineAt(Math.min(now.length, end + around)).to)
 }
-
 interface Verdict {
   doc: Text
   quick: boolean
 }
-
 async function verdictOn(view: EditorView, query: SearchQuery, still: () => boolean): Promise<Verdict | null> {
   const lines = !MULTILINE.test(query.search)
   let base: { doc: Text; spent: number } | null = null
@@ -130,19 +119,15 @@ async function verdictOn(view: EditorView, query: SearchQuery, still: () => bool
     base = { doc, spent: base ? spent : 0 }
   }
 }
-
 export function cleared(state: EditorState): boolean {
   const query = getSearchQuery(state)
   return !query.regexp || !query.valid || state.field(vetting, false)?.doc === state.doc
 }
-
 export const slow = (state: EditorState): boolean => state.field(vetting, false)?.slow === true
 const running = new WeakMap<EditorView, Promise<boolean>>()
-
 export function clear(view: EditorView): Promise<boolean> {
   const held = running.get(view)
   if (held) return held
-
   const made = (async () => {
     for (;;) {
       const { state } = view
@@ -159,35 +144,27 @@ export function clear(view: EditorView): Promise<boolean> {
   running.set(view, made)
   return made
 }
-
 export function tally(state: EditorState): FindTally {
   if (slow(state)) return SLOW_TALLY
   const query = getSearchQuery(state)
   if (!query.valid || !cleared(state)) return NO_TALLY
-
   const { from, to } = state.selection.main
   const cursor = query.getCursor(state)
   let count = 0
   let current = -1
-
   for (let step = cursor.next(); !step.done; step = cursor.next()) {
     if (step.value.from === from && step.value.to === to) current = count
     count += 1
     if (count >= MOST_COUNTED) return { count, current, capped: true }
   }
-
   return { count, current, capped: false }
 }
-
 const findMarks = Decoration.mark({ class: 'cm-searchMatch' })
 const findHere = Decoration.mark({ class: 'cm-searchMatch cm-searchMatch-selected' })
-
 function marksIn(view: EditorView): DecorationSet {
   if (!view.state.field(findShown, false)) return Decoration.none
-
   const query = getSearchQuery(view.state)
   if (!query.valid || !cleared(view.state)) return Decoration.none
-
   const built = new RangeSetBuilder<Decoration>()
   for (const range of view.visibleRanges) {
     const cursor = query.getCursor(view.state, range.from, range.to)
@@ -201,19 +178,15 @@ function marksIn(view: EditorView): DecorationSet {
       if (++seen >= MOST_COUNTED) break
     }
   }
-
   return built.finish()
 }
-
 const findHighlighter = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
-
     constructor(view: EditorView) {
       this.decorations = marksIn(view)
       if (!cleared(view.state)) void clear(view)
     }
-
     update(update: ViewUpdate) {
       if (!cleared(update.state)) {
         this.decorations = this.decorations.map(update.changes)
@@ -224,7 +197,6 @@ const findHighlighter = ViewPlugin.fromClass(
       const now = update.state.field(findShown, false)
       const query = getSearchQuery(update.state)
       const before = getSearchQuery(update.startState)
-
       if (
         was !== now ||
         update.docChanged ||
@@ -242,13 +214,10 @@ const findHighlighter = ViewPlugin.fromClass(
   },
   { decorations: (plugin) => plugin.decorations },
 )
-
 export const searching = (): Extension => [search(), vetting, findHighlighter, highlightSelectionMatches()]
-
 function keptAsTyped(replacement: string): string {
   return replacement.replace(/\\/g, '\\\\')
 }
-
 export function queryFor(spec: FindSpec): SearchQuery {
   return new SearchQuery({
     search: spec.query,
@@ -258,14 +227,11 @@ export function queryFor(spec: FindSpec): SearchQuery {
     wholeWord: spec.wholeWord,
   })
 }
-
 const asking = new WeakMap<EditorView, number>()
-
 export async function setQuery(view: EditorView, spec: FindSpec): Promise<void> {
   const query = queryFor(spec)
   const turn = (asking.get(view) ?? 0) + 1
   asking.set(view, turn)
-
   const verdict =
     !query.regexp || !query.valid ? { quick: true } : await verdictOn(view, query, () => asking.get(view) === turn)
   if (!verdict) return
@@ -273,9 +239,7 @@ export async function setQuery(view: EditorView, spec: FindSpec): Promise<void> 
     effects: verdict.quick ? setSearchQuery.of(query) : [setSearchQuery.of(NOTHING), refused.of(null)],
   })
 }
-
 export const asked = (state: EditorState): boolean => getSearchQuery(state).valid
-
 function unfolding<Target extends Parameters<StateCommand>[0]>(
   command: (target: Target) => boolean,
 ): (target: Target) => boolean {
@@ -292,7 +256,6 @@ function unfolding<Target extends Parameters<StateCommand>[0]>(
     return true
   }
 }
-
 export const next: Command = unfolding(libraryNext)
 export const previous: Command = unfolding(libraryPrevious)
 export const replaceOne: Command = unfolding(libraryReplaceNext)

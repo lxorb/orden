@@ -3,23 +3,15 @@ import { BasesError } from '../errors'
 import { parseExpression } from './parse'
 
 const LONGEST_VALUE = 1000
-
 const MOST_STEPS = 2e8
-
 const MOST_MS = 250
-
 const MOST_STEPS_ONE = 1e6
-
 const MOST_EVALUATING_MS = 500
-
 const STEPS_A_LOOK = 4096
-
 const measured = new WeakMap<RegExp, boolean>()
-
 export function patternAllowed(pattern: RegExp): boolean {
   const kept = measured.get(pattern)
   if (kept !== undefined) return kept
-
   let allowed = false
   try {
     const { open, ways } = patternCost(pattern.source, pattern.flags)
@@ -34,7 +26,6 @@ export function patternAllowed(pattern: RegExp): boolean {
   measured.set(pattern, allowed)
   return allowed
 }
-
 export function refusedPattern(base: unknown): string | null {
   if (typeof base === 'string') {
     if (!base.includes('/')) return null
@@ -51,7 +42,6 @@ export function refusedPattern(base: unknown): string | null {
   }
   return null
 }
-
 function refusedIn(node: unknown): string | null {
   if (typeof node !== 'object' || node === null) return null
   const { type, pattern, flags } = node as { type?: unknown; pattern?: unknown; flags?: unknown }
@@ -69,11 +59,9 @@ function refusedIn(node: unknown): string | null {
   }
   return null
 }
-
 let guarding = 0
 let spent = 0
 let since = Number.NEGATIVE_INFINITY
-
 export function underGuard<T>(guarded: boolean | undefined, run: () => T): T {
   if (!guarded) return run()
   guarding++
@@ -83,9 +71,7 @@ export function underGuard<T>(guarded: boolean | undefined, run: () => T): T {
     guarding--
   }
 }
-
 const wild = new WeakMap<RegExp, boolean>()
-
 function wildly(pattern: RegExp): boolean {
   let held = wild.get(pattern)
   if (held === undefined) {
@@ -94,17 +80,14 @@ function wildly(pattern: RegExp): boolean {
   }
   return held
 }
-
 export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T {
   if (guarding === 0) {
     if (wildly(pattern)) throw refuse(`/${pattern.source}/ could take too long on this value`)
     return read()
   }
-
   if (value.length > LONGEST_VALUE || !patternAllowed(pattern)) {
     throw refuse(`/${pattern.source}/ could take too long on this value`)
   }
-
   const start = performance.now()
   if (start - since >= 1000 || start < since) {
     since = start
@@ -117,7 +100,6 @@ export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T
     spent += performance.now() - start
   }
 }
-
 let evaluating = false
 let stepsOne = 0
 let stepsUnseen = 0
@@ -125,23 +107,18 @@ let evaluatingMs = 0
 let lookedAt = 0
 let evaluatingSince = Number.NEGATIVE_INFINITY
 let refused = 0
-
 function refuse(message: string): BasesError {
   refused++
   return new BasesError(message)
 }
-
 const tooLong = (): BasesError => refuse('This takes too long to answer')
-
 export function refusing<T>(run: () => T): { value: T; partial: boolean } {
   const before = refused
   const value = run()
   return { value, partial: refused > before }
 }
-
 export function evaluation<T, A>(run: (arg: A) => T, arg: A, weigh: (made: T) => void): T {
   if (guarding === 0 || evaluating) return run(arg)
-
   lookedAt = performance.now()
   if (lookedAt - evaluatingSince >= 1000 || lookedAt < evaluatingSince) {
     evaluatingSince = lookedAt
@@ -157,7 +134,6 @@ export function evaluation<T, A>(run: (arg: A) => T, arg: A, weigh: (made: T) =>
     evaluating = false
   }
 }
-
 export function spend(steps: number): void {
   if (guarding === 0 || !evaluating) return
   if (!(stepsOne + steps <= MOST_STEPS_ONE)) throw tooLong()
@@ -171,5 +147,4 @@ export function spend(steps: number): void {
   }
   if (evaluatingMs >= MOST_EVALUATING_MS) throw tooLong()
 }
-
 export const stepsOfText = (length: number): number => length / 16

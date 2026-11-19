@@ -18,16 +18,13 @@ function $(selector: string): Element {
   if (!found) throw new Error(`nothing is ${selector}`)
   return found
 }
-
 function press(target: Element, held: string | null, prevented = false) {
   const event = new KeyboardEvent('keydown', { key: 'z', cancelable: true, bubbles: true })
   Object.defineProperty(event, 'target', { value: target })
   if (prevented) event.preventDefault()
   return sidebarKey(event, (id) => id === held)
 }
-
 beforeEach(() => used($('canvas')))
-
 describe('a press of Undo', () => {
   test('after a row was pressed is the sidebar’s, with the keyboard gone to nothing', () => {
     used($('.row'))
@@ -35,45 +32,37 @@ describe('a press of Undo', () => {
     expect(press(document.body, 'edit.redo')).toBe('redo')
     expect(press(document.body, 'edit.redo.alt')).toBe('redo')
   })
-
   test('and a menu pressed on the way, Delete in a row’s, leaves it the sidebar’s', () => {
     used($('.row'))
     used($('.item'))
     expect(press(document.body, 'edit.undo')).toBe('undo')
   })
-
   test('is a field’s while a field holds the keyboard', () => {
     used($('.row'))
     expect(press($('textarea'), 'edit.undo')).toBeNull()
   })
-
   test('is the sidebar’s in a note the app gave the keyboard to', () => {
     used($('.row'))
     expect(press($('.note'), 'edit.undo')).toBe('undo')
   })
-
   test('and the note’s once the note was pressed', () => {
     used($('.row'))
     used($('.note'))
     expect(press($('.note'), 'edit.undo')).toBeNull()
   })
-
   test('is nobody’s once something else was pressed, or something took it already', () => {
     used($('.row'))
     used($('canvas'))
     expect(press(document.body, 'edit.undo')).toBeNull()
-
     used($('.row'))
     expect(press($('.row'), 'edit.undo', true)).toBeNull()
   })
-
   test('and a press in a panel about the note leaves it the note’s', () => {
     used($('.row'))
     used($('.prop'))
     expect(press($('.note'), 'edit.undo')).toBeNull()
     expect(press(document.body, 'edit.undo')).toBeNull()
   })
-
   test('and typing in the note since takes it back from the sidebar', () => {
     used($('.row'))
     expect(press($('.note'), null)).toBeNull()

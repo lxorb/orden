@@ -15,15 +15,11 @@ beforeAll(() => {
     HTMLElement.prototype.focus.call(this, options)
   }
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const NOTE = '| a | b |\n| --- | --- |\n| 1 | 2 ^t1\n| 3 | 4 |\n\nend'
-
 function drawn(): EditorView {
   const view = createEditor({
     parent: document.body,
@@ -34,18 +30,15 @@ function drawn(): EditorView {
   forceParsing(view, NOTE.length, 10_000)
   return view
 }
-
 describe('a table row named by a block id with no closing pipe', () => {
   test('is a named block before the table is touched', () => {
     expect(blockIds(NOTE).map((one) => one.id)).toEqual(['t1'])
   })
-
   test('draws the id beside the row, not inside its last cell', () => {
     const view = drawn()
     const cells = [...view.dom.querySelectorAll('td')].map((cell) => cell.textContent)
     expect(cells).toEqual(['1', '2', '3', '4'])
   })
-
   test('keeps its name after another cell of the table is typed in', () => {
     const view = drawn()
     const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '3')
@@ -57,7 +50,6 @@ describe('a table row named by a block id with no closing pipe', () => {
     expect(text).toContain('3333333')
     expect(blockIds(text).map((one) => one.id)).toEqual(['t1'])
   })
-
   test('keeps its name when the document is reformatted', () => {
     expect(blockIds(reformat(NOTE)).map((one) => one.id)).toEqual(['t1'])
   })

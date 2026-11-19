@@ -4,15 +4,11 @@ import { dirname } from 'node:path'
 import { isWebUrl } from '@orden/online/urls'
 
 export const OPEN_SOCKET = '/run/ordend/open.sock'
-
 const MOST_BODY = 16 * 1024
-
 const OPENS_A_MINUTE = 10
-
 export interface Opener {
   open(url: string, session: string): boolean
 }
-
 function bodyOf(request: IncomingMessage): Promise<string | null> {
   return new Promise((settle) => {
     let body = ''
@@ -32,7 +28,6 @@ function bodyOf(request: IncomingMessage): Promise<string | null> {
     })
   })
 }
-
 export function askedOf(body: string | null): { url: string; session: string } | null {
   if (body === null) return null
   let value: unknown
@@ -46,14 +41,12 @@ export function askedOf(body: string | null): { url: string; session: string } |
   if (!isWebUrl(url)) return null
   return { url, session: typeof session === 'string' ? session : '' }
 }
-
 export function serveOpener(opener: Opener, now: () => number = Date.now): Server {
   let minute = 0
   let count = 0
   const answer = (response: ServerResponse, status: number, words: string) => {
     response.writeHead(status, { 'content-type': 'text/plain' }).end(words)
   }
-
   return createServer((request, response) => {
     if (request.method !== 'POST' || request.url !== '/open') {
       answer(response, 404, 'orden-open only opens addresses\n')
@@ -83,7 +76,6 @@ export function serveOpener(opener: Opener, now: () => number = Date.now): Serve
     })
   })
 }
-
 export function listenOpener(server: Server, path = OPEN_SOCKET): void {
   try {
     mkdirSync(dirname(path), { recursive: true, mode: 0o755 })

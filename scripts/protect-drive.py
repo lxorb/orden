@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -21,18 +20,15 @@ NOTE = "Diary.md"
 PASSWORD = "tulip ladder"
 WORDS = "the secret words"
 PAGE = b"<!doctype html><title>a page</title><p>a page beside the note"
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
 FIND = """
 (async () => {
   const ws = orden.workspace
@@ -50,7 +46,6 @@ FIND = """
   return { root: space.root, path: note.path }
 })()
 """
-
 DEVICE = """
 (async () => {
   const ask = window.__TAURI_INTERNALS__.invoke
@@ -66,7 +61,6 @@ DEVICE = """
   return { can, said, seconds: (Date.now() - began) / 1000 }
 })()
 """
-
 MENU = """
 (() => {
   const row = document.querySelector(`.row[data-path="${CSS.escape(%(path)s)}"]`)
@@ -77,7 +71,6 @@ MENU = """
   return true
 })()
 """
-
 PRESS = """
 (() => {
   const found = [...document.querySelectorAll(%(where)s)].find((one) => one.textContent.trim() === %(label)s)
@@ -86,7 +79,6 @@ PRESS = """
   return true
 })()
 """
-
 TYPE = """
 (() => {
   const fields = [...document.querySelectorAll(%(where)s)]
@@ -98,7 +90,6 @@ TYPE = """
   return true
 })()
 """
-
 SUBMIT = """
 (() => {
   const button = document.querySelector('.locked button[type=submit]')
@@ -107,9 +98,7 @@ SUBMIT = """
   return true
 })()
 """
-
 TROUBLE = "(() => document.querySelector('.track.failed .said')?.textContent ?? '')()"
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -121,7 +110,6 @@ def main() -> int:
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
     args.out.mkdir(parents=True, exist_ok=True)
-
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-protect-"))
     (spaces / SPACE).mkdir()
     (spaces / SPACE / NOTE).write_text(f"# Diary\n\n{WORDS}\n", encoding="utf-8")
@@ -143,7 +131,6 @@ def main() -> int:
         stderr=subprocess.STDOUT,
     )
     wrong: list[str] = []
-
     def step(code: str, what: str, seconds: float = 30) -> Any:
         said = app.until(code, seconds)
         if said in (None, False) or (isinstance(said, dict) and "error" in said):
@@ -151,7 +138,6 @@ def main() -> int:
             raise RuntimeError(what)
         print(f"{what}: {json.dumps(said)}", flush=True)
         return said
-
     try:
         app = endpoint(config, process.pid, secret, 60)
         app.until("!!orden.workspace", 90)
@@ -167,7 +153,6 @@ def main() -> int:
             " if (one.textContent.trim() === 'Keep running') one.click(); return true"
         )
         where = step(FIND % {"space": json.dumps(SPACE), "note": json.dumps(NOTE)}, "the note", 60)
-
         app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         step(
             "orden.pages.each().some(([, page]) => page.live)",
@@ -182,7 +167,6 @@ def main() -> int:
             wrong.append(f"Windows Hello was asked and never answered: {device}")
         elif said.startswith("refused:") and not said.startswith("refused: Windows Hello"):
             wrong.append(f"Windows Hello was never asked, the call was refused: {device}")
-
         step(MENU % {"path": json.dumps(where["path"])}, "the row's menu")
         step(PRESS % {"where": json.dumps("[role=menuitem]"), "label": json.dumps("Protect")}, "Protect")
         time.sleep(1)
@@ -202,20 +186,17 @@ def main() -> int:
             f"!!document.querySelector(`.row[data-path=\"${{CSS.escape({json.dumps(where['path'])})}}\"] [aria-label=\"Protected\"]`)",
             "the row's lock mark",
         )
-
         step(MENU % {"path": json.dumps(where["path"])}, "the row's menu again")
         step(PRESS % {"where": json.dumps("[role=menuitem]"), "label": json.dumps("Lock")}, "Lock")
         step("!!document.querySelector('.locked input[type=password]')", "the lock screen")
         if WORDS in str(app.eval("document.querySelector('.pane')?.innerText ?? ''")):
             wrong.append("the lock screen shows the note's words")
-
         step(TYPE % {"where": json.dumps(".locked input[type=password]"), "count": 1, "words": json.dumps("wrong")}, "a wrong password typed")
         step(SUBMIT, "the wrong password sent")
         step("!!document.querySelector('.locked [role=alert]')", "the wrong password said", 60)
         step(TYPE % {"where": json.dumps(".locked input[type=password]"), "count": 1, "words": json.dumps(PASSWORD)}, "the password typed")
         step(SUBMIT, "the password sent")
         step("!document.querySelector('.locked') && !!document.querySelector('.cm-content')", "the note open again", 60)
-
         trouble = app.eval(TROUBLE)
         if trouble:
             wrong.append(f"something was said to have failed: {trouble}")
@@ -229,12 +210,10 @@ def main() -> int:
         ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -6,24 +6,19 @@ describe('front matter for an imported note', () => {
   test('writes the day it was made under the key Orden already reads', () => {
     expect(frontMatterFor({ date: '2026-01-02' })).toBe('---\ndate: 2026-01-02\n---\n\n')
   })
-
   test('writes the last-edited day only when it is a different day', () => {
     expect(frontMatterFor({ date: '2026-01-02', updated: '2026-01-02' })).not.toContain('updated')
     expect(frontMatterFor({ date: '2026-01-02', updated: '2026-03-04' })).toContain('updated: 2026-03-04')
   })
-
   test('writes tags as a list, tidied, with nothing said twice', () => {
     expect(frontMatterFor({ tags: ['#work', 'two words', 'work', 'a/b'] })).toBe(
       '---\ntags: [work, two-words, a/b]\n---\n\n',
     )
   })
-
   test('writes a column the export carried under a name YAML can hold', () => {
     const block = frontMatterFor({ extra: [['Last edited time', '2026-01-02']] })
-
     expect(block).toContain('last-edited-time: 2026-01-02')
   })
-
   test('keeps a column named in any script, and an emoji in front is left off', () => {
     const block = frontMatterFor({
       extra: [
@@ -32,12 +27,10 @@ describe('front matter for an imported note', () => {
         ['📅 When', 'today'],
       ],
     })
-
     expect(block).toContain('größe: L')
     expect(block).toContain('期限: soon')
     expect(block).toContain('when: today')
   })
-
   test('writes each key once, a column that folds into one already written under a name of its own', () => {
     const block = frontMatterFor({
       date: '2026-01-02',
@@ -49,7 +42,6 @@ describe('front matter for an imported note', () => {
         ['Tags', 'loose'],
       ],
     })
-
     expect(block.match(/^status:/gm)).toHaveLength(1)
     expect(block.match(/^date:/gm)).toHaveLength(1)
     expect(block.match(/^tags:/gm)).toHaveLength(1)
@@ -59,7 +51,6 @@ describe('front matter for an imported note', () => {
     expect(block).toContain('date-2: May 1, 2026 → May 3, 2026')
     expect(block).toContain('tags-2: loose')
   })
-
   test('keeps a column whose name has nothing in it to keep, under its place', () => {
     const block = frontMatterFor({
       extra: [
@@ -67,45 +58,37 @@ describe('front matter for an imported note', () => {
         ['⭐', '5'],
       ],
     })
-
     expect(block).toContain('due: soon')
     expect(block).toContain("property-2: '5'")
   })
-
   test('keeps every tag the app can hold, and the words of a label that cannot be one', () => {
     const block = frontMatterFor({
       tags: ['🔥', 'C++', 'C#', 'work', 'café', '2026', 'half-done!'],
     })
-
     expect(block).toContain('tags: [🔥, work, café]\n')
     expect(block).toContain('labels:')
     for (const words of ['C++', 'C#', '2026', 'half-done!']) expect(block).toContain(words)
     expect(block).not.toMatch(/tags: .*\bC\b/)
   })
-
   test('a note with nothing to say carries no fence at all', () => {
     expect(frontMatterFor({})).toBe('')
     expect(frontMatterFor({ tags: [], extra: [['Empty', '  ']] })).toBe('')
   })
 })
-
 describe('a whole note', () => {
   test('is its properties, its title as a heading, and its words', () => {
     expect(noteText('Plan', 'Some words.', { date: '2026-01-02' })).toBe(
       '---\ndate: 2026-01-02\n---\n\n# Plan\n\nSome words.\n',
     )
   })
-
   test('keeps the heading a body already opens with rather than writing a second', () => {
     expect(noteText('Plan', '# Plan\n\nWords.')).toBe('# Plan\n\nWords.\n')
   })
-
   test('keeps the indent of a first line, which is what makes it code', () => {
     expect(noteText(null, '\n\n    let x = 1\n    let y = 2\n\nAfter.\n')).toBe(
       '    let x = 1\n    let y = 2\n\nAfter.\n',
     )
   })
-
   test('a note that opens with its own properties keeps one block, its own keys first', () => {
     expect(
       noteText(
@@ -120,7 +103,6 @@ describe('a whole note', () => {
       ),
     ).toBe('---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\nupdated: 2024-02-03\n---\n\n# Trip\n\nWords.\n')
   })
-
   test('a rule at the top of a note is a rule, not properties', () => {
     expect(
       noteText('Trip', '---\n\nIntro paragraph.\n\n---\n\nRest\n', {
@@ -130,7 +112,6 @@ describe('a whole note', () => {
     ).toBe('---\ndate: 2024-01-02\ntags: [travel]\n---\n\n# Trip\n\n---\n\nIntro paragraph.\n\n---\n\nRest\n')
     expect(noteText(null, '---\n---\nWords.\n')).toBe('---\n---\nWords.\n')
   })
-
   test('words an import made are never a block of the note’s own', () => {
     const meta = { date: '2024-01-02' }
     for (const body of [
@@ -141,23 +122,19 @@ describe('a whole note', () => {
       expect(noteText('Trip', body, meta)).toBe(`---\ndate: 2024-01-02\n---\n\n# Trip\n\n${body}\n`)
     }
   })
-
   test('a block of the note’s own opens with a key, right under its fence', () => {
     const body = '---\n\nNote: this page is a draft.\n\n---\n\nBody text'
     expect(noteText('Trip', body, { date: '2024-01-02' }, true)).toBe(
       `---\ndate: 2024-01-02\n---\n\n# Trip\n\n${body}\n`,
     )
   })
-
   test('a note whose own block is all it says still opens with it', () => {
     expect(noteText('Trip', '---\nstatus: draft\n---', {}, true)).toBe('---\nstatus: draft\n---\n\n# Trip\n\n')
   })
-
   test('a note with no words at all is its heading, the way a new note is', () => {
     expect(noteText('Empty', '   \n\n')).toBe('# Empty\n\n')
   })
 })
-
 describe('a tag out of a label', () => {
   test('loses its spaces, its hash and its punctuation, and keeps its slashes', () => {
     expect(tagName('#Work')).toBe('Work')
@@ -166,7 +143,6 @@ describe('a tag out of a label', () => {
     expect(tagName('half-done!')).toBe('half-done')
     expect(tagName('  ')).toBe('')
   })
-
   test('keeps letters that are not English ones', () => {
     expect(tagName('Zürich')).toBe('Zürich')
     expect(tagName('🔥')).toBe('🔥')
@@ -174,7 +150,6 @@ describe('a tag out of a label', () => {
     expect(tagName('日本語')).toBe('日本語')
   })
 })
-
 describe('the day a date lands on', () => {
   test('reads every shape these exports write', () => {
     expect(dayOf('20260102T120000Z')).toBe('2026-01-02')
@@ -185,7 +160,6 @@ describe('the day a date lands on', () => {
     expect(dayOf(1767355200000)).toBe('2026-01-02')
     expect(dayOf('1767355200')).toBe('2026-01-02')
   })
-
   test('answers nothing rather than inventing a date', () => {
     expect(dayOf('')).toBeNull()
     expect(dayOf(null)).toBeNull()
@@ -194,7 +168,6 @@ describe('the day a date lands on', () => {
     expect(dayOf('0001-01-01')).toBeNull()
   })
 })
-
 describe('the day an instant lands on, west of Greenwich', () => {
   beforeAll(() => {
     vi.stubEnv('TZ', 'America/Los_Angeles')
@@ -202,7 +175,6 @@ describe('the day an instant lands on, west of Greenwich', () => {
   afterAll(() => {
     vi.unstubAllEnvs()
   })
-
   test('is the local day whichever shape the instant is written in', () => {
     expect(dayOf(1767321000000000)).toBe('2026-01-01')
     expect(dayOf('20260102T023000Z')).toBe('2026-01-01')
@@ -210,7 +182,6 @@ describe('the day an instant lands on, west of Greenwich', () => {
     expect(dayOf('2026-01-02T02:30:00.000Z')).toBe('2026-01-01')
     expect(dayOf('2026-01-02T03:30:00.0000000+01:00')).toBe('2026-01-01')
   })
-
   test('a day or a wall clock with no zone is the day it says', () => {
     expect(dayOf('2026-01-02')).toBe('2026-01-02')
     expect(dayOf('2026-01-02T23:30:00')).toBe('2026-01-02')
@@ -218,14 +189,11 @@ describe('the day an instant lands on, west of Greenwich', () => {
     expect(dayOf('20260102T003000')).toBe('2026-01-02')
   })
 })
-
 describe('a title as the note heading', () => {
   const TITLES = ['Tickets $5-$10', 'a==b and c==d', 'Ideas #work', 'See [[Other]]', 'H~2~O', 'Issue #']
-
   test.each(TITLES)('%s is its words', (title) => {
     const html = renderMarkdown(noteText(title, 'Words.'))
     const shown = title.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-
     expect(html).toContain(`<h1>${shown}</h1>`)
   })
 })

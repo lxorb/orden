@@ -28,25 +28,20 @@
     const entry = cursor === null ? null : view.rows.find((one) => one.name === cursor)
     return entry?.folder ? view.pathOf(entry.name) : null
   })
-
   let typing = $state(false)
   let filtering = $state(false)
   let looking = $state(false)
   let list = $state<{ focus: () => void; menuHere: () => void }>()
-
   onMount(() => {
     void view.appear()
     return () => {
       view.stop()
     }
   })
-
   const shownFolder = $derived(view.listing?.path ?? null)
-
   $effect(() => {
     if (focused && shownFolder !== null) untrack(() => list?.focus())
   })
-
   const counted = $derived.by(() => {
     const all = view.rows.length === 1 ? '1 item' : `${view.rows.length} items`
     const picked = view.rows.filter((one) => view.picked.names.has(one.name))
@@ -54,7 +49,6 @@
     const size = readableSize(picked.reduce((sum, one) => sum + one.size, 0))
     return picked.length === 1 ? `${all}, 1 selected (${size})` : `${all}, ${picked.length} selected (${size})`
   })
-
   function onkey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (event.defaultPrevented || event.target instanceof HTMLInputElement) return
     if (keyElsewhere(event, event.currentTarget)) return
@@ -171,14 +165,12 @@
     font-family: var(--font-ui);
     container-type: inline-size;
   }
-
   .body {
     position: relative;
     display: flex;
     flex: 1;
     min-height: 0;
   }
-
   .foot {
     display: flex;
     flex: none;
@@ -190,16 +182,13 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .cut,
   .said {
     margin-inline-end: auto;
   }
-
   .said {
     color: var(--danger);
   }
-
   .job {
     display: grid;
     flex: none;
@@ -210,14 +199,12 @@
     border-top: 1px solid var(--line);
     font-size: var(--text-xs);
   }
-
   .what {
     overflow: hidden;
     color: var(--text);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .far {
     color: var(--muted);
     font-variant-numeric: tabular-nums;

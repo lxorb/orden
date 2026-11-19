@@ -4,7 +4,6 @@ interface Resolved {
   symbol: string
   location: string
 }
-
 interface Tool {
   issueTitle(group: { kind: string; title: string }): string
   issueBody(group: unknown, id: string, report: unknown, symbols?: Map<string, Resolved>): string
@@ -12,10 +11,8 @@ interface Tool {
   parseSymbolized(output: string): (Resolved | null)[]
   framesToSymbolize(report: unknown, symbolsFile: string): Map<string, string>
 }
-
 const TOOL = new URL('../../../scripts/crash-reports.mjs', import.meta.url).href
 const tool = (await import(TOOL)) as Tool
-
 const GROUP = {
   signature: '0123456789abcdef',
   kind: 'freeze',
@@ -27,7 +24,6 @@ const GROUP = {
   platforms: ['Windows'],
   issue: null,
 }
-
 const REPORT = {
   v: 1,
   id: 'a'.repeat(32),
@@ -53,13 +49,11 @@ const REPORT = {
   breadcrumbs: [{ at: Date.UTC(2026, 10, 5, 11, 59), what: 'opened a web tab' }],
   log: Array.from({ length: 100 }, (_, index) => `line ${index} with \`\`\` inside`),
 }
-
 describe('the issue a group becomes', () => {
   test('is named by its kind and title', () => {
     expect(tool.issueTitle(GROUP)).toBe('Freeze: 41 s in web_open, killed')
     expect(tool.issueTitle({ ...GROUP, kind: 'js', title: 'TypeError: x' })).toBe('JS error: TypeError: x')
   })
-
   test('carries no link, mention or terminal escape a report wrote into its version or platform', () => {
     const body = tool.issueBody(
       {
@@ -76,10 +70,8 @@ describe('the issue a group becomes', () => {
     expect(head).not.toContain('\u001b')
     expect(head).toContain('Get the fixed build')
   })
-
   test('counts, versions, the stuck thread first, crumbs and the end of the log, all fenced', () => {
     const body = tool.issueBody(GROUP, REPORT.id, REPORT)
-
     expect(body).toContain('**3 reports**')
     expect(body).toContain('Versions: 0.20.1, 0.20.2')
     expect(body).toContain('Platforms: Windows')
@@ -92,7 +84,6 @@ describe('the issue a group becomes', () => {
     expect(body).not.toContain('line 39 with')
     expect(body).toContain('````text\nline 40')
   })
-
   test('shows what the symbols say for our frames', () => {
     const symbols = new Map([
       ['orden.exe+0x1a2b3c', { symbol: 'orden_lib::web_tabs::open', location: 'src/web_tabs.rs:120:9' }],
@@ -102,7 +93,6 @@ describe('the issue a group becomes', () => {
     )
   })
 })
-
 describe('symbolising', () => {
   test('asks only for our own frames that have no name yet', () => {
     expect([...tool.framesToSymbolize(REPORT, 'C:/build/orden.pdb').entries()]).toEqual([
@@ -110,7 +100,6 @@ describe('symbolising', () => {
       ['orden.exe+0x1a2b3c', '0x1a2b3c'],
     ])
   })
-
   test('reads what llvm-symbolizer says, unknowns too', () => {
     const output = [
       'orden_lib::web_tabs::open',
@@ -123,7 +112,6 @@ describe('symbolising', () => {
       '??:0:0',
       '',
     ].join('\r\n')
-
     expect(tool.parseSymbolized(output)).toEqual([
       { symbol: 'orden_lib::web_tabs::open', location: 'C:\\src\\web_tabs.rs:120:9' },
       null,
@@ -131,7 +119,6 @@ describe('symbolising', () => {
     ])
   })
 })
-
 describe('fences', () => {
   test('outgrow the backticks inside', () => {
     expect(tool.fenced('a ``` b')).toBe('````text\na ``` b\n````')

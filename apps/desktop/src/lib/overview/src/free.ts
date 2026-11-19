@@ -3,7 +3,6 @@ import type { Box, Slot } from './layout'
 const APART_X = 28
 const APART_Y = 60
 const ROUNDS = 200
-
 function clearOf(a: Box, b: Box, under = APART_Y): { x: number; y: number } | null {
   const right = a.x + a.w + APART_X - b.x
   const left = b.x + b.w + APART_X - a.x
@@ -18,7 +17,6 @@ function clearOf(a: Box, b: Box, under = APART_Y): { x: number; y: number } | nu
   const y = by >= ay ? down : -up
   return Math.abs(x) * (under / APART_X) <= Math.abs(y) ? { x, y: 0 } : { x: 0, y }
 }
-
 export function settled<T extends Box & { id: string }>(
   windows: readonly T[],
   still: ReadonlySet<string>,
@@ -51,7 +49,6 @@ export function settled<T extends Box & { id: string }>(
   }
   return apart(out, still, under, keepTogether)
 }
-
 function spotFor(one: Box, placed: readonly Box[], under: number): { x: number; y: number } {
   const free = (x: number, y: number) => placed.every((other) => clearOf({ ...one, x, y }, other, under) === null)
   if (free(one.x, one.y)) return { x: one.x, y: one.y }
@@ -81,7 +78,6 @@ function spotFor(one: Box, placed: readonly Box[], under: number): { x: number; 
   }
   return best
 }
-
 function apart<T extends Box & { id: string }>(
   windows: T[],
   still: ReadonlySet<string>,
@@ -105,7 +101,6 @@ function apart<T extends Box & { id: string }>(
   }
   return windows
 }
-
 export function roomFor<T extends Box & { id: string }>(
   windows: readonly T[],
   held: ReadonlyMap<string, Box>,
@@ -120,14 +115,12 @@ export function roomFor<T extends Box & { id: string }>(
   const moved = new Map(settled(among, new Set(held.keys()), named).map((one) => [one.id, one]))
   return lying.map((one) => moved.get(one.id) ?? one)
 }
-
 export function readsBefore(a: Box, b: Box): number {
   const ay = a.y + a.h / 2
   const by = b.y + b.h / 2
   if (Math.abs(ay - by) < Math.min(a.h, b.h) / 2) return a.x + a.w / 2 - (b.x + b.w / 2)
   return ay - by
 }
-
 export function stripLanding(
   slots: readonly Slot[],
   id: string,
@@ -153,13 +146,10 @@ export function stripLanding(
   const after = ofPane.find((one) => readsBefore(box, one) < 0)
   return { paneId, before: after?.id ?? null }
 }
-
 export const overlaps = (a: Box, b: Box, named = 0): boolean => clearOf(a, b, Math.max(APART_Y, named)) !== null
-
 export function keptAt<T extends Box>(slot: T, box: Box): T {
   return { ...slot, x: box.x, y: box.y, w: box.w, h: (box.w * slot.h) / Math.max(slot.w, 1) }
 }
-
 export function stripPlace(strip: readonly string[], id: string, before: string | null): number | null {
   const back = strip.filter((one) => one !== id)
   const found = before === null ? -1 : back.indexOf(before)

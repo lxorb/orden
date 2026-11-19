@@ -11,10 +11,7 @@ import { theme } from './lib/theme/src/api'
 
 const target = document.getElementById('app')
 if (!target) throw new Error('quick-add.html has no #app to mount into')
-
 holdComposingKeys()
 theme.init(false)
-
 const { default: Window } = await loadQuickAddWindow()
-
 export default mount(Window, { target })

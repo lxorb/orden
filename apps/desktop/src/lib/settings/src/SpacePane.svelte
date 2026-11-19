@@ -25,16 +25,12 @@
   const root = $derived(settings.space ?? workspace.activeSpace?.root ?? null)
   const name = $derived(rootedAt(workspace.spaces, root)?.name ?? '')
   const shut = $derived(root !== null && protection.locked(joinPath(root, AGENTS_NAME)))
-
   async function nudged() {
     const { sync } = await import('../../sync-store/src/api')
     sync.nudge()
   }
-
   const listed = (at: string) => workspace.spaces.some((one) => samePath(one.root, at))
-
   const shown = (path: string) => (protection.locked(path) ? Promise.resolve(null) : noteText(workspace, path))
-
   const hands: FieldHands = {
     space: async (path) => {
       const at = folderOf(path)
@@ -57,10 +53,8 @@
       await nudged()
     },
   }
-
   let field = $state.raw<Field | null>(null)
   let box = $state<HTMLTextAreaElement>()
-
   $effect(() => {
     if (root === null) return
     const at = root
@@ -70,13 +64,11 @@
     field = one
     current = one
     untrack(() => void one.load())
-
     const stop = links.hearSaves((saved, words) => {
       if (samePath(saved, path) && !closed) one.heard(words)
     })
     const back = () => void one.look()
     window.addEventListener('focus', back)
-
     return () => {
       stop()
       window.removeEventListener('focus', back)
@@ -84,7 +76,6 @@
       writing(one.flush())
     }
   })
-
   $effect(() => {
     if (!settings.landsOnField || !box) return
     settings.landsOnField = false
@@ -117,24 +108,20 @@
     flex-direction: column;
     width: 100%;
   }
-
   .tall {
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
     padding-block: var(--space-2);
   }
-
   .name {
     flex: 1;
   }
-
   small {
     margin-inline-start: var(--space-2);
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   textarea {
     flex: 1 0 100%;
     min-height: 12rem;
@@ -148,7 +135,6 @@
     line-height: 1.5;
     resize: vertical;
   }
-
   textarea.read {
     border-color: transparent;
     background: none;

@@ -5,9 +5,7 @@ import { callerOf, READER } from './caller'
 
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
 const reached: { name: string; agent: string | null }[] = []
-
 const reach: AgentVerb = (name, _args, caller) => {
   reached.push({ name, agent: caller.agent?.id ?? null })
   return Promise.resolve({ ok: true, status: 'ok', result: { ran: name } })
@@ -16,9 +14,7 @@ registerAgentVerbs(() =>
   Promise.resolve(Object.fromEntries(Object.keys(AGENT_WINDOW_VERBS).map((verb) => [verb, reach]))),
 )
 providePort('agents.crate', { answer: (name) => Promise.resolve({ asked: name }) })
-
 const { dispatch } = await import('./verbs')
-
 function agentHolding(...scopes: string[]) {
   return callerOf({
     id: 'claude-code',
@@ -28,14 +24,12 @@ function agentHolding(...scopes: string[]) {
     mode: 'unsupervised',
   })
 }
-
 describe('an agent at the dispatcher', () => {
   test('reaches every agent row with the scope the crate names for it, and no other', async () => {
     for (const [verb, scope] of Object.entries(AGENT_WINDOW_VERBS)) {
       reached.length = 0
       const others = ['context', 'notes.read', 'notes.write', 'tree', 'workspace', 'settings', 'terminal']
       const without = others.filter((one) => one !== scope)
-
       const refused = await dispatch(verb, {}, [], 'here', agentHolding(...without))
       if (scope === null) {
         expect(refused, verb).toMatchObject({ ok: true, status: 'ok' })
@@ -44,13 +38,11 @@ describe('an agent at the dispatcher', () => {
         expect(refused, verb).toMatchObject({ message: expect.stringContaining(scope) })
         expect(reached, verb).toEqual([])
       }
-
       const allowed = await dispatch(verb, {}, [], 'here', agentHolding(...(scope ? [scope] : [])))
       expect(allowed, verb).toEqual({ ok: true, status: 'ok', result: { ran: verb } })
       expect(reached.at(-1), verb).toEqual({ name: verb, agent: 'claude-code' })
     }
   })
-
   test('a client under Full permissions reaches every agent row, whatever scopes its grant kept', async () => {
     const full = callerOf({
       id: 'codex',
@@ -69,7 +61,6 @@ describe('an agent at the dispatcher', () => {
       expect(reached, verb).toEqual([{ name: verb, agent: 'codex' }])
     }
   })
-
   test('never reaches the command line own verbs, eval among them', async () => {
     const every = agentHolding(...Object.values(AGENT_WINDOW_VERBS).filter((one) => one !== null))
     for (const verb of [
@@ -89,7 +80,6 @@ describe('an agent at the dispatcher', () => {
       })
     }
   })
-
   test('a grant that cannot be read is an agent holding nothing, never the reader', async () => {
     reached.length = 0
     const garbled = callerOf('not a grant')
@@ -100,7 +90,6 @@ describe('an agent at the dispatcher', () => {
     expect(callerOf({ id: 'x', scopes: ['notes.read'], mode: 'whatever' }).agent?.mode).toBe('confirm')
     expect(reached).toEqual([])
   })
-
   test('the reader holds every scope, and is answered in the command line shapes', async () => {
     expect(await dispatch('run_terminal', { command: 'x' }, [], 'here', READER)).toEqual({
       ok: true,
@@ -108,18 +97,15 @@ describe('an agent at the dispatcher', () => {
     })
     expect(reached.at(-1)).toEqual({ name: 'run_terminal', agent: null })
   })
-
   test('the command line keeps its own bookmarks verb, and an agent gets the agent one', async () => {
     reached.length = 0
     const theirs = await dispatch('bookmarks', { op: 'list' }, [], 'here', agentHolding('workspace'))
     expect(theirs).toMatchObject({ status: 'ok', result: { ran: 'bookmarks' } })
     expect(reached).toEqual([{ name: 'bookmarks', agent: 'claude-code' }])
-
     reached.length = 0
     expect(await dispatch('bookmarks', {})).toEqual({ ok: false, error: 'there is no space open' })
     expect(reached).toEqual([])
   })
-
   test('the crate asks its three as the installation', async () => {
     expect(await dispatch('agent.reader_tabs', {})).toEqual({
       ok: true,

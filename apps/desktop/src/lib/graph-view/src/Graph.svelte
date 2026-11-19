@@ -30,9 +30,7 @@
     onopen?: ((path: string, how: OpenHow) => void) | undefined
     onescape?: (() => void) | undefined
   } = $props()
-
   if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.dismiss('graph'))
-
   const A_FRAME = 6
   const A_SETTLE = 10
   const A_CLICK = 3
@@ -68,7 +66,6 @@
   const settings = $derived(workspace.graphSettings.here)
   const asked = $derived(whole ? settings.filter.trim() : '')
   const filter = $derived<Keeps | null>(asked ? graphFilter(parseQuery(asked)) : null)
-
   const groups = $derived(
     settings.groups.flatMap((group) => {
       const keeps = group.query.trim() ? graphFilter(parseQuery(group.query)) : null
@@ -76,44 +73,33 @@
       return [{ colour: Math.min(MOST_GROUPS, Math.max(1, Math.round(group.colour))) - 1, keeps }]
     }),
   )
-
   const madeAt = $derived.by((): Map<string, number> => {
     const root = whole ? (workspace.activeSpace?.root ?? null) : null
     if (root === null) return new Map()
-
     return new Map(
       workspace.files.filter((file) => file.created > 0).map((file) => [relativeTo(root, file.path), file.created]),
     )
   })
-
   const span = $derived.by((): { from: number; to: number } | null => {
     let from = Infinity
     let to = -Infinity
-
     for (const node of graph.nodes) {
       const made = node.path === null ? 0 : (madeAt.get(node.path) ?? 0)
       if (!made) continue
       if (made < from) from = made
       if (made > to) to = made
     }
-
     return from <= to && from !== to ? { from, to } : null
   })
-
   const shape = $derived(signature(graph))
-
   const currentAt = $derived(current === null ? -1 : graph.nodes.findIndex((node) => node.id === current))
-
   const pushedBy = $derived([settings.spread, settings.gather, settings.distance, settings.push].join('\n'))
-
   const arrangedBy = $derived(`${pushedBy}\n${shape}`)
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(arrangedBy)
     untrack(rebuild)
   })
-
   $effect(() => {
     follows(filter)
     follows(groups)
@@ -124,14 +110,12 @@
     untrack(remask)
     schedule()
   })
-
   $effect(() => {
     follows(settings.arrows)
     follows(settings.lines)
     follows(settings.fade)
     schedule()
   })
-
   $effect(() => {
     follows(currentAt)
     follows(theme.current)
@@ -139,41 +123,31 @@
     colours = null
     schedule()
   })
-
   $effect(() => {
     const element = host
     if (!element) return
-
     follows(pixelRatio.now)
     const watcher = new ResizeObserver(() => resize())
     watcher.observe(element)
     resize()
-
     return () => watcher.disconnect()
   })
-
   $effect(() => {
     const element = canvas
     if (!element) return
-
     element.addEventListener('wheel', onWheel, { passive: false })
     return () => element.removeEventListener('wheel', onWheel)
   })
-
   onDestroy(() => {
     if (frame) cancelAnimationFrame(frame)
   })
-
   let laidOut: { graph: NoteGraph; by: string } | null = null
-
   function placed(): Map<string, { x: number; y: number }> | undefined {
     const was = laidOut
     const held = layout
     if (!was || !held || was.by !== pushedBy) return undefined
-
     return new Map(was.graph.nodes.map((node, one) => [node.id, { x: held.x[one] ?? 0, y: held.y[one] ?? 0 }]))
   }
-
   function rebuild() {
     const from = placed()
     layout = new Layout(graph, {
@@ -187,16 +161,12 @@
     lit = new Uint8Array(graph.nodes.length)
     hovered = -1
     remask()
-
     settling = stillness()
-
     if (!from) touched = false
     if (!touched) frameGraph()
     schedule()
   }
-
   let settling = false
-
   function remask() {
     const nodes = graph.nodes
     const edges = graph.edges
@@ -204,27 +174,20 @@
     const colours = groups
     const keeps = filter
     const sized = settings.sized
-
     const count = nodes.length
     if (hiding.length !== count) hiding = new Uint8Array(count)
     if (tint.length !== count) tint = new Int8Array(count)
     if (radii.length !== count) radii = new Float64Array(count)
-
     const cut = at
     const orphans = !whole || settings.orphans
-
     for (let one = 0; one < count; one++) {
       const node = nodes[one]
       if (!node) continue
-
       const made = node.path === null ? 0 : (dates.get(node.path) ?? 0)
-
       const yet = cut === null || made === 0 || made <= cut
       const kept = !keeps || keeps(node)
       hiding[one] = yet && kept && (orphans || node.degree > 0) ? 1 : 0
-
       radii[one] = radiusOf(sized ? node.degree : 0)
-
       let colour = -1
       for (const group of colours) {
         if (!group.keeps(node)) continue
@@ -233,118 +196,94 @@
       }
       tint[one] = colour
     }
-
     for (let one = 0; one < count; one++) {
       if (nodes[one]?.path === null) hiding[one] = 0
     }
-
     for (const edge of edges) {
       if (nodes[edge.a]?.path === null && hiding[edge.b]) hiding[edge.a] = 1
       if (nodes[edge.b]?.path === null && hiding[edge.a]) hiding[edge.b] = 1
     }
   }
-
   function frameGraph() {
     if (!layout) return
     camera = framing(layout.x, layout.y, graph.nodes.length, width, height, PADDING, hiding)
   }
-
   function resize() {
     const element = host
     const surface = canvas
     if (!element || !surface) return
-
     const box = element.getBoundingClientRect()
     ratio = untrack(() => pixelRatio.now)
     const next = { width: Math.round(box.width), height: Math.round(box.height) }
     if (!next.width || !next.height) return
-
     width = next.width
     height = next.height
     surface.width = Math.round(width * ratio)
     surface.height = Math.round(height * ratio)
-
     surface.getContext('2d')?.setTransform(ratio, 0, 0, ratio, 0, 0)
-
     if (!touched) frameGraph()
     schedule()
   }
-
   function schedule() {
     if (frame) return
     frame = requestAnimationFrame(run)
   }
-
   function run() {
     frame = 0
     const arrangement = layout
     if (!arrangement) return
-
     if (settling) {
       if (!arrangement.settle(A_SETTLE)) {
         schedule()
         return
       }
-
       settling = false
       if (!touched) frameGraph()
       draw()
       return
     }
-
     const until = performance.now() + A_FRAME
     while (!arrangement.settled && performance.now() < until) arrangement.tick()
     if (playing) step()
     if (!arrangement.settled || playing) schedule()
-
     if (!touched) frameGraph()
     draw()
   }
-
   function step() {
     const one = span
     if (!one) {
       playing = false
       return
     }
-
     const gone = (performance.now() - started) / A_LAPSE
     const next = startedAt + (one.to - one.from) * gone
-
     if (next >= one.to) {
       at = null
       playing = false
       return
     }
-
     at = next
   }
-
   function play() {
     const one = span
     if (!one) return
-
     if (playing) {
       playing = false
       return
     }
-
     startedAt = at ?? one.from
     started = performance.now()
     playing = true
     schedule()
   }
-
   function scrub(moment: number) {
     playing = false
     at = moment >= (span?.to ?? 0) ? null : moment
     schedule()
   }
-
   function palette(element: HTMLElement): GraphColours {
     const style = getComputedStyle(element)
     const token = (name: string) => style.getPropertyValue(name).trim()
-
     return {
       edge: token('--line-strong'),
       litEdge: token('--accent'),
@@ -358,18 +297,14 @@
       }),
     }
   }
-
   function draw() {
     const surface = canvas
     const element = host
     if (!surface || !element || !layout) return
-
     const context = surface.getContext('2d')
     if (!context) return
-
     colours ??= palette(element)
     context.clearRect(0, 0, width, height)
-
     paint(context, {
       graph,
       x: layout.x,
@@ -390,19 +325,15 @@
       ratio,
     })
   }
-
   function relight(node: number) {
     lit.fill(0)
     if (node < 0) return
-
     lit[node] = 2
     for (const near of neighbours(graph, node)) lit[near] ||= 1
   }
-
   function nodeUnder(event: PointerEvent | MouseEvent): number {
     const surface = canvas
     if (!surface || !layout) return -1
-
     const box = surface.getBoundingClientRect()
     const found = nodeAt(
       layout.x,
@@ -414,10 +345,8 @@
       event.clientX - box.left,
       event.clientY - box.top,
     )
-
     return found >= 0 && hiding[found] ? found : -1
   }
-
   function onPointerDown(event: PointerEvent) {
     if (event.button === 1) {
       const node = nodeUnder(event)
@@ -427,7 +356,6 @@
       return
     }
     if (event.button !== 0) return
-
     canvas?.setPointerCapture(event.pointerId)
     fingers.press(event.pointerId, { x: event.clientX, y: event.clientY })
     if (fingers.pinching) {
@@ -437,20 +365,16 @@
       return
     }
     if (fingers.lead !== event.pointerId) return
-
     lastX = event.clientX
     lastY = event.clientY
     travelled = 0
-
     const node = nodeUnder(event)
     if (node >= 0) holding = node
     else panning = true
   }
-
   function onPointerMove(event: PointerEvent) {
     const surface = canvas
     if (!surface) return
-
     const pinched = fingers.move(event.pointerId, { x: event.clientX, y: event.clientY })
     if (fingers.pinching) {
       if (!pinched) return
@@ -466,19 +390,16 @@
       return
     }
     if (fingers.lead !== null && fingers.lead !== event.pointerId) return
-
     if ((holding >= 0 || panning) && event.buttons === 0) {
       holding = -1
       panning = false
       fingers.lift(event.pointerId)
       if (surface.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId)
     }
-
     if (holding >= 0 && layout) {
       travelled += Math.abs(event.clientX - lastX) + Math.abs(event.clientY - lastY)
       lastX = event.clientX
       lastY = event.clientY
-
       if (travelled > A_CLICK) {
         touched = true
         const box = surface.getBoundingClientRect()
@@ -488,7 +409,6 @@
       }
       return
     }
-
     if (panning) {
       touched = true
       camera = {
@@ -502,18 +422,14 @@
       schedule()
       return
     }
-
     const node = nodeUnder(event)
     if (node === hovered) return
-
     hovered = node
     relight(node)
     schedule()
   }
-
   function onPointerUp(event: PointerEvent) {
     if (canvas?.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId)
-
     const leading = fingers.lead === event.pointerId
     const left = fingers.lift(event.pointerId)
     if (left) {
@@ -524,32 +440,24 @@
       return
     }
     if (!leading && fingers.lead !== null) return
-
     const wasHolding = holding
     const wasClick = travelled <= A_CLICK
-
     holding = -1
     panning = false
-
     if (event.type === 'pointerup' && wasHolding >= 0 && wasClick) open(wasHolding, tabAsk(event))
   }
-
   function onDoubleClick(event: MouseEvent) {
     if (clicked && tabAsk(event) === 'plain') onopen?.(clicked, {})
   }
-
   function open(node: number, ask: TabAsk) {
     const path = graph.nodes[node]?.path
     if (!path) return
-
     clicked = path
     onopen?.(path, howFor(ask, { preview: true }))
   }
-
   function onWheel(event: WheelEvent) {
     const surface = canvas
     if (!surface) return
-
     event.preventDefault()
     touched = true
     const box = surface.getBoundingClientRect()
@@ -563,16 +471,13 @@
     )
     schedule()
   }
-
   function onKeydown(event: KeyboardEvent) {
     if (event.key !== 'Escape' || event.defaultPrevented || !onescape) return
-
     const focus = document.activeElement
     if (focus instanceof HTMLInputElement || focus instanceof HTMLTextAreaElement) return
     if (focus instanceof HTMLElement && focus.isContentEditable) return
     const bare = focus === null || focus === document.body
     if (!host?.contains(focus) && !(bare && focused)) return
-
     event.preventDefault()
     onescape()
   }
@@ -620,7 +525,6 @@
     overflow: hidden;
     outline: none;
   }
-
   canvas {
     display: block;
     width: 100%;
@@ -630,7 +534,6 @@
     -webkit-user-select: none;
     cursor: default;
   }
-
   canvas.panning {
     cursor: grabbing;
   }

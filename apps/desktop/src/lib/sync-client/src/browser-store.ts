@@ -18,19 +18,14 @@ import { databaseName } from '../../web-backend/src/api'
 import { keptForGood } from '../../kept-for-good/src/api'
 
 const SCHEMA = 1
-
 const NAMES = Object.keys(TABLES) as TableName[]
-
 const BY_SPACE = 'space'
 const BY_AGE = 'age'
-
 const nameOf = (account: string) => `orden-sync:${account}`
 const formerNameOf = (account: string) => `nib-sync:${account}`
-
 export async function openWeb(account: string, made?: string): Promise<SyncStore> {
   const db = await database(account)
   db.onversionchange = () => db.close()
-
   const opened = await started(db, made)
   return {
     opened,
@@ -46,11 +41,9 @@ export async function openWeb(account: string, made?: string): Promise<SyncStore
     },
   }
 }
-
 export async function deviceWeb(account: string): Promise<string | null> {
   return (await deviceIn(nameOf(account))) ?? deviceIn(formerNameOf(account))
 }
-
 function deviceIn(name: string): Promise<string | null> {
   return new Promise((resolve) => {
     const request = indexedDB.open(name)
@@ -78,12 +71,10 @@ function deviceIn(name: string): Promise<string | null> {
     }
   })
 }
-
 export async function forgetWeb(account: string): Promise<void> {
   await forget(formerNameOf(account))
   await forget(nameOf(account))
 }
-
 function forget(name: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.deleteDatabase(name)
@@ -91,7 +82,6 @@ function forget(name: string): Promise<void> {
     request.onerror = () => reject(request.error ?? new StoreError('the sync store stayed'))
   })
 }
-
 async function database(account: string): Promise<IDBDatabase> {
   const name = await databaseName(formerNameOf(account), nameOf(account))
   return new Promise((resolve, reject) => {
@@ -102,7 +92,6 @@ async function database(account: string): Promise<IDBDatabase> {
     request.onblocked = () => reject(new StoreError('another tab holds an older sync store open'))
   })
 }
-
 function made(db: IDBDatabase): void {
   for (const name of NAMES) {
     const spec = TABLES[name]
@@ -118,11 +107,9 @@ function made(db: IDBDatabase): void {
     }
   }
 }
-
 function started(db: IDBDatabase, made?: string): Promise<Opened> {
   const found: { device?: unknown; clean?: unknown } = {}
   let device = ''
-
   return settled(db, ['meta'], (tx) => {
     const meta = tx.objectStore('meta')
     const asked = meta.get('device')
@@ -144,11 +131,9 @@ function started(db: IDBDatabase, made?: string): Promise<Opened> {
     recovered: false,
   }))
 }
-
 async function answered<const Q extends readonly Query[]>(db: IDBDatabase, queries: Q): Promise<Answers<Q>> {
   for (const query of queries) queryOf(query)
   if (queries.length === 0) return [] as Answers<Q>
-
   const raw: unknown[] = []
   const tables = [...new Set(queries.map((query) => query.table))]
   await settled(
@@ -172,24 +157,19 @@ async function answered<const Q extends readonly Query[]>(db: IDBDatabase, queri
     },
     'readonly',
   )
-
   return queries.map((query, at) => answerOf(query, raw[at] ?? null)) as Answers<Q>
 }
-
 function spaceIndexRead(store: IDBObjectStore, table: TableName, space: string): IDBRequest {
   const index = store.index(BY_SPACE)
   if (table !== 'outbox') return index.getAll(space)
   return index.getAll(IDBKeyRange.bound([space, -Infinity], [space, Infinity]))
 }
-
 async function written(db: IDBDatabase, changes: readonly Change[]): Promise<number[]> {
   const checked = changes.map((change) => changeOf(change))
   if (checked.length === 0) return []
-
   const counts = checked.map(() => 0)
   const tables = [...new Set(checked.map((change) => change.table))]
   let logged = false
-
   await settled(db, tables, (tx) => {
     checked.forEach((change, at) => {
       const store = tx.objectStore(change.table)
@@ -231,24 +211,20 @@ async function written(db: IDBDatabase, changes: readonly Change[]): Promise<num
     })
     if (logged) trim(tx.objectStore('log'))
   })
-
   if (checked.some(unsent)) void keptForGood.ask()
   return counts
 }
-
 function unsent(change: Change): boolean {
   if (change.table === 'outbox') return change.t === 'put'
   if (change.table !== 'docs') return false
   if (change.t === 'put') return change.row.pending != null
   return change.t === 'patch' && change.set.pending != null
 }
-
 function spaceKeys(store: IDBObjectStore, table: TableName, space: string): IDBRequest<IDBValidKey[]> {
   const index = store.index(BY_SPACE)
   if (table !== 'outbox') return index.getAllKeys(space)
   return index.getAllKeys(IDBKeyRange.bound([space, -Infinity], [space, Infinity]))
 }
-
 function trim(log: IDBObjectStore): void {
   const counted = log.count()
   counted.onsuccess = () => {
@@ -264,7 +240,6 @@ function trim(log: IDBObjectStore): void {
     }
   }
 }
-
 function settled(
   db: IDBDatabase,
   tables: readonly string[],

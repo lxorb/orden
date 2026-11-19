@@ -3,7 +3,6 @@ import { sidebarParts } from '../../ai-chat/src/api'
 export type { Change, ChatHost, Choice, ContextKind, Edit, FileChange } from '../../ai-chat/src/api'
 export type { Front, Listed, Mention, MentionKind, NoteChanges, Panel } from '../../ai-chat/src/api'
 export type { PanelCommand, ReviewPanel, Row, Source, TaskTool } from '../../ai-chat/src/api'
-
 const parts = await sidebarParts()
 export const { alwaysOffered, chat, chatToTab, checkpoints, citationLinks, citedIn } = parts
 export const { compactsAt, crateAnswers, DEFAULT_ASK, dictation, estimate, estimateText } = parts

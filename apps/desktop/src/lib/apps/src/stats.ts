@@ -4,27 +4,22 @@ export interface Clock {
   offset: number
   rtt: number
 }
-
 export function clockOf(pong: Pong, heard: number): Clock {
   const rtt = Math.max(0, heard - pong.at)
   return { offset: pong.now - (pong.at + rtt / 2), rtt }
 }
-
 const WRAP = 2 ** 32 / 90
-
 export function seenAt(rtp: number, began: number, clock: Clock, now: number): number {
   const since = rtp / 90
   const hostNow = now + clock.offset
   const turns = Math.round((hostNow - began - since) / WRAP)
   return began + since + turns * WRAP - clock.offset
 }
-
 export function middle(values: readonly number[]): number | null {
   if (values.length === 0) return null
   const sorted = [...values].sort((one, other) => one - other)
   return sorted[Math.floor(sorted.length / 2)] ?? null
 }
-
 export interface StreamStats {
   width: number | null
   height: number | null
@@ -37,7 +32,6 @@ export interface StreamStats {
   codec: string | null
   route: string | null
 }
-
 export interface Counts {
   at: number
   bytes: number
@@ -45,11 +39,8 @@ export interface Counts {
   delay: number
   squared: number
 }
-
 type Stat = Record<string, unknown> & { type?: unknown; id?: unknown }
-
 const num = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
-
 export function streamStats(
   report: Iterable<Stat>,
   before: Counts | null,

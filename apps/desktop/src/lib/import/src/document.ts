@@ -8,7 +8,6 @@ export async function importDocument(): Promise<{
   pictures: PandocPicture[]
 } | null> {
   if (!isDesktop) return null
-
   const { open } = await import('@tauri-apps/plugin-dialog')
   const given = dialogAnswer()
   const picked = given
@@ -21,9 +20,7 @@ export async function importDocument(): Promise<{
           },
         ],
       })
-
   if (typeof picked !== 'string') return null
-
   const { markdown, leftOut, pictures } = await invoke<{
     markdown: string
     leftOut: string | null
@@ -35,6 +32,5 @@ export async function importDocument(): Promise<{
       .split(/[\\/]/)
       .pop()
       ?.replace(/\.[^.]+$/, '') ?? 'Imported'
-
   return { name: `${name}.md`, markdown, pictures }
 }

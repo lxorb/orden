@@ -4,17 +4,13 @@ export interface Offered {
   provider: Provider
   models: readonly ModelInfo[]
 }
-
 export type Routed = { provider: Provider; model: string } | { refused: string }
-
 const NAMED = 24
-
 function parentFirst(offered: readonly Offered[], parent: Provider | null): Offered[] {
   if (!parent) return [...offered]
   const mine = offered.filter((one) => one.provider.id === parent.id)
   return [...mine, ...offered.filter((one) => one.provider.id !== parent.id)]
 }
-
 export function routed(want: string, offered: readonly Offered[], parent: Provider | null): Routed {
   const asked = want.trim().toLowerCase()
   const order = parentFirst(offered, parent)
@@ -23,7 +19,6 @@ export function routed(want: string, offered: readonly Offered[], parent: Provid
     if (!provider) return { refused: 'there is no AI provider set up' }
     return { provider, model: isLocal(provider.kind) ? '' : provider.model }
   }
-
   const is = (one: ModelInfo) => one.id.toLowerCase() === asked || one.name.toLowerCase() === asked
   const holds = (one: ModelInfo) => one.id.toLowerCase().includes(asked) || one.name.toLowerCase().includes(asked)
   for (const test of [is, holds]) {
@@ -32,7 +27,6 @@ export function routed(want: string, offered: readonly Offered[], parent: Provid
       if (found) return { provider, model: found.id }
     }
   }
-
   const names = order.flatMap(({ models }) => models.map((one) => one.id)).slice(0, NAMED)
   return {
     refused: names.length

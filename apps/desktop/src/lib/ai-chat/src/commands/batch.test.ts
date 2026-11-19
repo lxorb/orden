@@ -18,7 +18,6 @@ const NOTES: Record<string, string> = {
   ...Object.fromEntries(Array.from({ length: 1_200 }, (_, at) => [`Big Data/${at}.md`, 'x'])),
   'Data/real.md': 'real',
 }
-
 vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'space', root: ROOT }],
@@ -26,7 +25,6 @@ vi.mock('../../../workspace/src/api', () => ({
     leftOutOf: () => [],
   },
 }))
-
 vi.mock('../../../search/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../search/src/api')>()),
   searchSpace: (
@@ -46,9 +44,7 @@ vi.mock('../../../search/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const { batch } = await import('./helpers')
-
 async function batched(instruction: string): Promise<string[]> {
   const asked: string[] = []
   const ended: Ended = { stop: 'end', turn: null, usage: null }
@@ -64,19 +60,15 @@ async function batched(instruction: string): Promise<string[]> {
   await batch(host, newThread('space', 'p', 'm'), instruction)
   return asked.sort()
 }
-
 test('/batch over Inbox/ takes only the notes in the folder Inbox', async () => {
   expect(await batched('tag every note in Inbox/ with done')).toEqual(['Inbox/Deep/e', 'Inbox/a', 'inbox/f'])
 })
-
 test('/batch over a folder and a tag takes both, and only those', async () => {
   expect(await batched('tag every note in Projects/Inbox/ and #todo')).toEqual(['Elsewhere/g', 'Projects/Inbox/c'])
 })
-
 test('/batch over a short folder still finds it behind many paths that only contain it', async () => {
   expect(await batched('fix every note in Data/')).toEqual(['Data/real'])
 })
-
 test('/batch runs helpers of the thread, which its line opens (#1062)', async () => {
   const adopted: Thread[] = []
   const line = vi.fn()

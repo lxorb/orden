@@ -122,7 +122,6 @@ describe('a pattern that could backtrack without end', () => {
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
-
   test.each([
     'foo',
     'w[a-z]+d',
@@ -220,7 +219,6 @@ describe('a pattern that could backtrack without end', () => {
     expect(backtracksWildly(source)).toBe(false)
   })
 })
-
 describe('a search pattern over notes of emoji', () => {
   test.each([
     '[^\\p{L}\\p{N}]+X',
@@ -239,7 +237,6 @@ describe('a search pattern over notes of emoji', () => {
     expect(searchBacktracksWildly(source, true)).toBe(true)
   })
 })
-
 describe('a list, link or quote pattern led by a sign tables and emoji are full of', () => {
   test.each([
     '- \\[\\[[^\\]]+\\]\\]',

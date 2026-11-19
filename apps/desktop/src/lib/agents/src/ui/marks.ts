@@ -3,13 +3,10 @@ import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
 import type { Seen } from './seen'
 
 export type ColourOf = (agent: string) => string
-
 export function wornAt(seen: Seen, now: number, colourOf: ColourOf): Record<string, Worn> {
   const worn: Record<string, Worn> = {}
-
   for (const [tab, touch] of Object.entries(seen.acting)) {
     if (tab in seen.tabs) continue
-
     const state = stateOf(seen, touch.agent, touch.at, now)
     if (state !== 'none') {
       worn[tab] = {
@@ -19,34 +16,26 @@ export function wornAt(seen: Seen, now: number, colourOf: ColourOf): Record<stri
       }
     }
   }
-
   return worn
 }
-
 function stateOf(seen: Seen, agent: string, at: number, now: number): 'acting' | 'stopped' | 'none' {
   const stoppedAt = seen.halted[agent] ?? seen.stopped
   if (stoppedAt !== null) {
     return at + ACTIVE_FOR > stoppedAt ? 'stopped' : 'none'
   }
-
   return now - at < ACTIVE_FOR ? 'acting' : 'none'
 }
-
 export function nextLapse(seen: Seen, now: number): number | null {
   let soonest: number | null = null
-
   for (const touch of Object.values(seen.acting)) {
     const ends = touch.at + ACTIVE_FOR
     if (ends > now && (soonest === null || ends < soonest)) soonest = ends
   }
-
   return soonest
 }
-
 export function sameMarks(one: Record<string, Worn>, other: Record<string, Worn>): boolean {
   const keys = Object.keys(one)
   if (keys.length !== Object.keys(other).length) return false
-
   return keys.every((key) => {
     const a = one[key]
     const b = other[key]

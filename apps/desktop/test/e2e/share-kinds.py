@@ -2,9 +2,7 @@ import json
 import re
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import CHATS_ON, Drive
 
@@ -15,18 +13,14 @@ ORIGIN = harness.worker_origin()
 PATIENCE = 40
 CROSSING = 15
 SYNCED = 60
-
 OWNER = "owner-kinds@example.com"
 SPACE = "Kinds"
 DECK = "Deck.pages"
 CHAT = "Talk"
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: float = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -35,7 +29,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: f
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 def device(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     context.add_init_script(CHATS_ON)
@@ -46,7 +39,6 @@ def device(browser: Browser, label: str, at: str, token: str | None = None) -> P
     page.goto(at, wait_until="domcontentloaded")
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app")
     return page
-
 def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
     worker.request(
         f"/v1/spaces/{space}/share/link?item={note}",
@@ -59,7 +51,6 @@ def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
     if not found:
         raise SystemExit(f"that is not a join link: {link}")
     return f"{ORIGIN}/join/{found.group(1)}"
-
 def alone(page: Page, label: str) -> None:
     chrome = page.evaluate(
         "() => [...document.querySelectorAll('[data-chrome], .strip')]"
@@ -67,19 +58,16 @@ def alone(page: Page, label: str) -> None:
     )
     if chrome:
         failed(f"[{label}] a guest with one file still sees the app round it: {chrome}")
-
 SURFACE = """() => {
   const key = window.ordenApp.workspace.active?.note.key
   return key ? window.ordenApp.rooms.planes.get(key) ?? null : null
 }"""
-
 def card_on(page: Page, card: str) -> bool:
     return bool(
         page.evaluate(
             f"(id) => !!({SURFACE})()?.canvas.nodes.some((node) => node.id === id)", card
         )
     )
-
 def put_down(page: Page, label: str) -> str:
     return page.evaluate(
         """(label) => {
@@ -92,7 +80,6 @@ def put_down(page: Page, label: str) -> str:
         % SURFACE,
         label,
     )
-
 def crosses(source: Page, label: str, other: Page, there: str) -> None:
     card = put_down(source, label)
     until = time.monotonic() + CROSSING
@@ -102,7 +89,6 @@ def crosses(source: Page, label: str, other: Page, there: str) -> None:
         failed(f"a card put down on the {label}'s pages never reached the {there}'s")
     else:
         say(f"a card put down on the {label}'s pages is on the {there}'s")
-
 def held_and_gone_to(owner: Page, guest: Page) -> None:
     box = owner.locator(".pages").first.bounding_box()
     if not box:
@@ -128,25 +114,21 @@ def held_and_gone_to(owner: Page, guest: Page) -> None:
         say("pressing its arrow went to the owner's hand")
     except SystemExit as gave_up:
         failed(str(gave_up))
-
 def has_row(words: str) -> str:
     return (
         "() => [...document.querySelectorAll('.chat-tab .main .message .body')]"
         f".some((one) => one.textContent.includes({json.dumps(words)}))"
     )
-
 def post(page: Page, words: str) -> None:
     page.click(".chat-tab .main .composer .cm-content")
     page.keyboard.type(words, delay=8)
     page.keyboard.press("Enter")
-
 def arrives(page: Page, words: str, what: str) -> None:
     try:
         wait_for(page, has_row(words), what, patience=CROSSING)
         say(f"{what}: there")
     except SystemExit as gave_up:
         failed(str(gave_up))
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session(
@@ -160,7 +142,6 @@ def main() -> int:
         token = worker.account(OWNER)
         worker.request("/v1/me", token, {"name": "Emil"}, method="PATCH")
         space = worker.request("/v1/spaces", token=token, body={"name": SPACE})["space"]
-
         owner = device(browser, "owner", ORIGIN, token)
         root = wait_for(
             owner,
@@ -171,7 +152,6 @@ def main() -> int:
             space["id"],
             patience=SYNCED,
         )
-
         owner.evaluate(
             "async ([root, name]) => { await window.ordenApp.workspace.createPages(root, name) }",
             [root, DECK],
@@ -196,7 +176,6 @@ def main() -> int:
             raise
         wait_for(owner, f"() => !!({SURFACE})()?.shared", "[owner] the page note in its room")
         say(f"the owner holds {deck_path} as {deck}")
-
         guest = device(browser, "guest", link_to(worker, token, space["id"], deck))
         wait_for(guest, "() => !!window.ordenApp.workspace.active?.note.shared", "[guest] the shared tab")
         kind = guest.evaluate("() => window.ordenApp.workspace.active.kind")
@@ -213,7 +192,6 @@ def main() -> int:
                 failed(str(gave_up))
         alone(guest, "guest")
         guest.screenshot(path=str(SHOTS / "shared-pages.png"))
-
         wait_for(owner, "async () => (await window.ordenApp.chats()).chats.ready", "[owner] the chats")
         owner.evaluate(
             "async ([root, name]) => { const one = await window.ordenApp.chats(); await one.makeChat(root, name) }",
@@ -229,7 +207,6 @@ def main() -> int:
             patience=SYNCED,
         )
         wait_for(owner, "() => !!document.querySelector('.chat-tab .main .composer')", "[owner] the chat's tab")
-
         until = time.monotonic() + SYNCED
         pointer = None
         while time.monotonic() < until and not pointer:
@@ -240,7 +217,6 @@ def main() -> int:
         if not pointer:
             raise SystemExit("the chat's pointer never reached the account")
         say(f"the owner made {talk['id']} at {talk['path']}")
-
         chatter = device(browser, "chatter", link_to(worker, token, space["id"], pointer))
         wait_for(chatter, "() => !!window.ordenApp.workspace.active?.note.shared", "[chatter] the shared tab")
         kind = chatter.evaluate("() => window.ordenApp.workspace.active.kind")
@@ -268,7 +244,6 @@ def main() -> int:
                 failed(str(gave_up))
         alone(chatter, "chatter")
         chatter.screenshot(path=str(SHOTS / "shared-chat.png"))
-
     if wrong:
         print("\nFAILED", flush=True)
         for one in wrong:
@@ -276,5 +251,4 @@ def main() -> int:
         return 1
     print("\na page note and a chat shared on their own each open as themselves, and carry", flush=True)
     return 0
-
 sys.exit(main())

@@ -1,5 +1,4 @@
 export const page = (url: string, title: string) => ({ entries: [{ url, title }], index: 1 })
-
 export const SESSION = {
   version: ['sessionrestore', 1],
   windows: [
@@ -38,7 +37,6 @@ export const SESSION = {
     },
   ],
 }
-
 const bookmark = (uri: string, title: string, guid: string) => ({
   guid,
   title,
@@ -46,7 +44,6 @@ const bookmark = (uri: string, title: string, guid: string) => ({
   uri,
   dateAdded: 1_700_000_000_000_000,
 })
-
 export const BOOKMARKS = {
   guid: 'root________',
   title: '',

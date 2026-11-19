@@ -5,7 +5,6 @@ import { callerOf, fullPermissions, holds } from '../src/api'
 
 const LIB = join(import.meta.dirname, '..', '..')
 const DECIDES = 'automation/src/caller.ts'
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -13,9 +12,7 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.endsWith('.test.ts') ? [path] : []
   })
 }
-
 const OWN_DECISION = [/\bmode\s*[!=]==?\s*'autonomous'/, /\bagent\??\.scopes\??\.(includes|every|some)\(/]
-
 describe('what an agent holds', () => {
   test('is the crate’s Grant::holds: every scope under Full permissions, the listed ones otherwise', () => {
     for (const mode of ['autonomous', 'unsupervised', 'confirm']) {
@@ -26,7 +23,6 @@ describe('what an agent holds', () => {
     }
     expect(fullPermissions(callerOf({ id: 'a', mode: 'whatever' }).agent)).toBe(false)
   })
-
   test('is decided in one place, which every check of a caller’s mode or scopes asks', () => {
     const own = sources(LIB).flatMap((path) => {
       const where = relative(LIB, path).replaceAll('\\', '/')

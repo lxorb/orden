@@ -15,7 +15,6 @@ export const NEVER =
 const CONTROL_WORDS = new Set(['label', 'legend', 'option', 'button', 'select', 'textarea'])
 const NOT_A_FIELD = new Set(['hidden', 'submit', 'button', 'image', 'reset'])
 const WORDS_A_FIELD = 20
-
 export function formSays(form: Node): boolean {
   let words = 0
   let fields = 0
@@ -36,18 +35,13 @@ export function formSays(form: Node): boolean {
   walk(form)
   return fields === 0 ? words > 0 : words >= fields * WORDS_A_FIELD
 }
-
 export interface FromHtmlOptions {
   image?: (source: string, alt: string) => string
   fileTargets?: boolean
-
   appTargets?: boolean
-
   mediaLinks?: boolean
-
   plainTasks?: boolean
 }
-
 const MEDIA: Record<string, string> = {
   video: 'src',
   audio: 'src',
@@ -55,12 +49,10 @@ const MEDIA: Record<string, string> = {
   iframe: 'src',
   object: 'data',
 }
-
 function mediaLink(node: Element, options: FromHtmlOptions): string {
   const attribute = MEDIA[node.nodeName.toLowerCase()] ?? 'src'
   const source = (node.getAttribute(attribute) ?? node.querySelector('source[src]')?.getAttribute('src') ?? '').trim()
   if (!source || !mayPointAt(source, options)) return ''
-
   const name = source.split(/[?#]/)[0]?.split('/').pop() ?? ''
   let shown = name
   try {
@@ -68,101 +60,76 @@ function mediaLink(node: Element, options: FromHtmlOptions): string {
   } catch {
     // Not an escape after all; the name is shown as it was written.
   }
-
   const words = escapeText((shown || source).replace(/\s+/g, ' '))
   return `\n\n[${words}](${destination(source)})\n\n`
 }
-
 function texOf(maths: Element): string {
   const said =
     maths.getAttribute('data-tex') ??
     maths.querySelector('annotation[encoding="application/x-tex"]')?.textContent ??
     maths.getAttribute('alttext') ??
     ''
-
   return angled(said.replace(/\s+/g, ' ').trim())
 }
-
 const saysAFormula = (node: Element): boolean => node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
-
 function drawnBeside(node: Element): boolean {
   if (node.getAttribute('aria-hidden') !== 'true') return false
   return !!node.parentElement?.querySelector('math, [data-tex]')
 }
-
 function saysWords(node: Node): boolean {
   if (node.nodeType === 3) return !!node.nodeValue?.trim()
   if (node.nodeType !== 1 || drawnBeside(node as Element)) return false
-
   for (let kid = node.firstChild; kid; kid = kid.nextSibling) {
     if (saysWords(kid)) return true
   }
-
   return false
 }
-
 function holdsOnly(parent: Element, one: Node): boolean {
   for (let kid = parent.firstChild; kid; kid = kid.nextSibling) {
     if (kid !== one && saysWords(kid)) return false
   }
-
   return true
 }
-
 const angled = (tex: string): string => tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
-
 const BESIDE_ROWS = new Set(['CAPTION', 'COLGROUP', 'COL'])
-
 function firstBody(element: Element | null): boolean {
   if (element?.nodeName !== 'TBODY') return false
-
   for (let before = element.previousElementSibling; before; before = before.previousElementSibling) {
     if (BESIDE_ROWS.has(before.nodeName)) continue
     if (before.nodeName !== 'THEAD' || before.textContent.trim()) return false
   }
   return true
 }
-
 function headed(table: HTMLTableElement): boolean {
   const first = table.rows[0]
   if (!first) return false
-
   const parent = first.parentElement
   if (parent?.nodeName === 'THEAD') return true
-
   const looked = parent?.nodeName === 'TABLE' || firstBody(parent)
   return looked && first.previousElementSibling === null && [...first.cells].every((one) => one.nodeName === 'TH')
 }
-
 function alone(table: HTMLTableElement): boolean {
   const cells = table.rows[0]?.cells
   return table.rows.length === 1 && cells?.length === 1 && cells[0]?.nodeName === 'TD'
 }
-
 function spanOf(cell: Element): number {
   const said = Number(cell.getAttribute('colspan'))
   return Number.isInteger(said) && said > 1 ? Math.min(said, MOST_COLUMNS) : 1
 }
-
 const MOST_COLUMNS = 100
 const MOST_ROWS_SPANNED = 1000
-
 function rowsBelow(cell: Element): number {
   const said = Number(cell.getAttribute('rowspan'))
   return Number.isInteger(said) && said > 1 ? Math.min(said, MOST_ROWS_SPANNED) - 1 : 0
 }
-
 interface Gaps {
   before: Map<Element, number>
   after: Map<Element, number>
 }
-
 const gapsOfTable = new WeakMap<Element, Gaps>()
-
 function gapsOf(table: HTMLTableElement): Gaps {
   const known = gapsOfTable.get(table)
   if (known) return known
-
   const gaps: Gaps = { before: new Map(), after: new Map() }
   const covered: number[] = []
   for (const row of Array.from(table.rows)) {
@@ -191,146 +158,108 @@ function gapsOf(table: HTMLTableElement): Gaps {
   gapsOfTable.set(table, gaps)
   return gaps
 }
-
 const ALIGNED: Readonly<Record<string, string>> = { left: ':--', right: '--:', center: ':-:' }
-
 function emptyHeading(table: HTMLTableElement): string {
   const across = [...(table.rows[0]?.cells ?? [])].reduce((sum, one) => sum + spanOf(one), 0)
-
   return `|${'  |'.repeat(across)}\n|${' --- |'.repeat(across)}`
 }
-
 const LISTS = new Set(['UL', 'OL'])
-
 const OWNS_A_LINE = new Set(['P', 'DIV', 'DD', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'SECTION', 'BODY'])
 const HEADING = /^H[1-6]$/
-
 function standsAlone(maths: Element): boolean {
   if (OWNS_A_LINE.has(maths.nodeName)) return true
-
   let one: Element = maths
   let over: Element | null = maths.parentElement
-
   while (over) {
     if (HEADING.test(over.nodeName)) return false
     if (!holdsOnly(over, one)) return false
     if (OWNS_A_LINE.has(over.nodeName)) return true
-
     one = over
     over = over.parentElement
   }
-
   return false
 }
-
 function fenceFor(code: string): string {
   const longest = [...code.matchAll(/`+/g)].reduce((most, run) => Math.max(most, run[0].length), 0)
   return '`'.repeat(Math.max(3, longest + 1))
 }
-
 const A_LANGUAGE = /^[\w+#.-]{1,24}$/
 const THE_APP_S_OWN = new Set(['ai', 'query'])
-
 function languageOf(pre: Element): string {
   const code = pre.querySelector('code')
-
   for (const one of [pre, code]) {
     const named = one?.getAttribute('data-language') ?? one?.getAttribute('data-lang') ?? ''
     const first = named.trim().split(/\s+/)[0]
     if (first) return named_(first)
   }
-
   const classes = `${pre.className} ${code?.className ?? ''}`
   return named_(/(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? '')
 }
-
 function named_(said: string): string {
   const language = said.toLowerCase()
   return A_LANGUAGE.test(language) && !THE_APP_S_OWN.has(language) ? said : ''
 }
-
 export interface Work {
   lists: number
   items: number
   walked: number
 }
-
 const nothing = (): Work => ({ lists: 0, items: 0, walked: 0 })
 const work = nothing()
-
 export function workDone(): Work {
   const done = { ...work }
   Object.assign(work, nothing())
   return done
 }
-
 function indexer(): (parent: Element | null, node: Node) => number {
   const counted = new WeakMap<Element, Map<Node, number>>()
-
   return (parent, node) => {
     if (!parent) return 0
-
     work.items += 1
     let places = counted.get(parent)
-
     if (!places) {
       work.lists += 1
       places = new Map()
       const kids = parent.children
-
       let items = 0
       for (const kid of Array.from(kids)) {
         work.walked += 1
         if (kid.nodeName === 'LI') places.set(kid, items++)
       }
-
       counted.set(parent, places)
     }
-
     return places.get(node) ?? 0
   }
 }
-
 function altOf(image: Element): string {
   const words = (image.getAttribute('alt') ?? '').replace(/\s+/g, ' ').trim()
   if (image.closest('a')) {
     return words.replace(/\\/g, '/').replace(/\[/g, '(').replace(/\]/g, ')')
   }
-
   return words.replace(/([\\[\]])/g, '\\$1')
 }
-
 const IN_DESTINATION = /[\s\p{Cc}()<>\\"]/gu
 const KEPT: Record<string, string> = { '(': '%28', ')': '%29' }
-
 export const destination = (address: string): string =>
   address.replace(IN_DESTINATION, (character) => {
     return KEPT[character] ?? encodeURIComponent(character)
   })
-
 function preformattedText(node: Node): string {
   if (node.nodeName === 'BR') return '\n'
   if (node.nodeType === 3) return node.nodeValue ?? ''
   if (node.nodeType !== 1) return ''
-
   return [...node.childNodes].map(preformattedText).join('')
 }
-
 const WORD_LIST = /mso-list\s*:\s*l\d+\s+level(\d+)/i
-
 const WORD_LIST_MARK = /mso-list\s*:\s*ignore/i
-
 const BLOCKS =
   'address,article,aside,blockquote,div,dl,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,ul'
-
 const HEAVY = /(?:^|;)\s*font-weight\s*:\s*(?:bold|bolder|[6-9]00)\b/iu
 const LIGHT = /(?:^|;)\s*font-weight\s*:\s*(?:normal|lighter|[1-5]00)\b/iu
 const SLANTED = /(?:^|;)\s*font-style\s*:\s*(?:italic|oblique)\b/iu
 const UPRIGHT = /(?:^|;)\s*font-style\s*:\s*normal\b/iu
-
 const STRUCK = /(?:^|;)\s*text-decoration(?:-line)?\s*:[^;]*\bline-through\b/iu
 const RAISED = /(?:^|;)\s*vertical-align\s*:\s*(super|sub)\b/iu
-
 function styledAs(node: Element): 'del' | 'sup' | 'sub' | null {
   const style = node.getAttribute('style') ?? ''
   const raised = RAISED.exec(style)?.[1]?.toLowerCase()
@@ -338,13 +267,11 @@ function styledAs(node: Element): 'del' | 'sup' | 'sub' | null {
   if (raised === 'sub') return 'sub'
   return STRUCK.test(style) ? 'del' : null
 }
-
 const MARKED_BY: Readonly<Record<'del' | 'sup' | 'sub', readonly string[]>> = {
   del: ['DEL', 'S'],
   sup: ['SUP'],
   sub: ['SUB'],
 }
-
 function markedAbove(node: Element, kind: 'del' | 'sup' | 'sub'): boolean {
   for (let up = node.parentElement; up; up = up.parentElement) {
     if (MARKED_BY[kind].includes(up.nodeName)) return true
@@ -352,7 +279,6 @@ function markedAbove(node: Element, kind: 'del' | 'sup' | 'sub'): boolean {
   }
   return false
 }
-
 function joined(node: Element, side: -1 | 1): boolean {
   for (let next = side < 0 ? node.previousSibling : node.nextSibling; next;) {
     if (next.nodeType === 1) return true
@@ -361,28 +287,22 @@ function joined(node: Element, side: -1 | 1): boolean {
   }
   return false
 }
-
 function marksFor(node: Element): string | null {
   const style = node.getAttribute('style') ?? ''
   const name = node.nodeName
-
   if (name === 'SPAN') {
     if (!HEAVY.test(style) && !SLANTED.test(style)) return null
   } else if (!['B', 'STRONG', 'I', 'EM'].includes(name)) return null
-
   const heavy = name === 'B' || name === 'STRONG' ? !LIGHT.test(style) : HEAVY.test(style)
   const slanted = name === 'I' || name === 'EM' ? !UPRIGHT.test(style) : SLANTED.test(style)
   return `${heavy ? '**' : ''}${slanted ? '*' : ''}`
 }
-
 function sameRun(node: Element, next: Node | null): Element | null {
   if (next?.nodeType !== 1) return null
-
   const other = next as Element
   const touching = !/\s$/u.test(node.textContent) && !/^\s/u.test(other.textContent)
   return touching && other.textContent !== '' && marksFor(other) === marksFor(node) ? other : null
 }
-
 function marksHold(node: Element): boolean {
   let first = node
   let last = node
@@ -392,7 +312,6 @@ function marksHold(node: Element): boolean {
   for (let one = sameRun(last, last.nextSibling); one; one = sameRun(last, one.nextSibling)) {
     last = one
   }
-
   const opening = first.textContent
   const closing = last.textContent
   const after = /\s$/u.test(closing) ? '' : (last.nextSibling?.textContent ?? '')
@@ -401,7 +320,6 @@ function marksHold(node: Element): boolean {
   const opens = /^[\p{P}\p{S}]/u.test(opening.trimStart()) && /[\p{L}\p{N}]$/u.test(before)
   return !closes && !opens
 }
-
 function linkedBlocks(content: string, target: string): string {
   let fenced = false
   const blocks = content
@@ -418,51 +336,39 @@ function linkedBlocks(content: string, target: string): string {
         return block
       }
       if (block.includes('\n') || /^(?:-{3,}|\*{3,}|_{3,})$/u.test(block)) return block
-
       const found = /^(#{1,6} |> |(?:[-+*] |\d+[.)] )(?:\[[ x]\] )?)?(.*)$/u.exec(block.trim())
       return `${found?.[1] ?? ''}[${found?.[2] ?? ''}](${target})`
     })
-
   return `\n\n${blocks.join('\n\n')}\n\n`
 }
-
 function titleOf(link: Element): string {
   const title = (link.getAttribute('title') ?? '')
     .replace(/\s+/g, ' ')
     .replace(/(["\\])/g, '\\$1')
     .trim()
-
   return title ? ` "${title}"` : ''
 }
-
 function mayPointAt(said: string, options: FromHtmlOptions, picture = false): boolean {
   if (options.fileTargets === true && /^file:/i.test(said.trim())) return true
   if (picture) return safeSrc(said)
   if (options.appTargets === true && appHref(said)) return true
   return safeHref(said)
 }
-
 const CALLOUT_HEAD = ['callout-title', 'markdown-alert-title']
-
 function calloutType(node: Element): string | null {
   const said = node.getAttribute('data-callout')
   if (node.classList.contains('callout') && said) return said
   if (!node.classList.contains('markdown-alert')) return null
-
   const named = Array.from(node.classList).find((one) => one.startsWith('markdown-alert-'))
   return named?.slice('markdown-alert-'.length) ?? null
 }
-
 const calloutHead = (node: Element): Element | null =>
   Array.from(node.children).find((one) => CALLOUT_HEAD.some((name) => one.classList.contains(name))) ?? null
-
 const FOOTNOTE_LABEL = /^[^\]\s]+$/
-
 function labelled(said: string | null | undefined): string | null {
   const label = said?.trim() ?? ''
   return FOOTNOTE_LABEL.test(label) ? label : null
 }
-
 function fromFragment(href: string, prefix: RegExp): string | null {
   const rest = href.replace(prefix, '')
   if (rest === href) return null
@@ -472,12 +378,10 @@ function fromFragment(href: string, prefix: RegExp): string | null {
     return labelled(rest)
   }
 }
-
 function footnoteRefLabel(node: Element): string | null {
   if (node.nodeName !== 'SUP' || node.children.length !== 1) return null
   const link = node.firstElementChild
   if (link?.nodeName !== 'A') return null
-
   const href = link.getAttribute('href') ?? ''
   if (link.hasAttribute('data-footnote-ref')) return fromFragment(href, /^#(?:user-content-)?fn-/)
   if (node.classList.contains('footnote-ref') && href.startsWith('#fn-')) {
@@ -485,35 +389,24 @@ function footnoteRefLabel(node: Element): string | null {
   }
   return null
 }
-
 const isBackLink = (node: Element): boolean =>
   node.nodeName === 'A' && (node.classList.contains('footnote-back') || node.hasAttribute('data-footnote-backref'))
-
 function footnoteDefLabel(node: Element): string | null {
   if (node.nodeName !== 'LI') return null
-
   const own = Array.from(node.children).find((one) => one.classList.contains('footnote-back'))
   if (own && node.id.startsWith('fn-')) return labelled(own.textContent)
-
   if (!node.querySelector('a[data-footnote-backref]')) return null
   return fromFragment(`#${node.id}`, /^#(?:user-content-)?fn-/)
 }
-
 const quoted = (lines: readonly string[]): string => lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
-
 const FROM_A_SHEET = /<google-sheets-html-origin|\bdata-sheets-root\b|urn:schemas-microsoft-com:office:excel/i
-
 const FROM_LIBREOFFICE = /<meta\b[^>]*\bcontent=["']?LibreOffice/i
-
 const CALC_CELLS = /\bsd(?:val|num)=|<colgroup\b[^>]*\bwidth=/i
-
 function fromASheet(html: string): boolean {
   return FROM_A_SHEET.test(html) || (FROM_LIBREOFFICE.test(html) && CALC_CELLS.test(html))
 }
-
 function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
   const heads = (table: HTMLTableElement) => sheet || headed(table)
-
   const service = new TurndownService({
     headingStyle: 'atx',
     hr: '---',
@@ -528,27 +421,20 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return (node as { isBlock?: boolean }).isBlock ? '\n\n' : ''
     },
   })
-
   service.use(gfm)
-
   let insideLinks = 0
   service.escape = (text) => escapeText(text, { addresses: insideLinks === 0 })
-
   service.remove((node) => {
     const name = node.nodeName.toLowerCase()
     return NEVER.includes(name) || (name === 'form' && !formSays(node))
   })
-
   if (options.mediaLinks === true)
     service.addRule('media', {
       filter: (node) => node.nodeName.toLowerCase() in MEDIA,
       replacement: (_content, node) => mediaLink(node, options),
     })
-
   service.remove((node) => drawnBeside(node))
-
   const indexIn = indexer()
-
   service.addRule('emphasis', {
     filter: (node) => marksFor(node) !== null,
     replacement: (content, node) => {
@@ -564,14 +450,12 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       ) {
         return content
       }
-
       const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
       const opening = sameRun(element, element.previousSibling) ? '' : marks
       const closing = sameRun(element, element.nextSibling) ? '' : marks
       return `${words?.[1] ?? ''}${opening}${words?.[2] ?? ''}${closing}${words?.[3] ?? ''}`
     },
   })
-
   service.addRule('styled', {
     filter: (node) =>
       node.nodeName === 'SPAN' && marksFor(node) === null && styledAs(node) !== null && !node.closest('code,pre'),
@@ -587,7 +471,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return `${words?.[1] ?? ''}${written}${words?.[3] ?? ''}`
     },
   })
-
   service.addRule('heading', {
     filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
     replacement: (content, node) => {
@@ -595,7 +478,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return `\n\n${'#'.repeat(Number(node.nodeName.charAt(1)))} ${words}\n\n`
     },
   })
-
   service.addRule('looseTask', {
     filter: (node) => {
       if ((node as HTMLInputElement).type !== 'checkbox') return false
@@ -609,7 +491,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
     },
     replacement: (_content, node) => ((node as HTMLInputElement).checked ? '[x] ' : '[ ] '),
   })
-
   service.addRule('list', {
     filter: ['ul', 'ol'],
     replacement: (content, node) => {
@@ -623,7 +504,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return `${above ? '\n' : '\n\n'}${content}${below ? '\n' : '\n\n'}`
     },
   })
-
   service.addRule('listItem', {
     filter: 'li',
     replacement: (content, node, settings) => {
@@ -642,13 +522,11 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
           /^(\[[ x]\] )([^\n]*)/,
           (_, box: string, words: string) => box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
         )
-
       const ended = body.replace(/\n[ \t]*$/, '\n')
       const ends = node.nextSibling && !ended.endsWith('\n') ? '\n' : ''
       return `${marker} ${ended}${ends}`
     },
   })
-
   service.addRule('strayList', {
     filter: (node) => LISTS.has(node.nodeName) && LISTS.has(node.parentNode?.nodeName ?? ''),
     replacement: (content, node, settings) => {
@@ -656,7 +534,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       let item = node.previousSibling
       while (item && item.nodeName !== 'LI') item = item.previousSibling
       if (!item) return `\n\n${content}\n\n`
-
       const from = Number(parent.getAttribute('start') ?? 1) || 1
       const marker = parent.nodeName === 'OL' ? `${from + indexIn(parent, item)}.` : (settings.bulletListMarker ?? '-')
       const indent = ' '.repeat(marker.length + 1)
@@ -664,7 +541,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return `${indent}${lines}\n`
     },
   })
-
   service.addRule('struck', {
     filter: ['del', 's'],
     replacement: (content, node) => {
@@ -672,37 +548,30 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return markedAbove(node, 'del') ? content : `~~${content}~~`
     },
   })
-
   service.addRule('highlight', {
     filter: ['mark'],
     replacement: (content, node) => {
       if (!content) return ''
-
       const named = (node as Element).className
       const found = HIGHLIGHT_COLOURS.find((one) => one.className && one.className === named)
       return `==${found ? writeHighlight(content, found) : content}==`
     },
   })
-
   service.addRule('underline', {
     filter: ['u'],
     replacement: (content) => (content ? `<u>${content}</u>` : ''),
   })
-
   service.addRule('scripts', {
     filter: ['sup', 'sub'],
     replacement: (content, node) => {
       if (!content) return ''
-
       const tag = node.nodeName === 'SUP' ? 'sup' : 'sub'
       if (markedAbove(node, tag)) return content
       const marker = tag === 'sup' ? '^' : '~'
       const holds = !content.includes(marker) && !/\s/.test(content)
-
       return holds ? `${marker}${content}${marker}` : `<${tag}>${content}</${tag}>`
     },
   })
-
   service.addRule('cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
@@ -714,11 +583,9 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       const table = (node as Element).closest('table')
       if (table && alone(table)) return content.trim()
       const held = table ? (gapsOf(table).before.get(node) ?? 0) : 0
-
       return `${first ? '|' : ''}${'  |'.repeat(held)} ${said} |${'  |'.repeat(spanOf(node) - 1)}`
     },
   })
-
   service.addRule('row', {
     filter: 'tr',
     replacement: (content, node) => {
@@ -727,7 +594,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       const heading = table !== null && table.rows[0] === row && heads(table)
       const after = table ? (gapsOf(table).after.get(row) ?? 0) : 0
       if (!heading || alone(table)) return `\n${content}${'  |'.repeat(after)}`
-
       const borders = [...row.cells].flatMap((one) => {
         const align = (one.getAttribute('align') ?? '').toLowerCase()
         const border = ALIGNED[align] ?? '---'
@@ -736,9 +602,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return `\n${content}\n| ${borders.join(' | ')} |`
     },
   })
-
   const captions = new WeakMap<Node, string>()
-
   service.addRule('caption', {
     filter: 'caption',
     replacement: (content, node) => {
@@ -746,7 +610,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return ''
     },
   })
-
   service.addRule('table', {
     filter: (node) => node.nodeName === 'TABLE',
     replacement: (content, node) => {
@@ -756,34 +619,27 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       const above = caption ? `\n\n${caption}` : ''
       if (!rows) return above ? `${above}\n\n` : ''
       if (alone(table) || heads(table)) return `${above}\n\n${rows}\n\n`
-
       return `${above}\n\n${emptyHeading(table)}\n${rows}\n\n`
     },
   })
-
   service.addRule('preformatted', {
     filter: 'pre',
     replacement: (_content, node) => {
       const code = preformattedText(node).replace(/\n+$/, '')
       if (!code.trim()) return ''
-
       const fence = fenceFor(code)
       return `\n\n${fence}${languageOf(node)}\n${code}\n${fence}\n\n`
     },
   })
-
   service.addRule('maths', {
     filter: (node) => saysAFormula(node),
     replacement: (content, node) => {
       const tex = texOf(node)
       if (!tex) return content
-
       if (standsAlone(node)) return `\n\n$$\n${tex}\n$$\n\n`
-
       return `$${tex.replace(/(?<!\\)\$/g, '\\$')}$`
     },
   })
-
   service.addRule('link', {
     filter: (node) => {
       const href = node.nodeName === 'A' ? node.getAttribute('href') : null
@@ -795,17 +651,14 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       const href = node.getAttribute('href') ?? ''
       if (mayPointAt(href, options)) insideLinks -= 1
       if (!mayPointAt(href, options)) return content
-
       const target = `${destination(href)}${titleOf(node)}`
       if (content.includes('\n\n') || node.querySelector(BLOCKS)) {
         return linkedBlocks(content, target)
       }
-
       const label = content.replace(/^\^((?:[^^\s\\]|\\[\s\S])+)\^/u, '<sup>$1</sup>')
       return `[${label}](${target})`
     },
   })
-
   service.addRule('tag', {
     filter: (node) => {
       const words = node.textContent
@@ -813,23 +666,19 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
     },
     replacement: (_content, node) => node.textContent,
   })
-
   service.addRule('picture', {
     filter: 'img',
     replacement: (_content, node) => {
       const source = node.getAttribute('src') ?? ''
       if (!source || !mayPointAt(source, options, true)) return ''
-
       const alt = altOf(node)
       return `![${alt}](${destination(options.image ? options.image(source, alt) : source)})`
     },
   })
-
   service.addRule('definitionList', {
     filter: 'dl',
     replacement: (content) => (content.trim() ? `\n\n${content.trim()}\n\n` : ''),
   })
-
   service.addRule('definitionTerm', {
     filter: 'dt',
     replacement: (content, node) => {
@@ -838,7 +687,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return words ? `${after}${words}\n` : ''
     },
   })
-
   service.addRule('definitionDetail', {
     filter: 'dd',
     replacement: (content) => {
@@ -846,7 +694,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return words ? `: ${words}\n` : ''
     },
   })
-
   service.addRule('calloutHead', {
     filter: (node) => {
       const parent = node.parentElement
@@ -854,7 +701,6 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
     },
     replacement: () => '',
   })
-
   service.addRule('callout', {
     filter: (node) => calloutType(node) !== null,
     replacement: (content, node) => {
@@ -863,26 +709,21 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       const sign = node.nodeName === 'DETAILS' ? (node.hasAttribute('open') ? '+' : '-') : ''
       const named = title && title.toLowerCase() !== type.toLowerCase() ? ` ${title}` : ''
       const body = content.replace(/^\n+|\n+$/g, '')
-
       return `\n\n${quoted([`[!${type}]${sign}${named}`, ...(body ? body.split('\n') : [])])}\n\n`
     },
   })
-
   service.addRule('footnoteBack', {
     filter: (node) => isBackLink(node),
     replacement: () => '',
   })
-
   service.addRule('footnoteHeading', {
     filter: (node) => node.id === 'footnote-label' && node.closest('section[data-footnotes]') !== null,
     replacement: () => '',
   })
-
   service.addRule('footnoteRef', {
     filter: (node) => footnoteRefLabel(node) !== null,
     replacement: (_content, node) => `[^${footnoteRefLabel(node) ?? ''}]`,
   })
-
   service.addRule('footnoteDef', {
     filter: (node) => footnoteDefLabel(node) !== null,
     replacement: (content, node) => {
@@ -890,18 +731,15 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       return `[^${footnoteDefLabel(node) ?? ''}]: ${words.trim()}\n`
     },
   })
-
   service.addRule('wordListMark', {
     filter: (node) => node.nodeType === 1 && WORD_LIST_MARK.test((node as Element).getAttribute('style') ?? ''),
     replacement: () => '',
   })
-
   service.addRule('wordListItem', {
     filter: (node) => node.nodeName === 'P' && WORD_LIST.test((node as Element).getAttribute('style') ?? ''),
     replacement: (content, node) => {
       const words = content.trim()
       if (!words) return ''
-
       const style = (node as Element).getAttribute('style') ?? ''
       const level = Number(WORD_LIST.exec(style)?.[1] ?? 1)
       const shown = (node as Element).querySelector('[style*="mso-list"]')?.textContent ?? ''
@@ -912,28 +750,22 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
   })
   return service
 }
-
 function tidy(markdown: string): string {
   const kept: string[] = []
   let fence: string | null = null
-
   for (const line of markdown.split('\n')) {
     if (fence !== null) {
       kept.push(line)
       if (new RegExp(`^\\s*${fence}\`*\\s*$`).test(line)) fence = null
       continue
     }
-
     fence = /^\s*(`{3,})/.exec(line)?.[1] ?? null
-
     const tidied = line.replace(/^[ \t]+$/, '')
     if (fence === null && tidied === '' && kept.at(-1) === '') continue
     kept.push(tidied)
   }
-
   return kept.join('\n').trim()
 }
-
 export function htmlToMarkdown(html: string, options: FromHtmlOptions = {}): string {
   if (!html.trim()) return ''
   return tidy(converter(options, fromASheet(html)).turndown(html))

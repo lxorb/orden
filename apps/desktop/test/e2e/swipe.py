@@ -1,38 +1,30 @@
 import json
 import time
 from pathlib import Path
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SCRIPT = (Path(__file__).resolve().parents[2] / "src-tauri" / "crates" / "web" / "src" / "web_swipe.js").read_text(
     encoding="utf-8"
 )
-
 TRAIL = """async () => {
   const ws = window.ordenApp.workspace
   const path = (starts) => ws.notes.find((one) => one.name.startsWith(starts)).path
   await ws.open(path('Alpha'), { preview: true })
   await ws.open(path('Beta'), { preview: true })
 }"""
-
 HOLD = """(across) => {
   const at = document.querySelector('.cm-content')
   const step = (dx) => at.dispatchEvent(new WheelEvent('wheel', { deltaX: dx, deltaMode: 0, bubbles: true }))
   for (let one = 0; one < 30; one++) step(-across)
   window.__holding = setInterval(() => step(-0.001), 30)
 }"""
-
 def front(page: Page) -> str:
     return str(page.evaluate("window.ordenApp.workspace.active?.note?.name ?? ''"))
-
 def on(page: Page, starts: str, what: str) -> None:
     wait_for(page, f"window.ordenApp.workspace.active?.note?.name.startsWith({json.dumps(starts)})", what)
-
 def sweep(page: Page, x: float, y: float, across: float, down: float = 0) -> None:
     tools = page.context.new_cdp_session(page)
     tools.send(
@@ -48,11 +40,9 @@ def sweep(page: Page, x: float, y: float, across: float, down: float = 0) -> Non
         },
     )
     tools.detach()
-
 def lifted(page: Page) -> None:
     time.sleep(0.6)
     DRIVE.settled(page)
-
 def opened(
     browser: Browser, scheme: str = "light", off: bool = False, scale: float = 1
 ) -> tuple[Page, float, float]:
@@ -79,10 +69,8 @@ def opened(
     if box is None:
         raise SystemExit("no note on screen")
     return page, box["x"] + box["width"] / 2, box["y"] + 120
-
 def notes(browser: Browser, scheme: str) -> None:
     page, x, y = opened(browser, scheme)
-
     for across, name in ((7, "half"), (14, "armed")):
         page.evaluate(HOLD, across)
         DRIVE.settled(page)
@@ -96,33 +84,28 @@ def notes(browser: Browser, scheme: str) -> None:
         if front(page).startswith("Alpha"):
             page.evaluate("window.ordenApp.workspace.goForward()")
         on(page, "Beta", "Beta again")
-
     sweep(page, x, y, 120)
     lifted(page)
     if not front(page).startswith("Beta"):
         wrong(f"{scheme}: a short sweep went somewhere: {front(page)}")
     else:
         say(f"ok   {scheme}: a short sweep stays")
-
     sweep(page, x, y, 700)
     lifted(page)
     on(page, "Alpha", "back on Alpha")
     say(f"ok   {scheme}: a long sweep to the right goes back")
     if page.locator(".orden-swipe").count() != 0:
         wrong(f"{scheme}: the arrow stayed after it went")
-
     sweep(page, x, y, -700)
     lifted(page)
     on(page, "Beta", "forward on Beta")
     say(f"ok   {scheme}: a long sweep to the left goes forward")
-
     sweep(page, x, y, 0, -300)
     lifted(page)
     sweep(page, x, y, 700)
     lifted(page)
     on(page, "Alpha", "back on Alpha after a scroll down")
     page.close()
-
 WHERE = """() => {
   const circle = document.querySelector('.orden-swipe')
   const arrow = circle?.querySelector('.arrow')
@@ -130,7 +113,6 @@ WHERE = """() => {
   const at = (box) => [box.x, box.y, box.width, box.height].map((one) => one * devicePixelRatio)
   return { circle: at(circle.getBoundingClientRect()), arrow: at(arrow.getBoundingClientRect()) }
 }"""
-
 def close_up(browser: Browser, scale: float) -> None:
     page, _, _ = opened(browser, scale=scale)
     for across, name in ((7.3, "half"), (14.3, "armed")):
@@ -163,7 +145,6 @@ def close_up(browser: Browser, scale: float) -> None:
             page.evaluate("window.ordenApp.workspace.goForward()")
         on(page, "Beta", "Beta again")
     page.close()
-
 def turned_off(browser: Browser) -> None:
     page, x, y = opened(browser, off=True)
     sweep(page, x, y, 700)
@@ -173,7 +154,6 @@ def turned_off(browser: Browser) -> None:
     else:
         say("ok   switched off, a sweep is a scroll")
     page.close()
-
 PAGE = f"""<!doctype html>
 <meta charset="utf-8">
 <style>
@@ -197,11 +177,9 @@ PAGE = f"""<!doctype html>
 </script>
 <script>{SCRIPT}</script>
 """
-
 def page_script(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 800, "height": 600})
     page.set_content(PAGE)
-
     def heard(selector: str, across: float, down: float = 0, notch: bool = False) -> list[dict[str, object]]:
         page.evaluate("window.said = []")
         box = page.locator(selector).bounding_box()
@@ -214,7 +192,6 @@ def page_script(browser: Browser) -> None:
             sweep(page, x, y, across, down)
         time.sleep(0.2)
         return list(page.evaluate("window.said"))
-
     plain = heard("#words", 100)
     if not plain or any(one.get("k") != "w" or one.get("l") or one.get("r") for one in plain):
         wrong(f"a sideways scroll over plain words: {json.dumps(plain)}")
@@ -222,25 +199,21 @@ def page_script(browser: Browser) -> None:
         wrong(f"a scroll towards the left was not said as one: {json.dumps(plain)}")
     else:
         say(f"ok   the page says a scroll it left over ({len(plain)} frames)")
-
     row = heard("#row", 100)
     if not row or not all(one.get("l") for one in row):
         wrong(f"a scroller with room to the left did not take the scroll: {json.dumps(row)}")
     else:
         say("ok   a scroller in the page takes what it can")
-
     kept = heard("#map", 100)
     if not kept or not all(one.get("l") and one.get("r") for one in kept):
         wrong(f"a map that took the wheel did not keep it: {json.dumps(kept)}")
     else:
         say("ok   a handler that took the wheel keeps it")
-
     def once_down(said: list[dict[str, object]]) -> bool:
         if len(said) != 1:
             return False
         across, down = abs(float(str(said[0]["dx"]))), abs(float(str(said[0]["dy"])))
         return down > 60 and down > across * 2.5
-
     straight = heard("#words", 0, 100)
     if not once_down(straight):
         wrong(f"a scroll down was not said once, as a scroll down: {json.dumps(straight)}")
@@ -280,14 +253,12 @@ def page_script(browser: Browser) -> None:
     else:
         say("ok   a stream that moved a scroller is the scroller's, to its edge and past it")
     page.close()
-
 SHORT_OF_THE_EDGE = """() => {
   const table = document.querySelector('.orden-table-scroll')
   if (!table) return null
   table.scrollLeft = 4
   return { left: table.scrollLeft, x: document.querySelector('.cm-content').getBoundingClientRect().x }
 }"""
-
 ARROW_SEEN = """() => {
   window.__arrow = false
   const look = () => {
@@ -296,7 +267,6 @@ ARROW_SEEN = """() => {
   }
   look()
 }"""
-
 def latched(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     page.add_init_script("performance.setResourceTimingBufferSize(10000)")
@@ -312,7 +282,6 @@ def latched(browser: Browser) -> None:
     )
     wait_for(page, "document.querySelector('.orden-table-scroll')", "the wide table")
     DRIVE.settled(page)
-
     before = page.evaluate(SHORT_OF_THE_EDGE)
     box = page.locator(".orden-table-scroll").first.bounding_box()
     if before is None or box is None:
@@ -340,7 +309,6 @@ def latched(browser: Browser) -> None:
     if after["x"] != before["x"]:
         wrong(f"the note moved with the sweep: {before['x']} to {after['x']}")
     shot(page, "latched-table")
-
     words = page.locator(".cm-content .cm-line").first.bounding_box()
     assert words is not None
     page.evaluate(ARROW_SEEN)
@@ -353,7 +321,6 @@ def latched(browser: Browser) -> None:
     on(page, "Alpha", "back on Alpha from the words")
     say("ok   a table scrolled is the table's; the words beside it go back")
     page.close()
-
 def drive(browser: Browser) -> None:
     page_script(browser)
     latched(browser)
@@ -362,5 +329,4 @@ def drive(browser: Browser) -> None:
     for scale in (1, 1.25, 1.5, 2):
         close_up(browser, scale)
     turned_off(browser)
-
 raise SystemExit(DRIVE.run(drive, "swipes go back and forward, and only where they should"))

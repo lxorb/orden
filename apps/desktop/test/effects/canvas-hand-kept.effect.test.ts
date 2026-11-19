@@ -17,9 +17,7 @@ Element.prototype.hasPointerCapture = () => false
 let host: HTMLElement
 let tab: Tab
 let close: () => void
-
 const said: (Point | null)[] = []
-
 beforeEach(() => {
   tools.choose('draw')
   said.length = 0
@@ -39,7 +37,6 @@ beforeEach(() => {
   const shown = mount(Canvas, { target: host, props: { tab, focused: true } })
   close = () => void unmount(shown)
   flushSync()
-
   const found = CanvasStore.drawing(tab.note, [tab])
   if (!found) throw new Error('no canvas store')
   found.shared = {
@@ -50,12 +47,10 @@ beforeEach(() => {
   }
   flushSync()
 })
-
 afterEach(() => {
   close()
   host.remove()
 })
-
 function pointer(type: string, kind: string, x: number, buttons: number) {
   const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 100, buttons })
   Object.defineProperties(event, {
@@ -66,20 +61,16 @@ function pointer(type: string, kind: string, x: number, buttons: number) {
   host.querySelector('.canvas')?.dispatchEvent(event)
   flushSync()
 }
-
 test('a pen lifted off the plane leaves its hand where it stopped, for the others to see', () => {
   pointer('pointerdown', 'pen', 120, 1)
   pointer('pointermove', 'pen', 160, 1)
   pointer('pointerup', 'pen', 160, 0)
   pointer('pointerleave', 'pen', 160, 0)
-
   expect(said.at(-1)).not.toBeNull()
 })
-
 test('a mouse that leaves the plane takes its hand with it', () => {
   pointer('pointermove', 'mouse', 140, 0)
   expect(said.at(-1)).not.toBeNull()
-
   pointer('pointerleave', 'mouse', 140, 0)
   expect(said.at(-1)).toBeNull()
 })

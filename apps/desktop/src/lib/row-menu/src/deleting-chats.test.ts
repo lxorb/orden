@@ -7,9 +7,7 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-
 const asked = vi.hoisted(() => ({ paths: [] as string[][], answer: false }))
-
 providePort('chats', {
   list: () => Promise.resolve([]),
   chatAt: () => Promise.resolve(null),
@@ -21,11 +19,9 @@ providePort('chats', {
     return Promise.resolve(asked.answer)
   },
 })
-
 const { removeAsking } = await import('./row-menu')
 const { workspace } = await import('../../workspace/src/api')
 type Entry = import('../../workspace/src/api').Entry
-
 const entry = (path: string, children?: Entry[]): Entry => ({
   name: path.split('/').pop() ?? path,
   path,
@@ -34,7 +30,6 @@ const entry = (path: string, children?: Entry[]): Entry => ({
   created: 0,
   children: children ?? [],
 })
-
 beforeEach(() => {
   asked.paths = []
   asked.answer = false
@@ -45,22 +40,16 @@ beforeEach(() => {
     entry('/s/loose.md'),
   ])
 })
-
 test('deleting a folder asks about the chats inside it, and Cancel keeps the folder', async () => {
   const removing = vi.spyOn(workspace, 'removeMany').mockResolvedValue(undefined)
-
   await removeAsking(['/s/Trip'])
-
   expect(asked.paths).toEqual([['/s/Trip/Plans.chat']])
   expect(removing).not.toHaveBeenCalled()
   removing.mockRestore()
 })
-
 test('a delete with no chat in it asks nothing', async () => {
   const removing = vi.spyOn(workspace, 'removeMany').mockResolvedValue(undefined)
-
   await removeAsking(['/s/loose.md'])
-
   expect(asked.paths).toEqual([])
   expect(removing).toHaveBeenCalledOnce()
   removing.mockRestore()

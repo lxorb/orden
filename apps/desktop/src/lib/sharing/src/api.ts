@@ -26,10 +26,7 @@ export {
   trustsHtmlIn,
   whoIs,
 } from './sharing.svelte'
-
 export const loadLockScreen = () => import('./protect/LockScreen.svelte')
 export { pastesMarkup } from './trust'
-
 export const loadJoinSheet = () => import('./JoinSheet.svelte')
-
 export const loadJoinPending = () => import('./JoinPending.svelte')

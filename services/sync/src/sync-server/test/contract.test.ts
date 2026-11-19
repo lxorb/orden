@@ -4,13 +4,10 @@ import { hooks, wire } from '../src/hooks'
 import { type TestEnv, testEnv } from './fakes'
 
 let env: TestEnv
-
 beforeEach(() => {
   env = testEnv()
 })
-
 afterEach(() => env.close())
-
 describe('helpers', () => {
   test('a path stays inside the space unless it climbs out, starts at a root or names a disk', () => {
     expect(staysInside('Plans/Q3.md')).toBe(true)
@@ -19,20 +16,17 @@ describe('helpers', () => {
     expect(staysInside('C:/notes.md')).toBe(false)
     expect(staysInside('back\\slash.md')).toBe(false)
   })
-
   test('addresses compare without case or spaces around them, names lose control characters', () => {
     expect(normaliseEmail('  One@Example.COM ')).toBe('one@example.com')
     expect(isEmail('one@example.com')).toBe(true)
     expect(isEmail('not an address')).toBe(false)
     expect(cleanPersonName('  Ada \n  Lovelace\u0007 ')).toBe('Ada Lovelace')
   })
-
   test('long lists are asked in chunks with one placeholder per value', () => {
     expect(chunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]])
     expect(places(3)).toBe('?, ?, ?')
   })
 })
-
 describe('hooks', () => {
   test('the composition root wires the other services; until then the core says so', () => {
     expect(() => hooks()).toThrow(/wire/)

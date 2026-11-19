@@ -4,10 +4,8 @@ const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
-
 const THEIRS = { id: 'theirs', name: 'Theirs', root: '/theirs' }
 const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
-
 const held = vi.hoisted((): { active: unknown; spaces: { id: string; name: string; root: string }[] } => ({
   active: null,
   spaces: [],
@@ -42,7 +40,6 @@ vi.mock('../../workspace/src/api', () => ({
     return Promise.resolve(`assets/${name}`)
   },
 }))
-
 const failed = vi.hoisted((): string[] => [])
 const offered: string[] = []
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
@@ -55,7 +52,6 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
     },
   },
 }))
-
 vi.mock('./document', () => ({
   importDocument: () =>
     Promise.resolve({
@@ -64,7 +60,6 @@ vi.mock('./document', () => ({
       pictures: [{ link: 'media/rId20.png', data: 'AQID' }],
     }),
 }))
-
 const storedFor = vi.hoisted((): string[] => [])
 const landedIn = vi.hoisted((): { root: string; folder: string }[] => [])
 vi.mock('./apply', () => ({
@@ -73,9 +68,7 @@ vi.mock('./apply', () => ({
     return Promise.resolve({ paths: [], stepped: 0 })
   },
 }))
-
 const { importing } = await import('./importing.svelte')
-
 beforeEach(() => {
   readOnly.clear()
   readOnly.add(THEIRS.root)
@@ -89,25 +82,21 @@ beforeEach(() => {
   importing.root = null
   importing.forget()
 })
-
 describe('an import while a space shared to be read is open', () => {
   test("lands in the reader's own space instead", () => {
     importing.show()
     expect(importing.root).toBe(MINE.root)
   })
-
   test('lands nowhere where every space is one shared to be read', () => {
     readOnly.add(MINE.root)
     importing.show()
     expect(importing.root).toBeNull()
   })
-
   test('still lands in the open space where it is the reader’s own', () => {
     held.active = MINE
     importing.show()
     expect(importing.root).toBe(MINE.root)
   })
-
   test('is not offered that space as a place, from a space of the reader’s own', async () => {
     held.active = MINE
     await importing.chooseTarget()
@@ -115,47 +104,38 @@ describe('an import while a space shared to be read is open', () => {
     expect(offered.some((id) => id.startsWith(`${THEIRS.root}/`))).toBe(false)
   })
 })
-
 describe('a document read by pandoc while a space shared to be read is open', () => {
   test("keeps its pictures with the note in the reader's own space", async () => {
     await importing.readWithPandoc()
-
     expect(storedFor).toEqual([`${MINE.root}/Report.md`])
     expect(opened).toHaveLength(1)
     const [name, doc, home] = opened[0]!
     expect([name, home]).toEqual(['Report.md', MINE.id])
     expect(doc).toMatch(/^!\[a dot\]\(assets\/[0-9a-f]{16}\.png\)\n$/)
   })
-
   test('writes no picture where every space is one shared to be read', async () => {
     readOnly.add(MINE.root)
     await importing.readWithPandoc()
-
     expect(storedFor).toEqual([])
     expect(opened).toEqual([['Report.md', '![a dot](media/rId20.png)\n', null]])
     expect(failed).toHaveLength(1)
   })
-
   test('a place the sheet held that is no space any more is not written to', async () => {
     held.active = MINE
     importing.root = '/removed'
     await importing.readWithPandoc()
-
     expect(storedFor).toEqual([`${MINE.root}/Report.md`])
     expect(opened[0]![2]).toBe(MINE.id)
   })
-
   test('with no space yet, the pictures go to the one the note is placed in', async () => {
     held.spaces = []
     held.active = null
     await importing.readWithPandoc()
-
     expect(storedFor).toEqual([`${NOTES.root}/Report.md`])
     expect(opened[0]![2]).toBe(NOTES.id)
     expect(failed).toEqual([])
   })
 })
-
 test('an import with no folder of its own lands where it was sent, not in a folder called Untitled', async () => {
   for (const [under, folder] of [
     ['', ''],
@@ -169,7 +149,6 @@ test('an import with no folder of its own lands where it was sent, not in a fold
     importing.folder = folder ?? ''
     await importing.run()
   }
-
   expect(landedIn).toEqual([
     { root: MINE.root, folder: '' },
     { root: MINE.root, folder: 'Plans' },

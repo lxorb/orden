@@ -7,11 +7,9 @@ async function undo(agent: Agent, path: string) {
   const docs = await import('./index')
   await docs.undoAgentIn(agent, path)
 }
-
 export function undoRows(): CommandExtension[] {
   const path = workspace.active?.path
   if (!path) return []
-
   return touchedBy(path).map((agent) => ({
     id: `agent-undo:${agent.id}`,
     label: `Undo edits by ${agent.name}`,

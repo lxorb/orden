@@ -8,7 +8,6 @@ export async function put(file: Blob): Promise<string> {
   if (!hash) throw new Error('the file did not go up')
   return hash
 }
-
 export interface Attachment {
   id: number
   name: string
@@ -18,30 +17,23 @@ export interface Attachment {
   ref: FileRef | null
   failed: boolean
 }
-
 let made = 0
-
 export class Attachments {
   list = $state<Attachment[]>([])
-
   get ready(): boolean {
     return this.list.every((one) => one.ref !== null || one.failed)
   }
-
   get refs(): FileRef[] {
     return this.list.flatMap((one) => (one.ref ? [one.ref] : []))
   }
-
   add(files: readonly File[]): void {
     for (const file of files.slice(0, MOST_FILES - this.list.length)) void this.one(file)
   }
-
   async took(file: File): Promise<boolean> {
     if (this.list.length >= MOST_FILES) return false
     const id = await this.one(file)
     return this.list.some((one) => one.id === id && one.ref !== null)
   }
-
   private async one(file: File): Promise<number> {
     const id = (made += 1)
     this.list = [
@@ -59,23 +51,19 @@ export class Attachments {
     await this.send(id, file)
     return id
   }
-
   addRef(ref: FileRef): void {
     const id = (made += 1)
     this.list = [...this.list, { id, name: ref.name, type: ref.type, size: ref.size, thumb: null, ref, failed: false }]
   }
-
   remove(id: number): void {
     const gone = this.list.find((one) => one.id === id)
     if (gone?.thumb) URL.revokeObjectURL(gone.thumb)
     this.list = this.list.filter((one) => one.id !== id)
   }
-
   clear(): void {
     for (const one of this.list) if (one.thumb) URL.revokeObjectURL(one.thumb)
     this.list = []
   }
-
   private async send(id: number, file: File): Promise<void> {
     try {
       const ready = await prepared(file)

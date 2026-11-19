@@ -1,12 +1,10 @@
 import json
-
 from harness import Drive
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 ACCOUNTS = {
     "version": 1,
     "accounts": [
@@ -19,13 +17,11 @@ ACCOUNTS = {
     "defaultVendor": "claude",
     "uses": {},
 }
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def drive(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 860}, reduced_motion="reduce")
     page.context.add_init_script(
@@ -36,7 +32,6 @@ def drive(browser) -> None:
     page.wait_for_selector("text=Accounts")
     quiet(page)
     shot(page, "01-accounts")
-
     sheet = page.locator(".sheet").first
     cards = sheet.locator(".card[data-account]")
     check("every account is a card of its own", cards.count() == len(ACCOUNTS["accounts"]))
@@ -103,7 +98,6 @@ def drive(browser) -> None:
     except PlaywrightTimeout:
         access = False
     check("Access is on the same page", access)
-
     sheet.locator('.card[data-account="anthropic-2"]').get_by_role("button", name="Make default").click()
     quiet(page)
     kept = page.evaluate("JSON.parse(localStorage.getItem('orden:ai-accounts'))")
@@ -114,7 +108,6 @@ def drive(browser) -> None:
     kept = page.evaluate("JSON.parse(localStorage.getItem('orden:ai-accounts'))")
     check("OpenAI can be the default too", kept["defaultVendor"] == "openai" and (sheet.locator(".card.fallback").get_attribute("data-account") or "") == "openai")
     shot(page, "02-default-moved")
-
     check("one Add button, not one per kind", sheet.locator("[data-add-account]").count() == 1 and sheet.get_by_text("Add Claude", exact=True).count() == 0)
     sheet.locator("[data-add-account]").click()
     page.locator("[data-maker]").first.wait_for(timeout=5_000)
@@ -144,7 +137,6 @@ def drive(browser) -> None:
     check("the key became an account of its own", kinds.count("anthropic") == 3)
     check("the new account is a card too", sheet.locator(".card[data-account]").count() == 5)
     shot(page, "05-added")
-
     page.evaluate("() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)
     page.keyboard.press("Control+Shift+P")
@@ -154,10 +146,8 @@ def drive(browser) -> None:
     shot(page, "03-palette")
     rows = page.locator('[role="option"]', has_text="AI account")
     check("the palette offers each Claude account", rows.count() == 3)
-
     page.keyboard.press("Escape")
     page.evaluate("window.ordenApp.settings.show('agents')")
     quiet(page)
     check("an old link to Agents lands on AI", page.locator(".sheet").get_by_text("Accounts", exact=True).count() == 1)
-
 raise SystemExit(DRIVE.run(drive, "settings > ai holds several accounts of a provider"))

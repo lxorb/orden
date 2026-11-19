@@ -9,7 +9,6 @@ const days: [number, string[]][] = [
   [6, ['samstag', 'sonnabend', 'sa']],
   [0, ['sonntag', 'so']],
 ]
-
 const months: [number, string[]][] = [
   [1, ['januar', 'jänner', 'jan', 'jän']],
   [2, ['februar', 'feb']],
@@ -24,27 +23,20 @@ const months: [number, string[]][] = [
   [11, ['november', 'nov']],
   [12, ['dezember', 'dez']],
 ]
-
 const byName = (rows: [number, string[]][]) =>
   Object.fromEntries(rows.flatMap(([number, names]) => names.map((name) => [name, number])))
-
 const ENGLISH_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
 const everyDay = Object.fromEntries(days.map(([day, [name = '']]) => [`${name}s`, `every ${ENGLISH_DAYS[day] ?? ''}`]))
-
 export const DE: Grammar = {
   lang: 'de',
   today: ['heute'],
   tomorrow: ['morgen'],
   dayAfter: [['übermorgen'], ['uebermorgen']],
   yesterday: ['gestern'],
-
   weekdays: byName(days),
   shortDays: new Set(['mo', 'di', 'mi', 'do', 'fr', 'sa', 'so']),
   context: new Set(['am', 'nächsten', 'nächster', 'nächste', 'kommenden', 'diesen', 'bis', 'ab', 'jeden', 'jede']),
-
   months: byName(months),
-
   next: new Set(['nächsten', 'nächster', 'nächste', 'nächstes', 'kommenden', 'kommende']),
   coming: new Set(['diesen', 'dieser', 'diese']),
   week: new Set(['woche']),
@@ -52,7 +44,6 @@ export const DE: Grammar = {
   year: new Set(['jahr']),
   endOfMonth: [['monatsende'], ['ende', 'des', 'monats'], ['zum', 'monatsende']],
   weekend: [['am', 'wochenende'], ['wochenende'], ['dieses', 'wochenende']],
-
   within: new Set(['in']),
   units: {
     min: 'minute',
@@ -90,7 +81,6 @@ export const DE: Grammar = {
     neun: 9,
     zehn: 10,
   },
-
   dayWords: new Set(['am', 'bis']),
   deadlineWords: new Set(['bis']),
   timeWords: new Set(['um', '@']),
@@ -116,7 +106,6 @@ export const DE: Grammar = {
     abend: '19:00',
     nacht: '22:00',
   },
-
   every: new Set(['jeden', 'jede', 'jedes', 'alle']),
   everyDone: new Set(['jeden!', 'jede!', 'jedes!', 'alle!']),
   other: new Set(['zweite', 'zweiten', 'zweites', 'andere', 'anderen']),
@@ -137,10 +126,8 @@ export const DE: Grammar = {
   until: new Set(['bis']),
   workdays: new Set(['werktag', 'werktage', 'arbeitstag', 'arbeitstage']),
   weekends: new Set(['wochenende', 'wochenenden']),
-
   lasting: new Set(['für']),
   bareDuration: true,
-
   ordinal: /^(\d{1,2})\.$/,
   ordinals: {
     erste: 1,

@@ -2,7 +2,6 @@ import { expect, test, vi } from 'vitest'
 
 const heard: string[] = []
 const held: (() => void)[] = []
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: { folder: string }) => {
     heard.push(`${command} ${args.folder}`)
@@ -12,9 +11,7 @@ vi.mock('../../platform/src/tauri', () => ({
     return Promise.resolve(undefined)
   },
 }))
-
 const { unwatchFolder, watchFolder } = await import('./commands')
-
 test('a folder let go while its watch is still on the way is let go after it, never before', async () => {
   const watched = watchFolder('/slow')
   const left = unwatchFolder('/slow')

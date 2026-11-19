@@ -7,10 +7,8 @@ import type { AwayAsked, AwaySaid } from './paper-away'
 
 Object.assign(globalThis, { pdfjsWorker: engine })
 streamsIterate()
-
 const drawing = { filtered: false }
 const filtersUsed = (): boolean => drawing.filtered
-
 class NoFilters {
   addFilter(maps: unknown) {
     if (maps) drawing.filtered = true
@@ -47,19 +45,15 @@ class NoFilters {
     return undefined
   }
 }
-
 const fonts = (globalThis as { fonts?: unknown }).fonts
-
 const owner = {
   fonts,
   createElement: () => new OffscreenCanvas(1, 1),
 }
-
 const docs = new Map<number, { task: PDFDocumentLoadingTask; doc: Promise<PDFDocumentProxy> }>()
 const running = new Map<number, RenderTask>()
 const dropped = new Set<number>()
 let line: Promise<unknown> = Promise.resolve()
-
 function open(doc: number, bytes: ArrayBuffer) {
   const task = library.getDocument({
     data: new Uint8Array(bytes),
@@ -72,20 +66,16 @@ function open(doc: number, bytes: ArrayBuffer) {
   } as unknown as Parameters<typeof library.getDocument>[0])
   docs.set(doc, { task, doc: task.promise })
 }
-
 function close(doc: number) {
   const held = docs.get(doc)
   docs.delete(doc)
   void held?.task.destroy().catch(() => undefined)
 }
-
 async function draw(asked: Extract<AwayAsked, { kind: 'draw' }>): Promise<AwaySaid> {
   const { id } = asked
   if (dropped.delete(id)) return { id, image: null, here: false }
-
   const held = docs.get(asked.doc)
   if (!held) return { id, image: null, here: true }
-
   const doc = await held.doc
   const page = await doc.getPage(asked.number)
   const view = page.getViewport({
@@ -99,7 +89,6 @@ async function draw(asked: Extract<AwayAsked, { kind: 'draw' }>): Promise<AwaySa
     page.cleanup()
     return { id, image: null, here: true }
   }
-
   drawing.filtered = false
   const task = page.render({
     canvas: sheet as unknown as HTMLCanvasElement,
@@ -117,10 +106,8 @@ async function draw(asked: Extract<AwayAsked, { kind: 'draw' }>): Promise<AwaySa
   }
   if (dropped.delete(id)) return { id, image: null, here: false }
   if (filtersUsed()) return { id, image: null, here: true }
-
   return { id, image: sheet.transferToImageBitmap(), here: false }
 }
-
 self.onmessage = (event: MessageEvent<AwayAsked>) => {
   const asked = event.data
   switch (asked.kind) {

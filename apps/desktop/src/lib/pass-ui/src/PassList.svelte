@@ -35,7 +35,6 @@
     heading?: { title: string; ids: readonly string[]; back: () => void } | null
     onside?: (() => void) | null
   } = $props()
-
   const view = $derived(ui.view)
   const trash = $derived(view.scope.kind === 'trash' && heading === null)
   const source = $derived(heading === null ? pass.items : pass.items.filter((one) => heading.ids.includes(one.id)))
@@ -54,9 +53,7 @@
   const title = $derived(heading?.title ?? scopeName(view.scope, pass.vaults))
   const picked = $derived(ui.picked)
   const pickedSet = $derived(new Set(picked ?? []))
-
   let list = $state<HTMLElement>()
-
   function showFilters(event: MouseEvent) {
     menu.show(
       event,
@@ -69,7 +66,6 @@
       { until: pass.opened },
     )
   }
-
   function showSorts(event: MouseEvent) {
     menu.show(
       event,
@@ -81,7 +77,6 @@
       { until: pass.opened },
     )
   }
-
   function pressed(item: Item) {
     if (picked !== null) {
       ui.picked = pickedSet.has(item.id) ? picked.filter((one) => one !== item.id) : [...picked, item.id]
@@ -89,7 +84,6 @@
     }
     void ui.openItem(item.id)
   }
-
   function stepTo(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (keyElsewhere(event, event.currentTarget)) return
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
@@ -108,7 +102,6 @@
       list?.querySelector<HTMLElement>(`[data-item="${item.id}"]`)?.focus()
     })
   }
-
   async function emptyTrash() {
     const sure = await prompt.confirm({
       until: pass.opened,
@@ -119,7 +112,6 @@
     })
     if (sure) await pass.emptyTrash()
   }
-
   async function removePicked(ids: string[]) {
     const sure = await prompt.confirm({
       until: pass.opened,
@@ -129,7 +121,6 @@
     })
     if (sure) await unpick(pass.remove(ids))
   }
-
   async function unpick(done: Promise<unknown>) {
     await done
     ui.picked = null
@@ -296,7 +287,6 @@
     min-width: 0;
     height: 100%;
   }
-
   .head {
     flex: none;
     display: flex;
@@ -304,7 +294,6 @@
     gap: var(--space-2);
     padding: var(--space-3) var(--space-3) var(--space-2);
   }
-
   .search {
     flex: 1;
     min-height: 34px;
@@ -312,11 +301,9 @@
     background: var(--surface-2);
     border-color: transparent;
   }
-
   .search input::-webkit-search-cancel-button {
     display: none;
   }
-
   .bar {
     flex: none;
     display: flex;
@@ -325,50 +312,41 @@
     min-height: var(--row-height);
     padding: 0 var(--space-3) var(--space-2);
   }
-
   .bar.picking {
     flex-wrap: wrap;
   }
-
   .chip-words {
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
     max-width: 100%;
   }
-
   .chip-name {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
   .chip-words :global(.glyph) {
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-
   .number {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .gap {
     flex: 1;
   }
-
   .picking .count {
     flex: 1;
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .danger {
     color: var(--danger);
   }
-
   .pinned {
     flex: none;
     display: flex;
@@ -377,11 +355,9 @@
     padding: 0 var(--space-3) var(--space-2);
     scrollbar-width: none;
   }
-
   .pinned::-webkit-scrollbar {
     display: none;
   }
-
   .pin {
     flex: none;
     display: flex;
@@ -397,28 +373,23 @@
     font-size: var(--text-sm);
     --tile: 24px;
   }
-
   .pin :global(.item-mark) {
     --tile: 22px;
     border-radius: 50%;
   }
-
   .pin :global(.item-mark .glyph) {
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-
   .pin.is-on,
   .pin:hover {
     background: var(--surface-hover);
   }
-
   .pin-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .rows {
     flex: 1;
     min-height: 0;
@@ -428,16 +399,13 @@
     gap: 2px;
     padding: 0 var(--space-2) var(--space-3);
   }
-
   .item {
     min-height: 48px;
     gap: var(--space-3);
   }
-
   :global([data-touch]) .item {
     min-height: calc(var(--touch-row) + var(--space-2));
   }
-
   .item .orden-row-label {
     flex: 1;
     min-width: 0;
@@ -445,24 +413,20 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .name,
   .sub {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .name {
     color: var(--text-strong);
   }
-
   .sub {
     font-size: var(--text-sm);
     font-weight: var(--weight-row);
     color: var(--muted);
   }
-
   .tick {
     flex: none;
     width: 16px;
@@ -471,13 +435,11 @@
     border-radius: 5px;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .tick.on {
     border-color: var(--accent);
     background: var(--accent);
     box-shadow: inset 0 0 0 2px var(--surface);
   }
-
   .empty {
     display: flex;
     flex-direction: column;
@@ -488,11 +450,9 @@
     font-size: var(--text-sm);
     text-align: center;
   }
-
   .empty p {
     margin: 0;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

@@ -18,25 +18,21 @@
   const name = $derived(shown ? (people.called(shown.id, shown.space) ?? '') : '')
   const now = $derived(Date.now())
   const status = $derived(person && stands(person.status, now) ? person.status : null)
-
   const theirTime = $derived.by(() => {
     const zone = person?.zone
     const here = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!zone || mine || !farApart(zone, here, now)) return null
     return localDate(now, { timeStyle: 'short', timeZone: zone })
   })
-
   const pieces = $derived(
     (person?.bio ?? '')
       .split(/(https?:\/\/[^\s<>"]+)/g)
       .filter(Boolean)
       .map((text) => ({ text, link: /^https?:\/\//.test(text) })),
   )
-
   let layer = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
-
   const place = $derived.by(() => {
     if (!shown) return { left: 0, top: 0 }
     const gap = 6
@@ -46,9 +42,7 @@
     const top = below + height + room > window.innerHeight ? Math.max(room, shown.at.top - gap - height) : below
     return { left, top }
   })
-
   const close = () => card.close()
-
   $effect(() => (shown ? overlays.show(close, () => [layer]) : undefined))
   $effect(() => closeOnBack(!!shown, close))
   $effect(() => {
@@ -146,7 +140,6 @@
     font-size: var(--text-row);
     color: var(--text);
   }
-
   .who {
     display: flex;
     flex-wrap: wrap;
@@ -154,19 +147,16 @@
     gap: var(--space-2);
     margin-top: var(--space-1);
   }
-
   .name {
     color: var(--text-strong);
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
     overflow-wrap: anywhere;
   }
-
   .soft {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .status {
     display: flex;
     flex-wrap: wrap;
@@ -174,22 +164,18 @@
     gap: var(--space-1) var(--space-2);
     color: var(--text);
   }
-
   .time {
     font-variant-numeric: tabular-nums;
   }
-
   .bio {
     margin: 0;
     color: var(--text);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-
   .bio a {
     color: var(--accent);
   }
-
   .edit {
     margin-top: var(--space-1);
   }

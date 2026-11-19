@@ -3,12 +3,10 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, joined, signIn, type TestEnv, testEnv } from './harness'
 
 const OWNER = 'owner@example.com'
-
 let env: TestEnv
 let owner: string
 let space: string
 let pages: string
-
 function paper(words = 'a lecture') {
   const bytes = new TextEncoder().encode(`%PDF-1.4\n${words}\n%%EOF\n`)
   return {
@@ -17,7 +15,6 @@ function paper(words = 'a lecture') {
     text: new TextDecoder().decode(bytes),
   }
 }
-
 function upload(one: ReturnType<typeof paper>, token = owner) {
   return call(env, `/v1/blobs/${one.hash}`, {
     method: 'PUT',
@@ -26,15 +23,12 @@ function upload(one: ReturnType<typeof paper>, token = owner) {
     headers: { 'content-type': 'application/pdf' },
   })
 }
-
 function hold(id: string, hash: string, token = owner) {
   return call(env, `/v1/notes/${id}/paper`, { method: 'PUT', token, body: { hash } })
 }
-
 function note(path: string, content = '{}') {
   return call(env, `/v1/spaces/${space}/notes`, { token: owner, body: { path, content } })
 }
-
 async function guestOf(item: string): Promise<string> {
   const { json } = await call<{ link?: { url: string } }>(env, `/v1/spaces/${space}/share/link?item=${item}`, {
     method: 'PUT',
@@ -46,59 +40,48 @@ async function guestOf(item: string): Promise<string> {
   const joined = await call(env, `/v1/join/${found[1]}`, { method: 'POST' })
   return joined.json.token
 }
-
 async function editor(): Promise<string> {
   const token = await signIn(env, 'editor@example.com')
   await joined(env, owner, space, 'editor@example.com', 'write', { as: token })
   return token
 }
-
 beforeEach(async () => {
   env = testEnv()
   owner = await signIn(env, OWNER)
   space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Lectures' } })).json.space.id
   pages = (await note('Lecture.pages')).json.note.id
 })
-
 afterEach(() => env.close())
-
 describe('the paper a page note holds', () => {
   test('is the bytes it was given, for the account that holds the note', async () => {
     const one = paper()
     expect((await upload(one)).status).toBe(201)
     expect((await hold(pages, one.hash)).status).toBe(200)
-
     const got = await call(env, `/v1/notes/${pages}/paper`, { token: owner })
     expect(got.status).toBe(200)
     expect(got.headers.get('content-type')).toBe('application/pdf')
     expect(got.text).toBe(one.text)
   })
-
   test('reaches somebody the note was shared with on its own', async () => {
     const one = paper()
     await upload(one)
     await hold(pages, one.hash)
-
     const guest = await guestOf(pages)
     const got = await call(env, `/v1/notes/${pages}/paper`, { token: guest })
     expect(got.status).toBe(200)
     expect(got.text).toBe(one.text)
   })
-
   test('and nobody else', async () => {
     const one = paper()
     await upload(one)
     await hold(pages, one.hash)
-
     const stranger = await signIn(env, 'stranger@example.com')
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: stranger })).status).toBe(404)
     expect((await call(env, `/v1/notes/${pages}/paper`)).status).toBe(401)
   })
-
   test('is nothing for a page note that holds none', async () => {
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).status).toBe(404)
   })
-
   test('follows the note through a rename', async () => {
     const one = paper()
     await upload(one)
@@ -108,16 +91,13 @@ describe('the paper a page note holds', () => {
       token: owner,
       body: { path: 'Week 1/Lecture.pages', content: '{}' },
     })
-
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).text).toBe(one.text)
   })
-
   test('cannot be hung on a note in Recently deleted, nor on one purged for good', async () => {
     const one = paper()
     await upload(one)
     await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: owner })
     expect((await hold(pages, one.hash)).status).toBe(404)
-
     await call(env, `/v1/trash/notes/${pages}`, { method: 'DELETE', token: owner })
     expect((await hold(pages, one.hash)).status).toBe(404)
     const row = await env.DB.prepare('select paper from notes where id = ?')
@@ -125,31 +105,25 @@ describe('the paper a page note holds', () => {
       .first<{ paper: string | null }>()
     expect(row?.paper).toBeNull()
   })
-
   test('cannot name bytes nobody here uploaded', async () => {
     expect((await hold(pages, paper('never sent').hash)).status).toBe(409)
   })
-
   test('cannot name bytes the owner keeps for something outside this space', async () => {
     const writer = await editor()
     const elsewhere = paper('the owner’s own, kept for another space')
     await upload(elsewhere)
-
     expect((await hold(pages, elsewhere.hash, writer)).status).toBe(409)
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: writer })).status).toBe(404)
   })
-
   test('can name a paper this space already holds, for somebody who writes in it', async () => {
     const writer = await editor()
     const one = paper()
     await upload(one)
     await hold(pages, one.hash)
     const again = (await note('Lecture again.pages')).json.note.id
-
     expect((await hold(again, one.hash, writer)).status).toBe(200)
     expect((await call(env, `/v1/notes/${again}/paper`, { token: writer })).text).toBe(one.text)
   })
-
   test('or a PDF this space keeps as a file', async () => {
     const writer = await editor()
     const one = paper()
@@ -159,25 +133,20 @@ describe('the paper a page note holds', () => {
       token: owner,
       body: { files: [{ path: 'Lecture.pdf', hash: one.hash }] },
     })
-
     expect((await hold(pages, one.hash, writer)).status).toBe(200)
   })
-
   test('can name bytes of their own, for somebody who writes in it', async () => {
     const writer = await editor()
     const one = paper('the editor’s')
     expect((await upload(one, writer)).status).toBe(201)
-
     expect((await hold(pages, one.hash, writer)).status).toBe(200)
   })
-
   test('is a page note’s alone', async () => {
     const one = paper()
     await upload(one)
     const words = (await note('plan.md', '# Plan\n')).json.note.id
     expect((await hold(words, one.hash)).status).toBe(400)
   })
-
   test('is not set by somebody handed the one note', async () => {
     const guest = await guestOf(pages)
     const one = paper()
@@ -185,7 +154,6 @@ describe('the paper a page note holds', () => {
     expect((await hold(pages, one.hash, guest)).status).toBe(403)
   })
 })
-
 describe('a page note emptied from Recently deleted for good', () => {
   test('holds no paper any more', async () => {
     const one = paper()
@@ -193,7 +161,6 @@ describe('a page note emptied from Recently deleted for good', () => {
     await hold(pages, one.hash)
     await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: owner })
     expect((await call(env, `/v1/trash/notes/${pages}`, { method: 'DELETE', token: owner })).status).toBe(200)
-
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).status).toBe(404)
     expect(env.db.prepare('select paper from notes where id = ?').get(pages)).toEqual({
       paper: null,

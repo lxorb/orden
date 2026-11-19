@@ -14,14 +14,11 @@
   $effect(() => {
     void machine.refresh()
   })
-
   $effect(() => {
     void sessions.refresh()
     return sessions.watch()
   })
-
   const rows = $derived(rowsOf(sessions.list ?? []))
-
   const files = $derived(
     new Map(
       (sessions.list ?? []).map((one) => [
@@ -30,17 +27,13 @@
       ]),
     ),
   )
-
   const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
-
   const detail = (row: SessionRow) => [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
-
   async function open(path: string) {
     const space = spaceHolding(workspace.spaces, path)
     if (space && space.id !== workspace.activeSpaceId) await workspace.showSpace(space.id)
     await workspace.openEntry(path, { activate: true })
   }
-
   async function end(row: SessionRow) {
     const sure = await prompt.confirm({
       title: `End ${row.name ?? 'Terminal'}?`,
@@ -49,47 +42,34 @@
     })
     if (sure) await sessions.end(row.listed)
   }
-
   const known = $derived(machine.known)
   const state = $derived(known?.machine?.state ?? null)
   const awake = $derived(state === 'awake' || state === 'starting')
   const server = $derived(known?.machine?.host === 'hetzner')
-
   function bytes(value: number): string {
     const [amount, unit] = value >= 1e9 ? [value / 1e9, 'GB'] : [value / 1e6, 'MB']
     const shown = amount < 10 ? Math.round(amount * 10) / 10 : Math.round(amount)
     return `${localNumber(shown)} ${unit}`
   }
-
   const about = $derived(known?.machine?.server ?? null)
   const summary = $derived(about ? summaryOf(about) : null)
-
   const allowed = $derived(known?.allowed === true)
-
   $effect(() => {
     if (allowed) void machine.offer()
   })
-
   const offers = $derived(machine.offers)
-
   const choosable = $derived(offers !== null && (!known?.machine || known.machine.host === 'hetzner'))
-
   const running = $derived((sessions.list ?? []).filter((one) => one.alive === true).length)
-
   const STATES: Record<string, string> = {
     awake: 'Awake',
     starting: 'Starting',
     stopping: 'Stopping',
   }
   const stateWords = $derived(STATES[state ?? ''] ?? 'Asleep')
-
   const hours = (seconds: number) =>
     localNumber(Math.round(seconds / (seconds < 36_000 ? 360 : 3600)) / (seconds < 36_000 ? 10 : 1))
-
   const share = $derived(known ? shares(known.used, known.limit) : null)
-
   const disk = $derived(known?.machine?.disk ?? null)
-
   const meter = (label: string, share: number, words: string, near = false) => ({
     label,
     share,
@@ -98,9 +78,7 @@
   })
   const time = (used: number, limit: number) => `${hours(used)} / ${hours(limit)} h`
   const room = (used: number, limit: number) => `${bytes(used)} / ${bytes(limit)}`
-
   const diskMeter = $derived(disk ? [meter('Disk', diskShare(disk), room(disk.used, disk.total), diskNear(disk))] : [])
-
   const meters = $derived.by(() => {
     if (server) return diskMeter
     if (!known || !share) return []
@@ -113,7 +91,6 @@
       ...diskMeter,
     ]
   })
-
   const refusal = $derived(
     machine.known?.allowed === false ? refusalWords('list') : machine.refused ? refusalWords(machine.refused) : null,
   )
@@ -219,39 +196,33 @@
     gap: var(--space-4);
     width: 100%;
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
-
   .setting .name small {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .row {
     flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-3);
   }
-
   .stack {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     width: 100%;
   }
-
   .meter {
     display: flex;
     flex-direction: column;
@@ -260,18 +231,15 @@
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .line {
     display: flex;
     justify-content: space-between;
     gap: var(--space-3);
   }
-
   .words {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .hint {
     margin: 0;
     font-family: var(--font-ui);
@@ -279,38 +247,31 @@
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.caption {
     margin-top: calc(-1 * var(--space-2));
   }
-
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
-
   :global(.sheet.phone) .setting {
     gap: var(--touch-gap);
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .setting .name small,
   :global(.sheet.phone) .hint {
     font-size: var(--text-base);
   }
-
   :global(.sheet.phone) .stack {
     padding: var(--touch-pad);
   }
-
   :global(.sheet.phone) .meter {
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .hint.caption {
     margin: calc(-1 * var(--space-2)) var(--touch-pad) 0;
   }

@@ -7,7 +7,6 @@ export function find(result: Imported, title: string): ImportedItem {
   if (!found) throw new Error(`no item ${title}`)
   return found
 }
-
 export function as<K extends ItemKind>(content: Content, kind: K): ContentOf<K> {
   expect(content.kind).toBe(kind)
   return content as ContentOf<K>

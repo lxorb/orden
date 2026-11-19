@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -12,24 +11,18 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk } = await import('../disk')
 disk.current = new Disk()
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pane } = await import('../../src/lib/panes/src/api')
 const Tree = (await import('../../src/lib/sidebar/src/Tree.svelte')).default
 const { keyboardStays } = await import('../../src/lib/ui-kit/src/caret')
-
 const ALPHA = '/space/Alpha.md'
 const BETA = '/space/Beta.md'
 const GAMMA = '/space/Gamma.md'
-
 let list: ReturnType<typeof mount> | null = null
-
 const rowOf = (path: string) => document.querySelector<HTMLElement>(`[data-path="${path}"]`)
 const focused = () => (document.activeElement as HTMLElement | null)?.dataset.path ?? null
-
 beforeEach(async () => {
   HTMLElement.prototype.scrollIntoView = () => undefined
   const one = disk.current!
@@ -52,28 +45,22 @@ beforeEach(async () => {
   })
   flushSync()
 })
-
 afterEach(() => {
   if (list) void unmount(list)
   list = null
 })
-
 async function deleteRow(path: string) {
   await workspace.remove(path, false)
   flushSync()
   await vi.waitFor(() => expect(rowOf(path)).toBeNull())
   flushSync()
 }
-
 test('a row deleted under the keyboard hands it on to the row that comes up into its place', async () => {
   rowOf(BETA)!.focus()
   expect(focused()).toBe(BETA)
-
   await deleteRow(BETA)
-
   await vi.waitFor(() => expect(focused()).toBe(GAMMA))
 })
-
 test('the row a menu asked for with Shift+F10 deleted is the same, though the menu took the keyboard', async () => {
   rowOf(BETA)!.focus()
   rowOf(BETA)!.dispatchEvent(
@@ -82,12 +69,9 @@ test('the row a menu asked for with Shift+F10 deleted is the same, though the me
   const inMenu = document.body.appendChild(document.createElement('button'))
   inMenu.focus()
   inMenu.remove()
-
   await deleteRow(BETA)
-
   await vi.waitFor(() => expect(focused()).toBe(GAMMA))
 })
-
 test('and the note that comes to the front does not take the keyboard from the row', async () => {
   rowOf(BETA)!.focus()
   rowOf(BETA)!.dispatchEvent(
@@ -96,13 +80,10 @@ test('and the note that comes to the front does not take the keyboard from the r
   const caret = document.body.appendChild(document.createElement('div'))
   caret.tabIndex = 0
   caret.focus()
-
   await deleteRow(BETA)
-
   await vi.waitFor(() => expect(focused()).toBe(GAMMA))
   expect(keyboardStays()).toBe(true)
 })
-
 test('a menu long closed, and something done since, leaves the keyboard where it went', async () => {
   rowOf(BETA)!.focus()
   rowOf(BETA)!.dispatchEvent(
@@ -111,39 +92,28 @@ test('a menu long closed, and something done since, leaves the keyboard where it
   const elsewhere = document.body.appendChild(document.createElement('input'))
   elsewhere.focus()
   elsewhere.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))
-
   await deleteRow(BETA)
   flushSync()
-
   expect(document.activeElement).toBe(elsewhere)
   elsewhere.remove()
 })
-
 test('the only row left, gone, hands it to the list itself rather than to the page', async () => {
   await deleteRow(ALPHA)
   await deleteRow(GAMMA)
   rowOf(BETA)!.focus()
-
   await deleteRow(BETA)
-
   await vi.waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('tree'))
 })
-
 test('and the last row hands it back to the row that is last now', async () => {
   rowOf(GAMMA)!.focus()
-
   await deleteRow(GAMMA)
-
   await vi.waitFor(() => expect(focused()).toBe(BETA))
 })
-
 test('a keyboard that has gone somewhere else since stays where it went', async () => {
   rowOf(BETA)!.focus()
   const elsewhere = document.body.appendChild(document.createElement('input'))
   elsewhere.focus()
-
   await deleteRow(BETA)
-
   expect(document.activeElement).toBe(elsewhere)
   elsewhere.remove()
 })

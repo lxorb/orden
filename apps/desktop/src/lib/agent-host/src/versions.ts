@@ -23,7 +23,6 @@ import { readable } from './guarded'
 function idOf(version: Version): string {
   return `${version.path === null ? 'account' : 'device'}:${version.at}`
 }
-
 function noteOf(call: Call, writing = false): { place: Place; relative: string; path: string } {
   const place = placeOf(call)
   const asked = (writing ? judgedForWriting : judged)(need(call, 'path'))
@@ -32,11 +31,9 @@ function noteOf(call: Call, writing = false): { place: Place; relative: string; 
   readable(path, relative)
   return { place, relative, path }
 }
-
 export async function listVersions(call: Call): Promise<AgentAnswer> {
   const { place, relative, path } = noteOf(call)
   const versions = await versionsOf(path)
-
   return done(
     versions.map((one) => ({
       version: idOf(one),
@@ -47,7 +44,6 @@ export async function listVersions(call: Call): Promise<AgentAnswer> {
     sharedSource(place, relative),
   )
 }
-
 export async function restoreVersion(call: Call): Promise<AgentAnswer> {
   const { place, relative, path } = noteOf(call, true)
   writableAt(place, path)
@@ -56,18 +52,14 @@ export async function restoreVersion(call: Call): Promise<AgentAnswer> {
   if (!version) {
     throw new Refused('no_such_version', `${relative} has no version ${wanted}: list_versions`)
   }
-
   const words = await versionText(version, path)
   const now = await workspace.noteText(path)
   if (now === null) throw new Refused('no_such_file', `there is no note at ${relative}`)
-
   const when = new Date(version.at).toISOString().slice(0, 16).replace('T', ' ')
   const question = await asked(call, 'deleting', `Put back ${relative} as it was at ${when}`)
   if (question) return question
-
   const agent = call.caller.agent
   await invoke('snapshot_note', { path, content: now, source: agent?.name }).catch(() => undefined)
-
   const wrote = await notes.writeNote(
     writerOf(call),
     { path: relative, space: place.space.id },

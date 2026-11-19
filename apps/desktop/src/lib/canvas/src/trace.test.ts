@@ -9,7 +9,6 @@ const one = (over: Partial<Parameters<Trace['note']>[0]> = {}) => ({
   id: 1,
   ...over,
 })
-
 describe('the pointer record', () => {
   test('writes down a press, a lift and a cancel', () => {
     const trace = new Trace()
@@ -18,7 +17,6 @@ describe('the pointer record', () => {
     expect(trace.note(one({ what: 'cancel', button: -1, buttons: 0 }))).toBe(true)
     expect(trace.line).toBe('down/pen b0 B1 | up/pen b0 B0 | cancel/pen b-1 B0')
   })
-
   test('says nothing for a move that changed nothing', () => {
     const trace = new Trace()
     trace.note(one({ what: 'down', button: 0, buttons: 1 }))
@@ -26,14 +24,12 @@ describe('the pointer record', () => {
     expect(trace.note(one())).toBe(false)
     expect(trace.line).toBe('down/pen b0 B1')
   })
-
   test('writes down the move where the button arrived', () => {
     const trace = new Trace()
     trace.note(one({ what: 'down', button: 0, buttons: 1 }))
     expect(trace.note(one({ buttons: 33 }))).toBe(true)
     expect(trace.line).toBe('down/pen b0 B1 | move/pen b-1 B33')
   })
-
   test('keeps two contacts apart', () => {
     const trace = new Trace()
     trace.note(one({ what: 'down', id: 1, buttons: 1 }))
@@ -41,11 +37,9 @@ describe('the pointer record', () => {
     expect(trace.note(one({ id: 1 }))).toBe(false)
     expect(trace.note(one({ id: 2, buttons: 3 }))).toBe(true)
   })
-
   test('holds the gesture that just happened rather than the afternoon', () => {
     const trace = new Trace()
     for (let at = 0; at < 40; at++) trace.note(one({ what: 'down', id: at, buttons: at }))
-
     expect(trace.line.split(' | ')).toHaveLength(8)
   })
 })

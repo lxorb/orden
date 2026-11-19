@@ -26,13 +26,11 @@ function transfer(types: string[] = []): DataTransfer {
   }
   return held as unknown as DataTransfer
 }
-
 const drop = (dataTransfer: DataTransfer, keys: { ctrlKey?: boolean; altKey?: boolean } = {}) => ({
   dataTransfer,
   ctrlKey: keys.ctrlKey ?? false,
   altKey: keys.altKey ?? false,
 })
-
 describe('a drop on the file list', () => {
   test('moves its own rows, and lets the one dragging choose a copy instead', () => {
     const rows = transfer()
@@ -40,7 +38,6 @@ describe('a drop on the file list', () => {
     expect(rows.effectAllowed).toBe('copyMove')
     expect(landing(drop(rows), 'win')).toBe('move')
   })
-
   test('copies them with Ctrl held, and with Alt on a Mac', () => {
     const rows = transfer()
     carry(rows, ['/s/a.md'])
@@ -49,13 +46,11 @@ describe('a drop on the file list', () => {
     expect(landing(drop(rows, { altKey: true }), 'mac')).toBe('copy')
     expect(landing(drop(rows, { ctrlKey: true }), 'mac')).toBe('move')
   })
-
   test('copies in files from outside the app, whatever is held', () => {
     const files = transfer(['Files'])
     expect(isFileDrop(files)).toBe(true)
     expect(landing(drop(files), 'win')).toBe('copy')
   })
-
   test('keeps a link dragged out of a page, and a picture as the file it carries', () => {
     const link = transfer(['text/uri-list', 'text/html', 'text/plain'])
     expect(isLinkDrop(link)).toBe(true)
@@ -65,13 +60,11 @@ describe('a drop on the file list', () => {
     expect(isFileDrop(picture)).toBe(true)
     expect(isLinkDrop(transfer(['text/plain', 'text/html']))).toBe(false)
   })
-
   test('and takes nothing else', () => {
     expect(landing(drop(transfer(['text/plain'])), 'win')).toBeNull()
     expect(landing({ dataTransfer: null, ctrlKey: false, altKey: false }, 'win')).toBeNull()
   })
 })
-
 describe('a bookmark carried over the file list', () => {
   test('is a move where it is a tile, and nothing otherwise', async () => {
     const { carryBookmark, carriedNothing } = await import('./drag-paths')
@@ -85,7 +78,6 @@ describe('a bookmark carried over the file list', () => {
     expect(landing(drop(search), 'linux')).toBeNull()
   })
 })
-
 describe('rows of the file explorer, carried where files are taken', () => {
   test('are files to a place that takes them, even before the page may read the drag', () => {
     const rows = transfer()
@@ -96,7 +88,6 @@ describe('rows of the file explorer, carried where files are taken', () => {
     expect(outsideRows(hidden)).toEqual(['/home/me/Downloads/a.png', '/home/me/b.pdf'])
     carriedNothing()
   })
-
   test('a note leaves PDFs alone, to open as page notes, and takes them along with other files', () => {
     const pdfs = transfer()
     carryFromExplorer(pdfs, ['/home/me/a.pdf', '/home/me/B.PDF'], false)
@@ -107,7 +98,6 @@ describe('rows of the file explorer, carried where files are taken', () => {
     expect(carriedIntoNotes.carries(mixed)).toBe(true)
     carriedNothing()
   })
-
   test('rows inside the spaces are rows of the file list, not files from outside', () => {
     const rows = transfer()
     carryFromExplorer(rows, ['/s/Idea.md'], true)
@@ -118,13 +108,11 @@ describe('rows of the file explorer, carried where files are taken', () => {
     carriedNothing()
   })
 })
-
 const MARKS: Bookmark[] = [
   { kind: 'note', path: 'a.md', text: '' },
   { kind: 'note', path: 'b.md', text: '' },
   { kind: 'note', path: 'c.md', text: '' },
 ]
-
 describe('a bookmark carried', () => {
   test('is the bookmark picked up, not a place in a list', async () => {
     const here = await import('./drag-paths')
@@ -137,7 +125,6 @@ describe('a bookmark carried', () => {
     expect(here.carriedMark()).toBeNull()
   })
 })
-
 describe('a row carried by its place in a list', () => {
   test('is taken in the window it was picked up in', async () => {
     const here = await import('./drag-paths')
@@ -161,7 +148,6 @@ describe('a row carried by its place in a list', () => {
     expect(here.draggedAiChat(transfer(['text/plain']))).toBeNull()
     here.carriedNothing()
   })
-
   test('and never in another window, whose list has other rows at those places', async () => {
     const there = await import('./drag-paths')
     const mark = transfer()
@@ -185,13 +171,11 @@ describe('a row carried by its place in a list', () => {
     expect(here.landing(drop(mark), 'linux')).toBeNull()
   })
 })
-
 describe('a link dragged onto the strip from another app', () => {
   test('may be carried by a browser s list or by plain text', () => {
     expect(mayCarryAddress(['text/uri-list', 'text/plain'])).toBe(true)
     expect(mayCarryAddress(['text/plain'])).toBe(true)
   })
-
   test('is not a file, nor one of the app s own drags', () => {
     expect(mayCarryAddress(['Files', 'text/uri-list'])).toBe(false)
     expect(mayCarryAddress(['text/orden-path', 'text/plain'])).toBe(false)

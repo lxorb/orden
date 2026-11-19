@@ -1,8 +1,6 @@
 
 import time
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -14,13 +12,11 @@ MODES = {
     "throw": "LockManager.prototype.request = function(){ throw new DOMException('no','SecurityError') }",
 }
 STARTS_WITHIN = 15
-
 def type_in(page: Page, words: str) -> None:
     page.bring_to_front()
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
     page.keyboard.type(words, delay=2)
-
 def drive(browser: Browser) -> None:
     for mode, script in MODES.items():
         ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
@@ -43,5 +39,4 @@ def drive(browser: Browser) -> None:
         wait_for(a, f"()=>{WS}.active.note.latest.includes('FROM-B')", f"{mode}: A hears B", patience=20)
         say(f"{mode}: held")
         ctx.close()
-
 raise SystemExit(DRIVE.run(drive))

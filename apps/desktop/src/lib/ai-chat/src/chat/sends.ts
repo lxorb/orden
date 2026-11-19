@@ -8,26 +8,19 @@ interface Send {
   from: number
   to: number | null
 }
-
 const KEPT = 500
-
 const sends: Send[] = []
 runs(() => sends.some((send) => send.to === null))
-
 const starting = new Set<(thread: string) => void>()
-
 const ending = new Set<(thread: string) => void>()
-
 export function onSend(listener: (thread: string) => void): () => void {
   starting.add(listener)
   return () => starting.delete(listener)
 }
-
 export function onSent(listener: (thread: string) => void): () => void {
   ending.add(listener)
   return () => ending.delete(listener)
 }
-
 function began(thread: Thread): () => void {
   const send: Send = {
     thread: thread.id,
@@ -45,7 +38,6 @@ function began(thread: Thread): () => void {
     for (const listener of ending) listener(thread.id)
   }
 }
-
 export function answeringAt(provider: string, at: number): string | null {
   for (let index = sends.length - 1; index >= 0; index--) {
     const send = sends[index]
@@ -53,14 +45,11 @@ export function answeringAt(provider: string, at: number): string | null {
   }
   return null
 }
-
 export function answering(): Thread[] {
   const threads = sends.flatMap((send) => (send.to === null && send.held ? [send.held] : []))
   return [...new Set(threads)]
 }
-
 const watched = new WeakMap<Engine, Engine>()
-
 export function watching(engine: Engine): Engine {
   const held = watched.get(engine)
   if (held) return held

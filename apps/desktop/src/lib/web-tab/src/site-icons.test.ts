@@ -7,13 +7,10 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void kept.set(key, value),
   removeItem: (key: string) => void kept.delete(key),
 })
-
 vi.mock('../../accounts/src/account.svelte', async () => ({
   account: (await import('../../accounts/test/fakes')).accountDouble(),
 }))
-
 const PNG = 'data:image/png;base64,iVBORw0KGgo='
-
 const server = vi.hoisted(() => ({
   told: [] as Record<string, unknown>[],
   forgot: [] as unknown[],
@@ -45,11 +42,9 @@ vi.mock('../../accounts/src/client', () => ({
     siteIconPicture: () => Promise.resolve(PNG),
   },
 }))
-
 const { bounded, labelOf, siteIcons, siteOf } = await import('./site-icons.svelte')
 const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../../ui-kit/src/icons')
 const account = (await import('../../accounts/src/account.svelte')).account as unknown as AccountDouble
-
 beforeEach(async () => {
   account.signInAs('a')
   server.held = null
@@ -59,7 +54,6 @@ beforeEach(async () => {
   await siteIcons.forgetSince(0)
   server.forgot.length = 0
 })
-
 describe('a site', () => {
   test('is its host, lower case, without www, and only for a page on the web', () => {
     expect(siteOf('https://WWW.GitHub.com/lxorb/orden')).toBe('github.com')
@@ -69,12 +63,10 @@ describe('a site', () => {
     expect(siteOf('https://127.0.0.1/')).toBeNull()
     expect(siteOf(null)).toBeNull()
   })
-
   test('is called by the title of its front page, and by nothing further in', () => {
     expect(labelOf('https://github.com/', ' GitHub ')).toBe('GitHub')
     expect(labelOf('https://github.com/lxorb/orden', 'lxorb/orden')).toBe('')
   })
-
   test('is written as a value of its own, drawn in its own colours', () => {
     const value = writtenIcon(SITE_ICONS, 'github.com')
     expect(value).toBe('site:github.com')
@@ -82,7 +74,6 @@ describe('a site', () => {
     expect(takesTint(readIcon(value))).toBe(false)
   })
 })
-
 describe('the list', () => {
   test('is told once a site and mark, and holds the picture the service has', async () => {
     await siteIcons.saw('https://github.com/', 'GitHub', PNG)
@@ -91,14 +82,12 @@ describe('the list', () => {
     expect(server.told[0]).toMatchObject({ site: 'github.com', label: 'GitHub', icon: PNG })
     expect(siteIcons.picture('github.com')).toBe(PNG)
   })
-
   test('says nothing for a device nobody is signed in on', async () => {
     account.signOut()
     await siteIcons.saw('https://example.org/', 'Example', PNG)
     expect(server.told).toHaveLength(0)
     expect(siteIcons.list).toHaveLength(0)
   })
-
   test('is the account list, newest first, from every device', async () => {
     server.sites = [
       { site: 'b.dev', label: '', seen: 20, hash: 'x' },
@@ -112,7 +101,6 @@ describe('the list', () => {
     expect(siteIcons.picture('a.dev')).toBe(PNG)
     expect(siteIcons.picture('nowhere.dev')).toBeNull()
   })
-
   test('forgets what a range saw, here and on the account', async () => {
     await siteIcons.saw('https://old.dev/', '', PNG)
     const old = siteIcons.list[0]
@@ -123,7 +111,6 @@ describe('the list', () => {
     expect(siteIcons.list).toHaveLength(0)
     expect(server.forgot).toEqual([{ since: (old?.seen ?? 0) + 1 }, { since: 0 }])
   })
-
   test('keeps the newest pictures within its ceiling', () => {
     const big = 'data:image/png;base64,' + 'A'.repeat(600 * 1024)
     const list = bounded([
@@ -136,71 +123,54 @@ describe('the list', () => {
     ])
   })
 })
-
 describe('the list when the account changes', () => {
   function hold(): () => void {
     let free: () => void = () => undefined
     server.held = new Promise((resolve) => (free = resolve))
     return free
   }
-
   test('is gone with the account that saw those sites, here and in what is kept', async () => {
     await siteIcons.saw('https://github.com/', 'GitHub', PNG)
     expect(siteIcons.list).toHaveLength(1)
-
     account.signInAs('b')
-
     expect(siteIcons.list).toEqual([])
     expect(kept.get('orden:site-icons')).toBe('[]')
   })
-
   test('never takes the last account’s answer into the next account’s list', async () => {
     server.sites = [{ site: 'a.dev', label: 'A', seen: 10, hash: 'y' }]
     const free = hold()
     const asking = siteIcons.refresh()
-
     account.signInAs('b')
     free()
     await asking
-
     expect(siteIcons.list).toEqual([])
   })
-
   test('never brings back a site a clearing took while it was being told of', async () => {
     const free = hold()
     const telling = siteIcons.saw('https://github.com/', 'GitHub', PNG)
-
     await siteIcons.forgetSince(0)
     free()
     await telling
-
     expect(siteIcons.list).toEqual([])
   })
-
   test('never brings back the account list a clearing came during', async () => {
     server.sites = [{ site: 'a.dev', label: 'A', seen: 10, hash: 'y' }]
     const free = hold()
     const asking = siteIcons.refresh()
-
     await siteIcons.forgetSince(0)
     free()
     await asking
-
     expect(siteIcons.list).toEqual([])
   })
-
   test('never keeps a site the last account was telling of', async () => {
     const free = hold()
     const telling = siteIcons.saw('https://github.com/', 'GitHub', PNG)
-
     account.signInAs('b')
     free()
     await telling
-
     expect(siteIcons.list).toEqual([])
   })
 })
-
 describe('a service from before the Web icons', () => {
   test('is asked once, says nothing to anybody, and the picker leaves the section out', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
@@ -208,7 +178,6 @@ describe('a service from before the Web icons', () => {
       vi.setSystemTime(Date.now() + 60 * 60_000)
       server.refuse = Object.assign(new Error('not found'), { status: 404 })
       server.calls = 0
-
       await siteIcons.saw('https://one.dev/', 'One', PNG)
       await siteIcons.saw('https://one.dev/', 'One', PNG)
       await siteIcons.saw('https://two.dev/', 'Two', PNG)
@@ -216,7 +185,6 @@ describe('a service from before the Web icons', () => {
       expect(server.calls).toBe(1)
       expect(siteIcons.list).toHaveLength(0)
       expect(siteIcons.lacking).toBe(true)
-
       server.refuse = null
       vi.setSystemTime(Date.now() + 11 * 60_000)
       await siteIcons.refresh()
@@ -226,7 +194,6 @@ describe('a service from before the Web icons', () => {
       vi.useRealTimers()
     }
   })
-
   test('and a service out of reach is waited for, but the section stays', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     try {

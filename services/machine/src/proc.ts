@@ -9,19 +9,15 @@ function statOf(pid: number): string[] | null {
     return null
   }
 }
-
 function field(pid: number, at: number): number | null {
   const value = Number(statOf(pid)?.[at])
   return Number.isSafeInteger(value) ? value : null
 }
-
 function frontOf(shell: number): number | null {
   const front = field(shell, 5)
   return front !== null && front > 0 ? front : null
 }
-
 const RUNNERS = new Set(['node', 'nodejs'])
-
 function nameOf(pid: number): string | null {
   try {
     const comm = readFileSync(`/proc/${String(pid)}/comm`, 'utf8').trim()
@@ -33,13 +29,11 @@ function nameOf(pid: number): string | null {
     return null
   }
 }
-
 export function programOf(shell: number): string | null {
   const front = frontOf(shell)
   if (front === null || front === shell) return null
   return nameOf(front)
 }
-
 export function folderOf(shell: number): string | null {
   try {
     return readlinkSync(`/proc/${String(shell)}/cwd`)
@@ -47,11 +41,9 @@ export function folderOf(shell: number): string | null {
     return null
   }
 }
-
 export function sessionProcesses(shell: number): number[] {
   return sessionStates(shell).map(([pid]) => pid)
 }
-
 export function sessionStates(shell: number): [pid: number, state: string][] {
   let pids: string[]
   try {

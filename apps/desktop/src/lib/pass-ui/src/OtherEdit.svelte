@@ -16,13 +16,10 @@
     oninput,
   }: { ui: PassUi; content: Custom | SshKey | Wifi; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   const securities = $derived(WIFI_SECURITY.map((security) => ({ value: security, label: securityLabel(security) })))
-
   let canGenerate = $state(false)
   let generating = $state(false)
   let wrong = $state<string | null>(null)
-
   $effect(() => {
     if (content.kind !== 'ssh') return
     let current = true
@@ -33,7 +30,6 @@
       current = false
     }
   })
-
   async function generate() {
     if (content.kind !== 'ssh') return
     generating = true
@@ -49,7 +45,6 @@
       generating = false
     }
   }
-
   function filledPublic() {
     if (content.kind !== 'ssh' || content.publicKey.trim() !== '') return
     const derived = sshPublicOf(content.privateKey)
@@ -116,21 +111,18 @@
   .generate {
     align-self: flex-start;
   }
-
   .security {
     display: flex;
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-2) var(--space-3);
   }
-
   .label {
     flex: 1;
     padding-inline-start: calc(var(--icon-md) + var(--space-2));
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .security > :global(:last-child) {
     flex: none;
     width: 10rem;

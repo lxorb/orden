@@ -8,7 +8,6 @@
   import { propertyName } from './words'
 
   const { kit, part }: { kit: Kit; part: 'sort' | 'group' } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const kinds = $derived(view?.orden.rows ?? 'notes')
@@ -18,9 +17,7 @@
       value: one,
       label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
     }))
-
   const NONE = ''
-
   const direction = (sort: Sort): Sort => ({
     ...sort,
     direction: sort.direction === 'ASC' ? 'DESC' : 'ASC',
@@ -131,12 +128,10 @@
     align-items: center;
     gap: var(--space-2);
   }
-
   .row > :global(:first-child) {
     flex: 1;
     min-width: 0;
   }
-
   svg {
     fill: none;
     stroke: currentColor;
@@ -145,11 +140,9 @@
     stroke-linejoin: round;
     transition: transform var(--dur-base) var(--ease-out);
   }
-
   svg.down {
     transform: rotate(180deg);
   }
-
   .adder .orden-row-label {
     color: var(--muted);
   }

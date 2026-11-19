@@ -4,7 +4,6 @@ const world = vi.hoisted(() => ({
   asked: [] as { command: string; args: Record<string, unknown> | undefined }[],
   pressed: null as ((event: { payload: unknown }) => void) | null,
 }))
-
 vi.mock('../../platform/src/api', () => ({
   isDesktop: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -12,27 +11,21 @@ vi.mock('../../platform/src/api', () => ({
     return Promise.resolve(null)
   },
 }))
-
 vi.mock('../../windows/src/api', () => ({
   hearHere: (_name: string, heard: (event: { payload: unknown }) => void) => {
     world.pressed = heard
     return Promise.resolve(() => undefined)
   },
 }))
-
 const { notify, show, unshow } = await import('./notify')
-
 function lastId(): string {
   const notice = world.asked.at(-1)?.args?.notice as { id: string }
   return notice.id
 }
-
 const settled = () => new Promise((done) => setTimeout(done, 0))
-
 beforeEach(() => {
   world.asked.length = 0
 })
-
 describe('notices on a desktop', () => {
   it('names a notice by plain characters the crate takes, the same each time, however its tag is written', () => {
     for (const tag of ['time-goal:6f1c:1762473600000', 'whatsapp\nme@example.org\nchat 1', 'x'.repeat(80)]) {
@@ -46,7 +39,6 @@ describe('notices on a desktop', () => {
       expect(tags[0]).toMatch(/^[A-Za-z0-9_-]{1,64}$/)
     }
   })
-
   it('hands the crate the words, the tag and the answer field', () => {
     show({
       title: 'Lucile',
@@ -71,7 +63,6 @@ describe('notices on a desktop', () => {
     })
     expect(lastId()).toMatch(/^[0-9a-f]{16}$/)
   })
-
   it('answers a press with the notice it was on', async () => {
     const opened = vi.fn()
     const replied = vi.fn()
@@ -84,7 +75,6 @@ describe('notices on a desktop', () => {
     })
     const id = lastId()
     await settled()
-
     world.pressed?.({ payload: { id, act: 'reply', text: 'on it' } })
     world.pressed?.({ payload: { id, act: 'reply', text: '   ' } })
     world.pressed?.({ payload: { id, act: 'open' } })
@@ -93,7 +83,6 @@ describe('notices on a desktop', () => {
     expect(replied.mock.calls).toEqual([['on it']])
     expect(opened).toHaveBeenCalledOnce()
   })
-
   it('lets a replaced notice go, and takes a tag back once', async () => {
     const first = vi.fn()
     const second = vi.fn()
@@ -102,12 +91,10 @@ describe('notices on a desktop', () => {
     notify('a', 'b', 'c_3', second)
     const kept = lastId()
     await settled()
-
     world.pressed?.({ payload: { id: old, act: 'open' } })
     world.pressed?.({ payload: { id: kept, act: 'open' } })
     expect(first).not.toHaveBeenCalled()
     expect(second).toHaveBeenCalledOnce()
-
     unshow('c_3')
     unshow('c_3')
     expect(world.asked.filter((one) => one.command === 'notice_clear')).toEqual([

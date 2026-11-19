@@ -1,7 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const sent = vi.hoisted(() => [] as { command: string; args: unknown }[])
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
@@ -10,9 +9,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const { rememberGround } = await import('./ground')
-
 function grounds(body: string) {
   vi.spyOn(window, 'getComputedStyle').mockImplementation(
     (element) =>
@@ -21,18 +18,15 @@ function grounds(body: string) {
       }) as CSSStyleDeclaration,
   )
 }
-
 async function remembered() {
   rememberGround()
   await new Promise((done) => requestAnimationFrame(() => done(undefined)))
   return sent.at(-1)
 }
-
 beforeEach(() => {
   sent.length = 0
   vi.restoreAllMocks()
 })
-
 test('the window is told the ground it is painted, which a page drawn over it shows', async () => {
   grounds('rgb(14, 16, 19)')
   expect(await remembered()).toEqual({
@@ -40,7 +34,6 @@ test('the window is told the ground it is painted, which a page drawn over it sh
     args: { colour: 'rgb(14, 16, 19)', paint: 'rgb(14, 16, 19)' },
   })
 })
-
 test('a ground seen through is painted with the colour beneath it, never with nothing', async () => {
   grounds('rgba(0, 0, 0, 0)')
   expect(await remembered()).toEqual({

@@ -13,19 +13,15 @@ import { stuck } from './stuck'
 const EARLIER = 'orden:ai'
 const MOVED = 'orden:ai-moved'
 const TRIES = 3
-
 export type Feature = 'ask' | 'block' | 'rewrite'
-
 export const FEATURES: readonly { id: Feature; label: string }[] = [
   { id: 'ask', label: 'Ask' },
   { id: 'block', label: 'AI block' },
   { id: 'rewrite', label: 'Rewrite' },
 ]
-
 function isStale(error: unknown): boolean {
   return error === STALE || (error instanceof Error && error.message === STALE)
 }
-
 function parsedText(text: string | null): Accounts | null {
   if (text === null) return null
   try {
@@ -34,10 +30,8 @@ function parsedText(text: string | null): Accounts | null {
     return null
   }
 }
-
 class Ai {
   state = $state<Accounts>(NONE)
-
   readonly accounts = $derived<Account[]>(this.state.accounts)
   readonly providers = $derived<Provider[]>(actives(this.state))
   readonly vendors = $derived<Vendor[]>(vendors(this.state))
@@ -51,45 +45,36 @@ class Ai {
   private synced: Promise<void> | null = null
   private writing: Promise<void> = Promise.resolve()
   private local = new Set<() => void>()
-
   private firstThat(test: (one: Provider) => boolean): Provider | null {
     const all = [activeOf(this.state, this.state.defaultVendor), ...actives(this.state)]
     return all.find((one): one is Account => !!one && test(one)) ?? null
   }
-
   onLocalChange(listener: () => void): () => void {
     this.local.add(listener)
     return () => this.local.delete(listener)
   }
-
   adopt(state: Accounts): void {
     this.changed(() => state, true)
   }
-
   provider(id: string): Provider | null {
     return resolve(this.state, id)
   }
-
   accountsOf(vendor: Vendor): Account[] {
     return accountsOf(this.state, vendor)
   }
-
   isActive(id: string): boolean {
     return isActive(this.state, id)
   }
-
   providerFor(feature: Feature): Provider | null {
     const picked = this.state.uses[feature]
     const found = picked ? resolve(this.state, picked) : null
     return found && usable(found) ? found : this.chosen
   }
-
   restore() {
     const copy = parsedText(storedText(COPY))
     this.state = copy ?? migrated(stored(EARLIER))
     this.synced ??= this.sync()
   }
-
   private async sync(): Promise<void> {
     try {
       await this.reread(true)
@@ -100,7 +85,6 @@ class Ai {
       log('warn', `ai accounts: could not read the kept accounts: ${String(error)}`)
     }
   }
-
   private async reread(first: boolean): Promise<void> {
     const kept = await readKept()
     this.stamp = kept.stamp
@@ -112,7 +96,6 @@ class Ai {
     if (!read || brought !== read) await this.change((state) => merged(state, brought))
     keep(MOVED, '1')
   }
-
   private took(state: Accounts) {
     this.state = state
     keep(COPY, accountsText(state))
@@ -120,7 +103,6 @@ class Ai {
       void import('./mend').then(({ mend }) => mend(this, state))
     }
   }
-
   private async change(make: (state: Accounts) => Accounts): Promise<void> {
     this.took(make(this.state))
     for (let tries = 0; tries < TRIES; tries++) {
@@ -138,7 +120,6 @@ class Ai {
       }
     }
   }
-
   private changed(make: (state: Accounts) => Accounts, quiet = false) {
     this.state = make(this.state)
     const before = this.writing
@@ -149,42 +130,32 @@ class Ai {
     })()
     if (!quiet) for (const one of this.local) one()
   }
-
   async written(): Promise<void> {
     await this.writing
   }
-
   use(feature: Feature, id: string) {
     this.changed((state) => used(state, feature, id))
   }
-
   add(kind: ProviderKind): Account {
     const { account } = added(this.state, kind)
     this.changed((state) => including(state, account))
     return account
   }
-
   update(id: string, change: Partial<Omit<Account, 'id' | 'kind' | 'own'>>) {
     this.changed((state) => updated(state, id, change))
   }
-
   remove(id: string) {
     this.changed((state) => removed(state, id))
   }
-
   activate(id: string) {
     this.changed((state) => activated(state, id))
   }
-
   setDefault(id: string) {
     this.changed((state) => defaulted(state, id))
   }
 }
-
 export const ai = new Ai()
-
 transcribersAre(() => ai.transcriber)
-
 accountsAre(
   () =>
     ai.vendors.flatMap((vendor) => {
@@ -201,9 +172,7 @@ accountsAre(
     ai.activate(id)
   },
 )
-
 ai.restore()
-
 if (!__EVEN_PLUGIN__) {
   void import('./vault/start.svelte')
     .then((one) => one.startVault())

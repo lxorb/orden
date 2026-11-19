@@ -4,18 +4,13 @@ import { markersIn } from './checks'
 import type { Report, Step } from './run'
 
 export const settle: Step = { t: 'wait', ticks: 40 }
-
 export const PLAN = 0
-
 export const act = (device: number, action: Action): Step => ({ t: 'act', device, action })
-
 export const pass = (device: number): Step => ({ t: 'pass', device })
-
 export function textOf(report: Report, name: string): string {
   const entry = report.account.entries.find((one) => one.name === name)
   return entry ? (report.account.texts[entry.id] ?? '') : ''
 }
-
 export function apart(here: readonly Step[], there: readonly Step[], ...after: Step[]): Step[] {
   return [
     { t: 'offline', device: 0 },
@@ -29,7 +24,6 @@ export function apart(here: readonly Step[], there: readonly Step[], ...after: S
     ...after,
   ]
 }
-
 export async function failedSeeds(
   from: number,
   count: number,
@@ -42,7 +36,6 @@ export async function failedSeeds(
   }
   return failed
 }
-
 export function roads(run: (script: readonly Step[]) => Promise<Report>, every = true): void {
   test('road 2: the laptop that was closed merges character by character, asking nothing', async () => {
     const report = await run(
@@ -56,7 +49,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(markersIn(textOf(report, 'Plan.md'))).toEqual(expect.arrayContaining(['mk101z', 'mk102z']))
     expect(report.account.entries.filter((one) => one.name.includes('from another'))).toEqual([])
   })
-
   test('road 4: two Untitled.md made apart are two notes, the second numbered', async () => {
     const make = (device: number, words: string) =>
       act(device, { t: 'create', folder: null, name: 'Untitled.md', words })
@@ -65,7 +57,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     const names = report.account.entries.map((one) => one.name).sort()
     expect(names).toEqual(['Ideas.md', 'Plan.md', 'Untitled 2.md', 'Untitled.md'])
   })
-
   test('road 5: a delete landing first is undone by the edit that was written meanwhile', async () => {
     const report = await run(
       apart([act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk301z' })], [act(1, { t: 'delete', target: PLAN })]),
@@ -73,7 +64,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(report.failures).toEqual([])
     expect(textOf(report, 'Plan.md')).toContain('mk301z')
   })
-
   test('road 5, the other order: an edit landing first refuses the delete that had not seen it', async () => {
     const report = await run([
       act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk302z' }),
@@ -86,7 +76,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(report.failures).toEqual([])
     expect(textOf(report, 'Plan.md')).toContain('mk302z')
   })
-
   test('road 6: a rename made offline and an edit made elsewhere both hold', async () => {
     const report = await run(
       apart(
@@ -98,9 +87,7 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(textOf(report, 'Renamed.md')).toContain('mk401z')
     expect(textOf(report, 'Plan.md')).toBe('')
   })
-
   if (!every) return
-
   test("the day's note made on two devices is one note with both lines", async () => {
     const append = (device: number, words: string) => act(device, { t: 'append-day', name: '2026-09-30.md', words })
     const report = await run(apart([append(0, 'mk501z')], [append(1, 'mk502z')], pass(0), settle))
@@ -109,7 +96,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(days).toHaveLength(1)
     expect(markersIn(textOf(report, '2026-09-30.md'))).toEqual(expect.arrayContaining(['mk501z', 'mk502z']))
   })
-
   test('a sentence rewritten on both sides is held and asked, and Keep both keeps both', async () => {
     const rewrite = (device: number, words: string): Step[] => [
       act(device, { t: 'cut', note: PLAN, at: 0, length: 36 }),
@@ -131,7 +117,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(everything).toContain('mk602z')
     expect(report.account.entries.some((one) => one.name === 'Plan (d0).md')).toBe(true)
   })
-
   test('a crash loses only what was typed since the last save, and nothing after relaunch', async () => {
     const report = await run([
       act(0, { t: 'type', note: PLAN, at: 0, words: 'mk701z' }),
@@ -147,7 +132,6 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     expect(plan).toContain('mk701z')
     expect(plan).not.toContain('mk702z')
   })
-
   test('a file changed by another program is folded in three ways', async () => {
     const report = await run([
       act(0, { t: 'edit-file', note: PLAN, at: 0.2, words: 'mk801z', cut: 0 }),

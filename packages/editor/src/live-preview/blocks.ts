@@ -36,42 +36,31 @@ import { WebEmbedWidget } from './web'
 export const numberEquations = Facet.define<boolean, boolean>({
   combine: (values) => values[0] ?? false,
 })
-
 const TOC_MAX = 16
-
 const MEDIA: ReadonlySet<EmbedKind | null> = new Set<EmbedKind>(['image', 'audio', 'video'])
-
 function mathIn(doc: Text, node: { from: number; to: number }): string {
   const first = doc.lineAt(node.from)
   const last = doc.lineAt(node.to)
   if (first.number === last.number) return doc.sliceString(node.from + 2, node.to - 2)
-
   return doc.sliceString(first.to, last.from)
 }
-
 interface Equations {
   numbers: ReadonlyMap<number, number>
   labels: ReadonlyMap<string, number>
 }
-
 const UNNUMBERED: Equations = { numbers: new Map(), labels: new Map() }
-
 const counted = new WeakMap<Text, { tree: Tree; equations: Equations }>()
-
 export function equationsOf(state: EditorState): Equations {
   if (!state.facet(numberEquations)) return UNNUMBERED
-
   const tree = syntaxTree(state)
   const known = counted.get(state.doc)
   if (known?.tree === tree) return known.equations
-
   const numbers = new Map<number, number>()
   const labels = new Map<string, number>()
   let counter = 0
   tree.iterate({
     enter: (node) => {
       if (node.name !== 'BlockMath') return node.type.is('Block')
-
       counter += 1
       numbers.set(node.from, counter)
       const label = labelOf(mathIn(state.doc, node))
@@ -79,46 +68,38 @@ export function equationsOf(state: EditorState): Equations {
       return false
     },
   })
-
   const equations = { numbers, labels }
   counted.set(state.doc, { tree, equations })
   return equations
 }
-
 interface Span {
   from: number
   to: number
 }
-
 interface Blocks {
   decorations: DecorationSet
   spans: readonly Span[]
   toc: boolean
   chosen: boolean
 }
-
 interface Scanned {
   ranges: Range<Decoration>[]
   spans: Span[]
   toc: boolean
 }
-
 function scan(state: EditorState, reveals: boolean, region: Span, equations: Equations, out: Scanned) {
   const { ranges, spans } = out
   const doc = state.doc
   const kept = keptCover(state)
-
   const wholeLines = (from: number, to: number) => ({
     from: doc.lineAt(from).from,
     to: doc.lineAt(to).to,
   })
-
   const found = (from: number, to: number) => {
     const span = wholeLines(from, to)
     spans.push(span)
     return { ...span, revealed: reveals && overlaps(state, span.from, span.to) }
   }
-
   if (kept && region.from === 0) {
     ranges.push(
       Decoration.widget({
@@ -128,7 +109,6 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
       }).range(0),
     )
   }
-
   syntaxTree(state).iterate({
     from: region.from,
     to: region.to,
@@ -137,7 +117,6 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
       switch (node.name) {
         case 'BlockMath': {
           if (!standsAlone(state, node.from)) return true
-
           const span = found(node.from, node.to)
           if (span.revealed) return false
           const tex = mathIn(doc, node).trim()
@@ -149,7 +128,6 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
           )
           return false
         }
-
         case 'FrontMatter': {
           const span = found(node.from, node.to)
           const cover = kept ? null : coverOf(doc.sliceString(node.from, node.to))
@@ -164,23 +142,17 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
           }
           return false
         }
-
         case 'FencedCode': {
           if (!standsAlone(state, node.from)) return true
           const span = found(node.from, node.to)
-
           const language = fenceLanguage(state, node.node)
           if (!RENDERED_LANGUAGES.has(language)) return false
           if (span.revealed) return false
-
           const code = fenceCode(state, node.node)
-
           if (language === 'chart' && readChart(code) === null) return false
-
           const index = state.facet(noteIndex)
           if (ANSWERED.has(language) && !index.query) return false
           if (language === 'base' && !index.mountBase) return false
-
           ranges.push(
             Decoration.replace({
               widget: widgetFor(language, code, index),
@@ -189,7 +161,6 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
           )
           return false
         }
-
         case 'Paragraph': {
           const last = doc.lineAt(node.to).number
           for (let number = doc.lineAt(node.from).number; number <= last; number++) {
@@ -205,42 +176,31 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
               }
               continue
             }
-
             if (line.length > TOC_MAX || !/\[toc\]/i.test(line.text)) continue
-
             const span = found(line.from, line.to)
             if (!/^\s*\[toc\]\s*$/i.test(line.text)) continue
-
             out.toc = true
             if (span.revealed) continue
-
             ranges.push(
               Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(span.from, span.to),
             )
           }
           return false
         }
-
         case 'HTMLBlock': {
           if (!standsAlone(state, node.from)) return false
-
           const text = doc.sliceString(node.from, node.to)
           const card = (trustsMarkup(state) ? htmlBlockCard(text) : null) ?? frameOverLines(text)
           if (card === null) return false
-
           const span = found(node.from, node.to)
           if (span.revealed) return false
-
           ranges.push(Decoration.replace({ widget: new WebEmbedWidget(card), block: true }).range(span.from, span.to))
           return false
         }
-
         case 'Table': {
           if (!standsAlone(state, node.from)) return true
-
           const span = found(node.from, node.to)
           if (span.revealed) return true
-
           ranges.push(
             Decoration.replace({
               widget: new TableWidget(doc.sliceString(span.from, span.to), span.from, span.to, !state.readOnly),
@@ -249,16 +209,13 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
           )
           return false
         }
-
         default:
           return node.type.is('Block')
       }
     },
   })
 }
-
 const FRAME_CLOSED = /<\/iframe\s*>/i
-
 function frameOverLines(text: string): string | null {
   const closed = FRAME_CLOSED.exec(text)
   const end = closed ? closed.index + closed[0].length : text.length
@@ -266,16 +223,13 @@ function frameOverLines(text: string): string | null {
   if (!frame.includes('\n') || text.slice(end).trim()) return null
   return iframeCard(closed ? frame : text)
 }
-
 function chosenFor(state: EditorState, reveals: boolean, spans: readonly Span[]) {
   const wholeNoteParsed = syntaxTree(state).length === state.doc.length
   return reveals || (wholeNoteParsed && !crosses(spans, state.selection.ranges))
 }
-
 function buildBlocks(state: EditorState, reveals = true): Blocks {
   const out: Scanned = { ranges: [], spans: [], toc: false }
   scan(state, reveals, { from: 0, to: state.doc.length }, equationsOf(state), out)
-
   return {
     decorations: Decoration.set(out.ranges, true),
     spans: out.spans,
@@ -283,9 +237,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     chosen: chosenFor(state, reveals, out.spans),
   }
 }
-
 const LISTS = new Set(['BulletList', 'OrderedList'])
-
 function runIn(parent: SyntaxNode, from: number, to: number): Span {
   const first = parent.childAfter(from - 1)
   const last = parent.childBefore(to + 1)
@@ -294,13 +246,11 @@ function runIn(parent: SyntaxNode, from: number, to: number): Span {
     to: last && last.to > to ? last.to : to,
   }
 }
-
 function listAround(parent: SyntaxNode, from: number, to: number): SyntaxNode | null {
   const inside = parent.childAfter(from - 1)
   if (!inside || !LISTS.has(inside.name)) return null
   return inside.from < from && inside.to > to ? inside : null
 }
-
 function settle(transaction: Transaction, region: Span): Span {
   const changes = transaction.changes
   const back = changes.invertedDesc
@@ -312,7 +262,6 @@ function settle(transaction: Transaction, region: Span): Span {
   let to = Math.max(region.from, region.to)
   let newParent = newTree.topNode
   let oldParent = oldTree.topNode
-
   if (oldTree.length === oldEnd && newTree.length === newEnd) {
     for (;;) {
       const inNew = listAround(newParent, from, to)
@@ -324,7 +273,6 @@ function settle(transaction: Transaction, region: Span): Span {
       oldParent = inOld
     }
   }
-
   const topLevel = newParent.parent === null
   for (;;) {
     const fresh = runIn(newParent, from, to)
@@ -340,7 +288,6 @@ function settle(transaction: Transaction, region: Span): Span {
     to = nextTo
   }
 }
-
 function merged(regions: Span[]): Span[] {
   const sorted = [...regions].sort((one, other) => one.from - other.from)
   const out: Span[] = []
@@ -351,7 +298,6 @@ function merged(regions: Span[]): Span[] {
   }
   return out
 }
-
 function touched(regions: readonly Span[], from: number, to: number) {
   let low = 0
   let high = regions.length
@@ -363,9 +309,7 @@ function touched(regions: readonly Span[], from: number, to: number) {
   const near = regions[low]
   return near !== undefined && near.from <= to
 }
-
 const MOST_SETTLED = 64
-
 function withNeighbourLines(doc: Text, from: number, to: number): Span {
   const first = doc.lineAt(from)
   const last = doc.lineAt(to)
@@ -374,10 +318,8 @@ function withNeighbourLines(doc: Text, from: number, to: number): Span {
     to: last.number < doc.lines ? doc.line(last.number + 1).to : last.to,
   }
 }
-
 function fewer(wanted: Span[]): Span[] {
   if (wanted.length <= MOST_SETTLED) return wanted
-
   let from = Infinity
   let to = -Infinity
   for (const one of wanted) {
@@ -386,17 +328,14 @@ function fewer(wanted: Span[]): Span[] {
   }
   return [{ from, to }]
 }
-
 function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean): Blocks | null {
   const state = transaction.state
   if (state.facet(numberEquations)) return null
-
   const oldTree = syntaxTree(transaction.startState)
   const newTree = syntaxTree(state)
   const changes = transaction.changes
   const oldEnd = changes.mapPos(oldTree.length, 1)
   if (!transaction.docChanged && oldTree !== newTree && oldEnd === newTree.length) return null
-
   const wanted: Span[] = []
   changes.iterChangedRanges((_fromA, _toA, fromB, toB) => wanted.push(withNeighbourLines(state.doc, fromB, toB)))
   if (oldEnd !== newTree.length) {
@@ -409,7 +348,6 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
       wanted.push({ from: changes.mapPos(from, -1), to: changes.mapPos(to, 1) })
     })
   }
-
   const was = transaction.startState.selection.ranges
   const now = state.selection.ranges
   const spans = mapSpans(value.spans, changes)
@@ -417,18 +355,14 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
     const before = value.spans[at]
     if ((before && crosses([before], was)) || crosses([span], now)) wanted.push(span)
   })
-
   const regions = merged(fewer(wanted).map((region) => settle(transaction, region)))
   const first = regions[0]
   const last = regions[regions.length - 1]
   if (!first || !last) return { ...value, spans, chosen }
-
   const out: Scanned = { ranges: [], spans: [], toc: value.toc }
   for (const region of regions) scan(state, chosen, region, UNNUMBERED, out)
-
   const kept = spans.filter((span) => !touched(regions, span.from, span.to))
   const all = [...kept, ...out.spans].sort((one, other) => one.from - other.from)
-
   return {
     decorations: value.decorations.map(changes).update({
       filter: (from, to) => !touched(regions, from, to),
@@ -442,46 +376,35 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
     chosen: chosenFor(state, chosen, all),
   }
 }
-
 export const buildBlockDecorations = (state: EditorState): DecorationSet => buildBlocks(state).decorations
-
 const ANSWERED = new Set(['query', 'tasks'])
-
 function widgetFor(language: string, code: string, index: NoteIndex) {
   if (language === 'chart') return new ChartWidget(code)
   if (ANSWERED.has(language)) return new QueryWidget(code, index, language)
   if (language === 'base') return new BaseWidget({ code }, index)
   return new DiagramWidget(code, language)
 }
-
 const crosses = (spans: readonly Span[], ranges: readonly SelectionRange[]) =>
   spans.some((span) => ranges.some((range) => range.from <= span.to && range.to >= span.from))
-
 const PROSE = /^[\p{L}\p{N} ,;'"?]*$/u
 const PUNCTUATION = /^[\p{L}\p{N}\p{P}\p{S} ]*$/u
 const BLOCK_MARKS = /[`~|$[\]<>]/
-
 function insideALine(doc: Text, at: number): boolean {
   const line = doc.lineAt(at)
   return /\p{L}/u.test(line.text.slice(0, at - line.from))
 }
-
 function mayMakeATable(doc: Text, at: number): boolean {
   const line = doc.lineAt(at)
   const next = line.number < doc.lines ? doc.line(line.number + 1).text : ''
   return line.text.includes('|') || next.includes('|')
 }
-
 function mayMakeAnHtmlBlock(doc: Text, at: number): boolean {
   return doc.lineAt(at).text.includes('<')
 }
-
 function mayMoveMaths(doc: Text, at: number): boolean {
   return doc.lineAt(at).text.includes('$$')
 }
-
 const LINE_BLOCK = /^\s*(?:!\[\[|\[toc\])/i
-
 function byALineBlock(doc: Text, at: number): boolean {
   const line = doc.lineAt(at)
   const first = Math.max(1, line.number - 1)
@@ -491,15 +414,12 @@ function byALineBlock(doc: Text, at: number): boolean {
   }
   return false
 }
-
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
   if (value.toc) return false
-
   const before = transaction.startState
   const after = transaction.state.doc
   const changes = transaction.changes
   let ordinary = true
-
   changes.iterChanges((fromA, toA, fromB, _toB, inserted) => {
     if (!ordinary) return
     const from = before.doc.lineAt(fromA).from - 1
@@ -508,7 +428,6 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       ordinary = false
       return
     }
-
     const removed = before.doc.sliceString(fromA, toA)
     const added = inserted.toString()
     const written = removed + added
@@ -524,16 +443,13 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       !mayMoveMaths(after, fromB) &&
       !byALineBlock(after, fromB)
   })
-
   return ordinary
 }
-
 const mapSpans = (spans: readonly Span[], changes: ChangeDesc): Span[] =>
   spans.map((span) => ({
     from: changes.mapPos(span.from, 1),
     to: changes.mapPos(span.to, -1),
   }))
-
 function settingsChanged(transaction: Transaction): boolean {
   const before = transaction.startState
   const after = transaction.state
@@ -545,9 +461,7 @@ function settingsChanged(transaction: Transaction): boolean {
     trustChanged(before, after)
   )
 }
-
 export const openBlocksHere = StateEffect.define()
-
 function swappedIn(transaction: Transaction): boolean {
   if (!transaction.docChanged) return false
   let kept = false
@@ -556,42 +470,30 @@ function swappedIn(transaction: Transaction): boolean {
   })
   return !kept
 }
-
 export const blockDecorations = StateField.define<Blocks>({
   create: (state) => buildBlocks(state, false),
-
   update(value, transaction) {
     const moved =
       transaction.selection !== undefined && !transaction.startState.selection.eq(transaction.state.selection)
     const outside = isExternal(transaction)
     const typed = transaction.docChanged && !outside && !transaction.annotation(tableWrite)
     const chosen = value.chosen || typed || moved
-
     if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
-
     if (transaction.effects.some((effect) => effect.is(openBlocksHere))) {
       return buildBlocks(transaction.state, true)
     }
-
     if (outside && swappedIn(transaction)) return buildBlocks(transaction.state, false)
-
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
-
     const held = transaction.state.field(dragging, false) === true
     if (transaction.startState.field(dragging, false) === true && !held) return buildBlocks(transaction.state, chosen)
-
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
-
     if (held && !transaction.docChanged && !reparsed) return chosen === value.chosen ? value : { ...value, chosen }
-
     const was = transaction.startState.selection.ranges
     const now = transaction.state.selection.ranges
-
     if (!transaction.docChanged && !reparsed) {
       if (!crosses(value.spans, was) && !crosses(value.spans, now)) return value
       return rebuiltAround(value, transaction, chosen) ?? buildBlocks(transaction.state, chosen)
     }
-
     const parsedOn =
       syntaxTree(transaction.state).length - syntaxTree(transaction.startState).length ===
       transaction.state.doc.length - transaction.startState.doc.length
@@ -606,7 +508,6 @@ export const blockDecorations = StateField.define<Blocks>({
         }
       }
     }
-
     return rebuiltAround(value, transaction, chosen) ?? buildBlocks(transaction.state, chosen)
   },
   provide: (field) => [

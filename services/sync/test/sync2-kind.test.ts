@@ -13,34 +13,27 @@ let env: TestEnv
 let rooms: Live
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   rooms = live(env)
   token = await signIn(env, 'kinds@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Kinds' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 async function made(path: string, content: string): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   return answer.json.note.id
 }
-
 async function prepare() {
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 }
-
 function row(id: string): { version: number; path: string; kind: string; epoch: number } {
   return env.db.prepare('select * from notes where id = ?').get(id) as never
 }
-
 async function body(id: string): Promise<string> {
   const object = await env.NOTES.get(`spaces/${space}/${id}`)
   return object ? await object.text() : ''
 }
-
 async function renamed(id: string, name: string) {
   const answer = await call(env, `/v2/spaces/${space}/ops`, {
     token,
@@ -49,7 +42,6 @@ async function renamed(id: string, name: string) {
   expect(answer.status, answer.text).toBe(200)
   expect(row(id).path).toBe(name)
 }
-
 function evict(id: string) {
   const held = rooms.of(id)
   ;(rooms.all() as Map<string, { room: NoteRoom; state: unknown }>).set(id, {
@@ -57,25 +49,21 @@ function evict(id: string) {
     state: held.state,
   })
 }
-
 class Words {
   readonly doc = new Y.Doc()
   seq = 1
   private pushes = 0
-
   constructor(
     readonly id: string,
     text: string,
   ) {
     Y.applyUpdateV2(this.doc, seedUpdate(id, 1, text))
   }
-
   type(at: number, words: string) {
     const base = Y.encodeStateVector(this.doc)
     this.doc.getText(TEXT).insert(at, words)
     return { base, update: Y.encodeStateAsUpdateV2(this.doc, base) }
   }
-
   async push(pending: { base: Uint8Array; update: Uint8Array }) {
     const { value } = await framed<PushResponse>(env, '/v2/docs/push', token, {
       docs: [
@@ -94,7 +82,6 @@ class Words {
     return answer
   }
 }
-
 const CARD: Canvas = {
   nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'a card' }],
   edges: [],
@@ -102,36 +89,29 @@ const CARD: Canvas = {
   at: { a: 1 },
   gone: {},
 }
-
 describe('a note renamed to a canvas', () => {
   for (const warm of [false, true]) {
     const room = warm ? 'warm' : 'cold'
-
     test(`keeps its words through a push to a ${room} room`, async () => {
       const id = await made('Plan.md', 'one\n')
       await prepare()
       const device = new Words(id, 'one\n')
       expect(await device.push(device.type(4, 'two\n'))).toMatchObject({ ok: true })
       await rooms.settle()
-
       await renamed(id, 'Plan.canvas')
       expect(row(id).kind).toBe('note')
       if (!warm) evict(id)
-
       expect(await device.push(device.type(8, 'three\n'))).toMatchObject({ ok: true })
       await rooms.settle()
       expect(await body(id)).toBe('one\ntwo\nthree\n')
     })
-
     test(`keeps its words through a v1 save to a ${room} room`, async () => {
       const id = await made('Plan.md', 'one\n')
       await prepare()
       await join(rooms.of(id).room, { id, spaceId: space })
       await rooms.settle()
-
       await renamed(id, 'Plan.canvas')
       if (!warm) evict(id)
-
       const put = await call(env, `/v1/notes/${id}`, {
         method: 'PUT',
         token,
@@ -141,18 +121,15 @@ describe('a note renamed to a canvas', () => {
       await rooms.settle()
       expect(await body(id)).toBe('one\nfrom v1\n')
     })
-
     test(`keeps its words through a pull the ${room} room answers`, async () => {
       const id = await made('Plan.md', 'one\n')
       await prepare()
       const device = new Words(id, 'one\n')
       await device.push(device.type(4, 'two\n'))
       await rooms.settle()
-
       await renamed(id, 'Plan.canvas')
       if (!warm) evict(id)
       await env.NOTES.delete(`crdt/${id}`)
-
       const fresh = new Y.Doc()
       const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
         docs: [{ id, epoch: 1, sv: Y.encodeStateVector(fresh) }],
@@ -161,18 +138,15 @@ describe('a note renamed to a canvas', () => {
       if (!answer || !('update' in answer)) throw new Error(JSON.stringify(answer))
       Y.applyUpdateV2(fresh, answer.update)
       expect(fresh.getText(TEXT).toJSON()).toBe('one\ntwo\n')
-
       expect(await device.push(device.type(0, 'zero\n'))).toMatchObject({ ok: true })
       await rooms.settle()
       expect(await body(id)).toBe('zero\none\ntwo\n')
     })
   }
-
   test('is seeded as words for a pull no room has answered yet', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     await renamed(id, 'Plan.canvas')
-
     const fresh = new Y.Doc()
     const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
       docs: [{ id, epoch: 1, sv: Y.encodeStateVector(fresh) }],
@@ -181,12 +155,10 @@ describe('a note renamed to a canvas', () => {
     if (!answer || !('update' in answer)) throw new Error(JSON.stringify(answer))
     expect(answer.update).toEqual(seedUpdate(id, 1, 'one\n'))
   })
-
   test('a socket joins it as words', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     await renamed(id, 'Plan.canvas')
-
     const door = doorway()
     env.ROOMS = door.ROOMS
     const answer = await call(env, `/rooms/${id}`, {
@@ -196,18 +168,15 @@ describe('a note renamed to a canvas', () => {
     expect(door.asked.map((one) => one.get('x-orden-kind'))).toEqual(['words'])
   })
 })
-
 describe('a canvas renamed to a note', () => {
   test('keeps its cards through a push to a cold room', async () => {
     const id = await made('Board.canvas', writeCanvas(CARD))
     await prepare()
     await join(rooms.of(id).room, { id, spaceId: space, kind: 'plane' })
     await rooms.settle()
-
     await renamed(id, 'Board.md')
     expect(row(id).kind).toBe('canvas')
     evict(id)
-
     const doc = new Y.Doc()
     Y.applyUpdateV2(doc, seedPlane(id, 1, readCanvas(writeCanvas(CARD))))
     const base = Y.encodeStateVector(doc)
@@ -232,12 +201,10 @@ describe('a canvas renamed to a note', () => {
     })
     expect(value.docs[0]).toMatchObject({ ok: true })
     await rooms.settle()
-
     const after = readCanvas(await body(id))
     expect(after.nodes.map((one) => (one as { text?: string }).text)).toEqual(['a card, moved'])
   })
 })
-
 describe('a canvas renamed to a note, written as prose', () => {
   async function renamedBoard(warm: boolean): Promise<string> {
     const id = await made('Board.canvas', writeCanvas(CARD))
@@ -248,14 +215,11 @@ describe('a canvas renamed to a note, written as prose', () => {
     if (!warm) evict(id)
     return id
   }
-
   function cards(text: string): string[] {
     return readCanvas(text).nodes.map((one) => (one as { text?: string }).text ?? '')
   }
-
   for (const warm of [false, true]) {
     const room = warm ? 'warm' : 'cold'
-
     test(`refuses a v1 save of prose to a ${room} room, and keeps the cards`, async () => {
       const id = await renamedBoard(warm)
       const put = await call(env, `/v1/notes/${id}`, {
@@ -268,10 +232,8 @@ describe('a canvas renamed to a note, written as prose', () => {
       expect(cards(await body(id))).toEqual(['a card'])
     })
   }
-
   for (const warm of [false, true]) {
     const room = warm ? 'warm' : 'cold'
-
     test(`refuses a stale v1 save of prose to a ${room} room, rather than merging it away`, async () => {
       const id = await renamedBoard(warm)
       const put = await call(env, `/v1/notes/${id}`, {
@@ -284,7 +246,6 @@ describe('a canvas renamed to a note, written as prose', () => {
       expect(cards(await body(id))).toEqual(['a card'])
     })
   }
-
   test('refuses the connector writing prose into it, and says why', async () => {
     const id = await renamedBoard(false)
     const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
@@ -305,7 +266,6 @@ describe('a canvas renamed to a note, written as prose', () => {
     expect(cards(await body(id))).toEqual(['a card'])
   })
 })
-
 describe('a canvas written with something that is not one', () => {
   test('refuses JSON that is not a canvas, rather than emptying the cards', async () => {
     const id = await made('Board.canvas', writeCanvas(CARD))
@@ -319,7 +279,6 @@ describe('a canvas written with something that is not one', () => {
     await rooms.settle()
     expect(readCanvas(await body(id)).nodes).toHaveLength(1)
   })
-
   test('the connector says plainly that a canvas takes a canvas', async () => {
     await made('Board.canvas', writeCanvas(CARD))
     await prepare()
@@ -340,7 +299,6 @@ describe('a canvas written with something that is not one', () => {
     expect(said).toMatch(/canvas/)
     expect(said).not.toMatch(/name that says words/)
   })
-
   test('a rollback that would put words into a canvas says it did not, and counts it apart', async () => {
     const id = await made('Board.canvas', '')
     await prepare()
@@ -353,7 +311,6 @@ describe('a canvas written with something that is not one', () => {
       body: { content: writeCanvas(CARD), baseVersion: row(id).version },
     })
     expect(put.status, put.text).toBe(200)
-
     const rolled = await call(env, `/v1/spaces/${space}/rollback`, {
       token,
       body: { at: Date.now() - 30 * 60 * 1000 },
@@ -362,21 +319,18 @@ describe('a canvas written with something that is not one', () => {
     expect(readCanvas(await body(id)).nodes).toHaveLength(1)
   })
 })
-
 describe('a note renamed to a canvas, saved on an old version', () => {
   test('is a conflict, as a note is, rather than a canvas merge that drops the save', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     await renamed(id, 'Plan.canvas')
     const stale = row(id).version
-
     const first = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
       body: { content: 'one\ntwo\n', baseVersion: stale },
     })
     expect(first.status, first.text).toBe(200)
-
     const late = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -387,7 +341,6 @@ describe('a note renamed to a canvas, saved on an old version', () => {
     expect(await body(id)).toBe('one\ntwo\n')
   })
 })
-
 describe('a room that holds another kind than its entry', () => {
   test('writes nothing over the file, and starts the next epoch, when a push wakes it', async () => {
     const id = await made('Plan.md', 'one\n')
@@ -396,14 +349,12 @@ describe('a room that holds another kind than its entry', () => {
     await rooms.settle()
     expect(await body(id)).toBe('one\n')
     evict(id)
-
     const device = new Words(id, 'one\n')
     const answer = await device.push(device.type(4, 'two\n'))
     expect(answer).toMatchObject({ epoch: 2 })
     await rooms.settle()
     expect(await body(id)).toBe('one\n')
     expect(row(id).epoch).toBe(2)
-
     const fresh = new Y.Doc()
     const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
       docs: [{ id, epoch: 2, sv: Y.encodeStateVector(fresh) }],

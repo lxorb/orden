@@ -21,53 +21,43 @@
     onpick: (id: string) => void
     onclose: () => void
   } = $props()
-
   let term = $state('')
   let at = $state(-1)
   let field = $state<HTMLInputElement>()
   const found = $derived(hits ?? matches(canvas, term))
   const shown = 12
   const first = $derived(Math.floor(Math.max(at, 0) / shown) * shown)
-
   $effect(() => {
     onterm?.(term)
   })
-
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(asked)
     field?.focus()
     field?.select()
   })
-
   $effect(() => {
     follows(found.length)
     at = -1
   })
-
   function go(step: number) {
     if (!found.length) return
-
     at = at < 0 ? (step > 0 ? 0 : found.length - 1) : (at + step + found.length) % found.length
     const one = found[at]
     if (one) onpick(one.id)
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
       onclose()
       return
     }
-
     if (shortcuts.pressed('canvas.find', event)) {
       event.preventDefault()
       event.stopPropagation()
       field?.select()
       return
     }
-
     if (event.key === 'Enter') {
       event.preventDefault()
       go(event.shiftKey ? -1 : 1)
@@ -141,7 +131,6 @@
     align-items: center;
     gap: 2px;
   }
-
   input {
     width: 180px;
     padding: 2px 6px;
@@ -155,7 +144,6 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .count {
     min-width: 34px;
     color: var(--muted);
@@ -164,7 +152,6 @@
     font-variant-numeric: tabular-nums;
     text-align: end;
   }
-
   svg,
   .shut :global(svg) {
     width: 14px;
@@ -175,7 +162,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .hits {
     position: absolute;
     right: var(--space-3);
@@ -193,14 +179,12 @@
     box-shadow: var(--shadow-md);
     animation: drop var(--dur-fast) var(--ease-out);
   }
-
   @keyframes drop {
     from {
       opacity: 0;
       translate: 0 -4px;
     }
   }
-
   .hits button {
     display: block;
     width: 100%;
@@ -214,13 +198,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .paper {
     margin-inline-end: var(--space-2);
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .hits button.on {
     background: var(--accent-soft);
     color: var(--accent);

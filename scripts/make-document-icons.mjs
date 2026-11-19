@@ -5,11 +5,9 @@ import { join, resolve } from 'node:path'
 import { BLUSH, INK, SKY } from './mark.mjs'
 
 const OUT = 'apps/desktop/src-tauri/icons/documents'
-
 const TYPES = {
   pdf: { label: 'PDF' },
 }
-
 const WINDOWS = [16, 20, 24, 32, 40, 48, 64, 256]
 const MAC = [
   ['icp4', 16, 1],
@@ -24,7 +22,6 @@ const MAC = [
   ['ic09', 512, 1],
   ['ic10', 512, 2],
 ]
-
 const VARIANTS = {
   small: {
     page: [96, 16, 928, 1008],
@@ -49,10 +46,8 @@ const VARIANTS = {
   },
 }
 const variantOf = (size) => (size < 32 ? 'small' : size < 48 ? 'mid' : 'full')
-
 const n = (v) => Number(v.toFixed(2))
 const hex = (c) => `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`
-
 const GLYPHS = {
   P: {
     width: 0.55,
@@ -74,7 +69,6 @@ const GLYPHS = {
     path: (x, y, h) => `M${n(x + 0.5 * h)} ${n(y)}H${n(x)}V${n(y + h)}M${n(x)} ${n(y + 0.48 * h)}H${n(x + 0.4 * h)}`,
   },
 }
-
 function label(text, { height, stroke, gap, y: middle }) {
   const letters = [...text].map((c) => {
     const glyph = GLYPHS[c]
@@ -93,7 +87,6 @@ function label(text, { height, stroke, gap, y: middle }) {
     .join('')
   return `<path d="${d}" fill="none" stroke="${hex(INK)}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`
 }
-
 function svg({ label: text }, variant) {
   const v = VARIANTS[variant]
   const [x0, y0, x1, y1] = v.page
@@ -118,7 +111,6 @@ function svg({ label: text }, variant) {
     '',
   ].join('\n')
 }
-
 function ico(images) {
   const head = Buffer.alloc(6 + 16 * images.length)
   head.writeUInt16LE(0, 0)
@@ -137,7 +129,6 @@ function ico(images) {
   })
   return Buffer.concat([head, ...images.map(([, data]) => data)])
 }
-
 function icns(entries) {
   const parts = entries.map(([type, data]) => {
     const head = Buffer.alloc(8)
@@ -150,15 +141,12 @@ function icns(entries) {
   head.writeUInt32BE(8 + parts.reduce((sum, p) => sum + p.length, 0), 4)
   return Buffer.concat([head, ...parts])
 }
-
 const work = mkdtempSync(join(tmpdir(), 'orden-documents-'))
 mkdirSync(OUT, { recursive: true })
-
 for (const [ext, type] of Object.entries(TYPES)) {
   const wanted = { small: new Set(), mid: new Set(), full: new Set() }
   for (const size of WINDOWS) wanted[variantOf(size)].add(size)
   for (const [, size, scale] of MAC) wanted[variantOf(size)].add(size * scale)
-
   const drawn = {}
   for (const [variant, sizes] of Object.entries(wanted)) {
     const source = join(OUT, variant === 'full' ? `${ext}.svg` : `${ext}-${variant}.svg`)
@@ -170,7 +158,6 @@ for (const [ext, type] of Object.entries(TYPES)) {
     )
     drawn[variant] = (size) => readFileSync(join(out, `${size}x${size}.png`))
   }
-
   writeFileSync(join(OUT, `${ext}.ico`), ico(WINDOWS.map((size) => [size, drawn[variantOf(size)](size)])))
   writeFileSync(
     join(OUT, `${ext}.icns`),
@@ -178,5 +165,4 @@ for (const [ext, type] of Object.entries(TYPES)) {
   )
   console.log(`${OUT}/${ext}.ico and ${ext}.icns`)
 }
-
 rmSync(work, { recursive: true, force: true })

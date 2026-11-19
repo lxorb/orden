@@ -9,7 +9,6 @@
 
   const { message, page, space, canVote }: { message: Shown; page: ChatPage; space: string | null; canVote: boolean } =
     $props()
-
   const poll = $derived(message.poll)
   const ended = $derived(poll?.ends !== undefined && poll.ends < Date.now())
   const voters = $derived(Object.entries(poll?.votes ?? {}) as [Who, number[]][])
@@ -17,7 +16,6 @@
   const counts = $derived((poll?.answers ?? []).map((_, index) => voters.filter(([, chose]) => chose.includes(index))))
   const tally = $derived(counts.map((one) => one.length))
   const most = $derived(tally.reduce((high, one) => Math.max(high, one), 1))
-
   function choose(index: number) {
     if (!poll || ended || !canVote) return
     const has = mine.includes(index)
@@ -69,7 +67,6 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .question {
     --glyph-size: 14px;
     display: flex;
@@ -79,7 +76,6 @@
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .answer {
     position: relative;
     display: flex;
@@ -99,17 +95,14 @@
     cursor: default;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .answer:hover:not(:disabled) {
       border-color: var(--accent-line);
     }
   }
-
   .answer.mine {
     border-color: var(--accent);
   }
-
   .fill {
     position: absolute;
     inset-block: 0;
@@ -117,29 +110,24 @@
     background: var(--accent-soft);
     transition: width var(--dur-slow) var(--ease-out);
   }
-
   @media (forced-colors: active) {
     .fill {
       border-block-end: 3px solid Highlight;
     }
   }
-
   .words,
   .count {
     position: relative;
   }
-
   .words {
     flex: 1;
     min-width: 0;
   }
-
   .count {
     color: var(--muted);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
-
   .ends {
     --glyph-size: 12px;
     display: flex;
@@ -149,7 +137,6 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .ends.ended {
     text-decoration: line-through;
   }

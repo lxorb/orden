@@ -3,9 +3,7 @@ import type { Snippet } from 'svelte'
 class PaneCorners {
   draw = $state.raw<Snippet | null>(null)
 }
-
 export const paneCorners = new PaneCorners()
-
 export function frameOf(element: HTMLElement | null | undefined): {
   left: number
   top: number

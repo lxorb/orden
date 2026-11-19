@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 CLOCK = """
 () => {
   let now = performance.now()
@@ -21,7 +19,6 @@ CLOCK = """
   }
 }
 """
-
 OVERLAPS = """
 () => {
   const boxes = [...document.querySelectorAll('.window')].map((one) => [one.getAttribute('aria-label'), one.getBoundingClientRect()])
@@ -36,7 +33,6 @@ OVERLAPS = """
   return out
 }
 """
-
 BLANK = """
 () => {
   const ws = window.ordenApp.workspace
@@ -53,7 +49,6 @@ BLANK = """
   return out
 }
 """
-
 BARS = """
 () => {
   const bar = document.querySelector('header[data-chrome="top"]')
@@ -77,7 +72,6 @@ BARS = """
   return out
 }
 """
-
 CORNERS = """
 () => {
   const ws = window.ordenApp.workspace
@@ -94,11 +88,9 @@ CORNERS = """
   return radii
 }
 """
-
 def toggle(page: Page) -> None:
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
-
 def opened(page: Page) -> None:
     toggle(page)
     wait_for(page, "document.querySelector('.canvas')", "the overview")
@@ -110,12 +102,10 @@ def opened(page: Page) -> None:
         if now == before:
             break
         before = now
-
 def closed(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.canvas')", "the overview gone")
     page.wait_for_timeout(600)
-
 def blank(page: Page, *names: str) -> None:
     page.evaluate(
         """async (names) => {
@@ -125,7 +115,6 @@ def blank(page: Page, *names: str) -> None:
         }""",
         list(names),
     )
-
 def apart(page: Page, label: str) -> None:
     laps = page.evaluate(OVERLAPS)
     if laps:
@@ -139,7 +128,6 @@ def apart(page: Page, label: str) -> None:
         shot(page, f"{label}-blank")
     else:
         say(f"ok   [{label}] every pane fills its window")
-
 def overlapping(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800})
     DRIVE.open(page)
@@ -186,7 +174,6 @@ def overlapping(browser: Browser) -> None:
     shot(page, "farthest")
     closed(page)
     page.close()
-
 def cornered(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800})
     DRIVE.open(page)
@@ -213,11 +200,9 @@ def cornered(browser: Browser) -> None:
         for _ in range(60):
             page.evaluate("() => window.__frame()")
     page.close()
-
 def drive(browser: Browser) -> None:
     overlapping(browser)
     cornered(browser)
-
 raise SystemExit(
     DRIVE.run(
         drive,

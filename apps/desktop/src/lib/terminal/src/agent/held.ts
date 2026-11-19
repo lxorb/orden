@@ -5,7 +5,6 @@ import { held, type HeldRow } from '../remote/held.svelte'
 import { readSpec } from '../spec'
 
 const SESSION = 'session:'
-
 function inReach(call: Call): (row: HeldRow) => string | null | false {
   const agent = call.caller.agent
   const everywhere = agent === null || agent.spaces === 'all'
@@ -16,7 +15,6 @@ function inReach(call: Call): (row: HeldRow) => string | null | false {
     return everywhere && !row.open ? null : false
   }
 }
-
 export async function listHeld(call: Call): Promise<AgentAnswer> {
   await held.refresh()
   const reach = inReach(call)
@@ -37,7 +35,6 @@ export async function listHeld(call: Call): Promise<AgentAnswer> {
   })
   return done({ sessions }, 'tab titles and terminal output')
 }
-
 export async function heldCall(call: Call): Promise<Call> {
   const named = maybe(call, 'tab')
   if (!named?.startsWith(SESSION)) return call

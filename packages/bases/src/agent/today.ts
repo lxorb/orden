@@ -9,9 +9,7 @@ function onToday(row: Row, today: string): boolean {
   const deadline = deadlineOf(task, task.dueReads)
   return (day !== undefined && day <= today) || (deadline !== undefined && deadline <= today)
 }
-
 const overdue = (row: Row, today: string) => row.task !== undefined && isLate(row.task, today, row.task.dueReads)
-
 export const todayTasks = (rows: readonly Row[], today: string): Row[] =>
   rows
     .filter((row) => onToday(row, today))
@@ -24,7 +22,6 @@ export const todayTasks = (rows: readonly Row[], today: string): Row[] =>
         a.at - b.at,
     )
     .map((one) => one.row)
-
 function timeOrder(a: string | undefined, b: string | undefined): number {
   if (a === b) return 0
   if (a === undefined) return 1

@@ -14,11 +14,9 @@ const nativeStretcher: Stretcher = async (secret, salt, params) => {
   useStretcher(null)
   return await stretch(secret, salt, params)
 }
-
 export function stretcherHere(): Stretcher | null {
   return isNative ? nativeStretcher : null
 }
-
 export function useNativeStretcher(): void {
   const stretcher = stretcherHere()
   if (stretcher) useStretcher(stretcher)

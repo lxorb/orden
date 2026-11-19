@@ -6,7 +6,6 @@ pub async fn owner_can() -> bool {
         .await
         .unwrap_or(false)
 }
-
 #[tauri::command]
 pub async fn owner_check<R: Runtime>(webview: Webview<R>, reason: String) -> Result<bool, String> {
     let reason: String = reason
@@ -19,17 +18,14 @@ pub async fn owner_check<R: Runtime>(webview: Webview<R>, reason: String) -> Res
         .await
         .map_err(|error| error.to_string())?
 }
-
 #[cfg(target_os = "windows")]
 fn handle_of<R: Runtime>(window: &Window<R>) -> Option<isize> {
     window.hwnd().ok().map(|hwnd| hwnd.0 as isize)
 }
-
 #[cfg(not(target_os = "windows"))]
 fn handle_of<R: Runtime>(_window: &Window<R>) -> Option<isize> {
     None
 }
-
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 mod platform {
     use std::sync::mpsc;
@@ -47,7 +43,6 @@ mod platform {
                 .is_ok()
         }
     }
-
     #[allow(unsafe_code)]
     pub fn check(reason: &str, _window: Option<isize>) -> Result<bool, String> {
         let (said, heard) = mpsc::channel();
@@ -63,9 +58,7 @@ mod platform {
         }
         heard.recv().map_err(|error| error.to_string())?
     }
-
     const TURNED_AWAY: [isize; 3] = [-2, -4, -9];
-
     fn answer(yes: bool, error: Option<&NSError>) -> Result<bool, String> {
         match error {
             _ if yes => Ok(true),
@@ -76,7 +69,6 @@ mod platform {
         }
     }
 }
-
 #[cfg(target_os = "windows")]
 mod platform {
     use std::time::{Duration, Instant};
@@ -94,10 +86,8 @@ mod platform {
             .and_then(|asked| asked.get())
             .is_ok_and(|answer| answer == UserConsentVerifierAvailability::Available)
     }
-
     const PATIENCE: Duration = Duration::from_secs(120);
     const LOOK: Duration = Duration::from_millis(50);
-
     pub(super) fn said(answer: UserConsentVerificationResult) -> Result<bool, String> {
         match answer {
             UserConsentVerificationResult::Verified => Ok(true),
@@ -118,7 +108,6 @@ mod platform {
             other => Err(format!("Windows Hello answered {}", other.0)),
         }
     }
-
     #[allow(unsafe_code)]
     pub fn check(reason: &str, window: Option<isize>) -> Result<bool, String> {
         let message = HSTRING::from(reason);
@@ -151,7 +140,6 @@ mod platform {
         }
     }
 }
-
 #[cfg(target_os = "linux")]
 mod platform {
     use std::collections::HashMap;
@@ -161,7 +149,6 @@ mod platform {
 
     const ACTIONS: [&str; 2] = ["so.orden.Orden.unlock", "org.freedesktop.policykit.exec"];
     const ALLOW_INTERACTION: u32 = 1;
-
     pub(super) fn subject() -> Option<(&'static str, HashMap<&'static str, Value<'static>>)> {
         let stat = std::fs::read_to_string("/proc/self/stat").ok()?;
         let (_, after) = stat.rsplit_once(')')?;
@@ -171,7 +158,6 @@ mod platform {
         details.insert("start-time", Value::from(started));
         Some(("unix-process", details))
     }
-
     fn asked(action: &str, flags: u32) -> zbus::Result<(bool, bool)> {
         let subject = subject().ok_or_else(|| zbus::Error::Failure("no process".into()))?;
         let reply = Connection::system()?.call_method(
@@ -185,17 +171,14 @@ mod platform {
             reply.body().deserialize()?;
         Ok((yes, challenge))
     }
-
     fn action() -> Option<&'static str> {
         ACTIONS
             .into_iter()
             .find(|one| asked(one, 0).is_ok_and(|(yes, challenge)| yes || challenge))
     }
-
     pub fn can() -> bool {
         action().is_some()
     }
-
     pub fn check(_reason: &str, _window: Option<isize>) -> Result<bool, String> {
         let action = action().ok_or("polkit cannot ask here")?;
         asked(action, ALLOW_INTERACTION)
@@ -203,7 +186,6 @@ mod platform {
             .map_err(|error| error.to_string())
     }
 }
-
 #[cfg(not(any(
     target_os = "macos",
     target_os = "ios",
@@ -211,16 +193,13 @@ mod platform {
     target_os = "linux"
 )))]
 mod platform {
-
     pub fn can() -> bool {
         false
     }
-
     pub fn check(_reason: &str, _window: Option<isize>) -> Result<bool, String> {
         Err("this device cannot ask".into())
     }
 }
-
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     #[test]
@@ -234,7 +213,6 @@ mod tests {
         assert!(details.contains_key("start-time"));
     }
 }
-
 #[cfg(all(test, target_os = "windows"))]
 mod windows_tests {
     use windows::Security::Credentials::UI::UserConsentVerificationResult as Answer;

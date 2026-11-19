@@ -20,7 +20,6 @@
   import { links, pressQueryRow } from '../../link-index/src/api'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
-
   const REDRAW = 200
   let scroller = $state<HTMLDivElement>()
   let root = $state<HTMLDivElement>()
@@ -30,7 +29,6 @@
   let redraw: ReturnType<typeof setTimeout> | undefined
   let drawn = false
   let undrawn: (() => void) | undefined
-
   function basesIn(page: HTMLElement, from: string | null): () => void {
     if (__EVEN_PLUGIN__ || !page.querySelector('[data-base-code], .embed-file[data-kind="base"]'))
       return () => undefined
@@ -53,15 +51,12 @@
       stop?.()
     }
   }
-
   const reach = $derived(reachKey(tab.doc, tab.path, links))
-
   const note = () =>
     untrack(() => {
       tab.note.flush()
       return { text: tab.doc, path: tab.path }
     })
-
   async function draw() {
     const mine = ++latest
     const source = note()
@@ -70,18 +65,15 @@
       return unreadableHtml(source.text)
     })
     if (mine !== latest) return
-
     const again = html !== ''
     const kept = scroller?.scrollTop ?? 0
     html = next
-
     await tick()
     changed()
     requestAnimationFrame(() => {
       if (mine !== latest) return
       if (again && scroller && !headings().elements.length) scroller.scrollTop = kept
       else show(untrack(() => tab.anchor) ?? 0)
-
       undrawn?.()
       const papers = surface
         ? inlineFiles(
@@ -102,7 +94,6 @@
       if (untrack(() => finding)) reveal()
     })
   }
-
   $effect(() => {
     const reasons = [
       tab.note.revision,
@@ -113,33 +104,26 @@
       modes.hardBreaks,
     ]
     if (!reasons.length) return
-
     if (!drawn) {
       drawn = true
       void draw()
       return
     }
-
     clearTimeout(redraw)
     redraw = setTimeout(() => void draw(), REDRAW)
     return () => clearTimeout(redraw)
   })
-
   const style = $derived(`--measure: ${modes.width}rem; --leading-content: ${modes.lineHeight}`)
   const direction = $derived(modes.rtl ? 'rtl' : 'ltr')
-
   function headings(): { elements: HTMLElement[]; offsets: number[] } {
     const page = surface
     const offsets = page ? headingOffsets(tab.doc) : []
     if (!page) return { elements: [], offsets: [] }
-
     const elements = [...page.children].filter(
       (child): child is HTMLElement => child instanceof HTMLElement && /^H[1-6]$/.test(child.tagName) && !!child.id,
     )
-
     return elements.length === offsets.length ? { elements, offsets } : { elements: [], offsets: [] }
   }
-
   function spanOf(
     box: HTMLElement,
     page: HTMLElement,
@@ -154,13 +138,11 @@
     const end = last ? last.getBoundingClientRect().bottom - base : box.scrollHeight
     return { from: target ? at(target) : 0, to: next ? at(next) : end }
   }
-
   function show(position: number) {
     const box = scroller
     const page = surface
     const { elements, offsets } = headings()
     if (!box) return
-
     const { index, fraction } = sectionAt(position, offsets, tab.doc.length)
     const target = elements[index]
     if (target && !fraction) {
@@ -171,17 +153,14 @@
       box.scrollTop = 0
       return
     }
-
     const { from, to } = spanOf(box, page, elements, index)
     box.scrollTop = Math.max(0, Math.min(from + (to - from) * fraction, box.scrollHeight - box.clientHeight))
   }
-
   function placeNow(): { section: Section; offsets: number[] } {
     const box = scroller
     const page = surface
     const { elements, offsets } = headings()
     if (!box || !page) return { section: { index: -1, fraction: 0 }, offsets }
-
     const edge = box.getBoundingClientRect().top + 1
     let index = -1
     let past = elements.length
@@ -191,55 +170,43 @@
       if (top <= edge) index = middle
       else past = middle
     }
-
     const { from, to } = spanOf(box, page, elements, index)
     const span = to - from
     const fraction = span > 0 ? Math.min(1, Math.max(0, (box.scrollTop - from) / span)) : 0
-
     return { section: { index, fraction }, offsets }
   }
-
   let scheduled = 0
-
   function moved() {
     if (scheduled) return
-
     scheduled = requestAnimationFrame(() => {
       scheduled = 0
       const box = scroller
       if (!box) return
-
       const { section, offsets } = placeNow()
       workspace.notePlace(tab.id, box.scrollTop, positionOf(section, offsets, tab.doc.length))
     })
   }
-
   $effect(() => () => {
     cancelAnimationFrame(scheduled)
     latest++
     undrawn?.()
     undrawn = undefined
   })
-
   $effect(() => {
     if (focused) scroller?.focus({ preventScroll: true })
   })
-
   function follow(event: MouseEvent) {
     if (!opensLink(event)) return
     const middle = event.button === MIDDLE
-
     const card = middle ? null : (event.target as Element | null)?.closest('.embed-web')
     if (card instanceof HTMLElement && loadEmbed(card)) {
       event.preventDefault()
       return
     }
-
     if (!middle && pressQueryRow(event.target)) {
       event.preventDefault()
       return
     }
-
     const tag = (event.target as Element | null)?.closest('a.tag[data-tag]')
     if (tag) {
       event.preventDefault()
@@ -247,35 +214,27 @@
       if (name && !middle) searching()?.show(`tag:${name}`)
       return
     }
-
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
     if (!anchor || !href) return
-
     event.preventDefault()
-
     if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) {
       followHref(href, event)
       return
     }
-
     const hash = href.indexOf('#')
     const target = written(hash === -1 ? href : href.slice(0, hash))
     const fragment = hash === -1 ? '' : href.slice(hash + 1)
-
     if (!target) {
       if (fragment && !middle) jump(fragment)
       return
     }
     const ask = tabAsk(event)
-
     const index = links.index(tab.path)
     const wiki = anchor.classList.contains('wikilink')
-
     if (isTabFile(target)) {
       const file = wiki ? target : resolveFile(index, target, 'markdown')
       if (file === null) return
-
       void workspace.followLink(
         {
           path: file,
@@ -289,12 +248,10 @@
       )
       return
     }
-
     const note = wiki ? { path: target } : (resolveRelative(index, target) ?? resolveNote(index, target))
     const file = note ? null : resolveFile(index, target, 'markdown')
     const path = note?.path ?? file
     if (path === null) return
-
     const said = fragment && file === null ? decodeFragment(fragment) : null
     const block = said?.startsWith('^') ? said.slice(1) : null
     void workspace.followLink(
@@ -309,29 +266,22 @@
       tab.path,
     )
   }
-
   $effect(() => {
     const asked = workspace.goto
     if (!asked || !html || workspace.active?.id !== tab.id || tab.path !== asked.path) return
-
     workspace.goto = null
     void tick().then(() => requestAnimationFrame(() => land(asked.line)))
   })
-
   function land(line: number) {
     const named = blockIds(tab.doc).find((one) => one.line === line)
     if (named) jump(`^${named.id}`)
     else show(offsetOf(line))
   }
-
   const offsetOf = (line: number) => tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
-
   const written = (target: string): string => decodeTarget(target)
-
   function jump(fragment: string) {
     const page = surface
     if (!page) return
-
     const said = decodeFragment(fragment)
     const found = page.querySelector(`[id="${CSS.escape(said)}"]`)
     if (found) {
@@ -343,7 +293,6 @@
     const line = blockIds(tab.doc).find((one) => one.id === said.slice(1))?.line
     if (line !== undefined) show(offsetOf(line))
   }
-
   function showMenu(event: MouseEvent) {
     menu.show(
       event,
@@ -363,39 +312,31 @@
       { near: true },
     )
   }
-
   const painter = {}
   let finding = $state(false)
   let query = $state('')
   let current = $state(0)
   let words: Words | null = null
   let drawnPage = $state(0)
-
   function changed() {
     words = null
     drawnPage++
   }
-
   function wording(): Words {
     const page = surface
     if (!words && page) words = wordsOf(page)
     return words ?? { text: '', pieces: [] }
   }
-
   const found = $derived.by(() => {
     if (!finding || !query || !drawnPage) return []
     return placesIn(wording(), query)
   })
-
   function step(by: number) {
     if (!found.length) return
-
     current = (current + by + found.length) % found.length
     reveal()
   }
-
   let painting = 0
-
   function reveal() {
     cancelAnimationFrame(painting)
     painting = requestAnimationFrame(() => {
@@ -403,33 +344,26 @@
       repaint()
     })
   }
-
   function repaint() {
     const words = wording()
     const ranges = found.flatMap((offset) => rangeOf(words, offset, query.length) ?? [])
     if (current >= ranges.length) current = 0
     const here = ranges[current]
-
     paint(painter, 'orden-find', ranges)
     paint(painter, 'orden-find-here', here ? [here] : [])
-
     const box = scroller
     if (!here || !box) return
-
     const top = here.getBoundingClientRect().top - box.getBoundingClientRect().top
     box.scrollTop += top - box.clientHeight / 2
   }
-
   function typed(what: string) {
     query = what
     current = 0
     reveal()
   }
-
   function openFind() {
     finding = true
   }
-
   function closeFind() {
     finding = false
     query = ''
@@ -439,16 +373,13 @@
     paint(painter, 'orden-find-here', [])
     scroller?.focus({ preventScroll: true })
   }
-
   $effect(() => () => {
     cancelAnimationFrame(painting)
     paint(painter, 'orden-find', [])
     paint(painter, 'orden-find-here', [])
   })
-
   function onKeydown(event: KeyboardEvent) {
     if (!focused || event.defaultPrevented || keyElsewhere(event, root)) return
-
     if (shortcuts.pressed('edit.find', event)) {
       event.preventDefault()
       openFind()
@@ -501,7 +432,6 @@
     display: flex;
     flex-direction: column;
   }
-
   .scroller {
     position: relative;
     flex: 1;
@@ -509,24 +439,19 @@
     overflow-y: auto;
     overflow-x: hidden;
   }
-
   .page {
     animation: settle var(--dur-base) var(--ease-out);
   }
-
   :global(.page > *) {
     content-visibility: auto;
     contain-intrinsic-size: auto 110px;
   }
-
   :global(#write.page > :is(ul, ol) > li:first-child) {
     margin-top: 0;
   }
-
   :global(#write.page > :is(ul, ol) > li:last-child) {
     margin-bottom: 0;
   }
-
   @keyframes settle {
     from {
       opacity: 0;

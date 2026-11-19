@@ -7,7 +7,6 @@ vi.mock('../../ai-providers/src/api', async (original) => ({
   writeSecret: () => Promise.resolve(),
   forgetKey: () => Promise.resolve(),
 }))
-
 vi.mock('../../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(false),
   deviceSays: () => Promise.resolve(false),

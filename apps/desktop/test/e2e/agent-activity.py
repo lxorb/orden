@@ -1,25 +1,18 @@
 import sys
-
 from playwright.sync_api import Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     return DRIVE.waited(page, expression, what, patience)
-
 def shot(page: Page, name: str) -> None:
     settle(page)
     DRIVE.shot(page, name)
-
 AGENT = "claude-code"
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 START = """
 async () => {
   const { FakeCrate } = await import('/src/lib/agents/src/ui/fake.ts')
@@ -29,7 +22,6 @@ async () => {
   window.__fake = fake
 }
 """
-
 PAINTED = """
 () => {
   const canvas = document.createElement('canvas')
@@ -46,25 +38,20 @@ PAINTED = """
   window.__fake.peek = () => Promise.resolve({ png, width: 1280, height: 800 })
 }
 """
-
 def settle(page: Page) -> None:
     page.evaluate("() => document.fonts.ready")
     page.wait_for_timeout(250)
-
 def fake(page: Page, call: str) -> object:
     return page.evaluate(f"() => window.__fake.{call}")
-
 def drive(page: Page, scheme: str) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 120)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
-
     tab = page.evaluate(
         "() => window.ordenApp.workspace.openPage('https://shop.example/checkout', 'front')"
     )
     wait_for(page, "document.querySelector('.web .card')", "the web tab's card")
     page.evaluate(START)
-
     fake(page, f"connect('{AGENT}', 'Claude Code')")
     fake(page, f"act('{AGENT}', '{tab}', 'browser_open', {{ url: 'https://shop.example/' }})")
     fake(page, f"act('{AGENT}', '{tab}', 'browser_click')")
@@ -76,7 +63,6 @@ def drive(page: Page, scheme: str) -> None:
             wrong(f"the frame has no colour: {colour}")
     wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the turning mark")
     shot(page, f"{scheme}-01-acting")
-
     fake(page, f"stop('{AGENT}')")
     wait_for(page, "document.querySelector('.web .card.acted.resting')", "the muted frame")
     wait_for(page, "document.querySelector('.tab .mark.agent.resting')", "the still mark")
@@ -84,7 +70,6 @@ def drive(page: Page, scheme: str) -> None:
     page.click(".tab .mark.agent")
     if not wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the mark resumed"):
         say(f"asked: {page.evaluate('() => window.__fake.asked.slice(-3)')}")
-
     own = page.evaluate(
         f"() => window.__fake.open('{AGENT}', 'https://flights.example/', 'Flights to Lisbon').id"
     )
@@ -116,13 +101,11 @@ def drive(page: Page, scheme: str) -> None:
     }:
         wrong(f"the agent's row is {row}")
     shot(page, f"{scheme}-03-list")
-
     page.click(f".orden-row.agent[data-agent='{AGENT}']")
     wait_for(page, "document.querySelector('section.agent .name')", "the agent's session")
     wait_for(page, "document.querySelector('.agent .question')", "the question")
     page.evaluate("() => import('/src/lib/agents/src/ui/index.ts').then((ui) => ui.started().readLog())")
     wait_for(page, "document.querySelectorAll('.agent .call').length >= 3", "the session")
-
     name = page.evaluate("() => document.querySelector('section.agent .name').textContent")
     if name != "Claude Code":
         wrong(f"the session names the agent {name!r}")
@@ -137,7 +120,6 @@ def drive(page: Page, scheme: str) -> None:
     if answers != ["Don’t allow", "Allow", "Always on this site"]:
         wrong(f"the question's answers are {answers}")
     shot(page, f"{scheme}-04-session")
-
     page.evaluate(PAINTED)
     page.click("section.agent .tabs button")
     if wait_for(
@@ -163,13 +145,11 @@ def drive(page: Page, scheme: str) -> None:
     shot(page, f"{scheme}-04b-watch")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=dialog]')", "the large view to close")
-
     page.click(".agent .question .rows .orden-button:not(.is-quiet)")
     wait_for(page, "!document.querySelector('.agent .question')", "the answered question to go")
     answered = page.evaluate("() => window.__fake.asked.filter((one) => one.command === 'answer')")
     if not answered or answered[-1]["args"][1] is not True:
         wrong(f"Allow sent {answered}")
-
     fake(
         page,
         f"ask('{AGENT}', 'takeover', 'Sign in to finish the order', 'https://shop.example/', '{tab}')",
@@ -178,14 +158,12 @@ def drive(page: Page, scheme: str) -> None:
     shot(page, f"{scheme}-05-takeover")
     page.click(".takeover .orden-button")
     wait_for(page, "!document.querySelector('.takeover')", "the step said done")
-
     fake(page, "pair('Codex')")
     wait_for(page, "document.querySelector('.pairing')", "the pairing bubble")
     words = page.evaluate("() => document.querySelector('.pairing').textContent")
     if "Codex wants to connect" not in words:
         wrong(f"the pairing bubble says {words!r}")
     shot(page, f"{scheme}-06-pairing")
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -202,7 +180,5 @@ def main() -> int:
             for error in errors:
                 wrong(f"the page threw: {error}")
             context.close()
-
     return DRIVE.verdict("all good")
-
 raise SystemExit(main())

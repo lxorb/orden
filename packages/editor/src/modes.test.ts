@@ -32,7 +32,6 @@ function surface(doc: string, cursor = doc.length) {
     selection: EditorSelection.cursor(cursor),
     extensions: modeExtensions(),
   })
-
   const view = {
     get state() {
       return state
@@ -41,15 +40,12 @@ function surface(doc: string, cursor = doc.length) {
       state = state.update(spec).state
     },
   }
-
   return { view: view as unknown as EditorView }
 }
-
 const readOnlyClass = (state: EditorState): boolean =>
   state
     .facet(EditorView.editorAttributes)
     .some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-read-only')
-
 function concealed(state: EditorState): string[] {
   const out: string[] = []
   buildDecorations(state).atomic.between(0, state.doc.length, (from, to) => {
@@ -57,7 +53,6 @@ function concealed(state: EditorState): string[] {
   })
   return out
 }
-
 function rendered(state: EditorState): string[] {
   const out: string[] = []
   state.field(blockDecorations).decorations.between(0, state.doc.length, (from, to) => {
@@ -65,116 +60,89 @@ function rendered(state: EditorState): string[] {
   })
   return out
 }
-
 const afterChange = (state: EditorState, spec: TransactionSpec): string => state.update(spec).state.doc.toString()
-
 function afterCommand(state: EditorState, command: StateCommand): string {
   let written = state.doc.toString()
   command({ state, dispatch: (transaction) => (written = transaction.state.doc.toString()) })
   return written
 }
-
 describe('turning read-only mode on', () => {
   test('takes the writing surface away from the browser', () => {
     const { view } = surface('# Note')
     expect(view.state.readOnly).toBe(false)
     expect(view.state.facet(EditorView.editable)).toBe(true)
-
     setReadOnlyMode(view, true)
-
     expect(view.state.readOnly).toBe(true)
     expect(view.state.facet(EditorView.editable)).toBe(false)
   })
-
   test('marks the editor for the stylesheet', () => {
     const { view } = surface('# Note')
     setReadOnlyMode(view, true)
     expect(readOnlyClass(view.state)).toBe(true)
-
     setReadOnlyMode(view, false)
     expect(readOnlyClass(view.state)).toBe(false)
   })
-
   test('gives everything back when it goes off', () => {
     const { view } = surface('# Note')
     setReadOnlyMode(view, true)
     setReadOnlyMode(view, false)
-
     expect(view.state.readOnly).toBe(false)
     expect(view.state.facet(EditorView.editable)).toBe(true)
-
     const typed = { changes: { from: 0, insert: 'A ' }, userEvent: 'input.type' }
     expect(afterChange(view.state, typed)).toBe('A # Note')
   })
 })
-
 describe('what the reader sees', () => {
   test('the syntax around the caret stays hidden', () => {
     const { view } = surface('**bold**', 4)
     expect(concealed(view.state)).toEqual([])
-
     setReadOnlyMode(view, true)
     expect(concealed(view.state)).toEqual(['**', '**'])
-
     setReadOnlyMode(view, false)
     expect(concealed(view.state)).toEqual([])
   })
-
   test('a heading keeps its hashes hidden with the caret on the line', () => {
     const { view } = surface('# Title', 3)
     expect(concealed(view.state)).toEqual([])
-
     setReadOnlyMode(view, true)
     expect(concealed(view.state)).toEqual(['# '])
   })
-
   test('turning equation numbers on takes effect at once', () => {
     const { view } = surface('$$\nx = 1\n$$\n\ntail\n')
     const before = view.state.field(blockDecorations)
-
     setEquationNumbers(view, true)
     expect(view.state.field(blockDecorations)).not.toBe(before)
-
     const numbered = view.state.field(blockDecorations)
     setEquationNumbers(view, false)
     expect(view.state.field(blockDecorations)).not.toBe(numbered)
   })
-
   test('a table with the caret in it goes back to being a table', () => {
     const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |'
     const { view } = surface(doc)
-
     view.dispatch({ selection: { anchor: 3 } })
     expect(rendered(view.state)).toEqual([])
-
     setReadOnlyMode(view, true)
     expect(rendered(view.state)).toEqual([doc])
-
     setReadOnlyMode(view, false)
     expect(rendered(view.state)).toEqual([])
   })
 })
-
 describe('what may still change the document', () => {
   const locked = () => {
     const { view } = surface('# Note')
     setReadOnlyMode(view, true)
     return view.state
   }
-
   test.each([
     [locked(), '# Note', { changes: { from: 0, insert: 'x' }, userEvent: 'input.type' }],
     [locked(), '# Note', { changes: { from: 2, to: 6, insert: 'Read' } }],
   ])('%j', (input, wanted, extra) => expect(afterChange(input, extra)).toBe(wanted))
-
   test('nothing pasted, dropped or dragged out', () => {
     const state = locked()
-
     for (const userEvent of ['input.paste', 'input.drop', 'delete.selection'])
       expect(afterChange(state, { changes: { from: 0, insert: 'x' }, userEvent })).toBe('# Note')
     expect(afterChange(state, { changes: { from: 0, to: 6 }, userEvent: 'move.drop' })).toBe('# Note')
   })
-
   test('a note arriving from outside still lands', () => {
     const arriving = {
       changes: { from: 0, to: 6, insert: '# Elsewhere' },
@@ -182,44 +150,35 @@ describe('what may still change the document', () => {
     }
     expect(afterChange(locked(), arriving)).toBe('# Elsewhere')
   })
-
   test('the format commands write nothing', () => {
     const state = locked()
-
     for (const command of [toggleWrap('**'), setHeading(2), insertHorizontalRule, clearFormatting]) {
       expect(afterCommand(state, command)).toBe('# Note')
     }
   })
-
   test('nor does tidying up the note', () => {
     expect(afterCommand(locked(), reformatDocument)).toBe('# Note')
   })
 })
-
 describe('source mode and read-only mode', () => {
   const preview = (state: EditorState) => state.field(blockDecorations, false) !== undefined
-
   test('are never both on: read-only takes source off', () => {
     const { view } = surface('| a |\n| --- |\n| 1 |')
     setSourceMode(view, true)
     expect(preview(view.state)).toBe(false)
-
     setReadOnlyMode(view, true)
     expect(preview(view.state)).toBe(true)
     expect(view.state.readOnly).toBe(true)
   })
-
   test('and source unlocks it', () => {
     const { view } = surface('| a |\n| --- |\n| 1 |')
     setReadOnlyMode(view, true)
-
     setSourceMode(view, true)
     expect(view.state.readOnly).toBe(false)
     expect(preview(view.state)).toBe(false)
     expect(readOnlyClass(view.state)).toBe(false)
   })
 })
-
 const DEFAULTS: ModeSettings = {
   source: false,
   readOnly: false,
@@ -238,18 +197,15 @@ const DEFAULTS: ModeSettings = {
   ligatures: 'off',
   vim: false,
 }
-
 const editorClasses = (state: EditorState): string[] =>
   state
     .facet(EditorView.editorAttributes)
     .flatMap((attrs) => (typeof attrs === 'object' && attrs.class ? [attrs.class] : []))
-
 const direction = (state: EditorState): string | undefined =>
   state
     .facet(EditorView.contentAttributes)
     .flatMap((attrs) => (typeof attrs === 'object' && attrs.dir ? [attrs.dir] : []))
     .at(-1)
-
 describe('the classes the stylesheet works from', () => {
   const modes: [string, (view: EditorView, on: boolean) => void, string][] = [
     ['focus mode', setFocusMode, 'orden-focus-mode'],
@@ -259,44 +215,34 @@ describe('the classes the stylesheet works from', () => {
     ['code line numbers', setCodeLineNumbers, 'orden-line-numbers'],
     ['right to left', setRightToLeft, 'orden-rtl'],
   ]
-
   for (const [name, set, className] of modes) {
     test(`${name} hands its class to the editor, and takes it back`, () => {
       const { view } = surface('# Note')
       expect(editorClasses(view.state)).not.toContain(className)
-
       set(view, true)
       expect(editorClasses(view.state)).toContain(className)
-
       set(view, false)
       expect(editorClasses(view.state)).not.toContain(className)
     })
   }
-
   test('right to left sets the writing direction with it', () => {
     const { view } = surface('# Note')
     expect(direction(view.state)).toBe('ltr')
-
     setRightToLeft(view, true)
     expect(direction(view.state)).toBe('rtl')
-
     setRightToLeft(view, false)
     expect(direction(view.state)).toBe('ltr')
   })
-
   test('two modes at once keep both classes', () => {
     const { view } = surface('# Note')
     setFocusMode(view, true)
     setTypewriterMode(view, true)
-
     expect(editorClasses(view.state)).toEqual(expect.arrayContaining(['orden-focus-mode', 'orden-typewriter-mode']))
-
     setFocusMode(view, false)
     expect(editorClasses(view.state)).toContain('orden-typewriter-mode')
     expect(editorClasses(view.state)).not.toContain('orden-focus-mode')
   })
 })
-
 function numbersDrawn(state: EditorState, from = 0): string[] {
   const out: string[] = []
   const drawn = buildDecorations(state, [{ from, to: state.doc.length }]).decorations
@@ -306,14 +252,12 @@ function numbersDrawn(state: EditorState, from = 0): string[] {
   })
   return out
 }
-
 function numbered(doc: string): EditorView {
   const { view } = surface(doc, 0)
   setHeadingNumbers(view, true)
   view.dispatch({})
   return view
 }
-
 describe('numbered headings', () => {
   test('a heading far down a long note shows its place in the whole note', () => {
     const sections = Array.from(
@@ -323,13 +267,10 @@ describe('numbered headings', () => {
     const view = numbered(sections.join('\n\n'))
     const state = parsed(view.state)
     const far = state.doc.toString().indexOf('# Part 300')
-
     expect(numbersDrawn(state, far)).toEqual(['300 # Part 300', '300.1 ## Under 300'])
   })
-
   test('a deeper heading counts on from the one above it', () => {
     const view = numbered('# A\n## B\n## C\n### D\n# E\n## F\n')
-
     expect(numbersDrawn(parsed(view.state))).toEqual([
       '1 # A',
       '1.1 ## B',
@@ -339,59 +280,46 @@ describe('numbered headings', () => {
       '2.1 ## F',
     ])
   })
-
   test('a heading written inside a code fence is not counted', () => {
     const view = numbered('# One\n\n```md\n# Not a heading\n```\n\n# Two\n')
-
     expect(numbersDrawn(parsed(view.state))).toEqual(['1 # One', '2 # Two'])
   })
-
   test('turning them off takes the numbers away', () => {
     const view = numbered('# One\n\n## Two\n')
     expect(numbersDrawn(parsed(view.state))).toEqual(['1 # One', '1.1 ## Two'])
-
     setHeadingNumbers(view, false)
     expect(numbersDrawn(parsed(view.state))).toEqual([])
   })
 })
-
 describe('applying every mode again', () => {
   function long(): string {
     const sections: string[] = []
     for (let at = 0; at < 400; at++) sections.push(`## Section ${at}`, '', 'Some **bold** and *italic* text.', '')
     return sections.join('\n')
   }
-
   function dressed(): EditorState {
     return parsed(EditorState.create({ doc: long(), extensions: modeExtensions() }))
   }
-
   test('keeps the parse of the whole document', () => {
     const before = dressed()
     const after = before.update({ effects: modeEffects(DEFAULTS) }).state
-
     expect(syntaxTree(after)).toBe(syntaxTree(before))
   })
-
   test('leaves the decorations at the far end of the document standing', () => {
     const before = dressed()
     const far = [{ from: before.doc.length - 400, to: before.doc.length }]
     const had = buildDecorations(before, far).decorations.size
     expect(had).toBeGreaterThan(0)
-
     const after = before.update({ effects: modeEffects(DEFAULTS) }).state
     expect(buildDecorations(after, far).decorations.size).toBe(had)
   })
-
   test('a mode that did change still takes effect', () => {
     const after = dressed().update({
       effects: modeEffects({ ...DEFAULTS, numbers: true }),
     }).state
-
     expect(editorClasses(after)).toContain('orden-numbered')
   })
 })
-
 describe('a document too long to parse', () => {
   function note(characters: number): string {
     const lines: string[] = []
@@ -401,82 +329,63 @@ describe('a document too long to parse', () => {
       lines.push(line)
       held += line.length + 1
     }
-
     return lines.join('\n')
   }
-
   const SHORT = note(64 * 1024)
   const LONG = note(1024 * 1024)
-
   function opened(doc: string): EditorState {
     const made = EditorState.create({ doc, extensions: modeExtensions(doc.length) })
     return made.update({ effects: modeEffects(DEFAULTS) }).state
   }
-
   test.each([
     [opened(SHORT), true],
     [opened(LONG), false],
   ])('%j', (input, wanted) => expect(parsedFully(input)).toEqual(wanted))
-
   test('and is built that way rather than turned plain a transaction later', () => {
     const made = EditorState.create({ doc: LONG, extensions: modeExtensions(LONG.length) })
-
     expect(parsedFully(made)).toBe(false)
     ensureSyntaxTree(made, made.doc.length, 10_000)
     expect(syntaxTree(made).length).toBe(0)
   })
-
   test('so nothing of it is walked, however long the parse is given', () => {
     const long = opened(LONG)
     ensureSyntaxTree(long, long.doc.length, 10_000)
     expect(syntaxTree(long).length).toBe(0)
-
     const short = opened(SHORT)
     ensureSyntaxTree(short, short.doc.length, 10_000)
     expect(syntaxTree(short).length).toBeGreaterThan(0)
   })
-
   test('and the words, the lines and the caret are all still there', () => {
     const long = opened(LONG)
-
     expect(long.doc.toString()).toBe(LONG)
     expect(long.doc.lines).toBe(LONG.split('\n').length)
-
     const typed = long.update({ changes: { from: long.doc.length, insert: 'x' } }).state
     expect(typed.doc.sliceString(typed.doc.length - 1)).toBe('x')
     expect(parsedFully(typed)).toBe(false)
   })
-
   test('a document that grows past the size loses its parse', () => {
     const short = opened(SHORT)
     expect(parsedFully(short)).toBe(true)
-
     const grown = short.update({ changes: { from: short.doc.length, insert: LONG } }).state
     expect(parsedFully(grown)).toBe(false)
   })
-
   test('and one that is cut back below it gets the parse again', () => {
     const long = opened(LONG)
     const cut = long.update({ changes: { from: SHORT.length, to: long.doc.length } }).state
-
     expect(parsedFully(cut)).toBe(true)
     ensureSyntaxTree(cut, cut.doc.length, 10_000)
     expect(syntaxTree(cut).length).toBeGreaterThan(0)
   })
-
   test('a mode set on a long document does not put the parse back', () => {
     const long = opened(LONG)
     const again = long.update({ effects: modeEffects({ ...DEFAULTS, numbers: true }) }).state
-
     expect(parsedFully(again)).toBe(false)
     expect(editorClasses(again)).toContain('orden-numbered')
   })
-
   test('and strict mode on a short one is still strict', () => {
     const strict = opened(SHORT).update({
       effects: modeEffects({ ...DEFAULTS, strict: true }),
     }).state
-
     expect(parsedFully(strict)).toBe(true)
     expect(tooLongToParse(strict.doc.length)).toBe(false)
   })

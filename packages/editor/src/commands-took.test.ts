@@ -32,10 +32,8 @@ import { parsed } from '../test/parsed'
 
 const PLAIN = markdown({ base: markdownLanguage })
 const NOTE = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
-
 const stateOf = (doc: string, from: number, to = from, language: Extension = PLAIN) =>
   parsed(EditorState.create({ doc, selection: EditorSelection.range(from, to), extensions: [language] }))
-
 function apply(command: StateCommand, doc: string, from: number, to = from, language = PLAIN) {
   const state = stateOf(doc, from, to, language)
   let next = state
@@ -49,13 +47,11 @@ function apply(command: StateCommand, doc: string, from: number, to = from, lang
     selection: [next.selection.main.from, next.selection.main.to],
   }
 }
-
 function applyMarked(command: StateCommand, marked: string) {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[[\]|]/g, '')
   return caret >= 0 ? apply(command, doc, caret) : apply(command, doc, marked.indexOf('['), marked.indexOf(']') - 1)
 }
-
 const run = (command: StateCommand, marked: string) => applyMarked(command, marked).doc
 const took = (command: StateCommand, marked: string) => applyMarked(command, marked).took
 const runSelection = (command: StateCommand, marked: string) => applyMarked(command, marked).selection
@@ -66,14 +62,12 @@ const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n| 5 | 6 |'
 const SMALL = '| x |\n| - |\n| 1 |'
 const ONE_BY_ONE = '| Column 1 |\n| --- |\n|     |'
 const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
-
 const runs = (command: StateCommand, rows: [string, string][]) =>
   test.each(rows)('%j', (marked, wanted) => expect(run(command, marked)).toBe(wanted))
 const ats = (command: StateCommand, rows: [string, number, string][]) =>
   test.each(rows)('%j at %i', (doc, offset, wanted) => expect(at(command, doc, offset)).toBe(wanted))
 const selects = (command: StateCommand, rows: [string, number[]][]) =>
   test.each(rows)('%j', (marked, wanted) => expect(runSelection(command, marked)).toEqual(wanted))
-
 runs(insertHorizontalRule, [
   ['```\nco|de\nmore\n```\nb', '```\ncode\nmore\n```\n\n---\n\nb'],
   ['> on|e\n> two\n\nb', '> one\n> two\n\n---\n\n\nb'],
@@ -305,7 +299,6 @@ selects(closeFence, [['```|', [4, 4]]])
 selects(toggleTask, [['|', [6, 6]]])
 selects(insertComment, [['a |b', [7, 7]]])
 selects(insertFootnote, [['a claim|\n', [19, 19]]])
-
 describe('over a range', () => {
   test.each<[string, number, number, string, StateCommand]>([
     [`words\n\n${TABLE}`, 0, 10, `words\n\n${TABLE}`, moveLineOver(1)],
@@ -325,50 +318,41 @@ describe('over a range', () => {
   ])('%j %i to %i', (doc, from, to, wanted, command) => {
     expect(apply(command, doc, from, to).doc).toBe(wanted)
   })
-
   test('a rule goes under maths', () => {
     expect(apply(insertHorizontalRule, '$$\na\nb\n$$', 4, 4, NOTE).doc).toBe('$$\na\nb\n$$\n\n---\n')
   })
-
   test('fences three hundred thousand lines, one fence longer than any inside', () => {
     const doc = Array.from({ length: 300_000 }, (_, at) => (at === 7 ? '````' : 'x')).join('\n')
     const fenced = apply(insertCodeFence, doc, 0, doc.length).doc
     expect(fenced).toContain('`````\nx\nx')
     expect(fenced.trimEnd().endsWith('x\n`````')).toBe(true)
   })
-
   test('a table row gives way to a task', () => {
     const table = '| a | b |\n| - | - |\n| 1 | 2 |'
     expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
   })
-
   test('closing a fence says it took', () => {
     expect(took(closeFence, '```|')).toBe(true)
   })
-
   test('ticks the task it has just made on the next press', () => {
     const first = apply(toggleTask, 'milk', 4)
     expect(apply(toggleTask, first.doc, first.selection[0]!).doc).toBe('- [x] milk')
   })
-
   test('the caret ticks no line that is not a task, and says so', () => {
     for (const doc of ['just words', '- a bullet', '1. a number', ''])
       expect(apply(tickTaskAtCaret, doc, doc.length), doc).toMatchObject({ took: false, doc })
     expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 0, 19).took).toBe(false)
   })
-
   test('a line quoted 28 deep costs no time', () => {
     const deep = `${'> '.repeat(28)}x`
     const started = Date.now()
     expect(at(indentItems, `${deep}\n${deep}`, deep.length + 3)).toBe(`${deep}\n  ${deep}`)
     expect(Date.now() - started).toBeLessThan(5000)
   })
-
   test('a line moved past a table takes the caret with it', () => {
     const moved = apply(moveLineOver(1), `ab\n\n${SMALL}`, 1)
     expect(moved.selection).toEqual([SMALL.length + 3, SMALL.length + 3])
   })
-
   test('clear formatting leaves a fence as it is', () => {
     const doc = '```\n**b** `c`\n```'
     expect(apply(clearFormatting, `a **b**\n\n${doc}`, 0, doc.length + 9).doc).toBe(`a b\n\n${doc}`)

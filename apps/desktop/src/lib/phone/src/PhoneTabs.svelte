@@ -6,19 +6,15 @@
   import { panels, type PhoneTab } from '../../session/src/api'
 
   const { unread = false }: { unread?: boolean } = $props()
-
   const NOTES_MARK =
     'M3.5 1.5h4l3 3v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7.5 1.5v3h3M4.5 7.5h4M4.5 9.5h2.5'
-
   const PLUS_MARK = 'M12 5v14M5 12h14'
-
   const LOOKS: Record<PhoneTab, { label: () => string; mark: string }> = {
     tree: { label: () => 'Notes', mark: NOTES_MARK },
     tasks: { label: () => 'Todos', mark: TASKS_MARK },
     chats: { label: () => 'Chats', mark: CHATS_MARK },
     search: { label: () => 'Search', mark: SEARCH_MARK },
   }
-
   const tabs = $derived(
     panels.PHONE_TABS.filter(
       (one) =>
@@ -28,9 +24,7 @@
         (one !== 'tasks' || !__EVEN_PLUGIN__),
     ),
   )
-
   const on = $derived(workspace.panel ?? workspace.reopens)
-
   function go(tab: PhoneTab) {
     if (on === tab && workspace.panel === tab) {
       document.querySelector<HTMLElement>(`[data-panel="${tab}"]`)?.scrollTo({ top: 0, behavior: 'smooth' })
@@ -74,7 +68,6 @@
     position: relative;
     flex: none;
   }
-
   .bar {
     display: flex;
     justify-content: space-around;
@@ -83,7 +76,6 @@
     background: var(--bg);
     box-shadow: inset 0 1px var(--line);
   }
-
   .tab {
     flex: 1;
     min-width: 0;
@@ -102,22 +94,18 @@
     -webkit-tap-highlight-color: transparent;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   .tab.on {
     color: var(--accent);
   }
-
   .mark {
     position: relative;
     display: grid;
     place-items: center;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .tab:active .mark {
     transform: scale(0.88);
   }
-
   .mark svg {
     width: var(--touch-icon);
     height: var(--touch-icon);
@@ -127,11 +115,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .tab.on .mark svg {
     stroke-width: 1.35;
   }
-
   .label {
     max-width: 100%;
     overflow: hidden;
@@ -139,7 +125,6 @@
     white-space: nowrap;
     font-weight: var(--weight-strong);
   }
-
   .new {
     position: absolute;
     inset-inline-end: max(var(--space-4), var(--inset-right));
@@ -157,11 +142,9 @@
     -webkit-tap-highlight-color: transparent;
     transition: transform var(--dur-fast) var(--ease-spring);
   }
-
   .new:active {
     transform: scale(0.92);
   }
-
   .new svg {
     width: var(--touch-icon);
     height: var(--touch-icon);

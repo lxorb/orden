@@ -5,12 +5,10 @@ import { fits, MOST_BYTES } from '../src/sync-server-engine/src/spaces/columns'
 import { staysInside } from '../src/sync-server/src/paths'
 
 const at = aSpace()
-
 async function changedAt() {
   const { json } = await call(at.env, '/v1/spaces', { token: at.token })
   return json.spaces.find((one) => one.id === at.space)?.updatedAt
 }
-
 const TOO_MUCH: {
   name: string
   path: string
@@ -62,7 +60,6 @@ const TOO_MUCH: {
     says: 'that is more arranged folders than a space holds',
   },
 ]
-
 describe('a column filled past what it holds', () => {
   for (const column of TOO_MUCH) {
     test(`${column.name} says so, and says it the way it always has`, async () => {
@@ -71,29 +68,24 @@ describe('a column filled past what it holds', () => {
         token: at.token,
         body: column.body(),
       })
-
       expect(answer.status).toBe(413)
       expect(answer.json.error).toBe(column.says)
     })
   }
 })
-
 describe('writing a column', () => {
   test('says the space changed, so every other device learns there is something', async () => {
     const before = await changedAt()
-
     const answer = await call(at.env, `/v1/spaces/${at.space}/bookmarks`, {
       method: 'PUT',
       token: at.token,
       body: { bookmarks: [{ kind: 'note', path: 'Read me.md', text: '' }] },
     })
     expect(answer.status).toBe(200)
-
     const after = await changedAt()
     expect(typeof after).toBe('number')
     expect(after).toBeGreaterThanOrEqual(before ?? 0)
   })
-
   test('and each of the five writes its own column and no other', async () => {
     await call(at.env, `/v1/spaces/${at.space}/bookmarks`, {
       method: 'PUT',
@@ -110,15 +102,12 @@ describe('writing a column', () => {
       token: at.token,
       body: { graph: {} },
     })
-
     const { json } = await call(at.env, '/v1/spaces', { token: at.token })
     const kept = json.spaces.find((one) => one.id === at.space)
-
     expect(kept?.bookmarks).toHaveLength(1)
     expect(kept?.excluded).toEqual(['Archive'])
   })
 })
-
 describe('what each column may hold', () => {
   test('is a number a reader can compare with the others', () => {
     expect(MOST_BYTES.graph).toBeLessThan(MOST_BYTES.bookmarks)
@@ -128,28 +117,23 @@ describe('what each column may hold', () => {
     expect(MOST_BYTES.files).toBe(MOST_BYTES.icons)
     expect(MOST_BYTES.arranged).toBe(MOST_BYTES.icons)
   })
-
   test('and is counted in bytes', () => {
     const emoji = '📦'.repeat(MOST_BYTES.graph / 4 + 1)
-
     expect(emoji.length).toBeLessThan(MOST_BYTES.graph)
     expect(fits(emoji, 'graph')).toBe(false)
   })
-
   test('and what fits, fits', () => {
     expect(fits('', 'graph')).toBe(true)
     expect(fits('x'.repeat(MOST_BYTES.graph), 'graph')).toBe(true)
     expect(fits('x'.repeat(MOST_BYTES.graph + 1), 'graph')).toBe(false)
   })
 })
-
 describe('a path a column may hold', () => {
   test('is one every machine resolves in the same place', () => {
     for (const path of ['Read me.md', 'a/b/Read me.md', 'Notes/Deep idea.md', '..hidden/x.md']) {
       expect(staysInside(path), path).toBe(true)
     }
   })
-
   test('and never one that starts at the root of somebody’s disk', () => {
     for (const path of [
       '/etc/passwd',
@@ -161,13 +145,11 @@ describe('a path a column may hold', () => {
       expect(staysInside(path), path).toBe(false)
     }
   })
-
   test('nor one that climbs out of the space', () => {
     for (const path of ['../out.md', 'a/../../out.md', '..', 'a/..']) {
       expect(staysInside(path), path).toBe(false)
     }
   })
-
   test('nor a name that is two names to whatever reads it next', () => {
     expect(staysInside('a\nb.md')).toBe(false)
     expect(staysInside('a\u0000b.md')).toBe(false)

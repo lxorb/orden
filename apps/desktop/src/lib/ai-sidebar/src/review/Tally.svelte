@@ -12,16 +12,13 @@
     display: inline-flex;
     gap: var(--space-1);
   }
-
   ins,
   del {
     text-decoration: none;
   }
-
   ins {
     color: var(--success);
   }
-
   del {
     color: var(--danger);
   }

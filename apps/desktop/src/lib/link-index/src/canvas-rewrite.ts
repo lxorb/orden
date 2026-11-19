@@ -14,7 +14,6 @@ export function retargetCanvas(
 ): string | null {
   const nodes = nodeStrings(text)
   if (!nodes) return null
-
   const edits: Edit[] = []
   const changed: string[] = []
   for (const node of nodes) {
@@ -23,7 +22,6 @@ export function retargetCanvas(
     const words = node.get('text')
     const there = type === 'file' && card ? file(card.value) : null
     const id = node.get('id')?.value
-
     if (card && there !== null) {
       edits.push({ from: card.from, to: card.to, insert: JSON.stringify(there) })
       if (id !== undefined) changed.push(id)
@@ -37,14 +35,12 @@ export function retargetCanvas(
   }
   if (!edits.length) return null
   edits.push(...timesOf(text, changed, now))
-
   let out = text
   for (const edit of edits.sort((one, other) => other.from - one.from)) {
     out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
   }
   return out
 }
-
 export function retargetPlane(
   canvas: Canvas,
   source: string,
@@ -62,7 +58,6 @@ export function retargetPlane(
   })
   return nodes.some((node, at) => node !== canvas.nodes[at]) ? { ...canvas, nodes } : canvas
 }
-
 export function cardsMoving(
   note: string,
   moving: (path: string) => string | null,
@@ -75,20 +70,17 @@ export function cardsMoving(
     return there === own ? null : there
   }
 }
-
 interface Edit {
   from: number
   to: number
   insert: string
 }
-
 function timesOf(text: string, ids: readonly string[], now: number): Edit[] {
   const top = skim(text, ['orden', 'nib'])
   const own = top?.get('orden') ?? top?.get('nib')
   const at: Span | undefined = own ? skim(text, ['at'], own)?.get('at') : undefined
   const held = at ? skim(text, ids, at) : null
   if (!at || !held) return []
-
   const edits: Edit[] = []
   const missing: string[] = []
   for (const id of new Set(ids)) {
@@ -103,17 +95,14 @@ function timesOf(text: string, ids: readonly string[], now: number): Edit[] {
   }
   return edits
 }
-
 interface Spot {
   from: number
   to: number
   value: string
 }
-
 function nodeStrings(text: string): Map<string, Spot>[] | null {
   const nodes: Map<string, Spot>[] = []
   let at = 0
-
   const fail = (): never => {
     throw new SyntaxError('not JSON')
   }
@@ -193,7 +182,6 @@ function nodeStrings(text: string): Map<string, Spot>[] | null {
     })
     nodes.push(strings)
   }
-
   try {
     space()
     if (text[at] !== '{') return null

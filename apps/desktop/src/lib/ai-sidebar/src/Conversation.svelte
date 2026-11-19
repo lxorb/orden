@@ -19,7 +19,6 @@
   import Reply from './Reply.svelte'
 
   const { ongoto, ready }: { ongoto?: ((line: number) => void) | undefined; ready: boolean } = $props()
-
   let talk = $state<HTMLElement>()
   let atEnd = $state(true)
   const turns = $derived(chat.turns)
@@ -40,7 +39,6 @@
   let all = $state(false)
   let pointed = $state(-1)
   const recent = $derived(all ? chats : chats.slice(0, 3))
-
   const sideways = $derived({
     can: (step: 1 | -1) => !!id && chats.some((one) => one.id === id) && !!beside(chats, id, step),
     go: (step: 1 | -1) => {
@@ -55,14 +53,12 @@
     const title = chat.threadOf(above)?.title ?? chat.every.find((one) => one.id === above)?.title
     return title === undefined ? null : { id: above, title }
   })
-
   function attachedOf(index: number): string[] {
     const draft = turns[index]?.draft
     return (draft?.attachments ?? [])
       .filter((one) => !('cite' in one) && one.label !== 'selection')
       .map((one) => one.label.replace(/\.(?:md|markdown)$/i, ''))
   }
-
   const copied = new Copied<string>()
   const COPY =
     'M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z'
@@ -95,29 +91,24 @@
     box.scrollTop = box.scrollHeight - below
     reaching = false
   }
-
   function onScroll() {
     const box = talk
     if (!box) return
     atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 24
     if (from && box.scrollTop < NEAR_TOP) void earlier(box)
   }
-
   function down() {
     talk?.scrollTo({ top: talk.scrollHeight, behavior: 'smooth' })
   }
-
   $effect(() => {
     follows(turns, waiting, chat.trouble, pending, running)
     const box = talk
     if (box && atEnd) void tick().then(() => (box.scrollTop = box.scrollHeight))
   })
-
   $effect(() => {
     follows(id)
     atEnd = true
   })
-
   let looked = $state(0)
   $effect(() => {
     const look = () => looked++
@@ -128,7 +119,6 @@
       document.removeEventListener('visibilitychange', look)
     }
   })
-
   $effect(() => {
     follows(looked, turns)
     if (!id || !chat.unread.has(id) || !atEnd) return
@@ -267,7 +257,6 @@
     flex-direction: column;
     overflow-x: clip;
   }
-
   .talk {
     flex: 1;
     min-height: 0;
@@ -281,14 +270,12 @@
     padding-inline: max(calc(var(--space-1) + var(--row-pad)), calc((100% - var(--column, 100%)) / 2 + var(--space-4)));
     mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-4)), transparent);
   }
-
   .home {
     display: flex;
     flex-direction: column;
     gap: 2px;
     margin-inline: calc(var(--row-pad) * -1);
   }
-
   .heading {
     margin: 0;
     padding: 0 var(--row-pad) var(--space-1);
@@ -297,22 +284,18 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-row);
   }
-
   .recent {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .all .orden-row-label {
     color: var(--muted);
   }
-
   .up {
     flex: none;
     color: var(--muted);
   }
-
   .said {
     display: flex;
     flex-direction: column;
@@ -321,14 +304,12 @@
     min-width: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .held,
   .said > .bubble {
     position: relative;
     max-width: min(70%, 36rem);
     min-width: 0;
   }
-
   .bubble {
     margin: 0;
     padding: var(--space-2) var(--space-3);
@@ -341,15 +322,12 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-
   .said.steered .bubble {
     box-shadow: inset 0 0 0 1px var(--accent-line);
   }
-
   .said.is-pending {
     opacity: 0.6;
   }
-
   .went {
     display: flex;
     flex-wrap: wrap;
@@ -357,7 +335,6 @@
     gap: 4px;
     max-width: 85%;
   }
-
   .went span {
     max-width: 100%;
     padding: 1px var(--space-2);
@@ -370,7 +347,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .tools {
     position: absolute;
     top: 50%;
@@ -381,22 +357,18 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .said:hover .tools,
   .tools:focus-within,
   :global([data-touch]) .tools {
     opacity: 1;
   }
-
   .tool {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
   }
-
   .tool svg {
     stroke-width: 1.3;
   }
-
   .down {
     position: absolute;
     bottom: var(--space-2);
@@ -412,7 +384,6 @@
     color: var(--text);
     cursor: default;
   }
-
   .down svg {
     width: 14px;
     height: 14px;
@@ -422,13 +393,11 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   @media (hover: hover) {
     .down:hover {
       color: var(--text-strong);
     }
   }
-
   .link {
     padding: 0;
     border: 0;
@@ -437,13 +406,11 @@
     font: inherit;
     cursor: default;
   }
-
   @media (hover: hover) {
     .link:hover {
       text-decoration: underline;
     }
   }
-
   .empty-text,
   .wrong {
     margin: 0;
@@ -451,11 +418,9 @@
     font-size: var(--text-row);
     color: var(--muted);
   }
-
   .wrong {
     color: var(--danger);
   }
-
   :global([data-touch]) .bubble,
   :global([data-touch]) .empty-text,
   :global([data-touch]) .wrong {

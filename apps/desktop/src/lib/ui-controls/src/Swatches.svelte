@@ -16,7 +16,6 @@
     onpoint?: ((value: string | null) => void) | undefined
     pair?: PairField | undefined
   } = $props()
-
   function pick(which: number, colour: string, kept: boolean) {
     if (!pair) return
     const [first, second] = pair.get()
@@ -71,14 +70,12 @@
     flex-wrap: wrap;
     gap: 7px;
   }
-
   :global(.orden-setting-value.is-wrapping) > .swatches {
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--swatch-size));
     justify-content: space-between;
     padding: 4px;
   }
-
   .swatch {
     position: relative;
     width: var(--swatch-size);
@@ -91,17 +88,14 @@
     cursor: default;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .swatch:hover {
       transform: scale(1.12);
     }
   }
-
   .swatch.active {
     background: none;
   }
-
   .swatch.active::before,
   .swatch.active::after {
     content: '';
@@ -109,27 +103,22 @@
     border-radius: 50%;
     background: var(--swatch);
   }
-
   .swatch.active::before {
     inset: -4px;
   }
-
   .swatch.active::after {
     inset: 0;
     box-shadow:
       inset 0 0 0 1px var(--swatch-edge),
       0 0 0 2px var(--surface);
   }
-
   .picked {
     overflow: visible;
     cursor: pointer;
   }
-
   .wheel {
     --swatch: conic-gradient(#bfddfb, #c4ece0, #efe3c6, #fbdcc4, #f1c4d6, #ddd0f7, #bfddfb);
   }
-
   .picked input {
     position: absolute;
     inset: 0;
@@ -141,18 +130,15 @@
     opacity: 0;
     cursor: pointer;
   }
-
   @media (forced-colors: active) {
     .swatch {
       forced-color-adjust: none;
     }
-
     .swatch.active {
       outline: 2px solid Highlight;
       outline-offset: 5px;
     }
   }
-
   :global([data-touch]) .swatches {
     --swatch-size: var(--touch-target);
     gap: 12px;

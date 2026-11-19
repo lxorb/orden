@@ -9,11 +9,8 @@ use tauri::{AppHandle, Emitter, Manager};
 use orden_base::paths::{made, write_privately};
 
 const EVENT: &str = "orden://ai-accounts";
-
 const MOST_BYTES: usize = 256 * 1024;
-
 static WRITING: Mutex<()> = Mutex::new(());
-
 pub(crate) fn ours(webview: &tauri::Webview) -> Result<(), String> {
     let label = webview.label();
     #[cfg(desktop)]
@@ -26,7 +23,6 @@ pub(crate) fn ours(webview: &tauri::Webview) -> Result<(), String> {
         Err("only Orden's own window may ask that".into())
     }
 }
-
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let folder = app
         .path()
@@ -34,16 +30,13 @@ pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| format!("could not find the app's data folder: {error}"))?;
     Ok(folder.join("ai"))
 }
-
 fn file(root: &Path) -> PathBuf {
     root.join("accounts.json")
 }
-
 fn stamp_of(text: Option<&str>) -> String {
     text.map(|text| format!("{:016x}", orden_base::paths::fnv1a(text.as_bytes())))
         .unwrap_or_default()
 }
-
 fn read_text(root: &Path) -> Result<Option<String>, String> {
     match fs::read_to_string(file(root)) {
         Ok(text) => Ok(Some(text)),
@@ -51,19 +44,16 @@ fn read_text(root: &Path) -> Result<Option<String>, String> {
         Err(error) => Err(format!("could not read the accounts: {error}")),
     }
 }
-
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct Kept {
     text: Option<String>,
     stamp: String,
 }
-
 pub fn read(root: &Path) -> Result<Kept, String> {
     let text = read_text(root)?;
     let stamp = stamp_of(text.as_deref());
     Ok(Kept { text, stamp })
 }
-
 pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
     if text.len() > MOST_BYTES {
         return Err("too many accounts to keep".into());
@@ -81,7 +71,6 @@ pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
     write_privately(&file(root), text.as_bytes())?;
     Ok(stamp_of(Some(text)))
 }
-
 #[cfg(desktop)]
 pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
     if !matches!(kind, "claude-code" | "codex" | "gemini-cli") {
@@ -107,7 +96,6 @@ pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
         ),
     }
 }
-
 #[cfg(desktop)]
 pub fn home_dir(root: &Path, id: &str) -> Result<PathBuf, String> {
     let fits = !id.is_empty()
@@ -121,13 +109,11 @@ pub fn home_dir(root: &Path, id: &str) -> Result<PathBuf, String> {
         Err(format!("{id} is not an account"))
     }
 }
-
 #[tauri::command(async)]
 pub fn ai_accounts_read(webview: tauri::Webview, app: AppHandle) -> Result<Kept, String> {
     ours(&webview)?;
     read(&root(&app)?)
 }
-
 #[tauri::command(async)]
 pub fn ai_accounts_write(
     webview: tauri::Webview,
@@ -140,7 +126,6 @@ pub fn ai_accounts_write(
     let _ = app.emit(EVENT, &written);
     Ok(written)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,7 +136,6 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         dir
     }
-
     #[test]
     fn nothing_kept_reads_as_no_text_and_the_empty_stamp() {
         let root = folder("none");
@@ -163,7 +147,6 @@ mod tests {
             }
         );
     }
-
     #[test]
     fn a_write_reads_back_with_its_stamp() {
         let root = folder("round");
@@ -174,7 +157,6 @@ mod tests {
         assert_eq!(stamp.len(), 16);
         let _ = fs::remove_dir_all(&root);
     }
-
     #[test]
     fn a_write_over_a_text_that_changed_since_is_refused() {
         let root = folder("stale");
@@ -188,7 +170,6 @@ mod tests {
         );
         let _ = fs::remove_dir_all(&root);
     }
-
     #[cfg(desktop)]
     #[test]
     fn only_a_second_sign_in_to_that_program_has_a_home_of_its_own() {
@@ -209,7 +190,6 @@ mod tests {
         assert!(has_own_home(&root, "nobody", "claude-code").is_err());
         let _ = fs::remove_dir_all(&root);
     }
-
     #[cfg(desktop)]
     #[test]
     fn a_home_is_always_a_folder_under_the_homes() {
@@ -222,7 +202,6 @@ mod tests {
             assert!(home_dir(&root, bad).is_err(), "{bad:?}");
         }
     }
-
     #[test]
     fn only_an_object_is_kept() {
         let root = folder("shape");

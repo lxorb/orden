@@ -17,7 +17,6 @@ const row = (id: string, kind: string, parent: string | null, name: string, loca
   seq: 1,
   deleted: false,
 })
-
 describe('a folder renamed while a note was moved into it', () => {
   test.each(['the note first', 'the folder first'])(
     'goes to its new name whole, with the note in it, listed %s',
@@ -44,16 +43,13 @@ describe('a folder renamed while a note was moved into it', () => {
         keeps: () => false,
         forget: () => undefined,
       }
-
       await settle(space, how)
-
       expect([folder.local_path, note.local_path, inside.local_path]).toEqual(['A', 'A/N.md', 'A/in.md'])
       expect(disk.folders.has('/r/B')).toBe(false)
       expect([...disk.files.keys()].sort()).toEqual(['/r/A/N.md', '/r/A/in.md'])
     },
   )
 })
-
 describe('a folder moved into a new folder that took its old name', () => {
   test('steps aside first, and both end where they are wanted', async () => {
     const disk = new MemoryDisk()
@@ -75,14 +71,12 @@ describe('a folder moved into a new folder that took its old name', () => {
       'd',
       { platform: 'linux', foldsCase: true } as never,
     )
-
     await settle(space, {
       disk,
       join: (a: string, b: string) => `${a}/${b}`,
       keeps: () => false,
       forget: () => undefined,
     })
-
     expect([fresh.local_path, old.local_path, plan.local_path]).toEqual([
       'Projects',
       'Projects/Old',
@@ -92,7 +86,6 @@ describe('a folder moved into a new folder that took its old name', () => {
     expect([...disk.folders].filter((one) => one.includes('.orden-moving'))).toEqual([])
   })
 })
-
 describe('a move the disk refuses', () => {
   test('leaves that file where it is and settles the rest', async () => {
     const disk = new MemoryDisk()
@@ -113,19 +106,16 @@ describe('a move the disk refuses', () => {
       'd',
       { platform: 'linux', foldsCase: true } as never,
     )
-
     await settle(space, {
       disk,
       join: (a: string, b: string) => `${a}/${b}`,
       keeps: () => false,
       forget: () => undefined,
     })
-
     expect([pdf.local_path, note.local_path]).toEqual(['X.pdf', 'b.md'])
     expect([...disk.files.keys()].sort()).toEqual(['/r/X.pdf', '/r/b.md'])
   })
 })
-
 describe('a delete or a new folder the disk refuses', () => {
   test('leaves that file where it is and settles the rest', async () => {
     const disk = new MemoryDisk()
@@ -147,19 +137,16 @@ describe('a delete or a new folder the disk refuses', () => {
       'd',
       { platform: 'linux', foldsCase: true } as never,
     )
-
     await settle(space, {
       disk,
       join: (a: string, b: string) => `${a}/${b}`,
       keeps: () => false,
       forget: (id) => forgotten.push(id),
     })
-
     expect([pdf.local_path, note.local_path]).toEqual(['X.pdf', 'b.md'])
     expect(forgotten).toEqual([])
     expect([...disk.files.keys()].sort()).toEqual(['/r/X.pdf', '/r/b.md'])
   })
-
   test('a folder it cannot make waits, with what goes in it, and the rest settles', async () => {
     const disk = new MemoryDisk()
     disk.folders.add('/r')
@@ -180,19 +167,16 @@ describe('a delete or a new folder the disk refuses', () => {
       'd',
       { platform: 'linux', foldsCase: true } as never,
     )
-
     await settle(space, {
       disk,
       join: (a: string, b: string) => `${a}/${b}`,
       keeps: () => false,
       forget: () => undefined,
     })
-
     expect([folder.local_path, into.local_path, other.local_path]).toEqual(['', 'a.md', 'd.md'])
     expect([...disk.files.keys()].sort()).toEqual(['/r/a.md', '/r/d.md'])
   })
 })
-
 describe('a file waiting aside', () => {
   test.each(['../../Private/AGENTS.md', '..\\..\\Private\\AGENTS.md', 'C:evil', 'plain'])(
     'stays in its folder whatever its id is: %s',
@@ -219,21 +203,18 @@ describe('a file waiting aside', () => {
         'd',
         { platform: 'other', foldsCase: false } as never,
       )
-
       await settle(space, {
         disk,
         join: (a: string, b: string) => `${a}/${b}`,
         keeps: () => false,
         forget: () => undefined,
       })
-
       const waiting = moves.find((to) => to.includes('.orden-moving-'))
       expect(waiting).toMatch(/^\/spaces\/Shared\/\.orden-moving-[a-z0-9]+$/)
       expect(holder.local_path).toMatch(/^\.orden-moving-[a-z0-9]+$/)
     },
   )
 })
-
 describe('what a space holds at a path', () => {
   test('is found as a walk of every entry finds it, through any change to the entries', () => {
     let seed = 7
@@ -304,7 +285,6 @@ describe('what a space holds at a path', () => {
     expect(structuredClone([...space.entries.values()])).toEqual([...space.entries.values()])
   })
 })
-
 describe('an ask for what a space holds at a path', () => {
   test('does not walk every entry, so a sync of many notes is not slowed by each one', () => {
     const space = new SpaceState(
@@ -325,7 +305,6 @@ describe('an ask for what a space holds at a path', () => {
     expect(walks).not.toHaveBeenCalled()
   })
 })
-
 describe('a tree of many folders gone from the account', () => {
   test('leaves the disk without a walk of every entry for each folder', async () => {
     const rows = [row('top', 'folder', null, 'Top', 'Top'), row('keep', 'note', null, 'Keep.md', 'Keep.md')]
@@ -366,13 +345,11 @@ describe('a tree of many folders gone from the account', () => {
       keeps: () => false,
       forget: (id) => forgotten.push(id),
     })
-
     expect(walks.mock.calls.length).toBeLessThan(10)
     expect(forgotten).toHaveLength(1500)
     expect([...space.entries.values()].filter((one) => one.local_path).map((one) => one.id)).toEqual(['keep'])
   })
 })
-
 describe('a folder the tree shows with nothing of it on this disk', () => {
   test('is the folder a note made or moved there goes into, not a new one of the same name', () => {
     const space = new SpaceState(
@@ -386,7 +363,6 @@ describe('a folder the tree shows with nothing of it on this disk', () => {
     expect(space.folderAt('work')).toBe('W')
     expect(space.folderAt('Other')).toBeUndefined()
   })
-
   test('is not one that is gone', () => {
     const gone = { ...row('W', 'folder', null, 'Work', ''), deleted: true }
     const space = new SpaceState(
@@ -399,7 +375,6 @@ describe('a folder the tree shows with nothing of it on this disk', () => {
     expect(space.folderAt('Work')).toBeUndefined()
   })
 })
-
 describe('two entries of one name beside one that holds its number', () => {
   test('numbers the second past the number the other holds, never onto it (#1630)', () => {
     const space = new SpaceState(
@@ -413,7 +388,6 @@ describe('two entries of one name beside one that holds its number', () => {
       'd',
       { platform: 'linux', foldsCase: false } as never,
     )
-
     expect(Object.fromEntries(space.paths())).toEqual({
       a: 'App.application',
       b: 'App 3.application',

@@ -7,7 +7,6 @@ describe('a code block with a caption after its language', () => {
     const support = await fenceLanguage('js title="app.js"')?.load()
     expect(support?.language.name).toBe('javascript')
   })
-
   test('is highlighted as the language its header names', async () => {
     await fenceLanguages()
     for (const [info, name] of [

@@ -2,7 +2,6 @@ import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -12,13 +11,10 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
-
 test('a set out of sight stays when its space leaves the list', async () => {
   workspace.spaces = [
     { id: 'work', name: 'Work', root: '/spaces/Work' },
@@ -30,9 +26,7 @@ test('a set out of sight stays when its space leaves the list', async () => {
   workspace.openWebsite()
   await workspace.selectSpace('food')
   expect(workspace.tabs).toHaveLength(1)
-
   workspace.spaces = workspace.spaces.filter((one) => one.id !== 'work')
   flushSync()
-
   expect(workspace.tabs).toHaveLength(1)
 })

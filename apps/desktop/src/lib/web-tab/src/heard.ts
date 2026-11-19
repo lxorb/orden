@@ -22,26 +22,20 @@ export type Said = { tab: string } & (
     }
   | { said: 'crashed' }
 )
-
 const FAILURES: readonly string[] = ['unreachable', 'certificate', 'other'] satisfies Failure[]
-
 const STEPS: readonly string[] = ['in', 'out', 'reset'] satisfies ZoomStep[]
-
 export interface NotArrived {
   url: string
   failure: Failure
   reason: string | null
 }
-
 export interface Found {
   tab: string
   count: number
   at: number
 }
-
 export function readSaid(value: unknown): Said | null {
   if (!isRecord(value) || typeof value.tab !== 'string') return null
-
   const { tab, said } = value
   if (said === 'sound') {
     return { tab, said, playing: value.playing === true, muted: value.muted === true }
@@ -61,21 +55,16 @@ export function readSaid(value: unknown): Said | null {
   if (said === 'crashed') return { tab, said }
   return null
 }
-
 export function readFound(value: unknown): Found | null {
   if (!isRecord(value) || typeof value.tab !== 'string') return null
-
   const { tab, count, at } = value
   if (typeof count !== 'number' || typeof at !== 'number') return null
   return { tab, count: Math.max(0, count), at: count > 0 && at >= 0 ? at : -1 }
 }
-
 export function readUnplayable(value: unknown): string | null {
   return isRecord(value) && typeof value.tab === 'string' ? value.tab : null
 }
-
 export type Go = (tab: string, url: string) => void
-
 export function heard(
   page: Page,
   said: Said,
@@ -124,12 +113,10 @@ export function heard(
     }
   }
 }
-
 export function found(page: Page, said: Found): void {
   page.find.count = said.count
   page.find.at = said.at
 }
-
 export async function listening(
   listen: typeof hearHere,
   page: (tab: string) => Page | undefined,

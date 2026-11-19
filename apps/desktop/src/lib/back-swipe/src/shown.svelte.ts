@@ -6,9 +6,7 @@ export interface Room {
   width: number
   height: number
 }
-
 export type Stage = 'tracking' | 'went' | 'stayed'
-
 export const swiping = $state<{
   tab: string | null
   pane: string | null

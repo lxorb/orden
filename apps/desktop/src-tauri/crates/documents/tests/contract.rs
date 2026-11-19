@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 use orden_documents::handed_pdfs::pdfs_in;
 use orden_documents::pdf::{printing, PdfPage};
 
@@ -16,7 +15,6 @@ fn a_page_prints_on_its_own_sheet_with_its_backgrounds() {
     assert_eq!(asked["marginTop"], 0.0);
     assert_eq!(asked["printBackground"], true);
 }
-
 #[test]
 fn a_link_handed_over_brings_no_pdf() {
     let dir = tempfile::tempdir().expect("a folder");

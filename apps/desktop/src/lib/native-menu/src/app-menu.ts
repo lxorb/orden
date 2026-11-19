@@ -41,19 +41,15 @@ interface Context {
   onhistory(): void
   app?: AppContext
 }
-
 function exportRows(): MenuRow[] {
   const formats = new Set<string>([...EXPORT_FORMATS, ...EXPORT_EXTRAS].map((one) => `export-${one.id}`))
   const variants = new Set<string>(EXPORT_VARIANTS.map((one) => `export-${one.id}`))
-
   const rows: MenuRow[] = []
   let last: string | null = null
-
   for (const command of commandRows('export')) {
     const kind = formats.has(command.id) ? 'format' : variants.has(command.id) ? 'variant' : 'rest'
     if (last !== null && kind !== last) rows.push(DIVIDER)
     last = kind
-
     rows.push({
       label: command.label,
       hint: command.hint,
@@ -63,25 +59,19 @@ function exportRows(): MenuRow[] {
       run: command.run,
     })
   }
-
   return rows
 }
-
 function shut(): boolean {
   return protection.locked(workspace.active?.path)
 }
-
 function keyed(id: string): Pick<MenuItem, 'hint' | 'command'> {
   return { hint: shortcuts.hint(id), command: id }
 }
-
 function run(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
-
   command(view)
   view.focus()
 }
-
 export function appMenu(context: Context): MenuGroup[] {
   const { view } = context
   const app: AppContext = context.app ?? {
@@ -93,7 +83,6 @@ export function appMenu(context: Context): MenuGroup[] {
   const hasNote = !!workspace.active
   const selected = !!view && !view.state.selection.main.empty
   const writable = !!view && !view.state.readOnly
-
   const edit = (id: string | null, label: string, command: StateCommand): MenuItem => ({
     label,
     ...(id ? keyed(id) : {}),
@@ -112,17 +101,14 @@ export function appMenu(context: Context): MenuGroup[] {
     run: () => run(view, command),
   })
   const unlessTouch = (rows: MenuRow[]) => (viewport.touch ? [] : rows)
-
   const onView = (command: (one: EditorView) => boolean) => () => {
     if (view) command(view)
   }
-
   const written = blockCommands(view)
   const blocks = (...ids: string[]): MenuItem[] =>
     ids.flatMap((id) => {
       const found = written.find((one) => one.id === id)
       if (!found) return []
-
       return [
         {
           label: found.label,
@@ -134,7 +120,6 @@ export function appMenu(context: Context): MenuGroup[] {
         },
       ]
     })
-
   return [
     {
       id: 'file',
@@ -158,7 +143,6 @@ export function appMenu(context: Context): MenuGroup[] {
         },
       ],
     },
-
     {
       id: 'edit',
       label: 'Edit',
@@ -229,7 +213,6 @@ export function appMenu(context: Context): MenuGroup[] {
         go('app.search', 'Search'),
       ],
     },
-
     {
       id: 'paragraph',
       label: 'Paragraph',
@@ -253,7 +236,6 @@ export function appMenu(context: Context): MenuGroup[] {
         ...blocks('paragraph.rule', 'page-break'),
       ],
     },
-
     {
       id: 'format',
       label: 'Format',
@@ -286,7 +268,6 @@ export function appMenu(context: Context): MenuGroup[] {
         edit('format.clear', 'Clear formatting', clearFormatting),
       ],
     },
-
     {
       id: 'view',
       label: 'View',
@@ -349,7 +330,6 @@ export function appMenu(context: Context): MenuGroup[] {
         go('app.zoom-reset', 'Actual size'),
       ],
     },
-
     {
       id: 'help',
       label: 'Help',

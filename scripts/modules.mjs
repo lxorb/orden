@@ -4,22 +4,15 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-
 const LAYERS = { foundation: 0, shell: 1, content: 2, features: 3, native: 0 }
-
 const SKIPPED = new Set(['node_modules', 'dist', 'target', '.git', 'graphify-out', 'shots'])
-
 const MODULE_ROOTS = ['packages', 'services', 'apps/desktop/src/lib', 'apps/desktop/src-tauri/crates']
-
 const CONTRACT_TESTS = {
   ts: ['test/contract.test.ts', 'contract.test.ts', 'src/contract.test.ts'],
   rust: ['tests/contract.rs'],
 }
-
 const NAME = /^[a-z][a-z0-9-]*$/
-
 const keyOf = (module) => `${module.lang}:${module.name}`
-
 function walk(dir, found) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (SKIPPED.has(entry.name)) continue
@@ -29,7 +22,6 @@ function walk(dir, found) {
   }
   return found
 }
-
 export function findModules(root = ROOT) {
   const files = []
   for (const under of MODULE_ROOTS) {
@@ -62,7 +54,6 @@ export function findModules(root = ROOT) {
     }
   })
 }
-
 function enclosingPackage(dir, root) {
   for (let at = dir; at.startsWith(root); at = dirname(at)) {
     const manifest = join(at, 'package.json')
@@ -82,7 +73,6 @@ function enclosingPackage(dir, root) {
   }
   return null
 }
-
 function workspacePackages(root) {
   const names = new Map()
   for (const under of ['packages', 'services', 'apps']) {
@@ -102,7 +92,6 @@ function workspacePackages(root) {
   }
   return names
 }
-
 function crateProblems(module, json) {
   const cargo = readFileSync(join(module.absolute, 'Cargo.toml'), 'utf8')
   const found = []
@@ -120,22 +109,17 @@ function crateProblems(module, json) {
     if (!reached.has(one)) found.push(`${module.file}: declares '${one}', which Cargo.toml does not depend on`)
   return found
 }
-
 function contractTestOf(module) {
   return CONTRACT_TESTS[module.lang].find((one) => existsSync(join(module.absolute, one))) ?? null
 }
-
 const IMPORTS =
   /(?:^|\n)\s*(?:import|export)\s[^;'"]*?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|(?:^|\n)\s*import\s*['"]([^'"]+)['"]/g
-
 function importsOf(text) {
   const specifiers = []
   for (const match of text.matchAll(IMPORTS)) specifiers.push(match[1] ?? match[2] ?? match[3])
   return specifiers
 }
-
 const FAKES = /^test\/(?:fakes|sim)(?:\.ts)?$/
-
 function standsAlone(module, test, problems, modules) {
   if (module.lang !== 'ts') return
   const text = readFileSync(join(module.absolute, test), 'utf8')
@@ -171,7 +155,6 @@ function standsAlone(module, test, problems, modules) {
     )
   }
 }
-
 function sourcesOf(dir, found = []) {
   if (!existsSync(dir)) return found
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -182,9 +165,7 @@ function sourcesOf(dir, found = []) {
   }
   return found
 }
-
 const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
-
 function reachesOnlyApis(module, root, problems, modules) {
   if (module.lang !== 'ts') return
   const src = join(module.absolute, 'src')
@@ -208,15 +189,11 @@ function reachesOnlyApis(module, root, problems, modules) {
     }
   }
 }
-
 const TYPES_ONLY = /(?:^|\n)\s*(?:import|export)\s+type\s[^;'"]*?from\s*['"][^'"]+['"]/g
-
 const LAZY = /import\(\s*['"](\.[^'"]+)['"]\s*\)/g
-
 function fileAt(target) {
   return ENDINGS.map((one) => target + one).find((one) => existsSync(one) && !one.endsWith(sep)) ?? null
 }
-
 function doorsStayShut(module, root, problems) {
   if (module.lang !== 'ts') return
   const api = join(module.absolute, module.api)
@@ -244,7 +221,6 @@ function doorsStayShut(module, root, problems) {
       )
   }
 }
-
 export function check(root = ROOT) {
   const modules = findModules(root)
   const problems = []
@@ -368,7 +344,6 @@ export function check(root = ROOT) {
   for (const key of byName.keys()) visit(key)
   return { modules: [...byName.values()], problems: [...new Set(problems)] }
 }
-
 export function moduleOf(file, modules) {
   const path = resolve(file)
   let found = null
@@ -379,7 +354,6 @@ export function moduleOf(file, modules) {
   }
   return found
 }
-
 function runContracts(root, lang) {
   const { modules, problems } = check(root)
   if (problems.length > 0) return 1
@@ -410,7 +384,6 @@ function runContracts(root, lang) {
   }
   return failed === 0 ? 0 : 1
 }
-
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const mode = process.argv[2] ?? '--check'
   if (mode === '--list') {

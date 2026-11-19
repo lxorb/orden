@@ -8,7 +8,6 @@ use zbus::MatchRule;
 const SERVICE: &str = "org.freedesktop.PackageKit";
 const PATH: &str = "/org/freedesktop/PackageKit";
 const TRANSACTION: &str = "org.freedesktop.PackageKit.Transaction";
-
 const NO_FILTER: u64 = 1 << 1;
 const ONLY_TRUSTED: u64 = 1 << 1;
 const UNTRUSTED: u64 = 0;
@@ -16,41 +15,34 @@ const SUCCESS: u32 = 1;
 const CANCELLED: u32 = 3;
 const STOPPED: u32 = 17;
 const NOT_AUTHORIZED: u32 = 48;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Format {
     Deb,
     Rpm,
 }
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Failure {
     Absent,
     Refused,
     Failed(String),
 }
-
 impl From<zbus::Error> for Failure {
     fn from(error: zbus::Error) -> Self {
         Self::Failed(error.to_string())
     }
 }
-
 pub struct PackageKit {
     bus: Connection,
 }
-
 impl PackageKit {
     pub fn system() -> Result<Self, Failure> {
         Connection::system()
             .map(Self::on)
             .map_err(|_| Failure::Absent)
     }
-
     pub fn on(bus: Connection) -> Self {
         Self { bus }
     }
-
     pub fn update_from_repository(
         &self,
         package: &str,
@@ -72,14 +64,12 @@ impl PackageKit {
         self.run("UpdatePackages", &(ONLY_TRUSTED, vec![id.as_str()]))?;
         Ok(true)
     }
-
     pub fn install_file(&self, path: &Path) -> Result<(), Failure> {
         let path = path.to_str().ok_or_else(|| {
             Failure::Failed(format!("{} is not a path PackageKit takes", path.display()))
         })?;
         self.run("InstallFiles", &(UNTRUSTED, vec![path])).map(drop)
     }
-
     fn run<B>(&self, method: &str, body: &B) -> Result<Vec<String>, Failure>
     where
         B: serde::Serialize + DynamicType,
@@ -116,7 +106,6 @@ impl PackageKit {
             method,
             body,
         )?;
-
         let mut packages = Vec::new();
         let mut said: Option<(u32, String)> = None;
         for message in heard {
@@ -140,7 +129,6 @@ impl PackageKit {
         Err(Failure::Failed(format!("{method}: PackageKit went away")))
     }
 }
-
 fn ended(exit: u32, said: Option<(u32, String)>) -> Result<(), Failure> {
     match (exit, said) {
         (SUCCESS, _) => Ok(()),
@@ -149,7 +137,6 @@ fn ended(exit: u32, said: Option<(u32, String)>) -> Result<(), Failure> {
         (exit, None) => Err(Failure::Failed(format!("ended with {exit}"))),
     }
 }
-
 fn offers(id: &str, package: &str, version: &str, format: Format) -> bool {
     let mut parts = id.split(';');
     parts.next() == Some(package)
@@ -157,7 +144,6 @@ fn offers(id: &str, package: &str, version: &str, format: Format) -> bool {
             .next()
             .is_some_and(|its| plain(its, format) == version)
 }
-
 fn plain(version: &str, format: Format) -> String {
     let version = version
         .split_once(':')
@@ -171,7 +157,6 @@ fn plain(version: &str, format: Format) -> String {
             .replace('~', "-"),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{plain, Failure, Format, PackageKit, NOT_AUTHORIZED, ONLY_TRUSTED, UNTRUSTED};
@@ -190,15 +175,12 @@ mod tests {
         error: Option<(u32, &'static str)>,
         exit: u32,
     }
-
     const FINE: Ends = Ends {
         packages: Vec::new(),
         error: None,
         exit: 1,
     };
-
     type Asked = Arc<Mutex<Vec<String>>>;
-
     fn mock(ends: impl Fn(&str) -> Ends + Send + 'static) -> (PackageKit, Asked) {
         let (ours, theirs) = UnixStream::pair().expect("a socket pair");
         let asked: Asked = Arc::default();
@@ -220,7 +202,6 @@ mod tests {
         std::thread::spawn(move || serve(&server, calls, &log, &ends));
         (PackageKit::on(client), asked)
     }
-
     fn serve(bus: &Connection, calls: MessageIterator, log: &Asked, ends: &dyn Fn(&str) -> Ends) {
         let mut made = 0;
         for message in calls {
@@ -264,7 +245,6 @@ mod tests {
             signal(bus, &path, "Finished", &(end.exit, 0_u32));
         }
     }
-
     fn signal<B: serde::Serialize + zbus::zvariant::DynamicType>(
         bus: &Connection,
         path: &str,
@@ -274,11 +254,9 @@ mod tests {
         bus.emit_signal(None::<&str>, path, super::TRANSACTION, name, body)
             .expect("a signal");
     }
-
     fn asked(log: &Asked) -> Vec<String> {
         log.lock().expect("the log").clone()
     }
-
     fn offering(ids: &'static [&'static str]) -> impl Fn(&str) -> Ends {
         move |method| match method {
             "GetUpdates" => Ends {
@@ -288,7 +266,6 @@ mod tests {
             _ => FINE,
         }
     }
-
     #[test]
     fn a_repository_that_offers_the_version_is_what_updates_it() {
         let (kit, log) = mock(offering(&[
@@ -320,7 +297,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_repository_with_another_version_is_left_alone() {
         let (kit, log) = mock(offering(&["orden;0.19.1~1101-1;x86_64;orden-unstable"]));
@@ -332,7 +308,6 @@ mod tests {
             .iter()
             .any(|call| call.starts_with("UpdatePackages")));
     }
-
     #[test]
     fn a_build_of_main_is_found_as_rpm_and_apt_write_it() {
         let (kit, _) = mock(offering(&["orden;0.19.1~1101-1;aarch64;orden-unstable"]));
@@ -346,7 +321,6 @@ mod tests {
             Ok(true)
         );
     }
-
     #[test]
     fn a_refresh_that_fails_still_reads_the_index() {
         let (kit, _) = mock(|method| match method {
@@ -366,7 +340,6 @@ mod tests {
             Ok(true)
         );
     }
-
     #[test]
     fn a_file_is_installed_as_one_packagekit_cannot_vouch_for() {
         let (kit, log) = mock(|_| FINE);
@@ -378,7 +351,6 @@ mod tests {
             r#"InstallFiles(Ok(({UNTRUSTED}, ["/home/a/.cache/orden-0.20.0.rpm"])))"#
         )));
     }
-
     #[test]
     fn no_password_is_refused_and_anything_else_failed() {
         let (kit, _) = mock(|_| Ends {
@@ -387,7 +359,6 @@ mod tests {
             ..FINE
         });
         assert_eq!(kit.install_file(Path::new("/x.rpm")), Err(Failure::Refused));
-
         let (kit, _) = mock(|_| Ends {
             error: Some((13, "nothing provides libgtk-4.so.1()(64bit)")),
             exit: 2,
@@ -400,7 +371,6 @@ mod tests {
             ))
         );
     }
-
     #[test]
     fn versions_are_read_the_way_the_app_writes_them() {
         assert_eq!(plain("0.20.0-1", Format::Rpm), "0.20.0");

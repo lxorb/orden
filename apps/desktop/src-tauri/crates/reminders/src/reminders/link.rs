@@ -4,7 +4,6 @@ pub enum Act {
     Done,
     Open,
 }
-
 impl Act {
     #[cfg_attr(not(windows), allow(dead_code))]
     fn word(self) -> &'static str {
@@ -14,15 +13,12 @@ impl Act {
         }
     }
 }
-
 const HOST: &str = "orden://reminder";
 const OLD_HOST: &str = "nib://reminder";
-
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn link(act: Act, id: &str, nonce: &str) -> String {
     format!("{HOST}?act={}&id={id}&n={nonce}", act.word())
 }
-
 fn host_end(url: &str) -> Option<usize> {
     [HOST, OLD_HOST]
         .into_iter()
@@ -32,15 +28,12 @@ fn host_end(url: &str) -> Option<usize> {
         })
         .map(str::len)
 }
-
 pub fn is_reminder(url: &str) -> bool {
     host_end(url.trim()).is_some()
 }
-
 pub fn parsed(url: &str) -> Option<(Act, String, String)> {
     let url = url.trim();
     let query = url.get(host_end(url)?..)?.strip_prefix('?')?;
-
     let (mut act, mut id, mut nonce) = (None, None, None);
     for pair in query.split('&') {
         let (key, value) = pair.split_once('=')?;
@@ -55,7 +48,6 @@ pub fn parsed(url: &str) -> Option<(Act, String, String)> {
         }
         *slot = Some(value.to_string());
     }
-
     let act = match act?.as_str() {
         "done" => Act::Done,
         "open" => Act::Open,
@@ -63,11 +55,9 @@ pub fn parsed(url: &str) -> Option<(Act, String, String)> {
     };
     Some((act, id?, nonce?))
 }
-
 fn plain(value: &str) -> bool {
     !value.is_empty() && value.len() <= 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,7 +82,6 @@ mod tests {
             Some(Act::Open)
         );
     }
-
     #[test]
     fn a_link_a_notice_was_given_before_the_rename_still_reads() {
         assert_eq!(
@@ -101,7 +90,6 @@ mod tests {
         );
         assert!(is_reminder("NIB://Reminder?act=open"));
     }
-
     #[test]
     fn anything_else_is_no_reminder() {
         assert_eq!(parsed("orden://open?path=Plan.md"), None);

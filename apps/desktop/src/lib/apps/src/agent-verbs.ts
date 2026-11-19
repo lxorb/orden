@@ -19,9 +19,7 @@ import type { AppSession as Session } from './session.svelte'
 
 const MOST_EVENTS = 200
 const MOST_TEXT = 2000
-
 const BUTTONS: Readonly<Record<string, number>> = { left: 0, middle: 1, right: 2 }
-
 const MODIFIERS: Readonly<Record<string, { key: string; code: string }>> = {
   ctrl: { key: 'Control', code: 'ControlLeft' },
   control: { key: 'Control', code: 'ControlLeft' },
@@ -31,7 +29,6 @@ const MODIFIERS: Readonly<Record<string, { key: string; code: string }>> = {
   super: { key: 'Meta', code: 'MetaLeft' },
   cmd: { key: 'Meta', code: 'MetaLeft' },
 }
-
 export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
   const { appSessionIfAny } = await import('./session.svelte')
@@ -42,14 +39,12 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
         .map((tab) => listed(tab, appSessionIfAny(tab))),
     })
   }
-
   const tab = applicationTab(call)
   const session = appSessionIfAny(tab)
   if (!session) {
     throw new Refused('bad_arguments', `${named(tab)} is not connected yet: it connects once its tab has been shown`)
   }
   held(tab, session)
-
   if (op === 'start' || op === 'stop' || op === 'restart') {
     const question = await asked(call, null, `${word(op)} ${named(tab)}`, siteOf(tab))
     if (question) return question
@@ -78,9 +73,7 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   }
   throw new Refused('bad_arguments', 'op is list, start, stop, restart, picture or input')
 }
-
 const open = (tab: Tab) => tab.path === null || protection.agentsMay(tab.path)
-
 function applicationTab(call: Call): Tab {
   const id = need(call, 'tab')
   const tab = tabWithId(call, id)
@@ -95,7 +88,6 @@ function applicationTab(call: Call): Tab {
   }
   return tab
 }
-
 function held(tab: Tab, session: Session): void {
   if (session.holds) return
   const status = session.status
@@ -107,7 +99,6 @@ function held(tab: Tab, session: Session): void {
   }
   throw new Refused('failed', `${named(tab)} is not held here (${status.is}): ask again shortly`)
 }
-
 function listed(tab: Tab, session: Session | null) {
   const status = session?.status ?? null
   return {
@@ -122,14 +113,10 @@ function listed(tab: Tab, session: Session | null) {
     picture: session?.picture.status.is ?? 'off',
   }
 }
-
 const named = (tab: Tab): string => (tab.path ? shownName(nameOf(tab.path)) : tab.id)
-
 const siteOf = (tab: Tab): string => `application:${tab.path ?? tab.id}`
-
 const word = (op: 'start' | 'stop' | 'restart'): string =>
   op === 'start' ? 'Start' : op === 'stop' ? 'Stop' : 'Restart'
-
 export function inputOf(said: unknown): InputEvent[] {
   if (!Array.isArray(said) || said.length === 0) {
     throw new Refused('bad_arguments', 'say events, a list of what to do')
@@ -139,7 +126,6 @@ export function inputOf(said: unknown): InputEvent[] {
   }
   return said.flatMap((one: unknown, at) => eventsOf(one, at))
 }
-
 function eventsOf(one: unknown, at: number): InputEvent[] {
   const event = typeof one === 'object' && one !== null ? (one as Record<string, unknown>) : {}
   const bad = (why: string) => new Refused('bad_arguments', `event ${at}: ${why}`)
@@ -157,7 +143,6 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
     return found
   }
   const moved = (): InputEvent[] => (event.x === undefined && event.y === undefined ? [] : [{ t: 'move', ...point() }])
-
   switch (event.type) {
     case 'move':
       return [{ t: 'move', ...point() }]
@@ -193,12 +178,10 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
       throw bad('type is move, click, down, up, scroll, key or text')
   }
 }
-
 const NAMED = (
   'Enter Backspace Tab Escape Delete Insert Home End PageUp PageDown ArrowLeft ArrowUp ' +
   'ArrowRight ArrowDown CapsLock NumLock ScrollLock Pause PrintScreen ContextMenu'
 ).split(' ')
-
 const ALIASES: Readonly<Record<string, string>> = {
   space: ' ',
   spacebar: ' ',
@@ -218,7 +201,6 @@ const ALIASES: Readonly<Record<string, string>> = {
   menu: 'ContextMenu',
   ...Object.fromEntries(NAMED.map((one) => [one.toLowerCase(), one])),
 }
-
 function keyOf(said: string, shifted: boolean): string | null {
   if (said.length === 1) return shifted ? said : said.toLowerCase()
   const lower = said.toLowerCase()
@@ -226,7 +208,6 @@ function keyOf(said: string, shifted: boolean): string | null {
   const number = /^f(\d{1,2})$/.exec(lower)?.[1]
   return number && Number(number) >= 1 && Number(number) <= 24 ? `F${Number(number)}` : null
 }
-
 function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
   if (typeof said !== 'string' || said.trim() === '') throw bad('say key, such as Enter or Ctrl+S')
   const plus = /(^|\+)\s*\+\s*$/.exec(said)
@@ -255,7 +236,6 @@ function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
     ...held.reverse().map((one): InputEvent => ({ t: 'key', key: one.key, code: one.code, down: false })),
   ]
 }
-
 export const applicationVerbs = verbsOf({
   application_tabs: gatedBy(() => appsOn(), 'applications are', applicationTabs),
 })

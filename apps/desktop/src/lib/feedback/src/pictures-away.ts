@@ -5,14 +5,12 @@ interface Said {
   dataUrl?: string | null
   unable?: boolean
 }
-
 let worker: Worker | null = null
 let unable = false
 let asked = 0
 const waiting = new Map<number, (said: Said) => void>()
 let turn: Promise<unknown> = Promise.resolve()
 let made = 0
-
 function open(): Worker | null {
   if (unable || typeof Worker === 'undefined') return null
   if (worker) return worker
@@ -42,12 +40,10 @@ function open(): Worker | null {
   }
   return worker
 }
-
 async function drawnHere(file: Blob, drawing: Drawing): Promise<string | null> {
   const drawn = await redrawn(file, drawing)
   return drawn ? await dataUrlOf(drawn.blob, drawn.type) : null
 }
-
 function drawnAway(file: Blob): Promise<string | null> {
   const away = open()
   if (!away) return drawnHere(file, sheetDrawing(pageSheet))
@@ -60,7 +56,6 @@ function drawnAway(file: Blob): Promise<string | null> {
     away.postMessage({ id, file })
   })
 }
-
 export function pictureOf(file: Blob, drawing?: Drawing): Promise<Picture | null> {
   const drawn = turn.then(() => (drawing ? drawnHere(file, drawing) : drawnAway(file)))
   turn = drawn.catch(() => null)

@@ -20,9 +20,7 @@ const GIMP: AppFile = {
   run: { kind: 'installed', id: 'gimp.desktop', name: 'GIMP' },
 }
 const OTHER: AppFile = { ...GIMP, host: 'device-desktop' }
-
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
-
 function world(
   files: Record<string, AppFile | string>,
   options: {
@@ -39,7 +37,6 @@ function world(
   let why: Awaited<ReturnType<Runner['start']>> = null
   let paths = Object.keys(files)
   let changed: (() => void) | null = null
-
   const runner: Runner = {
     start(key, file, view, heard) {
       asked.push(`start ${key} ${file.run.kind === 'installed' ? file.run.id : file.run.path} ${view.width}`)
@@ -117,9 +114,7 @@ function world(
     },
   }
 }
-
 const VIEW: View = { width: 1600, height: 900, dpr: 2, hz: 120 }
-
 describe('an application’s host looking through many files (#1934)', () => {
   test('asks for a few ids at once, each file once, and a change meanwhile looks once more', async () => {
     const files: Record<string, AppFile> = {}
@@ -157,7 +152,6 @@ describe('an application’s host looking through many files (#1934)', () => {
     expect([...counts.values()].every((count) => count === 1)).toBe(true)
   })
 })
-
 describe('an application’s host', () => {
   test('hosts the files that name this device, and no other, without starting them', async () => {
     const here = world({
@@ -168,18 +162,15 @@ describe('an application’s host', () => {
     await tick()
     expect(here.links.map((one) => one.app)).toEqual(['id-sGIMPapplication'])
     expect(here.asked).toEqual(['watch id-sGIMPapplication'])
-
     here.links[0]?.heard({ t: 'open' })
     expect(here.said).toEqual([{ t: 'state', state: 'stopped' }])
   })
-
   test('makes no socket to an account that serves no applications', async () => {
     const here = world({ '/s/GIMP.application': GIMP }, { serves: false })
     await tick()
     expect(here.links).toEqual([])
     expect(here.asked).toEqual([])
   })
-
   test('a computer that cannot run one says why before Start, and Start asks nothing of the crate', async () => {
     const here = world({ '/s/GIMP.application': GIMP }, { cannot: 'isolation' })
     await tick()
@@ -191,7 +182,6 @@ describe('an application’s host', () => {
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'stopped', why: 'isolation' })
     expect(here.asked.filter((one) => one.startsWith('start'))).toEqual([])
   })
-
   test('the holder’s Start runs it at the holder’s view, and says so', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
     await tick()
@@ -204,10 +194,8 @@ describe('an application’s host', () => {
       { t: 'state', state: 'starting' },
       { t: 'state', state: 'running' },
     ])
-
     here.exits(3)
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 3 })
-
     heard?.({ t: 'run', what: 'start' })
     await tick()
     here.exits(0, 'handed')
@@ -217,7 +205,6 @@ describe('an application’s host', () => {
     here.exits(0, 'something new')
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 0 })
   })
-
   test('a start the crate refused is said with its reason', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
     await tick()
@@ -226,7 +213,6 @@ describe('an application’s host', () => {
     await tick()
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'stopped', why: 'isolation' })
   })
-
   test('Restart stops it and starts it again once it has stopped', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
     await tick()
@@ -242,7 +228,6 @@ describe('an application’s host', () => {
     ])
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'running' })
   })
-
   test('its file going stops it; hosting stopping leaves it running', async () => {
     const here = world({ '/s/GIMP.application': GIMP, '/s/Two.application': GIMP })
     await tick()
@@ -250,13 +235,11 @@ describe('an application’s host', () => {
     await tick()
     expect(here.links[0]?.closed).toBe(true)
     expect(here.asked).toContain('stop id-sGIMPapplication')
-
     here.stop()
     expect(here.links[1]?.closed).toBe(true)
     expect(here.asked).not.toContain('stop id-sTwoapplication')
   })
 })
-
 describe('an application’s size', () => {
   test('follows the holder’s view while it runs, and is started at the last one', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
@@ -267,7 +250,6 @@ describe('an application’s size', () => {
     heard?.({ t: 'run', what: 'start' })
     await tick()
     expect(here.asked).toContain('start id-sGIMPapplication gimp.desktop 1600')
-
     heard?.({ t: 'view', view: { ...VIEW, width: 1200 } })
     heard?.({ t: 'viewer', device: 'device-phone', name: 'Phone' })
     heard?.({ t: 'view', view: { width: 400, height: 800, dpr: 3, hz: 60 } })
@@ -277,7 +259,6 @@ describe('an application’s size', () => {
     ])
   })
 })
-
 describe('an application’s picture', () => {
   test('the holder’s signalling goes to the crate, and its answer back', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
@@ -296,7 +277,6 @@ describe('an application’s picture', () => {
     ])
     expect(here.said).toEqual([{ t: 'signal', data: '{"answer":"v=0"}' }])
   })
-
   test('another holder, or none, ends the picture the last one had', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
     await tick()
@@ -313,7 +293,6 @@ describe('an application’s picture', () => {
     await tick()
     expect(byes()).toHaveLength(2)
   })
-
   test('the relay’s socket dropping leaves the picture; hosting ending ends it', async () => {
     const here = world({ '/s/GIMP.application': GIMP })
     await tick()
@@ -326,7 +305,6 @@ describe('an application’s picture', () => {
     expect(here.asked).toContain(`signal id-sGIMPapplication ${BYE}`)
   })
 })
-
 describe('the host’s socket', () => {
   test('names its role beside the token and the device', async () => {
     const offered: string[][] = []
@@ -350,7 +328,6 @@ describe('the host’s socket', () => {
     link.close()
   })
 })
-
 test('every application file of a tree, however deep', () => {
   const tree = {
     path: '/s',

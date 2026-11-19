@@ -2,7 +2,6 @@ import { chunks, type Env, hooks, type User } from '../../../sync-server/src/api
 
 const MOST_OPEN = 200
 const AT_ONCE = 50
-
 export async function profileTold(env: Env, user: User, space?: string): Promise<void> {
   if (!env.CHATS) return
   const { results } = await env.DB.prepare(
@@ -16,7 +15,6 @@ export async function profileTold(env: Env, user: User, space?: string): Promise
   )
     .bind(user.id, user.email, space ?? '', MOST_OPEN)
     .all<{ chat: string }>()
-
   for (const round of chunks(results, AT_ONCE)) {
     await Promise.all(
       round.map((one) => hooks().chats.askChat(env, one.chat, 'profile', { 'x-orden-profile': `user:${user.id}` })),

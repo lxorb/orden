@@ -16,14 +16,12 @@ describe('an online terminal, told apart', () => {
     expect(isOnlineTab({ kind: 'terminal', path: null })).toBe(false)
     expect(isOnlineTab({ kind: 'note', path: '/n/Terminal.term' })).toBe(false)
   })
-
   test('or one not saved yet, whose words name its session', () => {
     const words = '{"v":1,"machine":"m_1","session":"s_1"}\n'
     expect(isOnlineTab({ kind: 'terminal', path: null, doc: words })).toBe(true)
     expect(isOnlineTab({ kind: 'terminal', path: null, doc: '{"shell":"bash"}' })).toBe(false)
     expect(isOnlineTab({ kind: 'note', path: null, doc: words })).toBe(false)
   })
-
   test('is called by its file, unless that is still the name it was made with', () => {
     expect(termName('Build.term')).toBe('Build')
     expect(isMadeName('Terminal.term')).toBe(true)
@@ -32,19 +30,16 @@ describe('an online terminal, told apart', () => {
     expect(isMadeName('Build.term')).toBe(false)
   })
 })
-
 describe('Resume', () => {
   test('types each agent its own continue command', () => {
     expect(resumeCommand('claude')).toBe('claude --continue')
     expect(resumeCommand('codex')).toBe('codex resume --last')
   })
-
   test('offers nothing for a program with no conversation to pick up', () => {
     expect(resumeCommand('vim')).toBeNull()
     expect(resumeCommand(null)).toBeNull()
   })
 })
-
 describe("the account's answer about the machine", () => {
   const month = {
     allowed: true,
@@ -53,7 +48,6 @@ describe("the account's answer about the machine", () => {
     limit: { awakeS: 72000, cpuS: 36000, homeBytes: 5e9, egressBytes: 2e10 },
     resetAt: 1_793_000_000_000,
   }
-
   test('reads as the machine and the month', () => {
     const { resetAt, ...rest } = month
     expect(onlineOf(month)).toEqual({
@@ -62,7 +56,6 @@ describe("the account's answer about the machine", () => {
       resets: resetAt,
     })
   })
-
   test('with the server under it and its disk', () => {
     const server = {
       type: 'cx43',
@@ -96,27 +89,22 @@ describe("the account's answer about the machine", () => {
     })?.machine
     expect(unplaced?.server?.location).toBeNull()
   })
-
   test('says where a server is by its city', () => {
     expect(cityOf('nbg1')).toBe('Nuremberg')
     expect(cityOf('fsn1')).toBe('Falkenstein')
     expect(cityOf('xyz9')).toBe('xyz9')
   })
-
   test('with no machine yet', () => {
     expect(onlineOf({ ...month, machine: null })?.machine).toBeNull()
   })
-
   test('and is nothing when it does not read', () => {
     expect(onlineOf({ ...month, used: { awakeS: '1' } })).toBeNull()
     expect(onlineOf(null)).toBeNull()
     expect(onlineOf({ ...month, machine: { id: 'm1', state: 'flying' } })?.machine).toBeNull()
   })
 })
-
 describe('a session on sync v1, which has no file id', () => {
   const made = { v: 1 as const, machine: 'm1', session: 's_new' }
-
   function file(words: string | null) {
     const did = { made: 0, written: [] as string[] }
     return {
@@ -134,24 +122,20 @@ describe('a session on sync v1, which has no file id', () => {
       },
     }
   }
-
   test('is made for an empty file, and written into it', async () => {
     const { did, file: empty } = file('')
     expect(await ownSession(empty)).toBe('s_new')
     expect(did).toEqual({ made: 1, written: ['{"v":1,"machine":"m1","session":"s_new"}\n'] })
   })
-
   test('is the one the file names, made once and never again', async () => {
     const { did, file: named } = file('{"v":1,"machine":"m1","session":"s_old"}\n')
     expect(await ownSession(named)).toBe('s_old')
     expect(did).toEqual({ made: 0, written: [] })
   })
-
   test('is made again for a file that cannot be read or does not name one', async () => {
     expect(await ownSession(file(null).file)).toBe('s_new')
     expect(await ownSession(file('not a terminal').file)).toBe('s_new')
   })
-
   test('refused by the account, writes nothing', async () => {
     const { did, file: one } = file('')
     one.make = () => Promise.reject(new Error('list'))
@@ -159,7 +143,6 @@ describe('a session on sync v1, which has no file id', () => {
     expect(did.written).toEqual([])
   })
 })
-
 describe('the program in front of an online terminal', () => {
   test('wears the mark its name gives, the shell’s otherwise', () => {
     expect(terminalMark('', 'claude')).toBe('claude')

@@ -2,20 +2,16 @@ import { invoke, isRecord, keep, log } from '../../platform/src/api'
 import { type DatabaseDump, finished, shaped } from './database-dump'
 
 export const PASS_LEFT_BEHIND = 'orden:pass-left-behind'
-
 const PASS = 'orden-pass'
-
 interface Carried extends DatabaseDump {
   skipped: number
 }
-
 function bytesOf(text: string): Uint8Array<ArrayBuffer> {
   const raw = atob(text)
   const out = new Uint8Array(raw.length)
   for (let at = 0; at < raw.length; at++) out[at] = raw.charCodeAt(at)
   return out
 }
-
 export function revived(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(revived)
   if (!isRecord(value)) return value
@@ -27,7 +23,6 @@ export function revived(value: unknown): unknown {
   for (const [key, one] of Object.entries(value)) out[key] = revived(one)
   return out
 }
-
 function opened(database: DatabaseDump, version: number): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(database.name, version)
@@ -37,12 +32,10 @@ function opened(database: DatabaseDump, version: number): Promise<IDBDatabase> {
     request.onblocked = () => reject(new Error('the database is held open'))
   })
 }
-
 async function versionOf(name: string): Promise<number | null> {
   const listing = await indexedDB.databases().catch(() => [])
   return listing.find((one) => one.name === name)?.version ?? null
 }
-
 export async function added(database: DatabaseDump): Promise<void> {
   const now = await versionOf(database.name)
   const db = await opened(database, Math.max(database.version, now ?? 1))
@@ -68,7 +61,6 @@ export async function added(database: DatabaseDump): Promise<void> {
     db.close()
   }
 }
-
 export async function carryOldDatabases(): Promise<void> {
   const said = await invoke<string | null>('old_engine_databases')
   if (!said) return

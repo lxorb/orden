@@ -22,10 +22,8 @@ function twoWayFields(): SettingField[] {
       set: (value) => shells.setWay(command, value === 'app' || value === 'shell' ? value : null),
     }))
 }
-
 export function terminalFields(): SettingField[] {
   void shells.ask()
-
   return [
     {
       kind: 'select',

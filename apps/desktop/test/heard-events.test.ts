@@ -3,7 +3,6 @@ import { join, relative } from 'node:path'
 import { expect, test } from 'vitest'
 
 const APP = join(import.meta.dirname, '..')
-
 function filesUnder(dir: string, wanted: (name: string) => boolean, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (['node_modules', 'target', 'dist'].includes(entry.name)) continue
@@ -13,9 +12,7 @@ function filesUnder(dir: string, wanted: (name: string) => boolean, found: strin
   }
   return found
 }
-
 const HEARD = /\b(?:listen|hearHere|once)(?:<[^>]*>)?\(\s*['"`]orden:\/\/([a-z0-9-]+)['"`]/g
-
 test('every app event a page waits for is one the native side sends', () => {
   const native = [join(APP, 'src-tauri', 'src'), join(APP, 'src-tauri', 'crates')]
     .flatMap((dir) => filesUnder(dir, (name) => name.endsWith('.rs')))

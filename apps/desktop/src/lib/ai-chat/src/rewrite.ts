@@ -1,14 +1,12 @@
 import type { Message } from '../../ai-providers/src/api'
 
 export type Verb = 'shorter' | 'longer' | 'grammar' | 'translate'
-
 export const VERBS: { id: Verb; label: string }[] = [
   { id: 'shorter', label: 'Shorter' },
   { id: 'longer', label: 'Longer' },
   { id: 'grammar', label: 'Fix grammar' },
   { id: 'translate', label: 'Translate' },
 ]
-
 function instruction(verb: Verb, language: string): string {
   switch (verb) {
     case 'shorter':
@@ -21,20 +19,17 @@ function instruction(verb: Verb, language: string): string {
       return `Translate the text below into ${language}.`
   }
 }
-
 const RULES = [
   'Answer with the rewritten text and nothing else: no preamble, no explanation,',
   'no quotation marks around it and no code fence around it. Keep the markdown that',
   'is in it - headings, lists, emphasis, links - exactly as markdown.',
 ].join(' ')
-
 export function rewriteMessages(verb: Verb, language: string, selection: string): Message[] {
   return [
     { role: 'system', content: `${instruction(verb, language)} ${RULES}` },
     { role: 'user', content: selection },
   ]
 }
-
 const LANGUAGES: readonly { id: string; name: string }[] = [
   { id: 'id', name: 'Bahasa Indonesia' },
   { id: 'ms', name: 'Bahasa Melayu' },
@@ -78,21 +73,17 @@ const LANGUAGES: readonly { id: string; name: string }[] = [
   { id: 'zh-Hant', name: '繁體中文' },
   { id: 'zh-Hant-HK', name: '繁體中文（香港）' },
 ]
-
 export function languageNames(): { id: string; name: string }[] {
   return [...LANGUAGES]
 }
-
 export function defaultLanguage(region: string): string {
   const base = region.split('-')[0]
   const found = LANGUAGES.find((one) => one.id === region) ?? LANGUAGES.find((one) => one.id === base)
   return found?.id ?? 'en'
 }
-
 export function nameOfLanguage(id: string): string {
   return languageNames().find((one) => one.id === id)?.name ?? 'English'
 }
-
 export function stillThere(
   text: string,
   place: { from: number; to: number },

@@ -6,16 +6,13 @@ import { FREE } from './usage'
 
 const NOW = 1_760_000_000_000
 const MINUTE = 60_000
-
 const none: Allowance = { awakeS: 0, cpuS: 0, homeBytes: 0, egressBytes: 0 }
-
 const watcher = (active: boolean, onScreen: boolean): Watcher => ({
   who: 'u_emil',
   device: 'd_1',
   active,
   onScreen,
 })
-
 const quiet = (ago: number): Activity => ({
   at: NOW - ago,
   output: 0,
@@ -23,13 +20,11 @@ const quiet = (ago: number): Activity => ({
   net: 0,
   homeBytes: 1,
 })
-
 const STAY: AwakeAnswer = { stay: true }
 const asleep = (reason: 'idle' | 'allowance' | 'budget' | 'off'): AwakeAnswer => ({
   stay: false,
   reason,
 })
-
 interface Case {
   watchers?: Watcher[]
   recent?: Activity[]
@@ -38,7 +33,6 @@ interface Case {
   limit?: Allowance
   budgetLeft?: number
 }
-
 const ask = (given: Case): AwakeAnswer =>
   awake(
     NOW,
@@ -49,7 +43,6 @@ const ask = (given: Case): AwakeAnswer =>
     given.limit ?? FREE,
     given.budgetLeft ?? 30,
   )
-
 describe('awake: somebody using a terminal', () => {
   it.each<[string, Watcher[], AwakeAnswer]>([
     ['nobody connected', [], asleep('idle')],
@@ -63,7 +56,6 @@ describe('awake: somebody using a terminal', () => {
     expect(ask({ watchers })).toEqual(answer)
   })
 })
-
 describe('awake: something in it working', () => {
   it.each<[string, Partial<Activity>, number, AwakeAnswer]>([
     ['nothing at all a minute ago', {}, MINUTE, asleep('idle')],
@@ -81,33 +73,27 @@ describe('awake: something in it working', () => {
   ])('%s', (_, activity, ago, answer) => {
     expect(ask({ recent: [{ ...quiet(ago), ...activity }] })).toEqual(answer)
   })
-
   it('stays for one working report among quiet ones', () => {
     const recent = [quiet(MINUTE), { ...quiet(10 * MINUTE), output: 3 }, quiet(30 * MINUTE)]
     expect(ask({ recent })).toEqual(STAY)
   })
-
   it('sleeps with only quiet reports, however many', () => {
     const recent = Array.from({ length: 30 }, (_, at) => quiet(at * 30_000))
     expect(ask({ recent })).toEqual(asleep('idle'))
   })
 })
-
 describe('awake: Keep awake', () => {
   it('stays with nothing else going on', () => {
     expect(ask({ keepAwake: true })).toEqual(STAY)
   })
-
   it('does not outlast the allowance, the budget or the switch', () => {
     expect(ask({ keepAwake: true, used: FREE })).toEqual(asleep('allowance'))
     expect(ask({ keepAwake: true, budgetLeft: 0 })).toEqual(asleep('budget'))
     expect(ask({ keepAwake: true, limit: OFF })).toEqual(asleep('off'))
   })
 })
-
 describe('awake: the allowance', () => {
   const busy = { watchers: [watcher(true, true)], recent: [{ ...quiet(0), output: 9 }] }
-
   it.each<[string, Partial<Allowance>, AwakeAnswer]>([
     ['nothing used', {}, STAY],
     ['a second short of the hours', { awakeS: FREE.awakeS - 1 }, STAY],
@@ -122,10 +108,8 @@ describe('awake: the allowance', () => {
     expect(ask({ ...busy, used: { ...none, ...used } })).toEqual(answer)
   })
 })
-
 describe('awake: the budget and the switch', () => {
   const busy = { watchers: [watcher(true, true)], keepAwake: true }
-
   it.each<[string, number, AwakeAnswer]>([
     ['plenty left', 30, STAY],
     ['a cent left', 0.01, STAY],
@@ -135,16 +119,13 @@ describe('awake: the budget and the switch', () => {
   ])('%s', (_, budgetLeft, answer) => {
     expect(ask({ ...busy, budgetLeft })).toEqual(answer)
   })
-
   it('says off for a service or account switched off, before anything else', () => {
     expect(ask({ ...busy, limit: OFF, used: FREE, budgetLeft: -1 })).toEqual(asleep('off'))
   })
-
   it('says budget before allowance, when both are spent', () => {
     expect(ask({ ...busy, used: FREE, budgetLeft: 0 })).toEqual(asleep('budget'))
   })
 })
-
 describe('awake: properties', () => {
   const activity = fc.record({
     at: fc.integer({ min: NOW - 40 * MINUTE, max: NOW }),
@@ -178,7 +159,6 @@ describe('awake: properties', () => {
   })
   const answer = (given: Required<Case>) =>
     awake(NOW, given.watchers, given.recent, given.keepAwake, given.used, given.limit, given.budgetLeft)
-
   it('more activity never sleeps sooner', () => {
     fc.assert(
       fc.property(inputs, activity, (given, more) => {
@@ -188,7 +168,6 @@ describe('awake: properties', () => {
       }),
     )
   })
-
   it('busier reports never sleep sooner', () => {
     fc.assert(
       fc.property(inputs, fc.nat(), fc.double({ min: 0, max: 1, noNaN: true }), fc.nat(), (given, output, cpu, net) => {
@@ -203,7 +182,6 @@ describe('awake: properties', () => {
       }),
     )
   })
-
   it('another watcher, or Keep awake, never sleeps sooner', () => {
     fc.assert(
       fc.property(inputs, watchers, (given, more) => {
@@ -213,7 +191,6 @@ describe('awake: properties', () => {
       }),
     )
   })
-
   it('less used, or more budget, never sleeps sooner', () => {
     fc.assert(
       fc.property(inputs, fc.double({ min: 0, max: 1, noNaN: true }), fc.nat({ max: 100 }), (given, less, more) => {
@@ -228,7 +205,6 @@ describe('awake: properties', () => {
       }),
     )
   })
-
   it('a later moment never wakes a sleeping machine by itself', () => {
     fc.assert(
       fc.property(inputs, fc.nat({ max: 60 * MINUTE }), (given, later) => {

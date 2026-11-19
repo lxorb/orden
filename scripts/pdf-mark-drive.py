@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import base64
 import json
 import subprocess
@@ -9,7 +8,6 @@ from pathlib import Path
 from linux_app import run
 
 OUT = Path(sys.argv[1])
-
 def until(code, seconds=20):
     for _ in range(seconds * 4):
         said = run(code)
@@ -17,7 +15,6 @@ def until(code, seconds=20):
             return said
         time.sleep(0.25)
     return None
-
 def pdf(title):
     stream = f"BT /F1 24 Tf 72 720 Td ({title}) Tj ET".encode()
     objects = [
@@ -39,13 +36,11 @@ def pdf(title):
         out += b"%010d 00000 n \n" % at
     out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objects) + 1, table)
     return bytes(out)
-
 def mark(path):
     return run(
         f"(() => {{ const row = document.querySelector('.row[data-path=\"' + CSS.escape({json.dumps(path)}) + '\"]');"
         " const mark = row && row.querySelector('.mark svg'); return mark ? mark.innerHTML : null })()"
     )
-
 root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
@@ -58,7 +53,6 @@ def put(path, bytes_):
     )
     if said != "done":
         sys.exit(f"::error::the app put no {path.name} in the space: {said}")
-
 put(lecture, pdf("Lecture"))
 put(leaflet, pdf("Leaflet"))
 BLANK = json.dumps('{"nodes":[],"edges":[]}')
@@ -69,29 +63,24 @@ made_sketch = run(
 if made_sketch != "done":
     sys.exit(f"::error::the app put no Sketch.pages in the space: {made_sketch}")
 print(f"pdf mark: two PDFs and a blank page note put in {root}")
-
 LISTED = "void orden.workspace.loadTree(), "
-
 if not until(
     f"{LISTED}!!orden.workspace.entryAt({json.dumps(str(leaflet))}) && !!orden.workspace.entryAt({json.dumps(str(sketch))})"
     f" && !!orden.workspace.entryAt({json.dumps(str(lecture))})"
 ):
     sys.exit("::error::the file list never showed the files put in the space")
-
 made = str(folder / "Lecture.pages")
 run(f"orden.workspace.openPdf({json.dumps(str(lecture))}); true")
 if not until(f"{LISTED}orden.workspace.entryAt({json.dumps(made)})?.path ?? null"):
     sys.exit("::error::opening the PDF made no page note")
 print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"orden.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
 time.sleep(1.5)
-
 pdf_mark, made_mark, blank_mark = mark(str(leaflet)), mark(made), mark(str(sketch))
 tab_mark = run(
     "(() => { const tab = document.querySelector('.pick[data-tab=\"' + orden.workspace.activeTabId + '\"] .mark svg');"
     " return tab ? tab.innerHTML : null })()"
 )
 subprocess.run(["grim", str(OUT / "pdf-mark.png")], check=False)
-
 failures = []
 if not (pdf_mark and made_mark and blank_mark):
     failures.append(f"a row wore no mark to compare: {[bool(pdf_mark), bool(made_mark), bool(blank_mark)]}")
@@ -108,7 +97,6 @@ elif tab_mark != pdf_mark:
     failures.append("the page note's tab does not wear the PDF's mark")
 else:
     print("pdf mark: its tab wears the PDF's mark too")
-
 run(f"(() => {{ for (const tab of orden.workspace.tabs) if (tab.path === {json.dumps(made)}) orden.workspace.close(tab.id); return true }})()")
 time.sleep(1)
 run("void orden.workspace.addSpace('Elsewhere'), true")
@@ -139,7 +127,6 @@ else:
         failures.append("the page note never opened in a tab of the other space")
     elif away_mark != pdf_mark:
         failures.append("opened from another space, the page note's tab does not wear the PDF's mark")
-
 for failure in failures:
     print(f"::error::pdf mark: {failure}")
 sys.exit(1 if failures else 0)

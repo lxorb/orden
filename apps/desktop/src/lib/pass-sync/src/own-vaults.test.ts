@@ -19,11 +19,9 @@ function vault(id: string, role: Role): Vault {
     hidePasswordsFromViewers: false,
   }
 }
-
 function item(id: string, inside: string): Item {
   return { ...newEnvelope({ ...blank('note'), title: id }, 1), id, vault: inside, rev: 1 }
 }
-
 describe('what an export holds', () => {
   test('is the vaults the reader owns and their items, never a vault shared with them', () => {
     const vaults = [vault('mine', 'owner'), vault('theirs', 'manager'), vault('seen', 'viewer')]

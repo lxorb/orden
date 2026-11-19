@@ -21,7 +21,6 @@ function numbersDrawn(doc: string): string[] {
   })
   return out
 }
-
 describe('numbered headings in a note whose top headings are not level one', () => {
   test('count from 1, as the setting says, not from 0', () => {
     expect(numbersDrawn('## Setup\n\nwords\n\n## Usage\n\n### Flags\n\nmore\n')).toEqual([

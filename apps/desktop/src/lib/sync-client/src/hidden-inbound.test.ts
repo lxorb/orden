@@ -11,7 +11,6 @@ import * as Y from 'yjs'
 
 const ROOT = '/device/space'
 const SPACE = 'sim'
-
 async function here(account: ReferenceAccount) {
   const store = new MemoryStore('d0')
   const disk = new MemoryDisk()
@@ -78,13 +77,11 @@ async function here(account: ReferenceAccount) {
   }
   return { disk, engine: await Engine.start(world, store.open(), { freshens: false }) }
 }
-
 test('a hidden name from another device is never made here, and never takes or removes a hidden folder of this one', async () => {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const { disk, engine } = await here(account)
   disk.folders.add(`${ROOT}/.localonly`)
   disk.files.set(`${ROOT}/.localonly/private.md`, 'never synced')
-
   await account.handle(
     'dX',
     'ops',
@@ -99,7 +96,6 @@ test('a hidden name from another device is never made here, and never takes or r
   const space = engine.core.spaces.get(SPACE)
   expect(space?.entries.get('evil1')?.local_path ?? '').toBe('')
   expect(disk.folders.has(`${ROOT}/.planted`)).toBe(false)
-
   await account.handle(
     'dX',
     'ops',
@@ -108,7 +104,6 @@ test('a hidden name from another device is never made here, and never takes or r
   await engine.pass(SPACE)
   expect(disk.files.has(`${ROOT}/.localonly/private.md`)).toBe(true)
 })
-
 test('a folder another device deletes keeps what this one holds in it that never synced', async () => {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const { disk, engine } = await here(account)
@@ -126,7 +121,6 @@ test('a folder another device deletes keeps what this one holds in it that never
   await engine.pass(SPACE)
   expect(disk.folders.has(`${ROOT}/Code/Sub`)).toBe(true)
   disk.files.set(`${ROOT}/Code/.git/HEAD`, 'ref: refs/heads/main')
-
   await account.handle(
     'dX',
     'ops',
@@ -142,7 +136,6 @@ test('a folder another device deletes keeps what this one holds in it that never
   expect(disk.folders.has(`${ROOT}/Code/Sub`)).toBe(false)
   expect(disk.folders.has(`${ROOT}/Gone`)).toBe(false)
 })
-
 test('a note made, copied or put back under a hidden name here is never sent, as one placed there by hand is not', async () => {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const { disk, engine } = await here(account)

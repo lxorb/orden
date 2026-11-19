@@ -1,16 +1,13 @@
 import { base64, unbase64, joined } from '@orden/pass/bytes'
 
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
-
 export function newNonce(): string {
   return base64(globalThis.crypto.getRandomValues(new Uint8Array(32)))
 }
-
 export async function commitment(pub: string, nonce: string): Promise<string> {
   const digest = await subtle().digest('SHA-256', joined(unbase64(pub), unbase64(nonce)))
   return base64(new Uint8Array(digest))
 }
-
 export async function digits(
   purpose: string,
   asking: string,

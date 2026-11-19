@@ -1,9 +1,7 @@
 import { invoke as handedOn, type InvokeArgs, type InvokeOptions } from '@tauri-apps/api/core'
 
 export { Channel } from '@tauri-apps/api/core'
-
 const ARGS_HEADER = 'Orden-Args'
-
 const RAW = new Set([
   'write_bytes',
   'save_asset',
@@ -13,7 +11,6 @@ const RAW = new Set([
   'print_page',
   'print_pdf',
 ])
-
 export function invoke<T>(command: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {
   if (RAW.has(command) && args && !Array.isArray(args) && !ArrayBuffer.isView(args)) {
     const { bytes, ...rest } = args as Record<string, unknown>

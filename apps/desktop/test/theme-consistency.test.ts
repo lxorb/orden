@@ -6,39 +6,30 @@ import { describe, expect, test } from 'vitest'
 import { SOURCE } from './files'
 
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
-
 function componentFiles(dir: string): string[] {
   const out: string[] = []
-
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) out.push(...componentFiles(path))
     else if (name.endsWith('.svelte')) out.push(path)
   }
-
   return out
 }
-
 function styleOf(text: string): string {
   return [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n')
 }
-
 const components = componentFiles(SOURCE).map((path) => ({
   name: path.slice(SOURCE.length).replace(/\\/g, '/'),
   text: styleOf(readFileSync(path, 'utf8')),
 }))
-
 describe('the look of things the browser also has an opinion about', () => {
   test('the scan finds the components', () => {
     expect(components.length).toBeGreaterThan(10)
   })
-
   test('nothing opts out of the themed scrollbar', () => {
     const offenders = components.filter((one) => /scrollbar-width:\s*(thin|auto)/.test(one.text)).map((one) => one.name)
-
     expect(offenders, `these would show the browser's scrollbar: ${offenders.join(', ')}`).toEqual([])
   })
-
   test('every scroller that hides the engine bar hides it in every engine', () => {
     const sheets = [
       ...components,
@@ -58,10 +49,8 @@ describe('the look of things the browser also has an opinion about', () => {
         })
         .map((selector) => `${one.name}: ${selector}`),
     )
-
     expect(offenders, `these show the bar in WebKit before 18.2: ${offenders.join(', ')}`).toEqual([])
   })
-
   test("the theme's bar never outranks a scroller that hides its own", () => {
     const base = readFileSync(join(THEMES, 'base.css'), 'utf8')
     const unwrapped = (selector: string) => {
@@ -82,11 +71,9 @@ describe('the look of things the browser also has an opinion about', () => {
       .filter((selector) => selector.includes('::-webkit-scrollbar'))
       .filter((selector) => !/^\.[\w-]+::/.test(selector))
     const loud = themed.filter((selector) => /[.:[#]/.test(unwrapped(selector).split('::')[0] ?? ''))
-
     expect(themed.length).toBeGreaterThan(4)
     expect(loud, `these beat .orden-scrolls::-webkit-scrollbar: ${loud.join(', ')}`).toEqual([])
   })
-
   test('no component restyles a dropdown on its own', () => {
     const offenders = components
       .filter((one) =>
@@ -95,90 +82,71 @@ describe('the look of things the browser also has an opinion about', () => {
         ),
       )
       .map((one) => one.name)
-
     expect(offenders, `these would diverge from the themed dropdown: ${offenders.join(', ')}`).toEqual([])
   })
-
   test('no component states a custom property in terms of itself', () => {
     const cycles = components.flatMap((one) =>
       [...one.text.matchAll(/--([\w-]+)\s*:\s*var\(\s*--([\w-]+)\s*[,)]/g)]
         .filter(([, named, read]) => named === read)
         .map(([said]) => `${one.name}: ${said.trim()}`),
     )
-
     expect(cycles, `these resolve to nothing at all: ${cycles.join(', ')}`).toEqual([])
   })
 })
-
 function sourceFiles(dir: string): string[] {
   const out: string[] = []
-
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) out.push(...sourceFiles(path))
     else if (/\.(ts|svelte|css)$/.test(name) && !name.endsWith('.test.ts')) out.push(path)
   }
-
   return out
 }
-
 describe('what a theme reaches, now that contrast is one', () => {
   const SYNTAX = ['--syntax-number', '--syntax-function', '--syntax-type', '--syntax-property']
   const tokens = readFileSync(join(THEMES, 'tokens.css'), 'utf8')
-
   function blockFor(scheme: 'dark' | 'light'): string {
     const dark = tokens.slice(tokens.indexOf("[data-theme='dark']"))
     const [own = '', rest = ''] = dark.split("[data-theme='light']")
     return scheme === 'dark' ? own : rest
   }
-
   test('states the four syntax colours in both schemes, so a theme can restate them', () => {
     for (const scheme of ['dark', 'light'] as const) {
       const block = blockFor(scheme)
       for (const token of SYNTAX) expect(block, `${token} on ${scheme}`).toContain(`${token}:`)
     }
   })
-
   test('and spells them apart from the gutter, which is a different colour entirely', () => {
     expect(tokens).toContain('--code-number-color:')
     expect(tokens).not.toMatch(/--code-(number|function|type|property):/)
   })
-
   test('and nothing paints contrast over a theme from outside it', () => {
     const offenders = [...sourceFiles(SOURCE), ...sourceFiles(THEMES)]
       .filter((path) => /data-contrast|dataset\.contrast/.test(readFileSync(path, 'utf8')))
       .map((path) => path.replace(/\\/g, '/').split('/').slice(-2).join('/'))
-
     expect(offenders, `these still write the attribute: ${offenders.join(', ')}`).toEqual([])
   })
 })
-
 describe('the paper a note is written on', () => {
   const PAPER = 'background: var(--content-ground, var(--bg));'
-
   function ruleOf(name: string, selector: string): string {
     const text = components.find((one) => one.name === name)?.text ?? ''
     const opens = new RegExp(`(?:^|\\n)\\s*\\.${selector}\\s*\\{([^}]*)\\}`)
     return opens.exec(text)?.[1] ?? ''
   }
-
   test('is what a pane lays under itself', () => {
     expect(ruleOf('lib/pane-tree/src/Pane.svelte', 'pane')).toContain(PAPER)
   })
-
   test('is the page itself, whole, under the scratchpad', () => {
     expect(ruleOf('lib/scratchpad/src/ScratchpadCard.svelte', 'card')).toContain('background: var(--bg);')
   })
-
   test('is see-through under a pane alone', () => {
     const offenders = components
       .filter((one) => one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
       .map((one) => one.name)
-
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])
   })
 })
-
 describe('what a side shows', () => {
   const FLOATING = ['orden-layer', 'orden-screen', 'orden-bubble']
   const sidebar = readFileSync(join(SOURCE, 'lib/sidebar/src/Sidebar.svelte'), 'utf8')
@@ -212,12 +180,10 @@ describe('what a side shows', () => {
       const from = new RegExp(`import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`).exec(features)?.[1]
       return loaded(from ?? '', body.trim())
     })
-
   interface Node {
     type?: string
     [key: string]: unknown
   }
-
   function* outermost(node: unknown): Generator<Node> {
     if (!node || typeof node !== 'object') return
     if (Array.isArray(node)) {
@@ -231,7 +197,6 @@ describe('what a side shows', () => {
     }
     for (const [key, value] of Object.entries(one)) if (key !== 'parent') yield* outermost(value)
   }
-
   function classesOf(node: Node): string[] {
     const words: string[] = []
     for (const one of (node.attributes ?? []) as Node[]) {
@@ -241,13 +206,11 @@ describe('what a side shows', () => {
     }
     return words.filter(Boolean)
   }
-
   test('finds the panels', () => {
     expect(shown).toContain('lib/scratchpad/src/ScratchpadCard.svelte')
     expect(shown).toContain('lib/tasks-views/src/TodosPanel.svelte')
     expect(shown).toContain('lib/ai-sidebar/src/ChatPanel.svelte')
   })
-
   test.each(shown.map((name) => [name]))('%s stands in it', (name) => {
     const source = readFileSync(join(SOURCE, name), 'utf8')
     const tree = parse(source, { modern: true })
@@ -266,16 +229,13 @@ describe('what a side shows', () => {
     }
   })
 })
-
 describe('what runs out under something', () => {
   const style = (name: string) => components.find((one) => one.name === name)?.text ?? ''
-
   test('the AI panel’s thread fades by a mask', () => {
     expect(style('lib/ai-sidebar/src/Conversation.svelte')).toMatch(
       /\.talk\s*\{[^}]*mask-image:\s*linear-gradient\(to bottom/,
     )
   })
-
   test('and nothing fades to a ground colour over the end of a scroller', () => {
     const offenders = components
       .filter((one) => /linear-gradient\(\s*to (?:top|bottom),\s*var\(--[a-z-]+\),\s*transparent\)/.test(one.text))
@@ -283,17 +243,14 @@ describe('what runs out under something', () => {
     expect(offenders, `these fade to a guessed ground: ${offenders.join(', ')}`).toEqual([])
   })
 })
-
 describe('what the AI chat is filled with', () => {
   const chat = components.filter((one) =>
     /^lib\/ai-sidebar\/src\/(?!(?:Answer|Thinking|DoWithAiCard)\.svelte$)/.test(one.name),
   )
   const style = (name: string) => chat.find((one) => one.name === name)?.text ?? ''
-
   test('finds the chat', () => {
     expect(chat.length).toBeGreaterThan(10)
   })
-
   test('the reader’s message is a wash of the ink over whatever it stands on', () => {
     expect(style('lib/ai-sidebar/src/Conversation.svelte')).toMatch(
       /\n\s*\.bubble\s*\{[^}]*background:\s*var\(--ink-wash\)/,
@@ -302,7 +259,6 @@ describe('what the AI chat is filled with', () => {
       /\n\s*\.said\s*\{[^}]*background:\s*var\(--ink-wash\)/,
     )
   })
-
   test('and nothing in it is filled with the ground the side stands on', () => {
     const offenders = chat
       .filter((one) => /background(?:-color)?:\s*var\(--(?:surface-2|tab-frame|chrome-ground)\)/.test(one.text))

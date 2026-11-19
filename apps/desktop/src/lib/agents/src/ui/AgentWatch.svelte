@@ -5,30 +5,23 @@
   import { LOOK_EVERY, Watching } from './watching.svelte'
 
   const { activity, tab, onclose }: { activity: Activity; tab: string; onclose: () => void } = $props()
-
   const watching = new Watching(() => activity.peek(tab))
-
   const held = $derived(activity.seen.tabs[tab])
   const touched = $derived(activity.seen.acting[tab]?.at ?? 0)
   const title = $derived(held ? held.title || shownHost(held.url) : '')
-
   $effect(() => {
     if (!held) onclose()
   })
-
   const seen = $derived([touched, held?.url, held?.title, held?.parked].join('\n'))
-
   $effect(() => {
     if (seen) void watching.look()
   })
-
   $effect(() => {
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') void watching.look()
     }, LOOK_EVERY)
     return () => clearInterval(timer)
   })
-
   function takeOver() {
     void activity.show(tab)
     onclose()
@@ -66,7 +59,6 @@
     gap: var(--space-2);
     min-width: 0;
   }
-
   .address {
     overflow: hidden;
     color: var(--muted);
@@ -75,7 +67,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .page {
     display: block;
     width: auto;
@@ -87,11 +78,9 @@
     border-radius: var(--radius-sm);
     background: var(--surface);
   }
-
   .stale {
     opacity: 0.6;
   }
-
   .quiet {
     margin: 0;
     padding: var(--space-4) 0;

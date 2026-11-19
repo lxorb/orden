@@ -15,7 +15,6 @@ pub enum SandboxPolicy {
     Required,
     Disabled,
 }
-
 impl SandboxPolicy {
     #[must_use]
     pub fn parse(asked: &str) -> Self {
@@ -26,16 +25,13 @@ impl SandboxPolicy {
         }
     }
 }
-
 pub const LOWEST_DEBUG_PORT: u16 = 1024;
-
 #[must_use]
 pub fn debug_port(asked: Option<&str>) -> Option<u16> {
     asked
         .and_then(|port| port.parse::<u16>().ok())
         .filter(|port| *port >= LOWEST_DEBUG_PORT)
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EngineSettings {
     pub sandbox: SandboxPolicy,
@@ -48,7 +44,6 @@ pub struct EngineSettings {
     pub windowless: bool,
     pub accelerated: bool,
 }
-
 impl Default for EngineSettings {
     fn default() -> Self {
         let (swipe_feature, swipe_switch, swipe_off) = ENGINE_SWIPE;
@@ -68,14 +63,12 @@ impl Default for EngineSettings {
         }
     }
 }
-
 impl EngineSettings {
     #[must_use]
     pub fn with_switches(mut self, more: impl IntoIterator<Item = Switch>) -> Self {
         self.switches.extend(more);
         self
     }
-
     #[must_use]
     pub fn disabling(mut self, feature: &str) -> Self {
         if !self.disabled_features.iter().any(|one| one == feature) {
@@ -83,7 +76,6 @@ impl EngineSettings {
         }
         self
     }
-
     #[must_use]
     pub fn enabling(mut self, feature: &str) -> Self {
         if !self.enabled_features.iter().any(|one| one == feature) {
@@ -92,7 +84,6 @@ impl EngineSettings {
         self
     }
 }
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Embed {
     pub label: String,
@@ -103,7 +94,6 @@ pub struct Embed {
     pub position: (f64, f64),
     pub size: (f64, f64),
 }
-
 pub fn embed_allowed(embed: &Embed, extensions: &impl ExtensionUrls) -> Outcome<()> {
     if embed.label.is_empty() {
         return Err(Failure::new(
@@ -121,7 +111,6 @@ pub fn embed_allowed(embed: &Embed, extensions: &impl ExtensionUrls) -> Outcome<
         format!("{} is not an address a web tab opens", embed.url),
     ))
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Cookie {
     pub name: String,
@@ -132,7 +121,6 @@ pub struct Cookie {
     pub http_only: bool,
     pub expires: Option<u64>,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Download {
     pub id: u64,
@@ -142,58 +130,36 @@ pub struct Download {
     pub total: Option<u64>,
     pub done: bool,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Picture {
     pub width: u32,
     pub height: u32,
     pub png: Vec<u8>,
 }
-
 pub trait WebPage {
     fn label(&self) -> &str;
-
     fn navigate(&self, url: &Url) -> Outcome<()>;
-
     fn step(&self, delta: i32) -> Outcome<()>;
-
     fn reload(&self) -> Outcome<()>;
-
     fn evaluate(&self, script: &str) -> Outcome<()>;
-
     fn send(&self, message: &str) -> Outcome<u64>;
-
     fn place(&self, position: (f64, f64), size: (f64, f64)) -> Outcome<()>;
-
     fn zoom(&self, factor: f64) -> Outcome<()>;
-
     fn find(&self, text: &str, forward: bool) -> Outcome<()>;
-
     fn devtools(&self) -> Outcome<()>;
-
     fn print_to_pdf(&self, into: &Path) -> Outcome<()>;
-
     fn capture(&self) -> Outcome<Picture>;
-
     fn close(&self) -> Outcome<()>;
 }
-
 pub trait WebEngine {
     fn settings(&self) -> &EngineSettings;
-
     fn profiles(&self) -> &Profiles;
-
     fn embed(&self, embed: Embed) -> Outcome<Box<dyn WebPage>>;
-
     fn page(&self, label: &str) -> Option<Box<dyn WebPage>>;
-
     fn cookies(&self, store: Option<&StoreName>) -> Outcome<Vec<Cookie>>;
-
     fn clear(&self, store: Option<&StoreName>) -> Outcome<()>;
-
     fn downloads(&self) -> Outcome<Vec<Download>>;
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Heard {
     Navigated { label: String, url: String },
@@ -203,7 +169,6 @@ pub enum Heard {
     Downloading(Download),
     Closed { label: String },
 }
-
 pub trait Listener {
     fn heard(&self, event: Heard);
 }

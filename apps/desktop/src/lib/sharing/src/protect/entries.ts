@@ -10,24 +10,19 @@ const unlocking = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
     : import('./unlocking')
-
 const failed = (error: unknown) =>
   busy.failed(`That did not work: ${error instanceof Error ? error.message : String(error)}`)
-
 export const LOCK_MARK: IconNode = [
   ['rect', { width: '18', height: '11', x: '3', y: '11', rx: '2', ry: '2' }],
   ['path', { d: 'M7 11V7a5 5 0 0 1 10 0v4' }],
 ]
-
 export interface ProtectRow extends MenuItem {
   id: 'protect' | 'unprotect' | 'lock' | 'lock-all' | 'agents'
   run: () => void
 }
-
 function rootOf(path: string): string | null {
   return spaceHolding(workspaceView().spaces, path)?.root ?? null
 }
-
 export function protectEntries(path: string | null | undefined): ProtectRow[] {
   if (__EVEN_PLUGIN__ || !path) return []
   const root = rootOf(path)
@@ -66,7 +61,6 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
     },
   ]
 }
-
 export function lockAllEntry(): ProtectRow[] {
   return unlocks.any ? [{ id: 'lock-all', label: 'Lock protected items', run: () => unlocks.lockAll() }] : []
 }

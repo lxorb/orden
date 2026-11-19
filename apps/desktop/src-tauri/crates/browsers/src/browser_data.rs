@@ -9,24 +9,17 @@ use crate::browser_profiles::{copied, known, profiles_of};
 use orden_base::paths::folded;
 
 const MOST_VISITS: i64 = 2000;
-
 const MOST_PAGES: usize = 5000;
-
 const LONGEST_MARK: usize = 46 * 1024;
-
 const MARK_SIZE: i64 = 32;
-
 const CHROMIUM_EPOCH: i64 = 11_644_473_600_000_000;
-
 const SAFARI_EPOCH: f64 = 978_307_200.0;
-
 #[derive(Clone, Copy)]
 enum Kind {
     Mozilla,
     Chromium,
     Safari,
 }
-
 fn profile_kind(browser: &str) -> Option<Kind> {
     match browser {
         "zen" | "firefox" => Some(Kind::Mozilla),
@@ -35,7 +28,6 @@ fn profile_kind(browser: &str) -> Option<Kind> {
         _ => None,
     }
 }
-
 #[tauri::command(async)]
 pub fn read_browser_history(browser: String, profile: String) -> Result<String, String> {
     let kind = profile_kind(&browser).ok_or("not a browser the import reads")?;
@@ -48,7 +40,6 @@ pub fn read_browser_history(browser: String, profile: String) -> Result<String, 
     let rows = history_of(&db.connection, kind).map_err(|error| format!("{file}: {error}"))?;
     Ok(Value::Array(rows).to_string())
 }
-
 #[tauri::command(async)]
 pub fn read_browser_icons(
     browser: String,
@@ -67,12 +58,10 @@ pub fn read_browser_icons(
         marks_of(&db.connection, kind, &asked).map_err(|error| format!("{file}: {error}"))?;
     Ok(Value::Object(marks).to_string())
 }
-
 pub(crate) struct Opened {
     pub(crate) connection: Connection,
     _copy: tempfile::TempDir,
 }
-
 fn copied_database(browser: &str, profile: &str, file: &str) -> Result<Opened, String> {
     let listed = profiles_of(browser);
     let path = if browser == "safari" {
@@ -86,7 +75,6 @@ fn copied_database(browser: &str, profile: &str, file: &str) -> Result<Opened, S
     };
     opened(&path, file)
 }
-
 pub(crate) fn opened(path: &Path, file: &str) -> Result<Opened, String> {
     let folder = path.parent().ok_or("a profile has a folder")?;
     let copy =
@@ -98,7 +86,6 @@ pub(crate) fn opened(path: &Path, file: &str) -> Result<Opened, String> {
         _copy: copy,
     })
 }
-
 fn history_of(db: &Connection, kind: Kind) -> rusqlite::Result<Vec<Value>> {
     let query = match kind {
         Kind::Mozilla => {
@@ -134,18 +121,15 @@ fn history_of(db: &Connection, kind: Kind) -> rusqlite::Result<Vec<Value>> {
     })?;
     rows.collect()
 }
-
 #[allow(clippy::cast_possible_truncation)]
 fn safari_time(seconds: f64) -> i64 {
     ((seconds + SAFARI_EPOCH) * 1000.0) as i64
 }
-
 struct Candidate {
     page: String,
     id: i64,
     width: i64,
 }
-
 fn marks_of(db: &Connection, kind: Kind, pages: &[&str]) -> rusqlite::Result<Map<String, Value>> {
     let (listing, picture) = match kind {
         Kind::Mozilla => (
@@ -171,7 +155,6 @@ fn marks_of(db: &Connection, kind: Kind, pages: &[&str]) -> rusqlite::Result<Map
             })
         })?
         .collect::<rusqlite::Result<Vec<Candidate>>>()?;
-
     let chosen = chosen_marks(&candidates, pages);
     let mut picture = db.prepare(picture)?;
     let mut drawn: HashMap<i64, Option<String>> = HashMap::new();
@@ -187,7 +170,6 @@ fn marks_of(db: &Connection, kind: Kind, pages: &[&str]) -> rusqlite::Result<Map
     }
     Ok(out)
 }
-
 fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str, i64)> {
     let better =
         |held: &Candidate, one: &Candidate| match (held.width >= MARK_SIZE, one.width >= MARK_SIZE)
@@ -209,7 +191,6 @@ fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str
             }
         }
     }
-
     pages
         .iter()
         .filter_map(|page| {
@@ -220,7 +201,6 @@ fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str
         })
         .collect()
 }
-
 fn site_part(page: &str) -> &str {
     let after = page.find("://").map_or(0, |at| at + 3);
     let end = page[after..]
@@ -228,7 +208,6 @@ fn site_part(page: &str) -> &str {
         .map_or(page.len(), |at| after + at);
     &page[..end]
 }
-
 fn data_address(bytes: &[u8]) -> Option<String> {
     if bytes.is_empty() || bytes.len() > LONGEST_MARK {
         return None;
@@ -250,13 +229,11 @@ fn data_address(bytes: &[u8]) -> Option<String> {
     };
     Some(format!("data:{kind};base64,{}", BASE64.encode(bytes)))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const PNG: &[u8] = b"\x89PNG\r\n\x1a\nfake";
-
     fn mozilla() -> Connection {
         let db = Connection::open_in_memory().expect("a database");
         db.execute_batch(
@@ -295,7 +272,6 @@ mod tests {
         drop(add);
         db
     }
-
     #[test]
     fn the_history_comes_newest_first_without_hidden_or_unvisited_pages() {
         let rows = history_of(&mozilla(), Kind::Mozilla).expect("the history");
@@ -307,7 +283,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_chromium_history_counts_from_1601() {
         let db = Connection::open_in_memory().expect("a database");
@@ -321,7 +296,6 @@ mod tests {
         assert_eq!(rows[0]["last"], 1_700_000_000_000_i64);
         assert_eq!(rows[0]["typed"], 1);
     }
-
     #[test]
     fn a_safari_history_takes_the_last_visits_title_and_counts_from_2001() {
         let db = Connection::open_in_memory().expect("a database");
@@ -338,7 +312,6 @@ mod tests {
         assert_eq!(rows[0]["title"], "After");
         assert_eq!(rows[0]["last"], 1_700_000_000_000_i64);
     }
-
     #[test]
     fn each_page_gets_its_own_mark_else_its_sites_at_the_size_it_is_drawn() {
         let marks = marks_of(
@@ -362,7 +335,6 @@ mod tests {
         assert!(!marks.contains_key("https://docs.example.com/guide"));
         assert!(!marks.contains_key("https://nowhere.example.com/"));
     }
-
     #[test]
     fn a_site_is_its_scheme_and_host() {
         assert_eq!(
@@ -375,14 +347,12 @@ mod tests {
         );
         assert_eq!(site_part("https://a.example.com"), "https://a.example.com");
     }
-
     #[test]
     fn a_picture_too_large_is_no_mark() {
         let big = [PNG, &vec![0_u8; LONGEST_MARK]].concat();
         assert!(data_address(&big).is_none());
         assert!(data_address(PNG).is_some());
     }
-
     #[test]
     fn only_a_browser_the_import_reads_is_asked() {
         assert!(read_browser_history("netscape".into(), "/x".into()).is_err());

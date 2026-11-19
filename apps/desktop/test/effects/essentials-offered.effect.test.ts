@@ -4,12 +4,10 @@ import { expect, test } from 'vitest'
 const Bookmarks = (await import('../../src/lib/sidebar/src/Bookmarks.svelte')).default
 const { carry } = await import('../../src/lib/ui-kit/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
-
 const file = (path: string, is_dir = false) => {
   const name = path.split('/').pop() ?? path
   return { name, path, is_dir, modified: 0, created: 0, children: [] }
 }
-
 test.each([
   ['/space/a.md', true],
   ['/space/Work', false],
@@ -24,7 +22,6 @@ test.each([
   const target = document.body.appendChild(document.createElement('div'))
   const drawn = mount(Bookmarks, { target, props: { onsearch: () => undefined } })
   const empty = () => target.querySelector('.tiles.is-floating .is-empty') !== null
-
   carry({ setData: () => undefined } as unknown as DataTransfer, [path])
   workspace.panes.dragged({ tabId: null })
   flushSync()

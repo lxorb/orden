@@ -6,12 +6,10 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void store.set(key, value),
   removeItem: (key: string) => void store.delete(key),
 })
-
 vi.mock('../src/lib/platform/src/tauri', async (actual) => ({
   ...(await actual<typeof import('../src/lib/platform/src/tauri')>()),
   isDesktop: true,
 }))
-
 const asked = vi.hoisted(() => ({ answer: true, titles: [] as string[], details: [] as string[] }))
 vi.mock('../src/lib/ui-kit/src/prompt.svelte', () => ({
   prompt: {
@@ -22,7 +20,6 @@ vi.mock('../src/lib/ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-
 const settings = await import('../src/lib/gates/src/api')
 const {
   appsOn,
@@ -42,9 +39,7 @@ const { experimentalPane } = await import('../src/lib/settings/src/experimental-
 const { kindsPane } = await import('../src/lib/settings/src/kinds-pane')
 const { openApplication } = await import('../src/lib/apps/src/open')
 const { account } = await import('../src/lib/accounts/src/account.svelte')
-
 Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
-
 const FEATURES = [
   'chats',
   'applications',
@@ -54,23 +49,18 @@ const FEATURES = [
   'databases',
   'glasses',
 ] as const
-
 const ON = [chatsOn, appsOn, explorerOn, passOn, timeOn, basesOn, settings.glassesOn]
-
 function fields() {
   return experimentalPane().groups.flatMap((group) => group.fields)
 }
-
 function field(key: string) {
   const found = fields().find((one) => one.key === key)
   if (found?.kind !== 'switch') throw new Error(`no switch ${key}`)
   return found
 }
-
 const master = () => field('experimental.enabled')
 const feature = (name: (typeof FEATURES)[number]) => field(`experimental.${name}`)
 const anyOn = () => ON.some((on) => on())
-
 beforeEach(() => {
   store.clear()
   hiddenKinds.restore()
@@ -78,7 +68,6 @@ beforeEach(() => {
   asked.titles.length = 0
   asked.details.length = 0
 })
-
 describe('the Experimental section', () => {
   test('starts with everything off, the features locked until the master is on', () => {
     expect(master().get()).toBe(false)
@@ -90,39 +79,33 @@ describe('the Experimental section', () => {
     }
     expect(anyOn()).toBe(false)
   })
-
   test('asks before turning the master on, saying bugs will come, and Cancel leaves it off', async () => {
     asked.answer = false
     master().set(true)
     await vi.waitFor(() => expect(asked.titles).toHaveLength(1))
     expect(asked.details[0]).toContain('100%')
     expect(experimentalOn()).toBe(false)
-
     asked.answer = true
     master().set(true)
     await vi.waitFor(() => expect(experimentalOn()).toBe(true))
     for (const name of FEATURES) expect(feature(name).locked?.()).toBe(false)
   })
-
   test('turning the master off hides every feature, and turning it on brings back each choice', async () => {
     master().set(true)
     await vi.waitFor(() => expect(experimentalOn()).toBe(true))
     for (const name of FEATURES) feature(name).set(true)
     expect(ON.every((on) => on())).toBe(true)
     expect(kindsHere()).toEqual(expect.arrayContaining(['chat', 'application', 'explorer', 'pass']))
-
     master().set(false)
     expect(asked.titles).toHaveLength(1)
     expect(anyOn()).toBe(false)
     expect(kindsHere()).not.toContain('application')
     expect(openApplication('/s/Box.application')).toBeNull()
     for (const name of FEATURES) expect(feature(name).get()).toBe(true)
-
     master().set(true)
     await vi.waitFor(() => expect(experimentalOn()).toBe(true))
     expect(ON.every((on) => on())).toBe(true)
   })
-
   test('the features left Note types', async () => {
     master().set(true)
     await vi.waitFor(() => expect(experimentalOn()).toBe(true))
@@ -134,20 +117,17 @@ describe('the Experimental section', () => {
       expect(keys).not.toContain(`kinds.${kind}`)
     }
   })
-
   test('an account that had all of them on before comes back with everything off', () => {
     const before = ['shown-chats', 'shown-pass', 'shown-explorer', 'shown-time', 'shown-bases']
     store.set(KINDS_KEY, JSON.stringify(before))
     hiddenKinds.restore()
     expect(experimentalOn()).toBe(false)
     expect(anyOn()).toBe(false)
-
     receive({ hiddenKinds: [...before, EXPERIMENTAL_WORD] })
     expect(experimentalOn()).toBe(true)
     expect(anyOn()).toBe(false)
     for (const name of FEATURES) expect(feature(name).get()).toBe(false)
   })
-
   test('follows the account, master and features alike', () => {
     receive({ hiddenKinds: [EXPERIMENTAL_WORD, settings.APPS_WORD, settings.CHATS_WORD] })
     expect(appsOn()).toBe(true)

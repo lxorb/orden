@@ -2,48 +2,37 @@ import { type Canvas, noTimes, readCanvas, type Thing, timeIn, writeCanvas } fro
 import { holdsExtras, mergedExtras } from './canvas-extras'
 
 export const TOMBSTONE_KEPT = 90 * 24 * 60 * 60 * 1000
-
 const byId = <T extends Thing>(things: readonly T[]): Map<string, T> =>
   new Map(things.map((thing) => [thing.id, thing]))
-
 export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   const changed: string[] = []
   const removed: string[] = []
   const shifted: string[] = []
   const touched = { changed, removed, shifted }
-
   diff(before.nodes, after.nodes, touched)
   diff(before.edges, after.edges, touched)
   diff(before.ink, after.ink, touched)
-
   const touchedIds = new Set(changed)
   const at = noTimes()
   const stamp = (id: string) => {
     const when = touchedIds.has(id) ? now : timeIn(before.at, id)
     if (when !== undefined) at[id] = when
   }
-
   for (const thing of [...after.nodes, ...after.edges, ...after.ink]) stamp(thing.id)
-
   const gone = noTimes()
-
   for (const [id, since] of Object.entries(before.gone)) {
     if (at[id] !== undefined || now - since >= TOMBSTONE_KEPT) continue
     gone[id] = since
   }
-
   for (const id of removed) {
     if (at[id] === undefined) gone[id] = now
   }
-
   const out: Canvas = { ...after, at, gone }
   const moved = movesAfter(before.moved, shifted, removed, now)
   if (moved) out.moved = moved
   else delete out.moved
-
   return out
 }
-
 function movesAfter(
   was: Record<string, number> | undefined,
   shifted: readonly string[],
@@ -52,47 +41,38 @@ function movesAfter(
 ): Record<string, number> | undefined {
   const dropped = was ? removed.filter((id) => timeIn(was, id) !== undefined) : []
   if (!shifted.length && !dropped.length) return was
-
   const moved = noTimes()
   const gone = new Set(dropped)
   for (const [id, since] of Object.entries(was ?? {})) {
     if (!gone.has(id)) moved[id] = since
   }
   for (const id of shifted) moved[id] = now
-
   return Object.keys(moved).length ? moved : undefined
 }
-
 interface Touched {
   changed: string[]
   removed: string[]
   shifted: string[]
 }
-
 function diff<T extends Thing>(before: readonly T[], after: readonly T[], touched: Touched): void {
   const hunks = hunksOf(before, after)
   if (!hunks.length) return
-
   const [only] = hunks
   if (only && hunks.length === 1) {
     sorted(only.was, only.is, touched)
     return
   }
-
   const sides = { was: new Map<T, number>(), is: new Map<T, number>() }
   hunks.forEach((hunk, at) => {
     for (const thing of hunk.was) sides.was.set(thing, at)
     for (const thing of hunk.is) sides.is.set(thing, at)
   })
-
   const was = hunks.flatMap((hunk) => hunk.was)
   const is = hunks.flatMap((hunk) => hunk.is)
   if (sorted(was, is, touched, sides)) return
-
   const [span] = spanOf(before, after)
   if (span) sorted(span.was, span.is, touched)
 }
-
 function sorted<T extends Thing>(
   wasMiddle: readonly T[],
   isMiddle: readonly T[],
@@ -103,19 +83,16 @@ function sorted<T extends Thing>(
     for (const thing of isMiddle) touched.changed.push(thing.id)
     return true
   }
-
   if (isMiddle.length === 0) {
     for (const thing of wasMiddle) touched.removed.push(thing.id)
     return true
   }
-
   const held = new Set(wasMiddle)
   const kept = new Set(isMiddle)
   const fresh = isMiddle.filter((thing) => !held.has(thing))
   const left = wasMiddle.filter((thing) => !kept.has(thing))
   const freshIds = new Map(fresh.map((thing) => [thing.id, thing]))
   const leftIds = new Map(left.map((thing) => [thing.id, thing]))
-
   if (sides) {
     for (const thing of isMiddle) {
       if (held.has(thing) && sides.was.get(thing) !== sides.is.get(thing)) return false
@@ -125,17 +102,14 @@ function sorted<T extends Thing>(
       if (was && sides.was.get(was) !== sides.is.get(thing)) return false
     }
   }
-
   for (const thing of fresh) touched.changed.push(thing.id)
   for (const [id] of leftIds) {
     if (!freshIds.has(id)) touched.removed.push(id)
   }
-
   const was = wasMiddle.filter((thing) => kept.has(thing) || freshIds.has(thing.id))
   const both = isMiddle.filter((thing) => held.has(thing) || leftIds.has(thing.id))
   if (was.length === both.length && was.every((thing, at) => thing === both[at] || thing.id === both[at]?.id))
     return true
-
   const places = new Map(was.map((thing, index) => [thing.id, index]))
   const stayed = standing(both, (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0))
   for (const [index, thing] of both.entries()) {
@@ -143,20 +117,16 @@ function sorted<T extends Thing>(
   }
   return true
 }
-
 export interface Hunk<T> {
   at: number
   was: readonly T[]
   is: readonly T[]
 }
-
 const REACH = 48
 const HUNKS = 64
-
 function resync<T>(before: readonly T[], from: number, after: readonly T[], to: number): [number, number] | null {
   const left = before.length - from
   const right = after.length - to
-
   for (let reach = 1; reach <= REACH; reach++) {
     for (let dropped = 0; dropped <= reach; dropped++) {
       const added = reach - dropped
@@ -167,22 +137,18 @@ function resync<T>(before: readonly T[], from: number, after: readonly T[], to: 
       }
     }
   }
-
   return null
 }
-
 function walked<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] | null {
   const hunks: Hunk<T>[] = []
   let from = 0
   let to = 0
-
   while (from < before.length || to < after.length) {
     if (from < before.length && to < after.length && before[from] === after[to]) {
       from++
       to++
       continue
     }
-
     const step = resync(before, from, after, to)
     if (!step || hunks.length === HUNKS) return null
     const [dropped, added] = step
@@ -194,25 +160,20 @@ function walked<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] | null 
     from += dropped
     to += added
   }
-
   return hunks
 }
-
 export function hunksOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
   if (before === after) return []
   return walked(before, after) ?? spanOf(before, after)
 }
-
 function spanOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
   let head = 0
   const shortest = Math.min(before.length, after.length)
   while (head < shortest && before[head] === after[head]) head++
-
   let tail = 0
   while (tail < shortest - head && before[before.length - 1 - tail] === after[after.length - 1 - tail]) {
     tail++
   }
-
   return [
     {
       at: head,
@@ -221,15 +182,12 @@ function spanOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
     },
   ]
 }
-
 export function standing<T extends object>(items: readonly T[], before: (one: T, other: T) => boolean): Set<number> {
   const starts: number[] = []
   const next: number[] = []
-
   for (let index = items.length - 1; index >= 0; index--) {
     const item = items[index]
     if (!item) continue
-
     let low = 0
     let high = starts.length
     while (low < high) {
@@ -238,30 +196,23 @@ export function standing<T extends object>(items: readonly T[], before: (one: T,
       if (start && before(item, start)) low = middle + 1
       else high = middle
     }
-
     next[index] = starts[low - 1] ?? -1
     starts[low] = index
   }
-
   const out = new Set<number>()
   let at = starts[starts.length - 1] ?? -1
   while (at >= 0) {
     out.add(at)
     at = next[at] ?? -1
   }
-
   return out
 }
-
 const timeOf = (canvas: Canvas, id: string): number => timeIn(canvas.at, id) ?? 0
-
 function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: number): T {
   if (ourTime !== theirTime) return ourTime > theirTime ? ours : theirs
   if (ours === theirs) return ours
-
   return JSON.stringify(ours) <= JSON.stringify(theirs) ? ours : theirs
 }
-
 function mergeList<T extends Thing>(
   ours: readonly T[],
   theirs: readonly T[],
@@ -287,27 +238,22 @@ function mergeList<T extends Thing>(
   const theirGaps = gapsIn(theirList, shared, (id) => !mine.has(id) || theirMove(id) >= ourMove(id))
   const touchedAt = (id: string) =>
     Math.max(ourMove(id), theirMove(id)) || Math.max(timeOf(ourCanvas, id), timeOf(theirCanvas, id))
-
   const out: T[] = []
   const keep = (id: string) => {
     const buried = gone[id]
     const ourTime = timeOf(ourCanvas, id)
     const theirTime = timeOf(theirCanvas, id)
-
     if (buried !== undefined && buried >= Math.max(ourTime, theirTime)) return
-
     const one = mine.get(id)
     const other = yours.get(id)
     const kept = one && other ? later(one, ourTime, other, theirTime) : (one ?? other)
     if (kept) out.push(kept)
   }
-
   for (let gap = 0; gap <= anchors.length; gap++) {
     const left = ourGaps[gap] ?? []
     const right = theirGaps[gap] ?? []
     let i = 0
     let j = 0
-
     while (i < left.length || j < right.length) {
       const one = left[i]
       const other = right[j]
@@ -323,14 +269,11 @@ function mergeList<T extends Thing>(
       else j++
       keep((first ? one : other) ?? '')
     }
-
     const anchor = anchors[gap]
     if (anchor !== undefined) keep(anchor)
   }
-
   return out
 }
-
 function settled(
   ours: readonly Thing[],
   theirs: readonly Thing[],
@@ -341,7 +284,6 @@ function settled(
   const one = ours.filter((thing) => shared(thing.id)).map((thing) => thing.id)
   const other = theirs.filter((thing) => shared(thing.id)).map((thing) => thing.id)
   if (one.every((id, index) => id === other[index])) return one
-
   const places = new Map(one.map((id, index) => [id, index]))
   other.forEach((id, index) => {
     const seen = places.get(id) ?? index
@@ -349,35 +291,28 @@ function settled(
     const yours = theirTime(id)
     places.set(id, yours > mine ? index : mine > yours ? seen : Math.min(seen, index))
   })
-
   return one.sort((a, b) => {
     const gap = (places.get(a) ?? 0) - (places.get(b) ?? 0)
     return gap || (a < b ? -1 : 1)
   })
 }
-
 function gapsIn(list: readonly Thing[], shared: (id: string) => boolean, stands: (id: string) => boolean): string[][] {
   const gaps: string[][] = [[]]
   for (const { id } of list) {
     if (shared(id)) gaps.push([])
     else if (stands(id)) gaps[gaps.length - 1]?.push(id)
   }
-
   return gaps
 }
-
 export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
   const gone = noTimes()
-
   for (const [id, when] of Object.entries({ ...ours.gone, ...theirs.gone })) {
     const mine = timeIn(ours.gone, id) ?? 0
     const yours = timeIn(theirs.gone, id) ?? 0
     const buried = Math.max(mine, yours, when)
     if (now - buried >= TOMBSTONE_KEPT) continue
-
     gone[id] = buried
   }
-
   const kept = keptIcon(ours.icon ?? null, theirs.icon ?? null)
   const nodes = mergeList(ours.nodes, theirs.nodes, ours, theirs, gone)
   const cards = new Set(nodes.map((node) => node.id))
@@ -391,13 +326,11 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     if (gone[id] !== undefined && !held.has(id)) continue
     at[id] = Math.max(timeIn(ours.at, id) ?? 0, timeIn(theirs.at, id) ?? 0)
   }
-
   const moved = noTimes()
   for (const id of new Set([...Object.keys(ours.moved ?? {}), ...Object.keys(theirs.moved ?? {})])) {
     if (!held.has(id)) continue
     moved[id] = Math.max(timeIn(ours.moved ?? {}, id) ?? 0, timeIn(theirs.moved ?? {}, id) ?? 0)
   }
-
   return {
     nodes,
     edges,
@@ -412,33 +345,24 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
       : {}),
   }
 }
-
 function keptTint(ours: Canvas, theirs: Canvas, kept: string | null): string | null {
   const mine = (ours.icon ?? null) === kept ? (ours.iconColor ?? null) : null
   const yours = (theirs.icon ?? null) === kept ? (theirs.iconColor ?? null) : null
-
   return keptIcon(mine, yours)
 }
-
 function keptIcon(ours: string | null, theirs: string | null): string | null {
   if (ours === null || ours === theirs) return theirs
   if (theirs === null) return ours
-
   return ours <= theirs ? ours : theirs
 }
-
 export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now()): string {
   if (ours === theirs) return ours
-
   const mine = readCanvas(ours)
   const yours = readCanvas(theirs)
-
   if (!weighs(mine)) return theirs
   if (!weighs(yours)) return ours
-
   return writeCanvas(merged(mine, yours, now))
 }
-
 const weighs = (canvas: Canvas): boolean =>
   holdsExtras(canvas.extras) ||
   canvas.nodes.length > 0 ||

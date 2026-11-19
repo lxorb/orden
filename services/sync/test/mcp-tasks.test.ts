@@ -6,16 +6,13 @@ import { type InboxPage, inboxPageOf } from '@orden/sync-core'
 let env: TestEnv
 let token: string
 let space: string
-
 const today = new Date().toISOString().slice(0, 10)
-
 beforeEach(async () => {
   env = testEnv()
   env.ROOMS = running(env).ROOMS
   token = await signIn(env, 'a@b.dev')
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
   space = created.json.space.id
-
   const notes: [string, string][] = [
     [
       'Thesis.md',
@@ -28,9 +25,7 @@ beforeEach(async () => {
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   }
 })
-
 afterEach(() => env.close())
-
 async function baseFile(path: string, yaml: string) {
   const hash = 'b'.repeat(64)
   await env.NOTES.put(`blobs/${hash}`, yaml)
@@ -41,12 +36,10 @@ async function baseFile(path: string, yaml: string) {
     )
     .run(space, path, yaml.length, hash)
 }
-
 async function connector(readOnly = false): Promise<string> {
   const made = await call(env, '/v1/mcp/token', { token, body: { readOnly } })
   return made.json.token
 }
-
 async function tool(key: string, name: string, args: Record<string, unknown> = {}) {
   const response = await call<RpcView>(env, '/mcp', {
     token: key,
@@ -54,13 +47,11 @@ async function tool(key: string, name: string, args: Record<string, unknown> = {
   })
   return response.json.result.content[0]?.text ?? ''
 }
-
 async function json(key: string, name: string, args: Record<string, unknown> = {}) {
   return JSON.parse(await tool(key, name, args)) as Record<string, unknown> & {
     todos: { id: string; title: string; space: string | null }[]
   }
 }
-
 async function basesTurned(on: boolean) {
   await call(env, '/v1/settings', {
     method: 'PATCH',
@@ -68,9 +59,7 @@ async function basesTurned(on: boolean) {
     body: { hiddenKinds: on ? ['experimental', 'experimental-bases'] : null },
   })
 }
-
 const read = async (key: string, path: string) => tool(key, 'read_note', { space: 'Work', path })
-
 describe('the todos, with Orden closed', () => {
   test('a todo added, listed, changed and ticked through the connector, never a note', async () => {
     const key = await connector()
@@ -110,13 +99,11 @@ describe('the todos, with Orden closed', () => {
     }[]
     expect(rows.map((one) => one.id)).toContain(id)
   })
-
   test('a change lands over what a device with a clock ahead wrote to the same field', async () => {
     const key = await connector()
     const id = (await json(key, 'add_task', { title: 'Call the bank' })).id as string
     const ahead = `${(Date.now() + 86_400_000).toString(36).padStart(9, '0')}-0000-phone`
     env.db.prepare('update inbox_items set stamps = json_set(stamps, ?, ?) where id = ?').run('$.done', ahead, id)
-
     expect(await json(key, 'update_task', { id, done: true })).toMatchObject({ done: true })
     expect((await json(key, 'list_tasks', { done: true })).todos[0]).toMatchObject({
       id,
@@ -127,18 +114,15 @@ describe('the todos, with Orden closed', () => {
     ) as Record<string, string>
     expect((stamps.done ?? '') > ahead).toBe(true)
   })
-
   test('a change that would make a todo larger than a device reads is refused, the todo kept', async () => {
     const key = await connector()
     const id = (await json(key, 'add_task', { title: 'Call the bank' })).id as string
-
     const said = await tool(key, 'update_task', { id, description: '€'.repeat(8000) })
     expect(said).toMatch(/too large/)
     expect((await json(key, 'list_tasks', {})).todos).toMatchObject([{ id, title: 'Call the bank' }])
     expect(await tool(key, 'add_task', { title: 'Big', description: '€'.repeat(8000) })).toMatch(/too large/)
     expect((await json(key, 'list_tasks', {})).todos).toHaveLength(1)
   })
-
   test('refused in sentences: a token that only reads, a todo that is gone, a bad day, no title', async () => {
     expect(await tool(await connector(true), 'add_task', { title: 'No' })).toMatch(/only read/)
     const key = await connector()
@@ -149,7 +133,6 @@ describe('the todos, with Orden closed', () => {
     expect(await tool(key, 'add_task', { title: '  ' })).toBe('A todo needs a title.')
     expect(await tool(key, 'list_tasks', { limit: 0 })).toMatch(/whole number/)
   })
-
   test('a change that leaves labels or the title as null keeps them as they were', async () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
@@ -163,13 +146,11 @@ describe('the todos, with Orden closed', () => {
       labels: null,
       title: null,
     })
-
     expect(changed).toMatchObject({ title: 'Call the bank', labels: ['work'], done: true })
     expect(await json(key, 'update_task', { id: added.id, labels: 'money' })).toMatchObject({
       labels: ['work'],
     })
   })
-
   test('are listed with the tools, and the base tools only once databases are turned on', async () => {
     const key = await connector()
     const names = async () => {
@@ -186,9 +167,7 @@ describe('the todos, with Orden closed', () => {
     expect(await names()).toEqual(expect.arrayContaining(['query_base', 'add_row']))
   })
 })
-
 const BOOKS = ['filters: file.inFolder("Books")', 'views:', '  - type: table', '    name: All', ''].join('\n')
-
 describe('bases, with Orden closed', () => {
   test('refused while databases are off, and the base left as it was', async () => {
     await baseFile('Books.base', BOOKS)
@@ -211,7 +190,6 @@ describe('bases, with Orden closed', () => {
     await basesTurned(false)
     await off('query_base', { space: 'Work', path: 'Books.base' })
   })
-
   test('a view queried, and a row added in the folder it looks in', async () => {
     await baseFile('Books.base', BOOKS)
     await basesTurned(true)
@@ -230,7 +208,6 @@ describe('bases, with Orden closed', () => {
     ).toMatchObject({ path: 'Books/Emma.md', created: true })
     expect(await read(key, 'Books/Emma.md')).toBe('---\nstatus: next\n---\n')
   })
-
   test('a row added from a template is filled on the asker’s clock, the view’s template first', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(Date.UTC(2026, 9, 7, 20))
@@ -273,7 +250,6 @@ describe('bases, with Orden closed', () => {
       vi.useRealTimers()
     }
   })
-
   test('a row added from a template named by its name alone, as the app finds it', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -283,10 +259,8 @@ describe('bases, with Orden closed', () => {
     await basesTurned(true)
     const key = await connector()
     await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
-
     expect(await read(key, 'Books/Emma.md')).toBe('# Emma\n')
   })
-
   test('a template named by its name passes over a protected namesake, in any case of its letters', async () => {
     for (const [path, content] of [
       ['Diary/Ärzte.md', 'the secret words\n'],
@@ -306,21 +280,17 @@ describe('bases, with Orden closed', () => {
     await basesTurned(true)
     const key = await connector()
     await tool(key, 'add_row', { space: 'Work', base: 'Visits.base', title: 'Anna' })
-
     expect(await read(key, 'Visits/Anna.md')).toBe('# Anna visit\n')
   })
-
   test('a row title or a note path is never a hidden note', async () => {
     await baseFile('Books.base', BOOKS)
     await basesTurned(true)
     const key = await connector()
-
     expect(await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: '.Secret' })).toMatch(/is hidden/)
     expect(await tool(key, 'write_note', { space: 'Work', path: '.hidden/x.md', content: 'hi' })).not.toMatch(/^Saved/)
     expect(await tool(key, 'write_note', { space: 'Work', path: 'a/.b.md', content: 'hi' })).not.toMatch(/^Saved/)
     expect(await tool(key, 'list_notes', { space: 'Work' })).not.toMatch(/\.Secret|\.hidden|\.b\.md/)
   })
-
   test('a base filtered by tag finds the notes tagged in their front matter', async () => {
     for (const [path, content] of [
       ['Inline.md', 'Body #book\n'],
@@ -335,11 +305,9 @@ describe('bases, with Orden closed', () => {
     await basesTurned(true)
     const key = await connector()
     await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
-
     const answer = await json(key, 'query_base', { space: 'Work', path: 'Books.base' })
     expect(answer).toMatchObject({ total: 3 })
   })
-
   test('a base reads a note’s links, its time and its cover as the app does', async () => {
     for (const [path, content] of [
       ['People/Ada.md', '---\nborn: 1815\n---\n'],
@@ -372,7 +340,6 @@ describe('bases, with Orden closed', () => {
       ]),
     )
   })
-
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
     await basesTurned(true)
@@ -380,7 +347,6 @@ describe('bases, with Orden closed', () => {
       total: 1,
     })
   })
-
   test('a date written with its offset is read on the clock of the person asking', async () => {
     env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
     await call(env, `/v1/spaces/${space}/notes`, {
@@ -395,37 +361,31 @@ describe('bases, with Orden closed', () => {
     expect(answer).toMatchObject({ total: 1, groups: [{ rows: [{ path: 'Trip.md' }] }] })
   })
 })
-
 describe('limits a device holds the todos to', () => {
   async function devicesRead(): Promise<{ sent: number; read: number }> {
     const page = await call<InboxPage>(env, '/v2/inbox', { token, method: 'GET' })
     return { sent: page.json.items.length, read: inboxPageOf(page.json)?.items.length ?? -1 }
   }
-
   test('a todo too large for a device is refused rather than kept', async () => {
     const key = await connector(false)
     const long = await tool(key, 'add_task', { title: 'Plan', description: '漢'.repeat(6000) })
     const labels = Array.from({ length: 2000 }, (_, at) => `label-${at}`)
     const many = await tool(key, 'add_task', { title: 'Labels', labels })
-
     expect(long).toMatch(/too large/i)
     expect(many).toMatch(/too large/i)
     const { sent, read } = await devicesRead()
     expect(read).toBe(sent)
   })
-
   test('an update that would make a todo too large leaves it as it was', async () => {
     const key = await connector(false)
     const made = JSON.parse(await tool(key, 'add_task', { title: 'Plan' })) as { id: string }
     const said = await tool(key, 'update_task', { id: made.id, description: '漢'.repeat(6000) })
-
     expect(said).toMatch(/too large/i)
     const { sent, read } = await devicesRead()
     expect(read).toBe(sent)
     expect(sent).toBe(1)
   })
 })
-
 describe('a base over more notes than are read', () => {
   test('says it is partial', async () => {
     for (let at = 0; at < 2005; at++) {
@@ -440,7 +400,6 @@ describe('a base over more notes than are read', () => {
         .run(`r${at}`, space, `rows/r${String(at).padStart(4, '0')}.md`, 1000 + at, text.length, hash)
     }
     await basesTurned(true)
-
     const answer = await json(await connector(true), 'query_base', {
       space: 'Work',
       yaml: 'filters: \'kind == "row"\'\n',

@@ -1,15 +1,12 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PHONE_AGENT = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15"
     " (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
 )
-
 KEYS = """
 (pixels) => {
   const seen = window.ordenApp.viewport
@@ -17,7 +14,6 @@ KEYS = """
   seen.typing = pixels > 0
 }
 """
-
 CARET = """
 () => {
   const view = window.orden
@@ -26,12 +22,8 @@ CARET = """
   view.focus()
 }
 """
-
 INK = "() => (JSON.parse(window.ordenApp.workspace.active?.doc || '{}').orden?.ink ?? []).length"
-
 ACTIVE = "window.ordenApp.workspace.active"
-
-
 def write_by_finger(page: Page) -> None:
     box = page.locator(".canvas").first.bounding_box()
     if not box:
@@ -47,8 +39,6 @@ def write_by_finger(page: Page) -> None:
         page.wait_for_timeout(16)
     cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
     page.wait_for_timeout(600)
-
-
 def phone(browser: Browser, dark: bool, width: int, height: int) -> None:
     tag = f"{'dark-' if dark else ''}{width}-"
     context = DRIVE.context(
@@ -68,7 +58,6 @@ def phone(browser: Browser, dark: bool, width: int, height: int) -> None:
     page.locator("[data-panel=tree]").get_by_text("Lecture").first.tap()
     wait_for(page, f"{ACTIVE}?.shown === 'Lecture' && window.ordenApp.workspace.panel === null", "the note")
     page.wait_for_timeout(400)
-
     page.evaluate("() => window.ordenApp.toolbar.reset()")
     page.evaluate(CARET)
     page.evaluate(KEYS, 300)
@@ -77,7 +66,6 @@ def phone(browser: Browser, dark: bool, width: int, height: int) -> None:
     DRIVE.shot(page, f"{tag}bar")
     pen.click()
     page.evaluate(KEYS, 0)
-
     wait_for(page, f"{ACTIVE}?.kind === 'canvas'", "the handwriting canvas")
     page.wait_for_selector(".canvas", timeout=15000)
     page.wait_for_timeout(600)
@@ -92,12 +80,10 @@ def phone(browser: Browser, dark: bool, width: int, height: int) -> None:
         wrong(f"[{tag}] the note has no embed: {note!r}")
     if "The proof goes like this\n\n![[handwriting-" not in note or ".canvas]]\n\n\nand then" not in note:
         wrong(f"[{tag}] the embed is not on its own line after the caret: {note!r}")
-
     write_by_finger(page)
     wait_for(page, f"({INK})() > 0", "a stroke written by finger, the pen chosen")
     DRIVE.shot(page, f"{tag}canvas")
     wait_for(page, f"!{ACTIVE}?.dirty", "the drawing saved")
-
     lecture = page.evaluate(
         "() => window.ordenApp.workspace.tabs.find((tab) => tab.shown === 'Lecture').id"
     )
@@ -107,18 +93,13 @@ def phone(browser: Browser, dark: bool, width: int, height: int) -> None:
     DRIVE.shot(page, f"{tag}note")
     embed = page.locator(".orden-embed-file[data-kind=canvas]").first
     embed.wait_for(state="visible", timeout=8000)
-
     embed.tap()
     wait_for(page, f"{ACTIVE}?.kind === 'canvas' && ({INK})() > 0", "the drawing opened again from the note")
     context.close()
-
-
 def drive(browser: Browser) -> None:
     phone(browser, False, 390, 844)
     phone(browser, True, 390, 844)
     phone(browser, False, 820, 1180)
-
-
 raise SystemExit(
     DRIVE.run(drive, "the pen in the note's bar puts a drawing in the note and opens it to write in by hand")
 )

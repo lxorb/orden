@@ -18,7 +18,6 @@ for (const [entry, outfile] of [
     logLevel: 'warning',
   })
 }
-
 const BUNDLE: readonly [string, string, boolean][] = [
   ['install.sh', 'install.sh', true],
   ['ordend.cjs', 'dist/ordend.cjs', false],
@@ -32,9 +31,7 @@ const BUNDLE: readonly [string, string, boolean][] = [
   ['server/cloudflared.service', 'server/cloudflared.service', false],
   ['server/orden-agents.service', 'server/orden-agents.service', false],
 ]
-
 const BLOCK = 512
-
 function header(name: string, size: number, mode: number): Uint8Array {
   const block = new Uint8Array(BLOCK)
   const put = (at: number, text: string) => {
@@ -54,7 +51,6 @@ function header(name: string, size: number, mode: number): Uint8Array {
   put(148, `${octal(sum, 7)}\u0000 `)
   return block
 }
-
 function tar(files: readonly { name: string; data: Uint8Array; mode: number }[]): Uint8Array {
   const parts: Uint8Array[] = []
   for (const file of files) {
@@ -71,7 +67,6 @@ function tar(files: readonly { name: string; data: Uint8Array; mode: number }[])
   }
   return out
 }
-
 const files = BUNDLE.map(([name, from, runs]) => ({
   name,
   data: new Uint8Array(readFileSync(from)),

@@ -5,26 +5,22 @@ import { zenImport } from './zen-plan'
 import { ZEN_1_17, ZEN_1_17_PLACES, ZEN_1_24, ZEN_TWILIGHT } from './zen-versions.fixture'
 
 const NOW = new Date('2026-11-05T08:00:00.000Z')
-
 const VERSIONS: [string, unknown, ZenPlaces | null][] = [
   ['1.24', ZEN_1_24, null],
   ['a twilight 1.18', ZEN_TWILIGHT, null],
   ['1.17', ZEN_1_17, ZEN_1_17_PLACES],
 ]
-
 function planned(said: unknown, places: ZenPlaces | null) {
   const session = readZenSession(said, places)
   if (!session) throw new Error('no sidebar read')
   return zenImport(session, NOW).spaces
 }
-
 describe.each(VERSIONS)("Zen %s's Essentials", (_, said, places) => {
   test('are read, in their order, as the Essentials they are', () => {
     const tabs = readZenSession(said, places)?.tabs ?? []
     expect(tabs.filter((one) => one.essential).map((one) => one.title)).toEqual(['Mail', 'Calendar', 'Chat'])
     expect(tabs.filter((one) => one.essential).every((one) => one.space === null)).toBe(true)
   })
-
   test('are the Essentials of the first space, at its top, one made in Work among them', () => {
     const [home, work] = planned(said, places)
     expect(home?.name).toBe('Home')
@@ -34,7 +30,6 @@ describe.each(VERSIONS)("Zen %s's Essentials", (_, said, places) => {
     const mail = home?.files.find((one) => one.path === 'Mail.url')
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.url).toBe('https://example.com/mail')
   })
-
   test('leave the pinned tabs and the folders where Zen has them', () => {
     const [, work] = planned(said, places)
     expect(work?.icon).toBe('briefcase')
@@ -43,18 +38,15 @@ describe.each(VERSIONS)("Zen %s's Essentials", (_, said, places) => {
     expect(work?.files.map((one) => one.path)).not.toContain('Docs.md')
   })
 })
-
 describe('a Zen up to 1.17', () => {
   test('is read only with the spaces and the pins Places keeps', () => {
     expect(readZenSession(ZEN_1_17)).toBeNull()
   })
-
   test('takes its spaces in their order and the pinned tab the session lost', () => {
     const [home, work] = planned(ZEN_1_17, ZEN_1_17_PLACES)
     expect([home?.name, work?.name]).toEqual(['Home', 'Work'])
     expect(home?.order['']).toEqual(['Mail.url', 'Calendar.url', 'Chat.url', 'News.url'])
   })
-
   test('takes the name somebody gave a pin, and the page of a pin that had not loaded', () => {
     const [, work] = planned(ZEN_1_17, ZEN_1_17_PLACES)
     expect(work?.order.Docs).toEqual(['The guide.url', 'API.url'])
@@ -62,7 +54,6 @@ describe('a Zen up to 1.17', () => {
     expect(board?.kind === 'note' && readShortcut(board.text)?.url).toBe('https://example.net/board')
   })
 })
-
 const PLACES: ZenPlaces = {
   spaces: [],
   pins: [],
@@ -91,21 +82,18 @@ const PLACES: ZenPlaces = {
     ],
   },
 }
-
 describe("Zen's bookmarks", () => {
   test('come in the first space, and a folder Zen shows only in a space in that one', () => {
     const session = readZenSession(ZEN_1_24)
     if (!session) throw new Error('no sidebar read')
     const marked = withBookmarks(session, PLACES)
     const [home, work] = zenImport(marked, NOW).spaces
-
     expect(home?.order['']?.at(-1)).toBe('Bookmarks')
     expect(home?.order['Bookmarks/Bookmarks toolbar']).toEqual(['Wiki.url'])
     expect(work?.order['Bookmarks/Bookmarks toolbar']).toEqual(['Reading'])
     expect(work?.order['Bookmarks/Bookmarks toolbar/Reading']).toEqual(['Article.url'])
     expect(marked.dropped).toBe(1)
   })
-
   test('are nothing where Places could not be read', () => {
     const session = readZenSession(ZEN_1_24)
     if (!session) throw new Error('no sidebar read')

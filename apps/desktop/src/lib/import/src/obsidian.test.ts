@@ -8,14 +8,12 @@ import { detect, readAs } from './read'
 import { insideFolder, sourceOf, sourcesFrom, type Source } from './sources'
 
 const file = (path: string, body = 'x'): Source => sourceOf(path, new TextEncoder().encode(body))
-
 async function noteFrom(path: string, ...files: Source[]): Promise<string> {
   const plan = await readAs('obsidian', [file('.obsidian/app.json', '{}'), ...files])
   const found = plan.files.find((one) => one.path === path)
   if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
   return found.text
 }
-
 describe('an Obsidian vault', () => {
   test('says so by its settings folder, before any folder shape', async () => {
     await expect(detect([file('.obsidian/app.json', '{}'), file('A.md', '# A')])).resolves.toBe('obsidian')
@@ -30,7 +28,6 @@ describe('an Obsidian vault', () => {
     ).resolves.toBe('obsidian')
     await expect(detect([file('Vault/.obsidian/app.json', '{}'), file('Vault/A.md', '# A')])).resolves.toBe('obsidian')
   })
-
   test('leaves behind what is about one machine, and keeps the rest of its settings', () => {
     expect(leftInVault('.obsidian/workspace.json')).toBe(true)
     expect(leftInVault('.obsidian/workspace-mobile.json')).toBe(true)
@@ -43,17 +40,14 @@ describe('an Obsidian vault', () => {
     expect(leftInVault('.stversions/A.md')).toBe(true)
     expect(leftInVault('Projects/node_modules/x/index.js')).toBe(true)
     expect(leftInVault('.gitignore')).toBe(true)
-
     expect(leftInVault('.obsidian/.DS_Store')).toBe(true)
     expect(leftInVault('.obsidian/snippets/._wide.css')).toBe(true)
-
     expect(leftInVault('.obsidian/app.json')).toBe(false)
     expect(leftInVault('.obsidian/workspaces.json')).toBe(false)
     expect(leftInVault('.obsidian/templates.json')).toBe(false)
     expect(leftInVault('Notes/workspace.json')).toBe(false)
     expect(leftInVault('Notes/A.md')).toBe(false)
   })
-
   test('arrives as its notes, with the settings Obsidian needs to open it again', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -64,7 +58,6 @@ describe('an Obsidian vault', () => {
       file('Projects/Plan.md', '# Plan\n\nSee [[Ideas]]'),
       file('Ideas.md', '# Ideas'),
     ])
-
     const paths = plan.files.map((one) => one.path).sort()
     expect(paths).toEqual(['.obsidian/app.json', 'Ideas.md', 'Projects/Plan.md'])
     expect(plan.format).toBe('obsidian')
@@ -77,10 +70,8 @@ describe('an Obsidian vault', () => {
       file('Old vault/.obsidian/graph.json', '{}'),
       file('Old vault/Note.md', '# Old'),
     ])
-
     expect(plan.files.map((one) => one.path).sort()).toEqual(['.obsidian/app.json', 'Home.md', 'Old vault/Note.md'])
   })
-
   test('says how many of its files are in iCloud rather than on this Mac', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -89,12 +80,10 @@ describe('an Obsidian vault', () => {
       file('Pictures/.photo.png.icloud', 'bplist00'),
       file('.trash/.Old.md.icloud', 'bplist00'),
     ])
-
     expect(plan.files.map((one) => one.path).sort()).toEqual(['.obsidian/app.json', 'Home.md'])
     expect(plan.lost).toEqual(['2 files are in iCloud rather than on this Mac'])
   })
 })
-
 describe('what a vault carries into the settings', () => {
   test('is Obsidian’s defaults where app.json says nothing', () => {
     expect(fromAppJson({})).toEqual({
@@ -106,7 +95,6 @@ describe('what a vault carries into the settings', () => {
       keys: 'obsidian',
     })
   })
-
   test('reads each answer the way Obsidian meant it', () => {
     const carried = fromAppJson({
       useMarkdownLinks: true,
@@ -116,7 +104,6 @@ describe('what a vault carries into the settings', () => {
       propertiesInDocument: 'source',
       vimMode: true,
     })
-
     expect(carried).toMatchObject({
       linkFormat: 'relative',
       hardBreaks: false,
@@ -124,26 +111,21 @@ describe('what a vault carries into the settings', () => {
       vim: true,
     })
   })
-
   test('takes a markdown link with no format as the shortest one, Obsidian’s default', () => {
     expect(fromAppJson({ useMarkdownLinks: true }).linkFormat).toBe('shortest')
     expect(fromAppJson({ useMarkdownLinks: true, newLinkFormat: 'absolute' }).linkFormat).toBe('absolute')
   })
-
   test('puts pictures in the space’s own folder for a folder at the top of the vault', () => {
     expect(fromAppJson({ attachmentFolderPath: '/' }).attachments).toBe('space')
     expect(fromAppJson({ attachmentFolderPath: 'Attachments' }).attachments).toBe('space')
     expect(fromAppJson({ attachmentFolderPath: './' }).attachments).toBe('note')
   })
-
   test('reads app.json out of what was picked, and a broken one as the defaults', async () => {
     const strict = await obsidianCarries([file('.obsidian/app.json', '{"strictLineBreaks":true}')])
     expect(strict.hardBreaks).toBe(false)
-
     const broken = await obsidianCarries([file('.obsidian/app.json', '{not json')])
     expect(broken).toEqual(fromAppJson({}))
   })
-
   test('reads the vault’s own app.json, not an older vault’s that sorts first', async () => {
     const carried = await carriedBy('obsidian', [
       file('Old vault/.obsidian/app.json', '{"useMarkdownLinks":true,"vimMode":true}'),
@@ -151,25 +133,21 @@ describe('what a vault carries into the settings', () => {
       file('.obsidian/app.json', '{"vimMode":false}'),
       file('Home.md', '# Home'),
     ])
-
     expect(carried).toMatchObject({ vim: false, linkFormat: 'wikilink' })
     await expect(obsidianCarries([file('Brain/.obsidian/app.json', '{"vimMode":true}')])).resolves.toMatchObject({
       vim: true,
     })
   })
-
   test('is Notion’s habits for a Notion export, and nothing for a plain folder', async () => {
     await expect(carriedBy('notion', [])).resolves.toBe(NOTION)
     expect(NOTION).toMatchObject({ quietMarks: true, keys: 'notion' })
     await expect(carriedBy('markdown', [])).resolves.toBeNull()
   })
 })
-
 describe('the links in a vault', () => {
   test('keep the heading, block or page they point at', async () => {
     const note = file('Note.md', '# Note\n\n## Setup\n\nPara ^abc123\n')
     const paper = file('paper.pdf', '%PDF')
-
     const said = [
       '[[Note#Setup]]',
       '[[Note#Setup|how to set up]]',
@@ -182,7 +160,6 @@ describe('the links in a vault', () => {
       await expect(noteFrom('A.md', file('A.md', `See ${link}.\n`), note, paper)).resolves.toBe(`See ${link}.\n`)
     }
   })
-
   test('keep the heading a markdown link to a note points at', async () => {
     const text = await noteFrom(
       'A.md',
@@ -191,7 +168,6 @@ describe('the links in a vault', () => {
     )
     expect(text).toBe('See [[Note name#Setup|setup]].\n')
   })
-
   test('keep the folder that says which of two files of one name is meant', async () => {
     const both = [
       file('Home/Meeting.md', '# Home meeting\n'),
@@ -200,7 +176,6 @@ describe('the links in a vault', () => {
       file('Work/photo.png', 'P2'),
     ]
     const linked = async (body: string) => noteFrom('A.md', ...both, file('A.md', body))
-
     await expect(linked('See [[Work/Meeting]].\n')).resolves.toBe('See [[Work/Meeting]].\n')
     await expect(linked('See [work](Work/Meeting.md).\n')).resolves.toBe('See [[Work/Meeting|work]].\n')
     await expect(linked('![[Work/photo.png|200]]\n')).resolves.toBe('![[Work/photo.png|200]]\n')
@@ -208,7 +183,6 @@ describe('the links in a vault', () => {
       noteFrom('A.md', file('Work/Plan.md', '# Plan\n'), file('A.md', 'See [[Work/Plan]].\n')),
     ).resolves.toBe('See [[Plan]].\n')
   })
-
   test('keep going to a note at the top that shares its name with one beside them', async () => {
     const text = await noteFrom(
       'Projects/Alpha.md',
@@ -218,7 +192,6 @@ describe('the links in a vault', () => {
     )
     expect(text).toBe('Back to [Home](../Index.md), or [[Index|here]].\n')
   })
-
   test('to a name two notes share stay as written and go where Orden reads them', async () => {
     const text = await noteFrom(
       'People/benf.md',
@@ -228,7 +201,6 @@ describe('the links in a vault', () => {
     )
     expect(text).toBe('- [[LaTeX]]\n- [[LaTeX|tex]]\n')
   })
-
   test('go to the note of the spelling they were written in first', async () => {
     const files = [
       file('People/BookFusion.md', '- [[bookfusion|BookFusion]]\n'),
@@ -239,7 +211,6 @@ describe('the links in a vault', () => {
       'Developed by: [[People/BookFusion|BookFusion]]\n',
     )
   })
-
   test('Orden would read as another note stay wikilinks, with the folder in', async () => {
     const text = await noteFrom(
       'People/Jawuj.md',
@@ -249,7 +220,6 @@ describe('the links in a vault', () => {
     )
     expect(text).toBe('- [[Expansions/Themes/Blur|Blur]]\n- ![[Expansions/Themes/Blur#Usage]]\n')
   })
-
   test('that start with a slash start at the top of the vault', async () => {
     const text = await noteFrom(
       'Notes/Home.md',
@@ -260,27 +230,22 @@ describe('the links in a vault', () => {
     )
     expect(text).toBe('See [x](../Plan.md) and ![[img.png]].\n')
   })
-
   test('whose words hold escaped brackets stay markdown links', async () => {
     const body = 'See [\\[1\\] Intro](Intro.md).\n'
     await expect(noteFrom('Home.md', file('Home.md', body), file('Intro.md', '# Intro\n'))).resolves.toBe(body)
   })
-
   test('are left exactly as written inside code', async () => {
     const kit = file('Kit.md', '# Kit\n')
     const fenced = 'Example:\n\n```markdown\n[the kit](Kit.md) and [[kit#Tent]]\n```\n'
     const inline = 'Write `[the kit](Kit.md)` or ``[[kit#Tent]]`` to link [[Kit]].\n'
-
     await expect(noteFrom('A.md', file('A.md', fenced), kit)).resolves.toBe(fenced)
     await expect(noteFrom('A.md', file('A.md', inline), kit)).resolves.toBe(inline)
     await expect(noteFrom('A.md', file('A.md', '~~~\n[[kit]]\n'), kit)).resolves.toBe('~~~\n[[kit]]\n')
   })
-
   test('are left exactly as written in an indented block or a fence in a callout', async () => {
     const kit = file('Kit.md', '# Kit\n')
     const indented = 'Example:\n\n    See [the kit](Kit.md)\n\n    and [[kit]]\n\nDone.\n'
     const callout = '> [!example]\n> ~~~\n> [[kit]]\n> ~~~\n'
-
     await expect(noteFrom('A.md', file('A.md', indented), kit)).resolves.toBe(indented)
     await expect(noteFrom('A.md', file('A.md', callout), kit)).resolves.toBe(callout)
     await expect(noteFrom('A.md', file('A.md', 'Some words\n    and [[kit]]\n'), kit)).resolves.toBe(
@@ -290,13 +255,11 @@ describe('the links in a vault', () => {
       '- Item\n\n    more about [[kit]]\n',
     )
   })
-
   test('are left exactly as written in a fence inside a list item', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const indented = '# A\n\n1. Write:\n    ~~~md\n    See [the plan](Plan.md)\n    ~~~\n'
     const tabbed = '# A\n\n- Write:\n\t~~~\n\tSee [the plan](Plan.md)\n\t~~~\n'
     const opened = '1. ```markdown\n   See [the plan](Plan.md)\n   ```\n'
-
     await expect(noteFrom('A.md', file('A.md', indented), plan)).resolves.toBe(indented)
     await expect(noteFrom('A.md', file('A.md', tabbed), plan)).resolves.toBe(tabbed)
     await expect(noteFrom('A.md', file('A.md', opened), plan)).resolves.toBe(opened)
@@ -304,43 +267,33 @@ describe('the links in a vault', () => {
       `${opened}   and [[Plan|the plan]]\n`,
     )
   })
-
   test('are left exactly as written in inline code after a lone backtick a paragraph above', async () => {
     const plan = file('Plan.md', '# Plan')
     const body =
       'Press the backtick (`) key to open the console.\n\nIn code: `[the plan](Plan.md)` is a markdown link.\n'
-
     await expect(noteFrom('Notes/A.md', file('Notes/A.md', body), plan)).resolves.toBe(body)
   })
-
   test('after a lone backtick are still pointed at their files', async () => {
     const body = 'Press the backtick (`) key.\n\n![](Screenshot%202.png)\n\nUse `x` here.\n'
-
     await expect(
       noteFrom('Notes/A.md', file('Notes/A.md', body), file('Attachments/Screenshot 2.png', 'png')),
     ).resolves.toBe('Press the backtick (`) key.\n\n![](../Attachments/Screenshot%202.png)\n\nUse `x` here.\n')
   })
-
   test('after a fence left open inside a callout are pointed at their files', async () => {
     const body = '> [!note]\n> ```\n> code\n\n![](pic.png)\n'
-
     await expect(noteFrom('Notes/A.md', file('Notes/A.md', body), file('Attachments/pic.png', 'png'))).resolves.toBe(
       '> [!note]\n> ```\n> code\n\n![](../Attachments/pic.png)\n',
     )
   })
-
   test('are left exactly as written in a tilde fence of a note with Windows line endings', async () => {
     const body = '~~~\r\n![](pic.png)\r\n~~~\r\n'
-
     await expect(
       noteFrom('Notes/Guide.md', file('Notes/Guide.md', body), file('Attachments/pic.png', 'p')),
     ).resolves.toBe(body)
   })
-
   test('in a table cell keep the cell whole', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const table = (link: string) => `| Who | Link |\n| --- | --- |\n| me | ${link} |\n`
-
     await expect(noteFrom('A.md', file('A.md', table('[the plan](Plan.md)')), plan)).resolves.toBe(
       table('[[Plan\\|the plan]]'),
     )
@@ -351,40 +304,32 @@ describe('the links in a vault', () => {
       'See [[Plan|the plan]].\n',
     )
   })
-
   test('in a table under a list item keep the cell whole', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const tabbed = '- Steps\n\t| step | note |\n\t| --- | --- |\n\t| one | [[Plan\\|the plan]] |\n'
     const spaced = (link: string) => `1. Steps\n    | step | note |\n    | --- | --- |\n    | one | ${link} |\n`
-
     await expect(noteFrom('A.md', file('A.md', tabbed), plan)).resolves.toBe(tabbed)
     await expect(noteFrom('A.md', file('A.md', spaced('[the plan](Plan.md)')), plan)).resolves.toBe(
       spaced('[[Plan\\|the plan]]'),
     )
   })
-
   test('are left exactly as written in math', async () => {
     const block = '$$\nA[i](j) = 1\n$$\n'
     const span = 'Let $f[x](y)$ be, for $5 or [y](y.md).\n'
-
     await expect(noteFrom('A.md', file('A.md', block), file('j.md', '# j'))).resolves.toBe(block)
     await expect(noteFrom('A.md', file('A.md', span), file('y.md', '# y'))).resolves.toBe(
       'Let $f[x](y)$ be, for $5 or [[y]].\n',
     )
   })
-
   test('are left exactly as written in a <pre> block or an HTML comment', async () => {
     const body = '<pre>\n[the plan](Plan.md)\n</pre>\n\n<!-- old: [the plan](Plan.md) -->\n'
     const after = `${body}\nNow [the plan](Plan.md), and a <!-- in a sentence [plan](Plan.md).\n`
-
     await expect(noteFrom('A.md', file('A.md', after), file('Plan.md', '# Plan'))).resolves.toBe(
       `${body}\nNow [[Plan|the plan]], and a <!-- in a sentence [[Plan|plan]].\n`,
     )
   })
-
   test('around a picture point the picture at its file', async () => {
     const pic = file('attachments/pic.png', 'png')
-
     await expect(noteFrom('A.md', file('A.md', '[![badge](pic.png)](https://example.com)\n'), pic)).resolves.toBe(
       '[![badge](attachments/pic.png)](https://example.com)\n',
     )
@@ -392,7 +337,6 @@ describe('the links in a vault', () => {
       noteFrom('A.md', file('A.md', '[![cover](pic.png)](Plan.md)\n'), file('Plan.md', '# Plan'), pic),
     ).resolves.toBe('[![cover](attachments/pic.png)](Plan.md)\n')
   })
-
   test('keep pointing at a file whose name holds a percent sign or a hash', async () => {
     await expect(
       noteFrom(
@@ -413,7 +357,6 @@ describe('the links in a vault', () => {
       noteFrom('A.md', file('A.md', 'See [[50%25 off]].\n'), file('50% off.md', 'x'), file('50%25 off.md', 'y')),
     ).resolves.toBe('See [[50%25 off]].\n')
   })
-
   test('to a file whose name holds brackets in a pair are pointed at it', async () => {
     await expect(
       noteFrom(
@@ -423,7 +366,6 @@ describe('the links in a vault', () => {
       ),
     ).resolves.toBe('![](../Attachments/Screenshot%20%281%29.png)\n')
   })
-
   test('whose words hold brackets in a pair are pointed at their files', async () => {
     await expect(
       noteFrom('Notes/A.md', file('Notes/A.md', '![see [1]](pic.png)\n'), file('Attachments/pic.png', 'png')),
@@ -432,7 +374,6 @@ describe('the links in a vault', () => {
       'See [[Plan]](draft).\n',
     )
   })
-
   test('keep pointing at a file whose name holds a bracket alone', async () => {
     await expect(
       noteFrom('Home.md', file('Home.md', 'Read [the intro](1%29%20Intro.pdf) first.\n'), file('1) Intro.pdf', '%PDF')),
@@ -441,7 +382,6 @@ describe('the links in a vault', () => {
       noteFrom('Home.md', file('Home.md', '![scan](%28draft%20scan.png)\n'), file('(draft scan.png', 'png')),
     ).resolves.toBe('![scan](%28draft%20scan.png)\n')
   })
-
   test('with no extension mean the note, whatever file of that stem sorts first', async () => {
     await expect(
       noteFrom(
@@ -460,7 +400,6 @@ describe('the links in a vault', () => {
       ),
     ).resolves.toBe('Read [[Report]] and [[Report.pdf]]\n')
   })
-
   test('with no extension and no note of that name are a note not written yet', async () => {
     await expect(
       noteFrom('Home.md', file('Home.md', 'Write up [[Budget]] later.\n'), file('Files/Budget.xlsx')),
@@ -469,25 +408,21 @@ describe('the links in a vault', () => {
       '![[Diagram]]\n',
     )
   })
-
   test('that name a folder holding no such note are a note not written yet', async () => {
     const beta = file('Clients/Beta/Contacts.md', '# Beta\n')
     const wiki = 'Call [[Clients/Acme/Contacts]].\n'
     const markdown = 'Call [them](Clients/Acme/Contacts.md).\n'
-
     await expect(noteFrom('A.md', file('A.md', wiki), beta)).resolves.toBe(wiki)
     await expect(noteFrom('A.md', file('A.md', markdown), beta)).resolves.toBe(markdown)
     await expect(noteFrom('A.md', file('A.md', 'Call [[Beta/Contacts]].\n'), beta)).resolves.toBe(
       'Call [[Contacts]].\n',
     )
   })
-
   test('keep the case they were written in', async () => {
     await expect(
       noteFrom('Home.md', file('Home.md', 'See the [[plan]] for details.\n'), file('Plan.md', '# Plan\n')),
     ).resolves.toBe('See the [[plan]] for details.\n')
   })
-
   test('reach each of two notes whose names differ only in case', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -499,7 +434,6 @@ describe('the links in a vault', () => {
     const home = plan.files.find((one) => one.path === 'Home.md')
     expect(home?.kind === 'note' && home.text).toBe('See [[todo 2]] and [[TODO]]\n')
   })
-
   test('keep a picture’s size when the Links setting writes markdown', async () => {
     setLinkWriting('shortest')
     try {
@@ -510,7 +444,6 @@ describe('the links in a vault', () => {
       setLinkWriting('wikilink')
     }
   })
-
   test('to a file whose name holds a bracket alone work when the Links setting writes markdown', async () => {
     setLinkWriting('shortest')
     try {
@@ -521,7 +454,6 @@ describe('the links in a vault', () => {
       setLinkWriting('wikilink')
     }
   })
-
   test('in the properties stay wikilinks when the Links setting writes markdown', async () => {
     setLinkWriting('shortest')
     try {
@@ -536,7 +468,6 @@ describe('the links in a vault', () => {
       setLinkWriting('wikilink')
     }
   })
-
   test('keep the folder that says which note is meant when the Links setting writes markdown', async () => {
     setLinkWriting('shortest')
     try {
@@ -552,7 +483,6 @@ describe('the links in a vault', () => {
       setLinkWriting('wikilink')
     }
   })
-
   test('to a note with a bracket in its name stay markdown links', async () => {
     await expect(
       noteFrom(
@@ -562,12 +492,10 @@ describe('the links in a vault', () => {
       ),
     ).resolves.toBe('See [the draft]([Draft]%20Plan.md).\n')
   })
-
   test('written with escaped brackets are words, not links', async () => {
     const body = 'Write it as \\[label\\](Notes.md) to show the syntax.\n'
     await expect(noteFrom('Home.md', file('Home.md', body), file('Notes.md', '# Notes\n'))).resolves.toBe(body)
   })
-
   test('whose words wrap onto a second line are pointed at their files', async () => {
     const out = await noteFrom(
       'Notes/Here.md',
@@ -582,12 +510,10 @@ describe('the links in a vault', () => {
       'The chart below is the one\n![sales by quarter, as sent to the\nboard](../assets/chart.png)\n\nSee [the whole\nplan](../Projects/Plan.md) for the rest.\n',
     )
   })
-
   test('do not run over a blank line', async () => {
     const body = 'An open [bracket\n\nand then](Plan.md) more.\n'
     await expect(noteFrom('Home.md', file('Home.md', body), file('Projects/Plan.md', '# Plan'))).resolves.toBe(body)
   })
-
   test('written as a reference follow a file the import renamed', async () => {
     await expect(
       noteFrom(
@@ -603,19 +529,16 @@ describe('the links in a vault', () => {
       'The answer: ![why][w], and [the note][n].\n\n[w]: Why.png\n[n]: Q.md "The question"\n[^1]: Why%3F.png\n',
     )
   })
-
   test('written as a reference are pointed at a file found by its name', async () => {
     await expect(
       noteFrom('Notes/Here.md', file('Notes/Here.md', '![chart][c]\n\n[c]: chart.png\n'), file('assets/chart.png')),
     ).resolves.toBe('![chart][c]\n\n[c]: ../assets/chart.png\n')
   })
-
   test('escaped with a backslash are words, and only the real link beside them changes', async () => {
     await expect(
       noteFrom('Help.md', file('Help.md', 'Type \\[[Why?]] to link to it, or [[Why?]].\n'), file('Why?.md', '# Why')),
     ).resolves.toBe('Type \\[[Why?]] to link to it, or [[Why]].\n')
   })
-
   test('escaped with a backslash stay words when the Links setting writes markdown', async () => {
     setLinkWriting('shortest')
     try {
@@ -625,7 +548,6 @@ describe('the links in a vault', () => {
       setLinkWriting('wikilink')
     }
   })
-
   test('under a property holding a lone backtick are still pointed at their files', async () => {
     await expect(
       noteFrom(
@@ -635,7 +557,6 @@ describe('the links in a vault', () => {
       ),
     ).resolves.toBe('---\ntitle: Rock `n roll\n---\nSee ![](../assets/pic.png) and `npm i`.\n')
   })
-
   test('to a root note by its relative or rooted path still go there past a namesake beside them', async () => {
     const vault = [file('Plan.md', '# Root plan\n'), file('Projects/Plan.md', '# Project plan\n')]
     await expect(noteFrom('Projects/A.md', ...vault, file('Projects/A.md', 'See [[../Plan]].\n'))).resolves.toBe(
@@ -645,7 +566,6 @@ describe('the links in a vault', () => {
       'See [the plan](../Plan.md).\n',
     )
   })
-
   test('to a file whose name a Mac wrote decomposed keep their own spelling and case', async () => {
     const decomposed = 'Caf\u00e9'.normalize('NFD')
     const body = 'Met at [[Caf\u00e9]], [[caf\u00e9]] and [[Caf\u00e9|the caf\u00e9]], ![[Caf\u00e9.png]].\n'
@@ -658,25 +578,20 @@ describe('the links in a vault', () => {
       ),
     ).resolves.toBe(body)
   })
-
   test('on the line after a table are not escaped as if in a cell', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const listed = '| Day | Hours |\n| --- | --- |\n| Mon | 3 |\n- see [[Plan|the plan]]\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', listed))).resolves.toBe(listed)
-
     const headed = '| Day | Hours |\n| --- | --- |\n| Mon | 3 |\n## Next [[Plan|again]]\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', headed))).resolves.toBe(headed)
-
     const callout = '> [!info] Stats\n> | a | b |\n> |---|---|\n> | 1 | 2 |\nAfter the callout, [[Plan|the plan]].\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', callout))).resolves.toBe(callout)
-
     const ran = '| a | b |\n| --- | --- |\nsee [[Plan|the plan]]\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', ran))).resolves.toBe(
       '| a | b |\n| --- | --- |\nsee [[Plan\\|the plan]]\n',
     )
   })
 })
-
 function picked(path: string, bytes: Uint8Array): PickedFile {
   return {
     name: path.split('/').pop() ?? path,
@@ -684,12 +599,10 @@ function picked(path: string, bytes: Uint8Array): PickedFile {
     arrayBuffer: async () => bytes.slice().buffer,
   }
 }
-
 async function pathsFrom(sources: readonly Source[]): Promise<string[]> {
   const plan = await readAs('obsidian', sources)
   return plan.files.map((one) => one.path).sort()
 }
-
 function windowsZip(entries: [Uint8Array, string][]): Uint8Array {
   const u16 = (n: number) => [n & 0xff, (n >> 8) & 0xff]
   const u32 = (n: number) => [...u16(n & 0xffff), ...u16(n >>> 16)]
@@ -703,7 +616,6 @@ function windowsZip(entries: [Uint8Array, string][]): Uint8Array {
     for (const b of bytes) c = (table[(c ^ b) & 0xff] ?? 0) ^ (c >>> 8)
     return (c ^ 0xffffffff) >>> 0
   }
-
   const local: number[] = []
   const central: number[] = []
   for (const [name, body] of entries) {
@@ -720,7 +632,6 @@ function windowsZip(entries: [Uint8Array, string][]): Uint8Array {
   const end = [...u32(0x06054b50), ...u32(0), ...count, ...count]
   return new Uint8Array([...local, ...central, ...end, ...u32(central.length), ...u32(local.length), ...u16(0)])
 }
-
 describe('the files in a vault', () => {
   test('keep a text file as the file it is, which a link names by its extension', async () => {
     const plan = await readAs('obsidian', [
@@ -728,19 +639,16 @@ describe('the files in a vault', () => {
       file('Notes.md', 'See ![[filenames.txt]].'),
       file('filenames.txt', 'one\ntwo'),
     ])
-
     const kept = plan.files.find((one) => one.path === 'filenames.txt')
     expect(kept?.kind).toBe('file')
     expect(plan.files.some((one) => one.path === 'filenames.md')).toBe(false)
   })
-
   test('keep a Word document whole when the vault is picked as a folder', async () => {
     const zip = new JSZip()
     zip.file('[Content_Types].xml', '<Types/>')
     zip.file('word/document.xml', '<w:document/>')
     const docx = await zip.generateAsync({ type: 'uint8array' })
     const words = (body: string) => new TextEncoder().encode(body)
-
     const sources = await sourcesFrom(
       insideFolder([
         picked('Vault/.obsidian/app.json', words('{}')),
@@ -750,14 +658,12 @@ describe('the files in a vault', () => {
     )
     await expect(pathsFrom(sources)).resolves.toEqual(['.obsidian/app.json', 'Attachments/Report.docx', 'Notes.md'])
   })
-
   test('keep a zip whole beside the note that links it when the vault is picked as a folder', async () => {
     const zip = new JSZip()
     zip.file('README.md', '# the code readme')
     zip.file('src/main.py', 'print(1)')
     const bytes = await zip.generateAsync({ type: 'uint8array' })
     const words = (body: string) => new TextEncoder().encode(body)
-
     const sources = await sourcesFrom(
       insideFolder([
         picked('Brain/.obsidian/app.json', words('{}')),
@@ -773,7 +679,6 @@ describe('the files in a vault', () => {
       'README.md',
     ])
   })
-
   test('keep a zip whole beside the note that links it when the vault is picked as a zip', async () => {
     const attachment = new JSZip()
     attachment.file('README.md', '# the code readme')
@@ -784,7 +689,6 @@ describe('the files in a vault', () => {
     zip.file('Brain/Projects/source.zip', await attachment.generateAsync({ type: 'uint8array' }))
     zip.file('Brain/README.md', '# my readme')
     const bytes = await zip.generateAsync({ type: 'uint8array' })
-
     const sources = await sourcesFrom([{ name: 'Brain.zip', arrayBuffer: async () => bytes.slice().buffer }])
     await expect(pathsFrom(sources)).resolves.toEqual([
       '.obsidian/app.json',
@@ -793,7 +697,6 @@ describe('the files in a vault', () => {
       'README.md',
     ])
   })
-
   test('keep a mind map and a Sketch file whole when the vault is picked as a folder', async () => {
     const zipped = async (entries: Record<string, string>) => {
       const zip = new JSZip()
@@ -801,7 +704,6 @@ describe('the files in a vault', () => {
       return zip.generateAsync({ type: 'uint8array' })
     }
     const words = (body: string) => new TextEncoder().encode(body)
-
     const sources = await sourcesFrom(
       insideFolder([
         picked('Vault/.obsidian/app.json', words('{}')),
@@ -817,7 +719,6 @@ describe('the files in a vault', () => {
       'Mind/Map.xmind',
     ])
   })
-
   test('arrive from a picked folder holding a note that opens with PK and a broken zip', async () => {
     const words = (body: string) => new TextEncoder().encode(body)
     const sources = await sourcesFrom([
@@ -826,7 +727,6 @@ describe('the files in a vault', () => {
       picked('Attachments/placeholder.zip', new Uint8Array()),
       picked('Attachments/cut.zip', words('PK\u0003\u0004 and then nothing')),
     ])
-
     await expect(pathsFrom(sources)).resolves.toEqual([
       '.obsidian/app.json',
       'Attachments/cut.zip',
@@ -835,7 +735,6 @@ describe('the files in a vault', () => {
     ])
     await expect(noteFrom('PKI.md', ...sources)).resolves.toBe('PKI is public key infrastructure.\n')
   })
-
   test('keep their names, a hash at the end of one included', async () => {
     const hashed = 'Attachments/photo-0123456789abcdef0123456789abcdef.jpg'
     await expect(pathsFrom([file('.obsidian/app.json', '{}'), file(hashed, 'JPG')])).resolves.toEqual([
@@ -843,7 +742,6 @@ describe('the files in a vault', () => {
       hashed,
     ])
   })
-
   test('keep a dot or a space before the extension, beside a namesake without one', async () => {
     await expect(
       pathsFrom([
@@ -854,7 +752,6 @@ describe('the files in a vault', () => {
       ]),
     ).resolves.toEqual(['.obsidian/app.json', 'Draft .md', 'Draft.md', 'Wait for it....md'])
   })
-
   test('keep a long name and a double space, so a canvas naming them still finds them', async () => {
     const long =
       'How to Build a Second Brain - A Proven Method to Organize Your Digital Life and Unlock Your Creative Potential'
@@ -866,7 +763,6 @@ describe('the files in a vault', () => {
       ],
       edges: [],
     })
-
     await expect(
       pathsFrom([
         file('.obsidian/app.json', '{}'),
@@ -885,7 +781,6 @@ describe('the files in a vault', () => {
       'Meeting  notes.md',
     ])
   })
-
   test('arrive when a name starts like a device’s, with the links following it', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -896,7 +791,6 @@ describe('the files in a vault', () => {
     const home = plan.files.find((one) => one.path === 'Home.md')
     expect(home?.kind === 'note' && home.text).toBe('See [[Con-. Law]].\n')
   })
-
   test('renamed for Windows are still what a canvas card shows', async () => {
     const board = '{\n  "nodes": [{ "id": "a", "type": "file", "file": "Questions/Why?.md" }],\n  "edges": []\n}'
     const plan = await readAs('obsidian', [
@@ -908,7 +802,6 @@ describe('the files in a vault', () => {
     expect(plan.files.map((one) => one.path)).toContain('Questions/Why.md')
     expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(board.replace('Why?.md', 'Why.md'))
   })
-
   test('renamed for Windows are still the picture behind a canvas group', async () => {
     const board =
       '{\n  "nodes": [{ "id": "g", "type": "group", "label": "Mood", "background": "Attachments/Why?.png" }],\n  "edges": []\n}'
@@ -921,7 +814,6 @@ describe('the files in a vault', () => {
     expect(plan.files.map((one) => one.path)).toContain('Attachments/Why.png')
     expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(board.replace('Why?.png', 'Why.png'))
   })
-
   test('keep their links when a rename for Windows gives one a namesake', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -932,7 +824,6 @@ describe('the files in a vault', () => {
     const home = plan.files.find((one) => one.path === 'Home.md')
     expect(home?.kind === 'note' && home.text).toBe('Read [[Notes/Why]] first, then [[Archive/Why]].\n')
   })
-
   test('whose name opens with a quote, kept in a folder, are still reached by their links', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -944,7 +835,6 @@ describe('the files in a vault', () => {
     const index = plan.files.find((one) => one.path === 'Quotes/Index.md')
     expect(index?.kind === 'note' && index.text).toBe('See [[Ship it]]\n')
   })
-
   test('keep a name that needs no change when another is renamed onto it', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -961,7 +851,6 @@ describe('the files in a vault', () => {
     const note = plan.files.find((one) => one.path === 'Note.md')
     expect(note?.kind === 'note' && note.text).toBe('![[Why.png]] and ![[Why 2.png]]\n')
   })
-
   test('arrive both when one is named with a space in front to sort first', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -976,7 +865,6 @@ describe('the files in a vault', () => {
       ['Inbox.md', 'the other inbox\n'],
     ])
   })
-
   test('arrive both when their names differ only in how an accent is composed', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -986,7 +874,6 @@ describe('the files in a vault', () => {
     const notes = plan.files.flatMap((one) => (one.kind === 'note' ? [one.path] : []))
     expect(notes).toEqual(['Caf\u00e9.md', 'Cafe\u0301 2.md'])
   })
-
   test('whose names a Mac wrote with their accents apart are found by a link typed whole', async () => {
     const embedded = await noteFrom(
       'Notes/Job.md',
@@ -994,7 +881,6 @@ describe('the files in a vault', () => {
       file('Notes/Job.md', '![](R%C3%A9sum%C3%A9.pdf)\n'),
     )
     expect(embedded.normalize('NFC')).toBe('![](../Attachments/R\u00e9sum\u00e9.pdf)\n')
-
     const renamed = await noteFrom(
       'Notes/Quiz.md',
       file(`Pics/${'R\u00e9ponse'.normalize('NFD')}?.png`, 'png'),
@@ -1002,7 +888,6 @@ describe('the files in a vault', () => {
     )
     expect(renamed.normalize('NFC')).toBe('![[R\u00e9ponse.png]]\n')
   })
-
   test('keep a saved web page as the page, not a note made of it', async () => {
     const page = '<html><body><p style="color:red">Hi</p></body></html>'
     const plan = await readAs('obsidian', [
@@ -1010,7 +895,6 @@ describe('the files in a vault', () => {
       file('Clips/Article.html', page),
       file('Clips/Article.md', '# Notes on [[Article.html]]'),
     ])
-
     const kept = plan.files.find((one) => one.path === 'Clips/Article.html')
     expect(kept?.kind).toBe('file')
     expect(kept?.kind === 'file' && new TextDecoder().decode(kept.bytes)).toBe(page)
@@ -1021,7 +905,6 @@ describe('the files in a vault', () => {
     ])
     expect(plan.lost).toEqual([])
   })
-
   test('land at the top of the space from a zip whose one entry is the vault', async () => {
     const zip = new JSZip()
     zip.file('Brain/.obsidian/app.json', '{}')
@@ -1029,7 +912,6 @@ describe('the files in a vault', () => {
     zip.file('Brain/Projects/Plan.md', '# Plan')
     zip.file('Brain/Map.canvas', '{"nodes":[{"type":"file","file":"Projects/Plan.md"}]}')
     const bytes = await zip.generateAsync({ type: 'uint8array' })
-
     const sources = await sourcesFrom([{ name: 'Brain.zip', arrayBuffer: async () => bytes.slice().buffer }])
     await expect(detect(sources)).resolves.toBe('obsidian')
     await expect(pathsFrom(sources)).resolves.toEqual([
@@ -1039,7 +921,6 @@ describe('the files in a vault', () => {
       'Projects/Plan.md',
     ])
   })
-
   test('keep their accented names from a zip Windows made', async () => {
     const ascii = (said: string) => [...new TextEncoder().encode(said)]
     const cafe = (before: string, after: string) => new Uint8Array([...ascii(`${before}Caf`), 0x82, ...ascii(after)])
@@ -1050,7 +931,6 @@ describe('the files in a vault', () => {
       [cafe('Brain/Attachments/', '.png'), 'png'],
       [new Uint8Array(ascii('Brain/Crème.md')), '# Crème\n'],
     ])
-
     const sources = await sourcesFrom([{ name: 'Brain.zip', arrayBuffer: async () => zip.slice().buffer }])
     await expect(detect(sources)).resolves.toBe('obsidian')
     await expect(pathsFrom(sources)).resolves.toEqual([
@@ -1061,7 +941,6 @@ describe('the files in a vault', () => {
       'Home.md',
     ])
   })
-
   test('keep their Japanese names from a zip a Japanese Windows made', async () => {
     const ascii = (said: string) => [...new TextEncoder().encode(said)]
     const memo = [0x83, 0x81, 0x83, 0x82]
@@ -1070,7 +949,6 @@ describe('the files in a vault', () => {
       [new Uint8Array(ascii('Brain/Home.md')), 'See [[メモ]]\n'],
       [new Uint8Array([...ascii('Brain/'), ...memo, ...ascii('.md')]), '# メモ\n'],
     ])
-
     vi.stubGlobal('navigator', { language: 'ja-JP' })
     try {
       const sources = await sourcesFrom([{ name: 'Brain.zip', arrayBuffer: async () => zip.slice().buffer }])
@@ -1079,22 +957,18 @@ describe('the files in a vault', () => {
       vi.unstubAllGlobals()
     }
   })
-
   test('land at the top of the space with their settings when a hidden file sits beside the vault', async () => {
     const sources = [
       file('Brain/.obsidian/app.json', '{"vimMode":true}'),
       file('Brain/Home.md', 'hi'),
       file('.nomedia', ''),
     ]
-
     await expect(detect(sources)).resolves.toBe('obsidian')
     await expect(pathsFrom(sources)).resolves.toEqual(['.obsidian/app.json', 'Home.md'])
     expect((await obsidianCarries(sources)).vim).toBe(true)
   })
-
   test('stay in their folders when the folder picked holds more than one vault', async () => {
     const notes = async (sources: Source[]) => (await pathsFrom(sources)).filter((one) => !one.includes('.obsidian'))
-
     await expect(
       notes([
         file('Work/.obsidian/app.json', '{"useMarkdownLinks": true}'),
@@ -1111,16 +985,13 @@ describe('the files in a vault', () => {
       ]),
     ).resolves.toEqual(['Home.md', 'Vault/Home.md'])
   })
-
   test('keep a note’s line endings and the blank lines above a rule', async () => {
     const windows = '# T\r\n\r\nline\r\n'
     const rule = '\n---\nnot: properties\n---\n'
-
     await expect(noteFrom('A.md', file('A.md', windows))).resolves.toBe(windows)
     await expect(noteFrom('A.md', file('A.md', '# T\r\n\r\nline'))).resolves.toBe(windows)
     await expect(noteFrom('A.md', file('A.md', rule))).resolves.toBe(rule)
   })
-
   test('keep a note that opens with an indented code block as code', async () => {
     const code = '    let x = 1\n    let y = 2\n\nAfter.\n'
     await expect(noteFrom('Code.md', file('Code.md', code))).resolves.toBe(code)

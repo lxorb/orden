@@ -10,14 +10,11 @@ use tauri::{
 };
 
 pub const LABEL: &str = "web-";
-
 pub fn is_page(label: &str) -> bool {
     label.starts_with(LABEL) || adopted_label(label)
 }
-
 static PRIVATE: Mutex<std::collections::BTreeSet<String>> =
     Mutex::new(std::collections::BTreeSet::new());
-
 fn mark_private(label: &str, private: bool) {
     let mut marked = PRIVATE.held();
     if private {
@@ -26,13 +23,10 @@ fn mark_private(label: &str, private: bool) {
         marked.remove(label);
     }
 }
-
 pub fn is_private(label: &str) -> bool {
     PRIVATE.held().contains(label)
 }
-
 static ADOPTED: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
-
 pub fn label_of(tab: &str) -> String {
     ADOPTED
         .lock()
@@ -40,22 +34,18 @@ pub fn label_of(tab: &str) -> String {
         .and_then(|held| held.as_ref()?.get(tab).cloned())
         .unwrap_or_else(|| format!("{LABEL}{tab}"))
 }
-
 fn adopted_label(label: &str) -> bool {
     ADOPTED.lock().is_ok_and(|held| {
         held.as_ref()
             .is_some_and(|all| all.values().any(|one| one == label))
     })
 }
-
 const CHOSEN: &str = "orden://web-chosen";
-
 pub fn page_chosen(app: &AppHandle, window: &str, page: &str) {
     if let Some(tab) = tab_of(page) {
         let _ = app.emit_to(window, CHOSEN, serde_json::json!({ "tab": tab }));
     }
 }
-
 pub fn tab_of(label: &str) -> Option<String> {
     let adopted = ADOPTED.lock().ok().and_then(|held| {
         held.as_ref()?
@@ -65,7 +55,6 @@ pub fn tab_of(label: &str) -> Option<String> {
     });
     adopted.or_else(|| label.strip_prefix(LABEL).map(str::to_string))
 }
-
 fn unadopt(tab: &str) {
     if let Ok(mut held) = ADOPTED.lock() {
         if let Some(all) = held.as_mut() {
@@ -73,17 +62,11 @@ fn unadopt(tab: &str) {
         }
     }
 }
-
 const MOVED: &str = "orden://web-tab";
-
 const OPENED: &str = "orden://web-open";
-
 const BLOCKED: &str = "orden://web-blocked";
-
 const LONGEST_PAGE: usize = 4_000_000;
-
 const BLANK: &str = "about:blank";
-
 const PLACE: &str = r"(function () {
   var want = __PLACE__
   if (!want || window.top !== window) return
@@ -104,7 +87,6 @@ const PLACE: &str = r"(function () {
     setTimeout(put, 400)
   }, { once: true })
 })()";
-
 const LOOKED: &str = r"(function () {
   try {
     var edited = Array.prototype.some.call(document.querySelectorAll('input, textarea'), function (one) {
@@ -115,23 +97,19 @@ const LOOKED: &str = r"(function () {
     return { url: '', x: 0, y: 0, edited: false }
   }
 })()";
-
 const READER: &str = include_str!("web_tabs/reader.js");
 #[cfg(any(windows, test))]
 const BARS: &str = include_str!("web_bars.js");
-
 #[cfg(any(windows, test))]
 fn bars() -> &'static str {
     BARS.trim().trim_start_matches(';')
 }
-
 struct Trail {
     urls: Vec<String>,
     at: usize,
     engine: bool,
     asked: bool,
 }
-
 impl Default for Trail {
     fn default() -> Self {
         Self {
@@ -142,7 +120,6 @@ impl Default for Trail {
         }
     }
 }
-
 impl Trail {
     fn restored(urls: Vec<String>, at: usize) -> Self {
         let at = at.min(urls.len().saturating_sub(1));
@@ -153,7 +130,6 @@ impl Trail {
             asked: false,
         }
     }
-
     fn step_to(&self, by: isize) -> Option<&String> {
         self.at
             .checked_add_signed(by)
@@ -163,30 +139,24 @@ impl Trail {
         if self.urls.get(self.at).is_some_and(|here| here == url) {
             return;
         }
-
         if self.at > 0 && self.urls.get(self.at - 1).is_some_and(|back| back == url) {
             self.at -= 1;
             return;
         }
-
         if self.urls.get(self.at + 1).is_some_and(|on| on == url) {
             self.at += 1;
             return;
         }
-
         if !self.urls.is_empty() {
             self.urls.truncate(self.at + 1);
             self.at = self.urls.len();
         }
-
         self.urls.push(url.to_string());
     }
-
     fn asked_for(&mut self, url: &str) {
         self.visited(url);
         self.asked = true;
     }
-
     fn loaded(&mut self, url: &str) {
         let asked = std::mem::take(&mut self.asked);
         match self.urls.get_mut(self.at) {
@@ -194,73 +164,60 @@ impl Trail {
             _ => self.visited(url),
         }
     }
-
     fn back(&self) -> bool {
         self.at > 0
     }
-
     fn forward(&self) -> bool {
         self.at + 1 < self.urls.len()
     }
 }
-
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
         .on_window_event(crate::web_follow::heard)
         .manage(WebTabs::default())
 }
-
 #[derive(Default)]
 pub struct WebTabs {
     trails: Mutex<HashMap<String, Trail>>,
     opening: Mutex<HashSet<String>>,
 }
-
 struct Claim<'a> {
     tabs: &'a WebTabs,
     tab: &'a str,
 }
-
 impl Drop for Claim<'_> {
     fn drop(&mut self) {
         self.tabs.built(self.tab);
     }
 }
-
 impl WebTabs {
     fn claim(&self, tab: &str) -> bool {
         self.opening
             .lock()
             .is_ok_and(|mut busy| busy.insert(tab.to_string()))
     }
-
     fn claimed<'a>(&'a self, tab: &'a str) -> Option<Claim<'a>> {
         self.claim(tab).then_some(Claim { tabs: self, tab })
     }
-
     fn built(&self, tab: &str) {
         if let Ok(mut busy) = self.opening.lock() {
             busy.remove(tab);
         }
     }
-
     fn walked(&self, tab: &str, url: &str) {
         if let Ok(mut trails) = self.trails.lock() {
             trails.entry(tab.to_string()).or_default().asked_for(url);
         }
     }
-
     fn restore(&self, tab: &str, urls: Vec<String>, at: usize) {
         if urls.is_empty() {
             return;
         }
-
         if let Ok(mut trails) = self.trails.lock() {
             trails.insert(tab.to_string(), Trail::restored(urls, at));
         }
     }
-
     fn walk(&self, tab: &str) -> (Vec<String>, usize) {
         self.trails
             .lock()
@@ -268,20 +225,16 @@ impl WebTabs {
             .and_then(|trails| trails.get(tab).map(|one| (one.urls.clone(), one.at)))
             .unwrap_or_default()
     }
-
     fn stepping(&self, tab: &str, by: isize) -> Option<String> {
         let mut trails = self.trails.lock().ok()?;
         let trail = trails.get_mut(tab)?;
         let url = trail.step_to(by)?.clone();
-
         if by.unsigned_abs() > 1 {
             trail.at = trail.at.checked_add_signed(by)?;
         }
-
         (!trail.engine).then_some(url)
     }
 }
-
 #[derive(Deserialize)]
 pub struct Pane {
     x: f64,
@@ -289,7 +242,6 @@ pub struct Pane {
     width: f64,
     height: f64,
 }
-
 #[derive(Clone, Serialize)]
 struct Moved {
     tab: String,
@@ -299,27 +251,23 @@ struct Moved {
     forward: bool,
     loading: bool,
 }
-
 #[derive(Clone, Serialize)]
 struct Opening {
     tab: String,
     url: String,
     behind: bool,
 }
-
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Place {
     x: f64,
     y: f64,
 }
-
 #[derive(Deserialize)]
 pub struct Revived {
     place: Option<Place>,
     trail: Vec<String>,
     at: usize,
 }
-
 #[derive(Deserialize)]
 struct Looked {
     url: String,
@@ -328,7 +276,6 @@ struct Looked {
     #[serde(default)]
     edited: bool,
 }
-
 #[derive(Serialize)]
 pub struct Look {
     url: String,
@@ -338,14 +285,12 @@ pub struct Look {
     at: usize,
     edited: bool,
 }
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Clipped {
     url: String,
     title: String,
     html: String,
 }
-
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Step {
@@ -355,13 +300,11 @@ pub enum Step {
     Fresh,
     Stop,
 }
-
 pub use orden_web_engine::allowed;
 
 pub fn tab_may_open(url: &Url) -> bool {
     orden_web_engine::tab_may_open(url, &crate::extension_ids::ours)
 }
-
 pub fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let payload = Opening {
         tab: tab.to_string(),
@@ -370,7 +313,6 @@ pub fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     };
     let _ = app.emit_to(window, OPENED, payload);
 }
-
 pub fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
@@ -382,17 +324,14 @@ pub fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind
     };
     let _ = app.emit_to(window, OPENED, payload);
 }
-
 fn handed_over(url: &Url) -> Option<String> {
     tab_may_open(url).then(|| url.to_string())
 }
-
 pub use orden_web_engine::Becomes;
 
 pub fn becomes(url: &Url, sized: bool) -> Becomes {
     orden_web_engine::becomes(url, sized, &crate::extension_ids::ours)
 }
-
 pub fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
@@ -404,7 +343,6 @@ pub fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
     };
     let _ = app.emit_to(window, BLOCKED, payload);
 }
-
 fn address(url: &str) -> Result<Url, String> {
     let parsed = Url::parse(url).map_err(|error| format!("that is not an address: {error}"))?;
     if tab_may_open(&parsed) {
@@ -413,42 +351,34 @@ fn address(url: &str) -> Result<Url, String> {
         Err("a web tab only opens http and https pages".into())
     }
 }
-
 pub fn reader(selection: bool) -> String {
     READER
         .replace("__SELECTION__", if selection { "yes" } else { "no" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
-
 fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     let want = place.and_then(|one| {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
-
     let mut scripts = vec![
         crate::web_opens::script(),
         crate::web_swipe::script().to_string(),
         crate::web_pointer::script().to_string(),
         crate::web_media::script().to_string(),
     ];
-
     #[cfg(windows)]
     scripts.push(bars().to_string());
-
     if pass {
         scripts.push(crate::web_pass::script().to_string());
     }
-
     if let Some(one) = want {
         scripts.push(PLACE.replace("__PLACE__", &one));
     }
-
     scripts
         .iter()
         .flat_map(|one| [one.as_str(), ";\n"])
         .collect()
 }
-
 fn page_built(
     window: &tauri::Window,
     builder: WebviewBuilder<orden_base::Engine>,
@@ -458,7 +388,6 @@ fn page_built(
 ) -> Result<(), String> {
     let _doing = orden_crashes::stall::doing("web_open: building the page");
     let _ = (app, store);
-
     let bounds = crate::web_follow::Bounds::from(pane);
     let scale = crate::page_scale::of(window).unwrap_or(1.0);
     let (left, top, width, height) = crate::web_follow::edges(bounds, scale);
@@ -479,9 +408,7 @@ fn page_built(
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     Ok(())
 }
-
 pub fn warm(_app: &AppHandle) {}
-
 #[derive(Debug, Default, Deserialize)]
 pub struct Profile {
     store: Option<String>,
@@ -490,7 +417,6 @@ pub struct Profile {
     #[serde(default)]
     pass: bool,
 }
-
 impl Profile {
     fn checked(&self) -> Result<(Option<String>, bool), String> {
         if self.private {
@@ -500,7 +426,6 @@ impl Profile {
         Ok((store, false))
     }
 }
-
 #[tauri::command]
 pub async fn web_open(
     webview: Webview,
@@ -515,26 +440,21 @@ pub async fn web_open(
     let (store, private) = profile.checked()?;
     let label = label_of(&tab);
     let app = webview.app_handle().clone();
-
     if app.get_webview(&label).is_some() {
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
             return Ok(crate::web_cut::layering(&label));
         }
         return Err("that tab already has a page".into());
     }
-
     let Some(claim) = tabs.claimed(&tab) else {
         return Err("that tab is already opening a page".into());
     };
-
     tabs.restore(&tab, revived.trail, revived.at);
-
     let scripts = crate::page_style::with(opening(revived.place, &url, profile.pass));
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
     );
-
     let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(built_on))
         .focused(orden_placement::placement::away().is_none())
@@ -546,25 +466,18 @@ pub async fn web_open(
             going
         })
         .disable_drag_drop_handler();
-
     mark_private(&label_of(&tab), private);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
-
     let builder = windows_asked(builder, &app, &tab, webview.window().label(), private);
-
     let builder = crate::downloads::saving(builder, &app, &tab, webview.window().label());
-
     let builder = reporting(builder, &app, &tab, private);
-
     let stepping = (app.clone(), tab.clone());
     let builder = crate::engine::zooms(
         builder,
         Box::new(move |step| crate::web_page::stepped(&stepping.0, &stepping.1, step)),
     );
-
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
-
     let (building, storing) = (app.clone(), store.clone());
     let posted = app.run_on_main_thread(move || {
         crate::engine::once_built(move || {
@@ -577,7 +490,6 @@ pub async fn web_open(
             ));
         });
     });
-
     let made = match posted {
         Err(error) => Err(format!("that page could not be opened: {error}")),
         Ok(()) => waiting
@@ -585,16 +497,13 @@ pub async fn web_open(
             .await
             .unwrap_or_else(|| Err("that page was never built".to_string())),
     };
-
     drop(claim);
     made?;
     crate::keyboard::built(&label_of(&tab));
-
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
     Ok(crate::web_cut::layering(&label_of(&tab)))
 }
-
 fn windows_asked(
     builder: WebviewBuilder<orden_base::Engine>,
     app: &AppHandle,
@@ -619,7 +528,6 @@ fn windows_asked(
             Becomes::Tab(address) => address,
             Becomes::Window => return NewWindowResponse::Allow,
         };
-
         let payload = Opening {
             tab: asking.clone(),
             url: address,
@@ -629,7 +537,6 @@ fn windows_asked(
         NewWindowResponse::Deny
     })
 }
-
 fn reporting(
     builder: WebviewBuilder<orden_base::Engine>,
     app: &AppHandle,
@@ -653,16 +560,13 @@ fn reporting(
             None,
             loading,
         );
-
         if loading {
             return;
         }
         crate::page_style::worn(&view);
-
         if !private {
             crate::web_cookies::keep(&view, || ());
         }
-
         {
             let marked = sending.clone();
             let named = moved.clone();
@@ -678,7 +582,6 @@ fn reporting(
             });
         }
     });
-
     let titled = tab.to_string();
     let naming = app.clone();
     builder.on_document_title_changed(move |view, title| {
@@ -686,21 +589,17 @@ fn reporting(
         say(&naming, &view, &titled, &url, Some(title), false);
     })
 }
-
 fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
     {
         let _ = view;
         seen.lock().map(|last| last.clone()).unwrap_or_default()
     }
 }
-
 fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(Url, String)>) {
     let _ = store;
-
     let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
     };
-
     if let Some((address, scripts)) = onward.clone() {
         let clearing = view.clone();
         let (hearing, named, holder) = (
@@ -715,7 +614,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             orden_base::trace::mark(&format!("web tab: {}", cleared.said()));
         });
     }
-
     let window = view.window().label().to_string();
     let label = view.label().to_string();
     let asking = app.clone();
@@ -727,13 +625,11 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         });
     });
 }
-
 fn started(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         say(app, &view, tab, "", None, true);
     }
 }
-
 fn say(
     app: &AppHandle,
     view: &Webview,
@@ -745,7 +641,6 @@ fn say(
     if url == BLANK || crate::engine::internal(url) {
         return;
     }
-
     let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
         tabs.trails.lock().ok().map(|mut open| {
             let trail = open.entry(tab.to_string()).or_default();
@@ -756,7 +651,6 @@ fn say(
         })
     });
     let (back, forward) = stepping.unwrap_or((false, false));
-
     let payload = Moved {
         tab: tab.to_string(),
         url: url.to_string(),
@@ -765,13 +659,11 @@ fn say(
         forward,
         loading,
     };
-
     let Ok(payload) = serde_json::to_value(payload) else {
         return;
     };
     crate::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
 }
-
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 pub fn web_place(
@@ -785,7 +677,6 @@ pub fn web_place(
     opacity: Option<f64>,
 ) -> Result<crate::web_cut::Layering, String> {
     let view = found(&app, &tab)?;
-
     let answering = {
         let _doing = orden_crashes::stall::doing("web_place: asked");
         crate::web_answers::answers(&view)
@@ -799,7 +690,6 @@ pub fn web_place(
         crate::web_answers::put_away(&view);
         return Ok(crate::web_cut::layering(view.label()));
     }
-
     let window = view.window();
     let bounds = crate::web_follow::placed(
         &window,
@@ -822,7 +712,6 @@ pub fn web_place(
         crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
-
     let _ = opacity;
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: cut");
@@ -835,14 +724,12 @@ pub fn web_place(
             corner.unwrap_or(crate::web_cut::Foot::Even(0.0)),
         );
     }
-
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: shown");
         crate::page_hide::no_ground(&view);
         view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
-
     let _doing = orden_crashes::stall::doing("web_place: keyboard");
     if visible && cut.is_some() {
         crate::keyboard::hold_for_layer(&app, window.label());
@@ -850,7 +737,6 @@ pub fn web_place(
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
     Ok(crate::web_cut::layering(view.label()))
 }
-
 impl From<&Pane> for crate::web_follow::Bounds {
     fn from(pane: &Pane) -> Self {
         Self {
@@ -861,7 +747,6 @@ impl From<&Pane> for crate::web_follow::Bounds {
         }
     }
 }
-
 #[tauri::command]
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
@@ -869,7 +754,6 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
     view.navigate(at)
         .map_err(|error| format!("that address could not be opened: {error}"))
 }
-
 #[tauri::command]
 pub fn web_step(
     app: AppHandle,
@@ -880,7 +764,6 @@ pub fn web_step(
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
     let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
-
     let by = match step {
         Step::Reload => return view.reload().map_err(|error| error.to_string()),
         Step::Fresh => return crate::web_reload::fresh(&view),
@@ -888,23 +771,19 @@ pub fn web_step(
         Step::Back => -steps,
         Step::Forward => steps,
     };
-
     if let Some(url) = tabs.stepping(&tab, by) {
         let at = address(&url)?;
         return view
             .navigate(at)
             .map_err(|error| format!("that page could not be stepped: {error}"));
     }
-
     view.eval(format!("history.go({by})"))
         .map_err(|error| format!("that page could not be stepped: {error}"))
 }
-
 #[tauri::command]
 pub fn web_trail(tabs: tauri::State<'_, WebTabs>, tab: String) -> (Vec<String>, usize) {
     tabs.walk(&tab)
 }
-
 #[tauri::command]
 pub async fn web_look(
     app: AppHandle,
@@ -913,21 +792,17 @@ pub async fn web_look(
 ) -> Result<Look, String> {
     let view = found(&app, &tab)?;
     let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
-
     view.eval_with_callback(LOOKED, move |answer| {
         let _ = sending.try_send(answer);
     })
     .map_err(|error| format!("that page could not be read: {error}"))?;
-
     let answer = waiting
         .recv()
         .await
         .ok_or_else(|| "that page said nothing".to_string())?;
-
     let said = serde_json::from_str::<Looked>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))?;
     let (trail, at) = tabs.walk(&tab);
-
     Ok(Look {
         url: said.url,
         x: said.x,
@@ -937,50 +812,41 @@ pub async fn web_look(
         edited: said.edited,
     })
 }
-
 #[tauri::command]
 pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), String> {
     found(&app, &tab)?
         .eval(format!("window.scrollTo({x}, {y})"))
         .map_err(|error| format!("that page could not be scrolled: {error}"))
 }
-
 #[tauri::command]
 pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> {
     found(&app, &tab)?
         .set_zoom(crate::page_scale::web(factor))
         .map_err(|error| format!("that page could not be zoomed: {error}"))
 }
-
 #[tauri::command]
 #[allow(clippy::unused_async)]
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
-
     view.eval("window.print()")
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
-
 #[tauri::command]
 pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
     found(&app, &tab)?.open_devtools();
     Ok(())
 }
-
 #[tauri::command]
 pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Clipped, String> {
     let view = found(&app, &tab)?;
     let script = reader(selection);
-
     if let Some(said) = in_our_world(&view, &script).await {
         if let Ok(clipped) = serde_json::from_value::<Clipped>(said) {
             return Ok(clipped);
         }
     }
-
     in_the_page(&view, script).await
 }
-
 async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
     let (view, script) = (view.clone(), script.to_string());
     tauri::async_runtime::spawn_blocking(move || crate::web_worlds::value(&view, &script))
@@ -988,24 +854,19 @@ async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value>
         .ok()
         .flatten()
 }
-
 async fn in_the_page(view: &Webview, script: String) -> Result<Clipped, String> {
     let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
-
     view.eval_with_callback(script, move |answer| {
         let _ = sending.try_send(answer);
     })
     .map_err(|error| format!("that page could not be read: {error}"))?;
-
     let answer = waiting
         .recv()
         .await
         .ok_or_else(|| "that page said nothing".to_string())?;
-
     serde_json::from_str::<Clipped>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))
 }
-
 #[tauri::command]
 pub async fn web_close(
     app: AppHandle,
@@ -1018,7 +879,6 @@ pub async fn web_close(
     let (sending, mut waiting) = tauri::async_runtime::channel::<()>(1);
     let closing = app.clone();
     let named = tab.clone();
-
     let posted = app.run_on_main_thread(move || {
         let _doing = orden_crashes::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
@@ -1043,7 +903,6 @@ pub async fn web_close(
     if posted.is_ok() {
         let _ = waiting.recv().await;
     }
-
     if let Ok(mut open) = tabs.trails.lock() {
         if keep {
             if let Some(trail) = open.get_mut(&tab) {
@@ -1053,15 +912,12 @@ pub async fn web_close(
             open.remove(&tab);
         }
     }
-
     Ok(())
 }
-
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     photographed(found(&app, &tab)?).await
 }
-
 async fn photographed(view: Webview) -> Result<Option<String>, String> {
     let taken = tauri::async_runtime::spawn_blocking(move || {
         crate::engine::devtools::call(
@@ -1084,7 +940,6 @@ async fn photographed(view: Webview) -> Result<Option<String>, String> {
         }
     })
 }
-
 pub fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         let_go(view.label());
@@ -1094,16 +949,13 @@ pub fn close_page(app: &AppHandle, tab: &str) {
         let _ = view.close();
     }
 }
-
 fn let_go(label: &str) {
     crate::engine::devtools::let_go_of(label);
 }
-
 pub fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&label_of(tab))
         .ok_or_else(|| "that tab has no page open".to_string())
 }
-
 pub fn on_the_page(
     app: &AppHandle,
     label: &str,
@@ -1116,7 +968,6 @@ pub fn on_the_page(
         }
     })
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -1148,13 +999,11 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_window_a_page_asks_for_becomes_what_it_needs() {
         let at = |text: &str| Url::parse(text).expect("an address");
         let site = "https://accounts.example/o/oauth2/auth?client_id=1";
         let web = |text: &str| Becomes::Tab(text.to_string());
-
         assert_eq!(becomes(&at(site), true), Becomes::Window);
         assert_eq!(becomes(&at(BLANK), false), Becomes::Window);
         assert_eq!(becomes(&at("about:blank#x"), false), Becomes::Window);
@@ -1192,7 +1041,6 @@ mod tests {
             assert_eq!(becomes(&at(refused), false), Becomes::Nothing, "{refused}");
         }
     }
-
     #[test]
     fn a_window_of_the_page_s_own_content_opens_where_its_address_lives() {
         let at = |text: &str| Url::parse(text).expect("an address");
@@ -1213,7 +1061,6 @@ mod tests {
             assert_eq!(becomes(&at(refused), false), Becomes::Nothing, "{refused}");
         }
     }
-
     #[test]
     fn an_extension_s_own_page_becomes_a_tab() {
         let id = "abcdefghijklmnopabcdefghijklmnop";
@@ -1225,11 +1072,9 @@ mod tests {
         let other = "chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba/dashboard.html";
         assert_eq!(becomes(&at(other), false), Becomes::Nothing);
     }
-
     fn at(url: &str) -> Url {
         Url::parse(url).expect("an address")
     }
-
     #[test]
     fn a_page_is_private_as_it_was_last_built() {
         let label = "web-private-test";
@@ -1239,11 +1084,9 @@ mod tests {
         super::mark_private(label, false);
         assert!(!super::is_private(label));
     }
-
     #[test]
     fn a_private_page_is_in_no_space_s_store() {
         let read = |said: &str| serde_json::from_str::<Profile>(said).expect("a profile");
-
         assert_eq!(read(r#"{"store":null}"#).checked(), Ok((None, false)));
         assert_eq!(
             read(r#"{"store":"space_s1"}"#).checked(),
@@ -1255,7 +1098,6 @@ mod tests {
         );
         assert!(read(r#"{"store":"../web"}"#).checked().is_err());
     }
-
     #[test]
     fn only_the_web_and_its_source_are_allowed_and_the_app_is_not_a_page() {
         for (url, fine) in [
@@ -1281,14 +1123,12 @@ mod tests {
             Some("view-source:https://example.com/a".to_string())
         );
     }
-
     #[test]
     fn a_window_the_page_asked_for_is_a_page_or_is_nothing() {
         assert_eq!(
             handed_over(&at("https://example.com/a")),
             Some("https://example.com/a".to_string())
         );
-
         for url in [
             "orden://command?id=record",
             "file:///C:/notes/Idea.md",
@@ -1300,7 +1140,6 @@ mod tests {
             assert!(handed_over(&at(url)).is_none(), "{url}");
         }
     }
-
     #[test]
     fn a_trail_steps_back_and_forgets_what_was_ahead_when_somewhere_new() {
         for (visits, urls, at, back, forward) in [
@@ -1323,7 +1162,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn an_address_that_redirects_is_one_step_where_it_landed() {
         let mut trail = Trail::default();
@@ -1331,18 +1169,15 @@ mod tests {
         trail.loaded("https://long.example/a");
         assert_eq!(trail.urls, ["https://long.example/a"]);
         assert!(!trail.back());
-
         trail.loaded("https://long.example/b");
         assert!(trail.back());
         assert_eq!(trail.urls.len(), 2);
-
         let mut plain = Trail::default();
         plain.asked_for("https://a.example/");
         plain.loaded("https://a.example/");
         plain.loaded("https://c.example/");
         assert_eq!(plain.urls, ["https://a.example/", "https://c.example/"]);
     }
-
     #[test]
     fn a_tab_opened_fresh_steps_through_the_engine_s_own_history() {
         let tabs = WebTabs::default();
@@ -1352,7 +1187,6 @@ mod tests {
         assert_eq!(tabs.stepping("t", -1), None);
         assert_eq!(tabs.stepping("t", 1), None);
     }
-
     #[test]
     fn a_row_of_the_history_is_a_jump_that_keeps_the_trail() {
         let tabs = WebTabs::default();
@@ -1360,7 +1194,6 @@ mod tests {
         for url in ["https://b.example/", "https://c.example/"] {
             tabs.walked("t", url);
         }
-
         assert_eq!(tabs.stepping("t", -2), None);
         tabs.walked("t", "https://a.example/");
         assert_eq!(
@@ -1374,12 +1207,10 @@ mod tests {
                 0,
             )
         );
-
         assert_eq!(tabs.stepping("t", -1), None);
         assert_eq!(tabs.stepping("t", 3), None);
         assert_eq!(tabs.walk("t").1, 0);
     }
-
     #[test]
     fn a_revived_page_jumps_by_address() {
         let tabs = WebTabs::default();
@@ -1392,7 +1223,6 @@ mod tests {
             ],
             2,
         );
-
         assert_eq!(
             tabs.stepping("t", -2),
             Some("https://a.example/".to_string())
@@ -1404,7 +1234,6 @@ mod tests {
             Some("https://b.example/".to_string())
         );
     }
-
     #[test]
     fn orden_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
@@ -1434,7 +1263,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
@@ -1454,7 +1282,6 @@ mod tests {
             )
         );
     }
-
     #[test]
     fn a_page_s_own_bars_keep_clear_of_the_pane_s_rounded_corners() {
         let script = super::bars();
@@ -1467,7 +1294,6 @@ mod tests {
             cfg!(windows)
         );
     }
-
     #[test]
     fn a_page_opened_while_pass_is_off_is_handed_none_of_pass_s_script() {
         for place in [None, Some(Place { x: 0.0, y: 940.0 })] {
@@ -1476,18 +1302,15 @@ mod tests {
             assert!(!opened.contains("__ordenPass"));
         }
     }
-
     #[test]
     fn nobody_opens_a_tab_on_the_blank_page() {
         assert!(address(BLANK).is_err());
     }
-
     #[test]
     fn a_revived_page_carries_the_place_it_was_left_at() {
         let opened = opening(None, "https://a.example/page", true);
         assert!(!opened.contains("__PLACE__"));
         assert!(!opened.contains("scrollTo"));
-
         let revived = opening(
             Some(Place { x: 0.0, y: 940.0 }),
             "https://a.example/page",
@@ -1496,23 +1319,18 @@ mod tests {
         assert!(revived.contains("window.scrollTo"));
         assert!(revived.contains("\"url\":\"https://a.example/page\""));
         assert!(revived.contains("940"));
-
         assert!(revived.contains("})();"));
         assert!(!revived.contains("})()\n(function"));
     }
-
     #[test]
     fn one_tab_builds_one_page_at_a_time() {
         let tabs = WebTabs::default();
-
         assert!(tabs.claim("a"));
         assert!(!tabs.claim("a"));
         assert!(tabs.claim("b"));
-
         tabs.built("a");
         assert!(tabs.claim("a"));
     }
-
     #[test]
     fn a_build_given_up_on_the_way_gives_the_tab_back() {
         fn build(tabs: &WebTabs) -> Result<(), String> {
@@ -1520,31 +1338,25 @@ mod tests {
             assert!(!tabs.claim("a"));
             Err("the store could not be had".to_string())
         }
-
         let tabs = WebTabs::default();
         assert!(build(&tabs).is_err());
         assert!(tabs.claim("a"));
     }
-
     #[test]
     fn a_tab_is_told_from_its_page_s_label() {
         assert_eq!(tab_of("web-a1").as_deref(), Some("a1"));
         assert_eq!(tab_of("main"), None);
     }
-
     #[test]
     fn the_trail_is_kept_for_the_tab_that_walked_it() {
         let tabs = WebTabs::default();
-
         tabs.walked("a", "https://a.example/");
         tabs.walked("a", "https://b.example/");
         tabs.walked("b", "https://c.example/");
-
         let trails = tabs.trails.lock().expect("the trails");
         assert!(trails["a"].back());
         assert!(!trails["b"].back());
     }
-
     #[test]
     fn the_reader_says_whether_it_wants_the_selection() {
         assert!(reader(true).contains("'yes' === 'yes'"));
@@ -1552,7 +1364,6 @@ mod tests {
         assert!(!reader(false).contains("__LONGEST__"));
         assert!(!reader(true).contains("__SELECTION__"));
     }
-
     #[test]
     fn the_reader_writes_the_marks_the_window_reads_it_by() {
         let said = reader(true);

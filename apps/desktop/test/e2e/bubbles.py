@@ -1,12 +1,9 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NEAR = 1.0
-
 WHOLE = """
 (bubble) => {
   const box = bubble.getBoundingClientRect()
@@ -30,9 +27,7 @@ WHOLE = """
   }
 }
 """
-
 GLYPHS = "() => [...document.querySelectorAll('[role=\"region\"][aria-label=\"Settings\"] .explain button')].length"
-
 def sentence_of(page: Page, index: int) -> dict | None:
     return page.evaluate(
         """async ([index, whole]) => {
@@ -60,7 +55,6 @@ def sentence_of(page: Page, index: int) -> dict | None:
         }""",
         [index, WHOLE],
     )
-
 def placed(one: dict, gap: float, inset: float) -> str | None:
     box, mark = one["box"], one["mark"]
     top = mark["bottom"] + gap if one["side"] != "above" else mark["top"] - gap - box["height"]
@@ -71,9 +65,7 @@ def placed(one: dict, gap: float, inset: float) -> str | None:
     if abs(box["left"] - clamped) > NEAR:
         return f"its left is {box['left']:.1f}, not {clamped:.1f}"
     return None
-
 DRIVE_WIDTH = 1280
-
 def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
     counted = 0
     for section in sections:
@@ -102,7 +94,6 @@ def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
         shot(page, f"{tag}-{section}")
     say(f"[{tag}] {counted} sentences opened whole")
     return counted
-
 def the_vault_row(page: Page, tag: str) -> None:
     page.evaluate("() => window.ordenApp.settings.show('ai')")
     page.wait_for_timeout(500)
@@ -116,7 +107,6 @@ def the_vault_row(page: Page, tag: str) -> None:
         wrong(f"[{tag}] the vault's sentence is cut: {one}")
     shot(page, f"{tag}-vault")
     page.mouse.move(5, 5)
-
 def at_the_foot(page: Page, tag: str) -> None:
     page.evaluate("() => window.ordenApp.settings.show('general')")
     page.wait_for_timeout(500)
@@ -151,7 +141,6 @@ def at_the_foot(page: Page, tag: str) -> None:
         wrong(f"[{tag}] the sentence of a ? at the foot of its pane was not turned over")
     if away["shown"]:
         wrong(f"[{tag}] the sentence of a ? scrolled out of sight is still drawn")
-
 def names(page: Page, tag: str) -> None:
     DRIVE.seed(page, *[f"# Note {one}\n" for one in range(1, 4)])
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
@@ -189,7 +178,6 @@ def names(page: Page, tag: str) -> None:
                 wrong(f"{where} is {one['box']['width']:.1f} wide, not the row's {wide:.1f}")
         shot(page, f"{tag}-reason-{'held' if held else 'plain'}")
     field.press("Escape")
-
 def look(browser: Browser, tag: str) -> None:
     page = DRIVE.page(browser, viewport={"width": DRIVE_WIDTH, "height": 860})
     DRIVE.open(page)
@@ -205,8 +193,6 @@ def look(browser: Browser, tag: str) -> None:
     if counted < 30:
         wrong(f"[{tag}] only {counted} sentences were opened")
     page.context.close()
-
 def drive(browser: Browser) -> None:
     look(browser, "light")
-
 raise SystemExit(DRIVE.run(drive, "every bubble is drawn whole, under what it is about"))

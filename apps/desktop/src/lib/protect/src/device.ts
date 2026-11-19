@@ -14,9 +14,7 @@ export function deviceName(): string {
       return 'System password'
   }
 }
-
 let can: Promise<boolean> | null = null
-
 export function deviceCan(): Promise<boolean> {
   can ??= (async () => {
     const phone = isMobile ? method('ownerCan') : undefined
@@ -25,7 +23,6 @@ export function deviceCan(): Promise<boolean> {
   })()
   return can
 }
-
 export async function deviceSays(reason: string): Promise<boolean> {
   if (!(await deviceCan())) return false
   const ask = isMobile ? method('ownerCheck') : undefined

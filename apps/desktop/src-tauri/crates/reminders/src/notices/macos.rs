@@ -18,18 +18,13 @@ use super::{Act, Notice};
 
 pub const CATEGORY: &str = "orden.notice.reply";
 const SEND: &str = "send";
-
 const PREFIX: &str = "notice.";
-
 static ASKED: Once = Once::new();
-
 static SHOWING: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
-
 fn in_showing<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
     let mut held = SHOWING.held();
     alter(held.get_or_insert_with(HashMap::new))
 }
-
 pub fn reply_action(placeholder: &str, send: &str) -> Retained<UNNotificationAction> {
     let action =
         UNTextInputNotificationAction::actionWithIdentifier_title_options_textInputButtonTitle_textInputPlaceholder(
@@ -41,7 +36,6 @@ pub fn reply_action(placeholder: &str, send: &str) -> Retained<UNNotificationAct
         );
     Retained::into_super(action)
 }
-
 pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     use crate::reminders::macos as centre_of;
 
@@ -57,7 +51,6 @@ pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
             &asked,
         );
     });
-
     let content = UNMutableNotificationContent::new();
     content.setTitle(&NSString::from_str(&notice.title));
     content.setBody(&NSString::from_str(&notice.body));
@@ -70,7 +63,6 @@ pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
         let sound = UNNotificationSound::defaultSound();
         content.setSound(Some(&*sound));
     }
-
     let name = format!("{PREFIX}{}", notice.id);
     if let Some(before) = in_showing(|showing| showing.insert(notice.tag.clone(), name.clone())) {
         centre.removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&[
@@ -85,7 +77,6 @@ pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     centre.addNotificationRequest_withCompletionHandler(&request, None);
     Ok(())
 }
-
 pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) -> bool {
     let Some(id) = name.strip_prefix(PREFIX) else {
         return false;
@@ -104,7 +95,6 @@ pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) ->
     }
     true
 }
-
 pub fn clear(tag: &str) {
     if !crate::reminders::macos::bundled() {
         return;
@@ -116,7 +106,6 @@ pub fn clear(tag: &str) {
             ]));
     }
 }
-
 pub fn clear_all() {
     if !crate::reminders::macos::bundled() {
         return;

@@ -4,9 +4,7 @@
   import Asked from './Asked.svelte'
 
   const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } = $props()
-
   let answering = $state(false)
-
   async function answer(allow: boolean, always = false) {
     const approval = part.result?.approval
     if (!approval || answering) return
@@ -44,14 +42,12 @@
     border-radius: var(--radius-md);
     background: var(--surface);
   }
-
   p {
     margin: 0;
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .answers {
     display: flex;
     flex-wrap: wrap;

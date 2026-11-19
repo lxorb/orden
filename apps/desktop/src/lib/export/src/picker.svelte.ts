@@ -2,12 +2,10 @@ import { askSheet } from '@orden/contracts'
 import { isRecord, keepJson, stored } from '../../platform/src/api'
 
 const KEPT = 'orden:export-choice'
-
 interface Kept {
   id: string
   optioned: Record<string, boolean>
 }
-
 function kept(): Kept {
   const held = stored(KEPT)
   if (!isRecord(held) || typeof held.id !== 'string') return { id: '', optioned: {} }
@@ -19,25 +17,20 @@ function kept(): Kept {
     ),
   }
 }
-
 class Picker {
   open = $state(false)
   last = $state<Kept>(kept())
-
   show() {
     this.last = kept()
     this.open = true
     void askSheet('export')
   }
-
   close() {
     this.open = false
   }
-
   keep(id: string, optioned: boolean) {
     this.last = { id, optioned: { ...this.last.optioned, [id]: optioned } }
     keepJson(KEPT, this.last)
   }
 }
-
 export const picker = new Picker()

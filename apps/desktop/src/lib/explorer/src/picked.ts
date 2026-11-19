@@ -3,10 +3,8 @@ export interface Picked {
   cursor: string | null
   anchor: string | null
 }
-
 export const NOTHING: Picked = { names: new Set(), cursor: null, anchor: null }
 export type How = 'one' | 'range' | 'toggle' | 'move'
-
 export function pickedAt(from: Picked, names: readonly string[], name: string, how: How): Picked {
   switch (how) {
     case 'one':
@@ -29,19 +27,16 @@ export function pickedAt(from: Picked, names: readonly string[], name: string, h
     }
   }
 }
-
 export const pickedOnly = (names: readonly string[]): Picked => ({
   names: new Set(names),
   cursor: names.at(-1) ?? null,
   anchor: names[0] ?? null,
 })
-
 export const pickedAll = (from: Picked, names: readonly string[]): Picked => ({
   names: new Set(names),
   cursor: from.cursor ?? names[0] ?? null,
   anchor: from.anchor,
 })
-
 export function stillThere(from: Picked, names: readonly string[]): Picked {
   const here = new Set(names)
   return {

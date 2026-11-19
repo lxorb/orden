@@ -17,17 +17,13 @@
   import { workspace, howFor, middleOpens, tabAsk } from '../../workspace/src/api'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
-
   const STAR = 'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
-
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
   let warm = $state<Warming>()
   void searchWarmth().then((one) => (warm = one))
-
   const writable = $derived(canWriteAt(workspace.activeSpace?.root ?? ''))
   let field = $state<HTMLInputElement>()
-
   $effect(() => {
     if (!field) return
     const end = field.value.length
@@ -38,26 +34,21 @@
   let shut = $state(false)
   let caret = $state(0)
   let active = $state(0)
-
   const folders = $derived.by(() => {
     const root = workspace.activeSpace?.root
     const tree = workspace.tree
     if (!root || !tree) return []
-
     const out: string[] = []
     const walk = (entry: Entry) => {
       for (const child of entry.children) {
         if (!child.is_dir) continue
-
         out.push(`${relativeTo(root, child.path).replace(/\\/g, '/')}/`)
         walk(child)
       }
     }
-
     walk(tree)
     return out.sort()
   })
-
   const names = $derived(
     [
       ...new Set(
@@ -67,35 +58,26 @@
       ),
     ].sort(),
   )
-
   const tags = $derived(tagTree(workspace.tags))
   const tagPaths = $derived(nodesIn(tags).map((node) => node.path))
-
   const asking = $derived(focused && !shut ? (completing(search.text, caret) ?? naming(search.text, caret)) : null)
-
   const suggestions = $derived.by(() => {
     if (!asking) return []
     if (asking.field === 'name') return offered(asking.typed, OPERATORS)
     if (asking.field === 'tag') return nearest(asking.typed, tagPaths)
     return offered(asking.typed, asking.field === 'path' ? folders : names)
   })
-
   $effect(() => {
     search.forSpace(workspace.activeSpace?.root ?? null)
   })
-
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(suggestions)
     active = asking?.field === 'name' ? -1 : 0
   })
-
   const searchMark = $derived(search.asks ? workspace.bookmarks.forSearch(search.text) : null)
-
   const groups = $derived.by(() => {
     const out: { path: string; name: string; loose: boolean; archived: boolean; hits: Hit[] }[] = []
-
     for (const hit of search.hits) {
       const last = out.at(-1)
       if (last?.path === hit.path) last.hits.push(hit)
@@ -109,43 +91,34 @@
         })
       }
     }
-
     return [...out.filter((group) => !group.archived), ...out.filter((group) => group.archived)]
   })
-
   function pieces(text: string, ranges: Range[]) {
     const out: { text: string; mark: boolean }[] = []
     let at = 0
-
     for (const range of ranges) {
       if (range.from > at) out.push({ text: text.slice(at, range.from), mark: false })
       out.push({ text: text.slice(range.from, range.to), mark: true })
       at = range.to
     }
-
     if (at < text.length) out.push({ text: text.slice(at), mark: false })
     return out
   }
-
   function typing(event: Event & { currentTarget: HTMLInputElement }) {
     caret = event.currentTarget.selectionStart ?? event.currentTarget.value.length
     shut = false
     search.ask(event.currentTarget.value)
   }
-
   function take(value: string) {
     if (!asking) return
-
     const next = chosen(search.text, asking, value)
     search.ask(next.text)
     caret = next.caret
-
     queueMicrotask(() => {
       field?.focus()
       field?.setSelectionRange(next.caret, next.caret)
     })
   }
-
   function onKeydown(event: KeyboardEvent) {
     if (suggestions.length) {
       if (event.key === 'ArrowDown') {
@@ -172,23 +145,19 @@
         return
       }
     }
-
     if (event.key === 'Escape' && search.replacing) {
       event.preventDefault()
       search.closeReplace()
       return
     }
-
     if (event.key === 'Escape') {
       event.preventDefault()
       if (search.text) search.ask('')
       else workspace.showPanel('tree')
     }
   }
-
   const shown = (hit: Hit, task: { text: string; ranges: Range[] } | null) =>
     task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
-
   async function ticked(event: Event, hit: Hit) {
     event.preventDefault()
     event.stopPropagation()
@@ -196,11 +165,9 @@
     const hash = words === null ? undefined : (await import('@orden/bases')).taskHash(words)
     if (await workspace.toggleTaskAt(hit.path, hit.line, hash)) search.ask(search.text)
   }
-
   async function openHit(hit: Hit, press: MouseEvent) {
     const ask = tabAsk(press)
     const how = howFor(ask)
-
     if (hit.page !== undefined) {
       await workspace.openPdf(hit.path, hit.page, how)
       return
@@ -210,12 +177,10 @@
       ongoto?.(hit.line)
       return
     }
-
     if (isScratchpad(hit.path)) {
       ;(await pad()).show(hit.line)
       return
     }
-
     await workspace.open(hit.path, how)
     if (ask !== 'behind') ongoto?.(hit.line)
   }
@@ -410,28 +375,23 @@
     gap: var(--space-1);
     margin-bottom: var(--space-2);
   }
-
   .row {
     display: flex;
     align-items: stretch;
     gap: var(--space-1);
   }
-
   .box {
     position: relative;
     flex: 1;
     min-width: 0;
   }
-
   .query {
     padding-inline-start: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
     transition: padding-inline-end var(--dur-fast) var(--ease-out);
   }
-
   .query.wide {
     padding-inline-end: 56px;
   }
-
   .mag {
     position: absolute;
     inset-inline-start: var(--row-pad);
@@ -439,7 +399,6 @@
     transform: translateY(-50%);
     pointer-events: none;
   }
-
   .found {
     position: absolute;
     top: 50%;
@@ -451,7 +410,6 @@
     font-variant-numeric: tabular-nums;
     pointer-events: none;
   }
-
   .star {
     position: absolute;
     top: 50%;
@@ -471,28 +429,22 @@
       color var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   .star:hover {
     background: var(--surface-hover);
     color: var(--text);
   }
-
   .star:active {
     transform: translateY(-50%) scale(0.88);
   }
-
   .star.on {
     color: var(--accent);
   }
-
   .star.on svg {
     fill: currentColor;
   }
-
   .star:focus-visible {
     outline-offset: -1px;
   }
-
   .swap {
     flex: none;
     width: var(--row-height);
@@ -508,26 +460,21 @@
       border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .swap:hover {
     background: var(--surface-hover);
     color: var(--text);
   }
-
   .swap:active {
     background: var(--surface-press);
   }
-
   .swap.active {
     border-color: var(--accent-line);
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .swap:focus-visible {
     outline-offset: -1px;
   }
-
   .apply {
     flex: none;
     display: flex;
@@ -546,34 +493,27 @@
       background var(--dur-fast) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);
   }
-
   .apply:hover:not(:disabled) {
     background: var(--accent-hover);
   }
-
   .apply:active:not(:disabled) {
     background: var(--accent-press);
   }
-
   .apply .count {
     color: inherit;
     opacity: 0.75;
   }
-
   .apply:focus-visible {
     outline-offset: 1px;
   }
-
   ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-
   .group + .group {
     margin-top: var(--space-2);
   }
-
   .note {
     display: block;
     color: var(--accent);
@@ -581,31 +521,26 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .guess {
     margin-inline-end: 3px;
     color: var(--muted);
   }
-
   svg.archived {
     width: var(--icon-sm);
     height: var(--icon-sm);
     margin-inline-end: var(--space-1);
     vertical-align: -2px;
   }
-
   .line {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .line > .orden-checkbox {
     flex: none;
     margin-block: 0;
     margin-inline: var(--row-pad) 0;
   }
-
   .hit {
     flex: 1;
     min-width: 0;
@@ -615,14 +550,12 @@
     white-space: nowrap;
     line-height: var(--row-height-sm);
   }
-
   mark {
     border-radius: 3px;
     background: var(--accent-soft);
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .tick {
     flex: none;
     width: var(--icon-md);
@@ -642,36 +575,29 @@
       color var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   .tick:hover {
     border-color: var(--accent-line);
   }
-
   .tick:active {
     transform: scale(0.86);
   }
-
   .tick.on {
     border-color: var(--accent);
     background: var(--accent);
     color: var(--accent-ink);
   }
-
   .tick:focus-visible {
     outline-offset: 1px;
   }
-
   .tick svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-
   .empty-text {
     margin: var(--space-3) var(--row-pad) 0;
     font-size: var(--text-row);
     color: var(--muted);
   }
-
   svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -681,20 +607,16 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   :global([data-touch]) .query.wide {
     padding-inline-end: 68px;
   }
-
   :global([data-touch]) .swap,
   :global([data-touch]) .apply {
     min-height: var(--touch-target);
   }
-
   :global([data-touch]) .swap {
     width: var(--touch-target);
   }
-
   :global([data-touch]) .empty-text {
     font-size: var(--touch-text);
   }

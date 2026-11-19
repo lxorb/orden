@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -12,29 +11,21 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk } = await import('../disk')
 disk.current = new Disk()
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pane } = await import('../../src/lib/panes/src/api')
 const Tree = (await import('../../src/lib/sidebar/src/Tree.svelte')).default
-
 const PLAN = '/space/Plan.md'
 const IDEAS = '/space/Ideas.md'
-
 let list: ReturnType<typeof mount> | null = null
-
 const rowOf = (path: string) => document.querySelector(`[data-path="${path}"]`)!
-
 const picked = () => [...document.querySelectorAll<HTMLElement>('.row.is-picked')].map((row) => row.dataset.path)
-
 async function click(path: string, held: MouseEventInit = {}) {
   rowOf(path).dispatchEvent(new MouseEvent('click', { bubbles: true, ...held }))
   if (!held.shiftKey) await vi.waitFor(() => expect(workspace.active?.path).toBe(path))
   flushSync()
 }
-
 beforeEach(async () => {
   HTMLElement.prototype.scrollIntoView = () => undefined
   const one = disk.current!
@@ -51,30 +42,23 @@ beforeEach(async () => {
   list = mount(Tree, { target: document.body, props: { tree: workspace.tree! } })
   flushSync()
 })
-
 afterEach(() => {
   if (list) void unmount(list)
   list = null
 })
-
 test('a row clicked open is picked, and another note opened leaves only that one lit', async () => {
   await click(PLAN)
   expect(picked()).toEqual([PLAN])
-
   await workspace.openEntry(IDEAS)
   flushSync()
-
   expect(picked()).toEqual([])
   expect(rowOf(IDEAS).classList.contains('is-on')).toBe(true)
 })
-
 test('and a selection that holds the note opened stays as it was', async () => {
   await click(PLAN)
   await click(IDEAS, { shiftKey: true })
   expect(picked()).toEqual([IDEAS, PLAN])
-
   await workspace.openEntry(IDEAS)
   flushSync()
-
   expect(picked()).toEqual([IDEAS, PLAN])
 })

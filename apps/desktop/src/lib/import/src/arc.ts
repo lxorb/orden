@@ -5,24 +5,20 @@ export interface ArcRead {
   sidebar: Sidebar
   stayed: number
 }
-
 export function arcSidebar(said: unknown, folder: string): ArcRead | null {
   const sidebar = isObject(said) && isObject(said.sidebar) ? said.sidebar : null
   const containers = list(sidebar?.containers)
   const at = containers.findIndex((one) => 'global' in one)
   const held = containers[at + 1] ?? containers.find((one) => Array.isArray(one.spaces))
   if (!held) return null
-
   const items = new Map<string, Said>()
   for (const one of list(held.items)) {
     const id = text(one.id)
     if (id) items.set(id, one)
   }
-
   const read: Reading = { items, folders: [], tabs: [], stayed: 0, seen: new Set() }
   const favourites = listOf(held.topAppsContainerIDs, (marker) => profileIs(marker, folder))
   if (favourites) rows(read, favourites, null, null, 'essential')
-
   const spaces: SidebarSpace[] = []
   for (const space of list(held.spaces)) {
     const id = text(space.id)
@@ -34,7 +30,6 @@ export function arcSidebar(said: unknown, folder: string): ArcRead | null {
       colour: null,
       container: 0,
     })
-
     const containers = space.newContainerIDs ?? space.containerIDs
     const pinned = listOf(containers, (marker) => isKey(marker, 'pinned'))
     const open = listOf(containers, (marker) => isKey(marker, 'unpinned'))
@@ -42,10 +37,8 @@ export function arcSidebar(said: unknown, folder: string): ArcRead | null {
     if (open) rows(read, open, id, null, 'open')
   }
   if (!spaces.length) return null
-
   return { sidebar: { spaces, folders: read.folders, tabs: read.tabs }, stayed: read.stayed }
 }
-
 interface Reading {
   items: Map<string, Said>
   folders: SidebarFolder[]
@@ -53,9 +46,7 @@ interface Reading {
   stayed: number
   seen: Set<string>
 }
-
 type Row = 'essential' | 'pinned' | 'open'
-
 function listOf(value: unknown, wanted: (marker: unknown) => boolean): string | null {
   if (!Array.isArray(value)) return null
   for (let at = 0; at + 1 < value.length; at += 2) {
@@ -63,16 +54,13 @@ function listOf(value: unknown, wanted: (marker: unknown) => boolean): string | 
   }
   return null
 }
-
 const isKey = (marker: unknown, key: string): boolean => marker === key || (isObject(marker) && key in marker)
-
 function profileIs(profile: unknown, folder: string): boolean {
   if (!isObject(profile)) return folder === 'Default'
   if ('default' in profile) return folder === 'Default'
   const custom = isObject(profile.custom) ? profile.custom._0 : null
   return isObject(custom) && text(custom.directoryBasename) === folder
 }
-
 function iconOf(info: unknown): string | null {
   const kind = isObject(info) && isObject(info.iconType) ? info.iconType : null
   if (!kind) return null
@@ -81,23 +69,18 @@ function iconOf(info: unknown): string | null {
   const point = Number(kind.emoji)
   return Number.isInteger(point) && point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : null
 }
-
 const DEEPEST = 64
-
 function rows(read: Reading, id: string, space: string | null, folder: string | null, row: Row, depth = 0) {
   const parent = read.items.get(id)
   if (!parent || depth > DEEPEST || read.seen.has(id)) return
   read.seen.add(id)
-
   const children = Array.isArray(parent.childrenIds)
     ? parent.childrenIds.map(text).filter((one): one is string => one !== null)
     : [...read.items.entries()].filter(([, one]) => text(one.parentID) === id).map(([key]) => key)
-
   for (const child of children) {
     const item = read.items.get(child)
     const data = isObject(item?.data) ? item.data : null
     if (!item || !data) continue
-
     if (isObject(data.tab)) {
       const url = text(data.tab.savedURL)
       if (!url) continue

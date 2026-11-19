@@ -24,18 +24,14 @@ export const OPEN_DEADLINE = 12_000
 export const ANSWER_WITHIN = 15_000
 const LOOK_AGAIN = [3_000, 5_000, 10_000, 30_000] as const
 const READ_AGAIN = 15_000
-
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
-
 export type Look = 'open' | 'unserved' | 'unknown' | 'signed-out' | 'unreachable'
-
 export function lookOf(status: number | null, error: unknown): Look {
   if (status === 426) return 'open'
   if (status === 401) return 'signed-out'
   if (status === 404) return error === UNKNOWN_APP ? 'unknown' : 'unserved'
   return 'unreachable'
 }
-
 export type AppStatus =
   | { is: 'reading' }
   | { is: 'damaged' }
@@ -58,19 +54,14 @@ export type AppStatus =
       why: NotStarted | null
       unanswered: boolean
     }
-
 type Blocked = 'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable' | Unfound | 'shared'
-
 export type Found = IdAt | { none: 'old-sync' }
-
 type Unfound = Extract<Found, { none: string }>['none']
-
 interface Device {
   id: string
   name: string
   platform?: string
 }
-
 export interface Linked {
   open(): void
   close(): void
@@ -78,11 +69,8 @@ export interface Linked {
   take(): boolean
   resize(view: View): void
 }
-
 export type Unread = 'away' | 'missing' | 'denied' | 'locked' | 'unread'
-
 export type Read = { text: string } | { cannot: Unread }
-
 export function unreadOf(error: unknown): Unread | null {
   const said = error instanceof Error ? error.message : String(error)
   if (/too large/i.test(said)) return null
@@ -92,7 +80,6 @@ export function unreadOf(error: unknown): Unread | null {
   if (/no such|not found|cannot find|nothing is at|no file at|os error (2|3)\b/i.test(said)) return 'missing'
   return 'unread'
 }
-
 export async function readApp(read: () => Promise<string>): Promise<Read> {
   try {
     return { text: await read() }
@@ -101,7 +88,6 @@ export async function readApp(read: () => Promise<string>): Promise<Read> {
     return why ? { cannot: why } : { text: '' }
   }
 }
-
 export function numberedBeside(path: string): string[] {
   const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
   const name = path.slice(at + 1)
@@ -111,7 +97,6 @@ export function numberedBeside(path: string): string[] {
   const ext = name.slice(dot)
   return Array.from({ length: 8 }, (_, one) => `${stem} ${String(one + 2)}${ext}`)
 }
-
 export interface SessionWorld {
   read(path: string): Promise<Read>
   moved?(path: string): void
@@ -123,7 +108,6 @@ export interface SessionWorld {
   after(ms: number, run: () => void): () => void
   now(): number
 }
-
 const sessionWorld: SessionWorld = {
   async read(path) {
     const { invoke } = await import('../../platform/src/api')
@@ -170,7 +154,6 @@ const sessionWorld: SessionWorld = {
   },
   now: () => Date.now(),
 }
-
 export class AppSession {
   file = $state<AppFile | null>(null)
   hostName = $state('')
@@ -201,16 +184,13 @@ export class AppSession {
   readonly picture = new Picture((data) => {
     this.link?.say({ t: 'signal', data })
   })
-
   constructor(
     private readonly tab: Tab,
     private readonly world: SessionWorld = sessionWorld,
   ) {}
-
   get holds(): boolean {
     return this.holding && this.holder === null && this.open
   }
-
   get status(): AppStatus {
     if (this.damaged) return { is: 'damaged' }
     if (this.unread) return { is: 'unread', why: this.unread }
@@ -227,14 +207,12 @@ export class AppSession {
       unanswered: this.unanswered,
     }
   }
-
   async start(view: View): Promise<void> {
     if (this.begun || this.ended) return
     this.begun = true
     this.view = view
     await this.load()
   }
-
   private async load(): Promise<void> {
     const path = this.tab.path
     if (!path || this.ended) return
@@ -267,14 +245,12 @@ export class AppSession {
     if (file) await this.arrive(file)
     else this.damaged = true
   }
-
   private async arrive(file: AppFile): Promise<void> {
     this.unread = null
     this.file = file
     void this.nameHost(file.host)
     await this.connect()
   }
-
   private async connect(): Promise<void> {
     const path = this.tab.path
     const turn = ++this.turn
@@ -300,7 +276,6 @@ export class AppSession {
     }
     await this.lookIn(turn)
   }
-
   private async lookIn(turn: number): Promise<void> {
     const token = this.world.token()
     const id = this.id
@@ -328,7 +303,6 @@ export class AppSession {
     this.blocked = look === 'unknown' ? 'unsynced' : look
     if (look === 'unknown' || look === 'unreachable') this.later(turn, () => void this.lookIn(turn))
   }
-
   private later(turn: number, again: () => void): void {
     this.cancelLook?.()
     const wait = LOOK_AGAIN[Math.min(this.tries, LOOK_AGAIN.length - 1)] ?? 30_000
@@ -338,7 +312,6 @@ export class AppSession {
       if (turn === this.turn) again()
     })
   }
-
   private deadline(): void {
     this.cancelSlow?.()
     const turn = this.turn
@@ -349,7 +322,6 @@ export class AppSession {
       void this.lookIn(turn)
     })
   }
-
   retry(): void {
     if (this.ended || (!this.file && (!this.unread || !this.begun))) return
     this.cancelLook?.()
@@ -365,7 +337,6 @@ export class AppSession {
     if (this.hostListed === null) void this.nameHost(this.file.host)
     void this.connect()
   }
-
   private closeLink(): void {
     this.cancelSlow?.()
     this.cancelSlow = null
@@ -374,12 +345,10 @@ export class AppSession {
     this.open = false
     this.holder = null
   }
-
   private heard(what: AppHeard): void {
     this.hear(what)
     this.picture.want(!this.ended && this.holding && this.hostUp && this.state === 'running')
   }
-
   private hear(what: AppHeard): void {
     switch (what.t) {
       case 'open':
@@ -419,7 +388,6 @@ export class AppSession {
         return
     }
   }
-
   private async nameHost(host: string): Promise<void> {
     const token = this.world.token()
     if (!token) return
@@ -430,15 +398,12 @@ export class AppSession {
     this.hostPlatform = found?.platform ?? ''
     this.hostListed = found !== undefined
   }
-
   private over(): boolean {
     return this.ended
   }
-
   take(): void {
     this.link?.take()
   }
-
   run(what: 'start' | 'stop' | 'restart'): void {
     if (!this.link?.say({ t: 'run', what })) return
     this.unanswered = false
@@ -448,12 +413,10 @@ export class AppSession {
       this.unanswered = true
     })
   }
-
   resize(view: View): void {
     this.view = view
     this.link?.resize(view)
   }
-
   end(): void {
     this.ended = true
     this.turn += 1
@@ -463,9 +426,7 @@ export class AppSession {
     this.closeLink()
   }
 }
-
 const onOldSync = (): boolean => !!account.user && account.user.syncVersion !== 2
-
 export async function find(path: string, until: number): Promise<Found> {
   if (onOldSync()) {
     await account.reread()
@@ -478,13 +439,10 @@ export async function find(path: string, until: number): Promise<Found> {
     await pause(LOOK_EVERY)
   }
 }
-
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
 const sessions = new Map<string, AppSession>()
 let watching = false
-
 export const appSessionIfAny = (tab: { readonly id: string }): AppSession | null => sessions.get(tab.id) ?? null
-
 export function appSessionOf(tab: Tab): AppSession {
   if (!watching) {
     watching = true

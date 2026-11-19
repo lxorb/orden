@@ -7,9 +7,7 @@ import { MemoryStore } from './memory-store'
 import type { World } from './world'
 
 const ROOT = '/device/space'
-
 const later = () => new Promise((settle) => setTimeout(settle, 5))
-
 async function here() {
   const disk = new MemoryDisk()
   disk.folders.add(ROOT)
@@ -44,21 +42,17 @@ async function here() {
   expect(await localFirst(engine.core, state, new Map())).toBe(true)
   return { disk, engine, state }
 }
-
 describe('a file made once and heard twice', () => {
   test('is one entry at its own name, never a second one numbered beside it (#1904)', async () => {
     const { disk, engine, state } = await here()
     const path = `${ROOT}/GIMP.application`
     const text = '{"v":1,"host":"d","run":{"kind":"installed","id":"gimp","name":"GIMP"}}\n'
     await disk.writeBytes(path, new TextEncoder().encode(text))
-
     await Promise.all([engine.created(path, false), engine.created(path, false)])
-
     const files = [...state.entries.values()].filter((one) => one.kind === 'file')
     expect(files.map((one) => [one.name, one.local_path])).toEqual([['GIMP.application', 'GIMP.application']])
     expect(new TextDecoder().decode((await disk.readBytes(path)) ?? new Uint8Array())).toBe(text)
   })
-
   test('a folder heard twice is one folder', async () => {
     const { disk, engine, state } = await here()
     disk.folders.add(`${ROOT}/Apps`)

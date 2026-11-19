@@ -12,7 +12,6 @@ use super::restore_view::Hidden;
 use super::{DUMP, RESTORE};
 
 const DATABASE_MOST: u64 = 16 * 1024 * 1024;
-
 #[derive(Debug, Default, Serialize, PartialEq, Eq)]
 pub struct Merged {
     pub cookies: usize,
@@ -20,26 +19,22 @@ pub struct Merged {
     pub origins: usize,
     pub left: usize,
 }
-
 #[derive(Deserialize)]
 struct Listed {
     origin: String,
     local: Option<Vec<(String, String)>>,
     databases: Vec<Listing>,
 }
-
 #[derive(Deserialize)]
 struct Listing {
     name: String,
 }
-
 #[derive(Deserialize)]
 struct Dumped<'a> {
     skip: Option<String>,
     #[serde(borrow)]
     db: Option<&'a RawValue>,
 }
-
 fn identity(cookie: &Cookie) -> (String, String, String, Option<(String, bool)>) {
     (
         cookie.name.clone(),
@@ -53,7 +48,6 @@ fn identity(cookie: &Cookie) -> (String, String, String, Option<(String, bool)>)
         ),
     )
 }
-
 pub fn chosen(
     from: &[Cookie],
     into: &[Cookie],
@@ -86,7 +80,6 @@ pub fn chosen(
         .collect();
     (taken, kept)
 }
-
 pub fn last_used(folder: &Path) -> Option<SystemTime> {
     fn newest(at: &Path, depth: u8, seen: &mut usize) -> Option<SystemTime> {
         let mut best = std::fs::metadata(at).ok()?.modified().ok();
@@ -110,7 +103,6 @@ pub fn last_used(folder: &Path) -> Option<SystemTime> {
     }
     newest(folder, 5, &mut 0)
 }
-
 pub async fn merge(
     caller: &Webview,
     from: &str,
@@ -121,7 +113,6 @@ pub async fn merge(
     let window = caller.window();
     let mut old = Hidden::open(&window, Some(from)).await?;
     let mut global = Hidden::open(&window, into).await?;
-
     let theirs = cookies::every(old.view()).await?;
     let ours = cookies::every(global.view()).await?;
     let (taken, kept) = chosen(&theirs, &ours, from_used_last, now());
@@ -132,7 +123,6 @@ pub async fn merge(
         kept,
         ..Merged::default()
     };
-
     for origin in origins {
         match copied(&mut old, &mut global, origin, into.is_some()).await {
             Ok(true) => merged.origins += 1,
@@ -141,11 +131,9 @@ pub async fn merge(
     }
     Ok(merged)
 }
-
 pub fn takes_storage(into_has: bool, fresh: bool) -> bool {
     fresh || !into_has
 }
-
 async fn copied(
     old: &mut Hidden,
     global: &mut Hidden,
@@ -154,7 +142,6 @@ async fn copied(
 ) -> Result<bool, String> {
     let listing = quoted(r#"{"session":false}"#)?;
     let list = format!("ordenDump('list', {listing})");
-
     global.visit(origin).await?;
     let there: Listed = parsed(&isolated::run(global.view(), DUMP, &list).await?)?;
     if there.origin != origin {
@@ -168,14 +155,12 @@ async fn copied(
     if !takes_storage(has, fresh) {
         return Ok(false);
     }
-
     old.visit(origin).await?;
     let here: Listed = parsed(&isolated::run(old.view(), DUMP, &list).await?)?;
     let local = here.local.unwrap_or_default();
     if local.is_empty() && here.databases.is_empty() {
         return Ok(false);
     }
-
     let mut databases = Vec::new();
     for listing in &here.databases {
         let args = serde_json::json!({ "name": listing.name, "most": DATABASE_MOST }).to_string();
@@ -190,7 +175,6 @@ async fn copied(
             databases.push(db.get().to_owned());
         }
     }
-
     if !local.is_empty() {
         let items = serde_json::to_string(&local).map_err(|error| error.to_string())?;
         isolated::run(
@@ -210,11 +194,9 @@ async fn copied(
     }
     Ok(true)
 }
-
 fn parsed<'a, T: Deserialize<'a>>(text: &'a str) -> Result<T, String> {
     serde_json::from_str(text).map_err(|error| format!("the page answered nonsense: {error}"))
 }
-
 #[cfg(test)]
 mod tests {
     use super::super::cookies::{Cookie, Partition};
@@ -233,7 +215,6 @@ mod tests {
         );
         assert!(takes_storage(false, true));
     }
-
     fn cookie(name: &str, value: &str, expires: Option<f64>) -> Cookie {
         Cookie {
             name: name.into(),
@@ -250,27 +231,23 @@ mod tests {
             source_port: None,
         }
     }
-
     #[test]
     fn a_cookie_the_global_store_lacks_is_copied() {
         let (taken, kept) = chosen(&[cookie("sid", "space", Some(2e9))], &[], false, 1e9);
         assert_eq!(taken.len(), 1);
         assert_eq!(kept, 0);
     }
-
     #[test]
     fn of_two_copies_the_later_expiry_wins() {
         let into = [cookie("sid", "global", Some(1.5e9))];
         let (taken, kept) = chosen(&[cookie("sid", "space", Some(2e9))], &into, false, 1e9);
         assert_eq!(taken[0].value, "space");
         assert_eq!(kept, 0);
-
         let into = [cookie("sid", "global", Some(3e9))];
         let (taken, kept) = chosen(&[cookie("sid", "space", Some(2e9))], &into, true, 1e9);
         assert!(taken.is_empty(), "the global store's own was set later");
         assert_eq!(kept, 1);
     }
-
     #[test]
     fn two_session_cookies_go_to_the_store_used_last() {
         let into = [cookie("sid", "global", None)];
@@ -278,14 +255,12 @@ mod tests {
         assert_eq!(chosen(&from, &into, true, 1e9).0.len(), 1);
         assert_eq!(chosen(&from, &into, false, 1e9).1, 1);
     }
-
     #[test]
     fn an_ended_cookie_is_left_behind() {
         assert!(chosen(&[cookie("old", "x", Some(5e8))], &[], true, 1e9)
             .0
             .is_empty());
     }
-
     #[test]
     fn a_partitioned_cookie_is_its_own_cookie() {
         let mut parted = cookie("sid", "parted", Some(2e9));

@@ -23,12 +23,10 @@ export type PictureStatus =
   | { is: 'lost' }
   | { is: 'cannot'; why: NoPicture | null }
   | { is: 'unsupported' }
-
 export const AGAIN_AFTER = 4000
 export const SHOWN_WITHIN = 20_000
 export const QUIET_CHECK = 2000
 export const QUIET_FOR = 6000
-
 export interface PeerWorld {
   servers(): Promise<IceServer[]>
   make(servers: IceServer[]): RTCPeerConnection | null
@@ -36,7 +34,6 @@ export interface PeerWorld {
   copy(text: string): void
   now(): number
 }
-
 const pageWorld: PeerWorld = {
   async servers() {
     const { account, request } = await import('../../accounts/src/api')
@@ -55,7 +52,6 @@ const pageWorld: PeerWorld = {
     void import('../../ui-controls/src/api').then(({ copyText }) => copyText(text)).catch(() => undefined)
   },
 }
-
 export class Picture {
   status = $state<PictureStatus>({ is: 'off' })
   stream = $state<MediaStream | null>(null)
@@ -78,21 +74,17 @@ export class Picture {
   private cancelTimer: (() => void) | null = null
   private cancelQuiet: (() => void) | null = null
   private turn = 0
-
   constructor(
     private readonly say: (data: string) => void,
     private readonly world: PeerWorld = pageWorld,
   ) {}
-
   share(on: boolean): void {
     this.sharing = on
     this.input({ t: 'share', clipboard: on })
   }
-
   paste(text: string): void {
     if (this.sharing && text) this.input({ t: 'clipboard', text: text.slice(0, MOST_CLIPBOARD) })
   }
-
   want(on: boolean): void {
     if (on === this.wanted) return
     this.wanted = on
@@ -104,7 +96,6 @@ export class Picture {
     this.send({ bye: true })
     this.status = { is: 'off' }
   }
-
   heard(data: string): void {
     const said = fromHostOf(data)
     const peer = this.peer
@@ -118,18 +109,15 @@ export class Picture {
       if (this.peer === peer) this.lost()
     })
   }
-
   input(event: InputEvent): void {
     const channel = this.channel
     if (channel?.readyState === 'open') channel.send(inputText(event))
   }
-
   end(): void {
     this.holders = 0
     this.measure(false)
     this.want(false)
   }
-
   hold(): () => void {
     this.holders += 1
     this.measure(true)
@@ -141,7 +129,6 @@ export class Picture {
       if (this.holders === 0) this.measure(false)
     }
   }
-
   private measure(on: boolean): void {
     if (on === (this.measuring !== null)) return
     if (!on) {
@@ -172,13 +159,11 @@ export class Picture {
     this.measuring = () => cancel()
     tick()
   }
-
   presented(rtp: number, shownAt: number): void {
     if (!this.measuring || !this.clock || this.began === null) return
     const took = shownAt - seenAt(rtp, this.began, this.clock, this.world.now())
     if (Number.isFinite(took) && this.shown.length < 1000) this.shown.push(took)
   }
-
   private async begin(): Promise<void> {
     this.close()
     const turn = this.turn
@@ -247,7 +232,6 @@ export class Picture {
       if (this.peer === peer) this.lost()
     }
   }
-
   private listen(peer: RTCPeerConnection): void {
     if (this.cancelQuiet) return
     let heard = -1
@@ -276,7 +260,6 @@ export class Picture {
     }
     check()
   }
-
   private lost(): void {
     this.close()
     this.status = { is: 'lost' }
@@ -285,7 +268,6 @@ export class Picture {
       if (this.wanted) void this.begin()
     })
   }
-
   private close(): void {
     this.turn += 1
     this.cancelTimer?.()
@@ -305,12 +287,10 @@ export class Picture {
     this.encoder = null
     peer?.close()
   }
-
   private send(said: ToHost): void {
     this.say(toHostText(said))
   }
 }
-
 function receivedOf(report: Iterable<Record<string, unknown>>): number {
   let bytes = 0
   for (const one of report) {

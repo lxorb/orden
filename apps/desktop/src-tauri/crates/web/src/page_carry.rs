@@ -8,9 +8,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager};
 
 const FOLDER: &str = "carried";
-
 const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
-
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Carried {
     pub files: Vec<PathBuf>,
@@ -19,41 +17,33 @@ pub struct Carried {
     folder: Option<PathBuf>,
     taken: bool,
 }
-
 static CARRYING: Mutex<Option<Carried>> = Mutex::new(None);
-
 pub fn carrying() -> Option<Carried> {
     CARRYING.held().clone()
 }
-
 pub fn taken() {
     if let Some(carried) = CARRYING.held().as_mut() {
         carried.taken = true;
     }
 }
-
 fn root(app: &AppHandle) -> Result<PathBuf, String> {
     app.path()
         .app_cache_dir()
         .map(|cache| cache.join(FOLDER))
         .map_err(|error| format!("there is no folder to carry files in: {error}"))
 }
-
 pub fn forget_carried(app: &AppHandle) {
     if let Ok(root) = root(app) {
         let _ = std::fs::remove_dir_all(root);
     }
 }
-
 fn is_address(said: &str) -> bool {
     tauri::Url::parse(said).is_ok_and(|url| matches!(url.scheme(), "http" | "https"))
 }
-
 fn is_note(path: &Path) -> bool {
     path.extension()
         .is_some_and(|extension| extension.eq_ignore_ascii_case("md"))
 }
-
 fn free_name(taken: &mut HashSet<OsString>, name: &Path) -> OsString {
     let stem = name.file_stem().unwrap_or_default().to_string_lossy();
     let extension = name
@@ -68,7 +58,6 @@ fn free_name(taken: &mut HashSet<OsString>, name: &Path) -> OsString {
     }
     tried
 }
-
 fn prune(root: &Path, now: SystemTime) {
     let Ok(folders) = std::fs::read_dir(root) else {
         return;
@@ -83,7 +72,6 @@ fn prune(root: &Path, now: SystemTime) {
         }
     }
 }
-
 fn made_in(
     root: &Path,
     sources: &[PathBuf],
@@ -128,7 +116,6 @@ fn made_in(
         taken: false,
     }))
 }
-
 fn drop_untaken(carried: Option<Carried>) {
     if let Some(Carried {
         folder: Some(folder),
@@ -139,7 +126,6 @@ fn drop_untaken(carried: Option<Carried>) {
         let _ = std::fs::remove_dir_all(folder);
     }
 }
-
 #[tauri::command]
 pub async fn page_carry(
     app: AppHandle,
@@ -166,7 +152,6 @@ pub async fn page_carry(
     .await
     .map_err(|error| format!("the files could not be carried: {error}"))?
 }
-
 #[tauri::command]
 pub async fn page_carry_end() {
     let carried = CARRYING.held().take();
@@ -176,7 +161,6 @@ pub async fn page_carry_end() {
     })
     .await;
 }
-
 mod shown {
     use orden_base::Held as _;
     use std::sync::Mutex;
@@ -187,13 +171,10 @@ mod shown {
     use super::Carried;
 
     const PATIENCE: Duration = Duration::from_secs(2);
-
     static OVER: Mutex<Option<String>> = Mutex::new(None);
-
     pub(super) fn forget() {
         *OVER.held() = None;
     }
-
     pub(super) fn data_of(carried: &Carried) -> Value {
         let mut items = Vec::new();
         if let Some(text) = &carried.text {
@@ -211,7 +192,6 @@ mod shown {
             .collect();
         json!({ "items": items, "files": files, "dragOperationsMask": 1 })
     }
-
     pub(super) fn steps(was: Option<&str>, tab: &str, phase: &str) -> Vec<&'static str> {
         let entered = was == Some(tab);
         match phase {
@@ -223,7 +203,6 @@ mod shown {
             _ => Vec::new(),
         }
     }
-
     pub(super) fn tell(
         view: &tauri::Webview,
         tab: &str,
@@ -248,7 +227,6 @@ mod shown {
         Ok(steps.contains(&"drop"))
     }
 }
-
 #[tauri::command]
 pub async fn page_carry_over(
     app: AppHandle,
@@ -271,7 +249,6 @@ pub async fn page_carry_over(
     }
     Ok(dropped)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{drop_untaken, free_name, is_address, made_in, prune, KEPT};
@@ -285,7 +262,6 @@ mod tests {
         std::fs::create_dir_all(&at).expect("a folder");
         at
     }
-
     #[test]
     fn a_note_is_carried_as_a_copy_of_its_file_with_its_words_beside() {
         let space = carry_room("space");
@@ -294,11 +270,9 @@ mod tests {
         std::fs::write(&note, "# Idea\n\nwords").expect("the note");
         let paper = space.join("Paper.pdf");
         std::fs::write(&paper, b"%PDF-1.4").expect("the PDF");
-
         let carried = made_in(&root, &[note.clone(), paper], Vec::new(), SystemTime::now())
             .expect("carried")
             .expect("something");
-
         let names: Vec<_> = carried
             .files
             .iter()
@@ -313,7 +287,6 @@ mod tests {
         assert_eq!(carried.text.as_deref(), Some("# Idea\n\nwords"));
         assert!(note.is_file());
     }
-
     #[test]
     fn two_files_of_one_name_are_both_carried() {
         let space = carry_room("twice");
@@ -322,7 +295,6 @@ mod tests {
         std::fs::create_dir_all(space.join("b")).unwrap();
         std::fs::write(space.join("a/Idea.md"), "one").unwrap();
         std::fs::write(space.join("b/Idea.md"), "two").unwrap();
-
         let carried = made_in(
             &root,
             &[space.join("a/Idea.md"), space.join("b/Idea.md")],
@@ -331,7 +303,6 @@ mod tests {
         )
         .unwrap()
         .unwrap();
-
         let names: Vec<_> = carried
             .files
             .iter()
@@ -340,7 +311,6 @@ mod tests {
         assert_eq!(names, ["Idea.md", "Idea 2.md"]);
         assert_eq!(carried.text.as_deref(), Some("one\n\ntwo"));
     }
-
     #[test]
     fn a_free_name_counts_up_past_every_name_taken() {
         let mut taken = HashSet::new();
@@ -349,7 +319,6 @@ mod tests {
         assert_eq!(free_name(&mut taken, Path::new("a.md")), "a 3.md");
         assert_eq!(free_name(&mut taken, Path::new("Makefile")), "Makefile");
     }
-
     #[test]
     fn a_web_note_is_carried_as_its_address_and_no_file() {
         let root = carry_room("web");
@@ -361,12 +330,10 @@ mod tests {
         )
         .unwrap()
         .unwrap();
-
         assert!(carried.files.is_empty());
         assert_eq!(carried.text.as_deref(), Some("https://example.com/"));
         assert_eq!(carried.addresses, ["https://example.com/"]);
     }
-
     #[test]
     fn nothing_to_carry_is_no_carrying() {
         let root = carry_room("none");
@@ -382,7 +349,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn only_a_page_s_address_is_an_address() {
         assert!(is_address("https://example.com/a"));
@@ -391,13 +357,11 @@ mod tests {
         assert!(!is_address("javascript:alert(1)"));
         assert!(!is_address("words"));
     }
-
     #[test]
     fn files_no_page_took_are_gone_at_the_drag_s_end_and_taken_ones_stay() {
         let space = carry_room("end");
         let root = carry_room("end-root");
         std::fs::write(space.join("Idea.md"), "x").unwrap();
-
         let left = made_in(
             &root,
             &[space.join("Idea.md")],
@@ -409,7 +373,6 @@ mod tests {
         let folder_left = left.files[0].parent().unwrap().to_path_buf();
         drop_untaken(Some(left));
         assert!(!folder_left.exists());
-
         let mut dropped = made_in(
             &root,
             &[space.join("Idea.md")],
@@ -423,7 +386,6 @@ mod tests {
         drop_untaken(Some(dropped));
         assert!(folder_dropped.is_dir());
     }
-
     #[test]
     fn carried_files_older_than_a_day_are_cleared() {
         let root = carry_room("prune");
@@ -431,12 +393,10 @@ mod tests {
         let later = SystemTime::now() + KEPT + Duration::from_secs(60);
         prune(&root, later);
         assert!(!root.join("old").exists());
-
         std::fs::create_dir_all(root.join("new")).unwrap();
         prune(&root, SystemTime::now());
         assert!(root.join("new").is_dir());
     }
-
     #[test]
     fn a_page_is_told_the_drag_entered_once_and_its_drop_after_it_moved() {
         use super::shown::steps;
@@ -448,7 +408,6 @@ mod tests {
         assert_eq!(steps(Some("a"), "a", "leave"), ["dragCancel"]);
         assert!(steps(None, "a", "leave").is_empty());
     }
-
     #[test]
     fn a_page_is_handed_the_file_its_words_and_its_address() {
         use super::shown::data_of;

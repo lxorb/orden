@@ -14,7 +14,6 @@
     danger?: boolean
     note?: string
   }
-
   const {
     value,
     options,
@@ -30,26 +29,20 @@
     plain?: boolean
     disabled?: boolean
   } = $props()
-
   let open = $state(false)
   let walking = $state<Walk>({ cursor: null, typed: '', typedAt: 0 })
   let hovered = $state<number | null>(null)
   let above = $state(false)
   let host = $state<HTMLElement>()
   let list = $state<HTMLElement>()
-
   const current = $derived(options.find((one) => one.value === value))
   const id = `select-${Math.random().toString(36).slice(2, 8)}`
-
   const lit = $derived(hovered ?? walking.cursor)
-
   const ROW = 32
   const MOST = 280
-
   function show() {
     walking = opensAt(options.findIndex((one) => one.value === value))
     hovered = null
-
     if (host && !viewport.touch) {
       const box = host.getBoundingClientRect()
       const scroller = host.closest('[data-scrolls]') ?? document.documentElement
@@ -57,22 +50,17 @@
       const needed = Math.min(MOST, options.length * ROW + 8) + 6
       above = box.bottom + needed > limit && box.top - needed > 0
     }
-
     open = true
   }
-
   function close() {
     open = false
   }
-
   function choose(next: string) {
     close()
     if (next !== value) onchange(next)
   }
-
   function onKey(event: KeyboardEvent) {
     if (chorded(event)) return
-
     if (!open) {
       if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
         event.preventDefault()
@@ -80,34 +68,28 @@
       }
       return
     }
-
     const step = walk(
       event.key,
       event.timeStamp,
       options.map((one) => one.label),
       walking,
     )
-
     if (step.took) event.preventDefault()
     walking = step.walk
-
     if (step.chose !== undefined) {
       const chosen = options[step.chose]
       if (chosen) choose(chosen.value)
       return
     }
-
     if (step.shut) {
       close()
       return
     }
-
     hovered = null
     if (walking.cursor !== null) {
       list?.children[walking.cursor]?.scrollIntoView({ block: 'nearest' })
     }
   }
-
   $effect(() => (open ? overlays.show(close, () => [host, list]) : undefined))
   $effect(() => closeOnBack(open && viewport.touch, close))
 </script>
@@ -203,28 +185,23 @@
     display: block;
     width: 100%;
   }
-
   .plain {
     width: auto;
     min-width: 0;
   }
-
   .trigger {
     width: 100%;
     gap: var(--space-2);
   }
-
   .open .trigger {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
-
   .trigger .text,
   .list li .text,
   .sheet li button .text {
     unicode-bidi: isolate;
   }
-
   .trigger .text {
     flex: 1;
     min-width: 0;
@@ -232,7 +209,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .mark {
     margin-inline-start: 1px;
     color: var(--muted);
@@ -240,7 +216,6 @@
     line-height: 1;
     vertical-align: super;
   }
-
   .chevron {
     flex: none;
     width: var(--icon-sm);
@@ -252,11 +227,9 @@
     stroke-linejoin: round;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .open .chevron {
     transform: rotate(180deg);
   }
-
   .plain .trigger {
     justify-content: flex-end;
     padding: 6px 0 6px 6px;
@@ -264,20 +237,16 @@
     background: none;
     color: var(--muted-strong);
   }
-
   .plain .trigger .text {
     flex: 0 1 auto;
   }
-
   .plain.open .trigger {
     box-shadow: none;
     color: var(--text-strong);
   }
-
   .plain .trigger:focus-visible {
     color: var(--text-strong);
   }
-
   .list {
     max-height: 280px;
     margin: 0;
@@ -286,7 +255,6 @@
     overflow-y: auto;
     z-index: var(--z-menu);
   }
-
   .list li {
     display: flex;
     align-items: center;
@@ -300,37 +268,30 @@
     white-space: nowrap;
     cursor: default;
   }
-
   .list li,
   .sheet li {
     content-visibility: auto;
     contain-intrinsic-size: auto 30px;
   }
-
   .list li .text {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .list li.cursor {
     background: var(--accent-soft);
     color: var(--text-strong);
   }
-
   .list li.chosen {
     color: var(--text-strong);
   }
-
   .list li.danger,
   .sheet li button.danger {
     color: var(--danger);
   }
-
   .list li.danger.cursor {
     background: var(--danger-soft);
   }
-
   .tick {
     flex: none;
     width: 14px;
@@ -341,13 +302,11 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .scrim {
     --scrim-z: var(--z-menu);
     --scrim-ink: 55%;
     --scrim-blur: 2px;
   }
-
   .sheet {
     position: fixed;
     left: 0;
@@ -363,7 +322,6 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow: var(--shadow-lg);
   }
-
   .heading {
     flex: none;
     margin: 0;
@@ -373,7 +331,6 @@
     font-weight: var(--weight-strong);
     color: var(--muted);
   }
-
   .sheet ul {
     flex: 1;
     min-height: 0;
@@ -382,7 +339,6 @@
     list-style: none;
     overflow-y: auto;
   }
-
   .sheet li button {
     width: 100%;
     display: flex;
@@ -399,30 +355,24 @@
     text-align: start;
     cursor: default;
   }
-
   .sheet li button:active {
     background: var(--surface-2);
   }
-
   .sheet li.chosen button {
     color: var(--text-strong);
   }
-
   .sheet li button .text {
     flex: 1;
     min-width: 0;
   }
-
   .sheet .tick {
     width: 18px;
     height: 18px;
   }
-
   :global([data-touch]) .trigger {
     min-height: var(--touch-target);
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) .plain .trigger {
     min-height: var(--touch-target);
     font-size: var(--touch-text);

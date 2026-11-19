@@ -15,7 +15,6 @@ const stateFor = (doc: string): EditorState =>
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-
 function treeOf(state: EditorState): string {
   const doc = state.doc.toString()
   const out: string[] = []
@@ -28,16 +27,12 @@ function treeOf(state: EditorState): string {
   })
   return out.join('\n')
 }
-
 const tree = (doc: string): string => treeOf(stateFor(doc))
-
 const namesOf = (state: EditorState): string[] =>
   treeOf(state)
     .split('\n')
     .map((line) => line.trim().split(' ')[0] ?? '')
-
 const names = (doc: string): string[] => namesOf(stateFor(doc))
-
 describe('front matter being typed', () => {
   const language = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
   const top = (state: EditorState): string => {
@@ -47,7 +42,6 @@ describe('front matter being typed', () => {
     return out.join(' ')
   }
   const fresh = (doc: string) => top(EditorState.create({ doc, extensions: [language] }))
-
   function typedAlong(doc: string, at: number, typed: string) {
     let state = EditorState.create({ doc, extensions: [language] })
     top(state)
@@ -59,7 +53,6 @@ describe('front matter being typed', () => {
     }
     return state
   }
-
   test.each([60, 100, 120, 126, 130, 132, 140, 160, 200, 400, 1000, 6000])(
     'a key under a value %i long is the same tree as a note opened with it',
     (length) => {
@@ -68,7 +61,6 @@ describe('front matter being typed', () => {
       expect(top(state).split(' ')[0]).toMatch(/^FrontMatter/)
     },
   )
-
   test('a key typed anywhere in the block leaves it a block at every keystroke', () => {
     const doc = '---\ntitle: x\nother: y\n---\n\n# Heading\n\nwords\n'
     let state = EditorState.create({ doc, extensions: [language] })
@@ -80,7 +72,6 @@ describe('front matter being typed', () => {
       expect(top(state).split(' ')[0]).toMatch(/^FrontMatter/)
     }
   })
-
   test('where a keystroke does turn a rule into a block or back, the trees agree', () => {
     const tail = `\n\n# Heading\n\n${'words words\n'.repeat(40)}`
     typedAlong(`---\n\n---${tail}`, 4, 'prose: x\n\nmore: y')
@@ -89,12 +80,10 @@ describe('front matter being typed', () => {
     typedAlong(`---\ntitle: x\n\nsta\n---${tail}`, 17, ': done')
     typedAlong(`---\ntitle: x\n---${tail}`, 12, '\n\nprose')
   })
-
   test('a block typed from nothing is the same tree at every keystroke', () => {
     typedAlong(`\n# Heading\n\n${'words\n'.repeat(60)}`, 0, '---\ntitle: x\nb: 1\n---\n')
   })
 })
-
 describe('a fence, as every parser of a note reads it', () => {
   test.each(fenceTable as [string, string, string[]][])('%j', (note, shape) => {
     const code = new Set<number>()
@@ -110,35 +99,29 @@ describe('a fence, as every parser of a note reads it', () => {
     expect(said.join('')).toBe(shape.replaceAll('o', 'c'))
   })
 })
-
 describe('highlight', () => {
   test('parses ==marked==', () => {
     expect(names('a ==marked== b')).toContain('Highlight')
     expect(names('a ==marked== b').filter((n) => n === 'HighlightMark')).toHaveLength(2)
   })
-
   test('leaves a lone equals alone', () => {
     expect(names('a = b')).not.toContain('Highlight')
   })
 })
-
 describe('inline math', () => {
   test('parses $x^2$', () => {
     expect(names('see $x^2$ here')).toContain('InlineMath')
   })
-
   test.each([
     ['costs $5 and $9 total', 'InlineMath'],
     ['a $ b', 'InlineMath'],
   ])('%j', (input, wanted) => expect(names(input)).not.toContain(wanted))
-
   test('ignores a range of prices, whose second dollar is before a digit', () => {
     expect(names('from $5-$10 a head')).not.toContain('InlineMath')
     expect(names('$x$1 is not')).not.toContain('InlineMath')
     expect(names('$x$ 1 is')).toContain('InlineMath')
   })
 })
-
 describe('block math', () => {
   test('parses a $$ fence', () => {
     expect(tree('$$\nE = mc^2\n$$\n')).toMatchInlineSnapshot(`
@@ -148,7 +131,6 @@ describe('block math', () => {
           MathMark "$$""
     `)
   })
-
   test('parses a whole line of $$…$$', () => {
     expect(tree('$$E = mc^2$$\n')).toMatchInlineSnapshot(`
       "Document "$$E = mc^2$$\\n"
@@ -157,20 +139,17 @@ describe('block math', () => {
           MathMark "$$""
     `)
   })
-
   test.each([
     ['Costs $$5 and $$6 in total.', 'BlockMath'],
     ['The sum $$E = mc^2$$ sits here.', 'BlockMath'],
     ['$$$$', 'BlockMath'],
   ])('%j', (input, wanted) => expect(names(input)).not.toContain(wanted))
-
   test.each([
     ['Text above\n$$x + y$$\nText below\n', 'BlockMath'],
     ['Text above\n$$\nx + y\n$$\nText below\n', 'BlockMath'],
     ['Text above\n```js\nlet x = 1\n```\nText below\n', 'FencedCode'],
     ['Text above\n# A heading\nText below\n', 'ATXHeading1'],
   ])('%j', (input, wanted) => expect(names(input)).toContain(wanted))
-
   test('and the paragraph above it is still a paragraph', () => {
     expect(tree('Text above\n$$x + y$$\n')).toMatchInlineSnapshot(`
       "Document "Text above\\n$$x + y$$\\n"
@@ -180,7 +159,6 @@ describe('block math', () => {
           MathMark "$$""
     `)
   })
-
   test('but prose about money is left where it is', () => {
     for (const doc of [
       'I paid\nCosts $$5 and $$6 in total.\n',
@@ -191,18 +169,15 @@ describe('block math', () => {
     }
   })
 })
-
 describe('footnotes', () => {
   test.each([
     ['text[^1] more', 'FootnoteRef'],
     ['[^1]: the note', 'FootnoteDef'],
   ])('%j', (input, wanted) => expect(names(input)).toContain(wanted))
-
   test('does not swallow ordinary links', () => {
     expect(names('[label](url)')).not.toContain('FootnoteRef')
   })
 })
-
 describe('front matter', () => {
   test('parses YAML at the top of the document', () => {
     expect(tree('---\ntitle: Hi\n---\n\nbody')).toMatchInlineSnapshot(`
@@ -213,13 +188,11 @@ describe('front matter', () => {
         Paragraph "body""
     `)
   })
-
   test.each([
     ['---\n\njust a rule', 'FrontMatter'],
     ['intro\n\n---\ntitle: Hi\n---\n', 'FrontMatter'],
   ])('%j', (input, wanted) => expect(names(input)).not.toContain(wanted))
 })
-
 describe('fenced code', () => {
   test('parses a closed fence with its marks, info and text', () => {
     expect(tree('```js\nlet x\n```\n')).toBe(
@@ -233,7 +206,6 @@ describe('fenced code', () => {
       ].join('\n'),
     )
   })
-
   test('leaves an unclosed fence as a paragraph and the rest of the file alone', () => {
     const found = names('```\n# Title\n\nsome *emphasis* here')
     expect(found).not.toContain('FencedCode')
@@ -243,18 +215,15 @@ describe('fenced code', () => {
       ['Document "```\\n# Title"', '  Paragraph "```"', '  ATXHeading1 "# Title"', '    HeaderMark "#"'].join('\n'),
     )
   })
-
   test('many fences that never close are read in time that grows with their number', () => {
     const lines = (count: number) => Array.from({ length: count }, (_, i) => `${'~'.repeat(3 + (i % 7))}a\n`).join('')
     expect(growth((count) => ordenMarkdownParser.parse(lines(count)), 2_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
-
   test('a fence after ones that never close still closes, by its own marks', () => {
     const found = names(`~~~a\n~~~~b\n\`\`\`\ncode\n\`\`\`\n~~~ c\n> ~~~\n> x\n> ~~~\n`)
     expect(found.filter((one) => one === 'FencedCode')).toHaveLength(2)
     expect(tree('~~~a\n\n~~~~\nx\n~~~~\n')).toContain('FencedCode "~~~a\\n\\n~~~~"')
   })
-
   test.each([
     [
       '# Title\n\n```',
@@ -289,19 +258,16 @@ describe('fenced code', () => {
       ].join('\n'),
     ],
   ])('%j', (input, wanted) => expect(tree(input)).toBe(wanted))
-
   test('becomes a fence the moment the third backtick of the closer lands', () => {
     expect(names('```js\ncode\n`')).not.toContain('FencedCode')
     expect(names('```js\ncode\n``')).not.toContain('FencedCode')
     expect(names('```js\ncode\n```')).toContain('FencedCode')
   })
-
   test('closes tildes with tildes, and backticks with backticks', () => {
     expect(names('~~~\ncode\n~~~')).toContain('FencedCode')
     expect(names('~~~\ncode\n```')).not.toContain('FencedCode')
     expect(names('```\ncode\n~~~')).not.toContain('FencedCode')
   })
-
   test('needs a closer at least as long as the opener', () => {
     expect(names('````\ncode\n```')).not.toContain('FencedCode')
     expect(tree('````\ncode\n```\n````')).toBe(
@@ -314,55 +280,45 @@ describe('fenced code', () => {
       ].join('\n'),
     )
   })
-
   test('keeps the info string, but not one with a backtick in it', () => {
     expect(tree('```js extra \ncode\n```')).toContain('CodeInfo "js extra"')
     expect(names('```js`\ncode\n```')).not.toContain('FencedCode')
     expect(tree('~~~a`b\ncode\n~~~')).toContain('CodeInfo "a`b"')
   })
-
   test('allows up to three spaces of indent on either fence', () => {
     expect(names('   ```\ncode\n   ```')).toContain('FencedCode')
     expect(names('```\ncode\n    ```')).not.toContain('FencedCode')
   })
-
   test('leaves indented code alone', () => {
     expect(names('    code')).toContain('CodeBlock')
     expect(names('    ```')).toEqual(['Document', 'CodeBlock', 'CodeText'])
   })
-
   test('does not let a list item close a fence for it', () => {
     const found = names('- ```\n  code\n\nafter')
     expect(found).not.toContain('FencedCode')
     expect(found).toContain('ListItem')
     expect(found.filter((name) => name === 'Paragraph')).toHaveLength(2)
   })
-
   test('ignores a closer outside the list item', () => {
     expect(names('- ```\n  code\n\n```')).not.toContain('FencedCode')
   })
-
   test('does not let a blockquote close a fence for it', () => {
     const found = names('> ```\n> code\n\nafter')
     expect(found).not.toContain('FencedCode')
     expect(found).toContain('Blockquote')
     expect(found.filter((name) => name === 'Paragraph')).toHaveLength(2)
   })
-
   test('is what Enter after an opening fence produces', () => {
     expect(names('```\n\n```')).toContain('FencedCode')
   })
 })
-
 describe('fenced code while editing', () => {
   const padding = '# Heading\n\nA paragraph of prose, long enough for the parse to keep it around.\n\n'.repeat(2)
-
   function edited(doc: string, from: number, to: number, insert: string): string[] {
     const state = stateFor(doc)
     syntaxTree(state)
     return namesOf(parsed(state.update({ changes: { from, to, insert } }).state))
   }
-
   function typed(doc: string, inserts: string[]): string[] {
     let state = stateFor(doc)
     for (const insert of inserts) {
@@ -372,28 +328,24 @@ describe('fenced code while editing', () => {
     syntaxTree(state)
     return namesOf(state)
   }
-
   test('becomes a fence once a closer is typed well below it', () => {
     const doc = '```js\n\n' + padding
     const found = edited(doc, doc.length, doc.length, '```')
     expect(found).toContain('FencedCode')
     expect(found).not.toContain('ATXHeading1')
   })
-
   test('goes back to a paragraph once the closer is removed', () => {
     const doc = '```js\n\n' + padding + '```'
     const found = edited(doc, doc.length - 3, doc.length, '')
     expect(found).not.toContain('FencedCode')
     expect(found).toContain('ATXHeading1')
   })
-
   test('becomes a fence once the line ending its list item is removed', () => {
     const item = '- ```\n  ' + 'a'.repeat(200) + '\n'
     const doc = item + '\nx\n  ```'
     expect(names(doc)).not.toContain('FencedCode')
     expect(edited(doc, item.length + 1, item.length + 3, '')).toContain('FencedCode')
   })
-
   test('becomes a fence on the third backtick of a closer typed key by key', () => {
     const doc = '```js\n\n' + padding
     expect(typed(doc, ['`', '`'])).not.toContain('FencedCode')
@@ -401,26 +353,22 @@ describe('fenced code while editing', () => {
     expect(found).toContain('FencedCode')
     expect(found).not.toContain('ATXHeading1')
   })
-
   test('stays a paragraph through prose typed below it', () => {
     const doc = '```js\n\n' + padding
     const found = typed(doc, ['more', ' prose', ' still', ' no', ' closer'])
     expect(found).not.toContain('FencedCode')
     expect(found).toContain('ATXHeading1')
   })
-
   test('a closer typed long after the last edit still closes it', () => {
     const doc = '```js\n\n' + padding
     const found = typed(doc, ['one\n\n', 'two\n\n', 'three\n\n', '```'])
     expect(found).toContain('FencedCode')
   })
-
   test('a fence inside a list item closes after edits elsewhere', () => {
     const doc = '- ~~~\n  ' + 'a'.repeat(200) + '\n'
     expect(typed(doc, ['\ntext\n\n'])).not.toContain('FencedCode')
     expect(typed(doc, ['  ~~~\n'])).toContain('FencedCode')
   })
-
   test('two unclosed fences, and the first one closes on its own', () => {
     const doc = '```js\n\n' + padding + '~~~\n\ntail\n'
     const found = typed(doc, ['```\n'])
@@ -428,7 +376,6 @@ describe('fenced code while editing', () => {
     expect(found.filter((name) => name === 'FencedCode')).toHaveLength(1)
   })
 })
-
 describe('a long paragraph', () => {
   test('parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser
@@ -450,7 +397,6 @@ describe('a long paragraph', () => {
     expect(growth(read, 5_000)).toBeLessThan(GROWS_AT_MOST)
     expect(found).toEqual({ Link: 20_000, URL: 20_000 })
   }, 60_000)
-
   test('full of dollar signs that close nothing parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser
     let maths = 0
@@ -465,7 +411,6 @@ describe('a long paragraph', () => {
     expect(growth(read, 2_000)).toBeLessThan(GROWS_AT_MOST)
     expect(maths).toBe(1)
   }, 60_000)
-
   test('a long run of spaces, or of brackets after an address, parses in time that grows with its length', () => {
     const runs = [
       (length: number) => `k${' '.repeat(length)}:\n`,
@@ -475,21 +420,18 @@ describe('a long paragraph', () => {
       expect(growth((length) => ordenMarkdownParser.parse(run(length)), 16_000)).toBeLessThan(GROWS_AT_MOST)
     }
   }, 60_000)
-
   test('a line of list or quote marks thousands deep parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
       ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
     for (const unit of ['- ', '* ', '1. ', '> ', '> - '])
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
   }, 30_000)
-
   test('reads lists and quotes 100 deep, as the page is drawn', () => {
     const items = (doc: string) => tree(doc).match(/^\s*ListItem /gm)?.length ?? 0
     expect(items(`${'- '.repeat(150)}x\n`)).toBe(100)
     expect(items(`${'- '.repeat(99)}x\n`)).toBe(99)
     expect(tree(`${'> '.repeat(150)}x\n`).match(/^\s*Blockquote /gm)).toHaveLength(100)
   })
-
   test('still reads a hard break, and the brackets an address keeps', () => {
     expect(tree('a   \nb')).toContain('HardBreak')
     expect(tree('a \nb')).not.toContain('HardBreak')
@@ -497,7 +439,6 @@ describe('a long paragraph', () => {
     expect(tree('see https://a.b/(x)) and')).toContain('URL "https://a.b/(x)"')
     expect(tree('see https://a.b/x).')).toContain('URL "https://a.b/x"')
   })
-
   test('repeating what opens a link or emphasis parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser
     const parsed = (unit: string) => (length: number) =>
@@ -505,14 +446,12 @@ describe('a long paragraph', () => {
     for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a '])
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
-
   test('repeating what closes a link nothing opened parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
       ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
     for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*'])
       expect(growth(parsed(unit), 32_000), unit).toBeLessThan(GROWS_AT_MOST)
   }, 120_000)
-
   test('reads a link and emphasis that close as before', () => {
     expect(tree('[a](b(c)) [d](e (f)) *g [h](i)* **j**').match(/(URL|LinkTitle|\w*Emphasis) ".*"/g)).toEqual([
       'URL "b(c)"',
@@ -526,7 +465,6 @@ describe('a long paragraph', () => {
     expect(tree(`[a](${'('.repeat(33)}b${')'.repeat(33)})`)).not.toContain('URL')
     expect(tree(`[a](${'('.repeat(32)}b${')'.repeat(32)})`)).toContain('URL')
   })
-
   test('still ends an address at the bracket of the link it is in', () => {
     expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual([
       'URL "c"',

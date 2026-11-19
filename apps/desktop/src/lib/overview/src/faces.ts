@@ -7,11 +7,9 @@ export interface Face {
   h: number
   at: number
 }
-
 const BUDGET = 20_000_000
 export const LARGEST = BUDGET / 50
 export const sizeOf = (face: Face): number => (face.html?.length ?? 0) + (face.shot?.length ?? 0)
-
 export function isFace(value: unknown): value is Face {
   if (typeof value !== 'object' || value === null) return false
   const { html, shot, w, h, at } = value as Record<string, unknown>
@@ -19,7 +17,6 @@ export function isFace(value: unknown): value is Face {
   const number = (one: unknown) => typeof one === 'number' && Number.isFinite(one)
   return text(html) && text(shot) && number(w) && number(h) && number(at)
 }
-
 export function evicted(faces: readonly [string, Face][], budget = BUDGET): string[] {
   let total = faces.reduce((sum, [, face]) => sum + sizeOf(face), 0)
   const out: string[] = []
@@ -30,9 +27,7 @@ export function evicted(faces: readonly [string, Face][], budget = BUDGET): stri
   }
   return out
 }
-
 const UNSAFE = 'script, style, link, meta, iframe, frame, object, embed, base, form'
-
 export function drawInto(into: Element, html: string) {
   const template = document.createElement('template')
   template.innerHTML = html
@@ -48,28 +43,22 @@ export function drawInto(into: Element, html: string) {
   }
   into.replaceChildren(root)
 }
-
 const NAME = 'orden-overview-faces'
 const STORE = 'face'
-
 const held = heldDatabase(NAME, 2, (request, oldVersion) => {
   if (oldVersion < 1) request.result.createObjectStore(STORE)
   else request.transaction?.objectStore(STORE).delete(IDBKeyRange.bound('web:', 'web:\uffff'))
 })
-
 const settled = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the faces store refused'))
   })
-
 const asked = async <T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) => IDBRequest<T>) =>
   settled(ask((await held.transaction(STORE, mode)).objectStore(STORE)))
-
 export async function upgradeFaces(): Promise<void> {
   await held.transaction(STORE).catch(() => undefined)
 }
-
 export async function readFaces(): Promise<[string, Face][]> {
   try {
     const keys = await asked('readonly', (store) => store.getAllKeys())
@@ -84,7 +73,6 @@ export async function readFaces(): Promise<[string, Face][]> {
     return []
   }
 }
-
 export async function writeFace(key: string, face: Face): Promise<void> {
   try {
     await asked('readwrite', (store) => store.put(face, key))
@@ -92,7 +80,6 @@ export async function writeFace(key: string, face: Face): Promise<void> {
     // Not kept: the window shows what it would have without it.
   }
 }
-
 export async function forgetFaces(keys: readonly string[]): Promise<void> {
   if (!keys.length) return
   try {

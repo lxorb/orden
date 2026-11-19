@@ -13,35 +13,27 @@
   import type { PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
-
   const asked = $derived(ui.sheet?.kind === 'generator' ? ui.sheet : null)
   const open = $derived(asked !== null)
-
   const prefs = $state(readPrefs())
   let turn = $state(0)
   let result = $state('')
-
   $effect(() => {
     if (!open || turn < 0) return
     const now = $state.snapshot(prefs)
     keepPrefs(now)
     result = generated(now)
   })
-
   const MODE_NAMES = { random: 'Random', memorable: 'Memorable', username: 'Username' }
-
   const separators = $derived(SEPARATORS.map((one) => ({ value: one, label: separatorLabel(one) })))
   const usernameSeparators = $derived([{ value: 'none', label: separatorLabel('none') }, ...separators])
-
   const close = () => (ui.sheet = null)
-
   function use() {
     const chosen = asked?.use
     if (!chosen) return
     chosen(result)
     close()
   }
-
   function copy() {
     void copyField(prefs.mode === 'username' ? 'Username' : 'Password', result)
   }
@@ -168,7 +160,6 @@
     gap: var(--space-3);
     padding: 0 var(--space-2);
   }
-
   .result {
     display: flex;
     align-items: flex-start;
@@ -177,25 +168,20 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .result > :global(:first-child) {
     flex: 1;
     min-width: 0;
   }
-
   .orden-glyph {
     flex: none;
     color: var(--muted-strong);
   }
-
   .card {
     overflow: hidden;
   }
-
   .card > :global(* + *) {
     border-top: 1px solid var(--line);
   }
-
   .dial,
   .choice {
     display: flex;
@@ -206,17 +192,14 @@
     font-size: var(--text-row);
     color: var(--text);
   }
-
   .name {
     flex: none;
     min-width: 6rem;
   }
-
   .orden-slider {
     flex: 1;
     min-width: 0;
   }
-
   .count {
     flex: none;
     min-width: 2ch;
@@ -224,12 +207,10 @@
     text-align: end;
     color: var(--muted-strong);
   }
-
   .choice > :global(:last-child) {
     flex: 1;
     min-width: 0;
   }
-
   .use {
     margin-inline-start: auto;
   }

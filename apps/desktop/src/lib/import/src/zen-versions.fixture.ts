@@ -1,7 +1,6 @@
 const HOME = '{d12f5e21-86dc-4ab6-aa68-5179e3c6578d}'
 const WORK = '{90bb2d5f-4e6e-4d01-80cf-84d545dda229}'
 const DOCS = '1793911194239-60'
-
 function tab(id: string, url: string, title: string, said: Record<string, unknown> = {}): Record<string, unknown> {
   const pinned = said.pinned === true
   return {
@@ -41,9 +40,7 @@ function tab(id: string, url: string, title: string, said: Record<string, unknow
     ...said,
   }
 }
-
 const essential = { pinned: true, zenEssential: true, zenDefaultUserContextId: 'true' }
-
 export const ZEN_1_24 = {
   lastCollected: 1793911199000,
   tabs: [
@@ -119,7 +116,6 @@ export const ZEN_1_24 = {
     },
   ],
 }
-
 export const ZEN_TWILIGHT = {
   ...ZEN_1_24,
   tabs: ZEN_1_24.tabs.map((one) => ({
@@ -127,7 +123,6 @@ export const ZEN_TWILIGHT = {
     zenEssential: one.zenEssential === true ? 'true' : null,
   })),
 }
-
 const oldTab = (
   pin: string | null,
   url: string,
@@ -156,12 +151,10 @@ const oldTab = (
   image: 'data:,',
   ...said,
 })
-
 const OLD_HOME = '{d88f2556-133e-46ba-ac88-679b67e17db0}'
 const OLD_WORK = '{82cd46dd-7275-4832-8a1c-a0f01c885cc7}'
 const OLD_DOCS = '{454e6094-0951-49df-b99b-8c428f295af9}'
 const oldEssential = { zenEssential: 'true', zenDefaultUserContextId: 'true' }
-
 export const ZEN_1_17 = {
   version: ['sessionrestore', 1],
   windows: [
@@ -208,7 +201,6 @@ export const ZEN_1_17 = {
   ],
   savedGroups: [],
 }
-
 const pin = (
   id: number,
   uuid: string,
@@ -235,7 +227,6 @@ const pin = (
   folder_parent_uuid: null,
   ...said,
 })
-
 export const ZEN_1_17_PLACES = {
   bookmarks: null,
   spaces: [

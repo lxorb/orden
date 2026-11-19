@@ -14,7 +14,6 @@ describe('a shortcut an older version wrote', () => {
     'Nib-Chosen-Color=violet',
     '',
   ].join('\r\n')
-
   test('is read in full', () => {
     expect(readShortcut(OLD)).toEqual({
       url: 'https://svelte.dev/docs',
@@ -27,7 +26,6 @@ describe('a shortcut an older version wrote', () => {
       chosenColour: 'violet',
     })
   })
-
   test('gives way to the new name where a newer version wrote both', () => {
     const both = `${OLD}Orden-Icon=https://svelte.dev/new.png\r\n`
     expect(readShortcut(both)?.icon).toBe('https://svelte.dev/new.png')

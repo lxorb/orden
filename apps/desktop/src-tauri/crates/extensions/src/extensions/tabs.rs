@@ -4,14 +4,10 @@ use std::sync::{Mutex, OnceLock};
 use tauri::{AppHandle, Url};
 
 static APP: OnceLock<AppHandle> = OnceLock::new();
-
 const LISTINGS: usize = 20;
 const AGAIN: std::time::Duration = std::time::Duration::from_secs(1);
-
 static EARLY: Mutex<Vec<Url>> = Mutex::new(Vec::new());
-
 static OPEN: OnceLock<fn(&AppHandle, Vec<String>)> = OnceLock::new();
-
 pub fn opened(url: Url) {
     let mut early = EARLY.held();
     match APP.get() {
@@ -19,7 +15,6 @@ pub fn opened(url: Url) {
         None => early.push(url),
     }
 }
-
 pub fn start(app: &AppHandle, open: fn(&AppHandle, Vec<String>)) {
     let mut early = EARLY.held();
     let _ = OPEN.set(open);
@@ -28,7 +23,6 @@ pub fn start(app: &AppHandle, open: fn(&AppHandle, Vec<String>)) {
         handed(app.clone(), url);
     }
 }
-
 fn handed(app: AppHandle, url: Url) {
     std::thread::spawn(move || {
         let unknown =

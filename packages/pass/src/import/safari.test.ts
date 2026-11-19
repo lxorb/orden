@@ -3,7 +3,6 @@ import { totpOf } from './build'
 import { parseSafari } from './safari'
 
 const OTP = 'otpauth://totp/Example:me?secret=JBSWY3DPEHPK3PXP&issuer=Example'
-
 describe('parseSafari', () => {
   it('reads Safari and Apple Passwords exports with 2FA', () => {
     const csv =

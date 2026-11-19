@@ -6,7 +6,6 @@ const ops = vi.hoisted(() => ({
   carried: new Map<string, unknown>(),
   did: [] as string[],
 }))
-
 vi.mock('./workspace.svelte', () => ({
   workspace: {
     fileOps: { follow: (one: (op: unknown) => void) => void ops.followers.push(one) },
@@ -33,13 +32,10 @@ vi.mock('./workspace.svelte', () => ({
     },
   },
 }))
-
 const { fileClipboard } = await import('./list-landing.svelte')
-
 const tell = (op: unknown) => {
   for (const one of ops.followers) one(op)
 }
-
 test('a cut note renamed before it is pasted is pasted under its new name', () => {
   fileClipboard.hold(['/s/a.md', '/s/f/b.md'], true)
   tell({ op: 'moved', kind: 'file', from: '/s/a.md', to: '/s/c.md', root: '/s' })
@@ -47,13 +43,11 @@ test('a cut note renamed before it is pasted is pasted under its new name', () =
   expect(fileClipboard.paths).toEqual(['/s/c.md', '/s/g/b.md'])
   expect(fileClipboard.isCut('/s/g/b.md')).toBe(true)
 })
-
 test('a held note deleted before it is pasted is let go', () => {
   fileClipboard.hold(['/s/a.md', '/s/f/b.md'], false)
   tell({ op: 'removed', kind: 'folder', path: '/s/f', root: '/s' })
   expect(fileClipboard.paths).toEqual(['/s/a.md'])
 })
-
 test('rows copied or cut in one space are pasted into another', async () => {
   ops.tree = new Map([['/A/plan.md', { path: '/A/plan.md', name: 'plan.md', is_dir: false }]])
   fileClipboard.hold(['/A/plan.md'], false)

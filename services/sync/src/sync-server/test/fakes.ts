@@ -8,20 +8,15 @@ const MIGRATIONS = readdirSync(FOLDER)
   .filter((name) => name.endsWith('.sql'))
   .sort()
   .map((name) => readFileSync(FOLDER + name, 'utf8'))
-
 type Loses = (sql: string) => boolean
-
 type Bound = (sql: string, count: number) => void
-
 type JustBefore = (sql: string) => void
-
 function asD1(row: unknown): unknown {
   if (!row || typeof row !== 'object') return row
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [key, value instanceof Uint8Array ? [...value] : value]),
   )
 }
-
 function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: JustBefore) {
   return {
     async batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]> {
@@ -36,11 +31,9 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
         throw error
       }
     },
-
     prepare(sql: string) {
       const lost = loses(sql)
       justBefore(sql)
-
       const statement = {
         args: [] as never[],
         bind(...args: unknown[]) {
@@ -61,7 +54,6 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
         },
         run(): Promise<{ success: true; results: unknown[]; meta: { changes: number } }> {
           if (lost) return Promise.resolve({ success: true, results: [], meta: { changes: 0 } })
-
           const prepared = database.prepare(sql)
           if ((prepared as unknown as { columns(): unknown[] }).columns().length) {
             const changed = () => (database.prepare('select total_changes() as n').get() as { n: number }).n
@@ -85,13 +77,11 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
     },
   }
 }
-
 function bytesOf(value: unknown): Uint8Array {
   if (value instanceof Uint8Array) return value
   if (value instanceof ArrayBuffer) return new Uint8Array(value)
   return new TextEncoder().encode(String(value))
 }
-
 function bucket() {
   const store = new Map<
     string,
@@ -103,10 +93,8 @@ function bucket() {
   >()
   const uploads = new Map<string, { key: string; parts: Map<number, Uint8Array>; options: unknown }>()
   let uploadsMade = 0
-
   return {
     keys: () => [...store.keys()],
-
     put(
       key: string,
       value: unknown,
@@ -125,7 +113,6 @@ function bucket() {
     get(key: string) {
       const held = store.get(key)
       if (!held) return Promise.resolve(null)
-
       return Promise.resolve({
         size: bytesOf(held.value).length,
         text: () => Promise.resolve(new TextDecoder().decode(bytesOf(held.value))),
@@ -204,7 +191,6 @@ function bucket() {
     },
   }
 }
-
 export interface TestEnv extends Env {
   db: DatabaseSync
   losing(sql: RegExp): () => number
@@ -213,38 +199,29 @@ export interface TestEnv extends Env {
   widest(): { count: number; sql: string }
   close(): void
 }
-
 export function testEnv(overrides: Partial<Env> = {}): TestEnv {
   const database = new DatabaseSync(':memory:')
   for (const migration of MIGRATIONS) database.exec(migration)
-
   let losing: RegExp | null = null
   let caught = 0
-
   const loses: Loses = (sql) => {
     if (!losing?.test(sql)) return false
-
     losing = null
     caught++
     return true
   }
-
   let widest = { count: 0, sql: '' }
   const bound: Bound = (sql, count) => {
     if (count > widest.count) widest = { count, sql }
   }
-
   const notes = bucket()
-
   let waiting: { sql: RegExp; work: () => void } | null = null
   const justBefore: JustBefore = (sql) => {
     if (!waiting?.sql.test(sql)) return
-
     const { work } = waiting
     waiting = null
     work()
   }
-
   return {
     DB: d1(database, loses, bound, justBefore) as unknown as D1Database,
     NOTES: notes as unknown as R2Bucket,

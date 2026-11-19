@@ -1,14 +1,11 @@
 import json
 import time
-
 from playwright.sync_api import Browser, Page, Route
-
 from harness import Drive
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
@@ -17,13 +14,10 @@ PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 GB = 1_000_000_000
 HOUR = 3600
-
 ALLOWANCE = {"awakeS": 20 * HOUR, "cpuS": 10 * HOUR, "homeBytes": 5 * GB, "egressBytes": 20 * GB}
 USED = {"awakeS": 17 * HOUR, "cpuS": 2 * HOUR, "homeBytes": int(1.4 * GB), "egressBytes": 3 * GB}
-
 MACHINES = {
     "cloud": {
         "id": "m-cloud",
@@ -53,7 +47,6 @@ MACHINES = {
         "disk": {"used": 131 * GB, "total": 160 * GB},
     },
 }
-
 def offer(name, cores, memory, disk, cpu, arch, monthly, hourly):
     return {
         "name": name,
@@ -64,7 +57,6 @@ def offer(name, cores, memory, disk, cpu, arch, monthly, hourly):
         "arch": arch,
         "prices": [{"location": place, "monthly": monthly, "hourly": hourly} for place in ("fsn1", "nbg1")],
     }
-
 OFFERS = {
     "currency": "EUR",
     "locations": [
@@ -79,7 +71,6 @@ OFFERS = {
         offer("ccx33", 8, 32, 240, "dedicated", "x86", 75.47, 0.1212),
     ],
 }
-
 SESSIONS = [
     {
         "term": "note-agent",
@@ -121,9 +112,7 @@ SESSIONS = [
         "at": None,
     },
 ]
-
 NAMES = ["Fix the flaky upload test and the build that goes with it", "vim", "Terminal"]
-
 ROWS = """
 () => {
   const box = (one) => one.getBoundingClientRect()
@@ -146,21 +135,16 @@ ROWS = """
   })
 }
 """
-
 class Account:
-
     def __init__(self) -> None:
         self.sessions = [dict(one) for one in SESSIONS]
         self.ended: list[str] = []
         self.chosen: list[dict[str, str]] = []
-
     def offers(self, route: Route) -> None:
         route.fulfill(status=200, content_type="application/json", body=json.dumps(OFFERS))
-
     def choose(self, route: Route) -> None:
         self.chosen.append(json.loads(route.request.post_data or "{}"))
         route.fulfill(status=200, content_type="application/json", body='{"state": "starting"}')
-
     def answer(self, route: Route) -> None:
         if route.request.method == "DELETE":
             ended = route.request.url.rsplit("/", 1)[-1]
@@ -169,7 +153,6 @@ class Account:
             route.fulfill(status=200, content_type="application/json", body='{"ok": true}')
             return
         route.fulfill(status=200, content_type="application/json", body=json.dumps({"terms": self.sessions}))
-
 LOOKS = [
     ("desktop", 1280, 860, "light"),
     ("desktop", 960, 760, "light"),
@@ -178,7 +161,6 @@ LOOKS = [
     ("phone", 390, 844, "light"),
     ("phone", 390, 844, "dark"),
 ]
-
 SIGNED_IN = """
 () => {
   const app = window.ordenApp
@@ -188,7 +170,6 @@ SIGNED_IN = """
   return !!app.account.accountToken
 }
 """
-
 MEASURE = """
 () => {
   const box = (one) => one ? one.getBoundingClientRect() : null
@@ -238,15 +219,12 @@ MEASURE = """
   }
 }
 """
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def answering(machine: dict[str, object]):
-
     def answer(route: Route) -> None:
         route.fulfill(
             status=200,
@@ -261,9 +239,7 @@ def answering(machine: dict[str, object]):
                 }
             ),
         )
-
     return answer
-
 def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> None:
     finger = kind == "phone"
     page = DRIVE.page(
@@ -293,7 +269,6 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
         DRIVE.wait_for(page, "document.querySelector('.online .meter')", f"[{name}] the meters")
         quiet(page)
         shot(page, name)
-
         seen = page.evaluate(MEASURE)
         say(f"[{name}] {json.dumps(seen)}")
         row, words, action = seen["row"], seen["name"], seen["action"]
@@ -322,7 +297,6 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
         )
         if machine == "server":
             check(f"[{name}] the machine's cost this month is beside its price", "this month" in words["text"])
-
         every = f"document.querySelectorAll('.online .orden-setting').length === {len(SESSIONS) + 1}"
         DRIVE.wait_for(page, every, f"[{name}] the sessions")
         listed = page.evaluate(ROWS)
@@ -342,14 +316,11 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
                 and all(chip["chip"] and chip["width"] < one["width"] / 3 for chip in one["chips"])
                 and abs(one["lastRight"] - one["end"]) <= 1,
             )
-
         if kind == "desktop" and width == 1280 and scheme == "light" and machine == "cloud":
             ending(page, account)
         if machine == "server":
             picking(page, account, name, kind == "desktop" and width == 1280 and scheme == "light")
-
     page.context.close()
-
 def ending(page: Page, account: Account) -> None:
     danger = "document.querySelector('button.orden-button.is-danger')"
     last = page.locator(".online .orden-setting").last
@@ -359,7 +330,6 @@ def ending(page: Page, account: Account) -> None:
     page.keyboard.press("Escape")
     DRIVE.wait_for(page, f"!{danger}", "the question put away")
     check("put away, the question ends nothing", account.ended == [])
-
     last.get_by_role("button", name="End").click()
     DRIVE.wait_for(page, danger, "End's question again")
     page.locator("button.orden-button.is-danger").click()
@@ -368,7 +338,6 @@ def ending(page: Page, account: Account) -> None:
     shot(page, "end-ended")
     account.sessions = [dict(one) for one in SESSIONS]
     account.ended.clear()
-
 PICKER = """
 () => {
   const box = (one) => one.getBoundingClientRect()
@@ -387,7 +356,6 @@ PICKER = """
   return { rows, past: past.map((one) => one.className || one.tagName), scrolls: pane.scrollWidth > pane.clientWidth }
 }
 """
-
 def picking(page: Page, account: Account, name: str, flow: bool) -> None:
     page.locator(".online .orden-setting").first.get_by_role("button", name="Change").click()
     DRIVE.wait_for(page, "document.querySelectorAll('.online .picker [data-type]').length === 5", f"[{name}] the machines")
@@ -409,7 +377,6 @@ def picking(page: Page, account: Account, name: str, flow: bool) -> None:
         return
     page.locator(".online .orden-setting").first.get_by_role("button", name="Change").click()
     DRIVE.wait_for(page, "!document.querySelector('.online .picker')", f"[{name}] the picker put away")
-
 def resizing(page: Page, account: Account) -> None:
     resize = page.locator('.online .picker [data-type="cx53"]').get_by_role("button", name="Resize")
     resize.click()
@@ -420,7 +387,6 @@ def resizing(page: Page, account: Account) -> None:
     page.keyboard.press("Escape")
     DRIVE.wait_for(page, "!document.querySelector('button.orden-button.is-danger')", "the warning put away")
     check("put away, the warning resizes nothing", account.chosen == [])
-
     resize.click()
     DRIVE.wait_for(page, "document.querySelector('button.orden-button.is-danger')", "the warning again")
     page.get_by_role("button", name="Continue").click()
@@ -436,9 +402,7 @@ def resizing(page: Page, account: Account) -> None:
     DRIVE.wait_for(page, "!document.querySelector('.online .picker')", "the picker closed once chosen")
     check("Resize asks for the chosen type, with no place", account.chosen == [{"type": "cx53"}])
     account.chosen.clear()
-
 def drive(browser: Browser) -> None:
     for kind, width, height, scheme in LOOKS:
         look(browser, kind, width, height, scheme)
-
 raise SystemExit(DRIVE.run(drive, "Settings > Online terminal is laid out in every look"))

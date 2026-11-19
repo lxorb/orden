@@ -3,31 +3,25 @@ from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 LOOKS = ["light", "dark"]
-
 OPEN = """
 async () => {
   window.agentsFake = window.ordenApp.agents.standIn()
   window.ordenApp.settings.show('agents')
 }
 """
-
 GRANT = """
 (id) => JSON.parse(JSON.stringify(window.agentsFake.grants.find((one) => one.id === id)))
 """
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 STANDING = """
 (one) => new Promise((done) => {
   const started = Date.now()
@@ -46,7 +40,6 @@ STANDING = """
   look()
 })
 """
-
 def press(page, row) -> None:
     row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
     quiet(page)
@@ -54,14 +47,12 @@ def press(page, row) -> None:
     if at is None:
         raise SystemExit(f"nothing to press: {row} never stood still with nothing over it")
     page.mouse.click(*at)
-
 def choose(page, name: str) -> None:
     press(page, page.locator(".agents .agent", has_text=name))
     page.wait_for_function(
         "(name) => document.querySelector('.agents .who input.title')?.value === name",
         arg=name,
     )
-
 def switch(page, name: str) -> None:
     row = page.locator(".agents .orden-setting", has_text=name).locator("[role=switch]")
     was = row.get_attribute("aria-checked")
@@ -74,7 +65,6 @@ def switch(page, name: str) -> None:
     )
     if not moved:
         say(f"     the switch {name!r} did not move when pressed")
-
 def body_to(page, where: str) -> None:
     page.evaluate(
         """(where) => {
@@ -86,9 +76,7 @@ def body_to(page, where: str) -> None:
         where,
     )
     quiet(page)
-
 MEMORY = ".agents .orden-setting.sliding:has-text('Browser memory limit')"
-
 SLIDE = """
 ([label, value]) => {
   const row = [...document.querySelectorAll('.agents .orden-setting.sliding')].find(
@@ -100,7 +88,6 @@ SLIDE = """
   range.dispatchEvent(new Event('change', { bubbles: true }))
 }
 """
-
 def memory_limit(page, name: str) -> None:
     row = page.locator(MEMORY)
     row.scroll_into_view_if_needed()
@@ -117,7 +104,6 @@ def memory_limit(page, name: str) -> None:
     page.evaluate(SLIDE, ["Browser memory limit", 0])
     page.wait_for_timeout(200)
     check(f"[{name}] and taken away again", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
-
 def look(browser, scheme: str) -> None:
     name = scheme
     page = DRIVE.page(
@@ -139,31 +125,25 @@ def look(browser, scheme: str) -> None:
         shot(page, f"{name}-stuck")
         raise
     DRIVE.wait_for(page, "window.ordenApp.agents", "the agents")
-
     page.evaluate(OPEN)
     page.wait_for_selector(".agents .agent")
     quiet(page)
-
     def photograph(tag: str) -> None:
         shot(page, f"{name}-{tag}")
-
     rows = page.locator(".agents .agent").count()
     check(f"[{name}] the list holds the three agents", rows == 3)
     photograph("list")
-
     choose(page, "Codex")
     quiet(page)
     check(f"[{name}] no trifecta line on an agent with no browser", page.locator(".trifecta").count() == 0)
     page.locator(".agents .back").click()
     page.wait_for_selector(".agents .agent")
     quiet(page)
-
     choose(page, "Claude Code")
     quiet(page)
     check(f"[{name}] the trifecta line is on the agent that reads and browses", page.locator(".trifecta").count() == 1)
     body_to(page, "top")
     photograph("agent-top")
-
     page.locator(".agents .session").first.click()
     page.wait_for_selector(".agents .calls li")
     quiet(page)
@@ -171,7 +151,6 @@ def look(browser, scheme: str) -> None:
     page.locator(".agents .session").first.click()
     page.wait_for_selector(".agents .calls", state="detached")
     quiet(page)
-
     check(f"[{name}] an MCP client says it manages its own permissions", page.locator(".agents .connected").count() == 1)
     check(f"[{name}] and has no switch of them", page.locator(".agents .orden-setting:has([role=switch])", has_text="Run scripts in pages").count() == 0)
     sidebar = page.evaluate("() => { const one = window.agentsFake.pair('Orden Claude'); return { id: one.id, name: one.name } }")
@@ -180,12 +159,10 @@ def look(browser, scheme: str) -> None:
     quiet(page)
     choose(page, sidebar["name"])
     quiet(page)
-
     switch(page, "Run scripts in pages")
     page.wait_for_timeout(200)
     grant = page.evaluate(GRANT, sidebar["id"])
     check(f"[{name}] a switch pressed is in the crate's grant", "browser.script" in grant["scopes"])
-
     switch(page, "Read your cookies")
     page.wait_for_timeout(200)
     switch(page, "Act in your tabs")
@@ -200,7 +177,6 @@ def look(browser, scheme: str) -> None:
     quiet(page)
     choose(page, "Claude Code")
     quiet(page)
-
     field = page.locator(".agents h3:text-is('Sites') + .card .add")
     field.press_sequentially("https://login.bank2.example/sign-in?next=/")
     field.press("Enter")
@@ -209,21 +185,15 @@ def look(browser, scheme: str) -> None:
     )
     grant = page.evaluate(GRANT, "claude-code")
     check(f"[{name}] a typed address is kept as its site", grant["sites"].get("bank2.example") == "deny")
-
     memory_limit(page, name)
-
     body_to(page, "middle")
     photograph("agent-middle")
     body_to(page, "foot")
     photograph("agent-foot")
-
     context.close()
-
 def drive(browser) -> None:
     for scheme in LOOKS:
         look(browser, scheme)
-
 def main() -> int:
     return DRIVE.run(drive, "Settings > Agents held in both looks")
-
 raise SystemExit(main())

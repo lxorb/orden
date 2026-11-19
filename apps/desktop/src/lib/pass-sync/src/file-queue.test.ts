@@ -14,7 +14,6 @@ function rows(): QueueRows & { kept: Map<string, unknown> } {
     },
   }
 }
-
 describe('the files waiting to be sent', () => {
   test('hold an upload until it is settled', async () => {
     const at = rows()
@@ -26,20 +25,17 @@ describe('the files waiting to be sent', () => {
     expect(await waitingFiles(at)).toEqual([])
     expect(at.kept.size).toBe(0)
   })
-
   test('forget an upload never sent when its file is taken off', async () => {
     const at = rows()
     await queuedUpload(at, 'i', 'f', 1)
     await queuedRemoval(at, 'v', 'i', 'f')
     expect(await waitingFiles(at)).toEqual([])
   })
-
   test('ask the account to delete a file it already has', async () => {
     const at = rows()
     await queuedRemoval(at, 'v', 'i', 'f')
     expect(await waitingFiles(at)).toEqual([{ item: 'i', file: 'f', parts: 1, gone: 'v' }])
   })
-
   test('drop the uploads of items that are gone, but not their deletions', async () => {
     const at = rows()
     await queuedUpload(at, 'i', 'f', 1)
@@ -51,7 +47,6 @@ describe('the files waiting to be sent', () => {
       { item: 'j', file: 'h', parts: 1, gone: null },
     ])
   })
-
   test('read nothing from a broken list', async () => {
     const at = rows()
     at.kept.set('files-waiting', [{ item: 3 }, 'x', { item: 'i', file: 'f', parts: 1, gone: null }])

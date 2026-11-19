@@ -7,13 +7,11 @@ const GROUPS: readonly (readonly string[])[] = [
   ['source', 'focus', 'typewriter'],
   ['view.fold', 'view.fold-all', 'view.fold-more', 'view.fold-less', 'view.unfold-all'],
 ]
-
 export async function noteMenu(paneId: string): Promise<MenuEntry[]> {
   const commands = portOf('commands.app')
   const rows = commands.ok ? await commands.value.rows(views.of(paneId)) : []
   const byId = new Map(rows.map((one) => [one.id, one]))
   const pick = (ids: readonly string[]) => ids.flatMap((id) => byId.get(id) ?? [])
-
   return [
     ...pick(['history', 'print']),
     ...(__EVEN_PLUGIN__ ? [] : [{ label: 'Export', asks: true, run: () => void runCommand('export.picker') }]),

@@ -18,11 +18,8 @@ import { applyOps } from './ops'
 import { DOCUMENT_KINDS } from './tree'
 
 const MENDER = 'mend'
-
 const SAME_BATCH = 2
-
 const EDITED_AFTER = 60_000
-
 interface Item {
   id: string
   folder: boolean
@@ -36,35 +33,28 @@ interface Item {
   updated_at: number
   meta: string | null
 }
-
 interface Made {
   id: string
   at: number
 }
-
 interface Pair {
   keep: string
   drop: string
 }
-
 interface Mending {
   pairs: Pair[]
   moved: string[]
   versions: number
   protected: number
 }
-
 function nameFrom(name: string): string {
   const dot = name.lastIndexOf('.')
   const stem = dot > 0 ? name.slice(0, dot) : name
   const extension = dot > 0 ? name.slice(dot) : ''
   return `${uncounted(stem)}${extension}`
 }
-
 type Later = ReturnType<typeof laterOf>
-
 type Row = Omit<Item, 'folder'> & { folder: number }
-
 async function liveItems(env: Env, spaceId: string): Promise<Item[]> {
   const notes = await env.DB.prepare(
     `select id, 0 as folder, kind, folder_id as parent, name, seq, hash, size, version, updated_at, meta
@@ -81,7 +71,6 @@ async function liveItems(env: Env, spaceId: string): Promise<Item[]> {
     .all<Row>()
   return [...notes.results, ...folders.results].map((one) => ({ ...one, folder: one.folder === 1 }))
 }
-
 async function madeInBatches(env: Env, spaceId: string): Promise<Map<number, Made[]>> {
   const { results } = await env.DB.prepare('select result, at from tree_ops where space_id = ?')
     .bind(spaceId)
@@ -103,11 +92,9 @@ async function madeInBatches(env: Env, spaceId: string): Promise<Map<number, Mad
   }
   return out
 }
-
 class Places {
   private readonly byId = new Map<string, Item>()
   private readonly children = new Map<string | null, Item[]>()
-
   constructor(items: readonly Item[]) {
     for (const item of items) {
       this.byId.set(item.id, item)
@@ -116,15 +103,12 @@ class Places {
       this.children.set(item.parent, list)
     }
   }
-
   get(id: string): Item | undefined {
     return this.byId.get(id)
   }
-
   inside(parent: string | null): Item[] {
     return this.children.get(parent) ?? []
   }
-
   twin(of: Item, name: string): Item | undefined {
     const key = nameKey(name)
     return this.inside(of.parent).find(
@@ -136,7 +120,6 @@ class Places {
         nameKey(one.name) === key,
     )
   }
-
   pathOf(id: string): string {
     const names: string[] = []
     for (let at = this.byId.get(id); at; at = at.parent ? this.byId.get(at.parent) : undefined) {
@@ -145,7 +128,6 @@ class Places {
     return names.join('/')
   }
 }
-
 function copiesIn(
   places: Places,
   batches: ReadonlyMap<number, readonly Made[]>,
@@ -170,32 +152,26 @@ function copiesIn(
   }
   return out.sort((a, b) => a.drop.seq - b.drop.seq)
 }
-
 async function bodyOf(env: Env, spaceId: string, id: string): Promise<string> {
   const object = await env.NOTES.get(noteKey(spaceId, id))
   return object ? await object.text() : ''
 }
-
 async function noteRow(env: Env, id: string): Promise<Note | null> {
   return await env.DB.prepare('select * from notes where id = ?').bind(id).first<Note>()
 }
-
 class Mender {
   readonly ops: Op[] = []
   readonly done: Mending = { pairs: [], moved: [], versions: 0, protected: 0 }
   readonly guarded: { from: string; to: string }[] = []
-
   constructor(
     private readonly env: Env,
     private readonly spaceId: string,
     private readonly places: Places,
     private readonly seen: number,
   ) {}
-
   private op(fields: Record<string, unknown>): void {
     this.ops.push({ op: `${MENDER}.${newId()}`, seen: this.seen, ...fields } as Op)
   }
-
   async pair(keep: Item, drop: Item, at: number): Promise<void> {
     const merged = keep.folder ? await this.folders(keep, drop, at) : await this.notes(keep, drop, at)
     if (!merged) return
@@ -204,7 +180,6 @@ class Mender {
     this.op({ t: 'delete', id: drop.id })
     this.done.pairs.push({ keep: keep.id, drop: drop.id })
   }
-
   private async folders(keep: Item, drop: Item, at: number): Promise<boolean> {
     for (const child of this.places.inside(drop.id)) {
       const twin = this.places
@@ -224,7 +199,6 @@ class Mender {
     }
     return true
   }
-
   private async notes(keep: Item, drop: Item, at: number): Promise<boolean> {
     if (drop.hash === keep.hash) return true
     if (!DOCUMENT_KINDS.has(drop.kind)) return false
@@ -242,7 +216,6 @@ class Mender {
     if (kept) await this.kept(keep.id, kept)
     return (await ingestInto(this.env, target, dropped, { name: 'Orden', device: MENDER })) !== null
   }
-
   private async kept(id: string, text: string): Promise<void> {
     const held = await this.env.DB.prepare('select 1 as one from note_versions where note_id = ? and hash = ? limit 1')
       .bind(id, await sha256(text))
@@ -251,7 +224,6 @@ class Mender {
     await keepVersionNow(this.env, id, text, MENDER)
     this.done.versions += 1
   }
-
   private described(keep: Item, drop: Item): void {
     const theirs = metaFromText(drop.meta) ?? {}
     const ours = metaFromText(keep.meta) ?? {}
@@ -260,18 +232,15 @@ class Mender {
     if (Object.keys(patch).length) this.op({ t: 'meta', id: keep.id, meta: patch })
   }
 }
-
 async function mendSpace(env: Env, space: Reached, later: Later): Promise<Mending | null> {
   const items = await liveItems(env, space.id)
   const places = new Places(items)
   const copies = copiesIn(places, await madeInBatches(env, space.id))
   if (!copies.length) return null
-
   const cursor = await env.DB.prepare('select next from space_cursor where space_id = ?')
     .bind(space.id)
     .first<{ next: number }>()
   const mender = new Mender(env, space.id, places, Math.max(0, (cursor?.next ?? 1) - 1))
-
   const backup = `mended/${space.id}/${String(now())}`
   await env.NOTES.put(
     `${backup}.json`,
@@ -286,13 +255,11 @@ async function mendSpace(env: Env, space: Reached, later: Later): Promise<Mendin
         })),
     }),
   )
-
   for (const { keep, drop, at } of copies) await mender.pair(keep, drop, at)
   if (!mender.ops.length) {
     await env.NOTES.put(`${backup}.done.json`, JSON.stringify(mender.done))
     return mender.done
   }
-
   const owner = { ...space, role: 'owner' as const }
   const done = await applyOps(env, owner, space.user_id, MENDER, mender.ops)
   if (done.changed) {
@@ -302,7 +269,6 @@ async function mendSpace(env: Env, space: Reached, later: Later): Promise<Mendin
   await env.NOTES.put(`${backup}.done.json`, JSON.stringify(mender.done))
   return mender.done
 }
-
 export async function mendedSpace(env: Env, space: Reached, later: Later): Promise<void> {
   if (space.mended_at) return
   const claimed = await env.DB.prepare('update spaces set mended_at = ? where id = ? and mended_at is null')

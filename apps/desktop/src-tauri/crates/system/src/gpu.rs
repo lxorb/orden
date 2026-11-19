@@ -2,14 +2,12 @@ use std::path::Path;
 use std::sync::OnceLock;
 
 pub const SCRIPT: &str = include_str!("gpu.js");
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Seen {
     pub hardware: bool,
     pub renderer: String,
     pub gpu_process: bool,
 }
-
 impl Seen {
     fn said(&self) -> String {
         format!(
@@ -28,44 +26,33 @@ impl Seen {
         )
     }
 }
-
 static SEEN: OnceLock<Seen> = OnceLock::new();
-
 const FILE: &str = "gpu.txt";
-
 pub const OFF: [&str; 2] = ["--disable-gpu", "--disable-gpu-compositing"];
-
 static ACCELERATED: OnceLock<bool> = OnceLock::new();
-
 pub fn accelerated(config: &Path) -> bool {
     *ACCELERATED.get_or_init(|| chosen(config))
 }
-
 fn chosen(config: &Path) -> bool {
     !std::fs::read_to_string(config.join(FILE)).is_ok_and(|said| said.trim() == "off")
 }
-
 pub fn seen() -> Option<&'static Seen> {
     SEEN.get()
 }
-
 #[tauri::command(async)]
 pub fn gpu_chosen(app: tauri::AppHandle<orden_base::Engine>) -> Result<bool, String> {
     Ok(chosen(&orden_base::paths::config_dir(&app)?))
 }
-
 #[tauri::command(async)]
 pub fn gpu_choose(app: tauri::AppHandle<orden_base::Engine>, on: bool) -> Result<(), String> {
     let config = orden_base::paths::config_dir(&app)?;
     orden_base::paths::made(&config)?;
     orden_base::paths::write_atomically(&config.join(FILE), if on { b"on" } else { b"off" })
 }
-
 #[tauri::command(async)]
 pub fn gpu_line() -> Option<String> {
     seen().map(Seen::said)
 }
-
 fn software(renderer: &str) -> bool {
     let renderer = renderer.to_lowercase();
     [
@@ -79,7 +66,6 @@ fn software(renderer: &str) -> bool {
     .iter()
     .any(|one| renderer.contains(one))
 }
-
 fn gpu_process() -> bool {
     let own = std::process::id().to_string();
     let Ok(all) = std::fs::read_dir("/proc") else {
@@ -98,7 +84,6 @@ fn gpu_process() -> bool {
             })
     })
 }
-
 #[tauri::command(async)]
 pub fn gpu_seen(app: tauri::AppHandle<orden_base::Engine>, renderer: Option<String>) {
     if SEEN.get().is_some() {
@@ -122,7 +107,6 @@ pub fn gpu_seen(app: tauri::AppHandle<orden_base::Engine>, renderer: Option<Stri
         orden_base::logs::say(&app, "info", &line);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{chosen, software, Seen, FILE, SCRIPT};
@@ -136,7 +120,6 @@ mod tests {
         };
         assert_eq!(seen.said(), "software (no WebGL; no GPU process)");
     }
-
     #[test]
     fn only_off_in_the_file_turns_hardware_acceleration_off() {
         let config = tempfile::tempdir().unwrap();
@@ -148,7 +131,6 @@ mod tests {
         std::fs::write(config.path().join(FILE), "").unwrap();
         assert!(chosen(config.path()), "half a file is on");
     }
-
     #[test]
     fn a_software_renderer_is_told_from_a_card() {
         assert!(software("ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"));
@@ -168,7 +150,6 @@ mod tests {
             "ANGLE (AMD, AMD Radeon RX 6600 (radeonsi, navi23, LLVM 19.1.7, DRM 3.59), OpenGL 4.6)"
         ));
     }
-
     #[test]
     fn the_script_asks_by_the_command_s_name() {
         assert!(SCRIPT.contains("'gpu_seen'"));

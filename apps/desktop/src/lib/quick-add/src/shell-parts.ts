@@ -28,7 +28,6 @@ const fields: SettingField[] = [
       ] satisfies SettingField[])
     : []),
 ]
-
 registerSettingFields({
   section: 'general',
   group: 'Add task',

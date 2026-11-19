@@ -7,7 +7,6 @@ export interface Preset {
   keys: KeyOverrides
   mac?: KeyOverrides
 }
-
 const OBSIDIAN: KeyOverrides = {
   'app.palette.alt': 'Mod-o',
   'app.palette.open': null,
@@ -26,11 +25,9 @@ const OBSIDIAN: KeyOverrides = {
   'edit.indent': 'Mod-]',
   'edit.outdent': 'Mod-[',
 }
-
 for (let index = 1; index <= 9; index++) OBSIDIAN[`app.note-${index}`] = `Mod-${index}`
 for (let level = 1; level <= 6; level++) OBSIDIAN[`paragraph.heading-${level}`] = null
 OBSIDIAN['canvas.frame'] = null
-
 const NOTION: KeyOverrides = {
   'app.palette.alt': 'Mod-p',
   'app.print': null,
@@ -51,7 +48,6 @@ const NOTION: KeyOverrides = {
   'edit.move-block-up': 'Mod-Shift-ArrowUp',
   'edit.move-block-down': 'Mod-Shift-ArrowDown',
 }
-
 const NOTION_MAC: KeyOverrides = {
   'paragraph.heading-1': 'Mod-Alt-1',
   'paragraph.heading-2': 'Mod-Alt-2',
@@ -61,7 +57,6 @@ const NOTION_MAC: KeyOverrides = {
   'paragraph.ordered-list': 'Mod-Alt-6',
   'paragraph.code-block': 'Mod-Alt-8',
 }
-
 const VSCODE: KeyOverrides = {
   'app.palette': 'Mod-p',
   'app.palette.alt': 'Shift Shift',
@@ -79,12 +74,10 @@ const VSCODE: KeyOverrides = {
   'edit.indent': 'Mod-]',
   'edit.outdent': 'Mod-[',
 }
-
 export const PRESETS: Preset[] = [
   { id: 'default', label: () => 'Default', keys: {} },
   { id: 'notion', label: () => 'Notion', keys: NOTION, mac: NOTION_MAC },
   { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN },
   { id: 'vscode', label: () => 'VS Code', keys: VSCODE },
 ]
-
 export const presetById = (id: string): Preset | undefined => PRESETS.find((one) => one.id === id)

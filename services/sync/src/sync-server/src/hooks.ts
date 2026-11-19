@@ -5,25 +5,19 @@ export interface Ended {
   session: string
   user_id: string
 }
-
 type RevokedRole = 'none' | 'read'
-
 export interface Session {
   token: string
   user: { id: string; email: string; name: string | null; [more: string]: unknown }
 }
-
 type CodeSent = { ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
-
 interface AccountHooks {
   whoever(env: Env, header: string | undefined): Promise<Whoever | null>
   sendCode(env: Env, address: string, machine: string | null): Promise<CodeSent>
 }
-
 interface BlogHooks {
   publishesFile(env: Env, space: Space, file: SpaceFile, request: Request): Promise<boolean>
 }
-
 interface ChatHooks {
   askChat(
     env: Env,
@@ -36,7 +30,6 @@ interface ChatHooks {
   eraseChats(env: Env, chats: readonly string[]): Promise<string[]>
   linkPointer(env: Env, note: Note, content: string): Promise<void>
 }
-
 interface MachineHooks {
   eraseMachines(env: Env, ids: readonly string[]): Promise<string[]>
   endTerms(env: Env, terms: readonly string[], who: string | null): Promise<void>
@@ -45,15 +38,12 @@ interface MachineHooks {
   machinesRevoked(env: Env, spaceId: string, who: string | null, role: RevokedRole, item?: string): Promise<void>
   machinesSignedOut(env: Env, who: string, logins: readonly string[]): Promise<void>
 }
-
 interface FeedbackHooks {
   withdrawIssues(env: Env, numbers: readonly number[]): Promise<number[]>
 }
-
 interface PassHooks {
   erased: readonly (readonly [table: string, sql: string])[]
 }
-
 export interface Hooks {
   accounts: AccountHooks
   blog: BlogHooks
@@ -62,13 +52,10 @@ export interface Hooks {
   machines: MachineHooks
   pass: PassHooks
 }
-
 let wired: Hooks | null = null
-
 export function wire(hooks: Hooks): void {
   wired = hooks
 }
-
 export function hooks(): Hooks {
   if (!wired) throw new Error('sync-server: wire the accounts, blog, chats, feedback, machines and pass hooks first')
   return wired

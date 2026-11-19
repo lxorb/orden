@@ -6,36 +6,26 @@ interface Open {
   keepsFocus: boolean
   peek: boolean
 }
-
 type Opener = Pick<Element, 'contains'> &
   Partial<Pick<Element, 'getAttribute' | 'setAttribute' | 'removeAttribute'>> & {
     focus?: () => void
   }
-
 type Holds = () => readonly (Pick<Element, 'contains'> | null | undefined)[]
-
 interface Pointed {
   target: EventTarget | null
 }
-
 interface Press {
   preventDefault: () => void
   stopImmediatePropagation: () => void
 }
-
 class Overlays {
   private readonly stack: Open[] = []
-
   private shutBy: { holds: Holds; from: Opener | null }[] = []
-
   private clicking: Opener | null = null
-
   private readonly watchers = new Set<() => void>()
-
   show(close: () => void, holds?: Holds, from: Opener | null = this.clicking, keepsFocus = false): () => void {
     return this.push({ close, holds: holds ?? null, from, said: null, keepsFocus, peek: false })
   }
-
   peek(close: () => void, holds?: Holds): () => void {
     return this.push({
       close,
@@ -46,7 +36,6 @@ class Overlays {
       peek: true,
     })
   }
-
   private push(entry: Open): () => void {
     this.stack.push(entry)
     const from = entry.from
@@ -55,7 +44,6 @@ class Overlays {
       from.setAttribute('aria-expanded', 'true')
     }
     this.said()
-
     return () => {
       const at = this.stack.indexOf(entry)
       if (at >= 0) this.stack.splice(at, 1)
@@ -63,7 +51,6 @@ class Overlays {
       this.said()
     }
   }
-
   private release(entry: Open) {
     const from = entry.from
     entry.from = null
@@ -71,28 +58,22 @@ class Overlays {
     if (entry.said === null) from.removeAttribute?.('aria-expanded')
     else from.setAttribute('aria-expanded', entry.said === 'true' ? 'false' : entry.said)
   }
-
   watch(tell: () => void): () => void {
     this.watchers.add(tell)
     return () => this.watchers.delete(tell)
   }
-
   private said() {
     for (const tell of this.watchers) tell()
   }
-
   get depth(): number {
     return this.stack.length
   }
-
   get layers(): number {
     return this.stack.filter((one) => !one.peek).length
   }
-
   pressed(press: Pointed) {
     this.shutBy = []
     const target = nodeOf(press)
-
     for (let at = this.stack.length - 1; at >= 0; at--) {
       const one = this.stack[at]
       if (!one?.holds) return
@@ -101,19 +82,16 @@ class Overlays {
       this.shut(one)
     }
   }
-
   clicked(click: Pointed & Press) {
     const shut = this.shutBy
     this.shutBy = []
     const target = nodeOf(click)
     if (!target) return
-
     const landed = (held: Pick<Element, 'contains'> | null | undefined) => !!held?.contains(target)
     if (shut.some((one) => landed(one.from) || one.holds().some(landed))) {
       spend(click)
       return
     }
-
     let at = this.stack.length - 1
     while (at >= 0 && !landed(this.stack[at]?.from)) at--
     if (at >= 0) {
@@ -123,26 +101,21 @@ class Overlays {
       }
       return
     }
-
     this.clicking = controlOf(target)
     if (this.clicking) setTimeout(() => (this.clicking = null), 0)
   }
-
   away() {
     for (let top = this.stack.at(-1); top?.holds && !top.keepsFocus; top = this.stack.at(-1)) this.shut(top)
   }
-
   private shut(one: Open) {
     this.stack.splice(this.stack.indexOf(one), 1)
     this.release(one)
     this.said()
     one.close()
   }
-
   escape(press?: Press): boolean {
     const top = this.stack.pop()
     if (!top) return false
-
     const from = top.from
     this.release(top)
     this.said()
@@ -153,39 +126,31 @@ class Overlays {
     return true
   }
 }
-
 function holds(held: Pick<Element, 'contains'> | null | undefined, target: Node): boolean {
   if (!held?.contains(target)) return false
   return held !== target || typeof getComputedStyle !== 'function' || !bare(target)
 }
-
 function bare(node: Node): boolean {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return false
   const style = getComputedStyle(node)
   const none = (value: string) => value === 'none' || value === ''
   return style.backgroundColor === 'rgba(0, 0, 0, 0)' && none(style.backgroundImage) && none(style.borderTopStyle)
 }
-
 function spend(press: Press) {
   press.preventDefault()
   press.stopImmediatePropagation()
 }
-
 const CONTROL = 'button, [role="button"], a[href], summary, [aria-haspopup]'
-
 function controlOf(target: Node): Opener | null {
   const element = typeof Element !== 'undefined' && target instanceof Element ? target : null
   return element?.closest(CONTROL) ?? null
 }
-
 function nowhere(): boolean {
   if (typeof document === 'undefined') return false
   const on = document.activeElement
   return !on || on === document.body || !on.isConnected
 }
-
 function nodeOf(press: Pointed): Node | null {
   return typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
 }
-
 export const overlays = new Overlays()

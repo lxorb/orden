@@ -22,29 +22,23 @@
       chat.thread?.autocompact,
     )
   })
-
   const say = (count: number) => tokens(count, region())
-
   const whole = $derived(!bands ? '' : bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used))
-
   const summary = $derived.by(() => {
     const spent = chat.thread?.spent
     if (!spent) return whole
     const cost = spent.cost === undefined ? '' : `, $${spent.cost.toFixed(2)}`
     return `${whole}, ↑${say(spent.input)} ↓${say(spent.output)}${cost}`
   })
-
   const R = 5.25
   const LENGTH = 2 * Math.PI * R
   const usedArc = $derived(bands?.window ? Math.min(1, bands.used / bands.window) * LENGTH : 0)
   const nextArc = $derived(bands?.fraction !== null && bands?.fraction !== undefined ? bands.fraction * LENGTH : 0)
   const tick = $derived(bands?.window && bands.compacts !== null ? (bands.compacts / bands.window) * 360 : null)
-
   function compact() {
     chat.popover = null
     chat.compact()
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
     event.preventDefault()
@@ -52,7 +46,6 @@
     chat.popover = null
     chat.focus()
   }
-
   const ROWS = [
     ['instructions', 'Instructions'],
     ['attached', 'Attached'],
@@ -130,55 +123,45 @@
   .ring {
     display: contents;
   }
-
   .knob {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
     color: var(--accent);
   }
-
   .knob.warn {
     color: var(--danger);
   }
-
   .knob svg {
     width: 15px;
     height: 15px;
     transform: rotate(-90deg);
   }
-
   circle {
     fill: none;
     stroke-width: 2;
     transition: stroke-dasharray var(--dur-base) var(--ease-out);
   }
-
   .track {
     stroke: var(--line-strong);
   }
-
   .arc-used {
     stroke: currentColor;
   }
-
   .arc-next {
     stroke: currentColor;
     opacity: 0.35;
   }
-
   .tick {
     stroke: var(--muted-strong);
     stroke-width: 1.2;
     stroke-linecap: round;
   }
-
   .count {
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .tray {
     position: absolute;
     inset-inline-end: var(--space-1);
@@ -193,24 +176,20 @@
     font-size: var(--text-sm);
     outline: none;
   }
-
   .top {
     display: flex;
     justify-content: space-between;
     gap: var(--space-2);
   }
-
   .whole {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
     font-variant-numeric: tabular-nums;
   }
-
   .at,
   .what {
     color: var(--muted);
   }
-
   .bar {
     display: flex;
     height: 6px;
@@ -218,46 +197,37 @@
     border-radius: 3px;
     background: var(--ink-wash);
   }
-
   .fill {
     flex: none;
     transition: width var(--dur-base) var(--ease-out);
   }
-
   .band {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .much {
     margin-inline-start: auto;
     color: var(--text);
     font-variant-numeric: tabular-nums;
   }
-
   .swatch {
     width: 8px;
     height: 8px;
     border-radius: 2px;
   }
-
   .instructions {
     background: var(--muted-strong);
   }
-
   .attached {
     background: var(--success);
   }
-
   .conversation {
     background: var(--accent);
   }
-
   .next {
     background: var(--accent-soft);
   }
-
   .compact {
     align-self: flex-start;
     margin-top: 2px;

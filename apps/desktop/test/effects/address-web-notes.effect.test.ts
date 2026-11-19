@@ -5,7 +5,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
-
 vi.mock('../../src/lib/link-index/src/api', () => ({
   links: {
     rootOf: () => '/space',
@@ -19,12 +18,9 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     tintOf: () => null,
   },
 }))
-
 const AddressField = (await import('../../src/lib/web-tab/src/AddressField.svelte')).default
-
 let target: HTMLElement | null = null
 let app: ReturnType<typeof mount> | null = null
-
 function open(onnote?: (path: string) => void) {
   target = document.createElement('div')
   document.body.append(target)
@@ -41,20 +37,17 @@ function open(onnote?: (path: string) => void) {
   })
   flushSync()
 }
-
 afterEach(() => {
   if (app) void unmount(app)
   target?.remove()
   app = null
   target = null
 })
-
 function field(): HTMLInputElement {
   const found = target?.querySelector('input')
   if (!found) throw new Error('no field')
   return found
 }
-
 function type(letters: string) {
   const box = field()
   box.focus()
@@ -64,34 +57,27 @@ function type(letters: string) {
   box.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }))
   flushSync()
 }
-
 function press(key: string) {
   field().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
   flushSync()
 }
-
 const options = () => [...(target?.querySelectorAll('[role="option"]') ?? [])]
-
 test('a website is offered by letters of its name, marked as saved', () => {
   open(() => undefined)
   type('moo')
-
   const [first] = options()
   expect(first?.textContent).toContain('Moodle')
   expect(first?.textContent).toContain('moodle-app2.let.ethz.ch/my/')
   expect(first?.querySelector('.badge')?.textContent).toBe('Saved')
   expect(first?.querySelector('.matched')?.textContent).toBe('Moo')
 })
-
 test('and by its address, with a typo', () => {
   open(() => undefined)
   type('lxorb')
   expect(options()[0]?.textContent).toContain('GitHub issues')
-
   type('githb isues')
   expect(options()[0]?.textContent).toContain('GitHub issues')
 })
-
 test('the arrows and Enter open it as the note it is', () => {
   const opened: string[] = []
   open((path) => opened.push(path))
@@ -101,7 +87,6 @@ test('the arrows and Enter open it as the note it is', () => {
   press('Enter')
   expect(opened).toEqual(['/space/Uni/Moodle.url'])
 })
-
 test('a press opens it too', () => {
   const opened: string[] = []
   open((path) => opened.push(path))
@@ -109,7 +94,6 @@ test('a press opens it too', () => {
   options()[0]?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }))
   expect(opened).toEqual(['/space/Code/GitHub issues.url'])
 })
-
 test('Tab takes the row the arrows are on into the field, to type on from', () => {
   open(() => undefined)
   type('moo')
@@ -121,7 +105,6 @@ test('Tab takes the row the arrows are on into the field, to type on from', () =
   expect(field().value).toBe('moodle-app2.let.ethz.ch/my/')
   expect(field().selectionStart).toBe(field().value.length)
 })
-
 test('Tab with nothing to take moves on, as Tab does', () => {
   open(() => undefined)
   type('zzzz')
@@ -129,7 +112,6 @@ test('Tab with nothing to take moves on, as Tab does', () => {
   field().dispatchEvent(tab)
   expect(tab.defaultPrevented).toBe(false)
 })
-
 test("a private tab's field offers none", () => {
   open(undefined)
   type('moo')

@@ -65,96 +65,73 @@ import {
 import { drawScale, loading, PDF_TO_CSS, pdfjs } from '../../pdf/src/api'
 
 const NUDGE = 1
-
 export const run = {
   connect(store: CanvasStore, from: string, fromSide: Side, to: string, toSide: Side | 'auto', head = true) {
     const target = store.canvas.nodes.find((node) => node.id === to)
     const source = store.canvas.nodes.find((node) => node.id === from)
     if (!target || !source) return
-
     const side = toSide === 'auto' ? facingSide(boxOf(target), boxOf(source)) : toSide
     const made = connected(store.canvas, from, fromSide, to, side, head)
     store.edit(made.canvas)
     if (made.id) store.pick(made.id)
   },
-
   reattach(store: CanvasStore, edge: string, end: 'from' | 'to', to: string) {
     store.edit(reattached(store.canvas, edge, end, to))
   },
-
   shape(store: CanvasStore, shape: Shape, from: Point, to: Point, colour: string) {
     const made = withShape(store.canvas, shape, from, to, colour === 'ink' ? undefined : colour)
     store.edit(made.canvas)
     store.pick(made.id)
   },
-
   group(store: CanvasStore) {
     if (store.picked.length < 1) return
-
     const made = grouped(store.canvas, store.picked)
     if (!made.id) return
-
     store.edit(made.canvas)
     store.pick(made.id)
   },
-
   lock(store: CanvasStore) {
     store.edit(locking(store.canvas, store.picked, true))
     store.pickAll(store.picked)
   },
-
   unlock(store: CanvasStore, id: string) {
     store.edit(locking(store.canvas, [id], false))
   },
-
   ungroup(store: CanvasStore) {
     const made = ungrouped(store.canvas, store.picked)
     if (!made.ids.length && made.canvas === store.canvas) return
-
     store.edit(made.canvas)
     store.pickAll(made.ids)
   },
-
   leaveCopy(store: CanvasStore, run: string) {
     if (!store.picked.length) return
-
     const made = copied(store.canvas, store.picked, 0, 0)
     store.edit(made.canvas, run)
   },
-
   write(store: CanvasStore): boolean {
     const id = store.picked[0]
     const node = store.canvas.nodes.find((one) => one.id === id)
     if (!node || (node.type !== 'text' && node.type !== 'shape')) return false
-
     store.editing = node.id
     return true
   },
-
   stroke(store: CanvasStore, pending: PendingStroke) {
     if (!pending.points.length) return
-
     const { opacity, ...rest } = pending
     const own = INK_STYLES[pending.tool].opacity
     const stroke = { id: freshId(), ...rest, ...(opacity === own ? {} : { opacity }) }
-
     store.edit(withStroke(store.canvas, tidied(stroke)))
   },
-
   eraseAll(store: CanvasStore) {
     if (!store.canvas.ink.length) return
-
     store.edit({ ...store.canvas, ink: [] })
   },
-
   rub(store: CanvasStore, ats: readonly Point[], reach: number, run?: string) {
     store.edit(rubbedOut(store.canvas, ats, reach, true), run)
   },
-
   cut(store: CanvasStore, ats: readonly Point[], reach: number, run?: string) {
     store.edit(rubbedOut(store.canvas, ats, reach, false), run)
   },
-
   lasso(store: CanvasStore, points: readonly Point[], partly = false, cards = false) {
     const ink = strokesInLasso(store.canvas.ink, points, partly)
     if (!cards) {
@@ -163,80 +140,62 @@ export const run = {
     }
     store.pickAll([...cardsInLasso(store.canvas.nodes, points, partly), ...ink])
   },
-
   remove(store: CanvasStore, ids: readonly string[] = store.picked) {
     if (!ids.length) return
-
     store.edit(removed(store.canvas, ids))
     store.clearPicked()
   },
-
   duplicate(store: CanvasStore): boolean {
     if (!store.picked.length) return false
-
     const made = copied(store.canvas, store.picked)
     store.edit(made.canvas)
     store.pickAll(made.ids)
     return true
   },
-
   nudge(store: CanvasStore, dx: number, dy: number) {
     if (!store.picked.length) return
-
     store.edit(movedBy(store.canvas, store.picked, dx, dy))
   },
-
   align(store: CanvasStore, how: Alignment) {
     store.edit(aligned(store.canvas, store.picked, how))
   },
-
   distribute(store: CanvasStore, axis: 'x' | 'y') {
     store.edit(distributed(store.canvas, store.picked, axis))
   },
-
   order(store: CanvasStore, how: Order) {
     store.edit(ordered(store.canvas, store.picked, how))
   },
-
   colour(store: CanvasStore, colour: string | null) {
     if (!store.picked.length) return
-
     store.edit(coloured(store.canvas, store.picked, colour))
   },
-
   ends(store: CanvasStore, from: boolean, to: boolean) {
     store.edit(withEnds(store.canvas, store.picked, from, to))
   },
-
   paste(store: CanvasStore, incoming: Canvas, text: string, at: Point) {
     if (incoming.nodes.length || incoming.ink.length) {
       const box = bounds([...incoming.nodes, ...incoming.ink.map(strokeBox)])
       const dx = box ? Math.round(at.x - box.x - box.width / 2) : 0
       const dy = box ? Math.round(at.y - box.y - box.height / 2) : 0
       const made = pasted(store.canvas, incoming, dx, dy)
-
       store.edit(made.canvas)
       store.pickAll(made.ids)
       return
     }
-
     if (/^[a-z][a-z\d+.-]*:\/\/\S*$/i.test(text)) {
       putLink(store, text, placedAt(at, DEFAULT_WIDTH, GRID * 4))
     } else {
       putText(store, text, placedAt(at, DEFAULT_WIDTH, DEFAULT_HEIGHT))
     }
   },
-
   async dropPaths(store: CanvasStore, paths: readonly string[], at: Point) {
     const root = canvasRoot(store)
     if (!root) return
-
     const inside = paths.flatMap((path) => {
       const file = withinSpace(root, path)
       return file ? [{ path, file }] : []
     })
     if (!inside.length) return
-
     const sizes = await Promise.all(
       inside.map(({ path, file }) =>
         isPicturePath(file)
@@ -248,7 +207,6 @@ export const run = {
             : Promise.resolve(ownSize('file')),
       ),
     )
-
     let next = store.canvas
     const ids: string[] = []
     let below: number | null = null
@@ -261,15 +219,12 @@ export const run = {
       next = withNode(next, { ...box, id, type: 'file', file })
       ids.push(id)
     }
-
     store.edit(next)
     store.pickAll(ids)
   },
-
   async dropFiles(store: CanvasStore, files: readonly File[], at: Point, notePath: string | null) {
     const ids: string[] = []
     let below: number | null = null
-
     for (const file of files) {
       const spot = (width: number, height: number): Box => {
         const box = placedAt(at, width, height)
@@ -285,10 +240,8 @@ export const run = {
       if (box) below = box.y + box.height + GRID
       ids.push(...made)
     }
-
     if (ids.length > 1) store.pickAll(ids)
   },
-
   async dropImage(store: CanvasStore, file: File, where: Spot, notePath: string | null): Promise<string[]> {
     if (store.readOnly) return []
     const label = 'Storing the image'
@@ -299,29 +252,23 @@ export const run = {
         return null
       })
     if (!stored) return []
-
     const root = canvasRoot(store)
     const relative = accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
     if (!relative) return []
     const size = await pictureSize(file)
-
     return [putFile(store, relative, spotted(where, size.width, size.height))]
   },
-
   async dropPdf(store: CanvasStore, file: File, where: Spot, notePath: string | null): Promise<string[]> {
     if (!notePath || store.readOnly) return []
-
     const bytes = new Uint8Array(await file.arrayBuffer())
     const library = await pdfjs()
     const task = loading(library, bytes)
-
     try {
       const doc = await task.promise.catch(() => null)
       if (!doc?.numPages) {
         busy.failed('That file could not be read')
         return []
       }
-
       const mode = await prompt.choose({
         title: 'Import PDF',
         detail: 'Choose how to add the pages to the canvas.',
@@ -331,7 +278,6 @@ export const run = {
         ],
       })
       if (!mode) return []
-
       let pages: number[]
       if (mode === 'single') {
         const selected =
@@ -350,10 +296,8 @@ export const run = {
       } else {
         pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
       }
-
       const root = canvasRoot(store)
       if (!root) return []
-
       const made: Parameters<typeof withNode>[1][] = []
       let below: number | null = null
       const label = 'Import PDF'
@@ -376,7 +320,6 @@ export const run = {
             page.cleanup()
             const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
             if (!blob) continue
-
             const image = new File([blob], `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`, {
               type: 'image/png',
             })
@@ -384,7 +327,6 @@ export const run = {
             if (!stored) continue
             const relative = accountAddress(stored) ?? spaceRelative(root, notePath, stored)
             if (!relative) continue
-
             const width = Math.round(natural.width)
             const height = Math.round(natural.height)
             const spot = spotted(where, width, height)
@@ -396,7 +338,6 @@ export const run = {
       } catch (error) {
         busy.failed(`${label}: ${error instanceof Error ? error.message : String(error)}`)
       }
-
       if (made.length) {
         store.edit(made.reduce((next, node) => withNode(next, node), store.canvas))
         store.pickAll(made.map((node) => node.id))
@@ -406,20 +347,16 @@ export const run = {
       await task.destroy().catch(() => undefined)
     }
   },
-
   async open(store: CanvasStore, hit: Hit, at: Point) {
     if (hit.edge) {
       await askLabel(store, hit.edge)
       return
     }
-
     const node = hit.node ? store.canvas.nodes.find((one) => one.id === hit.node) : null
-
     if (!node) {
       putText(store, '', placedAt(at, DEFAULT_WIDTH, DEFAULT_HEIGHT), true)
       return
     }
-
     switch (node.type) {
       case 'text':
         if (store.readOnly) break
@@ -450,17 +387,14 @@ export const run = {
         break
     }
   },
-
   async toNote(store: CanvasStore, canvasPath: string | null) {
     const id = store.picked[0]
     const node = store.canvas.nodes.find((one) => one.id === id)
     if (node?.type !== 'text' || !node.text.trim()) return
-
     const root = canvasRoot(store)
     const folder = canvasPath === null ? root : folderOf(canvasPath)
     const path = await workspace.noteFrom(node.text, folder ?? undefined)
     if (!path || !root) return
-
     store.edit({
       ...store.canvas,
       nodes: store.canvas.nodes.map((one) =>
@@ -479,44 +413,34 @@ export const run = {
       ),
     })
   },
-
   keys(store: CanvasStore, event: KeyboardEvent, view: KeyView): boolean {
     const tool = toolPressed(event)
     if (tool) {
       tools.pressed(tool, event)
       return true
     }
-
     const step = event.shiftKey ? GRID : NUDGE
     const arrow = { ...keystroke(event), shiftKey: false }
     const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, arrow))
     if (nudge) {
       if (!store.picked.length) return false
-
       run.nudge(store, nudge[1] * step, nudge[2] * step)
       return true
     }
-
     if (shortcuts.pressed('canvas.delete', event) || shortcuts.pressed('canvas.delete.alt', event)) {
       if (!store.picked.length) return false
-
       run.remove(store)
       return true
     }
-
     for (const [id, act] of ACTS) {
       if (!shortcuts.pressed(id, event)) continue
-
       return act(store, view) !== false
     }
-
     return false
   },
 }
-
 export const toolPressed = (event: KeyboardEvent): Tool | null =>
   TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))?.[1] ?? null
-
 const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.select', 'select'],
   ['canvas.tool.hand', 'hand'],
@@ -537,7 +461,6 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.arrow', 'arrow'],
   ['canvas.tool.elbow', 'elbow'],
 ]
-
 const keystroke = (event: KeyboardEvent): Keystroke => ({
   key: event.key,
   code: event.code,
@@ -547,14 +470,12 @@ const keystroke = (event: KeyboardEvent): Keystroke => ({
   shiftKey: event.shiftKey,
   isComposing: event.isComposing,
 })
-
 const NUDGES: readonly (readonly [string, number, number])[] = [
   ['canvas.nudge.left', -1, 0],
   ['canvas.nudge.right', 1, 0],
   ['canvas.nudge.up', 0, -1],
   ['canvas.nudge.down', 0, 1],
 ]
-
 const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => unknown])[] = [
   ['canvas.duplicate', (store) => run.duplicate(store)],
   ['canvas.write', (store) => run.write(store)],
@@ -572,26 +493,21 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.back', (store) => run.order(store, 'back')],
   ['canvas.backward', (store) => run.order(store, 'backward')],
 ]
-
 function upright(store: CanvasStore, view: { width: number; height: number }): boolean {
   const turn = turnOf(store.camera)
   if (!turn) return false
-
   const { width, height } = view
   store.camera = turned(store.camera, width, height, width / 2, height / 2, -turn)
   return true
 }
-
 export function actualSize(store: CanvasStore, view: { width: number; height: number }) {
   const { width, height } = view
   store.camera = zoomed(store.camera, width, height, width / 2, height / 2, 1 / store.camera.scale)
 }
-
 function zoomedBy(store: CanvasStore, view: KeyView, by: number) {
   const { width, height } = view
   store.camera = zoomed(store.camera, width, height, width / 2, height / 2, by)
 }
-
 export interface KeyView {
   width: number
   height: number
@@ -600,7 +516,6 @@ export interface KeyView {
   palette: Palette
   onfind: () => void
 }
-
 function putText(store: CanvasStore, text: string, box: Box, writing = false) {
   if (store.readOnly) return
   const id = freshId()
@@ -608,7 +523,6 @@ function putText(store: CanvasStore, text: string, box: Box, writing = false) {
   store.pick(id)
   if (writing) store.editing = id
 }
-
 export function putWords(store: CanvasStore, box: Box) {
   if (store.readOnly) return
   const id = freshId()
@@ -617,41 +531,33 @@ export function putWords(store: CanvasStore, box: Box) {
   store.editing = id
   tools.choose('select')
 }
-
 function putLink(store: CanvasStore, url: string, box: Box) {
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'link', url }))
   store.pick(id)
 }
-
 function putFile(store: CanvasStore, file: string, box: Box): string {
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'file', file }))
   store.pick(id)
   return id
 }
-
 type Spot = Point | Box | ((width: number, height: number) => Box)
-
 function spotted(where: Spot, width: number, height: number): Box {
   if (typeof where === 'function') return where(width, height)
   return 'width' in where ? where : placedAt(where, width, height)
 }
-
 export function isPdfFile(file: File): boolean {
   return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
 }
-
 async function askLabel(store: CanvasStore, id: string) {
   if (store.readOnly) return
   const node = store.canvas.nodes.find((one) => one.id === id)
   const was =
     node?.type === 'group' ? (node.label ?? '') : (store.canvas.edges.find((one) => one.id === id)?.label ?? '')
-
   const answer = await prompt.ask({ title: 'Name this', value: was, confirmLabel: 'Save' })
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
 }
-
 async function pictureSize(file: Blob): Promise<{ width: number; height: number }> {
   const own = ownSize('picture')
   if (typeof createImageBitmap !== 'function') return own
@@ -660,10 +566,8 @@ async function pictureSize(file: Blob): Promise<{ width: number; height: number 
   const { width, height } = drawn
   drawn.close()
   if (!width || !height) return own
-
   return ownShape(width, height)
 }
-
 function ownShape(width: number, height: number): { width: number; height: number } {
   const own = ownSize('picture')
   const longest = Math.max(width, height)
@@ -673,7 +577,6 @@ function ownShape(width: number, height: number): { width: number; height: numbe
     height: Math.max(GRID, Math.round(height * scale)),
   }
 }
-
 async function paperSize(path: string): Promise<{ width: number; height: number }> {
   const bytes = await fileBytes(path)
   const library = await pdfjs()
@@ -686,10 +589,8 @@ async function paperSize(path: string): Promise<{ width: number; height: number 
     await task.destroy().catch(() => undefined)
   }
 }
-
 function ownSize(tool: PutTool): { width: number; height: number } {
   if (isShape(tool)) return { width: GRID * 6, height: GRID * 4 }
-
   switch (tool) {
     case 'text':
       return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
@@ -705,28 +606,22 @@ function ownSize(tool: PutTool): { width: number; height: number } {
       return { width: GRID * 20, height: GRID * 12 }
   }
 }
-
 export interface Putting {
   colour: string
   path: string | null
 }
-
 const canvasRoot = (store: CanvasStore): string | null => workspace.rootHolding(store.path)
-
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
   await putDown(store, tool, tool === 'words' ? wordsAt(at) : placedAt(at, size.width, size.height), putting)
 }
-
 export function wordsAt(at: Point): Box {
   const { width, height } = ownSize('words')
   return { x: Math.round(at.x), y: Math.round(at.y - height / 2), width, height }
 }
-
 export async function pull(store: CanvasStore, tool: PutTool, from: Point, to: Point, putting: Putting) {
   await putDown(store, tool, rectBetween(from, to), putting, from, to)
 }
-
 async function putDown(store: CanvasStore, tool: PutTool, box: Box, putting: Putting, from?: Point, to?: Point) {
   if (store.readOnly) return
   if (isShape(tool)) {
@@ -735,7 +630,6 @@ async function putDown(store: CanvasStore, tool: PutTool, box: Box, putting: Put
     run.shape(store, tool, corner, other, putting.colour)
     return
   }
-
   switch (tool) {
     case 'text':
       putText(store, '', box, true)
@@ -761,7 +655,6 @@ async function putDown(store: CanvasStore, tool: PutTool, box: Box, putting: Put
     case 'file': {
       const root = canvasRoot(store)
       if (!root) return
-
       const chosen = await prompt.find({
         title: 'Which note',
         placeholder: 'Search',
@@ -770,20 +663,17 @@ async function putDown(store: CanvasStore, tool: PutTool, box: Box, putting: Put
           return relative ? [{ id: relative, label: relative }] : []
         }),
       })
-
       if (chosen) putFile(store, chosen, box)
       return
     }
     case 'picture': {
       const [file] = await chooseFiles({ accept: PICTURES })
       if (!file) return
-
       await run.dropImage(store, file, box, putting.path)
       return
     }
   }
 }
-
 export interface MenuView extends KeyView {
   narrowed: boolean
   onnarrow: () => void
@@ -792,10 +682,8 @@ export interface MenuView extends KeyView {
   again: (rows: MenuEntry[], title: string) => void
   locked: string | null
 }
-
 const sections = (...groups: readonly MenuEntry[][]): MenuEntry[] =>
   groups.filter((one) => one.length).flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
-
 export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuEntry[] {
   const picked = store.picked.length > 0
   const several = store.picked.length > 1
@@ -808,9 +696,7 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   const onNode = cards.length > 0
   const locked = view.locked
   const putting = { colour: tools.colour, path: view.path }
-
   const arranging = arrangeRows(store, several, many)
-
   return sections(
     locked ? [{ label: 'Unlock', run: () => run.unlock(store, locked) }] : [],
     view.bare
@@ -873,7 +759,6 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
     ],
   )
 }
-
 const arrangeRows = (store: CanvasStore, several: boolean, many: boolean): MenuEntry[] =>
   sections(
     [
@@ -899,7 +784,6 @@ const arrangeRows = (store: CanvasStore, several: boolean, many: boolean): MenuE
         ]
       : [],
   )
-
 async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' | 'pdf') {
   const drawing = {
     canvas: store.canvas,
@@ -909,7 +793,6 @@ async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' |
     name: view.name,
     trusted: view.trusted,
   }
-
   if (how === 'png') await exportCanvasPng(drawing)
   else if (how === 'svg') await exportCanvasSvg(drawing)
   else await exportCanvasPdf(drawing)

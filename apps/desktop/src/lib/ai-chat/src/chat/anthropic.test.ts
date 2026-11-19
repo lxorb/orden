@@ -15,7 +15,6 @@ const MODEL: ModelInfo = {
   thinking: true,
   compaction: true,
 }
-
 function ask(change: Partial<Ask> = {}): Ask {
   return {
     provider: { id: 'anthropic', kind: 'anthropic', name: 'Claude', model: '' },
@@ -31,13 +30,11 @@ function ask(change: Partial<Ask> = {}): Ask {
     ...change,
   }
 }
-
 function read(name: string) {
   const reader = anthropic.reader(MODEL.window)
   const heard = events(name).map((one) => reader.heard(one))
   return { reader, heard, answer: reader.answer() }
 }
-
 describe('a streamed message', () => {
   test('arrives as thinking, words and a call, in order', () => {
     const { reader } = read('anthropic-1')
@@ -50,7 +47,6 @@ describe('a streamed message', () => {
       state: 'running',
     })
   })
-
   test('keeps every block whole for the next request, the thinking’s signature included', () => {
     const { answer } = read('anthropic-1')
     expect(answer.ending).toBe('tool')
@@ -70,7 +66,6 @@ describe('a streamed message', () => {
       },
     ])
   })
-
   test('counts the cache into what was sent, from the provider’s own numbers', () => {
     const { heard } = read('anthropic-1')
     const last = heard.filter((one) => one.usage).at(-1)?.usage
@@ -82,7 +77,6 @@ describe('a streamed message', () => {
     })
     expect(heard[0]?.model).toBe('claude-opus-5-5')
   })
-
   test('a closing count that says every field keeps the cache written, and wins over the first', () => {
     const reader = anthropic.reader(MODEL.window)
     reader.heard({
@@ -108,7 +102,6 @@ describe('a streamed message', () => {
       },
     })
     expect(said.usage).toMatchObject({ input: 12 + 2048 + 1000, cached: 1000, output: 89 })
-
     const partly = anthropic.reader(MODEL.window)
     partly.heard({
       type: 'message_start',
@@ -127,13 +120,11 @@ describe('a streamed message', () => {
     })
     expect(after.usage).toMatchObject({ input: 10 + 2000 + 500, cached: 500, output: 7 })
   })
-
   test('an answer with no call ends the turn', () => {
     const { answer, reader } = read('anthropic-2')
     expect(answer.ending).toBe('end')
     expect(reader.parts).toEqual([{ kind: 'text', text: 'Herons stand still, then they do not.' }])
   })
-
   test('a complaint in the stream is handed up', () => {
     const reader = anthropic.reader(null)
     const said = reader.heard({
@@ -143,7 +134,6 @@ describe('a streamed message', () => {
     expect(said.trouble).toBeTruthy()
   })
 })
-
 describe('the request', () => {
   test('thinks adaptively and summarised, at the thread’s effort, with tools and a cache point', () => {
     const { body, headers } = anthropic.request(ask())
@@ -159,7 +149,6 @@ describe('the request', () => {
     })
     expect(headers).toEqual({})
   })
-
   test('auto sends no effort, fast asks for the fast tier, @web adds the search tool', () => {
     const { body, headers } = anthropic.request(ask({ effort: 'auto', fast: true, web: true }))
     expect(body).not.toHaveProperty('output_config')
@@ -167,7 +156,6 @@ describe('the request', () => {
     expect(headers['anthropic-beta']).toContain('fast-mode-2026-02-01')
     expect(JSON.stringify(body)).toContain('web_search_20260209')
   })
-
   test('a change of effort mid-thread is a message of its own, and the top level stays', () => {
     const { body, headers } = anthropic.request(
       ask({
@@ -187,13 +175,11 @@ describe('the request', () => {
     expect(messages[2]).toEqual({ role: 'system', content: [], output_config: { effort: 'low' } })
     expect(headers['anthropic-beta']).toContain(PER_MESSAGE_BETA)
   })
-
   test('a model with no adaptive thinking is asked without it', () => {
     const { body } = anthropic.request(ask({ model: { ...MODEL, thinking: false, output: 8_000 } }))
     expect(body).not.toHaveProperty('thinking')
     expect(body).toMatchObject({ max_tokens: 8_000 })
   })
-
   test('a request carrying a compaction block says the beta', () => {
     const { headers, body } = anthropic.request(
       ask({
@@ -210,7 +196,6 @@ describe('the request', () => {
     })
   })
 })
-
 describe('a turn rebuilt from its parts', () => {
   test('is calls and their answers, pictures and errors included', () => {
     const messages = messagesOf([

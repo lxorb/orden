@@ -6,13 +6,9 @@ use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use std::time::Duration;
 
 const PATIENCE: Duration = Duration::from_secs(3);
-
 const MOST_PAGE: usize = 512 * 1024;
-
 const MOST_PICTURE: usize = 2 * 1024 * 1024;
-
 const MOST_HOPS: usize = 5;
-
 #[derive(Serialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Page {
@@ -23,7 +19,6 @@ pub struct Page {
     picture: Option<String>,
     picture_type: Option<String>,
 }
-
 #[tauri::command(async)]
 pub async fn link_preview(url: String) -> Option<Page> {
     tokio::time::timeout(PATIENCE, preview(&url))
@@ -31,12 +26,10 @@ pub async fn link_preview(url: String) -> Option<Page> {
         .ok()
         .flatten()
 }
-
 async fn preview(url: &str) -> Option<Page> {
     let (url, html) = fetched(url, MOST_PAGE, |kind| kind.starts_with("text/html")).await?;
     let html = String::from_utf8_lossy(&html.0);
     let head = Head::read(&html);
-
     let title = head
         .meta("og:title")
         .or_else(|| head.meta("twitter:title"))
@@ -59,7 +52,6 @@ async fn preview(url: &str) -> Option<Page> {
         picture: None,
         picture_type: None,
     };
-
     let picture = head
         .meta("og:image")
         .or_else(|| head.meta("og:image:url"))
@@ -77,7 +69,6 @@ async fn preview(url: &str) -> Option<Page> {
     }
     Some(page)
 }
-
 async fn fetched(
     start: &str,
     most: usize,
@@ -91,7 +82,6 @@ async fn fetched(
         let host = url.host_str()?.to_owned();
         let port = url.port_or_known_default()?;
         let address = public_address(&host, port).await?;
-
         let _ = rustls::crypto::ring::default_provider().install_default();
         let client = Client::builder()
             .redirect(redirect::Policy::none())
@@ -104,7 +94,6 @@ async fn fetched(
             .send()
             .await
             .ok()?;
-
         if response.status().is_redirection() {
             let next = response.headers().get(LOCATION)?.to_str().ok()?;
             url = url.join(next).ok()?;
@@ -138,7 +127,6 @@ async fn fetched(
     }
     None
 }
-
 async fn public_address(host: &str, port: u16) -> Option<SocketAddr> {
     let named = host
         .trim_start_matches('[')
@@ -157,7 +145,6 @@ async fn public_address(host: &str, port: u16) -> Option<SocketAddr> {
     }
     found.first().copied()
 }
-
 fn is_public(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => {
@@ -187,28 +174,23 @@ fn is_public(ip: IpAddr) -> bool {
         }
     }
 }
-
 fn clipped(text: &str, most: usize) -> String {
     text.trim().chars().take(most).collect()
 }
-
 struct Head {
     title: Option<String>,
     metas: Vec<(String, String)>,
 }
-
 impl Head {
     fn read(html: &str) -> Self {
         let lower = html.to_ascii_lowercase();
         let end = lower.find("</head").unwrap_or(html.len());
         let (html, lower) = (&html[..end], &lower[..end]);
-
         let title = lower.find("<title").and_then(|at| {
             let open = at + lower[at..].find('>')? + 1;
             let close = open + lower[open..].find("</title")?;
             Some(decoded(html[open..close].trim()))
         });
-
         let mut metas = Vec::new();
         let mut from = 0;
         while let Some(at) = lower[from..].find("<meta") {
@@ -228,7 +210,6 @@ impl Head {
             metas,
         }
     }
-
     fn meta(&self, key: &str) -> Option<String> {
         self.metas
             .iter()
@@ -236,7 +217,6 @@ impl Head {
             .map(|(_, content)| content.clone())
     }
 }
-
 fn attribute(tag: &str, name: &str) -> Option<String> {
     let lower = tag.to_ascii_lowercase();
     let mut from = 0;
@@ -265,7 +245,6 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
     }
     None
 }
-
 fn decoded(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;
@@ -303,7 +282,6 @@ fn decoded(text: &str) -> String {
     out.push_str(rest);
     out
 }
-
 #[cfg(test)]
 mod tests {
     use super::{attribute, decoded, is_public, Head};
@@ -326,14 +304,12 @@ mod tests {
         assert_eq!(head.meta("og:image").as_deref(), Some("/pic.png"));
         assert_eq!(head.metas.len(), 3, "nothing from the body");
     }
-
     #[test]
     fn an_attribute_is_a_whole_name() {
         let tag = r#"<meta data-content="no" content="yes""#;
         assert_eq!(attribute(tag, "content").as_deref(), Some("yes"));
         assert_eq!(attribute("<meta name=x", "content"), None);
     }
-
     #[test]
     fn only_public_addresses_are_fetched() {
         for private in [
@@ -358,7 +334,6 @@ mod tests {
             assert!(is_public(public.parse().expect("an address")), "{public}");
         }
     }
-
     #[test]
     fn entities_are_decoded_and_odd_ones_kept() {
         assert_eq!(

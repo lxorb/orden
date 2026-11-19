@@ -4,20 +4,16 @@ use std::sync::Mutex;
 use tauri::{Manager as _, Webview};
 
 pub const SCRIPT: &str = include_str!("page_scheme.js");
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Scheme {
     Light,
     Dark,
 }
-
 static SAID: Mutex<Option<Scheme>> = Mutex::new(None);
-
 fn said() -> Option<Scheme> {
     *SAID.held()
 }
-
 #[tauri::command]
 pub fn page_scheme_seen(webview: Webview<orden_base::Engine>, scheme: Scheme) {
     let before = SAID.held().replace(scheme);
@@ -30,7 +26,6 @@ pub fn page_scheme_seen(webview: Webview<orden_base::Engine>, scheme: Scheme) {
         }
     }
 }
-
 pub fn wear(page: &Webview<orden_base::Engine>) {
     let Some(scheme) = said() else {
         return;
@@ -41,7 +36,6 @@ pub fn wear(page: &Webview<orden_base::Engine>) {
     let wear = engine.wear;
     let _ = page.with_webview(move |platform| wear(&platform, scheme));
 }
-
 #[cfg(test)]
 mod tests {
     use super::{Scheme, SCRIPT};
@@ -51,7 +45,6 @@ mod tests {
         assert!(SCRIPT.contains("'page_scheme_seen'"));
         assert!(SCRIPT.contains("data-theme"));
     }
-
     #[test]
     fn a_scheme_is_read_as_the_page_says_it() {
         assert_eq!(

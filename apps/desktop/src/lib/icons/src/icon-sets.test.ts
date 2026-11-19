@@ -29,26 +29,22 @@ import { FILLS_ITS_BOX } from './outline-names'
 
 const load = (id: string) => setNamed(id)!.load()
 const labels = (held: Pick<LoadedSet, 'groups'>) => held.groups.map((one) => one.label)
-
 function finds(held: Pick<LoadedSet, 'entries'>, cases: [query: string, limit: number, name: string][]) {
   for (const [query, limit, name] of cases) {
     expect(rankIcons(held.entries, query, limit), query).toContain(name)
   }
 }
-
 function drawn(held: LoadedSet, name: string) {
   const shape = held.shape(name)
   if (shape?.kind !== 'drawn') throw new Error(name)
   return shape
 }
-
 describe('the sets an icon can come from', () => {
   test('are the six the picker offers, each named, with an id nothing else uses', () => {
     expect(ICON_SETS.map((one) => one.id)).toEqual([LUCIDE, EMOJI_SET, FLAT_COLOUR, EMOJI_OUTLINE, SITE_ICONS, BRANDS])
     expect(new Set(ICON_SETS.map((one) => one.id)).size).toBe(ICON_SETS.length)
     for (const set of ICON_SETS) expect(set.label, set.id).toBeTruthy()
   })
-
   test('a set of drawings says who drew it and under what licence, and a set nothing knows is nothing', () => {
     expect(setNamed(LUCIDE)?.credit).toContain('ISC')
     expect(setNamed(FLAT_COLOUR)?.credit).toContain('MIT')
@@ -56,7 +52,6 @@ describe('the sets an icon can come from', () => {
     expect(setNamed('some-future-set')).toBeNull()
   })
 })
-
 describe('the emoji', () => {
   test('are the whole set, in Unicode s own nine groups, one entry per emoji with no skin tone', async () => {
     const held = await load(EMOJI_SET)
@@ -77,7 +72,6 @@ describe('the emoji', () => {
     expect(held.entries.filter((one) => tones.some((tone) => one.name.includes(tone)))).toEqual([])
     expect(held.shape('🚀')).toEqual({ kind: 'emoji', text: '🚀' })
   })
-
   test('are findable by the words a person would type, and keywords nowhere in their names', async () => {
     const held = await load(EMOJI_SET)
     finds(held, [
@@ -94,7 +88,6 @@ describe('the emoji', () => {
     expect(rocket?.terms).toContain('launch')
   })
 })
-
 describe('a coloured set', () => {
   test('is finished drawings in the box they were drawn in, with no groups, every icon findable', async () => {
     const held = await load(FLAT_COLOUR)
@@ -112,7 +105,6 @@ describe('a coloured set', () => {
     ])
     expect(held.shape('not-an-icon-anybody-drew')).toBeNull()
   })
-
   test.each([FLAT_COLOUR, LUCIDE])('and %s holds no icon named after an object property', async (id) => {
     const held = await load(id)
     for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
@@ -120,7 +112,6 @@ describe('a coloured set', () => {
     }
   })
 })
-
 describe('the stroked set', () => {
   test('is strokes this app dresses, found by its words, its uses and its other names', async () => {
     const held = await load(LUCIDE)
@@ -142,7 +133,6 @@ describe('the stroked set', () => {
     expect(rankIcons(held.entries, '  ', 1)).toEqual(['AArrowDown'])
   })
 })
-
 describe('the sets the picker searches', () => {
   test('are every set, each once, the brands waiting for a search, each credited', () => {
     expect([...PICKER_SETS, EMOJI_OUTLINE, SITE_ICONS].sort()).toEqual(ICON_SETS.map((one) => one.id).sort())
@@ -150,7 +140,6 @@ describe('the sets the picker searches', () => {
     expect([...LATER_SETS]).toEqual([BRANDS])
     for (const set of ICON_SETS) expect(pickerCredit()).toContain(set.credit)
   })
-
   test('are one list: the emoji s groups, then the line icons and the brands', async () => {
     const held = mergeSets(await Promise.all(PICKER_SETS.map(async (id) => ({ id, held: await load(id) }))))
     expect(labels(held).slice(-2)).toEqual(['Line', 'Brands'])
@@ -161,7 +150,6 @@ describe('the sets the picker searches', () => {
     ])
   })
 })
-
 describe('the places of the coloured drawings among the emoji', () => {
   test('name every drawing exactly once, beside emoji and in groups that exist', async () => {
     const [emoji, flat] = await Promise.all([load(EMOJI_SET), load(FLAT_COLOUR)])
@@ -178,7 +166,6 @@ describe('the places of the coloured drawings among the emoji', () => {
     for (const group of Object.keys(LOOSE)) expect(labels(emoji)).toContain(group)
   })
 })
-
 describe('the picture tab', () => {
   test('is the emoji s groups with the drawings in them, every icon once, searched as one', async () => {
     const held = mergeSets(
@@ -210,14 +197,12 @@ describe('the picture tab', () => {
     expect((await load(FLAT_COLOUR)).shape('calendar')?.kind).toBe('drawn')
   })
 })
-
 describe('merging sets', () => {
   const set = (names: string[], groups: LoadedSet['groups'] = []): LoadedSet => ({
     entries: names.map((name) => ({ name, words: name })),
     groups,
     shape: () => null,
   })
-
   test('keeps an icon whose place is nowhere, and without a frame is the sets one after another', () => {
     const frame = set(['a', 'b'], [{ label: 'Letters', names: ['a', 'b'] }])
     const extra = {
@@ -238,7 +223,6 @@ describe('merging sets', () => {
     expect(held.entries.map((one) => one.name)).toEqual(['book-open'])
   })
 })
-
 describe('the brands', () => {
   test('are every logo Simple Icons draws, in the colour of the text, found by name and other words', async () => {
     const held = await load(BRANDS)
@@ -265,7 +249,6 @@ describe('the brands', () => {
     expect(mark.body).toContain('currentColor')
     expect(mark.box).toBe('0 0 24 24')
   })
-
   test('are asked for by slug, and credit the set, its licence and the owners of the marks', () => {
     expect(brandIcon('claude')).toBe('simple-icons:claude')
     expect(readIcon(brandIcon('openai'))).toEqual({ kind: 'set', set: BRANDS, name: 'openai' })
@@ -274,7 +257,6 @@ describe('the brands', () => {
     expect(pickerCredit()).toContain(credit)
   })
 })
-
 describe('the emoji in one colour', () => {
   test('draw every emoji, each by its own character, an alias turned, Noto where it fills the box', async () => {
     const set = await load(EMOJI_OUTLINE)
@@ -298,7 +280,6 @@ describe('the emoji in one colour', () => {
     )
     for (const name of FILLS_ITS_BOX) expect(drawn(set, name).body, name).toBe(notoOutlines()[name])
   })
-
   test('fit what Noto draws into the box', () => {
     const outlines = Object.entries(notoOutlines())
     expect(outlines.length).toBeGreaterThan(300)
@@ -309,7 +290,6 @@ describe('the emoji in one colour', () => {
       expect(Math.max(...numbers), name).toBeLessThanOrEqual(31.1)
     }
   })
-
   test('are drawn in the text s colour alone, and keep the ids of their masks to themselves', async () => {
     const set = await load(EMOJI_OUTLINE)
     const owners = new Map<string, string>()
@@ -328,7 +308,6 @@ describe('the emoji in one colour', () => {
       for (const [, id] of shape.body.matchAll(/url\(#([^)]+)\)/g)) expect(shape.body, name).toContain(`id="${id}"`)
     }
   })
-
   test('are a value of their own beside the emoji, in one colour and tinted as a line is', () => {
     const value = writtenIcon(EMOJI_OUTLINE, 'thinking-face')
     expect(value).toBe('fluent-emoji-high-contrast:thinking-face')
@@ -347,7 +326,6 @@ describe('the emoji in one colour', () => {
     }
     expect(takesTint(null)).toBe(false)
   })
-
   test('credit Microsoft, Google and the licences', () => {
     const credit = setNamed(EMOJI_OUTLINE)!.credit
     for (const part of ['Fluent Emoji High Contrast', 'MIT', 'Noto Emoji', 'OFL']) {

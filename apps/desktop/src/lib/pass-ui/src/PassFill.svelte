@@ -10,9 +10,7 @@
   import { pass } from '../../pass-sync/src/api'
 
   const { bubble }: { bubble: PassBubble | null } = $props()
-
   let card = $state<HTMLElement>()
-
   const label = $derived.by(() => {
     if (!bubble) return ''
     switch (bubble.kind) {
@@ -26,22 +24,18 @@
         return 'Signing in'
     }
   })
-
   $effect(() =>
     overlays.show(() => {
       if (bubble) autofill.dismiss(bubble.tab)
     }),
   )
-
   $effect(() => {
     if (bubble?.kind === 'unlock' && pass.state === 'open') autofill.reoffer(bubble.tab)
   })
-
   onMount(() => {
     card?.focus({ preventScroll: true })
     if (isDesktop && !document.hasFocus()) void takeKeyboard()
   })
-
   function opened(tab: string) {
     autofill.dismiss(tab)
     openPass()
@@ -139,14 +133,12 @@
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .what {
     margin: 0;
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .which,
   .group {
     margin: 0;
@@ -154,18 +146,15 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .group {
     margin-top: var(--space-1);
   }
-
   .list {
     display: flex;
     flex-direction: column;
     max-height: 16rem;
     overflow-y: auto;
   }
-
   .choice {
     display: flex;
     flex-direction: column;
@@ -173,16 +162,13 @@
     width: 100%;
     text-align: start;
   }
-
   .title {
     color: var(--text-strong);
   }
-
   .subtitle {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .rows {
     display: flex;
     flex-wrap: wrap;

@@ -1,13 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """# Embeds
 
 A recording:
@@ -52,7 +49,6 @@ series:
 not a chart at all
 ```
 """
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -63,7 +59,6 @@ async (note) => {
   return found.name
 }
 """
-
 COUNTS = """
 () => {
   const count = (selector) => document.querySelectorAll(selector).length
@@ -81,7 +76,6 @@ COUNTS = """
   }
 }
 """
-
 BOXES = """
 () => {
   const seen = {}
@@ -104,7 +98,6 @@ BOXES = """
   return seen
 }
 """
-
 def scroll_to(page: Page, selector: str) -> None:
     page.evaluate(
         """(selector) => {
@@ -113,7 +106,6 @@ def scroll_to(page: Page, selector: str) -> None:
         selector,
     )
     page.wait_for_timeout(500)
-
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
@@ -136,7 +128,6 @@ def fresh(browser: Browser, finger: bool) -> Page:
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
-
 def asked_for(page: Page) -> list[str]:
     return page.evaluate(
         """() => performance
@@ -144,7 +135,6 @@ def asked_for(page: Page) -> list[str]:
           .map((one) => one.name)
           .filter((name) => !name.startsWith(location.origin))"""
     )
-
 def expect(counts: dict[str, int], where: str) -> None:
     if counts["audio"] != 1:
         wrong(f"{where}: {counts['audio']} audio players, not 1")
@@ -164,10 +154,8 @@ def expect(counts: dict[str, int], where: str) -> None:
         wrong(f"{where}: {counts['keys']} legend keys, not 5 (2 series and 3 slices)")
     if counts["code"] < 1:
         wrong(f"{where}: the fence that is not a chart did not stay code")
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
-
     counts = page.evaluate(COUNTS)
     say(f"[editor] {json.dumps(counts)}")
     say(f"[editor] boxes {json.dumps(page.evaluate(BOXES))}")
@@ -175,15 +163,12 @@ def drive(browser: Browser) -> None:
     expect(counts, "the editor")
     if counts["frames"] != 0:
         wrong(f"the editor loaded {counts['frames']} frames before anybody asked")
-
     scroll_to(page, ".chart-svg")
     shot(page, "01b-editor-charts")
-
     outside = asked_for(page)
     say(f"[editor] asked {len(outside)} things of anybody else")
     if outside:
         wrong(f"opening the note fetched from outside: {outside[:4]}")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(900)
     read = page.evaluate(COUNTS)
@@ -196,7 +181,6 @@ def drive(browser: Browser) -> None:
     expect(read, "the reading view")
     if read["frames"] != 0:
         wrong(f"the reading view loaded {read['frames']} frames before anybody asked")
-
     page.click(".embed-web")
     page.wait_for_timeout(900)
     frame = page.evaluate(
@@ -228,25 +212,20 @@ def drive(browser: Browser) -> None:
             wrong(f"the frame tells the provider more than the origin: {frame['referrer']!r}")
         if frame["height"] < 100 or abs(frame["width"] / max(1, frame["height"]) - 16 / 9) > 0.2:
             wrong(f"the frame is not the shape the card was: {frame}")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
     page.context.close()
-
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
-
     counts = page.evaluate(COUNTS)
     boxes = page.evaluate(BOXES)
     say(f"[phone editor] {json.dumps(counts)}")
     say(f"[phone editor] boxes {json.dumps(boxes)}")
     shot(page, "10-phone-editor")
     expect(counts, "the phone editor")
-
     for name, box in boxes.items():
         if box["left"] < 0 or box["left"] + box["width"] > 420:
             wrong(f"on a phone the {name} runs off the screen: {box}")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(900)
     read = page.evaluate(COUNTS)
@@ -255,26 +234,20 @@ def finger(browser: Browser) -> None:
     say(f"[phone reading] boxes {json.dumps(phone_boxes)}")
     shot(page, "11-phone-reading")
     expect(read, "the phone reading view")
-
     for name, box in phone_boxes.items():
         if box["left"] < 0 or box["left"] + box["width"] > 420:
             wrong(f"on a phone the {name} runs off the screen when read: {box}")
-
     page.tap(".embed-web")
     page.wait_for_timeout(800)
     shot(page, "12-phone-clicked")
     if page.evaluate("() => document.querySelectorAll('.embed-web iframe').length") != 1:
         wrong("a tap on the card loaded no frame on a phone")
-
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
         drive(browser)
         say("--- a finger ---")
         finger(browser)
-
     return DRIVE.verdict("media plays, files are cards, a chart draws, and nothing loads unasked")
-
 raise SystemExit(main())

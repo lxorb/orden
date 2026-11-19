@@ -8,9 +8,7 @@ vi.mock('../../accounts/src/client', () => ({
   },
 }))
 vi.stubGlobal('location', { href: 'https://orden.so/s/notes' })
-
 const { accountAddress } = await import('./assets')
-
 describe('a picture the account keeps', () => {
   test('is named by its whole address, on the web app as on the desktop', () => {
     api.BASE = ''
@@ -18,7 +16,6 @@ describe('a picture the account keeps', () => {
     api.BASE = 'https://orden.so'
     expect(accountAddress('https://orden.so/i/ab12.png')).toBe('https://orden.so/i/ab12.png')
   })
-
   test('and one kept in the space is not the account’s', () => {
     api.BASE = ''
     expect(accountAddress('assets/ab12.png')).toBeNull()

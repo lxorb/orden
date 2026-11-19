@@ -16,15 +16,12 @@
   const { rail = false, quiet = false }: { rail?: boolean; quiet?: boolean } = $props()
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
-
   function matches(one: ThreadHead, words: string[]): boolean {
     const text = `${one.title} ${one.words} ${one.model}`.toLowerCase()
     return words.every((word) => text.includes(word))
   }
-
   let archivedShown = $state(false)
   const stateIn = (one: ThreadHead) => chat.states.get(one.id) ?? stateOf(one)
-
   const found = $derived.by(() => {
     const words = chat.listQuery.toLowerCase().split(/\s+/).filter(Boolean)
     return chat.heads.filter((one) => matches(one, words))
@@ -35,21 +32,17 @@
   const rows = $derived([...active, ...shownArchived])
   let upper = $state<{ reach: (index: number) => void }>()
   let lower = $state<{ reach: (index: number) => void }>()
-
   function reach(index: number) {
     if (index < active.length) upper?.reach(index)
     else lower?.reach(index - active.length)
   }
-
   $effect(() => {
     const last = Math.max(0, rows.length - 1)
     if (untrack(() => lit) > last) lit = last
   })
-
   $effect(() => {
     if (!rail && !untrack(() => quiet)) requestAnimationFrame(() => field?.focus())
   })
-
   function rowMenu(event: MouseEvent, one: ThreadHead) {
     menu.show(event, [
       { label: 'Rename', asks: true, run: () => void chat.rename(undefined, one.id) },
@@ -58,12 +51,10 @@
       { label: 'Delete', danger: true, run: () => void chat.remove(one.id) },
     ])
   }
-
   function toggleArchived(one: ThreadHead) {
     if (one.archived) chat.unarchive(one.id)
     else chat.archive(one.id)
   }
-
   function onKey(event: KeyboardEvent) {
     const one = rows[lit]
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -177,7 +168,6 @@
     display: flex;
     flex-direction: column;
   }
-
   .top {
     flex: none;
     display: flex;
@@ -185,7 +175,6 @@
     gap: 2px;
     padding: 0 var(--space-1) var(--space-2);
   }
-
   .new {
     display: flex;
     align-items: center;
@@ -202,13 +191,11 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .new:hover {
       background: var(--surface-hover);
     }
   }
-
   .new svg {
     flex: none;
     width: var(--icon-md);
@@ -219,11 +206,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .find {
     margin-top: 2px;
   }
-
   .list {
     flex: 1;
     min-height: 0;
@@ -232,11 +217,9 @@
     overflow-y: auto;
     list-style: none;
   }
-
   .shown-archived .orden-row-label {
     color: var(--muted);
   }
-
   .group,
   .empty {
     padding: var(--space-3) var(--row-pad) var(--space-1);
@@ -244,7 +227,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .group:first-child {
     padding-top: var(--space-1);
   }

@@ -23,14 +23,12 @@ interface Device {
   asked: string[]
   reading: unknown
 }
-
 interface IndexRow {
   id: string
   space: string
   docSeq: number
   scan: IndexedNote
 }
-
 interface Indexing {
   refresh(): Promise<{ root: string; scans: IndexedNote[] }[]>
   scans(): ReadonlyMap<string, IndexedNote>
@@ -43,13 +41,11 @@ interface Indexing {
     excluded: readonly string[],
   ): Promise<void>
 }
-
 interface Kit {
   testDevice(making: { fetch: (request: Request) => Promise<Response>; token: string; lazy?: boolean }): Promise<Device>
   firstPass(core: unknown, space: unknown, v1: null): Promise<boolean>
   Indexing: new (engine: unknown, reading: unknown, store: unknown) => Indexing
 }
-
 async function kit(): Promise<Kit> {
   const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, indexing] = await Promise.all([
@@ -59,7 +55,6 @@ async function kit(): Promise<Kit> {
   ])
   return { ...(device as object), ...(migrate as object), ...(indexing as object) } as Kit
 }
-
 function memoryIndex() {
   const rows = new Map<string, IndexRow>()
   return {
@@ -75,30 +70,24 @@ function memoryIndex() {
     close: () => undefined,
   }
 }
-
 let env: TestEnv
 let rooms: Live
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   rooms = live(env)
   token = await signIn(env, 'browser@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Kept' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 async function note(path: string, content: string): Promise<string> {
   const made = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   expect(made.status).toBe(201)
   return made.json.note.id
 }
-
 const PLANS = '# Plans\n\nThe garden in spring, see [[Ideas]] #work\n\n- [ ] Dig the beds\n'
 const IDEAS = '# Ideas\n\nNothing yet.\n'
-
 async function browser(
   through: (request: Request, answer: () => Promise<Response>) => Promise<Response> = (_r, a) => a(),
 ) {
@@ -119,15 +108,12 @@ async function browser(
     indexing: new engine.Indexing(device.engine, device.reading, memoryIndex()),
   }
 }
-
 const pulls = (device: Device) => device.asked.filter((one) => one.endsWith('/v2/docs/pull'))
-
 describe('a browser keeping only the words it uses, against the Worker', () => {
   test('takes the tree and no words, knows each note by its scan, and searches the rest', async () => {
     const plans = await note('Plans.md', PLANS)
     await note('Ideas.md', IDEAS)
     const { device, indexing } = await browser()
-
     expect(pulls(device)).toEqual([])
     expect([...device.disk.files.keys()]).toEqual([])
     expect(
@@ -136,14 +122,12 @@ describe('a browser keeping only the words it uses, against the Worker', () => {
         .map((one) => one.path)
         .sort(),
     ).toEqual([`${device.root}/Ideas.md`, `${device.root}/Plans.md`])
-
     const refreshed = await indexing.refresh()
     expect(refreshed[0]?.scans.map((one) => one.path).sort()).toEqual(['Ideas.md', 'Plans.md'])
     const scan = indexing.scans().get(plans)
     expect(scan?.tags).toEqual(['work'])
     expect(scan?.links.map((one) => one.target)).toEqual(['Ideas'])
     expect(scan?.tasks?.map((one) => one.text)).toEqual(['Dig the beds'])
-
     const hits: string[] = []
     await indexing.search(
       device.root,
@@ -157,13 +141,11 @@ describe('a browser keeping only the words it uses, against the Worker', () => {
     )
     expect(hits).toEqual([`${device.root}/Plans.md|The garden in spring, see [[Ideas]] #work`])
     expect(pulls(device)).toEqual([])
-
     expect(await device.engine.fetch(`${device.root}/Plans.md`)).toBe(true)
     expect(device.disk.files.get(`${device.root}/Plans.md`)).toBe(PLANS)
     expect(pulls(device)).toHaveLength(1)
     expect(device.engine.awayFiles().map((one) => one.path)).toEqual([`${device.root}/Ideas.md`])
   })
-
   test('an account that does not say it serves the rest is kept whole', async () => {
     await note('Plans.md', PLANS)
     await note('Ideas.md', IDEAS)
@@ -177,7 +159,6 @@ describe('a browser keeping only the words it uses, against the Worker', () => {
     expect(device.disk.files.size).toBe(2)
     expect(device.engine.awayFiles()).toEqual([])
   })
-
   test('one that says so with no route for it is kept whole from the next pass', async () => {
     await note('Plans.md', PLANS)
     await note('Ideas.md', IDEAS)

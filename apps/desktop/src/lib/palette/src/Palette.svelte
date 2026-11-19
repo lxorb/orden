@@ -59,28 +59,20 @@
     ongoto?: (line: number) => void
   } = $props()
   /* eslint-enable prefer-const */
-
   $effect(() => {
     if (!__EVEN_PLUGIN__ && open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
   })
-
   let query = $state('')
   let cursor = $state(0)
   let input = $state<HTMLInputElement>()
-
   const asked = $derived(modeOf(query))
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
-
   const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
   const visits = paletteKind('visits')
-
   let forgotten = $state(0)
-
   const commands = $derived(open ? paletteCommands(view) : [])
-
   const settingRows = $derived(open ? paletteKind('settings').rows(view) : [])
-
   const tabs = $derived(
     workspace.tabs.map((tab): OpenTab => ({
       id: tab.id,
@@ -90,9 +82,7 @@
       url: tab.kind === 'web' ? visitKey(webPages().of(tab.id).url ?? '') : null,
     })),
   )
-
   const root = $derived(workspace.activeSpace?.root ?? null)
-
   let hosts = $state.raw<readonly PaletteHost[]>([])
   $effect(() => {
     if (!open || __EVEN_PLUGIN__ || !isDesktop) return
@@ -100,11 +90,9 @@
       .list()
       .then((list) => (hosts = list))
   })
-
   const world = $derived.by((): World | null => {
     if (!open) return null
     follows(forgotten)
-
     return {
       root: root ?? '',
       files: workspace.shownFiles,
@@ -124,9 +112,7 @@
       addressOf: (path) => links.shortcutOf(path),
     }
   })
-
   const all = $derived(world ? candidates(world) : [])
-
   const offered = $derived.by(() => {
     const whole = term.trim().toLowerCase()
     return all.filter(
@@ -136,39 +122,30 @@
         shownName(item.entry.name).toLowerCase() === whole,
     )
   })
-
   const writing = $derived(workspace.active?.kind === 'note' ? view : undefined)
-
   const wantsHeadings = $derived(mode === 'headings' || (mode === 'everything' && term.length >= 3))
   const headings = $derived(open && wantsHeadings && writing ? scanHeadings(writing.state.doc.toString()) : [])
   const headingRows = $derived(headingCandidates(headings, mode === 'headings'))
-
   const taken = $derived(new Set(workspace.files.map((one) => relativeTo(root ?? '', one.path).toLowerCase())))
-
   const makes = $derived(
     mode === 'everything' && root && hiddenKinds.offers('note') && canWriteAt(root) ? makeable(term, taken) : null,
   )
-
   const address = $derived.by(() => {
     const url = browses && mode === 'everything' ? typedAddress(term) : null
     return url ? { url, shown: shownAddress(url) } : null
   })
-
   function commandRows(): Row[] {
     const list = all.filter((one) => one.kind === 'command')
     if (term) return ranked(term, list)
-
     const lately = frecency.latest('command:', 8)
     return recentFirst(list, lately, (one) => one.key ?? '').map((one) => one.item)
   }
-
   function hostRows(): Row[] {
     const list = all.filter((one) => one.kind === 'host')
     const found = term ? ranked(term, list) : list.map((one) => one.item)
     const offer = __EVEN_PLUGIN__ ? null : paletteKind('hosts').wanted(term)
     return offer ? [...found, { kind: 'connect', ...offer }] : found
   }
-
   let messages = $state.raw<{ rows: Row[]; only: boolean; term: string }>({
     rows: [],
     only: false,
@@ -196,9 +173,7 @@
       clearTimeout(timer)
     }
   })
-
   const found = $derived(messages.term === term.trim() ? messages : { rows: [], only: false })
-
   const browsed = $derived(
     mode === 'everything' && !term && world
       ? browse(
@@ -207,26 +182,20 @@
         )
       : null,
   )
-
   const results = $derived.by((): Row[] => {
     if (mode === 'commands') return commandRows()
     if (mode === 'hosts') return hostRows()
-
     if (mode === 'headings') return ranked(term, headingRows, MOST_PLACES)
-
     if (mode === 'line') {
       const line = writing ? lineAsked(term, writing.state.doc.lines) : null
       if (line === null || !writing) return []
       const text = writing.state.doc.line(line + 1).text.trim()
       return [{ kind: 'place', line, text, depth: 0, hint: String(line + 1) }]
     }
-
     if (!term) return browsed?.rows ?? []
     if (found.only) return found.rows
-
     return [...withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes), ...found.rows]
   })
-
   function label(row: Row): string {
     switch (row.kind) {
       case 'command':
@@ -259,7 +228,6 @@
         return row.line
     }
   }
-
   function whereOf(row: Row): string | readonly string[] | null {
     switch (row.kind) {
       case 'note':
@@ -290,35 +258,27 @@
         return null
     }
   }
-
   function hintOf(row: Row): string | null {
     if (row.kind === 'command') return row.command.hint ?? null
     return row.kind === 'place' ? row.hint : null
   }
-
   const dimmed = (row: Row) => row.kind === 'command' && row.command.disabled === true
-
   const tabOf = (row: Extract<Row, { kind: 'tab' }>) => workspace.tabs.find((one) => one.id === row.tab.id)
-
   const unsavedTab = (row: Extract<Row, { kind: 'tab' }>) => {
     const tab = tabOf(row)
     return tab !== undefined && isDraft(tab.note)
   }
-
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(term)
     follows(mode)
     cursor = 0
   })
-
   $effect(() => {
     if (!open) return
     input?.focus()
     typeAhead.letGo(input ?? null)
   })
-
   $effect(() => {
     const words = paletteWords.words
     if (!open || words === null) return
@@ -328,16 +288,12 @@
       void tick().then(() => input?.setSelectionRange(words.length, words.length))
     })
   })
-
   let list = $state<HTMLElement>()
-
   $effect(() => {
     follows(cursor)
     list?.querySelector('.orden-row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
-
   let trying = false
-
   function wear(row: Row | undefined) {
     const look = lookOf(row, theme.kept)
     if (look) {
@@ -349,12 +305,10 @@
       trying = false
     }
   }
-
   $effect(() => {
     const row = open ? results[cursor] : undefined
     untrack(() => wear(row))
   })
-
   const opensTab = (row: Row) =>
     row.kind === 'note' ||
     row.kind === 'tab' ||
@@ -362,7 +316,6 @@
     row.kind === 'address' ||
     row.kind === 'message' ||
     (row.kind === 'bookmark' && (row.mark.kind === 'heading' || row.mark.kind === 'block'))
-
   const hands: Hands = {
     openEntry: (path, how) => void workspace.openEntry(path, how),
     openAside: (path) => void workspace.openAside(path),
@@ -392,23 +345,19 @@
     connect: (wanted) => paletteKind('hosts').connect(wanted),
     openMessage: (path, message, how) => paletteKind('messages').open(path, message, how),
   }
-
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {
     if (lookOf(row, theme)) trying = false
     const chosen = choose(row, press, hands)
     if (chosen === 'nothing') return
-
     const key = row.kind === 'note' ? null : rowKey(row)
     if (key) frecency.use(key)
     if (chosen !== 'close') return
     if (row.kind === 'command') typeAhead.hold(input ?? null)
     dismiss()
   }
-
   function forget(row: Row) {
     const key = rowKey(row)
     if (!key) return
-
     frecency.forget(key)
     if (row.kind === 'note') workspace.device.unremember(row.entry.path)
     if (row.kind === 'tab' && row.tab.path) workspace.device.unremember(row.tab.path)
@@ -417,47 +366,38 @@
     }
     forgotten++
   }
-
   export async function showCommands() {
     if (!query.startsWith('>')) query = `>${query}`
     open = true
-
     await tick()
     input?.focus()
     input?.setSelectionRange(query.length, query.length)
   }
-
   export function dismiss() {
     open = false
     query = ''
   }
-
   $effect(() => (open ? overlays.show(dismiss) : undefined))
-
   function spend(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
   }
-
   function onKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || (event.key === 'n' && event.ctrlKey)) {
       spend(event)
       cursor = (cursor + 1) % Math.max(results.length, 1)
       return
     }
-
     if (event.key === 'ArrowUp' || (event.key === 'p' && event.ctrlKey)) {
       spend(event)
       cursor = (cursor - 1 + results.length) % Math.max(results.length, 1)
       return
     }
-
     if ((event.key === 'Home' || event.key === 'End') && (event.ctrlKey || event.metaKey)) {
       spend(event)
       cursor = event.key === 'Home' ? 0 : Math.max(results.length - 1, 0)
       return
     }
-
     if (event.key === 'Delete' && event.shiftKey) {
       const chosen = results[cursor]
       if (chosen) {
@@ -466,15 +406,12 @@
       }
       return
     }
-
     if (event.key !== 'Enter') return
-
     if (event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && makes) {
       spend(event)
       pick({ kind: 'make', make: makes })
       return
     }
-
     const chosen = results[cursor]
     if (chosen) {
       spend(event)
@@ -613,16 +550,13 @@
   .scrim {
     --scrim-z: var(--z-screen);
   }
-
   .palette {
     --screen-width: var(--screen-list);
-
     z-index: var(--z-screen);
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
-
   .field {
     flex: none;
     min-height: 0;
@@ -633,14 +567,12 @@
     background: none;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   .field input {
     padding: var(--space-4);
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
   }
-
   .give {
     flex: none;
     min-height: var(--touch-row);
@@ -651,11 +583,9 @@
     font-family: var(--font-ui);
     font-size: var(--touch-text);
   }
-
   input::placeholder {
     color: var(--muted);
   }
-
   ul {
     box-sizing: border-box;
     min-height: 0;
@@ -664,11 +594,9 @@
     padding: var(--space-1);
     overflow-y: auto;
   }
-
   button.dim {
     opacity: 0.45;
   }
-
   .mark {
     display: grid;
     place-items: center;
@@ -681,35 +609,28 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .quiet {
     opacity: 0.8;
   }
-
   svg.drawn {
     stroke-width: 1.2;
     opacity: 0.8;
   }
-
   .tick {
     min-width: 1em;
     color: var(--accent);
     stroke: none;
   }
-
   .orden-row-label {
     padding-inline-start: calc(var(--depth) * var(--space-3));
   }
-
   [role='option'] .orden-row-label:dir(rtl) {
     padding-inline: 0 calc(var(--depth) * var(--space-3));
   }
-
   .orden-row-label b {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .where,
   .value {
     min-width: 0;
@@ -720,25 +641,21 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .value {
     margin-inline-start: auto;
   }
-
   .flip {
     display: flex;
     flex: none;
     margin-inline-start: auto;
     scale: 0.8;
   }
-
   .nothing {
     margin: 0;
     padding: var(--space-4);
     color: var(--muted);
     font-size: var(--text-row);
   }
-
   kbd {
     flex: none;
     margin-inline-start: auto;
@@ -747,7 +664,6 @@
     color: var(--muted);
     letter-spacing: 0.02em;
   }
-
   :global([data-touch]) .palette {
     top: 0;
     left: 0;
@@ -757,13 +673,11 @@
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     padding-top: var(--inset-top);
   }
-
   :global([data-touch]) .field input {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) ul {
     max-height: 60dvh;
     padding-bottom: var(--touch-bottom);

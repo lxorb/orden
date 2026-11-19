@@ -14,12 +14,10 @@ export interface DoesAgain extends Copies {
   loadTree(): Promise<void>
   persist(): void
 }
-
 export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
   const action = ws.undone.next
   if (!action) return
   const rest = ws.undone.ahead.slice(0, -1)
-
   try {
     await ws.undone.batch(() => again(ws, action))
   } catch {
@@ -27,12 +25,10 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
     failed.tell(() => void redoLastFileAction(ws), true)
     return
   }
-
   ws.undone.redone(rest)
   await ws.loadTree()
   ws.persist()
 }
-
 async function again(ws: DoesAgain, action: FileAction): Promise<void> {
   switch (action.kind) {
     case 'move':

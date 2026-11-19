@@ -7,9 +7,7 @@ interface Asked {
   headers: Record<string, string>
   body: unknown
 }
-
 type Reply = [status: number, body: unknown]
-
 function fake(replies: Record<string, Reply | ((asked: Asked) => Reply)>): {
   fetcher: AliasFetcher
   asked: Asked[]
@@ -30,7 +28,6 @@ function fake(replies: Record<string, Reply | ((asked: Asked) => Reply)>): {
   }
   return { fetcher, asked }
 }
-
 const SL_ALIAS = {
   id: 3,
   email: 'shop.cat@slmail.me',
@@ -39,7 +36,6 @@ const SL_ALIAS = {
   note: null,
   mailboxes: [{ id: 1, email: 'me@example.com' }],
 }
-
 const SL_MAILBOXES: Reply = [
   200,
   {
@@ -49,7 +45,6 @@ const SL_MAILBOXES: Reply = [
     ],
   },
 ]
-
 describe('SimpleLogin', () => {
   test('lists the mailboxes with the key in its own header', async () => {
     const { fetcher, asked } = fake({ 'GET /api/v2/mailboxes': SL_MAILBOXES })
@@ -62,7 +57,6 @@ describe('SimpleLogin', () => {
     expect(asked[0]?.headers.Authentication).toBe('sl-key')
     expect(asked[0]?.headers.Authorization).toBeUndefined()
   })
-
   test('offers the suffixes and the prefix for a site', async () => {
     const { fetcher, asked } = fake({
       'GET /api/v5/alias/options': [
@@ -90,7 +84,6 @@ describe('SimpleLogin', () => {
     })
     expect(options.mailboxes).toHaveLength(2)
   })
-
   test('makes an alias from a prefix and a signed suffix', async () => {
     const { fetcher, asked } = fake({ 'POST /api/v3/alias/custom/new': [201, SL_ALIAS] })
     const made = await aliasClient('simplelogin', 'k', fetcher).create(
@@ -115,14 +108,12 @@ describe('SimpleLogin', () => {
       note: '',
     })
   })
-
   test('makes a random alias', async () => {
     const { fetcher, asked } = fake({ 'POST /api/alias/random/new': [201, SL_ALIAS] })
     const made = await aliasClient('simplelogin', 'k', fetcher).random('for shop')
     expect(asked[0]?.body).toEqual({ note: 'for shop' })
     expect(made.address).toBe('shop.cat@slmail.me')
   })
-
   test('toggles to the state asked for, twice when it was already there', async () => {
     let enabled = true
     const { fetcher, asked } = fake({
@@ -137,14 +128,12 @@ describe('SimpleLogin', () => {
     expect(await client.setEnabled('3', false)).toBe(false)
     expect(asked).toHaveLength(3)
   })
-
   test('deletes an alias', async () => {
     const { fetcher, asked } = fake({ 'DELETE /api/aliases/3': [200, { deleted: true }] })
     await aliasClient('simplelogin', 'k', fetcher).remove('3')
     expect(asked[0]?.method).toBe('DELETE')
     expect(asked[0]?.url).toBe('https://app.simplelogin.io/api/aliases/3')
   })
-
   test('counts the last 14 days of activity across pages and stops at older ones', async () => {
     const now = 100 * 86_400_000
     const at = (days: number) => (now - days * 86_400_000) / 1000
@@ -171,7 +160,6 @@ describe('SimpleLogin', () => {
     expect(stats).toEqual({ forwarded: 2, replied: 1, blocked: 1, days: 14 })
     expect(asked).toHaveLength(2)
   })
-
   test('is refused with the service’s words on a wrong key, never the key', async () => {
     const { fetcher } = fake({ 'GET /api/v2/mailboxes': [401, { error: 'Wrong api key' }] })
     const asking = aliasClient('simplelogin', 'secret-key', fetcher).mailboxes()
@@ -179,13 +167,11 @@ describe('SimpleLogin', () => {
     await expect(asking).rejects.toMatchObject({ status: 401, message: 'Wrong api key' })
     await expect(asking).rejects.not.toThrow('secret-key')
   })
-
   test('throws on an answer it cannot read', async () => {
     const { fetcher } = fake({ 'POST /api/alias/random/new': [201, { email: 3 }] })
     await expect(aliasClient('simplelogin', 'k', fetcher).random('')).rejects.toThrow('unreadable alias answer')
   })
 })
-
 const ADDY_ALIAS = {
   data: {
     id: '50c9e585',
@@ -199,7 +185,6 @@ const ADDY_ALIAS = {
     emails_replied: 2,
   },
 }
-
 const ADDY_DOMAINS: Reply = [
   200,
   {
@@ -209,7 +194,6 @@ const ADDY_DOMAINS: Reply = [
     defaultAliasFormat: 'random_words',
   },
 ]
-
 const ADDY_RECIPIENTS: Reply = [
   200,
   {
@@ -219,7 +203,6 @@ const ADDY_RECIPIENTS: Reply = [
     ],
   },
 ]
-
 describe('addy.io', () => {
   test('lists the recipients with the bearer key and marks the default one', async () => {
     const { fetcher, asked } = fake({
@@ -237,7 +220,6 @@ describe('addy.io', () => {
     })
     expect(asked[0]?.url.startsWith('https://app.addy.io/api/v1/recipients')).toBe(true)
   })
-
   test('offers its domains, the default first, and a prefix from the site', async () => {
     const { fetcher } = fake({
       'GET /api/v1/domain-options': ADDY_DOMAINS,
@@ -252,7 +234,6 @@ describe('addy.io', () => {
     ])
     expect(options.canCreate).toBe(true)
   })
-
   test('makes a custom alias and names its sender', async () => {
     const { fetcher, asked } = fake({
       'POST /api/v1/aliases': [201, ADDY_ALIAS],
@@ -282,7 +263,6 @@ describe('addy.io', () => {
       note: 'for shop',
     })
   })
-
   test('makes a random alias on the default domain', async () => {
     const { fetcher, asked } = fake({
       'GET /api/v1/domain-options': ADDY_DOMAINS,
@@ -291,7 +271,6 @@ describe('addy.io', () => {
     await aliasClient('addy', 'k', fetcher).random('note')
     expect(asked[1]?.body).toEqual({ domain: 'me.anonaddy.com', description: 'note' })
   })
-
   test('turns an alias on and off', async () => {
     const { fetcher, asked } = fake({
       'POST /api/v1/active-aliases': [200, ADDY_ALIAS],
@@ -303,13 +282,11 @@ describe('addy.io', () => {
     expect(await client.setEnabled('50c9e585', false)).toBe(false)
     expect(asked[1]?.method).toBe('DELETE')
   })
-
   test('deletes an alias', async () => {
     const { fetcher, asked } = fake({ 'DELETE /api/v1/aliases/50c9e585': [204, null] })
     await aliasClient('addy', 'k', fetcher).remove('50c9e585')
     expect(asked[0]?.url).toBe('https://app.addy.io/api/v1/aliases/50c9e585')
   })
-
   test('gives its counts for all time', async () => {
     const { fetcher } = fake({ 'GET /api/v1/aliases/50c9e585': [200, ADDY_ALIAS] })
     expect(await aliasClient('addy', 'k', fetcher).stats('50c9e585')).toEqual({
@@ -319,7 +296,6 @@ describe('addy.io', () => {
       days: null,
     })
   })
-
   test('is refused with its message', async () => {
     const { fetcher } = fake({ 'POST /api/v1/aliases': [403, { message: 'Limit reached' }] })
     await expect(

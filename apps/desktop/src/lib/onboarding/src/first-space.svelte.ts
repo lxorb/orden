@@ -10,7 +10,6 @@ import { type Space, workspace } from '../../workspace/src/api'
 
 class FirstSpace {
   private working = false
-
   async start(now: Moment) {
     if (!startsFresh(now) || this.working || workspace.spaces.length) return
     this.working = true
@@ -24,22 +23,18 @@ class FirstSpace {
       this.working = false
     }
   }
-
   private async welcome(space: Space): Promise<string | null> {
     if (await wasSeeded()) return null
-
     const path = joinPath(space.root, WELCOME_NAME)
     await writeFile(path, WELCOME)
     await markSeeded()
     await workspace.loadTree()
     return path
   }
-
   private async arrive(space: Space, note: string | null) {
     if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
     if (note) await workspace.openFirst(note)
     if (!viewport.drawer) workspace.showPanel('tree')
   }
 }
-
 export const firstSpace = new FirstSpace()

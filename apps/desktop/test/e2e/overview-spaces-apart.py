@@ -1,12 +1,9 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 NEEDS = ("chromium",)
-
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -24,7 +21,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 600))
 }
 """
-
 BUBBLES = """
 () => {
   const names = [...document.querySelectorAll('[data-space-name]')]
@@ -39,7 +35,6 @@ BUBBLES = """
   })
 }
 """
-
 CROSSING = """
 () => {
   const paths = [...document.querySelectorAll('.bubble')]
@@ -63,7 +58,6 @@ CROSSING = """
   return out
 }
 """
-
 CROSSED = """
 () => {
   const space = (label) => ['Work', 'Ideas'].find((one) => label.startsWith(one)) ?? 'Here'
@@ -76,7 +70,6 @@ CROSSED = """
   return out
 }
 """
-
 NEAREST = """
 (pair) => {
   const names = [...document.querySelectorAll('[data-space-name]')].map((one) => one.textContent.trim())
@@ -91,10 +84,8 @@ NEAREST = """
   return least
 }
 """
-
 def meet(a: list[float], b: list[float]) -> bool:
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
-
 def at_rest(page: Page, label: str) -> None:
     crossing = page.evaluate(CROSSING)
     if crossing:
@@ -107,7 +98,6 @@ def at_rest(page: Page, label: str) -> None:
         for other in bubbles:
             if one["name"] < other["name"] and meet(one["label"], other["label"]):
                 wrong(f"[{label}] the names of {one['name']} and {other['name']} lie on each other")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -120,7 +110,6 @@ def drive(browser: Browser) -> None:
     page.click(".tidy")
     page.wait_for_timeout(1400)
     shot(page, "packed")
-
     bubbles = {one["name"]: one for one in page.evaluate(BUBBLES)}
     one_window = bubbles.get("Ideas")
     empties = [bubbles.get("Empty A"), bubbles.get("Empty B")]
@@ -135,7 +124,6 @@ def drive(browser: Browser) -> None:
         if not (0.35 < wide < 0.7 and 0.35 < tall < 0.75):
             wrong(f"[empty] {empty['name']}'s bubble is not about half a one-window bubble: {wide:.2f} x {tall:.2f}")
     at_rest(page, "empty")
-
     ideas = bubbles["Ideas"]
     work = bubbles.get("Work")
     zoom = page.evaluate(
@@ -184,14 +172,12 @@ def drive(browser: Browser) -> None:
     page.mouse.up()
     page.wait_for_timeout(1600)
     shot(page, "let-go")
-
     def stayed(label: str) -> None:
         now = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Ideas")
         if now and pushed:
             off = max(abs(now["box"][0] - pushed["box"][0]), abs(now["box"][1] - pushed["box"][1]))
             if off > 8:
                 wrong(f"[{label}] Ideas did not stay where it was pushed: {off:.0f} away")
-
     stayed("let go")
     at_rest(page, "let go")
     page.keyboard.press("Alt")
@@ -205,7 +191,6 @@ def drive(browser: Browser) -> None:
     shot(page, "again")
     stayed("again")
     at_rest(page, "again")
-
     empty = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Empty A")
     if not empty:
         wrong("[empty carry] Empty A has no bubble")
@@ -231,5 +216,4 @@ def drive(browser: Browser) -> None:
         wrong("[empty carry] the empty space did not stay where it was let go")
     at_rest(page, "empty carried")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "no two spaces' bubbles on each other"))

@@ -16,13 +16,10 @@ beforeAll(async () => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await loadFind()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function pictureOver(view: EditorView, from: number, to: number): boolean {
   let covered = false
   for (const source of view.state.facet(EditorView.decorations)) {
@@ -34,7 +31,6 @@ function pictureOver(view: EditorView, from: number, to: number): boolean {
   }
   return covered
 }
-
 describe('finding words in a picture description, in Read-only mode', () => {
   test('shows the match instead of leaving it inside the drawn picture', async () => {
     const doc = 'Our setup\n\n![architecture sketch](sketch.png)\n\nend'
@@ -53,10 +49,8 @@ describe('finding words in a picture description, in Read-only mode', () => {
     )
     const view = new EditorView({ state, parent: document.body })
     open.push(view)
-
     await setFind(view, { ...NO_FIND, query: 'architecture' })
     findNext(view)
-
     const { from, to } = view.state.selection.main
     expect(view.state.sliceDoc(from, to)).toBe('architecture')
     expect(pictureOver(view, from, to)).toBe(false)

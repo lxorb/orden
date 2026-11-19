@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 const sent: { command: string; from?: unknown; to?: unknown }[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -11,19 +10,15 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
-
 const { workspace } = await import('./api')
 const { place, unkeepInto } = await import('./essentials.svelte')
 type Entry = import('./api').Entry
-
 const file = (path: string): Entry => ({
   name: path.split('/').pop() ?? path,
   path,
@@ -37,9 +32,7 @@ const folder = (path: string, children: Entry[]): Entry => ({
   is_dir: true,
   children,
 })
-
 const kept = () => workspace.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path)
-
 beforeEach(() => {
   sent.length = 0
   readOnly.clear()
@@ -54,7 +47,6 @@ beforeEach(() => {
   workspace.undone.stack = []
   workspace.undone.ahead = []
 })
-
 describe('a file dragged into the Essentials', () => {
   test('leaves the list for a tile, a selection at once, and one undo puts both back', async () => {
     place(
@@ -72,7 +64,6 @@ describe('a file dragged into the Essentials', () => {
     expect(kept()).toEqual(['a.md', 'b.md'])
   })
 })
-
 describe('a tile dragged into the list', () => {
   test('leaves the Essentials and lands in the folder it was let go of in, one step', async () => {
     workspace.bookmarks.put('/space', [{ kind: 'note', path: 'a.md', text: '' }])
@@ -95,7 +86,6 @@ describe('a tile dragged into the list', () => {
       to: '/space/a.md',
     })
   })
-
   test('let go of in the folder it is in, only leaves the Essentials', async () => {
     workspace.bookmarks.put('/space', [{ kind: 'note', path: 'a.md', text: '' }])
     await unkeepInto(0, '/space')
@@ -103,7 +93,6 @@ describe('a tile dragged into the list', () => {
     expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
     expect(workspace.undone.last?.kind).toBe('keep')
   })
-
   test('in a space shared to be read, stays a tile rather than going nowhere', async () => {
     workspace.bookmarks.put('/space', [{ kind: 'note', path: 'a.md', text: '' }])
     readOnly.add('/space')
@@ -112,7 +101,6 @@ describe('a tile dragged into the list', () => {
     expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
     expect(workspace.undone.stack).toEqual([])
   })
-
   test('takes nothing that is not a file', async () => {
     workspace.bookmarks.put('/space', [{ kind: 'search', path: '', text: 'tag:x' }])
     await unkeepInto(0, '/space/Work')

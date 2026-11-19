@@ -10,21 +10,16 @@ const TOKENS = readFileSync(
   fileURLToPath(new URL('../../../../../../../packages/themes/src/tokens.css', import.meta.url)),
   'utf8',
 )
-
 const WHITE: Rgb = [255, 255, 255]
 const BLACK: Rgb = [0, 0, 0]
-
 const SIDES = ['dark', 'light'] as const
 type Side = (typeof SIDES)[number]
-
 const accents = (side: Side): Rgb[] => ACCENTS.map((one) => rgbOf(one[side])!)
-
 function palette(side: Side): Palette {
   const found = paletteOf(wallpaperCss, side)
   if (!found) throw new Error(`wallpaper.css states no ${side} palette`)
   return found
 }
-
 function stacks(one: Palette): Lift[][] {
   expect(wallpaperCss).toContain(
     '--item-hover-bg-color: color-mix(in srgb, var(--text) 8%, var(--wallpaper-scrim) 40%);',
@@ -32,20 +27,17 @@ function stacks(one: Palette): Lift[][] {
   const hover = { colour: over(one.text, 8 / 48, one.scrim), alpha: 0.48 }
   return [[], [hover], [one.layer], [one.layer, hover]]
 }
-
 function readsEverywhere(one: Palette, alpha: number, under: Rgb): boolean {
   return stacks(one).every((lifts) => {
     const ground = lifts.reduce((below, lift) => over(lift.colour, lift.alpha, below), over(one.scrim, alpha, under))
     return ratio(one.ink, ground) >= AA
   })
 }
-
 function tokenOf(css: string, side: Side, name: string): Rgb {
   const head = new RegExp(String.raw`\[data-theme='${side}'\]\s*\{`).exec(css)!
   const block = css.slice(head.index, css.indexOf('}', head.index))
   return rgbOf(new RegExp(String.raw`${name}:\s*([^;]+);`).exec(block)![1]!)!
 }
-
 describe('the palette', () => {
   test('is read out of the sheet, both sides', () => {
     for (const side of SIDES) {
@@ -56,7 +48,6 @@ describe('the palette', () => {
     }
   })
 })
-
 const PICTURES: Record<string, Span> = {
   white: { least: WHITE, most: WHITE },
   black: { least: BLACK, most: BLACK },
@@ -65,7 +56,6 @@ const PICTURES: Record<string, Span> = {
   'a yellow field': { least: [180, 160, 0], most: [255, 240, 90] },
   'a night sky': { least: [2, 4, 12], most: [40, 50, 90] },
 }
-
 describe('the open note’s row', () => {
   test('reads in its quietest ink on every accent, both sides', () => {
     expect(wallpaperCss).toMatch(
@@ -80,7 +70,6 @@ describe('the open note’s row', () => {
     }
   })
 })
-
 describe('the floor', () => {
   for (const side of SIDES) {
     for (const [name, span] of Object.entries(PICTURES)) {
@@ -95,14 +84,12 @@ describe('the floor', () => {
       })
     }
   }
-
   test('only ever rises under the Dim dial, which is a second scrim over it', () => {
     for (const floor of [0, 0.3, 0.6]) {
       for (const dim of [0, 0.2, 0.9]) expect(floor + (1 - floor) * dim).toBeGreaterThanOrEqual(floor)
     }
   })
 })
-
 describe('the accent field, before a picture is chosen', () => {
   function statedFloor(side: Side): number {
     const found = new RegExp(String.raw`--wallpaper-floor:\s*var\(--wallpaper-floor-${side},\s*(\d+)%\)`).exec(
@@ -110,9 +97,7 @@ describe('the accent field, before a picture is chosen', () => {
     )
     return Number(found?.[1]) / 100
   }
-
   const share = (token: string) => Number(new RegExp(String.raw`var\(${token}\) (\d+)%`).exec(wallpaperCss)?.[1]) / 100
-
   function fieldOf(side: Side, accent: Rgb): Span {
     const canvas = tokenOf(TOKENS, side, '--canvas-5')
     const grounds = [
@@ -121,13 +106,11 @@ describe('the accent field, before a picture is chosen', () => {
     ]
     const lit = grounds.map((ground) => over(accent, share('--accent'), ground))
     const colours = [...grounds, ...lit, ...[...grounds, ...lit].map((one) => over(canvas, share('--canvas-5'), one))]
-
     return {
       least: [0, 1, 2].map((at) => Math.min(...colours.map((one) => one[at]!))) as unknown as Rgb,
       most: [0, 1, 2].map((at) => Math.max(...colours.map((one) => one[at]!))) as unknown as Rgb,
     }
   }
-
   for (const side of SIDES) {
     test(`is covered by the ${side} floor the sheet states, whichever accent`, () => {
       const needed = Math.max(...accents(side).map((accent) => floorFor(palette(side), fieldOf(side, accent))))

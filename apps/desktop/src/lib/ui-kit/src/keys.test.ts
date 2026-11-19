@@ -18,7 +18,6 @@ function press(key: string, mods = '', code?: string) {
     shiftKey: mods.includes('shift'),
   }
 }
-
 describe('reading a written combination', () => {
   test('Mod is Ctrl off a Mac and Cmd on one, Space is the space bar', () => {
     const k = { alt: false, shift: false, key: 'k' }
@@ -32,7 +31,6 @@ describe('reading a written combination', () => {
       key: ' ',
     })
   })
-
   test('keeps a trailing minus, takes modifiers in any order, and refuses what is not one', () => {
     expect(parseCombination('Mod--', 'win')?.key).toBe('-')
     expect(parseCombination('Mod-Shift-[', 'win')?.key).toBe('[')
@@ -43,7 +41,6 @@ describe('reading a written combination', () => {
     expect(parseCombination('Hyper-k', 'win')).toBeNull()
   })
 })
-
 describe('reading a keystroke', () => {
   test.each([
     ['s', 'ctrl', 'KeyS', 'win', 'Mod-s'],
@@ -63,7 +60,6 @@ describe('reading a keystroke', () => {
     },
   )
 })
-
 describe('matching a keystroke against a binding', () => {
   test.each([
     ['Mod-Shift-3', '#', 'ctrl shift', 'Digit3', 'win', true],
@@ -103,13 +99,11 @@ describe('matching a keystroke against a binding', () => {
   ] as const)('%s answers %j with %j on %s: %s', (binding, key, mods, code, platform, answers) => {
     expect(matchesCombination(binding, press(key, mods, code), platform)).toBe(answers)
   })
-
   test('nothing is a chord while an input method is composing', () => {
     expect(matchesCombination('Alt-3', { ...press('3', 'alt', 'Digit3'), isComposing: true }, 'win')).toBe(false)
     expect(matchesCombination('Mod-Space', { ...press(' ', 'ctrl', 'Space'), isComposing: true }, 'win')).toBe(false)
   })
 })
-
 describe('showing a combination', () => {
   test.each([
     ['Mod-Shift-k', 'mac', '⇧⌘K'],
@@ -138,7 +132,6 @@ describe('showing a combination', () => {
   ] as const)('shows %s on %s as %s, signs on a Mac in its order and words elsewhere', (key, platform, shown) => {
     expect(showCombination(key, platform)).toBe(shown)
   })
-
   test.each([
     ['Escape', '⎋', 'Esc'],
     ['Delete', '⌦', 'Del'],
@@ -157,7 +150,6 @@ describe('showing a combination', () => {
     expect(showCombination(key, 'linux')).toBe(other)
   })
 })
-
 describe('telling a chord from a key a widget owns', () => {
   test.each([
     [' ', '', 'Space', false],
@@ -169,7 +161,6 @@ describe('telling a chord from a key a widget owns', () => {
   ] as const)('%j with %j is on its way to the window: %s', (key, mods, code, chord) => {
     expect(chorded(press(key, mods, code))).toBe(chord)
   })
-
   test('a keystroke with nothing said about the modifiers is a bare one', () => {
     expect(chorded({ key: ' ' })).toBe(false)
   })

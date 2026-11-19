@@ -24,7 +24,6 @@ function shown(doc: string): string {
   })
   return out + full.slice(at, full.length - 3)
 }
-
 function linked(doc: string): string[] {
   const full = `${doc}\n\nx`
   const state = parsed(
@@ -40,22 +39,18 @@ function linked(doc: string): string[] {
   })
   return out
 }
-
 describe('the words of a footnote definition', () => {
   const doc = 'Claim[^1].\n\n[^1]: See [the docs](https://x.test) and **this** part.'
-
   test('are drawn with their bold and links, as the reading view draws them', () => {
     const read = renderMarkdown(doc)
     expect(read).toContain('<strong>this</strong>')
     expect(read).toContain('href="https://x.test"')
     expect(shown(doc)).toBe('Claim1.\n\n1 See the docs and this part.')
   })
-
   test('hold a link that can be followed', () => {
     expect(linked(doc)).toContain('the docs')
   })
 })
-
 describe('the words of a definition', () => {
   test('are drawn with their bold, as the reading view draws them', () => {
     const doc = 'Term\n: has **bold** words'

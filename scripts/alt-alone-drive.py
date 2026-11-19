@@ -15,9 +15,7 @@ over its automation endpoint. Both must come back clean.
 
     python scripts/alt-alone-drive.py --exe <probe orden.exe> --identifier <probe id>
 """
-
 from __future__ import annotations
-
 import argparse
 import ctypes
 import importlib
@@ -32,19 +30,15 @@ import time
 from ctypes import wintypes
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-
 drive = importlib.import_module("web-tab-drive")
 from probe_app import main_window
 from fresh_app import ended, fresh
-
 ALT = 0x12
 F10 = 0x79
 ESCAPE = 0x1B
 SPACE = 0x20
 KEY_UP = 0x0002
 IN_MENU = 0x00000004
-
-
 class GuiThreadInfo(ctypes.Structure):
     _fields_ = [
         ("cbSize", wintypes.DWORD),
@@ -57,8 +51,6 @@ class GuiThreadInfo(ctypes.Structure):
         ("hwndCaret", wintypes.HWND),
         ("rcCaret", wintypes.RECT),
     ]
-
-
 def in_menu(user32: ctypes.WinDLL, hwnd: int) -> bool:
     thread = user32.GetWindowThreadProcessId(hwnd, None)
     info = GuiThreadInfo()
@@ -66,8 +58,6 @@ def in_menu(user32: ctypes.WinDLL, hwnd: int) -> bool:
     if not user32.GetGUIThreadInfo(thread, ctypes.byref(info)):
         return False
     return bool(info.flags & IN_MENU)
-
-
 def tap(user32: ctypes.WinDLL, app, hwnd: int, name: str, key: int, where: str, wrong: list[str]) -> None:
     user32.keybd_event(key, 0, 0, 0)
     user32.keybd_event(key, 0, KEY_UP, 0)
@@ -84,8 +74,6 @@ def tap(user32: ctypes.WinDLL, app, hwnd: int, name: str, key: int, where: str, 
     user32.keybd_event(ESCAPE, 0, 0, 0)
     user32.keybd_event(ESCAPE, 0, KEY_UP, 0)
     time.sleep(1.0)
-
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this drive is Windows only")
@@ -95,7 +83,6 @@ def main() -> int:
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
-
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     config = drive.config_of(args.identifier)
     fresh(config)
@@ -141,11 +128,8 @@ def main() -> int:
     finally:
         ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
-
 if __name__ == "__main__":
     raise SystemExit(main())

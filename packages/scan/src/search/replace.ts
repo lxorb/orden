@@ -6,7 +6,6 @@ export interface Edit {
   to: number
   insert: string
 }
-
 export interface Change {
   path: string
   before: string
@@ -14,18 +13,14 @@ export interface Change {
   edits: Edit[]
   back: Edit[]
 }
-
 export function expand(replacement: string, matched: string, groups: readonly string[] | undefined): string {
   if (!groups) return replacement
-
   return replacement.replace(/\$(\$|&|\d)/g, (whole, what: string) => {
     if (what === '$') return '$'
     if (what === '&') return matched
-
     return groups[Number(what) - 1] ?? whole
   })
 }
-
 export function replaceIn(
   body: string,
   spans: readonly Span[],
@@ -36,13 +31,10 @@ export function replaceIn(
   const wanted = spans
     .filter((span) => span.from < span.to && lines.has(lineAt(starts, span.from)))
     .sort((a, b) => a.from - b.from || b.to - a.to)
-
   const edits: Edit[] = []
   let reached = 0
-
   for (const span of wanted) {
     if (span.from < reached) continue
-
     edits.push({
       from: span.from,
       to: span.to,
@@ -50,10 +42,8 @@ export function replaceIn(
     })
     reached = span.to
   }
-
   return edits.length ? edits : null
 }
-
 export function applied(body: string, edits: readonly Edit[]): string {
   let text = ''
   let at = 0
@@ -61,10 +51,8 @@ export function applied(body: string, edits: readonly Edit[]): string {
     text += body.slice(at, edit.from) + edit.insert
     at = edit.to
   }
-
   return text + body.slice(at)
 }
-
 export const changeOf = (path: string, before: string, edits: Edit[]): Change => ({
   path,
   before,
@@ -72,13 +60,10 @@ export const changeOf = (path: string, before: string, edits: Edit[]): Change =>
   edits,
   back: reverse(before, edits),
 })
-
 export const endingsLike = (words: string, like: string): string =>
   like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
-
 export function flatEdits(words: string, edits: readonly Edit[]): { words: string; edits: Edit[] } {
   if (!words.includes('\r')) return { words, edits: edits.map((one) => ({ ...one })) }
-
   const dropped: number[] = new Array<number>(words.length + 1)
   let count = 0
   for (let at = 0; at <= words.length; at++) {
@@ -86,7 +71,6 @@ export function flatEdits(words: string, edits: readonly Edit[]): { words: strin
     if (words[at] === '\r' && words[at + 1] === '\n') count++
   }
   const flat = (at: number) => at - (dropped[Math.max(0, Math.min(at, words.length))] ?? 0)
-
   return {
     words: words.replace(/\r\n?/g, '\n'),
     edits: edits.map((one) => ({
@@ -96,12 +80,10 @@ export function flatEdits(words: string, edits: readonly Edit[]): { words: strin
     })),
   }
 }
-
 function crlfFirst(file: string): boolean {
   const first = file.indexOf('\n')
   return first > 0 && file[first - 1] === '\r'
 }
-
 export function appliedToFile(file: string, edits: readonly Edit[]): string {
   const crlf = crlfFirst(file)
   let raw = 0
@@ -110,7 +92,6 @@ export function appliedToFile(file: string, edits: readonly Edit[]): string {
     for (; flat < to; flat++) raw += file[raw] === '\r' && file[raw + 1] === '\n' ? 2 : 1
     return raw
   }
-
   let out = ''
   let last = 0
   for (const edit of edits) {
@@ -120,15 +101,12 @@ export function appliedToFile(file: string, edits: readonly Edit[]): string {
   }
   return out + file.slice(last)
 }
-
 export function reverse(body: string, edits: readonly Edit[]): Edit[] {
   let drift = 0
-
   return edits.map((edit) => {
     const from = edit.from + drift
     const to = from + edit.insert.length
     drift += edit.insert.length - (edit.to - edit.from)
-
     return { from, to, insert: body.slice(edit.from, edit.to) }
   })
 }

@@ -1,15 +1,11 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 MENU = ".orden-layer.menu[role=menu]"
 OPEN = f"!!document.querySelector('{MENU}') && window.ordenApp.overlays.depth > 0"
-
 LISTEN = """() => {
   window.__heard = []
   for (const type of ['pointerdown', 'mousedown', 'contextmenu', 'pointerup', 'mouseup', 'click', 'auxclick']) {
@@ -18,31 +14,25 @@ LISTEN = """() => {
         document.querySelector('.orden-layer.menu') ? ' (open)' : ''}`), true)
   }
 }"""
-
 def is_open(page: Page) -> bool:
     return bool(page.evaluate(f"() => {OPEN}"))
-
 def centre(page: Page, selector: str) -> tuple[float, float]:
     box = page.locator(selector).first.bounding_box()
     if box is None:
         raise SystemExit(f"nothing on screen for {selector}")
     return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
-
 def row_of(page: Page, label: str) -> tuple[float, float]:
     row = page.locator(f"{MENU} [role=menuitem]", has_text=label).first
     box = row.bounding_box()
     if box is None:
         raise SystemExit(f"the menu has no {label!r} row")
     return box["x"] + min(40, box["width"] / 2), box["y"] + box["height"] / 2
-
 def shut(page: Page) -> None:
     if is_open(page):
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
-
 def heard(page: Page) -> list[str]:
     return list(page.evaluate("() => window.__heard.splice(0)"))
-
 def clicked(page: Page, label: str, at: tuple[float, float]) -> None:
     page.mouse.move(*at)
     page.mouse.down(button="right")
@@ -61,7 +51,6 @@ def clicked(page: Page, label: str, at: tuple[float, float]) -> None:
     if is_open(page):
         wrong(f"[{label}] a click past the menu did not close it")
     shut(page)
-
 def held(page: Page, label: str, at: tuple[float, float], choose: str, chosen: str) -> None:
     page.mouse.move(*at)
     page.mouse.down(button="right")
@@ -84,7 +73,6 @@ def held(page: Page, label: str, at: tuple[float, float], choose: str, chosen: s
         wrong(f"[{label}] letting go on {choose!r} did not choose it")
     else:
         say(f"ok   [{label}] held, slid onto {choose!r} and let go of: chosen")
-
 def held_past(page: Page, label: str, at: tuple[float, float]) -> None:
     page.mouse.move(*at)
     page.mouse.down(button="right")
@@ -100,7 +88,6 @@ def held_past(page: Page, label: str, at: tuple[float, float]) -> None:
         shut(page)
     else:
         say(f"ok   [{label}] let go of past the menu: closed, nothing chosen")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -111,13 +98,11 @@ def drive(browser: Browser) -> None:
     wait_for(page, f"document.querySelector({json.dumps(plan)})", "Plan's row")
     DRIVE.settled(page)
     page.evaluate(LISTEN)
-
     clicked(page, "file list", centre(page, plan))
     held(page, "file list", centre(page, plan), "Rename", "() => !!window.ordenApp.workspace.naming")
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     held_past(page, "file list", centre(page, plan))
-
     DRIVE.open_note(page, "Plan")
     wait_for(page, "!!document.querySelector('.cm-content')", "the note")
     words = page.locator(".cm-line", has_text="The plan").first
@@ -134,7 +119,6 @@ def drive(browser: Browser) -> None:
     )
     held_past(page, "note", at)
     shot(page, "note")
-
     wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
     page.evaluate(
         "async (root) => { const ws = window.ordenApp.workspace;"
@@ -153,5 +137,4 @@ def drive(browser: Browser) -> None:
     held_past(page, "canvas", at)
     shot(page, "canvas")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "a right click's menu stays, and a held one chooses the row it is let go of on"))

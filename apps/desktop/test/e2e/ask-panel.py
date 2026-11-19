@@ -3,29 +3,22 @@ import json
 import re
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = DRIVE.origin
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 45) -> bool:
     return DRIVE.waited(page, expression, what, patience)
-
 def landed(page: Page, expression: str, patience: float = 5) -> bool:
     try:
         page.wait_for_function(expression, timeout=patience * 1000, polling=50)
     except Exception:  # noqa: BLE001 - not there in time, which the caller says
         return False
     return True
-
 MODEL = "fake-small"
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 HERONS = "# Herons\n\nA heron stands still in the shallows for a long time.\n\nThen it strikes.\n"
 HOVERING = (
     "# Hovering\n\n"
@@ -34,7 +27,6 @@ HOVERING = (
 )
 ARCHIVED = "# Old kestrels\n\nThe secret kestrel roost is behind the mill.\n"
 CARD = "---\nstatus: draft\ntags: [birds, notes]\ndone: false\n---\n# Card\n\nWords.\n"
-
 SEED = """
 async (notes) => {
   const ws = window.ordenApp.workspace
@@ -46,7 +38,6 @@ async (notes) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 OPEN = """
 async (name) => {
   const ws = window.ordenApp.workspace
@@ -54,7 +45,6 @@ async (name) => {
   await ws.openEntry(note.path, { activate: true })
 }
 """
-
 SETUP = """
 async (base) => {
   const ai = window.ordenApp.ai
@@ -65,14 +55,12 @@ async (base) => {
   return ai.ready
 }
 """ % MODEL
-
 SIDES = """
 () => {
   const ws = window.ordenApp.workspace
   return { right: [...ws.right], left: ws.panel, open: ws.rightPanel }
 }
 """
-
 WHERE = """
 () => {
   const at = document.activeElement
@@ -83,35 +71,27 @@ WHERE = """
   }
 }
 """
-
 TEXT = "() => window.orden?.state.doc.toString() ?? ''"
-
 LINE = """
 () => {
   const state = window.orden.state
   return state.doc.lineAt(state.selection.main.head).number - 1
 }
 """
-
 class Model(http.server.BaseHTTPRequestHandler):
-
     words: list[str] = ["Still."]
     pause: float = 0.0
     seen: list[dict] = []
-
     def log_message(self, format: str, *args: object) -> None:
         return
-
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self._cors()
         self.end_headers()
-
     def do_GET(self) -> None:  # noqa: N802
         raw = json.dumps({"data": [{"id": MODEL}]}).encode()
         self.send_response(200)
@@ -119,14 +99,12 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(raw)
-
     def do_POST(self) -> None:  # noqa: N802
         raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         try:
             Model.seen.append(json.loads(raw))
         except json.JSONDecodeError:
             Model.seen.append({})
-
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self._cors()
@@ -145,9 +123,7 @@ class Model(http.server.BaseHTTPRequestHandler):
             self.wfile.flush()
         except OSError:
             return
-
 MODEL_ORIGIN = DRIVE.side(Model)
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme="light")
     page = context.new_page()
@@ -163,7 +139,6 @@ def fresh(browser: Browser) -> Page:
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
     return page
-
 def the_sides(page: Page) -> None:
     sides = page.evaluate(SIDES)
     say(f"the sides as the window opens: {sides}")
@@ -171,7 +146,6 @@ def the_sides(page: Page) -> None:
         wrong(f"the right side does not start homed and shut: {sides}")
     if page.locator("button.toggle.right").count() != 1:
         wrong("the right side's button is not in the bar")
-
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Alt+b")
     page.wait_for_timeout(400)
@@ -182,7 +156,6 @@ def the_sides(page: Page) -> None:
     page.wait_for_timeout(400)
     if page.evaluate(SIDES)["open"] is not None:
         wrong("Ctrl+Alt+B did not shut the right side again")
-
     page.keyboard.press("Control+Shift+O")
     page.wait_for_timeout(500)
     where = page.evaluate(WHERE)
@@ -193,7 +166,6 @@ def the_sides(page: Page) -> None:
     page.wait_for_timeout(300)
     if page.evaluate(WHERE)["region"] != "editor":
         wrong(f"the Outline's key did not give the note the keyboard back: {page.evaluate(WHERE)}")
-
 def nothing_set_up(page: Page) -> None:
     page.evaluate("() => { for (const one of [...window.ordenApp.ai.providers]) window.ordenApp.ai.remove(one.id) }")
     page.keyboard.press("Control+Shift+A")
@@ -216,7 +188,6 @@ def nothing_set_up(page: Page) -> None:
         wrong(f"the link did not open Settings > AI: {opened}")
     page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_timeout(300)
-
 def asked(page: Page) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
@@ -228,7 +199,6 @@ def asked(page: Page) -> None:
     wait_for(page, "document.querySelector('.ask textarea')", "the field")
     if not landed(page, "document.activeElement?.matches('.ask textarea')"):
         wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {page.evaluate(WHERE)}")
-
     Model.seen.clear()
     Model.words = ["It ", "faces ", "the ", "wind ", "[2]", "."]
     page.locator(".ask textarea").click()
@@ -237,7 +207,6 @@ def asked(page: Page) -> None:
     wait_for(page, "document.querySelector('.ask .answer a[href=\"#cite-2\"]')", "a cited answer")
     page.wait_for_timeout(400)
     shot(page, "03-answered")
-
     sent = json.dumps(Model.seen[-1].get("messages", []) if Model.seen else [])
     if "stands still in the shallows" not in sent:
         wrong("the note in front did not go with the question")
@@ -251,7 +220,6 @@ def asked(page: Page) -> None:
     say(f"the sources row: {sources}")
     if sources != ["Hovering"]:
         wrong(f"the sources row does not name the note cited: {sources}")
-
     page.locator('.ask .answer a[href="#cite-2"]').click()
     page.wait_for_timeout(700)
     active = page.evaluate("() => window.ordenApp.workspace.active?.path ?? ''")
@@ -262,7 +230,6 @@ def asked(page: Page) -> None:
         wrong(f"the citation did not open its note: {active}")
     if line < 6:
         wrong(f"the citation did not land at its passage: line {line}")
-
     Model.words = [f"word{one} " for one in range(40)]
     Model.pause = 0.15
     page.locator(".ask textarea").click()
@@ -280,7 +247,6 @@ def asked(page: Page) -> None:
         wrong(f"Stop did not keep what had arrived and stop: {kept[:80]!r}")
     if page.locator(".ask .wrong").count():
         wrong("stopping was reported as a failure")
-
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(300)
     page.evaluate(
@@ -293,18 +259,15 @@ def asked(page: Page) -> None:
     say(f"the note after Insert ends {text[-40:]!r}")
     if "It faces the wind [[Hovering]]." not in text:
         wrong(f"Insert did not write the answer with its citation as a link: {text[-60:]!r}")
-
     page.locator("[data-tool='new-chat']").click()
     page.wait_for_timeout(300)
     if page.locator(".ask .answer").count():
         wrong("the pen did not start the conversation again")
     shot(page, "05-new-chat")
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 def on_a_phone(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 390, "height": 844},
@@ -321,7 +284,6 @@ def on_a_phone(browser: Browser) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     wait_for(page, "document.querySelector('aside[data-region=\"right\"] [role=\"tab\"]')", "[phone] the right drawer's tabs")
     tabs = page.evaluate(
@@ -331,14 +293,12 @@ def on_a_phone(browser: Browser) -> None:
     say(f"[phone] the right drawer holds {tabs}")
     if "Ask" in tabs:
         wrong(f"[phone] the right drawer offers the AI panel: {tabs}")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('ask')")
     page.wait_for_timeout(500)
     shot(page, "08-phone-right")
     if page.evaluate("() => !!document.querySelector('.ask textarea')"):
         wrong("[phone] asking for the AI panel drew it")
     context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         page = fresh(browser)
@@ -350,7 +310,5 @@ def main() -> int:
         asked(page)
         say("--- on a phone ---")
         on_a_phone(browser)
-
     return DRIVE.verdict("the right side opens where it should; Ask cites and opens")
-
 raise SystemExit(main())

@@ -8,16 +8,13 @@ import { untrusted } from '../chat/transcript'
 import { CITING, cites } from './citations'
 
 const INSTRUCTIONS = ['AGENTS.md', 'CLAUDE.md']
-
 const told = new Map<string, string>()
-
 async function instructionFile(path: string): Promise<string | null> {
   if (!protection.agentsMay(path)) return null
   const text = await workspace.noteText(path).catch(() => null)
   if (!text?.trim()) return null
   return (await fromOthers(path)) ? untrusted(path, text) : text
 }
-
 export async function instructionsOf(thread: Thread): Promise<string> {
   const space = workspace.spaces.find((one) => one.id === thread.space)
   const read = space ? await Promise.all(INSTRUCTIONS.map((name) => instructionFile(`${space.root}/${name}`))) : []
@@ -31,16 +28,13 @@ export async function instructionsOf(thread: Thread): Promise<string> {
   told.set(thread.id, words)
   return words
 }
-
 const setup: Setup = {
   provider: (id) => ai.provider(id),
   instructions: instructionsOf,
 }
-
 export function instructionsSent(thread: string): string {
   return told.get(thread) ?? ''
 }
-
 export async function engineOf(kind: ProviderKind): Promise<Engine> {
   return await engineFor(kind, setup)
 }

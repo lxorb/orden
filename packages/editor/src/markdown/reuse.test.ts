@@ -9,26 +9,22 @@ function edited(doc: string, tree: Tree, at: number, removed: number, inserted: 
   ])
   return { next, tree: ordenMarkdownParser.parse(next, fragments) }
 }
-
 function shape(tree: Tree): string {
   const out: string[] = []
   tree.iterate({ enter: (node) => void out.push(`${node.name} ${node.from}-${node.to}`) })
   return out.join('\n')
 }
-
 function itemAt(tree: Tree, pos: number): Tree | null {
   const cursor = tree.cursor()
   while (cursor.childAfter(pos)) if (cursor.name === 'ListItem' || cursor.name === 'Blockquote') return cursor.tree
   return null
 }
-
 const lists = {
   tasks: (i: number) => `- [${' x'[i % 2]}] task ${i} #t${i % 30}\n`,
   bullets: (i: number) => `- item ${i}\n`,
   ordered: (i: number) => `${i + 1}. item ${i}\n`,
   nested: (i: number) => `${'  '.repeat(i % 3)}- item ${i}\n`,
 }
-
 describe('parsing again after an edit', () => {
   for (const [kind, line] of Object.entries(lists)) {
     test(`keeps the items of a long ${kind} list when the paragraph after it changes`, () => {
@@ -38,14 +34,11 @@ describe('parsing again after an edit', () => {
       const inside = `# K\n\n${items.slice(0, 201).join('')}`.length
       const before = itemAt(tree, inside)
       expect(before).not.toBeNull()
-
       const after = edited(doc, tree, doc.indexOf('end\n') + 3, 0, 'q')
-
       expect(itemAt(after.tree, inside)).toBe(before)
       expect(shape(after.tree)).toBe(shape(ordenMarkdownParser.parse(after.next)))
     })
   }
-
   test('reads as a fresh parse after any edit', () => {
     let seed = 7
     const random = (below: number) => {

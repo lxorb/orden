@@ -3,9 +3,7 @@ import type { Classify } from './classify'
 import type { Blobs } from './files'
 
 export type Route = 'prepare' | 'ops' | 'feed' | 'pull' | 'push' | 'keep'
-
 export type FileKind = 'file' | 'folder'
-
 export interface Disk {
   read(path: string): Promise<string | null>
   write(path: string, text: string): Promise<void>
@@ -17,11 +15,9 @@ export interface Disk {
   evicted(path: string): Promise<boolean>
   holds?(folder: string): Promise<readonly string[] | null>
 }
-
 export interface Account {
   ask(route: Route, body: Framed, space: string): Promise<unknown>
 }
-
 export interface World {
   disk: Disk
   account: Account

@@ -14,7 +14,6 @@ import type { Field, Group, Pane } from './fields'
 
 function dictionaryGroups(view: EditorView | undefined): Group[] {
   if (!choosable) return []
-
   const first = dictionaryFor(systemLocale(), machineLanguages())
   return [
     {
@@ -42,7 +41,6 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
     },
   ]
 }
-
 export function spellingPane(view: EditorView | undefined): Pane {
   return {
     id: 'spelling',

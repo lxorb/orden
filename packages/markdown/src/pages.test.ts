@@ -30,7 +30,6 @@ import {
 function page(id: string, extra: Partial<PageNode> = {}): PageNode {
   return { ...newPage(), id, ...extra }
 }
-
 function carrying(pages: PageNode[]) {
   const placed = laidOut(pages)
   const at = (one: PageNode) => ({ x: one.x + 20, y: one.y + 20 })
@@ -41,7 +40,6 @@ function carrying(pages: PageNode[]) {
   const ink = placed.map((one) => ({ ...inked, id: `on:${one.id}`, points: [point(one)] }))
   return { ...emptyCanvas(), nodes: [...placed, ...cards], ink }
 }
-
 function strays(canvas: ReturnType<typeof emptyCanvas>): string[] {
   const off = (id: string, point: { x: number; y: number } | undefined) =>
     !point || pageAt(pagesOf(canvas), point)?.id !== id.slice(3)
@@ -49,7 +47,6 @@ function strays(canvas: ReturnType<typeof emptyCanvas>): string[] {
   const ink = canvas.ink.filter((stroke) => off(stroke.id, stroke.points[0]))
   return [...nodes, ...ink].map((one) => one.id)
 }
-
 describe('a page note as a file', () => {
   test('a blank one is one A4 page', () => {
     const canvas = readCanvas(blankPages())
@@ -59,7 +56,6 @@ describe('a page note as a file', () => {
     expect(pages[0]?.height).toBe(PAPERS.a4.height)
     expect(pages[0]?.pattern).toBe('blank')
   })
-
   test('starts on the paper it was asked for, which is what a new one is given', () => {
     for (const paper of ['a4', 'letter', 'long'] as const) {
       const pages = pagesOf(readCanvas(blankPages(paper)))
@@ -69,7 +65,6 @@ describe('a page note as a file', () => {
       expect(pages[0]?.height, paper).toBe(PAPERS[paper].height)
     }
   })
-
   test('writes each page as a spec node, so the file is JSON Canvas', () => {
     const written = JSON.parse(blankPages()) as {
       nodes: { id: string; type: string; label?: string }[]
@@ -81,7 +76,6 @@ describe('a page note as a file', () => {
     expect(written.orden.pages).toHaveLength(1)
     expect(written.orden.pages[0]?.id).toBe(written.nodes[0]?.id)
   })
-
   test('a page with a PDF behind it is a file node with the page in its subpath', () => {
     const canvas = pagesFromPdf('Paper.pdf', [
       { width: 600, height: 800 },
@@ -95,7 +89,6 @@ describe('a page note as a file', () => {
     expect(written.nodes[0]?.subpath).toBe('#page=1')
     expect(written.nodes[1]?.subpath).toBe('#page=2')
   })
-
   test('reads back everything it wrote, whole; written back byte for byte; a canvas with no pages is written exactly as it was, with no pages key', () => {
     const paper = pagesFromPdf('Paper.pdf', [{ width: 600, height: 800 }])
     const first = pagesOf(paper)[0]
@@ -107,7 +100,6 @@ describe('a page note as a file', () => {
     const plain = writeCanvas(emptyCanvas())
     expect(plain).not.toContain('pages')
   })
-
   test('a record naming a card is not a page: the card stays a card', () => {
     const file = JSON.stringify({
       nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 100, height: 40, text: 'hello' }],
@@ -118,7 +110,6 @@ describe('a page note as a file', () => {
     expect(pagesOf(canvas)).toHaveLength(0)
     expect(canvas.nodes[0]?.type).toBe('text')
   })
-
   test('a page whose record was lost degrades to the frame it looks like', () => {
     const file = JSON.stringify({
       nodes: [{ id: 'a', type: 'group', x: 0, y: 0, width: 794, height: 1123, label: 'Page 1' }],
@@ -128,7 +119,6 @@ describe('a page note as a file', () => {
     expect(pagesOf(canvas)).toHaveLength(0)
     expect(canvas.nodes[0]?.type).toBe('group')
   })
-
   test('a page keeps its place among the cards', () => {
     const canvas = emptyPages()
     const sheet = pagesOf(canvas)[0]
@@ -146,7 +136,6 @@ describe('a page note as a file', () => {
     expect(back.nodes.map((node) => node.id)).toEqual([sheet?.id, 'card'])
   })
 })
-
 describe('the column', () => {
   test('lays the pages out top to bottom with a gutter between them', () => {
     const laid = laidOut([page('a'), page('b'), page('c')])
@@ -154,7 +143,6 @@ describe('the column', () => {
     expect(laid[1]?.y).toBe(PAPERS.a4.height + GUTTER)
     expect(laid[2]?.y).toBe(2 * (PAPERS.a4.height + GUTTER))
   })
-
   test('centres every page on the same middle, whatever their sizes; hands back the very same pages when nothing moved; a canvas already settled is handed straight back', () => {
     const laid = laidOut([page('a'), page('b', { width: 500 })])
     expect(laid[0]?.x).toBe(-PAPERS.a4.width / 2)
@@ -165,13 +153,11 @@ describe('the column', () => {
     const canvas = emptyPages()
     expect(settled(canvas)).toBe(canvas)
   })
-
   test('is as tall as its pages and their gutters, with no gutter after the last', () => {
     expect(columnHeight([page('a'), page('b')])).toBe(2 * PAPERS.a4.height + GUTTER)
     expect(columnHeight([])).toBe(0)
   })
 })
-
 describe('adding and taking away', () => {
   test('a page goes on the end and the note is laid out round it', () => {
     const { canvas, id } = added(emptyPages())
@@ -180,14 +166,12 @@ describe('adding and taking away', () => {
     expect(pages[1]?.id).toBe(id)
     expect(pages[1]?.y).toBe(PAPERS.a4.height + GUTTER)
   })
-
   test('a page added after one goes after that one', () => {
     const three = added(added(emptyPages()).canvas).canvas
     const first = pagesOf(three)[0]
     const { canvas, id } = added(three, first?.id)
     expect(pagesOf(canvas).map((one) => one.id)[1]).toBe(id)
   })
-
   test('a page takes the size and the ruling of the one it follows', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
@@ -195,7 +179,6 @@ describe('adding and taking away', () => {
     const { canvas } = added(reshaped(start, sheet.id, { pattern: 'lines' }))
     expect(pagesOf(canvas)[1]?.pattern).toBe('lines')
   })
-
   test('taking a page away takes what was written on it', () => {
     const two = added(emptyPages()).canvas
     const pages = pagesOf(two)
@@ -230,13 +213,11 @@ describe('adding and taking away', () => {
     expect(left.nodes.some((node) => node.id === 'card')).toBe(false)
     expect(left.ink).toHaveLength(0)
   })
-
   test('the pages after one taken away take what is on them along', () => {
     const left = removed(carrying([page('a'), page('b'), page('c')]), 'a')
     expect(left.nodes.map((node) => node.id)).toEqual(['b', 'c', 'on:b', 'on:c'])
     expect(strays(left)).toEqual([])
   })
-
   test('a card that reaches over the edge onto the next page stays with the page it sits on', () => {
     const three = laidOut([page('a'), page('b'), page('c')])
     const [first, second] = three
@@ -262,7 +243,6 @@ describe('adding and taking away', () => {
     expect(gone.nodes.map((node) => node.id)).toEqual(['b', 'c', 'high'])
     expect(high?.y).toBe((pagesOf(gone)[0]?.y ?? 0) - 50)
   })
-
   test('a stroke begun in the gap between pages goes with the page it is written on', () => {
     const three = laidOut([page('a'), page('b'), page('c')])
     const second = three[1]
@@ -280,13 +260,11 @@ describe('adding and taking away', () => {
     const moved = removed(plane, 'a').ink[0]?.points[0]?.y
     expect(moved).toBe((pagesOf(removed(plane, 'a'))[0]?.y ?? 0) - 20)
   })
-
   test('the last page is never taken away', () => {
     const one = emptyPages()
     expect(removed(one, pagesOf(one)[0]?.id ?? '')).toBe(one)
   })
 })
-
 describe('reordering', () => {
   test('a page moved carries what is on it', () => {
     const two = added(emptyPages()).canvas
@@ -313,7 +291,6 @@ describe('reordering', () => {
     expect(pagesOf(swapped)[0]?.id).toBe(second.id)
     expect(card?.y).toBe(20)
   })
-
   test('every page that moves in a reorder carries what is on it; a page already where it is asked to go comes back unchanged; an id that names no page changes nothing', () => {
     const turned = moved(carrying([page('a'), page('b'), page('c')]), 'a', 2)
     expect(pagesOf(turned).map((one) => one.id)).toEqual(['b', 'c', 'a'])
@@ -324,7 +301,6 @@ describe('reordering', () => {
     expect(moved(one, 'nothing', 3)).toBe(one)
   })
 })
-
 describe('a long page', () => {
   test('grows in whole steps to hold what reaches past it', () => {
     const start = emptyPages()
@@ -336,7 +312,6 @@ describe('a long page', () => {
     expect(height).toBeGreaterThan(PAPERS.a4.height)
     expect((height - PAPERS.a4.height) % GROWTH).toBe(0)
   })
-
   test('the page under one that grew takes what is on it along; a page with nothing reaching past it is left where it is', () => {
     const long = carrying([page('a', { paper: 'long' }), page('b', { paper: 'long' })])
     const taller = grown(long, new Map([['a', PAPERS.long.height + 400]]))
@@ -347,14 +322,12 @@ describe('a long page', () => {
     const endless = reshaped(start, sheet.id, { paper: 'long' })
     expect(grown(endless, new Map([[sheet.id, 10]]))).toBe(endless)
   })
-
   test('A4 never grows: writing past the bottom of a sheet is writing off it', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
     if (!sheet) throw new Error('no page')
     expect(grown(start, new Map([[sheet.id, 9_000]]))).toBe(start)
   })
-
   test('made A4 again it goes back to A4', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
@@ -365,7 +338,6 @@ describe('a long page', () => {
     expect(pagesOf(back)[0]?.height).toBe(PAPERS.a4.height)
   })
 })
-
 describe('which page a thing is on', () => {
   test('a point on a page, and a point in a gutter', () => {
     const pages = laidOut([page('a'), page('b')])
@@ -375,7 +347,6 @@ describe('which page a thing is on', () => {
     expect(pageAt(pages, { x: 0, y: second.y + 10 })?.id).toBe('b')
     expect(pageAt(pages, { x: 0, y: PAPERS.a4.height + 5 })).toBeNull()
   })
-
   test('a stroke belongs to the page the pen went down on', () => {
     const pages = laidOut([page('a'), page('b')])
     const first = pages[0]
@@ -390,7 +361,6 @@ describe('which page a thing is on', () => {
     expect(onPage(over, box)).toBe(true)
     expect(onPage({ points: [] }, box)).toBe(false)
   })
-
   test('the page being looked at is the one under the middle of the view', () => {
     const pages = laidOut([page('a'), page('b'), page('c')])
     expect(pageShowing(pages, 0, 600)).toBe(1)
@@ -399,7 +369,6 @@ describe('which page a thing is on', () => {
     expect(pageShowing([], 0, 600)).toBe(0)
   })
 })
-
 describe('a page note with many pages and strokes', () => {
   interface Box {
     x: number
@@ -407,10 +376,8 @@ describe('a page note with many pages and strokes', () => {
     width: number
     height: number
   }
-
   const pen = { tool: 'pen' as const, color: '1', size: 2 }
   const dot = (x: number, y: number) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
-
   function annotated(count: number, seed = 7) {
     let state = seed
     const next = () => ((state = (state * 1103515245 + 12345) % 2147483648), state / 2147483648)
@@ -433,13 +400,11 @@ describe('a page note with many pages and strokes', () => {
     }))
     return { ...emptyCanvas(), nodes: [...pages, ...nodes], ink }
   }
-
   function overlapOf(one: Box, other: Box): number {
     const across = Math.min(one.x + one.width, other.x + other.width) - Math.max(one.x, other.x)
     const down = Math.min(one.y + one.height, other.y + other.height) - Math.max(one.y, other.y)
     return across > 0 && down > 0 ? across * down : 0
   }
-
   function ownerOf(thing: Box, pages: readonly PageNode[]): PageNode | null {
     const x = thing.x + thing.width / 2
     const y = thing.y + thing.height / 2
@@ -456,7 +421,6 @@ describe('a page note with many pages and strokes', () => {
     }
     return best
   }
-
   function inkOwnerOf(stroke: { points: { x: number; y: number }[] }, pages: readonly PageNode[]) {
     const held = pages.find((one) => onPage(stroke, one))
     if (held) return held
@@ -468,7 +432,6 @@ describe('a page note with many pages and strokes', () => {
     const height = ys.reduce((high, one) => Math.max(high, one)) - y
     return ownerOf({ x, y, width, height }, pages)
   }
-
   test('takes away with a page what was on it, the same as asking every page', () => {
     const canvas = annotated(40)
     const pages = pagesOf(canvas)
@@ -486,7 +449,6 @@ describe('a page note with many pages and strokes', () => {
       }
     }
   })
-
   test('moves with a page what was on it, the same as asking every page', () => {
     const canvas = annotated(30, 11)
     const pages = pagesOf(canvas)
@@ -503,7 +465,6 @@ describe('a page note with many pages and strokes', () => {
       expect((now?.points[0]?.y ?? 0) - (stroke.points[0]?.y ?? 0)).toBe(shift(inkOwnerOf(stroke, pages)))
     }
   })
-
   function longPages(count: number) {
     const canvas = annotated(count, 5)
     return {
@@ -513,13 +474,11 @@ describe('a page note with many pages and strokes', () => {
       ),
     }
   }
-
   const boxOf = (stroke: { points: { x: number; y: number }[] }) => {
     const ys = stroke.points.map((one) => one.y)
     const y = ys.reduce((low, one) => Math.min(low, one))
     return { x: 0, y, width: 0, height: ys.reduce((high, one) => Math.max(high, one)) - y }
   }
-
   test('finds how far down each long page is written, the same as asking every page', () => {
     const canvas = longPages(30)
     const lowest = lowestOf(canvas, boxOf)
@@ -541,7 +500,6 @@ describe('a page note with many pages and strokes', () => {
       expect(lowest.get(page.id)).toBe(reach)
     }
   })
-
   test('finds how far down long pages are written in time that grows with pages and strokes, not their product', () => {
     const made = new Map<number, ReturnType<typeof longPages>>()
     linearly((count) => {
@@ -550,7 +508,6 @@ describe('a page note with many pages and strokes', () => {
       return lowestOf(canvas, boxOf)
     }, 800)
   })
-
   test('adds, moves and takes away a page in time that grows with pages and strokes, not their product', () => {
     const made = new Map<number, ReturnType<typeof annotated>>()
     const of = (count: number) => {
@@ -568,7 +525,6 @@ describe('a page note with many pages and strokes', () => {
     }, 800)
   })
 })
-
 describe('a page out of a PDF', () => {
   test('is the size the paper says, page by page', () => {
     const canvas = pagesFromPdf('Paper.pdf', [
@@ -579,7 +535,6 @@ describe('a page out of a PDF', () => {
     expect(pages[0]).toMatchObject({ width: 600, height: 800, file: 'Paper.pdf', page: 1 })
     expect(pages[1]).toMatchObject({ width: 800, height: 600, file: 'Paper.pdf', page: 2 })
   })
-
   test('says which paper each page is, so a Letter paper is not called A4', () => {
     const canvas = pagesFromPdf('Paper.pdf', [
       { width: PAPERS.letter.width, height: PAPERS.letter.height },
@@ -590,7 +545,6 @@ describe('a page out of a PDF', () => {
     expect(pages.map((one) => one.paper)).toEqual(['letter', 'a4', 'a4'])
     expect(pages[2]).toMatchObject({ width: 400, height: 1200 })
   })
-
   test('a page named Letter keeps Letter when the file is read back; a paper with no pages still gives somewhere to write; one page is a page and nothing else', () => {
     const once = pagesFromPdf('Paper.pdf', [{ width: PAPERS.letter.width, height: PAPERS.letter.height }])
     expect(pagesOf(readCanvas(writeCanvas(once)))[0]?.paper).toBe('letter')
@@ -599,13 +553,11 @@ describe('a page out of a PDF', () => {
     expect(isPage(one)).toBe(true)
     expect(one.page).toBe(3)
   })
-
   test('counts its pages', () => {
     expect(pageCount(pagesFromPdf('Paper.pdf', [{ width: 1, height: 1 }]))).toBe(1)
     expect(pageCount(emptyCanvas())).toBe(0)
   })
 })
-
 test('the paper a page note holds: is the note with .pdf after it; names the note it belongs to, and nothing else does', () => {
   expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
   expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')

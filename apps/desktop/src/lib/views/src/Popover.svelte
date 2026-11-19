@@ -17,9 +17,7 @@
     children: Snippet
     start?: boolean
   } = $props()
-
   let layer = $state<HTMLElement>()
-
   $effect(() => closeOnBack(open, onclose))
   $effect(() =>
     open
@@ -67,7 +65,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .pop.start {
     inset-inline-end: auto;
     inset-inline-start: 0;

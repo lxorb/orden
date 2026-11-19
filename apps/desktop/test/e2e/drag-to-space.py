@@ -1,22 +1,17 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PHONE = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
-
 BUTTON = '[data-space-drop="switcher"]'
 LIST = "!!document.querySelector('[data-spaces-open]')"
 HOLD = 900
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -32,28 +27,21 @@ async () => {
   return { home: { id: home.id, root: home.root }, work: { id: work.id, root: work.root } }
 }
 """
-
 THERE = "async (path) => (await window.ordenApp.workspace.noteText(path).catch(() => null)) !== null"
-
 def join(root: str, name: str) -> str:
     return f"{root.rstrip('/')}/{name}"
-
 def there(page: Page, path: str) -> bool:
     return bool(page.evaluate(THERE, path))
-
 def centre(page: Page, selector: str) -> tuple[float, float]:
     box = page.locator(selector).first.bounding_box()
     if box is None:
         raise SystemExit(f"nothing on screen for {selector}")
     return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
-
 def row_of(path: str) -> str:
     return f".row[data-path={json.dumps(path)}]"
-
 def glide(page: Page, x: float, y: float) -> None:
     page.mouse.move(x, y, steps=8)
     page.wait_for_timeout(60)
-
 def carry_to_switcher(page: Page, start: str) -> tuple[float, float]:
     x, y = centre(page, start)
     page.mouse.move(x, y)
@@ -65,10 +53,8 @@ def carry_to_switcher(page: Page, start: str) -> tuple[float, float]:
         glide(page, bx + (step % 2), by)
         page.wait_for_timeout(HOLD // 6)
     return bx, by
-
 def shut(page: Page, what: str) -> bool:
     return DRIVE.waited(page, f"!{LIST}", what, 2)
-
 def lit(page: Page, space: str) -> bool:
     return bool(
         page.evaluate(
@@ -76,7 +62,6 @@ def lit(page: Page, space: str) -> bool:
             space,
         )
     )
-
 def drop_on(page: Page, space: str, label: str) -> None:
     if not page.evaluate(f"() => {LIST}"):
         wrong(f"[{label}] holding it over the switcher did not open the list of spaces")
@@ -89,7 +74,6 @@ def drop_on(page: Page, space: str, label: str) -> None:
     page.mouse.up()
     DRIVE.settled(page)
     page.wait_for_timeout(600)
-
 def moved(page: Page, label: str, ids: dict, name: str) -> None:
     home, work = join(ids["home"]["root"], name), join(ids["work"]["root"], name)
     if there(page, home):
@@ -99,7 +83,6 @@ def moved(page: Page, label: str, ids: dict, name: str) -> None:
     else:
         say(f"ok   [{label}] {name} moved to Work, and is not in Home")
     shut(page, f"[{label}] the list of spaces to close after the drop")
-
 def desktop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     page.add_init_script(HINTS_SEEN)
@@ -109,7 +92,6 @@ def desktop(browser: Browser) -> None:
     home = ids["home"]["root"]
     work = ids["work"]["id"]
     DRIVE.settled(page)
-
     wait_for(page, f"document.querySelector({json.dumps(row_of(join(home, 'Plan.md')))})", "[desktop] Plan's row")
     carry_to_switcher(page, row_of(join(home, "Plan.md")))
     drop_on(page, work, "note")
@@ -122,11 +104,9 @@ def desktop(browser: Browser) -> None:
         wrong("[note] Undo did not put Plan back in Home")
     page.evaluate("async () => { await window.ordenApp.workspace.loadTree() }")
     DRIVE.settled(page)
-
     carry_to_switcher(page, row_of(join(home, "Trip")))
     drop_on(page, work, "folder")
     moved(page, "folder", ids, "Trip/Map.md")
-
     page.evaluate("async () => { await window.ordenApp.workspace.loadTree() }")
     DRIVE.settled(page)
     plan = row_of(join(home, "Plan.md"))
@@ -152,7 +132,6 @@ def desktop(browser: Browser) -> None:
         wrong("[escape] Plan moved, with no space let go of on")
     else:
         say("ok   [escape] Escape closes the list, and nothing moves")
-
     page.evaluate(
         "async (path) => { await window.ordenApp.workspace.open(path) }",
         join(home, "Draft.md"),
@@ -168,7 +147,6 @@ def desktop(browser: Browser) -> None:
         wrong(f"[tab] the tab did not go with its file: {path}")
     else:
         say("ok   [tab] the tab went with its file")
-
     page.locator(row_of(join(home, "Plan.md"))).first.click(button="right")
     page.wait_for_timeout(300)
     said = page.evaluate("() => [...document.querySelectorAll('.menu [role=menuitem]')].map((one) => one.textContent.trim())")
@@ -193,7 +171,6 @@ def desktop(browser: Browser) -> None:
     else:
         say("ok   [menu] the tab's right-click menu offers no Move to space")
     page.close()
-
 def phone(browser: Browser) -> None:
     page = DRIVE.page(
         browser,
@@ -218,21 +195,17 @@ def phone(browser: Browser) -> None:
         say("ok   [phone] a row's held press still offers Move")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     page.evaluate("() => window.ordenApp.workspace.setSort('manual')")
     page.wait_for_timeout(300)
     DRIVE.settled(page)
     cdp = page.context.new_cdp_session(page)
-
     def touch(kind: str, x: float, y: float) -> None:
         points = [] if kind == "touchEnd" else [{"x": x, "y": y}]
         cdp.send("Input.dispatchTouchEvent", {"type": kind, "touchPoints": points})
-
     def slide(x0: float, y0: float, x1: float, y1: float, steps: int = 10) -> None:
         for step in range(1, steps + 1):
             touch("touchMove", x0 + (x1 - x0) * step / steps, y0 + (y1 - y0) * step / steps)
             page.wait_for_timeout(25)
-
     x, y = centre(page, plan)
     touch("touchStart", x, y)
     page.wait_for_timeout(320)
@@ -256,9 +229,7 @@ def phone(browser: Browser) -> None:
     page.wait_for_timeout(700)
     moved(page, "phone", ids, "Plan.md")
     page.close()
-
 def drive(browser: Browser) -> None:
     desktop(browser)
     phone(browser)
-
 raise SystemExit(DRIVE.run(drive, "a note, a folder and a tab dragged onto the switcher move to that space"))

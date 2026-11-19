@@ -34,13 +34,10 @@ export type TemplateId =
   | 'reward'
   | 'ssn'
   | 'scratch'
-
 type Spec = readonly (readonly [() => string, FieldKind])[]
-
 const text = 'text' as const
 const hidden = 'hidden' as const
 const date = 'date' as const
-
 const FIELDS: Record<Exclude<TemplateId, 'ssh' | 'wifi' | 'scratch'>, Spec> = {
   api: [
     [() => 'API key', hidden],
@@ -128,13 +125,11 @@ const FIELDS: Record<Exclude<TemplateId, 'ssh' | 'wifi' | 'scratch'>, Spec> = {
     [() => 'Social security number', hidden],
   ],
 }
-
 export interface Template {
   id: TemplateId
   label: () => string
   icon: IconNode
 }
-
 export const TEMPLATES: readonly Template[] = [
   { id: 'ssh', label: () => 'SSH key', icon: KeySquare },
   { id: 'wifi', label: () => 'WiFi network', icon: Wifi },
@@ -152,15 +147,12 @@ export const TEMPLATES: readonly Template[] = [
   { id: 'ssn', label: () => 'Social security number', icon: Contact },
   { id: 'scratch', label: () => 'Start from scratch', icon: Shapes },
 ]
-
 function fieldsOf(spec: Spec): Field[] {
   return spec.map(([name, kind]) => ({ id: newId(), name: name(), kind, value: '' }))
 }
-
 export function newSection(name: string, fields: Field[] = []): Section {
   return { id: newId(), name, fields }
 }
-
 export function contentFromTemplate(id: TemplateId): Content {
   switch (id) {
     case 'ssh':

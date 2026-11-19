@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-
 import json
 import sys
 import time
-
 from drive_scheme import other, switch
 from linux_app import run
 from linux_desk import DESK, OUT, failures, box, at, press, fail, colour_at, page_is
@@ -19,7 +17,6 @@ HOLE = (
     "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
-
 for _ in range(30):
     if run(VISIBLE):
         break
@@ -30,7 +27,6 @@ for _ in range(30):
 else:
     raise SystemExit(f"::error::{DESK}: no web tab's page in sight")
 time.sleep(2)
-
 seen = []
 for turn in range(5):
     app = run("document.documentElement.dataset.theme")
@@ -53,6 +49,5 @@ for turn in range(5):
     if said != "switched":
         fail(f"turn {turn}: the app's scheme did not switch: {said}", f"{turn}-toggle")
         break
-
 (OUT / "scheme.json").write_text(json.dumps({"seen": seen, "failures": failures}, indent=2))
 sys.exit(1 if failures else 0)

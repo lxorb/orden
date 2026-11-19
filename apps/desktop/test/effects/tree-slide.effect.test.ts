@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -12,26 +11,19 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk } = await import('../disk')
 disk.current = new Disk()
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const Tree = (await import('../../src/lib/sidebar/src/Tree.svelte')).default
-
 const A = '/space/A'
 const B = '/space/B'
-
 let list: ReturnType<typeof mount> | null = null
-
 const order = () => [...document.querySelectorAll<HTMLElement>('.row[data-path]')].map((row) => row.dataset.path)
-
 afterEach(() => {
   if (list) void unmount(list)
   list = null
   vi.unstubAllGlobals()
 })
-
 test('a folder opened while another still slides shut shows the rows as they are now', async () => {
   vi.stubGlobal('requestAnimationFrame', () => 1)
   vi.stubGlobal('cancelAnimationFrame', () => undefined)
@@ -53,11 +45,9 @@ test('a folder opened while another still slides shut shows the rows as they are
   })
   flushSync()
   expect(order()).toEqual([A, `${A}/a1.md`, `${A}/a2.md`, B])
-
   workspace.toggleFolder(A)
   flushSync()
   workspace.toggleFolder(B)
   flushSync()
-
   expect(order()).toEqual([A, B])
 })

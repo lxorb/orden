@@ -7,16 +7,13 @@ export async function membershipOf(env: Env, vault: string, email: string): Prom
     .bind(vault, email)
     .first<VaultDb>()
 }
-
 export async function activeIn(env: Env, vault: string, email: string): Promise<VaultDb | null> {
   const held = await membershipOf(env, vault, email)
   return held?.state === 'active' && held.deleted_at === null ? held : null
 }
-
 export function mayAct(held: VaultDb, wanted: Role): boolean {
   return atLeast(held.role, wanted)
 }
-
 export function holdsSql(vault: string, email: string, wanted: Role): string {
   const roles = ROLES.filter((role) => atLeast(role, wanted))
     .map((role) => `'${role}'`)

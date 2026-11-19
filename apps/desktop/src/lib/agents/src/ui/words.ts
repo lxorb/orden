@@ -5,7 +5,6 @@ const TYPING = 'Typing'
 const WRITING = 'Writing'
 const WAITING = 'Waiting'
 const RUNNING = 'Running'
-
 const WORDS: Readonly<Record<string, string>> = {
   browser_tabs: READING,
   browser_open: OPENING,
@@ -88,7 +87,6 @@ const WORDS: Readonly<Record<string, string>> = {
   post_message: WRITING,
   react: WRITING,
 }
-
 export function wordFor(verb: string): string | null {
   const word = WORDS[verb]
   return word ?? null

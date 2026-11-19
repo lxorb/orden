@@ -6,7 +6,6 @@ describe('what somebody typed', () => {
     expect(webAddress('')).toBeNull()
     expect(webAddress('   ')).toBeNull()
   })
-
   test('no host ends in a number or has an empty label: those are words', () => {
     const search = (words: string) => `https://www.google.com/search?q=${words}`
     expect(webAddress('3.14')).toBe(search('3.14'))
@@ -14,36 +13,29 @@ describe('what somebody typed', () => {
     expect(webAddress('1.2.3.4')).toBe('https://1.2.3.4')
     expect(webAddress('127.1:3000')).toBe('http://127.1:3000')
   })
-
   test('a scheme no tab opens means nothing rather than a search', () => {
     expect(webAddress('javascript:alert(1)')).toBeNull()
     expect(webAddress('file:///etc/passwd')).toBeNull()
   })
-
   test('a word with digits after it is a host only when it is not a scheme', () => {
     expect(webAddress('tel:123')).toBeNull()
     expect(webAddress('nas')).toBe('https://www.google.com/search?q=nas')
   })
-
   test('on the engine the reader chose', () => {
     expect(webAddress('a & b', 'https://duckduckgo.com/?q=%s')).toBe('https://duckduckgo.com/?q=a%20%26%20b')
     expect(webAddress('svelte.dev', 'https://duckduckgo.com/?q=%s')).toBe('https://svelte.dev')
     expect(webAddress('javascript:alert(1)', 'https://duckduckgo.com/?q=%s')).toBeNull()
   })
 })
-
 describe('a name with a dot whose last part is no top-level domain', () => {
   const search = (words: string) => `https://www.google.com/search?q=${encodeURIComponent(words)}`
-
   test('is a file name, searched for, not a site', () => {
     for (const name of ['node.js', 'vue.config.ts', 'index.html', 'file.txt', 'report.docx', 'a.json'])
       expect(webAddress(name)).toBe(search(name))
   })
-
   test('is no website the palette offers to open', () => {
     for (const name of ['node.js', 'vite.config.ts', 'notes.txt']) expect(typedAddress(name)).toBeNull()
   })
-
   test('a real top-level domain, in any case or script, still opens', () => {
     for (const name of ['readme.md', 'svelte.dev', 'x.co', 'Example.COM', 'deno.land', 'foo.zip'])
       expect(webAddress(name)).toBe(`https://${name}`)
@@ -51,7 +43,6 @@ describe('a name with a dot whose last part is no top-level domain', () => {
     expect(webAddress('xn--fsqu00a.xn--fiqs8s')).toBe('https://xn--fsqu00a.xn--fiqs8s')
   })
 })
-
 describe('a word with a colon after it', () => {
   test.each([
     ['site:github.com orden'],
@@ -69,7 +60,6 @@ describe('a word with a colon after it', () => {
     expect(typedAddress(typed)).toBeNull()
     expect(mayBeSecret(typed)).toBe(false)
   })
-
   test.each([
     ['admin:secret@router.lan'],
     ['admin:pa/ss@router.lan'],
@@ -91,14 +81,12 @@ describe('a word with a colon after it', () => {
     expect(webAddress(typed)).toBeNull()
     expect(typedAddress(typed)).toBeNull()
   })
-
   test.each([['admin:secret@'], ['root:hunter2'], ['password: hunter2'], ['admin:pass word@router.lan']])(
     '%s is told it went nowhere',
     (typed) => {
       expect(mayBeSecret(typed)).toBe(true)
     },
   )
-
   test.each([
     ['javascript:alert(1)'],
     ['data:text/html,hi'],
@@ -113,7 +101,6 @@ describe('a word with a colon after it', () => {
     expect(webAddress(typed)).toBeNull()
   })
 })
-
 describe('a local path', () => {
   test.each([
     ['file:notes.txt'],
@@ -141,13 +128,11 @@ describe('a local path', () => {
     expect(typedAddress(typed)).toBeNull()
     expect(isLocalFile(typed)).toBe(true)
   })
-
   test('two slashes are a host and not a path', () => {
     expect(isLocalFile('//svelte.dev')).toBe(false)
     expect(webAddress('//svelte.dev')).toBe('https://svelte.dev')
   })
 })
-
 describe('a Windows path', () => {
   test.each([
     ['C:\\Users\\emil\\Documents\\thesis.pdf'],
@@ -164,7 +149,6 @@ describe('a Windows path', () => {
     expect(typedAddress(path)).toBe(null)
   })
 })
-
 describe('a name that is not ASCII', () => {
   test('is sent to the address the engine will say', () => {
     expect(webAddress('münchen.de')).toBe('https://xn--mnchen-3ya.de/')
@@ -172,14 +156,12 @@ describe('a name that is not ASCII', () => {
     expect(typedAddress('münchen.de')).toBe('https://xn--mnchen-3ya.de/')
   })
 })
-
 describe('a time of day', () => {
   test.each(['10:30', '9:05', '0:00', '23:59'])('%s is words, not a host and a port', (typed) => {
     expect(typedAddress(typed)).toBeNull()
     expect(mayBeSecret(typed)).toBe(false)
     expect(webAddress(typed)).toBe(`https://www.google.com/search?q=${encodeURIComponent(typed)}`)
   })
-
   test.each(['8080:80', '0:8080', '123:456', '2130706433:80', '10:30/path', '99:99', '24:00', '9:5'])(
     '%s is a number with a port, and opens',
     (typed) => {
@@ -187,7 +169,6 @@ describe('a time of day', () => {
     },
   )
 })
-
 describe('a path from where one stands, on Windows', () => {
   test.each([
     ['\\Users\\me\\secret.docx'],
@@ -204,7 +185,6 @@ describe('a path from where one stands, on Windows', () => {
     expect(webAddress(typed)).toBeNull()
   })
 })
-
 describe('a word that names a secret, in the languages a page is read in', () => {
   test.each([
     ['Passwort: geheim'],
@@ -222,20 +202,17 @@ describe('a word that names a secret, in the languages a page is read in', () =>
     expect(mayBeSecret(typed)).toBe(true)
     expect(webAddress(typed)).toBeNull()
   })
-
   test('and words about one are a search', () => {
     expect(webAddress('passwort vergessen')).toContain('google')
     expect(webAddress('wie lang: passwort')).toContain('google')
   })
 })
-
 describe('what Enter does when the bar opens no page', () => {
   test('Orden’s own page opens, as its address is shown', () => {
     expect(webAddress('orden://history')).toBeNull()
     expect(unopened('orden://history')).toBe('own page')
     expect(unopened('  NIB://history ')).toBe('own page')
   })
-
   test('every other address that opens nothing says so', () => {
     for (const said of [
       'about:blank',
@@ -250,7 +227,6 @@ describe('what Enter does when the bar opens no page', () => {
     }
   })
 })
-
 test.each<[unknown, ...Parameters<typeof dotCom>]>([
   ['https://www.svelte.com', 'svelte'],
   ['https://www.example.com', '  example  '],
@@ -263,7 +239,6 @@ test.each<[unknown, ...Parameters<typeof dotCom>]>([
 ])('%j from %j', (expected, ...args) => {
   expect(dotCom(...args)).toBe(expected)
 })
-
 test.each<[unknown, ...Parameters<typeof isLocalFile>]>([
   [true, 'C:\\thesis.pdf'],
   [true, '\\\\nas\\share'],
@@ -273,7 +248,6 @@ test.each<[unknown, ...Parameters<typeof isLocalFile>]>([
 ])('%j from %j', (expected, ...args) => {
   expect(isLocalFile(...args)).toBe(expected)
 })
-
 test.each<[unknown, ...Parameters<typeof unopened>]>([
   ['file', '/etc/hosts'],
   ['file', 'C:\\a.txt'],
@@ -281,7 +255,6 @@ test.each<[unknown, ...Parameters<typeof unopened>]>([
 ])('%j from %j', (expected, ...args) => {
   expect(unopened(...args)).toBe(expected)
 })
-
 test.each<[unknown, ...Parameters<typeof webAddress>]>([
   ['http://example.com', 'http:example.com'],
   ['https://example.com/a', 'https:example.com/a'],

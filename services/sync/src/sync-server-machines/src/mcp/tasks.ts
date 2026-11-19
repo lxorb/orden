@@ -21,11 +21,8 @@ import { zoneOf } from './zone'
 
 const MOST_READ = 2000
 const AT_ONCE = 32
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-
 const string = { type: 'string' }
-
 export const TASK_TOOLS = [
   {
     name: 'list_tasks',
@@ -106,16 +103,12 @@ export const TASK_TOOLS = [
     },
   },
 ]
-
 type Args = Record<string, unknown>
-
 class Said extends Error {}
-
 const words = (args: Args, name: string): string | undefined => {
   const value = args[name]
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
-
 interface Held {
   id: string
   path: string
@@ -123,7 +116,6 @@ interface Held {
   size: number
   updated_at: number
 }
-
 async function notesOf(env: Env, space: Space): Promise<Held[]> {
   const { results } = await env.DB.prepare(
     `select id, path, meta, size, updated_at from notes where space_id = ? and deleted = 0 and kind != 'file'
@@ -133,7 +125,6 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
     .all<Held>()
   return results
 }
-
 async function rowsOf(env: Env, spaces: readonly Space[], shut: Shut): Promise<{ rows: Row[]; partial: boolean }> {
   const rows: Row[] = []
   let left = MOST_READ
@@ -158,13 +149,10 @@ async function rowsOf(env: Env, spaces: readonly Space[], shut: Shut): Promise<{
   }
   return { rows, partial }
 }
-
 type Writable = Pick<Space, 'id' | 'name' | 'user_id'> & { shut?: Shut; zone?: string; me: string }
-
 function mayReach(space: Writable, path: string): void {
   if (space.shut?.(space.id, path)) throw new Said(PROTECTED(path))
 }
-
 async function wordsAt(env: Env, space: Writable, path: string): Promise<string | null> {
   mayReach(space, path)
   const note = await env.DB.prepare(
@@ -174,7 +162,6 @@ async function wordsAt(env: Env, space: Writable, path: string): Promise<string 
     .first<{ id: string }>()
   return note ? noteBody(env, space.id, note.id) : null
 }
-
 async function templateAt(env: Env, space: Writable, link: string): Promise<string | null> {
   const path = notePath(link)
   const named = await wordsAt(env, space, path)
@@ -191,7 +178,6 @@ async function templateAt(env: Env, space: Writable, link: string): Promise<stri
   )
   return found ? wordsAt(env, space, found.path) : null
 }
-
 function notePath(asked: string): string {
   const named = asked.trim()
   if (isCanvasTarget(named) || isPagesTarget(named)) throw new Said(`${asked} is not a note.`)
@@ -199,13 +185,11 @@ function notePath(asked: string): string {
   if (!path) throw new Said(`${asked} is not a note path.`)
   return path
 }
-
 class Moved extends Error {
   constructor(readonly path: string) {
     super(`${path} moved`)
   }
 }
-
 async function written(env: Env, space: Writable, path: string, words: string, read: Note | null): Promise<string> {
   mayReach(space, path)
   const put = await putNote(env, space, path, words, undefined, read)
@@ -213,11 +197,9 @@ async function written(env: Env, space: Writable, path: string, words: string, r
   if (typeof put === 'string') throw new Said(put)
   return put.path
 }
-
 function contextNow(zone: string | undefined): Context {
   return clockOf(new Date(), zone ?? 'UTC')
 }
-
 async function baseText(env: Env, space: Space, path: string): Promise<string | null> {
   const file = await env.DB.prepare(
     "select hash from notes where space_id = ? and path = ? and deleted = 0 and kind = 'file'",
@@ -228,7 +210,6 @@ async function baseText(env: Env, space: Space, path: string): Promise<string | 
   const object = await env.NOTES.get(blobKey(file.hash))
   return object ? object.text() : null
 }
-
 async function readBaseAt(env: Env, space: Space & Writable, asked: string) {
   const path = asked.replace(/\\/g, '/').replace(/^\/+/, '').trim()
   if (!/\.base$/i.test(path) || path.split('/').some((part) => !part || part === '..')) {
@@ -243,7 +224,6 @@ async function readBaseAt(env: Env, space: Space & Writable, asked: string) {
     throw new Said(`${path} does not read: ${String(error)}`)
   }
 }
-
 async function spaceOf(
   env: Env,
   token: TokenRow,
@@ -257,7 +237,6 @@ async function spaceOf(
   seen.push(space)
   return space
 }
-
 async function writableSpace(
   env: Env,
   token: TokenRow,
@@ -269,9 +248,7 @@ async function writableSpace(
   if (space.role === 'read') throw new Said(`${space.name} was shared with you to read, not to write.`)
   return space
 }
-
 type Fields = Record<string, unknown>
-
 interface Todo {
   id: string
   title: string
@@ -285,12 +262,9 @@ interface Todo {
   subtasks: unknown[]
   order: number
 }
-
 const DAY = /^\d{4}-\d{2}-\d{2}$/
-
 const texts = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
-
 function todoOf(id: string, fields: Fields): Todo | null {
   if (fields.kind !== 'todo' || fields.gone === true || typeof fields.title !== 'string') return null
   const priority = fields.priority
@@ -308,7 +282,6 @@ function todoOf(id: string, fields: Fields): Todo | null {
     order: typeof fields.order === 'number' ? fields.order : 0,
   }
 }
-
 async function heldTodos(env: Env, userId: string): Promise<Map<string, Fields>> {
   const { results } = await env.DB.prepare('select id, fields from inbox_items where user_id = ? order by seq')
     .bind(userId)
@@ -320,12 +293,10 @@ async function heldTodos(env: Env, userId: string): Promise<Map<string, Fields>>
   }
   return out
 }
-
 async function spaceIdOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<string | null> {
   if (args.space === undefined || args.space === null || args.space === '') return null
   return (await spaceOf(env, token, args, seen)).id
 }
-
 function dayArg(args: Args, name: string): string | null | undefined {
   const value = args[name]
   if (value === undefined) return undefined
@@ -333,7 +304,6 @@ function dayArg(args: Args, name: string): string | null | undefined {
   if (typeof value !== 'string' || !DAY.test(value)) throw new Said(`${name} is a day as YYYY-MM-DD.`)
   return value
 }
-
 async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Fields> {
   const patch: Fields = {}
   const title = words(args, 'title') ?? words(args, 'text')
@@ -361,9 +331,7 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   if (typeof args.done === 'boolean') patch.done = args.done
   return patch
 }
-
 const STAMP = /^([0-9a-z]{9})-([0-9a-z]{4})-/
-
 function stampPast(now: string, held: string | undefined): string {
   if (!newer(held, now)) return now
   const [, time = '0', step = '0'] = STAMP.exec(held ?? '') ?? []
@@ -371,7 +339,6 @@ function stampPast(now: string, held: string | undefined): string {
   const next = parseInt(step, 36) + 1
   return next < 36 ** 4 ? inboxStamp(at, next, 'mcp') : inboxStamp(at + 1, 0, 'mcp')
 }
-
 async function keep(env: Env, userId: string, id: string, fields: Fields): Promise<void> {
   const held = await heldInbox(env, userId, id)
   const now = inboxStamp(Date.now(), 0, 'mcp')
@@ -383,7 +350,6 @@ async function keep(env: Env, userId: string, id: string, fields: Fields): Promi
   const kept = await writeInbox(env, userId, [change], 'mcp')
   if (kept === 'full') throw new Said('That is more todos than an account keeps.')
 }
-
 async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   const space = await spaceIdOf(env, token, args, seen)
   if (args.limit !== undefined && !(Number.isInteger(args.limit) && Number(args.limit) > 0)) {
@@ -407,11 +373,9 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
     })
   return { total: todos.length, todos: todos.slice(0, limit) }
 }
-
 function mayWrite(token: TokenRow): void {
   if (token.read_only) throw new Said('This token may only read. Allow writing in Orden’s settings first.')
 }
-
 async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   mayWrite(token)
   const patch = await patchOf(env, token, args, seen)
@@ -441,7 +405,6 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
   await keep(env, token.user_id, id, fields)
   return todoOf(id, fields)
 }
-
 async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   mayWrite(token)
   const id = words(args, 'id')
@@ -457,7 +420,6 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   await keep(env, token.user_id, id, patch)
   return todoOf(id, { ...was, ...patch })
 }
-
 async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   const space = await spaceOf(env, token, args, seen)
   const yaml = typeof args.yaml === 'string' ? args.yaml : undefined
@@ -481,7 +443,6 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
   })
   return partial ? { ...answer, partial } : answer
 }
-
 async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   const space = await writableSpace(env, token, args, seen)
   const { path: basePath, base } = await readBaseAt(env, space, words(args, 'base') ?? '')
@@ -491,7 +452,6 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   }
   const where = rowPlace(base, words(args, 'view'))
   const folder = where.folder ?? basePath.slice(0, Math.max(0, basePath.lastIndexOf('/')))
-
   const template = where.template ? ((await templateAt(env, space, where.template)) ?? '') : ''
   const clock = contextNow(space.zone)
   const name = noteName(words(args, 'title') ?? 'Untitled')
@@ -520,7 +480,6 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   }
   throw new Said(`${name} is taken a hundred times over.`)
 }
-
 const RUNS: Record<string, (env: Env, token: TokenRow, args: Args, seen: Space[]) => Promise<unknown>> = {
   list_tasks: list,
   add_task: add,
@@ -528,16 +487,13 @@ const RUNS: Record<string, (env: Env, token: TokenRow, args: Args, seen: Space[]
   query_base: query,
   add_row: addRow,
 }
-
 function refusalOf(error: unknown): string | null {
   return error instanceof Said || error instanceof AgentError ? error.message : null
 }
-
 function sourceOf(seen: readonly Space[]): string | null {
   const sources = [...new Set(seen.map(spaceSource).filter((one) => one !== null))]
   return sources.length ? sources.join(', ') : null
 }
-
 export async function callTaskTool(env: Env, token: TokenRow, name: string, args: Args): Promise<string> {
   const run = RUNS[name]
   if (!run) return `No tool called ${name}.`

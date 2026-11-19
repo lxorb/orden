@@ -33,9 +33,7 @@ The exe is a probe build, under an identifier of its own:
 This wipes that identifier's settings folder and webview profile at the start of every
 run, and refuses to wipe one whose name does not say `probe`.
 """
-
 from __future__ import annotations
-
 import argparse
 import ctypes
 import http.server
@@ -51,17 +49,13 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
-
 from probe_app import run_probe, refuse_updating
 
 PORT = 23760
-
 SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "New tabs probe"
-
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
-
 PAGE = b"""<!doctype html>
 <title>A page in a tab</title>
 <body style="background: #2b2b6b; color: white; font: 16px system-ui">
@@ -69,16 +63,12 @@ PAGE = b"""<!doctype html>
 <p>Served by scripts/new-tabs-probe.py.</p>
 </body>
 """
-
 failures: list[str] = []
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 def wrong(words: str) -> None:
     failures.append(words)
     print(f"  FAIL {words}", flush=True)
-
 class Quiet(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - the library's own name
         self.send_response(200)
@@ -86,25 +76,19 @@ class Quiet(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
     def log_message(self, *args: object) -> None:
         return
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier; refusing to wipe it")
-
     for path in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(path, ignore_errors=True)
-
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
@@ -116,15 +100,12 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
         except (OSError, ValueError):
             pass
         time.sleep(0.2)
-
     raise SystemExit(f"the app never wrote {path}")
-
 def allow_eval(identifier: str) -> None:
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
-
 def verb(port: int, secret: str, name: str, args: dict[str, object], seconds: float = 20.0) -> str:
     body = json.dumps({"verb": name, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -139,38 +120,30 @@ def verb(port: int, secret: str, name: str, args: dict[str, object], seconds: fl
         return f"the app answered {refused.code}: {refused.read().decode('utf-8', 'replace')}"
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return f"no answer: {error}"
-
 def ran(port: int, secret: str, code: str) -> object:
     said = verb(port, secret, "eval", {"code": code, "yes": True})
     try:
         answer = json.loads(said)
     except ValueError:
         return said
-
     if isinstance(answer, dict):
         if answer.get("ok") is False:
             return f"refused: {answer.get('error')}"
         if "value" in answer:
             return answer["value"]
-
     return answer
-
 def windows_of(pid: int) -> list[int]:
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     found: list[int] = []
-
     proc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-
     def each(hwnd: int, _param: int) -> bool:
         owner = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
         if owner.value == pid and user32.IsWindowVisible(hwnd):
             found.append(hwnd)
         return True
-
     user32.EnumWindows(proc(each), 0)
     return found
-
 def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -179,7 +152,6 @@ def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
             return got[0]
         time.sleep(0.25)
     return 0
-
 def shoot(pid: int, out: pathlib.Path) -> None:
     subprocess.run(
         [
@@ -197,7 +169,6 @@ def shoot(pid: int, out: pathlib.Path) -> None:
         check=False,
         capture_output=True,
     )
-
 PRESS = """
 (() => {
   const press = (key, code, shift) => window.dispatchEvent(new KeyboardEvent('keydown', {
@@ -207,14 +178,12 @@ PRESS = """
   return true
 })()
 """
-
 FIELD = """
 (() => {
   const input = document.querySelector('.palette input')
   return input ? input.value + '|' + input.selectionStart : null
 })()
 """
-
 STATE = """
 (() => {
   const ws = window.ordenApp.workspace
@@ -225,7 +194,6 @@ STATE = """
   })
 })()
 """
-
 MENU = """
 (() => {
   const rows = [...document.querySelectorAll('.menu [role="menuitem"]')].map((o) => o.textContent.trim())
@@ -233,43 +201,34 @@ MENU = """
   return JSON.stringify({ rows, on })
 })()
 """
-
 def state(port: int, secret: str) -> dict:
     said = ran(port, secret, STATE)
     try:
         return json.loads(said if isinstance(said, str) else json.dumps(said))
     except ValueError:
         return {}
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this probe is Windows only")
-
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
     parsed.add_argument("--identifier", default="so.orden.Orden.probe")
     args = parsed.parse_args()
-
     exe = pathlib.Path(args.exe).resolve()
     if not exe.exists():
         raise SystemExit(f"no such exe: {exe}")
-
     shots = ROOT / "apps" / "desktop" / "test" / "e2e" / "shots" / "new-tabs-probe"
     shots.mkdir(parents=True, exist_ok=True)
-
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Quiet)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     say(f"serving a page on http://127.0.0.1:{PORT}")
-
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-new-tabs-"))
     (spaces / SPACE).mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
     say(f"spaces root {spaces}")
-
     refuse_updating(exe)
     wipe(args.identifier)
     environment = {**os.environ, SPACES_DIR: str(spaces)}
-
     first = run_probe(exe, env=environment)
     was, _ = endpoint(args.identifier, 150)
     allow_eval(args.identifier)
@@ -280,22 +239,18 @@ def main() -> int:
     except subprocess.TimeoutExpired:
         first.kill()
     time.sleep(6.0)
-
     app = run_probe(exe, env=environment)
     try:
         hwnd = wait_for_window(app, 120)
         if not hwnd:
             raise SystemExit("the window never appeared")
         say(f"window 0x{hwnd:X}, pid {app.pid}")
-
         port, secret = endpoint(args.identifier, 150, unlike=was)
         time.sleep(2.0)
         say(f"endpoint on {port}")
-
         if ran(port, secret, "1 + 1") != 2:
             wrong("the endpoint would not run anything; is eval on?")
             return 1
-
         say("--- Ctrl+Shift+P in the packaged window ---")
         ran(port, secret, PRESS % ("P", "KeyP", "true"))
         time.sleep(0.8)
@@ -307,7 +262,6 @@ def main() -> int:
         shoot(app.pid, shots / "commands.png")
         ran(port, secret, "(() => { window.ordenApp.overlays.escape(); return true })()")
         time.sleep(0.5)
-
         say("--- Ctrl+T ---")
         ran(port, secret, PRESS % ("t", "KeyT", "false"))
         time.sleep(1.0)
@@ -323,7 +277,6 @@ def main() -> int:
         shoot(app.pid, shots / "chooser.png")
         ran(port, secret, "(() => { window.ordenApp.overlays.escape(); return true })()")
         time.sleep(0.4)
-
         say("--- a tab of each kind, and nothing on disk ---")
         before = sorted(one.name for one in (spaces / SPACE).iterdir())
         for kind, code in (
@@ -338,13 +291,11 @@ def main() -> int:
                 wrong(f"a new {kind} did not open unsaved: {now.get('active')}")
             else:
                 say(f"a new {kind:<10}      -> a tab, path null")
-
         after = sorted(one.name for one in (spaces / SPACE).iterdir())
         if after != before:
             wrong(f"something was written into the space: {after}")
         else:
             say(f"the space              -> still {after}")
-
         say("--- the chord over a web tab ---")
         ran(
             port,
@@ -357,7 +308,6 @@ def main() -> int:
         time.sleep(1.0)
         ran(port, secret, PRESS % ("0", "Digit0", "false"))
         time.sleep(6.0)
-
         aimed = ran(
             port,
             secret,
@@ -367,7 +317,6 @@ def main() -> int:
         )
         say(f"the tab points at      -> {aimed!r}")
         shoot(app.pid, shots / "web-tab.png")
-
         ran(port, secret, PRESS % ("P", "KeyP", "true"))
         time.sleep(0.8)
         field = ran(port, secret, FIELD)
@@ -378,7 +327,6 @@ def main() -> int:
         shoot(app.pid, shots / "commands-over-page.png")
         ran(port, secret, "(() => { window.ordenApp.overlays.escape(); return true })()")
         time.sleep(0.5)
-
         say("--- keeping the website ---")
         ran(
             port,
@@ -394,7 +342,6 @@ def main() -> int:
             wrong(f"keeping the website did not write the shortcut: {now.get('active')}")
         else:
             say(f"kept                   -> {path}")
-
             written = spaces / SPACE / path.replace("\\", "/").split("/")[-1]
             if not written.exists():
                 wrong(f"no shortcut on disk: {sorted(one.name for one in (spaces / SPACE).iterdir())}")
@@ -404,7 +351,6 @@ def main() -> int:
                     wrong(f"the shortcut does not hold the address: {text!r}")
                 else:
                     say(f"the file               -> {text.splitlines()[:3]}")
-
         shoot(app.pid, shots / "after.png")
         say(f"shots in {shots}")
     finally:
@@ -415,15 +361,12 @@ def main() -> int:
             app.kill()
         httpd.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     if failures:
         print("\n%d thing(s) wrong:" % len(failures))
         for one in failures:
             print(f"  - {one}")
         return 1
-
     print("\neverything the probe checked was right")
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

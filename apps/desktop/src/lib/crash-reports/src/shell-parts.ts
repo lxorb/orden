@@ -13,7 +13,6 @@ const fields: SettingField[] = [
     set: (on) => crashReports.set(on),
   },
 ]
-
 if (!__EVEN_PLUGIN__) {
   registerSettingFields({
     section: 'general',

@@ -6,9 +6,7 @@ import { editorState } from '../editor'
 import { parsed } from '../../test/parsed'
 
 const LETTER = 10
-
 let shown: HTMLElement | null = null
-
 function letterAt(x: number): { node: Node; offset: number } | null {
   if (!shown) return null
   const wanted = Math.round(x / LETTER)
@@ -22,7 +20,6 @@ function letterAt(x: number): { node: Node; offset: number } | null {
   }
   return last ? { node: last, offset: last.length } : null
 }
-
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
@@ -36,14 +33,11 @@ beforeAll(() => {
     },
   })
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
   shown = null
 })
-
 function cellOf(words: string): HTMLElement {
   const note = `intro\n\n| name | note |\n| - | - |\n| ${words} | plain |\n\nend\n`
   const view = new EditorView({
@@ -56,7 +50,6 @@ function cellOf(words: string): HTMLElement {
   cell.tabIndex = 0
   return cell
 }
-
 function clickAfterLetters(cell: HTMLElement, letters: number): number {
   shown = cell
   const x = letters * LETTER
@@ -64,7 +57,6 @@ function clickAfterLetters(cell: HTMLElement, letters: number): number {
   cell.dispatchEvent(new MouseEvent('mousedown', keys))
   cell.dispatchEvent(new MouseEvent('mouseup', keys))
   cell.dispatchEvent(new MouseEvent('click', keys))
-
   const selection = window.getSelection()
   if (!selection || selection.rangeCount === 0) throw new Error('no caret')
   const caret = selection.getRangeAt(0)
@@ -73,24 +65,18 @@ function clickAfterLetters(cell: HTMLElement, letters: number): number {
   before.setEnd(caret.endContainer, caret.endOffset)
   return before.toString().length
 }
-
 describe('a click into a drawn table cell', () => {
   test('puts the caret between the letters clicked in a cell with bold words', () => {
     const cell = cellOf('**Revenue** growth')
     expect(cell.textContent).toBe('Revenue growth')
-
     const caret = clickAfterLetters(cell, 'Revenue gro'.length)
-
     expect(cell.textContent).toBe('**Revenue** growth')
     expect(cell.textContent.slice(0, caret)).toBe('**Revenue** gro')
   })
-
   test('puts the caret between the letters clicked in a cell with a link', () => {
     const cell = cellOf('see [the docs](https://x.test) first')
     expect(cell.textContent).toBe('see the docs first')
-
     const caret = clickAfterLetters(cell, 'see the docs fi'.length)
-
     expect(cell.textContent.slice(0, caret)).toBe('see [the docs](https://x.test) fi')
   })
 })

@@ -5,12 +5,10 @@ import { idle } from '../../../../test/effects/settle'
 
 let target: HTMLElement
 let close: () => void = () => undefined
-
 afterEach(() => {
   close()
   target.remove()
 })
-
 function shown(value: string) {
   target = document.createElement('div')
   document.body.append(target)
@@ -18,7 +16,6 @@ function shown(value: string) {
   close = () => void unmount(one)
   flushSync()
 }
-
 test('a link is drawn as a square a camera reads, named for those who cannot see it', async () => {
   shown('https://orden.so/s/abc')
   await vi.waitFor(() => {
@@ -27,7 +24,6 @@ test('a link is drawn as a square a camera reads, named for those who cannot see
   })
   expect(target.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('QR code for the link')
 })
-
 test('nothing is drawn for no text', async () => {
   shown('')
   await idle(20)

@@ -3,11 +3,9 @@ import { expect, test, vi } from 'vitest'
 class FakeChannel {
   onmessage: (value: unknown) => void = () => undefined
 }
-
 const asked: string[] = []
 const answers = new Map<string, () => void>()
 const opened: Record<string, unknown>[] = []
-
 async function fakeInvoke(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   if (command === 'ai_cli_open') {
     opened.push(args.opening as Record<string, unknown>)
@@ -20,16 +18,13 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
   await new Promise<void>((done) => answers.set(name, done))
   return null
 }
-
 vi.mock('../../../crate/src/native', () => ({ Channel: FakeChannel }))
 vi.mock('../../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../../platform/src/tauri')>()),
   invoke: fakeInvoke,
 }))
-
 const { openSession } = await import('./session')
 const settle = () => new Promise((done) => setTimeout(done, 0))
-
 test('what is said to a session reaches it one at a time, in the order it was said', async () => {
   const session = await openSession(
     {
@@ -59,7 +54,6 @@ test('what is said to a session reaches it one at a time, in the order it was sa
   answers.get('ai_cli_close')?.()
   await closed
 })
-
 test('a session of an account the vault moved to a fresh id goes by the agent rights it had, as that account', async () => {
   const { keepMoves } = await import('../moves')
   keepMoves({ cx: 'cx-2' })

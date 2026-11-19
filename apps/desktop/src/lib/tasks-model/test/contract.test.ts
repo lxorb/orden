@@ -21,7 +21,6 @@ import {
 const TODAY = '2026-11-14'
 const NOON = Date.parse(`${TODAY}T12:00:00`)
 let clock = NOON
-
 function world(server: MemoryTodoServer | null, disks = new Map<string, MemoryTodoDisk>()) {
   const made: StoreWorld = {
     openDisk: async (owner) => {
@@ -44,7 +43,6 @@ function world(server: MemoryTodoServer | null, disks = new Map<string, MemoryTo
     })
   return { store, open, disks }
 }
-
 const todo = (over: Partial<Todo>): Todo => ({
   id: over.id ?? 'x',
   title: 'a todo',
@@ -61,7 +59,6 @@ const todo = (over: Partial<Todo>): Todo => ({
   created: 0,
   ...over,
 })
-
 describe('tasks-model contract', () => {
   test('nothing under src reaches the shell: only contracts, sync-core, the held database and the task line of markdown', () => {
     const src = join(import.meta.dirname, '..', 'src')
@@ -79,7 +76,6 @@ describe('tasks-model contract', () => {
       }
     }
   })
-
   test('a new todo lands in the given space by default and with nothing else set', async () => {
     const { store, open } = world(null)
     await open(null)
@@ -98,7 +94,6 @@ describe('tasks-model contract', () => {
     })
     expect(store.todos).toHaveLength(1)
   })
-
   test('a todo refuses an empty title, a bad day, a priority outside 0 to 3 and too many labels', async () => {
     const { store, open } = world(null)
     await open(null)
@@ -109,7 +104,6 @@ describe('tasks-model contract', () => {
     expect((await store.add({ title: 'x', labels: many })).ok).toBe(false)
     expect(store.todos).toHaveLength(0)
   })
-
   test('subtasks hold a title and a done state only, at most the limit, blanks dropped', async () => {
     const { store, open } = world(null)
     await open(null)
@@ -133,14 +127,12 @@ describe('tasks-model contract', () => {
     }))
     expect((await store.update(made.value.id, { subtasks: tooMany })).ok).toBe(false)
   })
-
   test('"only this space" keeps the todos of the open space and the ones with no space stay out', () => {
     const all = [todo({ id: 'a', space: 'home' }), todo({ id: 'b', space: 'work' }), todo({ id: 'c', space: null })]
     const filter = { onlySpace: true, space: 'home', label: null, today: TODAY }
     expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['a'])
     expect(shownTodos(all, { ...filter, onlySpace: false }).map((t) => t.id)).toEqual(['a', 'b', 'c'])
   })
-
   test('a label exists only while a shown todo carries it, and within the open space when asked', () => {
     const all = [
       todo({ id: 'a', space: 'home', labels: ['errand', 'Urgent'] }),
@@ -153,7 +145,6 @@ describe('tasks-model contract', () => {
       ['b'],
     )
   })
-
   test('a todo with a start date after today stays out of the way until that day', () => {
     const all = [
       todo({ id: 'later', start: '2026-11-15' }),
@@ -166,7 +157,6 @@ describe('tasks-model contract', () => {
     expect(shown(TODAY)).toEqual(['now', 'past', 'none'])
     expect(shown('2026-11-15')).toEqual(['later', 'now', 'past', 'none'])
   })
-
   test('a done todo stays visible for the rest of its day, then leaves', () => {
     const all = [
       todo({ id: 'today', done: true, doneAt: NOON }),
@@ -176,7 +166,6 @@ describe('tasks-model contract', () => {
     const filter = { onlySpace: false, space: null, label: null, today: dayOf(NOON) }
     expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['today', 'open'])
   })
-
   test('sorting is exactly deadline, priority and manual, done todos last', () => {
     expect([...SORTS]).toEqual(['deadline', 'priority', 'manual'])
     const all = [
@@ -190,7 +179,6 @@ describe('tasks-model contract', () => {
     expect(ids('priority')).toEqual(['p3dn', 'p1d2', 'p0d1', 'done'])
     expect(ids('manual')).toEqual(['p3dn', 'p0d1', 'p1d2', 'done'])
   })
-
   test('grouping by label puts a todo in every label it carries and the unlabeled last', () => {
     const groups = groupedByLabel([
       todo({ id: 'a', labels: ['work', 'calls'] }),
@@ -203,7 +191,6 @@ describe('tasks-model contract', () => {
       [null, ['c']],
     ])
   })
-
   test("two devices of one user see each other's todos, field by field, and a deletion", async () => {
     const server = new MemoryTodoServer()
     const one = world(server)
@@ -215,7 +202,6 @@ describe('tasks-model contract', () => {
     await one.store.exchange()
     await two.store.exchange()
     expect(two.store.todos.map((t) => t.title)).toEqual(['Call Ann'])
-
     await one.store.update(made.value.id, { priority: 3 })
     await two.store.update(made.value.id, { deadline: '2026-11-20' })
     await one.store.exchange()
@@ -223,13 +209,11 @@ describe('tasks-model contract', () => {
     await one.store.exchange()
     expect(one.store.todo(made.value.id)).toMatchObject({ priority: 3, deadline: '2026-11-20' })
     expect(two.store.todo(made.value.id)).toMatchObject({ priority: 3, deadline: '2026-11-20' })
-
     await two.store.remove(made.value.id)
     await two.store.exchange()
     await one.store.exchange()
     expect(one.store.todos).toHaveLength(0)
   })
-
   test('todos are per user: another user sees none of them, and signed-out todos are carried into the account', async () => {
     const server = new MemoryTodoServer()
     const alice = world(server)
@@ -239,7 +223,6 @@ describe('tasks-model contract', () => {
     await bob.open('bob')
     await bob.store.exchange()
     expect(bob.store.todos).toHaveLength(0)
-
     const guest = world(server)
     await guest.open(null)
     await guest.store.add({ title: 'Before signing in' })
@@ -251,7 +234,6 @@ describe('tasks-model contract', () => {
     await carol.store.exchange()
     expect(carol.store.todos.map((t) => t.title)).toEqual(['Before signing in'])
   })
-
   test('what was changed while the server was away goes up on the next exchange', async () => {
     const server = new MemoryTodoServer()
     const one = world(server)
@@ -267,7 +249,6 @@ describe('tasks-model contract', () => {
     await two.store.exchange()
     expect(two.store.todos.map((t) => t.title)).toEqual(['Offline'])
   })
-
   test('items of another kind on the same account are not todos', async () => {
     const server = new MemoryTodoServer()
     await server.forUser('user-3').push([
@@ -283,13 +264,11 @@ describe('tasks-model contract', () => {
     expect(one.store.todos).toHaveLength(0)
   })
 })
-
 describe('a priority', () => {
   test('is drawn in its own tone from the first to the third, and plain after', () => {
     expect([1, 2, 3].map(priorityTone)).toEqual(['var(--canvas-1)', 'var(--canvas-2)', 'var(--canvas-5)'])
     expect(priorityTone(4)).toBeUndefined()
   })
-
   test('said in a quick add, the first is the highest and none is plain', () => {
     expect(([1, 2, 3, undefined] as const).map((one) => priorityOf(one))).toEqual([3, 2, 1, 0])
   })

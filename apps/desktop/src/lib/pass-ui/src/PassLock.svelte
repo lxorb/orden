@@ -5,24 +5,19 @@
   import { pass, PIN_TRIES, type Unlock } from '../../pass-sync/src/api'
 
   const { focused = false }: { focused?: boolean } = $props()
-
   type Way = 'password' | 'pin' | 'device' | 'recovery'
-
   let way = $state<Way>(pass.settings.lock)
   let typed = $state('')
   let busy = $state(false)
   let wrong = $state(false)
   let shaking = $state(false)
   let field = $state<HTMLInputElement>()
-
   $effect(() => {
     if (pass.settings.lock === 'password' && (way === 'pin' || way === 'device')) way = 'password'
   })
-
   $effect(() => {
     if (focused && way !== 'device') field?.focus({ preventScroll: true })
   })
-
   function asked(): Unlock {
     switch (way) {
       case 'password':
@@ -35,7 +30,6 @@
         return { device: true }
     }
   }
-
   async function opened(event?: SubmitEvent) {
     event?.preventDefault()
     if (busy || (way !== 'device' && typed === '')) return
@@ -49,13 +43,11 @@
     requestAnimationFrame(() => (shaking = true))
     field?.focus()
   }
-
   function use(next: Way) {
     way = next
     typed = ''
     wrong = false
   }
-
   const wrongWord = $derived.by(() => {
     return {
       pin: 'Wrong PIN',

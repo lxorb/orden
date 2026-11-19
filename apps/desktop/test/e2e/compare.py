@@ -26,43 +26,33 @@ than the exit code when a floor is in play.
 
 Needs Pillow, which is the only thing here that is not the standard library.
 """
-
 import hashlib
 import sys
 from pathlib import Path
-
 from PIL import Image, ImageChops
 
 SHOTS = Path(__file__).resolve().parent / "shots"
-
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
 def pixels(one: Path, other: Path) -> tuple[int, int, int]:
     a = Image.open(one).convert("RGB")
     b = Image.open(other).convert("RGB")
     if a.size != b.size:
         return (a.size[0] * a.size[1], a.size[0] * a.size[1], 255)
-
     counted = ImageChops.difference(a, b).convert("L").histogram()
     whole = a.size[0] * a.size[1]
     worst = max((value for value, held in enumerate(counted) if held), default=0)
-
     return (whole - counted[0], whole, worst)
-
 def main() -> int:
     if len(sys.argv) != 3:
         print(__doc__)
         return 2
-
     before, after = SHOTS / sys.argv[1], SHOTS / sys.argv[2]
     for run in (before, after):
         if not run.is_dir():
             print(f"no such run: {run}")
             return 2
-
     names = sorted({p.name for p in before.glob("*.png")} | {p.name for p in after.glob("*.png")})
-
     same = differ = missing = 0
     for name in names:
         one, other = before / name, after / name
@@ -76,8 +66,6 @@ def main() -> int:
             moved, whole, worst = pixels(one, other)
             share = 100 * moved / whole
             print(f"{name}: {moved} of {whole} pixels ({share:.3f}%), worst channel {worst}")
-
     print(f"{same} identical, {differ} differ, {missing} in one run only, of {len(names)}")
     return 1 if differ or missing else 0
-
 raise SystemExit(main())

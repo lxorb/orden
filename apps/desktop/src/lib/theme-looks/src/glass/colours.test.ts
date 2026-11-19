@@ -4,11 +4,9 @@ import { agreed, dominant, groundSaid, solid, stripGround } from './colours'
 function pixels(...each: [number, number, number, number?][]): number[] {
   return each.flatMap(([r, g, b, a = 255]) => [r, g, b, a])
 }
-
 function many(count: number, pixel: [number, number, number, number?]): [number, number, number, number?][] {
   return Array.from({ length: count }, () => pixel)
 }
-
 describe('a colour a page names', () => {
   test('is read in every spelling a canvas or a stylesheet hands back', () => {
     expect(solid('#ff0000')).toEqual([255, 0, 0])
@@ -17,7 +15,6 @@ describe('a colour a page names', () => {
     expect(solid('rgb(12 34 56 / 95%)')).toEqual([12, 34, 56])
     expect(solid('rgba(12, 34, 56, 0.95)')).toEqual([12, 34, 56])
   })
-
   test('is nothing when it is see-through or not a colour', () => {
     expect(solid('rgba(12, 34, 56, 0.5)')).toBeNull()
     expect(solid('rgba(0, 0, 0, 0)')).toBeNull()
@@ -26,7 +23,6 @@ describe('a colour a page names', () => {
     expect(solid('tomato')).toBeNull()
   })
 })
-
 describe('the top edge', () => {
   test('is the colour most points agree on, the middle first', () => {
     expect(
@@ -44,7 +40,6 @@ describe('the top edge', () => {
       ]),
     ).toEqual([0, 0, 0])
   })
-
   test('says nothing where every point is different', () => {
     expect(
       agreed([
@@ -57,21 +52,17 @@ describe('the top edge', () => {
     expect(agreed([])).toBeNull()
   })
 })
-
 describe('what a page says it stands on', () => {
   test('is its theme colour first, whatever its top is', () => {
     const said = { theme: '#d32f2f', top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false }
     expect(groundSaid(said)).toEqual([211, 47, 47])
   })
-
   test('is its top edge where it names none', () => {
     expect(groundSaid({ theme: '', top: ['#0f0f0f', '#0f0f0f', '#212121'], pictured: false })).toEqual([15, 15, 15])
   })
-
   test('is left to its picture where the top is one', () => {
     expect(groundSaid({ theme: '', top: ['#ffffff', '', '#ffffff'], pictured: true })).toBeNull()
   })
-
   test('is what it paints where its theme colour is a grey of the other lightness', () => {
     const youtube = {
       theme: 'rgba(255, 255, 255, 0.98)',
@@ -82,14 +73,12 @@ describe('what a page says it stands on', () => {
     const react = { theme: '#23272f', top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false }
     expect(groundSaid(react)).toEqual([255, 255, 255])
   })
-
   test('keeps a grey theme colour of the same lightness, and any colour with a hue', () => {
     const github = { theme: '#1e2327', top: ['#0d1117', '#0d1117', '#0d1117'], pictured: false }
     expect(groundSaid(github)).toEqual([30, 35, 39])
     const discord = { theme: '#161cbb', top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false }
     expect(groundSaid(discord)).toEqual([22, 28, 187])
   })
-
   test('keeps its theme colour where the top is a picture and cannot say otherwise', () => {
     const linear = { theme: '#08090a', top: ['', '', ''], pictured: true }
     expect(groundSaid(linear)).toEqual([8, 9, 10])
@@ -97,7 +86,6 @@ describe('what a page says it stands on', () => {
     expect(groundSaid(proton)).toEqual([27, 19, 64])
     expect(groundSaid({ ...proton, top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false })).toEqual([27, 19, 64])
   })
-
   test('takes a see-through theme colour as no word at all', () => {
     const said = {
       theme: 'rgba(255, 0, 0, 0.3)',
@@ -107,7 +95,6 @@ describe('what a page says it stands on', () => {
     expect(groundSaid(said)).toEqual([255, 235, 59])
   })
 })
-
 describe('a mark', () => {
   test('is its colour and not the white round it', () => {
     const logo = pixels(...many(60, [255, 255, 255]), ...many(20, [220, 30, 40]))
@@ -116,22 +103,18 @@ describe('a mark', () => {
     expect(found?.[0]).toBeGreaterThan(200)
     expect(found?.[1]).toBeLessThan(60)
   })
-
   test('is its most common grey where it has no colour', () => {
     expect(dominant(pixels(...many(10, [20, 20, 20]), ...many(3, [255, 255, 255])))).toEqual([20, 20, 20])
   })
-
   test('ignores what is see-through round its shape', () => {
     expect(dominant(pixels(...many(50, [0, 200, 0, 0]), ...many(5, [0, 0, 200])))).toEqual([0, 0, 200])
     expect(dominant(pixels(...many(4, [255, 0, 0, 10])))).toBeNull()
   })
 })
-
 describe("a page's still along its top", () => {
   test('is the colour most of it is', () => {
     expect(stripGround(pixels(...many(80, [255, 255, 255]), ...many(20, [30, 30, 30])))).toEqual([255, 255, 255])
   })
-
   test('is what a picture too busy for one colour comes to, as dark as it is', () => {
     const busy = pixels(...many(30, [200, 0, 0]), ...many(30, [0, 200, 0]), ...many(40, [0, 0, 200]))
     expect(stripGround(busy)).toEqual([60, 60, 80])
@@ -145,7 +128,6 @@ describe("a page's still along its top", () => {
     expect(ground).not.toBeNull()
     expect(Math.max(...(ground ?? [255]))).toBeLessThan(60)
   })
-
   test('is nothing with nothing to count', () => {
     expect(stripGround(pixels(...many(4, [255, 255, 255, 0])))).toBeNull()
   })

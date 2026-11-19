@@ -10,22 +10,16 @@ export interface ReviewMark {
   removed: string
   fading?: boolean
 }
-
 export const setReviewMarks = StateEffect.define<readonly ReviewMark[]>()
-
 let source: ((doc: SharedDoc) => readonly ReviewMark[]) | null = null
 let actions: ((id: string, keep: boolean) => void) | null = null
-
 export function setReviewSource(ask: (doc: SharedDoc) => readonly ReviewMark[]) {
   source = ask
 }
-
 export function setReviewActions(act: (id: string, keep: boolean) => void) {
   actions = act
 }
-
 const SHOWN = 120
-
 class Removed extends OrdenWidget {
   constructor(
     private readonly words: string,
@@ -33,11 +27,9 @@ class Removed extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: Removed): boolean {
     return other.words === this.words && other.fading === this.fading
   }
-
   override toDOM(): HTMLElement {
     const struck = document.createElement('del')
     struck.className = 'cm-review-removed'
@@ -47,28 +39,23 @@ class Removed extends OrdenWidget {
     struck.title = this.words
     return struck
   }
-
   override ignoreEvent(): boolean {
     return false
   }
 }
-
 interface Held {
   marks: readonly ReviewMark[]
   drawn: DecorationSet
 }
-
 function drawn(state: EditorState, marks: readonly ReviewMark[]): Held {
   const length = state.doc.length
   const kept: ReviewMark[] = []
   const ranges: Range<Decoration>[] = []
-
   for (const mark of marks) {
     const from = Math.min(Math.max(0, mark.from), length)
     const to = Math.min(Math.max(from, mark.to), length)
     if (to === from && !mark.removed) continue
     kept.push({ ...mark, from, to })
-
     const fading = mark.fading ? ' is-fading' : ''
     if (mark.removed) {
       ranges.push(Decoration.widget({ widget: new Removed(mark.removed, !!mark.fading), side: -1 }).range(from))
@@ -82,17 +69,13 @@ function drawn(state: EditorState, marks: readonly ReviewMark[]): Held {
       )
     }
   }
-
   return { marks: kept, drawn: Decoration.set(ranges, true) }
 }
-
 const none: Held = { marks: [], drawn: Decoration.none }
-
 function asked(state: EditorState): Held {
   const doc = sharedOf(state)
   return doc && source ? drawn(state, source(doc)) : none
 }
-
 const field = StateField.define<Held>({
   create: asked,
   update(held, transaction) {
@@ -100,7 +83,6 @@ const field = StateField.define<Held>({
       if (effect.is(setReviewMarks)) return drawn(transaction.state, effect.value)
     if (sharedOf(transaction.state) !== sharedOf(transaction.startState)) return asked(transaction.state)
     if (!transaction.docChanged || !held.marks.length) return held
-
     const changes = transaction.changes
     return {
       marks: held.marks.map((mark) => {
@@ -112,12 +94,10 @@ const field = StateField.define<Held>({
   },
   provide: (one) => EditorView.decorations.from(one, (held) => held.drawn),
 })
-
 function changeAt(state: EditorState, at: number): ReviewMark | null {
   const held = state.field(field, false)
   return held?.marks.find((mark) => !mark.fading && mark.from <= at && at <= Math.max(mark.to, mark.from + 1)) ?? null
 }
-
 const offer = hoverTooltip(
   (view, at): Tooltip | null => {
     const mark = changeAt(view.state, at)
@@ -149,7 +129,6 @@ const offer = hoverTooltip(
   },
   { hoverTime: 250 },
 )
-
 const style = EditorView.baseTheme({
   '.cm-review-added': {
     backgroundColor: 'color-mix(in srgb, var(--success) 16%, transparent)',
@@ -192,9 +171,6 @@ const style = EditorView.baseTheme({
   '.cm-review-offer button:active': { background: 'var(--press)' },
   '.cm-review-offer .is-keep': { color: 'var(--success)' },
 })
-
 const extension: Extension = [field, offer, style]
-
 export const reviewMarks = (): Extension => extension
-
 export const reviewMarksOf = (state: EditorState): readonly ReviewMark[] => state.field(field, false)?.marks ?? []

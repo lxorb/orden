@@ -23,7 +23,6 @@ describe('a key out of a page', () => {
       down: true,
     })
   })
-
   test('and a release is a release', () => {
     expect(readPressed({ key: 'Control', code: 'ControlLeft', down: false })).toMatchObject({
       key: 'Control',
@@ -31,14 +30,12 @@ describe('a key out of a page', () => {
       down: false,
     })
   })
-
   test('holds nothing it was not told', () => {
     expect(readPressed({ key: 'w', code: 'KeyW', ctrl: 'yes', down: 1 })).toMatchObject({
       ctrl: false,
       down: false,
     })
   })
-
   test('and is nothing where the crate said nothing a key could be', () => {
     expect(readPressed(null)).toBeNull()
     expect(readPressed('t')).toBeNull()

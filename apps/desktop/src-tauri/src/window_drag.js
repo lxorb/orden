@@ -1,6 +1,5 @@
 ;(function () {
   const invoke = (args) => window.__TAURI_INTERNALS__.invoke('window_move_resize', args)
-
   let wrapped = false
   function wrap() {
     const internals = window.__TAURI_INTERNALS__
@@ -10,7 +9,6 @@
     internals.invoke = (cmd, ...rest) =>
       cmd === 'plugin:window|start_dragging' ? Promise.resolve() : own(cmd, ...rest)
   }
-
   function frame() {
     const internals = window.__TAURI_INTERNALS__
     if (internals && typeof internals.invoke === 'function') {
@@ -19,7 +17,6 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', frame)
   else frame()
-
   const ATTR = 'data-tauri-drag-region'
   const CLICKABLE = new Set(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'SUMMARY'])
   const ROLES = new Set(['button', 'link', 'menuitem', 'tab', 'checkbox', 'radio', 'switch', 'option'])
@@ -43,7 +40,6 @@
     }
     return false
   }
-
   const EDGE = 5
   const CORNER = 14
   function edgeAt(x, y) {
@@ -78,14 +74,12 @@
     nw: 'nwse-resize',
     se: 'nwse-resize',
   }
-
   let filling = false
   function measure() {
     filling = window.outerWidth >= screen.availWidth && window.outerHeight >= screen.availHeight
   }
   window.addEventListener('resize', measure)
   measure()
-
   let shown = null
   let style = null
   function cursor(edge) {
@@ -103,7 +97,6 @@
     true,
   )
   document.addEventListener('mouseleave', () => cursor(null))
-
   const THRESHOLD = 4
   let pressed = null
   window.addEventListener(

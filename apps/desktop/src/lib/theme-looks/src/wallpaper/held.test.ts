@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { DARK_KEY, heldDark, heldFor, heldWallpaper, WALLPAPER_KEY } from './held'
 
 const entries = new Map<string, string>()
-
 beforeEach(() => {
   entries.clear()
   vi.stubGlobal('localStorage', {
@@ -11,24 +10,20 @@ beforeEach(() => {
     removeItem: (key: string) => void entries.delete(key),
   })
 })
-
 const GOOD = {
   picture: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==',
   blur: 28,
   dark: { floor: 0.7, ground: '#171c25' },
   light: { floor: 0.69, ground: '#f1f3f6' },
 }
-
 function write(value: unknown) {
   entries.set(WALLPAPER_KEY, JSON.stringify(value))
 }
-
 describe('what was written down', () => {
   test('is read back whole, an older record with its focal point in the middle', () => {
     write(GOOD)
     expect(heldWallpaper()).toEqual({ ...GOOD, focus: [0.5, 0.5] })
   })
-
   test('a record made now keeps what the picture holds instead of its floors', () => {
     const made = {
       picture: GOOD.picture,
@@ -42,20 +37,17 @@ describe('what was written down', () => {
     write(made)
     expect(heldWallpaper()).toEqual(made)
   })
-
   test('a focal point is held inside the picture, and a span out of range is none', () => {
     write({ ...GOOD, focus: [-1, 4] })
     expect(heldWallpaper()?.focus).toEqual([0, 1])
     write({ picture: GOOD.picture, blur: 0, span: { least: [0, 0, 0], most: [300, 0, 0] } })
     expect(heldWallpaper()).toBeNull()
   })
-
   test('is nothing when nothing was', () => {
     expect(heldWallpaper()).toBeNull()
     entries.set(WALLPAPER_KEY, '{"picture":')
     expect(heldWallpaper()).toBeNull()
   })
-
   test('is nothing where the picture is anything but a picture written out', () => {
     for (const picture of [
       'https://example.com/a.png',
@@ -67,7 +59,6 @@ describe('what was written down', () => {
       expect(heldWallpaper(), picture).toBeNull()
     }
   })
-
   test('is nothing where a side is missing or out of range', () => {
     write({ ...GOOD, light: undefined })
     expect(heldWallpaper()).toBeNull()
@@ -76,7 +67,6 @@ describe('what was written down', () => {
     write({ ...GOOD, dark: { floor: 0.5, ground: 'red; color: blue' } })
     expect(heldWallpaper()).toBeNull()
   })
-
   test('follows the entry when it changes', () => {
     write(GOOD)
     expect(heldWallpaper()?.blur).toBe(28)
@@ -84,7 +74,6 @@ describe('what was written down', () => {
     expect(heldWallpaper()?.blur).toBe(40)
   })
 })
-
 describe('the dark side', () => {
   test('wears the picture until it has its own', () => {
     write(GOOD)

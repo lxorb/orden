@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import sys
 import time
@@ -8,11 +7,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from devtools import Session  # noqa: E402
-
 PORT = int(sys.argv[1])
 OFF = len(sys.argv) > 2 and sys.argv[2] == "off"
 SWITCHES = ("--disable-gpu-compositing", "--disable-gpu")
-
 def browser():
     for _ in range(60):
         try:
@@ -21,19 +18,16 @@ def browser():
         except (OSError, ValueError, KeyError):
             time.sleep(0.5)
     sys.exit(f"::error::compositing: Chromium's DevTools port {PORT} never answered")
-
 session = Session({"webSocketDebuggerUrl": browser()})
 info = session.call("SystemInfo.getInfo")
 session.close()
 if "error" in info:
     sys.exit(f"::error::compositing: Chromium did not say how it runs: {info['error']}")
-
 line = info.get("commandLine", "").split()
 status = info.get("gpu", {}).get("featureStatus", {})
 found = [switch for switch in SWITCHES if any(one == switch or one.startswith(switch + "=") for one in line)]
 print(f"compositing: Chromium runs with {len(line)} switches; of the ones that take the card away: {found or 'none'}")
 print(f"compositing: Chromium says of compositing: {status.get('gpu_compositing', '?')}")
-
 if OFF and "--disable-gpu-compositing" not in found:
     sys.exit("::error::compositing: Hardware acceleration is off, and Chromium was not told so")
 if not OFF and found:

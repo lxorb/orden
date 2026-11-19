@@ -2,7 +2,6 @@
     clippy::transmute_ptr_to_ptr,
     reason = "the cef crate's wrap_* macros transmute between a wrapper and the struct it wraps"
 )]
-
 use orden_base::Held as _;
 use std::collections::HashMap;
 use std::path::Path;
@@ -26,25 +25,20 @@ use orden_agent_web::tabs;
 use orden_agents::verbs::{Dialog, DialogKind, Download, DownloadState};
 
 const FRAME_RATE: i32 = 60;
-
 static WINDOWLESS: OnceLock<bool> = OnceLock::new();
-
 pub fn windowless_wanted(config: &Path) -> bool {
     *WINDOWLESS.get_or_init(|| {
         std::env::var_os("ORDEN_AGENT_PAGES").is_some_and(|said| said == "1")
             || std::fs::read_to_string(config.join("agents.json")).is_ok_and(|text| paired(&text))
     })
 }
-
 fn paired(text: &str) -> bool {
     serde_json::from_str::<Value>(text)
         .ok()
         .and_then(|file| file.get("agents")?.as_array().map(|all| !all.is_empty()))
         .unwrap_or(false)
 }
-
 type Hearing = Arc<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
-
 struct Page {
     owner: Owner,
     app: AppHandle,
@@ -58,7 +52,6 @@ struct Page {
     hearing: Mutex<Vec<Hearing>>,
     dialog: Mutex<Option<(u64, Answering)>>,
 }
-
 enum Answering {
     Script(JsdialogCallback),
     SignIn {
@@ -70,40 +63,31 @@ enum Answering {
         Vec<(X509Certificate, String)>,
     ),
 }
-
 impl Page {
     fn host(&self) -> Option<BrowserHost> {
         self.host.held().clone()
     }
-
     fn say(&self, text: String) {
         quiet::say(&self.owner.label, "warning", text);
     }
 }
-
 #[derive(Clone)]
 pub struct Windowless {
     label: String,
     page: Arc<Page>,
 }
-
 static PAGES: Mutex<Option<HashMap<String, Windowless>>> = Mutex::new(None);
-
 static NEXT: AtomicI32 = AtomicI32::new(1);
-
 pub fn page(label: &str) -> Option<Windowless> {
     PAGES.held().as_ref()?.get(label).cloned()
 }
-
 impl orden_agent_web::engines::Windowless for Windowless {
     fn label(&self) -> &str {
         &self.label
     }
-
     fn url(&self) -> String {
         self.page.url.held().clone()
     }
-
     fn close(&self) {
         if let Some(all) = PAGES.held().as_mut() {
             all.remove(&self.label);
@@ -112,7 +96,6 @@ impl orden_agent_web::engines::Windowless for Windowless {
             on_ui(move || host.close_browser(1));
         }
     }
-
     fn ask(
         &self,
         session: Option<&str>,
@@ -142,35 +125,28 @@ impl orden_agent_web::engines::Windowless for Windowless {
         }
         Ok(answer)
     }
-
     fn hear(&self, heard: orden_agent_web::engines::Heard) {
         self.page.hearing.held().push(Arc::from(heard));
     }
 }
-
 impl Windowless {
     pub fn tell(&self, method: &str, params: &Value) {
         let _ = self.ask(None, method, params);
     }
 }
-
 pub(crate) fn shared(label: &str) -> Option<Arc<dyn orden_agent_web::engines::Windowless>> {
     page(label).map(|one| Arc::new(one) as Arc<dyn orden_agent_web::engines::Windowless>)
 }
-
 type Work = Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>;
-
 pub(crate) fn on_ui(job: impl FnOnce() + Send + 'static) -> bool {
     let job: Work = Arc::new(Mutex::new(Some(Box::new(job))));
     let mut task = Job::new(job);
     post_task(ThreadId::UI, Some(&mut task)) != 0
 }
-
 wrap_task! {
     struct Job {
         job: Work,
     }
-
     impl Task {
         fn execute(&self) {
             let job = self.job.held().take();
@@ -180,7 +156,6 @@ wrap_task! {
         }
     }
 }
-
 pub fn build(
     app: &AppHandle,
     owner: &Owner,
@@ -230,18 +205,15 @@ pub fn build(
         .recv_timeout(tabs::BUILDING)
         .map_err(|_| "the page was never built".to_string())?
 }
-
 fn finished(page: &Page, outcome: Result<(), String>) {
     if let Some(built) = page.built.held().take() {
         let _ = built.try_send(outcome);
     }
 }
-
 wrap_request_context_handler! {
     struct Ready {
         page: Arc<Mutex<Option<Arc<Page>>>>,
     }
-
     impl RequestContextHandler {
         fn on_request_context_initialized(&self, request_context: Option<&mut RequestContext>) {
             let Some(page) = self.page.held().take() else {
@@ -265,7 +237,6 @@ wrap_request_context_handler! {
         }
     }
 }
-
 fn windowless() -> WindowInfo {
     WindowInfo {
         windowless_rendering_enabled: 1,
@@ -273,7 +244,6 @@ fn windowless() -> WindowInfo {
         ..Default::default()
     }
 }
-
 fn browser_settings() -> BrowserSettings {
     BrowserSettings {
         windowless_frame_rate: FRAME_RATE,
@@ -281,13 +251,11 @@ fn browser_settings() -> BrowserSettings {
         ..Default::default()
     }
 }
-
 fn quietened(page: &Windowless) {
     for (method, params) in quieting() {
         page.tell(method, &params);
     }
 }
-
 fn quieting() -> [(&'static str, Value); 4] {
     [
         ("Page.enable", json!({})),
@@ -302,11 +270,9 @@ fn quieting() -> [(&'static str, Value); 4] {
         ("Fetch.enable", signing_in()),
     ]
 }
-
 fn signing_in() -> Value {
     json!({ "handleAuthRequests": true, "patterns": [{ "urlPattern": "*" }] })
 }
-
 fn signed_in(request: &str, said: &Said) -> Value {
     let response = if said.accept {
         json!({
@@ -319,7 +285,6 @@ fn signed_in(request: &str, said: &Said) -> Value {
     };
     json!({ "requestId": request, "authChallengeResponse": response })
 }
-
 fn made(page: &Arc<Page>, browser: &Browser) {
     let Some(host) = browser.host() else {
         finished(page, Err("the engine made a page with no host".into()));
@@ -332,7 +297,6 @@ fn made(page: &Arc<Page>, browser: &Browser) {
     let observing = host.add_dev_tools_message_observer(Some(&mut observer));
     *page.observing.held() = observing;
     *page.host.held() = Some(host);
-
     let handle = Windowless {
         label: page.owner.label.clone(),
         page: Arc::clone(page),
@@ -349,7 +313,6 @@ fn made(page: &Arc<Page>, browser: &Browser) {
     }
     finished(page, Ok(()));
 }
-
 fn closed(page: &Page) {
     if let Some(all) = PAGES.held().as_mut() {
         if all
@@ -367,12 +330,10 @@ fn closed(page: &Page) {
         let _ = waiting.try_send(Err("the page has closed".into()));
     }
 }
-
 wrap_dev_tools_message_observer! {
     struct Listening {
         page: Arc<Page>,
     }
-
     impl DevToolsMessageObserver {
         fn on_dev_tools_message(
             &self,
@@ -386,7 +347,6 @@ wrap_dev_tools_message_observer! {
         }
     }
 }
-
 fn heard(page: &Arc<Page>, message: &Value) {
     if let Some(id) = message
         .get("id")
@@ -449,7 +409,6 @@ fn heard(page: &Arc<Page>, message: &Value) {
         one(method, session, &params);
     }
 }
-
 fn send(page: &Arc<Page>, session: Option<&str>, method: &str, params: &Value) {
     let found = Windowless {
         label: page.owner.label.clone(),
@@ -457,7 +416,6 @@ fn send(page: &Arc<Page>, session: Option<&str>, method: &str, params: &Value) {
     };
     let _ = found.ask(session, method, params);
 }
-
 fn answer(message: &Value) -> Result<Value, String> {
     if let Some(error) = message.get("error") {
         return Err(error
@@ -468,13 +426,11 @@ fn answer(message: &Value) -> Result<Value, String> {
     }
     Ok(message.get("result").cloned().unwrap_or(Value::Null))
 }
-
 pub fn answer_dialog(_app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     let found = page(label).ok_or("the page has closed")?;
     settle(&found.page, None, said);
     Ok(())
 }
-
 fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     let held = {
         let mut dialog = page.dialog.held();
@@ -493,7 +449,6 @@ fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     quiet::release(&page.owner.label);
     give(page, answering, said);
 }
-
 fn give(page: &Arc<Page>, answering: Answering, said: Said) {
     match answering {
         Answering::Script(callback) => {
@@ -519,7 +474,6 @@ fn give(page: &Arc<Page>, answering: Answering, said: Said) {
         }
     }
 }
-
 fn hold(
     page: &Arc<Page>,
     kind: DialogKind,
@@ -549,64 +503,50 @@ fn hold(
         settle(&late, Some(number), Said::only(kind == DialogKind::Alert));
     });
 }
-
 fn text(said: Option<&CefString>) -> String {
     said.map(ToString::to_string).unwrap_or_default()
 }
-
 wrap_client! {
     struct Agent {
         page: Arc<Page>,
     }
-
     impl Client {
         fn render_handler(&self) -> Option<RenderHandler> {
             Some(Screen::new(Arc::clone(&self.page)))
         }
-
         fn life_span_handler(&self) -> Option<LifeSpanHandler> {
             Some(Life::new(Arc::clone(&self.page)))
         }
-
         fn jsdialog_handler(&self) -> Option<JsdialogHandler> {
             Some(Dialogs::new(Arc::clone(&self.page)))
         }
-
         fn permission_handler(&self) -> Option<PermissionHandler> {
             Some(Permissions::new(Arc::clone(&self.page)))
         }
-
         fn download_handler(&self) -> Option<DownloadHandler> {
             Some(Downloads::new(Arc::clone(&self.page)))
         }
-
         fn dialog_handler(&self) -> Option<DialogHandler> {
             Some(Files::new(Arc::clone(&self.page)))
         }
-
         fn context_menu_handler(&self) -> Option<ContextMenuHandler> {
             Some(Menus::new())
         }
-
         fn request_handler(&self) -> Option<RequestHandler> {
             Some(Requests::new(Arc::clone(&self.page)))
         }
-
         fn display_handler(&self) -> Option<DisplayHandler> {
             Some(Display::new(Arc::clone(&self.page)))
         }
-
         fn load_handler(&self) -> Option<LoadHandler> {
             Some(Loads::new(Arc::clone(&self.page)))
         }
     }
 }
-
 wrap_render_handler! {
     struct Screen {
         page: Arc<Page>,
     }
-
     impl RenderHandler {
         fn view_rect(&self, _browser: Option<&mut Browser>, rect: Option<&mut Rect>) {
             if let Some(rect) = rect {
@@ -619,7 +559,6 @@ wrap_render_handler! {
                 };
             }
         }
-
         fn screen_info(
             &self,
             _browser: Option<&mut Browser>,
@@ -642,7 +581,6 @@ wrap_render_handler! {
             screen.available_rect = whole;
             1
         }
-
         fn on_paint(
             &self,
             _browser: Option<&mut Browser>,
@@ -655,12 +593,10 @@ wrap_render_handler! {
         }
     }
 }
-
 wrap_life_span_handler! {
     struct Life {
         page: Arc<Page>,
     }
-
     impl LifeSpanHandler {
         fn on_before_popup(
             &self,
@@ -712,7 +648,6 @@ wrap_life_span_handler! {
             *client = Some(Agent::new(popup));
             0
         }
-
         fn on_after_created(&self, browser: Option<&mut Browser>) {
             if let Some(browser) = browser {
                 made(&self.page, browser);
@@ -721,22 +656,18 @@ wrap_life_span_handler! {
                 }
             }
         }
-
         fn do_close(&self, _browser: Option<&mut Browser>) -> ::std::os::raw::c_int {
             0
         }
-
         fn on_before_close(&self, _browser: Option<&mut Browser>) {
             closed(&self.page);
         }
     }
 }
-
 wrap_jsdialog_handler! {
     struct Dialogs {
         page: Arc<Page>,
     }
-
     impl JsdialogHandler {
         fn on_jsdialog(
             &self,
@@ -768,7 +699,6 @@ wrap_jsdialog_handler! {
             );
             1
         }
-
         fn on_before_unload_dialog(
             &self,
             _browser: Option<&mut Browser>,
@@ -790,19 +720,16 @@ wrap_jsdialog_handler! {
             );
             1
         }
-
         fn on_reset_dialog_state(&self, _browser: Option<&mut Browser>) {
             self.page.dialog.held().take();
             quiet::release(&self.page.owner.label);
         }
     }
 }
-
 wrap_permission_handler! {
     struct Permissions {
         page: Arc<Page>,
     }
-
     impl PermissionHandler {
         fn on_request_media_access_permission(
             &self,
@@ -821,7 +748,6 @@ wrap_permission_handler! {
             ));
             1
         }
-
         fn on_show_permission_prompt(
             &self,
             _browser: Option<&mut Browser>,
@@ -839,12 +765,10 @@ wrap_permission_handler! {
         }
     }
 }
-
 wrap_download_handler! {
     struct Downloads {
         page: Arc<Page>,
     }
-
     impl DownloadHandler {
         fn can_download(
             &self,
@@ -854,7 +778,6 @@ wrap_download_handler! {
         ) -> ::std::os::raw::c_int {
             1
         }
-
         fn on_before_download(
             &self,
             _browser: Option<&mut Browser>,
@@ -889,7 +812,6 @@ wrap_download_handler! {
             callback.cont(Some(&CefString::from(path.to_string_lossy().as_ref())), 0);
             1
         }
-
         fn on_download_updated(
             &self,
             _browser: Option<&mut Browser>,
@@ -917,12 +839,10 @@ wrap_download_handler! {
         }
     }
 }
-
 wrap_dialog_handler! {
     struct Files {
         page: Arc<Page>,
     }
-
     impl DialogHandler {
         fn on_file_dialog(
             &self,
@@ -944,10 +864,8 @@ wrap_dialog_handler! {
         }
     }
 }
-
 wrap_context_menu_handler! {
     struct Menus;
-
     impl ContextMenuHandler {
         fn on_before_context_menu(
             &self,
@@ -962,12 +880,10 @@ wrap_context_menu_handler! {
         }
     }
 }
-
 wrap_request_handler! {
     struct Requests {
         page: Arc<Page>,
     }
-
     impl RequestHandler {
         fn on_before_browse(
             &self,
@@ -996,7 +912,6 @@ wrap_request_handler! {
                 }
             }
         }
-
         fn on_open_urlfrom_tab(
             &self,
             _browser: Option<&mut Browser>,
@@ -1011,7 +926,6 @@ wrap_request_handler! {
             ));
             1
         }
-
         fn on_select_client_certificate(
             &self,
             _browser: Option<&mut Browser>,
@@ -1049,12 +963,10 @@ wrap_request_handler! {
         }
     }
 }
-
 wrap_display_handler! {
     struct Display {
         page: Arc<Page>,
     }
-
     impl DisplayHandler {
         fn on_address_change(
             &self,
@@ -1071,7 +983,6 @@ wrap_display_handler! {
                 tabs::set(&self.page.owner.tab, |one| one.url = url);
             }
         }
-
         fn on_title_change(&self, _browser: Option<&mut Browser>, title: Option<&CefString>) {
             let title = text(title);
             tabs::set(&self.page.owner.tab, |one| one.title = title);
@@ -1079,7 +990,6 @@ wrap_display_handler! {
                 tabs::said(&self.page.app, &tab);
             }
         }
-
         fn on_console_message(
             &self,
             _browser: Option<&mut Browser>,
@@ -1092,12 +1002,10 @@ wrap_display_handler! {
         }
     }
 }
-
 wrap_load_handler! {
     struct Loads {
         page: Arc<Page>,
     }
-
     impl LoadHandler {
         fn on_loading_state_change(
             &self,
@@ -1114,7 +1022,6 @@ wrap_load_handler! {
                 }
             }
         }
-
         fn on_load_error(
             &self,
             _browser: Option<&mut Browser>,
@@ -1133,7 +1040,6 @@ wrap_load_handler! {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -1152,7 +1058,6 @@ mod tests {
         );
         assert_eq!(answer(&json!({ "id": 4 })), Ok(serde_json::Value::Null));
     }
-
     #[test]
     fn an_agent_page_takes_its_own_sign_ins() {
         let fetch = quieting()
@@ -1163,7 +1068,6 @@ mod tests {
         assert_eq!(fetch["handleAuthRequests"], json!(true));
         assert_eq!(fetch["patterns"], json!([{ "urlPattern": "*" }]));
     }
-
     #[test]
     fn a_sign_in_is_answered_with_its_words_or_cancelled() {
         let yes = Said {
@@ -1181,7 +1085,6 @@ mod tests {
             json!({ "requestId": "r2", "authChallengeResponse": { "response": "CancelAuth" } })
         );
     }
-
     #[test]
     fn a_run_wants_windowless_pages_only_with_an_agent_paired() {
         assert!(paired(r#"{"agents":[{"id":"claude-code"}]}"#));

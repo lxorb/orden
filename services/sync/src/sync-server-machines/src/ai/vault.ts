@@ -12,29 +12,21 @@ import {
   type Variables,
 } from '../../../sync-server/src/api'
 type Vault = Context<{ Bindings: Env; Variables: Variables }>
-
 const MOST_DEVICES = 30
-
 const MOST_VAULT = 512 * 1024
-
 const ID = /^[a-f0-9]{32}$/
 const BASE64 = /^[A-Za-z0-9+/=_-]+$/
-
 const NO_SUCH_DEVICE = 'no such device'
 const STALE = 'stale'
 const NOT_THE_KEY = 'not the vault key'
-
 export const aiVault = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 function told(env: Env, user: string, from: string): Promise<unknown> {
   return askHub(env, user, 'ai', { 'x-orden-from': from }).catch(() => null)
 }
-
 async function authHash(auth: string): Promise<string | null> {
   const bytes = BASE64.test(auth) ? bytesOf(auth) : null
   return bytes ? hexOf(await digest(bytes)) : null
 }
-
 async function holdsTheKey(env: Env, user: string, auth: string | undefined): Promise<boolean> {
   if (!auth) return false
   const held = await env.DB.prepare('select auth_hash from ai_vaults where user_id = ?')
@@ -47,7 +39,6 @@ async function holdsTheKey(env: Env, user: string, auth: string | undefined): Pr
   for (let at = 0; at < sent.length; at++) differ |= sent.charCodeAt(at) ^ kept.charCodeAt(at)
   return differ === 0
 }
-
 async function anyAllowed(env: Env, user: string): Promise<boolean> {
   const found = await env.DB.prepare(
     'select 1 as one from ai_devices where user_id = ? and approved_at is not null limit 1',
@@ -56,19 +47,16 @@ async function anyAllowed(env: Env, user: string): Promise<boolean> {
     .first()
   return found !== null
 }
-
 async function authIn(context: Vault): Promise<string | undefined> {
   const sent: unknown = await context.req.json().catch(() => null)
   if (typeof sent !== 'object' || sent === null) return undefined
   const auth = (sent as Record<string, unknown>).auth
   return typeof auth === 'string' && auth.length <= 100 ? auth : undefined
 }
-
 interface VaultRow {
   rev: number
   blob: string
 }
-
 interface DeviceRow {
   id: string
   name: string
@@ -80,7 +68,6 @@ interface DeviceRow {
   wrapped: string | null
   approved_at: number | null
 }
-
 aiVault.get('/', async (context) => {
   const user = context.get('user').id
   const device = context.req.query('device') ?? ''
@@ -110,7 +97,6 @@ aiVault.get('/', async (context) => {
     })),
   })
 })
-
 aiVault.post('/devices', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -121,7 +107,6 @@ aiVault.post('/devices', async (context) => {
   if (!ID.test(id) || !BASE64.test(commitment)) {
     return context.json({ error: 'not a device' }, 400)
   }
-
   const added = await context.env.DB.prepare(
     `insert into ai_devices (user_id, id, name, commitment, created_at)
      select ?1, ?2, ?3, ?4, ?5
@@ -142,7 +127,6 @@ aiVault.post('/devices', async (context) => {
   await told(context.env, user, id)
   return context.json({ ok: true })
 })
-
 aiVault.put('/devices/:id/nonce', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -154,7 +138,6 @@ aiVault.put('/devices/:id/nonce', async (context) => {
   if (!(await holdsTheKey(context.env, user, auth))) {
     return context.json({ error: NOT_THE_KEY }, 403)
   }
-
   const changed = await context.env.DB.prepare(
     `update ai_devices set nonce = ?, nonce_from = ?
       where user_id = ? and id = ? and approved_at is null and pub is null
@@ -166,7 +149,6 @@ aiVault.put('/devices/:id/nonce', async (context) => {
   await told(context.env, user, from)
   return context.json({ ok: true })
 })
-
 aiVault.put('/devices/:id/reveal', async (context) => {
   const user = context.get('user').id
   const id = context.req.param('id')
@@ -177,27 +159,23 @@ aiVault.put('/devices/:id/reveal', async (context) => {
   const pubBytes = BASE64.test(pub) ? bytesOf(pub) : null
   const nonceBytes = BASE64.test(nonce) ? bytesOf(nonce) : null
   if (!pubBytes || !nonceBytes) return context.json({ error: 'not a key' }, 400)
-
   const row = await context.env.DB.prepare('select commitment, nonce, pub from ai_devices where user_id = ? and id = ?')
     .bind(user, id)
     .first<{ commitment: string; nonce: string | null; pub: string | null }>()
   if (!row) return context.json({ error: NO_SUCH_DEVICE }, 404)
   if (row.pub !== null) return context.json({ error: 'revealed already' }, 409)
-
   if (hexOf(await digest(pubBytes), 16) !== id) {
     return context.json({ error: 'that key is not this device' }, 400)
   }
   if (!(await opens(row.commitment, pub, nonce))) {
     return context.json({ error: 'not what this device committed to' }, 400)
   }
-
   if (row.nonce === null) {
     const vault = await context.env.DB.prepare('select 1 as one from ai_vaults where user_id = ?').bind(user).first()
     if (vault || (await anyAllowed(context.env, user))) {
       return context.json({ error: 'not answered yet' }, 409)
     }
   }
-
   await context.env.DB.prepare(
     'update ai_devices set pub = ?, revealed = ? where user_id = ? and id = ? and pub is null',
   )
@@ -206,7 +184,6 @@ aiVault.put('/devices/:id/reveal', async (context) => {
   await told(context.env, user, id)
   return context.json({ ok: true })
 })
-
 aiVault.put('/devices/:id/wrap', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -218,7 +195,6 @@ aiVault.put('/devices/:id/wrap', async (context) => {
   if (!(await holdsTheKey(context.env, user, auth))) {
     return context.json({ error: NOT_THE_KEY }, 403)
   }
-
   const changed = await context.env.DB.prepare(
     `update ai_devices set wrapped = ?, approved_at = ?
       where user_id = ? and id = ? and pub is not null`,
@@ -229,7 +205,6 @@ aiVault.put('/devices/:id/wrap', async (context) => {
   await told(context.env, user, from)
   return context.json({ ok: true })
 })
-
 aiVault.delete('/devices/:id', async (context) => {
   const user = context.get('user').id
   const id = context.req.param('id')
@@ -248,12 +223,10 @@ aiVault.delete('/devices/:id', async (context) => {
       .first()
     if (others) return context.json({ error: 'change the key instead' }, 409)
   }
-
   await context.env.DB.prepare('delete from ai_devices where user_id = ? and id = ?').bind(user, id).run()
   await told(context.env, user, '')
   return context.json({ ok: true })
 })
-
 aiVault.put('/vault', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -268,7 +241,6 @@ aiVault.put('/vault', async (context) => {
   if (rev > 0 && !(await holdsTheKey(context.env, user, auth))) {
     return context.json({ error: NOT_THE_KEY }, 403)
   }
-
   const at = now()
   const written =
     rev === 0
@@ -291,7 +263,6 @@ aiVault.put('/vault', async (context) => {
   await told(context.env, user, from)
   return context.json({ rev: held?.rev ?? rev + 1 })
 })
-
 aiVault.put('/rotate', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -323,7 +294,6 @@ aiVault.put('/rotate', async (context) => {
     return context.json({ error: NOT_THE_KEY }, 403)
   }
   const oldHash = (await authHash(auth ?? '')) ?? ''
-
   const changed = `exists (select 1 from ai_vaults where user_id = ?1 and rev = ?2 and auth_hash = ?3)`
   const after = [user, rev + 1, nextHash] as const
   const marks = (ids: readonly string[], first: number) => ids.map((_, at) => `?${String(at + first)}`).join(', ')
@@ -363,13 +333,11 @@ aiVault.put('/rotate', async (context) => {
   await told(context.env, user, from)
   return context.json({ rev: rev + 1 })
 })
-
 aiVault.delete('/vault', async (context) => {
   const user = context.get('user').id
   const allowed =
     (await holdsTheKey(context.env, user, await authIn(context))) || !(await anyAllowed(context.env, user))
   if (!allowed) return context.json({ error: NOT_THE_KEY }, 403)
-
   await context.env.DB.batch([
     context.env.DB.prepare('delete from ai_vaults where user_id = ?').bind(user),
     context.env.DB.prepare('update ai_devices set wrapped = null, approved_at = null where user_id = ?').bind(user),

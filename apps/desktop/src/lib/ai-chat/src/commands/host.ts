@@ -16,11 +16,8 @@ export interface Host {
   line(thread: Thread, text: string, code?: NoticeCode, threads?: readonly string[]): void
   ask(thread: Thread, messages: readonly Message[], signal?: AbortSignal): Promise<string>
 }
-
 const providerOf = (id: string): Provider | null => ai.provider(id)
-
 const setup: Setup = { provider: providerOf, instructions: instructionsFor }
-
 function ending(): { on: (event: EngineEvent) => void; ended: () => Ended } {
   let stop: Ended['stop'] = 'end'
   let error: string | undefined
@@ -46,7 +43,6 @@ function ending(): { on: (event: EngineEvent) => void; ended: () => Ended } {
     }),
   }
 }
-
 async function directTurn(thread: Thread, text: string, once: Once = {}): Promise<Ended> {
   const provider = providerOf(thread.provider)
   if (!provider)
@@ -73,7 +69,6 @@ async function directTurn(thread: Thread, text: string, once: Once = {}): Promis
   }
   return heard.ended()
 }
-
 export function hostOf(panel: Panel): Host {
   const touched = (thread: Thread) => {
     if (panel.touched) panel.touched(thread)
@@ -112,7 +107,6 @@ export function hostOf(panel: Panel): Host {
     },
   }
 }
-
 export function sendHere(host: Host, thread: Thread | null, text: string, once?: Once): void {
   const { panel } = host
   if (!once) {
@@ -127,7 +121,6 @@ export function sendHere(host: Host, thread: Thread | null, text: string, once?:
   if (once.mode) panel.setMode(once.mode)
   panel.send(text)
 }
-
 export function waitFor(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
     if (signal.aborted) {

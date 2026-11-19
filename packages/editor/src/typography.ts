@@ -12,21 +12,16 @@ const RULES: { pattern: RegExp; insert: string; dash?: boolean }[] = [
   { pattern: /(--)$/, insert: '–', dash: true },
   { pattern: /(\.\.\.)$/, insert: '…' },
 ]
-
 const BREAK = /^[ \t]{0,3}(?:>[ \t]*)*[-*_]+$/
-
 export interface Replacement {
   consumed: number
   insert: string
 }
-
 export const typingBreak = (before: string): boolean => BREAK.test(before)
-
 const DIVIDER_ROW = /^[ \t]*(?:>[ \t]*)*\|?[ \t:|-]*$/
 const COMMENT_OPENING = /<!-?-?$/
 const TAG_OPEN =
   /<[A-Za-z][\w-]*(?:\s+[\w:-]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s+[\w:-]+\s*=\s*(?:"[^"]*|'[^']*)?$/
-
 function withinMaths(before: string): boolean {
   const bare = before.replace(/\\./g, '').replace(/(`+)[\s\S]*?\1/g, '')
   let open = false
@@ -36,12 +31,10 @@ function withinMaths(before: string): boolean {
   }
   return open
 }
-
 function withinOpen(before: string, opening: string, closing: string): boolean {
   const opened = before.lastIndexOf(opening)
   return opened >= 0 && !before.includes(closing, opened + opening.length)
 }
-
 function writingMarkup(before: string): boolean {
   return (
     withinOpen(before, '[[', ']]') ||
@@ -52,26 +45,21 @@ function writingMarkup(before: string): boolean {
     COMMENT_OPENING.test(before.slice(0, -1))
   )
 }
-
 export function smartReplacement(before: string): Replacement | null {
   if (writingMarkup(before)) return null
   const markup = typingBreak(before) || (before.includes('|') && DIVIDER_ROW.test(before))
-
   for (const rule of RULES) {
     if (markup && rule.dash) continue
-
     const [, replaced = ''] = rule.pattern.exec(before) ?? []
     if (replaced) return { consumed: replaced.length, insert: rule.insert }
   }
   return null
 }
-
 export function inCodeSpan(lineText: string, offset: number, inItem = false): boolean {
   if (/^\s*(```|~~~)/.test(lineText)) return true
   if (!inItem && /^\s{4,}/.test(lineText)) return true
   return (lineText.slice(0, offset).match(/`/g)?.length ?? 0) % 2 === 1
 }
-
 const STRAIGHT = new Set([
   'InlineCode',
   'CodeText',
@@ -89,7 +77,6 @@ const STRAIGHT = new Set([
   'URL',
   'LinkTitle',
 ])
-
 function inOpenFrontMatter(state: EditorState, pos: number): boolean {
   const doc = state.doc
   const at = doc.lineAt(pos).number
@@ -100,30 +87,23 @@ function inOpenFrontMatter(state: EditorState, pos: number): boolean {
   }
   return true
 }
-
 export function keepsStraightQuotes(state: EditorState, pos: number): boolean {
   if (inOpenFrontMatter(state, pos)) return true
   const line = state.doc.lineAt(pos)
   const inner = syntaxTree(state).resolveInner(pos, -1)
   const inItem = enclosingNamed(inner, 'ListItem') !== null
   if (inCodeSpan(line.text, pos - line.from, inItem)) return true
-
   return enclosingNamed(inner, STRAIGHT) !== null
 }
-
 export const smartPunctuation = (): Extension =>
   Prec.high(
     EditorView.inputHandler.of((view, from, to, text) => {
       if (text.length !== 1 || !`"'-.`.includes(text)) return false
-
       if (keepsStraightQuotes(view.state, from)) return false
-
       const line = view.state.doc.lineAt(from)
       const replacement = smartReplacement(view.state.doc.sliceString(line.from, from) + text)
       if (!replacement) return false
-
       const start = from - (replacement.consumed - 1)
-
       view.dispatch({
         changes: { from: start, to, insert: replacement.insert },
         selection: { anchor: start + replacement.insert.length },

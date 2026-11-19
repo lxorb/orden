@@ -11,7 +11,6 @@ describe("Zen's sidebar", () => {
       ['Reading', null, null],
     ])
   })
-
   test('keeps every tab with a page, in order, and none of the stand-ins', () => {
     const tabs = readZenSession(SIDEBAR)?.tabs ?? []
     expect(tabs.map((one) => one.title)).toEqual([
@@ -26,7 +25,6 @@ describe("Zen's sidebar", () => {
       'Settings',
     ])
   })
-
   test('reads what each tab is beyond its page', () => {
     const tabs = readZenSession(SIDEBAR)?.tabs ?? []
     const [mail, news] = tabs
@@ -40,7 +38,6 @@ describe("Zen's sidebar", () => {
     expect(tabs.find((one) => one.title === 'Board')?.container).toBe(2)
     expect(tabs.find((one) => one.title === 'b - Search')?.url).toBe('https://search.example.com/?q=b')
   })
-
   test('reads the folders, a split view among them', () => {
     const folders = readZenSession(SIDEBAR)?.folders ?? []
     expect(folders.map((one) => [one.id, one.parent, one.split])).toEqual([
@@ -50,7 +47,6 @@ describe("Zen's sidebar", () => {
       ['f-later', null, false],
     ])
   })
-
   test("reads Firefox's session the same, each tab once and no private window", () => {
     const [mail, ...rest] = SIDEBAR.tabs
     const session = readZenSession({
@@ -69,13 +65,11 @@ describe("Zen's sidebar", () => {
         { tabs: [mail] },
       ],
     })
-
     expect(session?.spaces).toHaveLength(3)
     expect(session?.tabs.map((one) => one.title)[0]).toBe('Mail')
     expect(session?.tabs.filter((one) => one.title === 'Mail')).toHaveLength(1)
     expect(session?.tabs.some((one) => one.url.includes('secret'))).toBe(false)
   })
-
   test('is nothing where there are no spaces', () => {
     expect(readZenSession({ windows: [{ tabs: SIDEBAR.tabs }] })).toBeNull()
     expect(readZenSession({ spaces: [] })).toBeNull()

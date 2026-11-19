@@ -21,7 +21,6 @@
         true,
       )
   }
-
   function afterPress(run: () => void) {
     if (pressing) afterPresses.push(run)
     else run()
@@ -40,9 +39,7 @@
   import { leads, noteKey, webNotesFor, webNotesOf, type WebNote } from './web-notes'
 
   type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
-
   const NOTE = 'orden-note:'
-
   const {
     resting,
     address,
@@ -60,7 +57,6 @@
     onnote?: ((path: string) => void) | undefined
     held?: { halfTyped: HalfTyped | null; keyboard?: 'address' | 'page' | null }
   } = $props()
-
   const id = $props.id()
   let field = $state<HTMLInputElement>()
   let editing = $state(false)
@@ -71,20 +67,16 @@
   let composing = false
   const listing = $derived(editing && !shut && rows.length > 0)
   const byValue = $derived(new Map(rows.map((one) => [valueOf(one), one])))
-
   function valueOf(offer: Offer): string {
     return offer.kind === 'note' ? `${NOTE}${offer.note.path}` : offer.visit.url
   }
-
   function urlOf(offer: Offer): string {
     return offer.kind === 'note' ? offer.note.url : offer.visit.url
   }
-
   function offersFor(said: string): Offer[] {
     const pages = visited.suggest(book, said)
     const root = links.rootOf()
     if (!onnote || root === null) return pages.map((visit) => ({ kind: 'page', visit }))
-
     const notes = webNotesFor(
       said,
       webNotesOf(links.websitesHere, root, (key) => frecency.worth(key)),
@@ -102,23 +94,19 @@
       ...after,
     ]
   }
-
   $effect(() => {
     const box = field
     const face = rest()
     if (box && !editing && box.value !== face) box.value = face
   })
-
   function rest(): string {
     const half = held.halfTyped
     return half?.over === address ? half.value : resting
   }
-
   $effect(() => {
     if (!listing) return
     return untrack(() => overlays.show(() => (shut = true)))
   })
-
   export function take() {
     afterPress(() => {
       if (!here()) return
@@ -127,11 +115,9 @@
       restored = false
     })
   }
-
   function here(): boolean {
     return field?.isConnected === true
   }
-
   function remember() {
     const box = field
     if (!box || !holding) return
@@ -146,13 +132,10 @@
           }
         : null
   }
-
   let restored = false
   let holding = false
-
   function onFocus() {
     if (!here() || !field) return
-
     visited.wake(book)
     holding = true
     held.keyboard = 'address'
@@ -175,10 +158,8 @@
     typed = address
     field.select()
   }
-
   function onBlur() {
     if (!here() || !field) return
-
     remember()
     if (document.hasFocus() && !pressedOn?.closest('[data-tab]')) held.keyboard = null
     holding = false
@@ -187,66 +168,52 @@
     rows = []
     field.value = rest()
   }
-
   onMount(() => () => {
     if (holding) remember()
   })
-
   function finish() {
     const box = field
     if (!box) return
-
     const offer = visited.complete(book, typed)
     if (!offer || offer.text.length <= typed.length) return
-
     box.value = offer.text
     box.setSelectionRange(typed.length, offer.text.length)
   }
-
   function onInput(event: Event) {
     const box = field
     if (!box) return
-
     typed = box.value
     active = -1
     shut = false
     rows = offersFor(typed)
     remember()
-
     const typing = event instanceof InputEvent && event.inputType === 'insertText'
     if (!typing || composing || event.isComposing) return
     if (box.selectionStart !== box.value.length) return
-
     finish()
   }
-
   function resolved(said: string): string {
     const offer = visited.complete(book, said)
     return offer?.text === said ? offer.url : said
   }
-
   function move(step: 1 | -1) {
     const box = field
     if (!box) return
-
     let next = active + step
     if (next < -1) next = rows.length - 1
     if (next >= rows.length) next = -1
     active = next
-
     const row = rows[active]
     box.value = row ? shownAddress(urlOf(row)) : typed
     box.setSelectionRange(box.value.length, box.value.length)
     if (!row) finish()
   }
-
   function complete(): boolean {
     const box = field
     if (!box) return false
     const row = rows[active]
     const offered = box.selectionStart !== box.selectionEnd && box.selectionEnd === box.value.length
     if (!row && !offered) return false
-
     const text = row ? shownAddress(urlOf(row)) : box.value
     box.value = text
     box.setSelectionRange(text.length, text.length)
@@ -256,7 +223,6 @@
     remember()
     return true
   }
-
   function choose(value: string, aside = false) {
     const row = byValue.get(value)
     if (row?.kind === 'note' && onnote && !aside) {
@@ -268,23 +234,19 @@
     }
     go(row ? urlOf(row) : value, aside)
   }
-
   function go(said: string, aside = false) {
     onenter(said, aside, typed)
     field?.blur()
     held.halfTyped = null
   }
-
   function onKeydown(event: KeyboardEvent) {
     const box = field
     if (!box || event.isComposing) return
-
     if (listing && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
       event.preventDefault()
       move(event.key === 'ArrowDown' ? 1 : -1)
       return
     }
-
     const row = rows[active]
     if (listing && row?.kind === 'page' && event.key === 'Delete' && event.shiftKey) {
       event.preventDefault()
@@ -295,17 +257,14 @@
       box.value = next ? shownAddress(urlOf(next)) : typed
       return
     }
-
     if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
       if (complete()) event.preventDefault()
       return
     }
-
     if ((event.key === 'ArrowRight' || event.key === 'End') && !event.shiftKey) {
       typed = box.value
       return
     }
-
     if (event.key === 'Enter') {
       event.preventDefault()
       const dotted = event.ctrlKey || event.metaKey ? dotCom(typed) : null
@@ -313,9 +272,7 @@
       else go(dotted ?? resolved(box.value), event.altKey)
       return
     }
-
     if (event.key !== 'Escape') return
-
     event.preventDefault()
     event.stopPropagation()
     if (listing || box.value !== typed) {
@@ -324,7 +281,6 @@
       box.value = typed
       return
     }
-
     box.blur()
     held.halfTyped = null
   }
@@ -396,7 +352,6 @@
     min-width: min(7rem, 100%);
     display: flex;
   }
-
   .orden-field {
     flex: 1;
     min-width: 0;

@@ -12,24 +12,18 @@ export interface Call {
   path: string | null
   status: 'ok' | 'needs_approval' | 'error'
 }
-
 const KEPT = 200
-
 function text(value: unknown): string | null {
   return typeof value === 'string' && value !== '' ? value : null
 }
-
 export function readCall(line: unknown, seq = 0): Call | null {
   if (!isRecord(line)) return null
-
   const { at, agent, verb, tab, args, status } = line
   if (typeof at !== 'number' || typeof agent !== 'string' || typeof verb !== 'string') return null
   if (status !== 'ok' && status !== 'needs_approval' && status !== 'error') return null
   if (wordFor(verb) === null) return null
-
   const named = isRecord(args) ? args : {}
   const url = text(named.url)
-
   return {
     seq,
     at,
@@ -41,28 +35,22 @@ export function readCall(line: unknown, seq = 0): Call | null {
     status,
   }
 }
-
 export function callsOf(lines: readonly unknown[], agent: string): Call[] {
   const calls: Call[] = []
-
   for (let at = lines.length - 1; at >= 0 && calls.length < KEPT; at--) {
     const call = readCall(lines[at], at)
     if (call?.agent === agent) calls.push(call)
   }
-
   return calls
 }
-
 export function today(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10)
 }
-
 export function aboutOf(call: Call, titleOf: (tab: string) => string | null): string | null {
   if (call.path !== null) return nameOf(call.path).replace(/\.md$/i, '')
   if (call.url !== null) return shownHost(call.url)
   return call.tab === null ? null : titleOf(call.tab)
 }
-
 export function sessionMarkdown(name: string, calls: readonly Call[]): string {
   const ordered = [...calls].reverse()
   const first = ordered[0]
@@ -79,6 +67,5 @@ export function sessionMarkdown(name: string, calls: readonly Call[]): string {
     const mark = call.status === 'error' ? ' ✗' : call.status === 'needs_approval' ? ' ?' : ''
     return `- ${time} ${word}${link}${mark}`
   })
-
   return `## ${name}, ${day}\n\n${lines.join('\n')}\n`
 }

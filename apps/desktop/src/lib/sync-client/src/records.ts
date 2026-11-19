@@ -16,28 +16,22 @@ export interface Flight {
   push: string
   count: number
 }
-
 export interface DocNumbers {
   seq: number
   pulled: number
   pending: boolean
   flight: Flight | null
 }
-
 const DOC = 'doc:'
-
 export function numbersKey(id: string): string {
   return `${DOC}${id}`
 }
-
 const whole = (value: unknown): value is number => Number.isSafeInteger(value)
-
 function flightOf(value: unknown): Flight | null {
   if (typeof value !== 'object' || value === null) return null
   const { push, count } = value as Record<string, unknown>
   return typeof push === 'string' && whole(count) ? { push, count } : null
 }
-
 export function numbersOf(row: MetaRow): { id: string; numbers: DocNumbers } | null {
   if (!row.key.startsWith(DOC) || typeof row.value !== 'string') return null
   try {
@@ -53,35 +47,28 @@ export function numbersOf(row: MetaRow): { id: string; numbers: DocNumbers } | n
     return null
   }
 }
-
 export function numbersRow(id: string, numbers: DocNumbers): MetaRow {
   return { key: numbersKey(id), value: JSON.stringify(numbers) }
 }
-
 export function pendingBytes(chunks: readonly Uint8Array[]): Uint8Array | null {
   return chunks.length ? frame({ chunks: [...chunks] }) : null
 }
-
 export function pendingOf(bytes: Uint8Array | null): Uint8Array[] {
   if (!bytes) return []
   const value = unframe(bytes)
   if (!isRecord(value) || !Array.isArray(value.chunks)) return []
   return value.chunks.filter((one): one is Uint8Array => one instanceof Uint8Array)
 }
-
 export interface Merging {
   mine: string
   into: string
   create: CreateOp
 }
-
 export type Outgoing =
   { t: 'op'; op: Op; sent?: boolean } | { t: 'keep'; keep: KeepRequest } | { t: 'merge'; merge: Merging }
-
 export function outgoingBytes(record: Outgoing): Uint8Array {
   return frame(record)
 }
-
 export function outgoingOf(bytes: Uint8Array): Outgoing | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
@@ -105,18 +92,14 @@ export function outgoingOf(bytes: Uint8Array): Outgoing | null {
   }
   return null
 }
-
 export interface Wanted {
   docSeq: number
   epoch: number
 }
-
 const WANT = 'want:'
-
 export function wantKey(space: string): string {
   return `${WANT}${space}`
 }
-
 export function wantedOf(row: MetaRow): { space: string; wanted: Map<string, Wanted> } | null {
   if (!row.key.startsWith(WANT) || typeof row.value !== 'string') return null
   try {
@@ -133,23 +116,18 @@ export function wantedOf(row: MetaRow): { space: string; wanted: Map<string, Wan
     return null
   }
 }
-
 export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): MetaRow {
   const out: Record<string, [number, number]> = {}
   for (const [id, one] of wanted) out[id] = [one.docSeq, one.epoch]
   return { key: wantKey(space), value: JSON.stringify(out) }
 }
-
 const WANTS = 'wants:'
-
 export function wantOneKey(space: string, id: string): string {
   return `${WANTS}${space}/${id}`
 }
-
 export function wantOneRow(space: string, id: string, one: Wanted): MetaRow {
   return { key: wantOneKey(space, id), value: JSON.stringify([one.docSeq, one.epoch]) }
 }
-
 export function wantOneOf(row: MetaRow): { space: string; id: string; wanted: Wanted } | null {
   if (!row.key.startsWith(WANTS) || typeof row.value !== 'string') return null
   const named = row.key.slice(WANTS.length)
@@ -165,51 +143,40 @@ export function wantOneOf(row: MetaRow): { space: string; id: string; wanted: Wa
     return null
   }
 }
-
 export class Tracked<V> extends Map<string, V> {
   readonly dirty = new Set<string>()
   inOneRow = false
-
   override set(id: string, one: V): this {
     this.dirty.add(id)
     return super.set(id, one)
   }
-
   override delete(id: string): boolean {
     const had = super.delete(id)
     if (had) this.dirty.add(id)
     return had
   }
-
   override clear(): void {
     for (const id of this.keys()) this.dirty.add(id)
     super.clear()
   }
-
   took(id: string, one: V): void {
     super.set(id, one)
   }
 }
-
 export type Wants = Tracked<Wanted>
-
 export interface Ordering {
   on: boolean
   positions: Map<string, string>
   describes: boolean
   meta: Map<string, ItemMeta>
 }
-
 export function emptyOrdering(): Ordering {
   return { on: false, positions: new Map(), describes: false, meta: new Map() }
 }
-
 const ORDER = 'order:'
-
 export function orderKey(space: string): string {
   return `${ORDER}${space}`
 }
-
 export function orderingOf(row: MetaRow): { space: string; ordering: Ordering } | null {
   if (!row.key.startsWith(ORDER) || typeof row.value !== 'string') return null
   try {
@@ -236,7 +203,6 @@ export function orderingOf(row: MetaRow): { space: string; ordering: Ordering } 
     return null
   }
 }
-
 export function orderingRow(space: string, ordering: Ordering): MetaRow {
   return {
     key: orderKey(space),
@@ -248,22 +214,16 @@ export function orderingRow(space: string, ordering: Ordering): MetaRow {
     }),
   }
 }
-
 interface Went {
   paths: Map<string, string>
   back?: string
 }
-
 export type Gone = Map<string, Went>
-
 export const GONE_KEPT = 200
-
 const GONE = 'gone:'
-
 export function goneKey(space: string): string {
   return `${GONE}${space}`
 }
-
 export function goneOf(row: MetaRow): { space: string; gone: Gone } | null {
   if (!row.key.startsWith(GONE) || typeof row.value !== 'string') return null
   try {
@@ -284,7 +244,6 @@ export function goneOf(row: MetaRow): { space: string; gone: Gone } | null {
     return null
   }
 }
-
 export function goneRow(space: string, gone: Gone): MetaRow {
   const value: Record<string, { paths: Record<string, string>; back?: string }> = {}
   for (const [id, went] of gone) {
@@ -295,17 +254,14 @@ export function goneRow(space: string, gone: Gone): MetaRow {
   }
   return { key: goneKey(space), value: JSON.stringify(value) }
 }
-
 export type Against =
   | { t: 'moved'; update: Uint8Array; seq: number; at: number }
   | { t: 'file'; base: string; local: string }
   | { t: 'merge'; base: string; local: string; from: string }
   | { t: 'blob'; mine: string; theirs: string; at: number }
-
 export function againstBytes(against: Against): Uint8Array {
   return frame(against)
 }
-
 export function againstOf(bytes: Uint8Array): Against | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
@@ -334,25 +290,20 @@ export function againstOf(bytes: Uint8Array): Against | null {
   }
   return null
 }
-
 export interface Used {
   at: number
   size: number
 }
-
 export interface Keeping {
   on: boolean
   used: Tracked<Used>
   going: Set<string>
   refused?: boolean
 }
-
 const KEEP = 'keep:'
-
 export function keepKey(space: string): string {
   return `${KEEP}${space}`
 }
-
 export function keepingOf(row: MetaRow): { space: string; keeping: Keeping } | null {
   if (!row.key.startsWith(KEEP) || typeof row.value !== 'string') return null
   try {
@@ -377,7 +328,6 @@ export function keepingOf(row: MetaRow): { space: string; keeping: Keeping } | n
     return null
   }
 }
-
 export function keepingRow(space: string, keeping: Keeping): MetaRow {
   return {
     key: keepKey(space),
@@ -388,17 +338,13 @@ export function keepingRow(space: string, keeping: Keeping): MetaRow {
     }),
   }
 }
-
 const USED = 'used:'
-
 export function usedOneKey(space: string, id: string): string {
   return `${USED}${space}/${id}`
 }
-
 export function usedOneRow(space: string, id: string, one: Used): MetaRow {
   return { key: usedOneKey(space, id), value: JSON.stringify([one.at, one.size]) }
 }
-
 export function usedOneOf(row: MetaRow): { space: string; id: string; used: Used } | null {
   if (!row.key.startsWith(USED) || typeof row.value !== 'string') return null
   const named = row.key.slice(USED.length)

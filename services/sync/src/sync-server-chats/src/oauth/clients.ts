@@ -19,21 +19,15 @@ export interface Client {
   redirectUris: string[]
   secretHash: string | null
 }
-
 const MOST_REDIRECTS = 20
 const LONGEST_URI = 2048
-
 const MOST_CLIENTS = 5_000
-
 const FULL = failure('temporarily_unavailable', 'this server is not taking new clients right now')
-
 const UNUSED_FOR = 30 * 24 * 60 * 60 * 1000
 const LONGEST_DOCUMENT = 64_000
-
 function clientName(value: unknown): string {
   return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
 }
-
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text)
@@ -41,13 +35,11 @@ function parseJson(text: string): unknown {
     return null
   }
 }
-
 function uriList(value: unknown): [string, ...string[]] | null {
   if (!Array.isArray(value) || value.length === 0 || value.length > MOST_REDIRECTS) return null
   if (!value.every((one) => typeof one === 'string' && one.length <= LONGEST_URI)) return null
   return value as [string, ...string[]]
 }
-
 async function clientFromDocument(id: string): Promise<Client | null> {
   let url: URL
   try {
@@ -55,26 +47,20 @@ async function clientFromDocument(id: string): Promise<Client | null> {
   } catch {
     return null
   }
-
   if (url.protocol !== 'https:' || url.pathname === '/' || url.hash) return null
   if (privateHost(url.hostname)) return null
-
   try {
     const response = await fetch(id, {
       headers: { accept: 'application/json' },
       signal: AbortSignal.timeout(5000),
     })
     if (!response.ok) return null
-
     const text = await textAtMost(response, LONGEST_DOCUMENT)
     if (text === null) return null
-
     const document = JSON.parse(text) as Record<string, unknown>
     if (document.client_id !== id) return null
-
     const redirectUris = uriList(document.redirect_uris)
     if (!redirectUris?.every(redirectAllowed)) return null
-
     return {
       id,
       name: clientName(document.client_name) || url.hostname,
@@ -85,20 +71,15 @@ async function clientFromDocument(id: string): Promise<Client | null> {
     return null
   }
 }
-
 export async function clientFor(env: Env, id: string): Promise<Client | null> {
   if (!id || id.length > LONGEST_URI) return null
   if (/^https:\/\//i.test(id)) return clientFromDocument(id)
-
   const row = await env.DB.prepare('select id, name, redirect_uris, secret_hash from oauth_clients where id = ?')
     .bind(id)
     .first<{ id: string; name: string; redirect_uris: string; secret_hash: string | null }>()
-
   if (!row) return null
-
   const registered = uriList(parseJson(row.redirect_uris))
   if (!registered) return null
-
   return {
     id: row.id,
     name: row.name,
@@ -106,16 +87,13 @@ export async function clientFor(env: Env, id: string): Promise<Client | null> {
     secretHash: row.secret_hash,
   }
 }
-
 export const registration = new Hono<{ Bindings: Env }>()
-
 registration.post('/register', async (context) => {
   const parsed = await context.req.json<unknown>().catch(() => null)
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return context.json(failure('invalid_client_metadata', 'send a JSON object'), 400)
   }
   const body = parsed as Record<string, unknown>
-
   const redirectUris = uriList(body.redirect_uris)
   if (!redirectUris) {
     return context.json(
@@ -123,17 +101,14 @@ registration.post('/register', async (context) => {
       400,
     )
   }
-
   const refused = redirectUris.find((uri) => !redirectAllowed(uri))
   if (refused) {
     return context.json(failure('invalid_redirect_uri', `${refused} is not https, localhost or a known app`), 400)
   }
-
   const method = body.token_endpoint_auth_method
   const wantsSecret = typeof method === 'string' && method !== 'none'
   const name = clientName(body.client_name) || fallbackName(redirectUris[0])
   const uris = JSON.stringify(redirectUris)
-
   const existing = wantsSecret
     ? null
     : await context.env.DB.prepare(
@@ -141,22 +116,17 @@ registration.post('/register', async (context) => {
       )
         .bind(name, uris)
         .first<{ id: string; created_at: number }>()
-
   const id = existing?.id ?? newId()
   const secret = wantsSecret ? randomToken() : null
   const createdAt = existing?.created_at ?? now()
-
   if (!existing) {
     const held = await context.env.DB.prepare('select count(*) as many from oauth_clients').first<{
       many: number
     }>()
-
     if ((held?.many ?? 0) >= MOST_CLIENTS) return context.json(FULL, 503)
-
     if (!(await mayRegister(context.env, machineOf(context.req)))) {
       return context.json(failure('temporarily_unavailable', 'too many registrations from here, try again later'), 429)
     }
-
     const added = await context.env.DB.prepare(
       `insert into oauth_clients (id, name, redirect_uris, secret_hash, created_at, used_at)
        select ?1, ?2, ?3, ?4, ?5, ?5 where (select count(*) from oauth_clients) < ?6`,
@@ -165,7 +135,6 @@ registration.post('/register', async (context) => {
       .run()
     if (!added.meta.changes) return context.json(FULL, 503)
   }
-
   return context.json(
     {
       client_id: id,
@@ -184,11 +153,9 @@ registration.post('/register', async (context) => {
     201,
   )
 })
-
 export function clientWasUsed(env: Env, id: string): Promise<unknown> {
   return env.DB.prepare('update oauth_clients set used_at = ? where id = ?').bind(now(), id).run()
 }
-
 export async function expireClients(env: Env, at: number): Promise<number> {
   const gone = await env.DB.prepare(
     `delete from oauth_clients
@@ -198,6 +165,5 @@ export async function expireClients(env: Env, at: number): Promise<number> {
   )
     .bind(at - UNUSED_FOR)
     .run()
-
   return gone.meta.changes
 }

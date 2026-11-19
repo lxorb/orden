@@ -17,13 +17,11 @@ pub struct Sensed {
     lid: Option<bool>,
     locked: Option<bool>,
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Ticks {
     busy: u64,
     total: u64,
 }
-
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Power {
     battery: Option<f32>,
@@ -31,26 +29,20 @@ struct Power {
     lid: Option<bool>,
     locked: Option<bool>,
 }
-
 struct Held {
     ticks: Option<Ticks>,
     power: Option<(Instant, Power)>,
 }
-
 static HELD: Mutex<Held> = Mutex::new(Held {
     ticks: None,
     power: None,
 });
-
 const POWER_EVERY: Duration = Duration::from_secs(30);
-
 const LONGEST_APP: usize = 80;
-
 #[tauri::command]
 pub async fn time_sense() -> Sensed {
     orden_base::lane::off_the_runtime(sensed).await
 }
-
 fn sensed() -> Sensed {
     let input = crate::presence::input_idle();
     let ticks = platform::cpu_ticks();
@@ -73,7 +65,6 @@ fn sensed() -> Sensed {
         HELD.held().power = Some((Instant::now(), power.clone()));
         power
     });
-
     Sensed {
         idle_ms: input.map(|one| one.idle_ms),
         front: input.map(|one| one.front),
@@ -86,7 +77,6 @@ fn sensed() -> Sensed {
         locked: power.locked,
     }
 }
-
 fn busy_share(was: Ticks, now: Ticks) -> Option<f32> {
     let total = now.total.checked_sub(was.total)?;
     if total == 0 {
@@ -97,7 +87,6 @@ fn busy_share(was: Ticks, now: Ticks) -> Option<f32> {
     let share = (busy as f64 / total as f64) as f32;
     Some(share)
 }
-
 fn app_name(path: &str) -> Option<String> {
     let file = path.rsplit(['/', '\\']).next().unwrap_or(path);
     let bare = file
@@ -113,7 +102,6 @@ fn app_name(path: &str) -> Option<String> {
     let name = name.trim();
     (!name.is_empty()).then(|| name.to_owned())
 }
-
 #[cfg(any(target_os = "linux", test))]
 fn linux_ticks(stat: &str) -> Option<Ticks> {
     let line = stat.lines().find(|one| one.starts_with("cpu "))?;
@@ -132,7 +120,6 @@ fn linux_ticks(stat: &str) -> Option<Ticks> {
         total,
     })
 }
-
 #[cfg(any(target_os = "linux", test))]
 fn linux_memory(info: &str) -> Option<f32> {
     let read = |key: &str| -> Option<f64> {
@@ -148,7 +135,6 @@ fn linux_memory(info: &str) -> Option<f32> {
     let used = (1.0 - free / total).clamp(0.0, 1.0) as f32;
     Some(used)
 }
-
 #[cfg(target_os = "linux")]
 mod platform {
     use std::path::Path;
@@ -161,17 +147,14 @@ mod platform {
     pub fn cpu_ticks() -> Option<Ticks> {
         linux_ticks(&std::fs::read_to_string("/proc/stat").ok()?)
     }
-
     pub fn memory() -> Option<f32> {
         linux_memory(&std::fs::read_to_string("/proc/meminfo").ok()?)
     }
-
     fn read(path: &Path) -> Option<String> {
         std::fs::read_to_string(path)
             .ok()
             .map(|one| one.trim().to_owned())
     }
-
     fn battery() -> (Option<f32>, Option<bool>) {
         let Ok(supplies) = std::fs::read_dir("/sys/class/power_supply") else {
             return (None, None);
@@ -190,7 +173,6 @@ mod platform {
         }
         (None, None)
     }
-
     fn lid() -> Option<bool> {
         let lids = std::fs::read_dir("/proc/acpi/button/lid").ok()?;
         for lid in lids.flatten() {
@@ -200,9 +182,7 @@ mod platform {
         }
         None
     }
-
     const LOGIND: &str = "org.freedesktop.login1";
-
     fn ask(
         bus: &Connection,
         name: &str,
@@ -214,7 +194,6 @@ mod platform {
         bus.call_method(Some(name), path, Some(interface), method, body)
             .ok()
     }
-
     fn property(bus: &Connection, path: &str, interface: &str, name: &str) -> Option<OwnedValue> {
         ask(
             bus,
@@ -228,7 +207,6 @@ mod platform {
         .deserialize()
         .ok()
     }
-
     fn own_session(bus: &Connection) -> Option<String> {
         let id = std::env::var("XDG_SESSION_ID").ok()?;
         let path: OwnedObjectPath = ask(
@@ -244,7 +222,6 @@ mod platform {
         .ok()?;
         Some(path.as_str().to_owned())
     }
-
     fn display_session(bus: &Connection) -> Option<String> {
         let shown = property(
             bus,
@@ -255,7 +232,6 @@ mod platform {
         let (_, path): (String, OwnedObjectPath) = shown.try_into().ok()?;
         (path.as_str() != "/").then(|| path.as_str().to_owned())
     }
-
     fn locked_hint(bus: &Connection, path: &str) -> Option<bool> {
         bool::try_from(property(
             bus,
@@ -265,7 +241,6 @@ mod platform {
         )?)
         .ok()
     }
-
     fn logind_locked() -> Option<bool> {
         let bus = Connection::system().ok()?;
         [own_session(&bus), display_session(&bus)]
@@ -276,7 +251,6 @@ mod platform {
             ))
             .find_map(|path| locked_hint(&bus, &path))
     }
-
     fn screensaver_locked() -> Option<bool> {
         let bus = Connection::session().ok()?;
         [
@@ -308,14 +282,12 @@ mod platform {
                 .ok()
         })
     }
-
     fn locked() -> Option<bool> {
         match logind_locked() {
             Some(true) => Some(true),
             hint => screensaver_locked().filter(|active| *active).or(hint),
         }
     }
-
     pub fn power() -> Power {
         let (battery, charging) = battery();
         Power {
@@ -325,12 +297,10 @@ mod platform {
             locked: locked(),
         }
     }
-
     pub fn front_app() -> Option<String> {
         crate::front_x::front_class()
     }
 }
-
 #[cfg(windows)]
 mod platform {
     use windows::core::PWSTR;
@@ -350,11 +320,9 @@ mod platform {
 
     const NO_BATTERY: u8 = 128;
     const UNKNOWN: u8 = 255;
-
     fn ticks_of(time: FILETIME) -> u64 {
         (u64::from(time.dwHighDateTime) << 32) | u64::from(time.dwLowDateTime)
     }
-
     pub fn cpu_ticks() -> Option<Ticks> {
         let mut idle = FILETIME::default();
         let mut kernel = FILETIME::default();
@@ -374,7 +342,6 @@ mod platform {
             total,
         })
     }
-
     pub fn memory() -> Option<f32> {
         let mut status = MEMORYSTATUSEX {
             dwLength: u32::try_from(std::mem::size_of::<MEMORYSTATUSEX>()).ok()?,
@@ -388,7 +355,6 @@ mod platform {
         let used = (status.dwMemoryLoad as f32 / 100.0).clamp(0.0, 1.0);
         Some(used)
     }
-
     pub fn power() -> Power {
         let mut status = SYSTEM_POWER_STATUS::default();
         #[allow(unsafe_code)]
@@ -415,7 +381,6 @@ mod platform {
             locked: Some(locked),
         }
     }
-
     pub fn front_app() -> Option<String> {
         let mut process = 0u32;
         let mut buffer = [0u16; 1024];
@@ -444,7 +409,6 @@ mod platform {
         Some(String::from_utf16_lossy(&buffer[..length]))
     }
 }
-
 #[cfg(target_os = "macos")]
 #[allow(deprecated)]
 mod platform {
@@ -476,7 +440,6 @@ mod platform {
             total,
         })
     }
-
     fn sysctl(name: &str) -> Option<u64> {
         let name = std::ffi::CString::new(name).ok()?;
         let mut value = 0u64;
@@ -493,7 +456,6 @@ mod platform {
         };
         (read == 0).then_some(value)
     }
-
     pub fn memory() -> Option<f32> {
         let total = sysctl("hw.memsize")?;
         let page = sysctl("hw.pagesize")?;
@@ -524,14 +486,12 @@ mod platform {
         let share = (used as f64 / total as f64).clamp(0.0, 1.0) as f32;
         Some(share)
     }
-
     fn said(program: &str, args: &[&str]) -> Option<String> {
         let out = Command::new(program).args(args).output().ok()?;
         out.status
             .success()
             .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
     }
-
     pub fn power() -> Power {
         let battery = said("pmset", &["-g", "batt"]);
         let level = battery.as_deref().and_then(|text| {
@@ -567,13 +527,11 @@ mod platform {
             locked,
         }
     }
-
     pub fn front_app() -> Option<String> {
         let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
         Some(app.localizedName()?.to_string())
     }
 }
-
 #[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
 mod platform {
     use super::{Power, Ticks};
@@ -581,20 +539,16 @@ mod platform {
     pub fn cpu_ticks() -> Option<Ticks> {
         None
     }
-
     pub fn memory() -> Option<f32> {
         None
     }
-
     pub fn power() -> Power {
         Power::default()
     }
-
     pub fn front_app() -> Option<String> {
         None
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{app_name, busy_share, linux_memory, linux_ticks, Ticks};
@@ -610,7 +564,6 @@ mod tests {
         assert_eq!(app_name("  "), None);
         assert_eq!(app_name(&"x".repeat(200)).map(|one| one.len()), Some(80));
     }
-
     #[test]
     fn the_processor_is_as_busy_as_its_ticks_since_the_last_look() {
         let was = Ticks {
@@ -630,7 +583,6 @@ mod tests {
         assert_eq!(busy_share(was, was), None);
         assert_eq!(busy_share(was, Ticks { busy: 0, total: 10 }), None);
     }
-
     #[test]
     fn linux_says_its_processor_and_memory_in_its_own_files() {
         let stat = "cpu  100 0 100 700 100 0 0 0 0 0\ncpu0 1 2 3 4\n";
@@ -646,7 +598,6 @@ mod tests {
         assert_eq!(linux_memory(info), Some(0.75));
         assert_eq!(linux_memory("MemTotal: 0 kB\nMemAvailable: 0 kB\n"), None);
     }
-
     #[test]
     fn the_system_is_asked_without_trouble() {
         let first = super::sensed();

@@ -5,10 +5,8 @@
   import Spark from './Spark.svelte'
 
   const { id, reason }: { id: string; reason: string } = $props()
-
   const activity = started()
   const approval = $derived(activity.seen.approvals.find((one) => one.id === id) ?? null)
-
   function done() {
     if (approval) void activity.answer(approval, true).catch(() => undefined)
   }
@@ -34,7 +32,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .reason {
     flex: 1;
     min-width: 0;

@@ -8,29 +8,24 @@
   import ViewFrame from './ViewFrame.svelte'
 
   const { tab }: { tab: Tab } = $props()
-
   const which = $derived.by(() => {
     const spec = readViewSpec(tab.doc) ?? {}
     return JSON.stringify([spec.builtin, spec.space, spec.path, spec.tag, spec.view])
   })
-
   const made = $derived.by(() => {
     const view = which
     return untrack(() => make(view))
   })
-
   function make(view: string) {
     const spec = readViewSpec(tab.doc) ?? {}
     const path = tab.path
     const live = new LiveView(fileSource(path ?? '', spec.view))
     return { view, live, kit: kitFor(live, spec, path, false) }
   }
-
   $effect(() => {
     const now = made
     return untrack(() => now.live.start())
   })
-
   let seen = untrack(() => tab.doc)
   $effect(() => {
     const words = tab.doc

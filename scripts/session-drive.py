@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import sqlite3
@@ -8,13 +7,11 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-
 from devtools import Session
 from linux_app import CONFIG, run
 
 OUT, STEP = Path(sys.argv[1]), sys.argv[2]
 DEBUG = os.environ["ORDEN_CEF_DEBUG_PORT"]
-
 def pages():
     with urllib.request.urlopen(f"http://127.0.0.1:{DEBUG}/json/version", timeout=5) as answer:
         browser = json.loads(answer.read())["webSocketDebuggerUrl"]
@@ -24,23 +21,18 @@ def pages():
     finally:
         session.close()
     return [one for one in found if one.get("type") == "page"]
-
 def windows():
     tree = json.loads(subprocess.check_output(["swaymsg", "-t", "get_tree"]))
-
     def walk(node):
         own = 1 if node.get("pid") and node.get("type") in ("con", "floating_con") else 0
         return own + sum(walk(one) for one in node.get("nodes", []) + node.get("floating_nodes", []))
-
     return walk(tree)
-
 def site(found, private=False):
     return [
         one
         for one in found
         if one.get("url", "").startswith("http://127.0.0.1") and ("?private" in one["url"]) == private
     ]
-
 def titled(said, private=False):
     found = []
     for _ in range(60):
@@ -50,14 +42,12 @@ def titled(said, private=False):
         time.sleep(0.5)
     (OUT / "session-targets.json").write_text(json.dumps(found, indent=1))
     raise SystemExit(f"::error::{STEP}: no page of the site says {said!r}; see session-targets.json")
-
 def cookies():
     found = []
     for store in (CONFIG / "chromium").rglob("Cookies"):
         with sqlite3.connect(f"file:{store}?mode=ro", uri=True) as db:
             found += [tuple(row) for row in db.execute("select name, is_persistent from cookies")]
     return found
-
 def counted(found, wanted_pages=None, wanted_windows=None):
     seen, shown = len(found), windows()
     print(f"session: {STEP}: {seen} page targets, {shown} windows")
@@ -67,7 +57,6 @@ def counted(found, wanted_pages=None, wanted_windows=None):
     if wanted_windows is not None and shown != int(wanted_windows):
         raise SystemExit(f"::error::{STEP}: {shown} windows where the first run had {wanted_windows}")
     return seen, shown
-
 if STEP == "first":
     found = titled("a session cookie made")
     seen, shown = counted(found)

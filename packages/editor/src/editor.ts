@@ -83,23 +83,18 @@ export interface StateOptions {
   editPreview?: PreviewMount
   coveredBelow?: () => number
 }
-
 export interface EditorOptions extends StateOptions {
   parent: HTMLElement
 }
-
 const carried: Extension[] = []
-
 export function carryIntoEditors(extension: Extension): void {
   if (!carried.includes(extension)) carried.push(extension)
 }
-
 export function editorState(options: StateOptions): EditorState {
   const { doc = '', onChange, onImage, resolveImage, onSelection } = options
   const { openLink, openNote, nameBlock, writeLink, shared, selection, folds } = options
   const { editPreview, carriedNotes } = options
   const text = shared ? shared.text : doc
-
   const state = EditorState.create({
     doc: text,
     ...(selection ? { selection: { anchor: Math.min(Math.max(0, selection.anchor), text.length) } } : {}),
@@ -195,25 +190,20 @@ export function editorState(options: StateOptions): EditorState {
       }),
     ],
   })
-
   return withFolds(state, folds ?? [])
 }
-
 function hasDollar(text: Text): boolean {
   for (const iter = text.iter(); !iter.next().done;) if (iter.value.includes('$')) return true
   return false
 }
-
 const mathsPreview = ViewPlugin.fromClass(
   class {
     private inner: (PluginValue & { update(update: ViewUpdate): void }) | null = null
     private asked = false
     private gone = false
-
     constructor(view: EditorView) {
       if (hasDollar(view.state.doc)) this.open(view)
     }
-
     update(update: ViewUpdate) {
       if (this.inner) {
         this.inner.update(update)
@@ -223,7 +213,6 @@ const mathsPreview = ViewPlugin.fromClass(
         if (hasDollar(inserted)) this.open(update.view)
       })
     }
-
     private open(view: EditorView) {
       if (this.asked) return
       this.asked = true
@@ -231,19 +220,15 @@ const mathsPreview = ViewPlugin.fromClass(
         if (!this.gone) this.inner = openPreview(view)
       })
     }
-
     destroy() {
       this.gone = true
       this.inner?.destroy?.()
     }
   },
 )
-
 const coveredBelow = (covered: () => number) => EditorView.scrollMargins.of(() => ({ bottom: covered() }))
-
 export function createEditor(options: EditorOptions): EditorView {
   const view = new EditorView({ parent: options.parent, state: editorState(options) })
-
   options.shared?.join(view)
   return view
 }

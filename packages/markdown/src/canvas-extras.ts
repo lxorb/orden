@@ -3,25 +3,20 @@ const NODE_FIELDS = new Set(
 )
 const EDGE_FIELDS = new Set('id fromNode fromSide fromEnd toNode toSide toEnd color label'.split(' '))
 const TOP_FIELDS = new Set(['nodes', 'edges', 'orden', 'nib'])
-
 export function ownOf(file: Record<string, unknown>): Fields | undefined {
   if (isRecord(file.orden)) return file.orden
   return isRecord(file.nib) ? file.nib : undefined
 }
-
 function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
   delete file.nib
   if (own) file.orden = own
   else delete file.orden
 }
-
 const ORDEN_FIELDS = new Set(
   'version icon iconColor pages ink shapes order words locked at gone moved outside'.split(' '),
 )
 const RECORD = 'outside'
-
 type Fields = Record<string, unknown>
-
 export interface Extras {
   top: Fields
   nib: Fields
@@ -33,16 +28,11 @@ export interface Extras {
   generations: Map<string, number>
   buried: Map<string, number>
 }
-
 type Kind = 'node' | 'edge' | 'ink' | 'shape' | 'field' | 'top' | 'nib'
-
 const named = (kind: Kind, id: string): string => `${kind}:${id}`
-
 const isRecord = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const idOf = (value: Fields): string | null => (typeof value.id === 'string' && value.id ? value.id : null)
-
 function beyond(value: Fields, known: ReadonlySet<string>): Fields | null {
   let out: Fields | null = null
   for (const [key, held] of Object.entries(value)) {
@@ -52,7 +42,6 @@ function beyond(value: Fields, known: ReadonlySet<string>): Fields | null {
   }
   return out
 }
-
 const none = (): Extras => ({
   top: {},
   nib: {},
@@ -64,7 +53,6 @@ const none = (): Extras => ({
   generations: new Map(),
   buried: new Map(),
 })
-
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
   if (isRecord(value)) {
@@ -73,7 +61,6 @@ function canonical(value: unknown): string {
   }
   return JSON.stringify(value ?? null)
 }
-
 function fingerprint(value: unknown): string {
   let hash = 0x811c9dc5
   const text = canonical(value)
@@ -83,7 +70,6 @@ function fingerprint(value: unknown): string {
   }
   return hash.toString(36)
 }
-
 function everyOf(extras: Extras): Map<string, unknown> {
   const out = new Map<string, unknown>()
   for (const [key, held] of Object.entries(extras.top)) out.set(named('top', key), held)
@@ -95,7 +81,6 @@ function everyOf(extras: Extras): Map<string, unknown> {
   for (const [id, held] of extras.fields) out.set(named('field', id), held)
   return out
 }
-
 function entryOf(entry: unknown): { print: string | null; generation: number } | null {
   if (typeof entry !== 'string') return null
   const buried = entry.startsWith('~')
@@ -105,9 +90,7 @@ function entryOf(entry: unknown): { print: string | null; generation: number } |
   if (buried) return { print: null, generation }
   return at > 0 ? { print: entry.slice(0, at), generation } : null
 }
-
 export const noExtras = (): Extras => none()
-
 export function extrasFrom(
   parsed: Fields,
   nodes: ReadonlySet<string>,
@@ -115,13 +98,11 @@ export function extrasFrom(
   ink: ReadonlySet<string> = new Set(),
 ): Extras {
   const out = none()
-
   for (const [key, held] of Object.entries(parsed)) {
     if (!TOP_FIELDS.has(key)) out.top[key] = held
   }
   const own = ownOf(parsed)
   if (own) out.nib = beyond(own, ORDEN_FIELDS) ?? {}
-
   const unreadIn = (list: unknown, read: ReadonlySet<string>, known: ReadonlySet<string>) => {
     const unread = new Map<string, Fields>()
     if (!Array.isArray(list)) return unread
@@ -144,7 +125,6 @@ export function extrasFrom(
     out.ink = unreadOnly(own.ink, ink)
     out.shapes = unreadOnly(own.shapes, nodes)
   }
-
   const record = own?.[RECORD]
   const said = isRecord(record) ? record : {}
   const now = everyOf(out)
@@ -161,7 +141,6 @@ export function extrasFrom(
   }
   return out
 }
-
 function unreadOnly(list: unknown, read: ReadonlySet<string>): Map<string, Fields> {
   const unread = new Map<string, Fields>()
   if (!Array.isArray(list)) return unread
@@ -172,7 +151,6 @@ function unreadOnly(list: unknown, read: ReadonlySet<string>): Map<string, Field
   }
   return unread
 }
-
 export function holdsExtras(extras: Extras | undefined): extras is Extras {
   if (!extras) return false
   return (
@@ -186,23 +164,19 @@ export function holdsExtras(extras: Extras | undefined): extras is Extras {
     extras.buried.size > 0
   )
 }
-
 const either = (ours: unknown, theirs: unknown): unknown =>
   JSON.stringify(ours) <= JSON.stringify(theirs) ? ours : theirs
-
 export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Extras {
   const mine = everyOf(ours)
   const yours = everyOf(theirs)
   const out = none()
   const names = new Set([...mine.keys(), ...yours.keys(), ...ours.buried.keys(), ...theirs.buried.keys()])
-
   for (const name of names) {
     const one = mine.get(name)
     const other = yours.get(name)
     const oneAt = ours.generations.get(name) ?? 0
     const otherAt = theirs.generations.get(name) ?? 0
     const buried = Math.max(ours.buried.get(name) ?? -1, theirs.buried.get(name) ?? -1)
-
     let value: unknown
     let at: number
     if (one !== undefined && other !== undefined) {
@@ -217,7 +191,6 @@ export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Ex
       continue
     }
     out.generations.set(name, at)
-
     const split = name.indexOf(':')
     const kind = name.slice(0, split) as Kind
     const id = name.slice(split + 1)
@@ -229,7 +202,6 @@ export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Ex
   }
   return out
 }
-
 function mapOf(extras: Extras, kind: Kind): Map<string, Fields> {
   if (kind === 'node') return extras.nodes
   if (kind === 'edge') return extras.edges
@@ -237,22 +209,18 @@ function mapOf(extras: Extras, kind: Kind): Map<string, Fields> {
   if (kind === 'shape') return extras.shapes
   return extras.fields
 }
-
 export function withExtras(text: string, extras: Extras | undefined): string {
   if (!holdsExtras(extras)) return text
-
   const file = JSON.parse(text) as Fields
   const nodes = Array.isArray(file.nodes) ? (file.nodes as Fields[]) : []
   const edges = Array.isArray(file.edges) ? (file.edges as Fields[]) : []
   const placed = new Set(nodes.map((node) => idOf(node)))
-
   for (const node of nodes) Object.assign(node, extras.fields.get(idOf(node) ?? '') ?? {})
   for (const [id, node] of extras.nodes) {
     if (placed.has(id)) continue
     nodes.push(node)
     placed.add(id)
   }
-
   const joined = new Set(edges.map((edge) => idOf(edge)))
   for (const edge of edges) Object.assign(edge, extras.fields.get(idOf(edge) ?? '') ?? {})
   for (const [id, edge] of extras.edges) {
@@ -261,10 +229,8 @@ export function withExtras(text: string, extras: Extras | undefined): string {
     edges.push(edge)
     joined.add(id)
   }
-
   file.nodes = nodes
   file.edges = edges
-
   const own = ownOf(file) ?? {}
   const kept = { ink: extras.ink, shapes: extras.shapes }
   for (const [key, unread] of Object.entries(kept)) {
@@ -278,7 +244,6 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   for (const [key, held] of Object.entries(extras.top)) {
     if (!TOP_FIELDS.has(key)) file[key] = held
   }
-
   const written = none()
   written.top = Object.fromEntries(Object.entries(extras.top).filter(([key]) => !TOP_FIELDS.has(key)))
   written.nib = extras.nib
@@ -301,10 +266,8 @@ export function withExtras(text: string, extras: Extras | undefined): string {
     ...(Object.keys(record).length ? { [RECORD]: record } : {}),
   }
   keptOwn(file, Object.keys(section).length ? section : null)
-
   return `${JSON.stringify(file, null, '\t')}\n`
 }
-
 export function extrasText(extras: Extras): string {
   const sorted = (map: Map<string, Fields>) => [...map].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
   return JSON.stringify({
@@ -319,7 +282,6 @@ export function extrasText(extras: Extras): string {
     buried: [...extras.buried].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
   })
 }
-
 export function extrasRead(text: unknown): Extras {
   if (typeof text !== 'string') return none()
   let parsed: unknown

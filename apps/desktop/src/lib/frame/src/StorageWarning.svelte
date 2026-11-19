@@ -41,19 +41,16 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-lg);
   }
-
   p {
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .actions {
     display: flex;
     gap: var(--space-3);
   }
-
   button {
     padding: 0;
     border: none;
@@ -62,25 +59,20 @@
     font-size: var(--text-sm);
     cursor: default;
   }
-
   .quiet {
     color: var(--muted-strong);
   }
-
   .quiet:hover {
     color: var(--text-strong);
   }
-
   .link {
     color: var(--accent);
     font-weight: var(--weight-strong);
   }
-
   :global([data-touch]) .toast {
     justify-self: stretch;
     max-width: none;
   }
-
   :global([data-touch]) button {
     min-height: var(--touch-target);
   }

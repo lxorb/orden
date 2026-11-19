@@ -1,12 +1,9 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = "# Flying\n\nA note that leaves as a file.\n"
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -17,7 +14,6 @@ async (note) => {
   return written.name
 }
 """
-
 WATCH = """
 () => {
   window.__flights = { seen: 0, most: 0, places: [], pressable: false }
@@ -36,20 +32,16 @@ WATCH = """
   requestAnimationFrame(look)
 }
 """
-
 SAID = "() => document.querySelector('p.orden-said[aria-live]')?.textContent ?? ''"
-
 def is_true(claim: bool, what: str) -> None:
     if claim:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def export(page: Page) -> None:
     go = DRIVE.pick_export(page, "txt")
     with page.expect_download(timeout=40000):
         go.click()
-
 def opened(browser: Browser, reduced: bool) -> tuple[object, Page]:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820},
@@ -70,10 +62,8 @@ def opened(browser: Browser, reduced: bool) -> tuple[object, Page]:
     )
     page.evaluate(WATCH)
     return context, page
-
 def flying(browser: Browser) -> None:
     context, page = opened(browser, reduced=False)
-
     export(page)
     page.wait_for_timeout(120)
     shot(page, "01-in-the-air")
@@ -87,7 +77,6 @@ def flying(browser: Browser) -> None:
     is_true(page.locator("[data-flight]").count() == 0, "and was gone once it landed")
     is_true("Downloading" in page.evaluate(SAID) and ".txt" in page.evaluate(SAID), "and was said")
     shot(page, "02-landed")
-
     flights = 0
     for _ in range(3):
         page.evaluate("() => { window.__flights.seen = 0 }")
@@ -96,26 +85,19 @@ def flying(browser: Browser) -> None:
         flights += 1 if page.evaluate("() => window.__flights.seen") > 3 else 0
     say(f"[again] {flights} of 3 exports in a row flew")
     is_true(flights == 3, "every export in a row flies, not only the first")
-
     context.close()
-
 def still(browser: Browser) -> None:
     context, page = opened(browser, reduced=True)
-
     export(page)
     page.wait_for_timeout(900)
     watched = page.evaluate("() => window.__flights")
     is_true(watched["seen"] == 0, "nothing flies for a reader who asked for less movement")
     is_true("Downloading" in page.evaluate(SAID), "and the download is still said")
     shot(page, "03-still")
-
     context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         flying(browser)
         still(browser)
-
     return DRIVE.verdict("a download flies to where downloads are, and is said")
-
 raise SystemExit(main())

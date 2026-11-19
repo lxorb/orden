@@ -2,11 +2,8 @@ import { Collector, fieldsOf, itemOf, loginOf, noteOf } from './build'
 import type { Imported } from './types'
 
 const HEADERS = ['Websites', 'Applications', 'Other Accounts', 'Notes'] as const
-
 type Header = (typeof HEADERS)[number]
-
 const LONG_KEYS = new Set(['Comment', 'Text'])
-
 function entryOf(lines: readonly string[]): Map<string, string> {
   const entry = new Map<string, string>()
   let long: string | null = null
@@ -28,7 +25,6 @@ function entryOf(lines: readonly string[]): Map<string, string> {
   }
   return entry
 }
-
 function sectionsOf(text: string): { header: Header; entries: Map<string, string>[] }[] {
   const sections: { header: Header; entries: Map<string, string>[] }[] = []
   let current: { header: Header; entries: Map<string, string>[] } | null = null
@@ -52,7 +48,6 @@ function sectionsOf(text: string): { header: Header; entries: Map<string, string
   flush()
   return sections
 }
-
 export function parseKaspersky(text: string): Imported {
   const into = new Collector('Kaspersky')
   for (const { header, entries } of sectionsOf(text)) {

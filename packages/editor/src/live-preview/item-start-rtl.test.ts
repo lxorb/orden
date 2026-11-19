@@ -23,13 +23,10 @@ beforeAll(() => {
     })
   }
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, cursor: number) {
   const state = parsed(
     EditorState.create({
@@ -49,32 +46,25 @@ function viewOf(doc: string, cursor: number) {
   view.dispatch({})
   return view
 }
-
 function press(view: EditorView, key: string) {
   const event = new KeyboardEvent('keydown', { key, cancelable: true })
   return runScopeHandlers(view, event, 'editor')
 }
-
 describe('ArrowLeft at the start of a right-to-left item', () => {
   test('moves on into the words, as left is forward on that line', () => {
     const doc = 'intro\n- שלום עולם\n\nend'
     const start = doc.indexOf('שלום')
     const view = viewOf(doc, start)
     expect(view.textDirectionAt(start)).toBe(1)
-
     press(view, 'ArrowLeft')
-
     expect(view.state.doc.lineAt(view.state.selection.main.head).number).toBe(2)
     expect(view.state.selection.main.head).toBe(start + 1)
   })
-
   test('ArrowRight there steps back out of the item, as right is backward on that line', () => {
     const doc = 'intro\n- שלום עולם\n\nend'
     const start = doc.indexOf('שלום')
     const view = viewOf(doc, start)
-
     press(view, 'ArrowRight')
-
     expect(view.state.selection.main.head).toBe(doc.indexOf('\n'))
   })
 })

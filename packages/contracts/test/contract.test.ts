@@ -81,7 +81,6 @@ describe('branded ids', () => {
     expect(spaceId('x'.repeat(LONGEST_ID + 1))).toBeNull()
     expect(userId('u1')).toBe('u1')
   })
-
   it('keeps an entry id out of the file system', () => {
     expect(itemId('note-1')).toBe('note-1')
     expect(itemId('a/b')).toBeNull()
@@ -91,7 +90,6 @@ describe('branded ids', () => {
     expect(noteId('n')).toBe('n')
     expect(isEntryId('fine')).toBe(true)
   })
-
   it('brands are distinct at the type level and plain strings at runtime', () => {
     const space = spaceId('s')!
     const note = noteId('n')!
@@ -101,7 +99,6 @@ describe('branded ids', () => {
     takesSpace(note)
     expect(typeof space).toBe('string')
   })
-
   it('knows a ULID and a note path', () => {
     expect(isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAV')).toBe(true)
     expect(isUlid('not a ulid')).toBe(false)
@@ -110,7 +107,6 @@ describe('branded ids', () => {
     expect(notePath('a\0b')).toBeNull()
   })
 })
-
 describe('results', () => {
   it('never throws: a failure is a value with its module and kind', () => {
     const failed = attempt('contracts', () => {
@@ -123,7 +119,6 @@ describe('results', () => {
     }
     expect(attempt('contracts', () => 3)).toEqual(ok(3))
   })
-
   it('maps and unwraps', () => {
     const one: Result<number> = ok(2)
     expect(mapResult(one, (n) => n * 2)).toEqual(ok(4))
@@ -133,7 +128,6 @@ describe('results', () => {
     expect(isOk(one)).toBe(true)
     expect(isOk(bad)).toBe(false)
   })
-
   it('leaves out status and cause when not given', () => {
     expect(failure('contracts', 'invalid', 'no')).toEqual({
       kind: 'invalid',
@@ -142,27 +136,23 @@ describe('results', () => {
     })
     expect(failure('contracts', 'refused', 'no', { status: 403 }).status).toBe(403)
   })
-
   it('catches an async rejection the same way', async () => {
     const failed = await attemptAsync('contracts', () => Promise.reject(new Error('late')), 'timeout')
     expect(failed).toMatchObject({ ok: false, error: { kind: 'timeout', message: 'late' } })
     expect(await attemptAsync('contracts', () => Promise.resolve('fine'))).toEqual(ok('fine'))
   })
 })
-
 describe('shared objects', () => {
   it('lists the entry kinds the sync wire carries', () => {
     expect(ENTRY_KINDS).toEqual(['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder'])
     expect(isEntryKind('url')).toBe(true)
     expect(isEntryKind('settings')).toBe(false)
   })
-
   it('normalises line endings as the workspace does', () => {
     expect(unixLines('a\r\nb\rc\n')).toBe('a\nb\nc\n')
     const plain = 'a\nb'
     expect(unixLines(plain)).toBe(plain)
   })
-
   it('knows roles and schemes', () => {
     expect(isSpaceRole('owner')).toBe(true)
     expect(isSpaceRole('admin')).toBe(false)
@@ -171,7 +161,6 @@ describe('shared objects', () => {
     expect(isScheme('system')).toBe(false)
   })
 })
-
 describe('shell extension points', () => {
   it('names every tab kind the workspace has', () => {
     expect([...TAB_KINDS].sort()).toEqual(
@@ -196,7 +185,6 @@ describe('shell extension points', () => {
     expect(isTabKind('note')).toBe(true)
     expect(isTabKind('folder')).toBe(false)
   })
-
   it('keeps one part per sidebar panel, the last registered, until it is taken back', () => {
     const first = { id: 'ask', unread: () => true } as const
     const second = { id: 'ask', unread: () => false } as const
@@ -210,7 +198,6 @@ describe('shell extension points', () => {
     expect(sidebarPart('ask')).toBe(null)
     expect(sidebarPart('time')).toBe(null)
   })
-
   it('asks a port for each kind of thing quitting would stop', async () => {
     expect([...STOPPING_KINDS]).toEqual(['terminal', 'thread'])
     const row = { window: 'main', kind: 'thread', id: 'a', name: 'A', busy: true } as const
@@ -223,7 +210,6 @@ describe('shell extension points', () => {
     expect(portProvided('quit.terminal')).toBe(false)
     unbind()
   })
-
   it('may stop when nothing asks, and otherwise as the asking port answers', async () => {
     expect(await mayStop('restart')).toBe(true)
     const asked: string[] = []
@@ -237,21 +223,18 @@ describe('shell extension points', () => {
     expect(asked).toEqual(['restart'])
     unbind()
   })
-
   it('only takes events under the app scheme', () => {
     expect(isEventName('orden://open-url')).toBe(true)
     expect(isEventName('orden://')).toBe(false)
     expect(isEventName('https://open-url')).toBe(false)
   })
 })
-
 describe('ports', () => {
   it('answers a missing port with a result, not a throw, and the bound one once provided', () => {
     expect(portProvided('sync.clock')).toBe(false)
     const missing = portOf('sync.clock')
     expect(missing.ok).toBe(false)
     if (!missing.ok) expect(missing.error.kind).toBe('missing')
-
     const heard: number[] = []
     whenPortProvided('sync.clock', (clock) => heard.push(clock.now()))
     expect(heard).toEqual([])
@@ -265,11 +248,9 @@ describe('ports', () => {
         0,
       ),
     ).toBe(7)
-
     unbind()
     expect(portProvided('sync.clock')).toBe(false)
   })
-
   it('says a notice where the shell shows one, and nowhere before it is bound', () => {
     expect(() => sayNotice('lost')).not.toThrow()
     const said: string[] = []
@@ -278,7 +259,6 @@ describe('ports', () => {
     unbind()
     expect(said).toEqual(['That image does not fit in your storage.'])
   })
-
   it('throws for a needed port nothing bound, naming it, and hands over the bound one', () => {
     expect(() => needPort('sync.clock')).toThrow("no module has provided the port 'sync.clock' yet")
     const clock = { now: () => 3, waited: () => Promise.resolve() }
@@ -286,7 +266,6 @@ describe('ports', () => {
     expect(needPort('sync.clock')).toBe(clock)
     unbind()
   })
-
   it('lets a later binding replace an earlier one, and an old unbind leave the new one alone', () => {
     const first = providePort('sync.clock', { now: () => 1, waited: () => Promise.resolve() })
     const second = providePort('sync.clock', { now: () => 2, waited: () => Promise.resolve() })
@@ -300,23 +279,19 @@ describe('ports', () => {
     second()
     expect(portProvided('sync.clock')).toBe(false)
   })
-
   it('asks every writer still holding words for them, and leaves the others when one lets go', () => {
     const asked: string[] = []
     const first = holdEdits(() => asked.push('first'))
     const second = holdEdits(() => asked.push('second'))
     flushHeldEdits()
     expect(asked).toEqual(['first', 'second'])
-
     second()
     flushHeldEdits()
     expect(asked).toEqual(['first', 'second', 'first'])
-
     first()
     flushHeldEdits()
     expect(asked).toEqual(['first', 'second', 'first'])
   })
-
   it('answers the web pages with blank ones and nothing held until the web tab binds them', async () => {
     const none = webPages()
     expect(none.cuts).toBe(false)
@@ -349,7 +324,6 @@ describe('ports', () => {
     await expect(none.letGo()).resolves.toBeUndefined()
     await expect(none.bringHistory([{ url: 'https://a.example/' }])).resolves.toBeUndefined()
     await expect(none.takeEngine({ id: 'bing' })).resolves.toBe('same')
-
     const page = {
       url: 'https://a.example/',
       title: 'A',
@@ -372,10 +346,8 @@ describe('ports', () => {
     expect(webPages().of('t').url).toBeNull()
   })
 })
-
 describe('agent verbs', () => {
   const reader = { agent: null }
-
   it('runs a verb a registered table names, and refuses one no table names', async () => {
     const heard: string[] = []
     const unregister = registerAgentVerbs(() =>
@@ -399,7 +371,6 @@ describe('agent verbs', () => {
     unregister()
     expect(await agentVerbNames()).not.toContain('echo')
   })
-
   it('answers a verb that throws with a refusal, and loads a table that failed again', async () => {
     let fails = true
     const unregister = registerAgentVerbs(() =>
@@ -412,7 +383,6 @@ describe('agent verbs', () => {
     expect(await runAgentVerb('broken', {}, reader)).toEqual(agentRefusal('failed', 'fell over'))
     unregister()
   })
-
   it('reads the agent parts of a tab kind once loaded, and none for a kind nobody registered', async () => {
     const parts = { running: (tab: string) => tab === 't1' }
     const unregister = registerAgentTabKind('terminal', () => Promise.resolve(parts))
@@ -424,7 +394,6 @@ describe('agent verbs', () => {
     expect(agentTabKindParts('terminal')).toEqual({})
   })
 })
-
 describe('registry', () => {
   it('reads a palette kind once it is registered and loaded, and nothing before', async () => {
     expect(paletteKind('visits')).toBe(NO_VISITS)
@@ -437,7 +406,6 @@ describe('registry', () => {
     unregister()
     expect(paletteKind('visits')).toBe(NO_VISITS)
   })
-
   it('reads setting fields by section and group once loaded, and skips a load that fails', async () => {
     let on = false
     const unregister = registerSettingFields({
@@ -469,7 +437,6 @@ describe('registry', () => {
     broken()
     expect(settingFieldsIn('general', 'Browser')).toEqual([])
   })
-
   it('lists the settings parts of a section', () => {
     const part = {
       section: 'general' as const,
@@ -484,7 +451,6 @@ describe('registry', () => {
     unregister()
     expect(settingsPartsIn('general')).toEqual([])
   })
-
   it('loads the registered features before what they register, once, and again after a failed load', async () => {
     let tries = 0
     let fails = true
@@ -511,7 +477,6 @@ describe('registry', () => {
     ])
     unfeature()
   })
-
   it('reads a tab kind once loaded, nothing for a kind no feature registered, and skips a load that fails', async () => {
     expect(tabKindParts('terminal')).toBe(NO_TAB_KIND)
     expect(await tabKindLoaded('terminal')).toBe(NO_TAB_KIND)
@@ -533,7 +498,6 @@ describe('registry', () => {
     expect(tabKindParts('terminal')).toBe(NO_TAB_KIND)
   })
 })
-
 describe('loads', () => {
   function gate<T>() {
     let open: (value: T) => void = () => undefined
@@ -544,7 +508,6 @@ describe('loads', () => {
     })
     return { loading, open, shut }
   }
-
   it('hand what loaded to its use', async () => {
     const seen: string[] = []
     const { loading, open } = gate<string>()
@@ -556,7 +519,6 @@ describe('loads', () => {
     await loading
     expect(seen).toEqual(['in'])
   })
-
   it('use nothing once called off before they are in', async () => {
     const seen: string[] = []
     const { loading, open } = gate<string>()
@@ -569,7 +531,6 @@ describe('loads', () => {
     await loading
     expect(seen).toEqual([])
   })
-
   it('tell a failed load to whoever still wants it', async () => {
     const missed: unknown[] = []
     const wanted = gate<string>()
@@ -589,7 +550,6 @@ describe('loads', () => {
     for (let turn = 0; turn < 5; turn++) await Promise.resolve()
     expect(missed.map((one) => (one as Error).message)).toEqual(['gone'])
   })
-
   it('runs a registered command once it loads, and answers false for one nobody registered or whose load fails', async () => {
     const ran: string[] = []
     expect(await runCommand('time.start')).toBe(false)
@@ -602,7 +562,6 @@ describe('loads', () => {
     broken()
     expect(await runCommand('time.start')).toBe(false)
   })
-
   it('runs a command of a registered namespace from the runs it loads, an exact one first', async () => {
     const ran: string[] = []
     const space = registerCommands('pass.', () => Promise.resolve({ 'pass.open': () => void ran.push('open') }))
@@ -616,7 +575,6 @@ describe('loads', () => {
     exact()
     expect(await runCommand('pass.open')).toBe(false)
   })
-
   it('starts the registered hearings in the order they came, and hands back how to stop each', async () => {
     const heard: string[] = []
     const hearing = (name: string) => () =>
@@ -633,7 +591,6 @@ describe('loads', () => {
     pdfs()
     expect(await startHearings()).toEqual([])
   })
-
   it('starts every other hearing when one fails to load or to start', async () => {
     const heard: string[] = []
     const unloaded = registerHearing(() => Promise.reject(new Error('the chunk is gone')))
@@ -651,7 +608,6 @@ describe('loads', () => {
     refusing()
     pdfs()
   })
-
   it('reads command rows of a place once loaded, with the view handed in, and none for a failed load', async () => {
     const view = { line: 3 }
     const rows = registerCommandRows('web', () =>
@@ -666,7 +622,6 @@ describe('loads', () => {
     broken()
     expect(commandRows('web', view)).toEqual([])
   })
-
   it('answers the open notes with nothing until the workspace binds them', async () => {
     const notes = workspaceNotes()
     expect(notes.activeRoot).toBeNull()
@@ -679,7 +634,6 @@ describe('loads', () => {
     unbind()
     expect(workspaceNotes().activeRoot).toBeNull()
   })
-
   it('answers the shown spaces and tabs with nothing until the workspace binds them', async () => {
     const view = workspaceView()
     expect(view.spaces).toEqual([])

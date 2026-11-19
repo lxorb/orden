@@ -7,7 +7,6 @@ export interface Signed {
   email: string
   origin: string
 }
-
 export function signedSharing(): Signed {
   const token = account.token
   const user = account.user

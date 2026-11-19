@@ -8,12 +8,10 @@ import { cornerOf, flightMs, framesOf, landing, middleOf, startOf, type Box, typ
 const SIZE = 28
 const AT_ONCE = 5
 const APART = 70
-
 function boxOf(node: Element): Box {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
-
 function shown(node: Element | null | undefined): Box | null {
   if (!node?.isConnected) return null
   if (typeof node.checkVisibility === 'function' && !node.checkVisibility()) return null
@@ -23,9 +21,7 @@ function shown(node: Element | null | undefined): Box | null {
   if (box.x >= innerWidth || box.y >= innerHeight) return null
   return box
 }
-
 const GLYPHS = '[data-opens="downloads"]'
-
 function glyphsOnScreen(): { node: HTMLElement; glyph: Glyph }[] {
   const focusedPane = document.activeElement?.closest('[data-pane]') ?? null
   const found: { node: HTMLElement; glyph: Glyph }[] = []
@@ -43,15 +39,12 @@ function glyphsOnScreen(): { node: HTMLElement; glyph: Glyph }[] {
   }
   return found
 }
-
 function areaOf(): Box {
   const panes = shown(document.querySelector('[data-panes]'))
   return panes ?? { x: 0, y: 0, width: innerWidth, height: innerHeight }
 }
-
 const pagesInWindow = (): boolean => document.querySelector('.webbar') !== null
 const engineCuts = (): boolean => pagesInWindow() && webPages().cuts
-
 function pageOf(tab: string, cuts: boolean): Point | null {
   const glyph = [...document.querySelectorAll<HTMLElement>(GLYPHS)].find((one) => one.dataset.tab === tab)
   const pane = shown(glyph?.closest('[data-pane]'))
@@ -60,10 +53,8 @@ function pageOf(tab: string, cuts: boolean): Point | null {
   if (cuts || !bar) return middleOf(pane)
   return { x: pane.x + pane.width / 2, y: bar.y + bar.height }
 }
-
 const flying = new Set<Animation>()
 const answering = new WeakMap<Element, Animation>()
-
 function answer(node: Element): void {
   if (typeof node.animate !== 'function') return
   answering.get(node)?.cancel()
@@ -79,7 +70,6 @@ function answer(node: Element): void {
   const timing = still ? { duration: calm(480) } : { duration: dur(360) }
   answering.set(node, node.animate(frames, { ...timing, easing: 'ease-out' }))
 }
-
 function fileGlyph(): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   svg.setAttribute('viewBox', '0 0 24 24')
@@ -100,7 +90,6 @@ function fileGlyph(): SVGSVGElement {
   })
   return svg
 }
-
 function flyer(at: Point, cut: boolean): HTMLElement {
   const node = document.createElement('div')
   if (cut) node.className = 'orden-flight'
@@ -126,36 +115,30 @@ function flyer(at: Point, cut: boolean): HTMLElement {
   node.append(fileGlyph())
   return node
 }
-
 export function stopFlights(): void {
   for (const one of [...flying]) one.finish()
 }
-
 let listening = false
 function listen() {
   if (listening) return
   listening = true
   window.addEventListener('resize', stopFlights, { passive: true })
 }
-
 const settled = (): Promise<void> =>
   new Promise((done) => {
     requestAnimationFrame(() => requestAnimationFrame(() => done()))
   })
-
 export async function started(name: string, from: Origin, press: Press | null = lastPress()): Promise<void> {
   said.say(`Downloading ${name}`)
   const element = shown(from.element)
   await settled()
   const cuts = engineCuts()
-
   const glyphs = glyphsOnScreen()
   const target = landing(
     glyphs.map((one) => one.glyph),
     from.tab ?? null,
   )
   const node = target ? glyphs.find((one) => one.glyph === target)?.node : undefined
-
   if (stillness() || typeof document.body.animate !== 'function') {
     if (node) answer(node)
     return
@@ -164,7 +147,6 @@ export async function started(name: string, from: Origin, press: Press | null = 
     if (node) answer(node)
     return
   }
-
   const page = from.tab
     ? (pageOf(from.tab, cuts) ?? (target?.tab ? pageOf(target.tab, cuts) : null) ?? middleOf(areaOf()))
     : null
@@ -177,7 +159,6 @@ export async function started(name: string, from: Origin, press: Press | null = 
     area: areaOf(),
   })
   const end = target ? middleOf(target.box) : cornerOf({ width: innerWidth, height: innerHeight })
-
   listen()
   const card = flyer(start, cuts)
   document.body.append(card)
@@ -188,7 +169,6 @@ export async function started(name: string, from: Origin, press: Press | null = 
     fill: 'backwards',
   })
   flying.add(flight)
-
   const done = () => {
     flying.delete(flight)
     card.remove()

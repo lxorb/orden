@@ -1,28 +1,20 @@
 import json
 from pathlib import Path
-
 from playwright.sync_api import Browser, Page, Route
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 BUDGET = 1500
-
 PASSWORD = "tulip ladder seven"
 SECRET = "hunter2-Very-Secret"
-
 ROWS = "document.querySelectorAll('.pass [data-item]').length"
-
 ATTACHED = b"the deed to the house, page one"
-
 CORS = {
     "access-control-allow-origin": "*",
     "access-control-allow-headers": "authentication, content-type, accept",
     "access-control-allow-methods": "GET, POST, DELETE, PATCH, OPTIONS",
 }
-
 SIMPLELOGIN = {
     "/api/v2/mailboxes": {"mailboxes": [{"id": 1, "email": "me@example.com", "default": True}]},
     "/api/v5/alias/options": {
@@ -40,10 +32,7 @@ SIMPLELOGIN = {
     },
     "/api/aliases/7/activities": {"activities": []},
 }
-
 ALIAS_ASKED: list[str] = []
-
-
 def simplelogin(route: Route) -> None:
     request = route.request
     if request.method == "OPTIONS":
@@ -62,13 +51,9 @@ def simplelogin(route: Route) -> None:
         content_type="application/json",
         body=json.dumps(answer if answer is not None else {"error": "not here"}),
     )
-
-
 def opened(page: Page) -> None:
     page.keyboard.press("Control+Alt+v")
     wait_for(page, "document.querySelector('.pass')", "the Pass tab")
-
-
 def made_login(page: Page, title: str, username: str, password: str) -> None:
     page.locator(".pass .side .new").click()
     page.get_by_role("menuitem", name="Login", exact=True).click()
@@ -84,8 +69,6 @@ def made_login(page: Page, title: str, username: str, password: str) -> None:
     page.locator(".pass main input[type=password]").first.fill(password)
     page.get_by_role("button", name="Create", exact=True).click()
     wait_for(page, f"[...document.querySelectorAll('.pass main h2')].some((one) => one.textContent.includes({title!r}))", "the new login shown")
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 1280, "height": 820},
@@ -103,7 +86,6 @@ def drive(browser: Browser) -> None:
     opened(page)
     wait_for(page, "document.querySelector('.pass')?.textContent.includes('Set up Pass')", "the setup screen", 60)
     shot(page, "01-setup")
-
     fields = page.locator(".pass input[type=password]")
     fields.nth(0).fill(PASSWORD)
     fields.nth(1).fill(PASSWORD)
@@ -117,7 +99,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.pass .side')", "the three columns")
     shot(page, "03-empty")
     say("set up, recovery key shown once")
-
     made_login(page, "Bank of Tests", "ada@example.com", SECRET)
     made_login(page, "Mail", "grace@example.com", "short")
     wait_for(page, f"{ROWS} === 2", "two rows")
@@ -125,14 +106,12 @@ def drive(browser: Browser) -> None:
         wrong("the password shows before Show is pressed")
     shot(page, "04-item")
     say("two logins made")
-
     page.locator(".pass input[type=search]").fill("bank")
     wait_for(page, f"{ROWS} === 1", "the search narrowing to one row")
     shot(page, "05-search")
     page.locator(".pass input[type=search]").fill("")
     wait_for(page, f"{ROWS} === 2", "both rows again")
     page.locator(".pass [data-item]").filter(has_text="Bank of Tests").click()
-
     password = page.locator(".pass [data-field='Password']")
     password.locator(".tap").click()
     wait_for(page, f"navigator.clipboard.readText().then((text) => text === {SECRET!r})", "the password copied")
@@ -140,7 +119,6 @@ def drive(browser: Browser) -> None:
     if SECRET not in password.inner_text():
         wrong("Show did not show the password")
     say("searched, copied and shown")
-
     page.locator(".pass [data-item]").filter(has_text="Mail").click()
     page.locator(".pass main").get_by_role("button", name="Edit", exact=True).click()
     page.locator(".pass main input[type=file]").set_input_files(
@@ -155,7 +133,6 @@ def drive(browser: Browser) -> None:
         wrong("the downloaded file is not the one attached")
     shot(page, "05b-attachment")
     say("a file attached, sealed on the device and downloaded again")
-
     page.locator(".pass .side .foot button").filter(has_text="Lock").click()
     wait_for(page, "document.querySelector('.pass')?.textContent.includes('Pass is locked')", "the lock")
     if "Bank of Tests" in page.locator(".pass").inner_text():
@@ -169,14 +146,12 @@ def drive(browser: Browser) -> None:
     page.get_by_role("button", name="Unlock", exact=True).click()
     wait_for(page, "document.querySelector('.pass .side')", "Pass open again", 180)
     say("locked, refused a wrong password, opened")
-
     page.locator(".pass [data-item]").filter(has_text="Bank of Tests").click()
     page.locator(".pass main").get_by_role("button", name="Edit", exact=True).click()
     page.get_by_label("Title", exact=True).fill("Bank of Proofs")
     page.get_by_role("button", name="Save", exact=True).click()
     wait_for(page, "[...document.querySelectorAll('.pass [data-item]')].some((one) => one.textContent.includes('Bank of Proofs'))", "the new title")
     say("edited")
-
     page.locator(".pass main").get_by_role("button", name="More", exact=True).click()
     page.get_by_role("menuitem", name="Move to trash", exact=True).click()
     wait_for(page, f"{ROWS} === 1", "one row left")
@@ -189,7 +164,6 @@ def drive(browser: Browser) -> None:
     page.locator(".pass .side button").filter(has_text="All items").click()
     wait_for(page, f"{ROWS} === 2", "both rows back")
     say("trashed and restored")
-
     page.locator(".pass .side .new").click()
     page.get_by_role("menuitem", name="Password", exact=True).click()
     wait_for(page, "document.querySelector('[role=dialog]')", "the generator")
@@ -201,7 +175,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the generator gave {first!r} then {second!r}")
     shot(page, "09-generator")
     page.keyboard.press("Escape")
-
     page.locator(".pass .side button").filter(has_text="Monitor").click()
     wait_for(page, "document.querySelector('.pass .monitor')", "Monitor")
     shot(page, "10-monitor")
@@ -209,7 +182,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.pass .settings')", "Settings")
     shot(page, "11-settings")
     say("generator, Monitor and Settings drawn")
-
     page.route("https://app.simplelogin.io/**", simplelogin)
     page.get_by_role("tab", name="Aliases", exact=True).click()
     page.get_by_label("API key", exact=True).fill("sl-test-key")
@@ -238,13 +210,9 @@ def drive(browser: Browser) -> None:
     shot(page, "13-alias")
     say("an alias service connected and an alias made there")
     context.close()
-
-
 def main() -> int:
     return DRIVE.run(
         drive,
         "Pass is set up, holds logins and files, searches, copies, locks, edits, trashes, generates and makes aliases",
     )
-
-
 raise SystemExit(main())

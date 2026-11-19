@@ -18,11 +18,9 @@ pub(crate) fn wear(platform: &tauri::webview::PlatformWebview, scheme: Scheme) {
     ground(&mut browser);
     crate::engine::windowless::on_ui(move || ground(&mut browser));
 }
-
 fn ground(browser: &mut cef::Browser) {
     if let Some(view) = cef::browser_view_get_for_browser(Some(browser)) {
         view.set_background_color(WHITE);
     }
 }
-
 const WHITE: u32 = 0xFFFF_FFFF;

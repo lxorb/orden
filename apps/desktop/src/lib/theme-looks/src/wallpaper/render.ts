@@ -3,13 +3,11 @@ import type { Held } from './held'
 import { blurred, fitted, measured, sideFor, toned, type Toning } from './pixels'
 
 const COPY = 3200
-
 export interface Drawable {
   image: CanvasImageSource
   width: number
   height: number
 }
-
 export async function decode(picture: Blob): Promise<Drawable> {
   try {
     const bitmap = await createImageBitmap(picture)
@@ -26,14 +24,12 @@ export async function decode(picture: Blob): Promise<Drawable> {
     }
   }
 }
-
 function drawn(source: Drawable, width: number, height: number, blur = 0) {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) throw new Error('this window cannot draw a picture')
-
   context.fillStyle = '#000'
   context.fillRect(0, 0, width, height)
   context.imageSmoothingEnabled = true
@@ -48,13 +44,11 @@ function drawn(source: Drawable, width: number, height: number, blur = 0) {
   }
   return { canvas, context }
 }
-
 export async function copyOf(source: Drawable): Promise<Blob> {
   const [width, height] = fitted(source.width, source.height, COPY)
   const { canvas } = drawn(source, width, height)
   return blobOf(canvas, 'image/jpeg', 0.9)
 }
-
 function blobOf(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -64,13 +58,11 @@ function blobOf(canvas: HTMLCanvasElement, type: string, quality?: number): Prom
     )
   })
 }
-
 export interface Tone {
   saturation: number
   tint: number
   colour: string
 }
-
 function toningOf(tone: Tone): Toning {
   return {
     saturation: tone.saturation,
@@ -78,17 +70,14 @@ function toningOf(tone: Tone): Toning {
     colour: rgbOf(tone.colour) ?? ([0, 0, 0] as Rgb),
   }
 }
-
 export function toneKey(tone: Tone): string {
   const colour = tone.tint > 0 ? tone.colour : ''
   return `${tone.saturation.toFixed(2)} ${tone.tint.toFixed(2)} ${colour}`
 }
-
 function heldColours(pixels: Uint8ClampedArray): { span: Span; mean: string } {
   const { least, most, mean } = measured(pixels)
   return { span: { least, most }, mean: hexOf(mean) }
 }
-
 export function made(
   source: Drawable,
   blur: number,
@@ -100,12 +89,10 @@ export function made(
   const side = sideFor(blur, screen)
   const [width, height] = fitted(source.width, source.height, side)
   const { canvas, context } = drawn(source, width, height)
-
   const sigma = (blur * Math.max(width, height)) / Math.max(1, screen)
   const pixels = blurred(context.getImageData(0, 0, width, height).data, width, height, sigma)
   toned(pixels, toningOf(tone))
   context.putImageData(new ImageData(pixels, width, height), 0, 0)
-
   return {
     picture: canvas.toDataURL('image/png'),
     blur,
@@ -115,7 +102,6 @@ export function made(
     focus,
   }
 }
-
 export async function sharp(
   source: Drawable,
   blur: number,
@@ -129,6 +115,5 @@ export async function sharp(
   const image = context.getImageData(0, 0, width, height)
   toned(image.data, toningOf(tone))
   context.putImageData(image, 0, 0)
-
   return { picture: await blobOf(canvas, 'image/jpeg', 0.92), ...heldColours(image.data) }
 }

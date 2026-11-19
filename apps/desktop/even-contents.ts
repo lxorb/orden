@@ -84,7 +84,6 @@ export const LIBRARIES = [
   'codemirror-lang-hcl',
   'lezer-elixir',
 ]
-
 export const PACKAGES = [
   'autocomplete',
   'bases',
@@ -99,7 +98,6 @@ export const PACKAGES = [
   'sync-core',
   'themes',
 ]
-
 export const APP_FOLDERS = [
   'accounts',
   'accounts-ui',
@@ -219,33 +217,26 @@ export const APP_FOLDERS = [
   'windows',
   'workspace',
 ]
-
 export function sourceOf(module: string): string | null {
   const path = module.replace(/\\/g, '/')
   if (path.startsWith('\0')) return null
-
   const library = path.lastIndexOf('node_modules/')
   if (library >= 0) {
     const [scope = '', name = ''] = path.slice(library + 'node_modules/'.length).split('/')
     return `library ${scope.startsWith('@') ? `${scope}/${name}` : scope}`
   }
-
   const ours = /^packages\/([^/]+)\//.exec(path)
   if (ours) return `package ${ours[1]}`
-
   const folder = /^apps\/desktop\/src\/lib\/([^/?]+)\//.exec(path)
   return folder ? `folder ${folder[1]}` : null
 }
-
 export type Part = 'code' | 'fonts' | 'styles' | 'pages'
-
 export function partOf(file: string): Part {
   if (file.endsWith('.js')) return 'code'
   if (file.endsWith('.css')) return 'styles'
   if (/\.(woff2?|ttf)$/.test(file)) return 'fonts'
   return 'pages'
 }
-
 export const BUDGETS: Record<Part, number> = {
   code: 6_600_000,
   styles: 298_700,

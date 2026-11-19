@@ -18,27 +18,17 @@ use crate::Caller;
 
 const WAIT: u64 = 60_000;
 const MOST_WAIT: u64 = 120_000;
-
 const MOST_READ_WAIT: u64 = 30_000;
-
 const MOST_OUTPUT: usize = 100_000;
-
 const KEPT: usize = 1_000_000;
-
 const MOST_RUNNING: usize = 8;
-
 const DRAINING: Duration = Duration::from_secs(1);
-
 static NEXT: AtomicU64 = AtomicU64::new(1);
-
 static STARTED: Mutex<Vec<Arc<Started>>> = Mutex::new(Vec::new());
-
 static CLOSING: AtomicBool = AtomicBool::new(false);
-
 fn started() -> MutexGuard<'static, Vec<Arc<Started>>> {
     STARTED.held()
 }
-
 struct Started {
     id: String,
     agent: String,
@@ -54,12 +44,10 @@ struct Started {
     said: Mutex<Said>,
     heard: Condvar,
 }
-
 struct Feed {
     words: mpsc::Sender<Vec<u8>>,
     unread: Arc<AtomicUsize>,
 }
-
 impl Feed {
     fn new(mut pipe: ChildStdin) -> Self {
         let (words, heard) = mpsc::channel::<Vec<u8>>();
@@ -76,7 +64,6 @@ impl Feed {
         });
         Self { words, unread }
     }
-
     fn give(&self, words: &str) -> Result<(), Unfed> {
         let unread = self.unread.load(Ordering::SeqCst);
         if unread > 0 && unread + words.len() > KEPT {
@@ -88,12 +75,10 @@ impl Feed {
             .map_err(|_| Unfed::Closed)
     }
 }
-
 enum Unfed {
     Unread(usize),
     Closed,
 }
-
 #[derive(Default)]
 struct Said {
     out: Stream,
@@ -102,13 +87,11 @@ struct Said {
     ended: bool,
     code: Option<i32>,
 }
-
 #[derive(Default)]
 struct Stream {
     bytes: Vec<u8>,
     dropped: u64,
 }
-
 impl Stream {
     fn push(&mut self, chunk: &[u8]) {
         self.bytes.extend_from_slice(chunk);
@@ -118,11 +101,9 @@ impl Stream {
             self.dropped += u64::try_from(over).unwrap_or(u64::MAX);
         }
     }
-
     fn total(&self) -> u64 {
         self.dropped + u64::try_from(self.bytes.len()).unwrap_or(u64::MAX)
     }
-
     fn after(&self, since: u64) -> (String, u64, bool) {
         let skipped = since < self.dropped;
         let from = usize::try_from(since.saturating_sub(self.dropped))
@@ -139,7 +120,6 @@ impl Stream {
             skipped || cut,
         )
     }
-
     fn end(&self) -> (String, bool) {
         let from = whole_from(&self.bytes, self.bytes.len().saturating_sub(MOST_OUTPUT));
         (
@@ -148,7 +128,6 @@ impl Stream {
         )
     }
 }
-
 fn whole_from(bytes: &[u8], at: usize) -> usize {
     let mut at = at;
     while at < bytes.len() && at > 0 && (bytes[at] & 0b1100_0000) == 0b1000_0000 {
@@ -156,19 +135,16 @@ fn whole_from(bytes: &[u8], at: usize) -> usize {
     }
     at
 }
-
 fn whole_to(bytes: &[u8], at: usize) -> usize {
     match std::str::from_utf8(&bytes[..at]) {
         Err(error) if error.error_len().is_none() => error.valid_up_to(),
         _ => at,
     }
 }
-
 impl Started {
     fn said(&self) -> MutexGuard<'_, Said> {
         self.said.held()
     }
-
     fn end(&self) {
         let held = self.child.held();
         if held.is_some() {
@@ -176,7 +152,6 @@ impl Started {
             self.family.end();
         }
     }
-
     fn entry(&self) -> ProcessEntry {
         let said = self.said();
         ProcessEntry {
@@ -188,7 +163,6 @@ impl Started {
             exit: said.code,
         }
     }
-
     fn wait(&self, patience: Duration, since: Option<u64>, done: impl Fn(&Said) -> bool) -> bool {
         let until = Instant::now() + patience;
         let mut said = self.said();
@@ -211,7 +185,6 @@ impl Started {
         }
     }
 }
-
 pub fn answer(
     app: &AppHandle,
     caller: &Caller,
@@ -249,7 +222,6 @@ pub fn answer(
         },
     }
 }
-
 fn own(caller: &Caller, asked: &Process) -> Result<Arc<Started>, Answer> {
     let Some(id) = asked.id.as_deref() else {
         return Err(Answer::error(
@@ -268,7 +240,6 @@ fn own(caller: &Caller, asked: &Process) -> Result<Arc<Started>, Answer> {
             )
         })
 }
-
 fn state(one: &Started) -> ProcessDone {
     let said = one.said();
     ProcessDone {
@@ -279,7 +250,6 @@ fn state(one: &Started) -> ProcessDone {
         ..ProcessDone::default()
     }
 }
-
 fn begin(app: &AppHandle, caller: &Caller, session: &str, asked: &Process, since: u64) -> Answer {
     let Some(program) = asked
         .program
@@ -341,7 +311,6 @@ fn begin(app: &AppHandle, caller: &Caller, session: &str, asked: &Process, since
     }
     ran(&one, asked, since)
 }
-
 fn ran(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     let patience = Duration::from_millis(asked.timeout_ms.unwrap_or(WAIT).min(MOST_WAIT));
     let stopped = one.wait(patience, Some(since), |said| said.ended);
@@ -369,7 +338,6 @@ fn ran(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
         &one.program,
     )
 }
-
 fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     let cursor = asked.since.unwrap_or(0);
     let patience = Duration::from_millis(asked.wait_ms.unwrap_or(0).min(MOST_READ_WAIT));
@@ -387,7 +355,6 @@ fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     drop(said);
     untrusted(done, &one.program)
 }
-
 fn written(one: &Started, asked: &Process) -> Answer {
     let mut input = one.input.held();
     let Some(feed) = input.as_ref() else {
@@ -414,7 +381,6 @@ fn written(one: &Started, asked: &Process) -> Answer {
     drop(input);
     Answer::ok(state(one))
 }
-
 fn untrusted(done: ProcessDone, program: &str) -> Answer {
     Answer::Ok {
         result: serde_json::to_value(done).unwrap_or_default(),
@@ -422,7 +388,6 @@ fn untrusted(done: ProcessDone, program: &str) -> Answer {
         dialog: None,
     }
 }
-
 fn asked_as(grant: &Grant, free: bool) -> Option<Category> {
     if !free && grant.asks(Category::Terminal) {
         Some(Category::Terminal)
@@ -432,7 +397,6 @@ fn asked_as(grant: &Grant, free: bool) -> Option<Category> {
         None
     }
 }
-
 fn question(
     app: &AppHandle,
     grant: &Grant,
@@ -461,7 +425,6 @@ fn question(
         Asking::of(grant, category, summary(program, asked), key),
     )
 }
-
 fn runs_in_reach(app: &AppHandle, grant: &Grant, cwd: &Path) -> bool {
     let Ok(root) = orden_base::paths::spaces_dir(app) else {
         return false;
@@ -471,7 +434,6 @@ fn runs_in_reach(app: &AppHandle, grant: &Grant, cwd: &Path) -> bool {
         _ => false,
     }
 }
-
 fn in_reach(root: &Path, cwd: &Path, spaces: &Spaces) -> bool {
     let space = cwd
         .strip_prefix(root)
@@ -480,7 +442,6 @@ fn in_reach(root: &Path, cwd: &Path, spaces: &Spaces) -> bool {
         .and_then(|one| one.as_os_str().to_str());
     !crate::files::hidden_within(root, cwd) && space.is_some_and(|one| spaces.reach(one))
 }
-
 fn free_on_the_list(
     app: &AppHandle,
     grant: &Grant,
@@ -502,7 +463,6 @@ fn free_on_the_list(
     )
     .is_ok_and(|value| value.as_bool() == Some(true))
 }
-
 fn listed(programs: &[String], program: &str, asked: &Process, windows: bool) -> bool {
     if !asked.env.is_empty() || program.contains(['/', '\\']) || program.starts_with('~') {
         return false;
@@ -510,7 +470,6 @@ fn listed(programs: &[String], program: &str, asked: &Process, windows: bool) ->
     let name = bare(program, windows);
     programs.iter().any(|one| bare(one, windows) == name)
 }
-
 fn bare(program: &str, windows: bool) -> String {
     let name = program.trim();
     if !windows {
@@ -524,7 +483,6 @@ fn bare(program: &str, windows: bool) -> String {
     }
     name
 }
-
 fn summary(program: &str, asked: &Process) -> String {
     let mut line = format!("Run {program}");
     for arg in &asked.args {
@@ -547,7 +505,6 @@ fn summary(program: &str, asked: &Process) -> String {
     }
     line
 }
-
 fn word(line: &mut String, said: &str) {
     if said.is_empty() || said.contains(char::is_whitespace) || said.contains('"') {
         let _ = write!(line, "{said:?}");
@@ -555,7 +512,6 @@ fn word(line: &mut String, said: &str) {
         line.push_str(said);
     }
 }
-
 fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result<PathBuf, String> {
     if program.contains(['/', '\\']) || program.starts_with('~') {
         let file = crate::files::under_home(program, home)?;
@@ -573,7 +529,6 @@ fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result
     )
     .ok_or_else(|| format!("there is no program called {program} on this computer's PATH"))
 }
-
 fn spawned(
     agent: &str,
     session: &str,
@@ -652,7 +607,6 @@ fn spawned(
     }
     Ok(one)
 }
-
 fn listen(one: Arc<Started>, mut pipe: impl std::io::Read + Send + 'static, apart: bool) {
     std::thread::spawn(move || {
         let mut chunk = [0_u8; 8192];
@@ -675,7 +629,6 @@ fn listen(one: Arc<Started>, mut pipe: impl std::io::Read + Send + 'static, apar
         }
     });
 }
-
 fn reap(one: &Started) {
     let code = loop {
         {
@@ -715,15 +668,12 @@ fn reap(one: &Started) {
     drop(said);
     one.heard.notify_all();
 }
-
 pub fn end_all(agent: Option<&str>) {
     end_where(|one| agent.is_none_or(|agent| one.agent == agent));
 }
-
 pub fn end_session(agent: &str, session: &str) {
     end_where(|one| one.agent == agent && one.session == session);
 }
-
 fn end_where(ending: impl Fn(&Started) -> bool) {
     let ending: Vec<Arc<Started>> = {
         let mut all = started();
@@ -735,7 +685,6 @@ fn end_where(ending: impl Fn(&Started) -> bool) {
         one.end();
     }
 }
-
 pub fn end_for_good() {
     let ending: Vec<Arc<Started>> = {
         let mut all = started();
@@ -746,7 +695,6 @@ pub fn end_for_good() {
         one.end();
     }
 }
-
 pub fn keep_only(connected: &[String]) {
     let gone: Vec<String> = started()
         .iter()
@@ -757,7 +705,6 @@ pub fn keep_only(connected: &[String]) {
         end_all(Some(&agent));
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -778,7 +725,6 @@ mod tests {
         grant.asks.clear();
         assert_eq!(asked_as(&grant, false), None);
     }
-
     #[test]
     fn a_listed_program_runs_unasked_only_inside_a_space_the_grant_reaches() {
         let root = Path::new("/data/Spaces");
@@ -794,7 +740,6 @@ mod tests {
         assert!(!in_reach(root, Path::new("/data/Spaces"), &work));
         assert!(!in_reach(root, Path::new("/home/me"), &work));
     }
-
     fn process(op: ProcessOp, program: &str) -> Process {
         Process {
             op,
@@ -810,7 +755,6 @@ mod tests {
             close: false,
         }
     }
-
     #[test]
     fn only_a_bare_name_with_nothing_set_is_on_the_list() {
         let programs = vec!["git".to_owned(), "Node.exe".to_owned()];
@@ -838,7 +782,6 @@ mod tests {
             assert!(!listed(&programs, "git", &pathed, windows));
         }
     }
-
     #[test]
     fn an_ending_is_the_bare_name_only_where_windows_runs_it_so() {
         let programs = vec!["git".to_owned(), "Node.exe".to_owned()];
@@ -858,7 +801,6 @@ mod tests {
         }
         assert!(listed(&programs, "Node.exe", &run("Node.exe"), false));
     }
-
     #[test]
     fn a_program_is_found_where_it_says_and_never_relative() {
         let home = std::env::temp_dir();
@@ -883,7 +825,6 @@ mod tests {
         )
         .is_err());
     }
-
     #[test]
     fn an_output_is_read_on_whole_letters_and_keeps_its_end() {
         let mut stream = Stream::default();
@@ -895,7 +836,6 @@ mod tests {
         let mut half = Stream::default();
         half.push(&"ü".as_bytes()[..1]);
         assert_eq!(half.after(0), (String::new(), 0, false));
-
         let mut long = Stream::default();
         long.push(&vec![b'a'; KEPT + 10]);
         assert_eq!(long.dropped, 0);
@@ -906,7 +846,6 @@ mod tests {
         assert!(skipped);
         assert!(long.end().1);
     }
-
     #[test]
     fn a_program_printing_without_end_keeps_its_last_words_and_counts_the_rest() {
         let mut stream = Stream::default();
@@ -920,14 +859,12 @@ mod tests {
         assert!(skipped);
         assert!(next > stream.dropped);
     }
-
     #[test]
     fn a_question_names_the_program_and_its_arguments() {
         let mut asked = process(ProcessOp::Run, "git");
         asked.args = vec!["commit".into(), "-m".into(), "a fix".into()];
         assert_eq!(summary("git", &asked), "Run git commit -m \"a fix\"");
     }
-
     #[test]
     fn a_question_names_the_folder_variables_and_input_it_runs_with_and_cuts_nothing() {
         let mut asked = process(ProcessOp::Run, "git");
@@ -941,13 +878,11 @@ mod tests {
         assert!(said.contains(&"x".repeat(400)));
         assert!(said.ends_with(" in \"/tmp/a b\" with GIT_SSH_COMMAND=\"sh -c evil\", typing yes"));
     }
-
     #[cfg(unix)]
     #[test]
     fn a_program_runs_and_a_started_one_is_read_written_and_killed() {
         let cwd = std::env::temp_dir();
         let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
-
         let mut run = process(ProcessOp::Run, "sh");
         run.args = vec![
             "-c".into(),
@@ -962,7 +897,6 @@ mod tests {
         assert_eq!(said.out.end().0, "out hi\n");
         assert_eq!(said.err.end().0, "err\n");
         drop(said);
-
         let mut start = process(ProcessOp::Start, "sh");
         start.args = vec!["-c".into(), "while read x; do echo got $x; done".into()];
         let kept = spawned("tester", "s1", &found, &start, &cwd, true).expect("started");
@@ -974,7 +908,6 @@ mod tests {
         let (output, next, _) = kept.said().out.after(0);
         assert_eq!(output, "got one\n");
         assert_eq!(kept.said().out.after(next).0, "");
-
         end_all(Some("tester"));
         assert!(!kept.wait(Duration::from_secs(10), None, |said| said.ended));
         assert!(kept.killed.load(Ordering::SeqCst));
@@ -982,7 +915,6 @@ mod tests {
         assert!(!other.said().ended);
         end_all(Some("someone-else"));
     }
-
     #[cfg(unix)]
     #[test]
     fn a_session_that_leaves_ends_only_the_programs_it_started() {
@@ -992,20 +924,17 @@ mod tests {
         start.args = vec!["-c".into(), "sleep 30".into()];
         let first = spawned("leaving", "s1", &found, &start, &cwd, true).expect("started");
         let second = spawned("leaving", "s2", &found, &start, &cwd, true).expect("started");
-
         end_session("leaving", "s2");
         assert!(!second.wait(Duration::from_secs(10), None, |said| said.ended));
         assert!(second.killed.load(Ordering::SeqCst));
         assert!(!first.said().ended);
         assert!(!first.killed.load(Ordering::SeqCst));
         assert!(started().iter().any(|one| Arc::ptr_eq(one, &first)));
-
         end_session("leaving", "s3");
         assert!(!first.said().ended);
         end_all(Some("leaving"));
         assert!(!first.wait(Duration::from_secs(10), None, |said| said.ended));
     }
-
     #[cfg(unix)]
     #[test]
     fn a_started_program_ends_with_orden_and_none_starts_after() {
@@ -1036,7 +965,6 @@ mod tests {
         assert!(spawned("quitting", "s1", &found, &start, &cwd, true).is_err());
         assert!(started().is_empty());
     }
-
     #[cfg(unix)]
     #[test]
     fn a_write_to_a_program_that_is_not_reading_does_not_wait_for_it() {
@@ -1045,7 +973,6 @@ mod tests {
         let mut start = process(ProcessOp::Start, "sh");
         start.args = vec!["-c".into(), "sleep 3; wc -c".into()];
         let kept = spawned("not-reading", "s1", &found, &start, &cwd, true).expect("started");
-
         let mut write = process(ProcessOp::Write, "sh");
         write.stdin = Some("x".repeat(512 << 10));
         let at = Instant::now();
@@ -1057,7 +984,6 @@ mod tests {
             matches!(&refused, Answer::Error { code: Code::Limit, message, .. } if message.contains("not read")),
             "{refused:?}"
         );
-
         let mut close = process(ProcessOp::Write, "sh");
         close.close = true;
         assert_eq!(written(&kept, &close).status(), "ok");

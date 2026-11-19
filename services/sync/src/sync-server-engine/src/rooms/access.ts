@@ -9,7 +9,6 @@ export const SIGNED_IN_AS = `me as (
     from guest_sessions s
    where s.token_hash = ?1 and s.expires_at > ?2
 )`
-
 const ACCESS = `with ${SIGNED_IN_AS}
 select case when sp.deleted = 1 then 'none'
             when sp.user_id = me.user_id then 'write'
@@ -28,9 +27,7 @@ select case when sp.deleted = 1 then 'none'
   left join guest_members gi on gi.space_id = sp.id and gi.guest_id = me.guest_id
                             and gi.item = n.id and gi.joined_at is not null
  limit 1`
-
 export type Access = 'write' | 'read' | 'none'
-
 export async function accessOf(env: Env, noteId: string, logins: readonly string[]): Promise<Map<string, Access>> {
   const at = Date.now()
   const found = new Map<string, Access>()

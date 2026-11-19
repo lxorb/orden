@@ -6,7 +6,6 @@ test('the module stands on its own the api loads with the sheet closed and nothi
   expect(publish.ready).toBe(false)
   expect(typeof loadPublishSheet).toBe('function')
 })
-
 describe('the form', () => {
   test('a site never published starts on a subdomain with nothing typed', () => {
     publish.fill(undefined)
@@ -15,7 +14,6 @@ describe('the form', () => {
     expect(publish.hasPassword).toBe(false)
     expect(publish.rules).toEqual({ include: [], exclude: [], otherwise: 'all' })
   })
-
   test('a folder is included once and let go again', () => {
     publish.rule('include', 'Blog', true)
     publish.rule('include', 'Blog', true)
@@ -23,7 +21,6 @@ describe('the form', () => {
     publish.rule('include', 'Blog', false)
     expect(publish.rules.include).toEqual([])
   })
-
   test('what is not named either goes out or stays home', () => {
     publish.otherwise('none')
     expect(publish.rules.otherwise).toBe('none')

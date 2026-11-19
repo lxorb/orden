@@ -7,16 +7,13 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   invoke: (command: string) => Promise.resolve(command === 'read_note' ? '# a' : undefined),
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../src/lib/workspace/src/api')
 const { keepAsTab, openEssential } = await (await import('../src/lib/workspace/src/api')).essentials()
 const { essentialLetters } = await import('../src/lib/tab-strip/src/letters.svelte')
 const { droppedEssential } = await import('../src/lib/tab-strip/src/essential-drop')
 const { flushSync } = await import('svelte')
 type Entry = import('../src/lib/workspace/src/api').Entry
-
 const file = (path: string): Entry => ({
   name: path.split('/').pop() ?? path,
   path,
@@ -25,10 +22,8 @@ const file = (path: string): Entry => ({
   created: 0,
   children: [],
 })
-
 const note = (path: string) => ({ kind: 'note' as const, path, text: '' })
 const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((one) => one.path)
-
 beforeEach(() => {
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
   workspace.activeSpaceId = 's'
@@ -39,38 +34,31 @@ beforeEach(() => {
   }
   workspace.bookmarks.put('/space', [note('Notes.md')])
 })
-
 describe('an essential double clicked', () => {
   test('is a tab of the strip, in front, and the tile then opens a view of its own', async () => {
     await openEssential('/space/Notes.md')
     expect(strip()).not.toContain('/space/Notes.md')
     const shown = workspace.active
-
     await keepAsTab('/space/Notes.md')
     expect(strip()).toContain('/space/Notes.md')
     expect(workspace.active).toBe(shown)
     expect(shown?.essential).toBeNull()
-
     await openEssential('/space/Notes.md')
     expect(workspace.active).not.toBe(shown)
     expect(workspace.active?.essential).toBe('/space/Notes.md')
   })
 })
-
 describe('two essentials pressed one right after the other', () => {
   test('each opens as its essential, neither as a tab of the strip', async () => {
     workspace.tabs = []
     workspace.bookmarks.put('/space', [note('Notes.md'), note('Next.md')])
-
     await Promise.all([openEssential('/space/Notes.md'), openEssential('/space/Next.md')])
-
     const essentials = workspace.tabs.map((one) => one.essential)
     expect(essentials).toEqual(['/space/Notes.md', '/space/Next.md'])
     expect(strip()).toEqual([])
     expect(workspace.essentialsComing).toEqual([])
   })
 })
-
 describe('an essential pressed while the window is split', () => {
   test('is kept as a tab of the strip in front, and no pane loses what it showed', async () => {
     workspace.panes.collapse()
@@ -81,7 +69,6 @@ describe('an essential pressed while the window is split', () => {
     expect(right).not.toBeNull()
     workspace.openBlank('Right', '# Right')
     const showing = workspace.tabs.map((one) => one.id)
-
     await openEssential('/space/Notes.md')
     expect(strip()).toContain('/space/Notes.md')
     expect(workspace.active?.essential).toBeNull()
@@ -89,7 +76,6 @@ describe('an essential pressed while the window is split', () => {
     for (const id of showing) expect(workspace.tabs.some((one) => one.id === id)).toBe(true)
     workspace.panes.collapse()
   })
-
   test('opens a view of its own as before with the window not split', async () => {
     workspace.panes.collapse()
     workspace.tabs = []
@@ -99,7 +85,6 @@ describe('an essential pressed while the window is split', () => {
     expect(strip()).not.toContain('/space/Notes.md')
   })
 })
-
 describe('an essential dragged into a strip', () => {
   test('is kept as a tab where it was let go, as it was, as a double click keeps it', async () => {
     workspace.panes.collapse()
@@ -109,7 +94,6 @@ describe('an essential dragged into a strip', () => {
     await openEssential('/space/Notes.md')
     const shown = workspace.active
     shown!.scroll = 240
-
     const pane = workspace.panes.focusedId
     const id = await droppedEssential(0, pane, 1)
     expect(id).toBe(shown?.id)
@@ -118,18 +102,15 @@ describe('an essential dragged into a strip', () => {
     expect(workspace.active).toBe(shown)
     expect(shown?.scroll).toBe(240)
   })
-
   test('is what the strip does with a bookmark let go of on it', () => {
     const tabs = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/const takes = [^\n]*\n(?:[^\n]*\n){0,3}[^\n]*isBookmarkDrag\(transfer\)/)
     expect(tabs).toContain('droppedEssential(mark, paneId, at)')
   })
-
   test('and the strip takes it from the moment it comes over the strip, as Safari asks', () => {
     const tabs = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/use:dropOver=\{over\}/)
   })
-
   test('and a bookmark that is no note is no tab', async () => {
     workspace.bookmarks.put('/space', [{ kind: 'group', path: 'g', text: 'Group' }])
     const before = workspace.tabs.length
@@ -137,13 +118,11 @@ describe('an essential dragged into a strip', () => {
     expect(workspace.tabs.length).toBe(before)
   })
 })
-
 describe('the letters of the Essentials', () => {
   test('are given by name and kept as another is added in front', () => {
     flushSync()
     expect(essentialLetters.given).toEqual({ '/space/Notes.md': 'N' })
     expect(essentialLetters.pathOf('N')).toBe('/space/Notes.md')
-
     workspace.bookmarks.put('/space', [note('Next.md'), note('Notes.md')])
     flushSync()
     expect(essentialLetters.given).toEqual({ '/space/Notes.md': 'N', '/space/Next.md': 'E' })

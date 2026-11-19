@@ -26,9 +26,7 @@ export interface Options {
   restart?: () => void
   holder: string
 }
-
 const CALL_WAIT = 10_000
-
 async function call(url: string): Promise<number> {
   try {
     const answer = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(CALL_WAIT) })
@@ -38,7 +36,6 @@ async function call(url: string): Promise<number> {
     return 0
   }
 }
-
 export class Ordend {
   private readonly sessions = new Map<string, Session>()
   private readonly opening = new Map<string, Promise<void>>()
@@ -51,7 +48,6 @@ export class Ordend {
   private readonly timers: ReturnType<typeof setInterval>[] = []
   private readonly images: Images
   private readonly holds: string
-
   constructor(options: Options) {
     this.options = options
     this.images = new Images(options.home, options.user)
@@ -78,15 +74,12 @@ export class Ordend {
     }
     void this.measure()
   }
-
   attach(send: ((frame: OrdendFrame) => void) | null): void {
     this.link = send
   }
-
   private send(frame: OrdendFrame): void {
     this.link?.(frame)
   }
-
   private session(id: string, cols: number, rows: number, saved?: Saved): Session {
     return new Session(
       id,
@@ -102,7 +95,6 @@ export class Ordend {
       saved,
     )
   }
-
   async receive(frame: MachineFrame): Promise<void> {
     if (frame.t === 'sleep') {
       await this.saveAll()
@@ -163,7 +155,6 @@ export class Ordend {
       }
     }
   }
-
   async list(): Promise<SessionNow[]> {
     const listed = [...this.sessions.values()].map((one) => one.now())
     let sockets: string[]
@@ -178,7 +169,6 @@ export class Ordend {
     const found = await Promise.all(others.map((id) => this.holderOf(id)))
     return [...listed, ...found.filter((one) => one !== null)]
   }
-
   private async watcherOpens(id: string, cols: number, rows: number): Promise<void> {
     const opens = async () => {
       if (!(await this.holderOf(id))?.alive) return
@@ -192,7 +182,6 @@ export class Ordend {
       if (this.opening.get(id) === opening) this.opening.delete(id)
     }
   }
-
   private async holderOf(id: string): Promise<SessionNow | null> {
     const held = new Held(socketOf(this.holds, id), { out: () => undefined, exit: () => undefined })
     const hello = await held.find()
@@ -207,14 +196,12 @@ export class Ordend {
       at: null,
     }
   }
-
   open(url: string, session: string): boolean {
     const id = this.sessions.has(session) ? session : this.lastTyped
     if (!this.link || id === null || !this.sessions.has(id)) return false
     this.send({ t: 'browse', session: id, url })
     return true
   }
-
   async saveAll(say = true): Promise<void> {
     const at = Date.now()
     for (const session of this.sessions.values()) {
@@ -226,7 +213,6 @@ export class Ordend {
     }
     if (say) this.send({ t: 'saved' })
   }
-
   activity(): Activity {
     const now = Date.now()
     const { cpu, net } = this.meter.since(now)
@@ -235,21 +221,17 @@ export class Ordend {
     const disk = diskOf(this.options.home)
     return { at: now, output, cpu, net, homeBytes: this.homeBytes, ...(disk ? { disk } : {}) }
   }
-
   private report(): void {
     if (!this.link) return
     this.send({ t: 'activity', activity: this.activity() })
   }
-
   private async measure(): Promise<void> {
     const bytes = await homeSize(this.options.home)
     if (bytes !== null) this.homeBytes = bytes
   }
-
   pause(paused: boolean): void {
     for (const session of this.sessions.values()) session.pause(paused)
   }
-
   private endHeld(id: string): void {
     this.options.cgroups?.kill(id)
     const held = new Held(socketOf(this.holds, id), {
@@ -259,7 +241,6 @@ export class Ordend {
     held.kill()
     void held.find()
   }
-
   stop(ending = false): void {
     for (const timer of this.timers) clearInterval(timer)
     for (const session of this.sessions.values()) {

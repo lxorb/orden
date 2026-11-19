@@ -10,18 +10,14 @@
   import { setup } from './setup-state.svelte'
 
   type State = 'idle' | 'busy' | 'waiting' | 'in'
-
   let plans = $state.raw<LocalPlans | null>(null)
   if (!__EVEN_PLUGIN__) void localCli().then((one) => (plans = one.plans))
-
   const FROM_KEY: Record<KeyedKind, Plan> = {
     anthropic: 'claude',
     openai: 'chatgpt',
     gemini: 'gemini',
   }
-
   const offered = PLANS.filter((one) => signInKind(one.id) !== null || offersApiKey(setup.answers.code))
-
   let states = $state<Record<string, State>>({})
   let waitingOn = $state<Record<string, string>>({})
   let trouble = $state('')
@@ -32,16 +28,13 @@
   let target = $state<Compatible | null>(null)
   let field = $state<HTMLInputElement>()
   let keyTimer: ReturnType<typeof setTimeout> | undefined
-
   const keyOffered = offersApiKey(setup.answers.code)
   const connected = $derived(Object.values(states).includes('in'))
-
   $effect(() => {
     if (connected) setup.got('ai')
   })
   const more = $derived(matching(MORE_AI, query))
   const nothing = $derived(!!query.trim() && !more.length)
-
   $effect(() => {
     for (const [plan, id] of Object.entries(waitingOn)) {
       if (plans?.of(id).state === 'in') {
@@ -50,9 +43,7 @@
       }
     }
   })
-
   $effect(() => () => clearTimeout(keyTimer))
-
   async function signIn(plan: Plan) {
     if (signInKind(plan) === null) {
       openKey(null)
@@ -70,14 +61,12 @@
     if (said.state === 'waiting') waitingOn = { ...waitingOn, [plan]: said.id }
     states = { ...states, [plan]: said.state }
   }
-
   function openKey(to: Compatible | null) {
     keying = true
     target = to
     typed = ''
     setTimeout(() => field?.focus({ preventScroll: true }), 150)
   }
-
   async function connect(provider: Compatible) {
     if (provider.keyed) {
       openKey(provider)
@@ -89,7 +78,6 @@
     if (said) trouble = said
     states = { ...states, [provider.id]: said ? 'idle' : 'in' }
   }
-
   async function takeKey() {
     const key = typed.trim()
     if (!key) return
@@ -108,7 +96,6 @@
     }
     states = { ...states, [row]: said ? 'idle' : 'in' }
   }
-
   function typing() {
     clearTimeout(keyTimer)
     if (!target && keyKindOf(typed)) keyTimer = setTimeout(() => void takeKey(), 600)
@@ -218,7 +205,6 @@
     text-align: start;
     position: relative;
   }
-
   .row + .row::before {
     content: '';
     position: absolute;
@@ -227,15 +213,12 @@
     height: 1px;
     background: var(--line);
   }
-
   .open {
     cursor: pointer;
   }
-
   .open:hover {
     background: var(--surface-2);
   }
-
   .ico {
     width: 30px;
     height: 30px;
@@ -245,13 +228,11 @@
     background: var(--surface-2);
     flex: none;
   }
-
   .dots {
     width: 17px;
     height: 17px;
     fill: currentColor;
   }
-
   .chev {
     width: 16px;
     height: 16px;
@@ -262,12 +243,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .more {
     max-height: min(34vh, 300px);
     overflow-y: auto;
   }
-
   .spin {
     width: 14px;
     height: 14px;
@@ -276,24 +255,20 @@
     border-right-color: transparent;
     animation: turn 0.7s linear infinite;
   }
-
   @keyframes turn {
     to {
       transform: rotate(1turn);
     }
   }
-
   .key {
     width: 100%;
     display: flex;
     justify-content: center;
   }
-
   .skip {
     color: var(--accent);
     font-size: 15px;
   }
-
   @media (prefers-reduced-motion: reduce) {
     .spin {
       animation: none;

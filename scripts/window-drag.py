@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import subprocess
 import sys
@@ -11,16 +10,12 @@ DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 POINTER = OUT / "pointer.fifo"
 seen = {}
 failures = []
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 if DESK == "sway":
-
     def sway(*words):
         return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))
-
     def window():
         def walk(node):
             if str(node.get("pid")) == APP or (
@@ -29,46 +24,35 @@ if DESK == "sway":
                 yield node
             for child in node.get("nodes", []) + node.get("floating_nodes", []):
                 yield from walk(child)
-
         found = sorted(walk(sway("-t", "get_tree")), key=lambda n: n["rect"]["width"] * n["rect"]["height"])
         rect = found[-1]["rect"]
         return rect["x"], rect["y"], rect["width"], rect["height"]
-
     def tell(line):
         with open(POINTER, "w") as pointer:
             pointer.write(line + "\n")
-
     def move(x, y):
         tell(f"move {x} {y}")
-
     def press():
         tell("press")
-
     def release():
         tell("release")
-
     def double_click():
         tell("click")
         time.sleep(0.08)
         tell("click")
-
     def shoot(name):
         subprocess.run(["grim", str(OUT / f"drag-{name}.png")], check=False)
-
     def screen():
         output = next(one for one in sway("-t", "get_outputs") if one["name"] == "HEADLESS-2")["rect"]
         return output["width"], output["height"]
-
     subprocess.run(
         ["swaymsg", '[title="Orden"] floating enable, move container to output HEADLESS-2, resize set 900 600, move position 100 100'],
         check=False,
     )
     time.sleep(1.5)
 else:
-
     def xdo(*words):
         return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout
-
     def wid():
         found = [w for w in xdo("search", "--onlyvisible", "--name", "Orden").split() if w]
         best, area = None, 0
@@ -79,35 +63,26 @@ else:
             if size > area:
                 best, area = one, size
         return best
-
     def window():
         shape = xdo("getwindowgeometry", "--shell", wid())
         got = dict(line.split("=", 1) for line in shape.split() if "=" in line)
         return int(got["X"]), int(got["Y"]), int(got["WIDTH"]), int(got["HEIGHT"])
-
     def move(x, y):
         xdo("mousemove", str(int(x)), str(int(y)))
-
     def press():
         xdo("mousedown", "1")
-
     def release():
         xdo("mouseup", "1")
-
     def double_click():
         xdo("click", "--repeat", "2", "--delay", "80", "1")
-
     def shoot(name):
         subprocess.run(["import", "-window", "root", str(OUT / f"drag-{name}.png")], check=False)
-
     def screen():
         size = xdo("getdisplaygeometry").split()
         return int(size[0]), int(size[1])
-
     xdo("windowsize", wid(), "900", "600")
     xdo("windowmove", wid(), "100", "100")
     time.sleep(1.5)
-
 def drag(start, by, steps=12):
     move(*start)
     time.sleep(0.3)
@@ -119,7 +94,6 @@ def drag(start, by, steps=12):
     time.sleep(0.3)
     release()
     time.sleep(1.0)
-
 region = run(
     "(() => { for (const one of document.querySelectorAll('[data-tauri-drag-region]')) {"
     " const r = one.getBoundingClientRect(); if (r.width < 20 || r.height < 8) continue;"
@@ -131,7 +105,6 @@ if not isinstance(region, dict):
     fail("no drag region to press on")
     region = {"x": 300, "y": 12}
 seen["region"] = region
-
 before = window()
 shoot("before")
 drag((before[0] + region["x"], before[1] + region["y"]), (160, 90))
@@ -141,14 +114,12 @@ seen["move"] = {"before": before, "after": moved}
 print(f"{DESK}: the strip dragged by (160, 90): {before} -> {moved}")
 if abs(moved[0] - before[0] - 160) > 20 or abs(moved[1] - before[1] - 90) > 20:
     fail(f"{DESK}: the window did not follow the strip ({before} -> {moved})")
-
 run(
     "(() => { window.__dragHeard = []; for (const kind of ['mousedown', 'mouseup', 'pointercancel', 'lostpointercapture', 'blur', 'focus'])"
     " window.addEventListener(kind, (e) => window.__dragHeard.push([kind, Math.round(performance.now()),"
     " e.clientX ?? null, e.clientY ?? null, e.button ?? null, e.buttons ?? null, innerWidth, innerHeight]), true);"
     " return true })()"
 )
-
 at = window()
 drag((at[0] + at[2] - 2, at[1] + at[3] // 2), (120, 0))
 grown = window()
@@ -159,7 +130,6 @@ seen["resize"] = {"before": at, "after": grown}
 print(f"{DESK}: the right edge dragged by 120: {at} -> {grown}")
 if grown[2] - at[2] < 80:
     fail(f"{DESK}: the window did not grow by its edge ({at} -> {grown})")
-
 if DESK != "sway":
     at = window()
     move(at[0] + region["x"], at[1] + region["y"])
@@ -173,6 +143,5 @@ if DESK != "sway":
     print(f"{DESK}: a double click on the strip: {at} -> {full} on a {width}x{height} screen")
     if full[2] < width * 0.9 or full[3] < height * 0.85:
         fail(f"{DESK}: a double click on the strip did not fill the screen ({full})")
-
 (OUT / "drag.json").write_text(json.dumps({"seen": seen, "failures": failures}, indent=2))
 sys.exit(1 if failures else 0)

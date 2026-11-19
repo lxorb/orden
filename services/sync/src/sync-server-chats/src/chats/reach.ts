@@ -8,7 +8,6 @@ export interface Reached {
   id: string
   guest: boolean
 }
-
 const reached = (me: string, chat: string) => `with ${me},
 reached as (
   select ch.id as chat, sp.id as space,
@@ -30,7 +29,6 @@ reached as (
    where (me.user_id is not null and sp.user_id = me.user_id) or ms.role is not null
       or mi.role is not null or gs.role is not null or gi.role is not null
 )`
-
 const TOKEN_ME = `me as (
   select u.id as user_id, u.email as email, null as guest_id
     from sessions s join users u on u.id = s.user_id
@@ -39,18 +37,14 @@ const TOKEN_ME = `me as (
   select null as user_id, null as email, s.guest_id as guest_id
     from guest_sessions s where s.token_hash = ?1 and s.expires_at > ?2
 )`
-
 const ASKING_ME = 'me as (select ?1 as user_id, ?2 as email, ?3 as guest_id)'
-
 const PERSON_ME = `me as (
   select u.id as user_id, u.email as email, null as guest_id from users u
    where ?2 = 0 and u.id = ?1
   union all
   select null, null, g.id from guests g where ?2 = 1 and g.id = ?1
 )`
-
 const PICKED = 'select chat, space, role, id, guest from reached'
-
 interface Row {
   chat: string | null
   space: string | null
@@ -58,31 +52,26 @@ interface Row {
   id: string | null
   guest: number | null
 }
-
 function reachedOf(row: Row | null): Reached | null {
   if (!row?.chat || !row.space || !row.id) return null
   const role = row.role === 'owner' || row.role === 'write' ? row.role : 'read'
   return { chat: row.chat, space: row.space, role, id: row.id, guest: row.guest === 1 }
 }
-
 export function askingOf(who: Whoever): [string | null, string | null, string | null] {
   return who.kind === 'user' ? [who.user.id, who.user.email, null] : [null, null, who.guest.id]
 }
-
 export async function reachChat(env: Env, who: Whoever, chat: string): Promise<Reached | null> {
   const row = await env.DB.prepare(`${reached(ASKING_ME, '?4')} ${PICKED}`)
     .bind(...askingOf(who), chat)
     .first<Row>()
   return reachedOf(row)
 }
-
 export async function reachAs(env: Env, person: { id: string; guest: boolean }, chat: string): Promise<Reached | null> {
   const row = await env.DB.prepare(`${reached(PERSON_ME, '?3')} ${PICKED}`)
     .bind(person.id, person.guest ? 1 : 0, chat)
     .first<Row>()
   return reachedOf(row)
 }
-
 export async function reachByToken(
   env: Env,
   tokenHash: string,
@@ -93,7 +82,6 @@ export async function reachByToken(
     .bind(tokenHash, at, chat)
     .first<Row>()
   if (row) return { live: true, reached: reachedOf(row) }
-
   const live = await env.DB.prepare(
     `select 1 as yes from sessions where token_hash = ?1 and expires_at > ?2
      union all select 1 from guest_sessions where token_hash = ?1 and expires_at > ?2`,
@@ -102,11 +90,9 @@ export async function reachByToken(
     .first<{ yes: number }>()
   return { live: live !== null, reached: null }
 }
-
 export function hubIdOf(who: string): string {
   return who.slice(who.indexOf(':') + 1)
 }
-
 const PEOPLE = `with c as (
   select sp.id as space_id, sp.user_id as owner, f.id as file_id
     from chats ch join spaces sp on sp.id = ch.space_id and sp.deleted = 0
@@ -125,7 +111,6 @@ people as (
                                and (g.item = '' or g.item = c.file_id) and g.joined_at is not null
 )
 select id, guest, max(rank) as rank from people group by id, guest`
-
 export async function reaching(env: Env, chat: string): Promise<{ id: string; guest: boolean }[]> {
   const { results } = await env.DB.prepare(PEOPLE).bind(chat).all<{ id: string; guest: number }>()
   return results.map((one) => ({ id: one.id, guest: one.guest === 1 }))

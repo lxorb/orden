@@ -3,262 +3,195 @@ import { Arranged, arrangedMap, MOST_ARRANGED, MOST_NAMES, STORAGE_KEY } from '.
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const ROOT = '/space'
 let arranged: Arranged
-
 beforeEach(() => {
   vi.useFakeTimers()
   localStorage.clear()
   arranged = new Arranged(() => ROOT)
 })
-
 afterEach(() => {
   vi.clearAllTimers()
   vi.useRealTimers()
 })
-
 describe('what a folder keeps', () => {
   test('is kept under the folder s path as the space speaks it', () => {
     arranged.set('/space/Work', ['b.md', 'a.md'])
-
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md', 'a.md'] })
     expect(arranged.listOf('/space/Work')).toEqual(['b.md', 'a.md'])
   })
-
   test('the top of the space is a folder too, under the empty key', () => {
     arranged.set(ROOT, ['z.md', 'a.md'])
-
     expect(arranged.of(ROOT)).toEqual({ '': ['z.md', 'a.md'] })
     expect(arranged.listOf(ROOT)).toEqual(['z.md', 'a.md'])
   })
-
   test('is nothing for a folder nobody arranged, which reads in name order', () => {
     expect(arranged.listOf('/space/Work')).toEqual([])
   })
-
   test('and an order dragged back to name order takes the key with it', () => {
     arranged.set('/space/Work', ['b.md'])
     arranged.set('/space/Work', [])
-
     expect(arranged.of(ROOT)).toEqual({})
   })
-
   test('holds a name once, however many times it was written', () => {
     arranged.set('/space/Work', ['a.md', 'a.md', 'b.md'])
-
     expect(arranged.listOf('/space/Work')).toEqual(['a.md', 'b.md'])
   })
-
   test('drops a name that is a path rather than a name', () => {
     arranged.set('/space/Work', ['../out.md', 'deep/in.md', 'a.md'])
-
     expect(arranged.listOf('/space/Work')).toEqual(['a.md'])
   })
-
   test('refuses a folder outside its own space', () => {
     arranged.set('/elsewhere/Work', ['a.md'])
-
     expect(arranged.of(ROOT)).toEqual({})
   })
 })
-
 describe('a drag that has not been dropped yet', () => {
   test('is the order the list is drawn in while it is showing', () => {
     arranged.show('/space/Work', ['c.md', 'a.md'])
-
     expect(arranged.listOf('/space/Work')).toEqual(['c.md', 'a.md'])
     expect(arranged.dragging).toBe(true)
     expect(arranged.of(ROOT)).toEqual({})
   })
-
   test('leaves every other folder alone', () => {
     arranged.set('/space/Other', ['b.md'])
     arranged.show('/space/Work', ['c.md'])
-
     expect(arranged.listOf('/space/Other')).toEqual(['b.md'])
   })
-
   test('slides back where the drag ends nowhere', () => {
     arranged.set('/space/Work', ['b.md'])
     arranged.show('/space/Work', ['c.md', 'b.md'])
     arranged.unshow()
-
     expect(arranged.listOf('/space/Work')).toEqual(['b.md'])
     expect(arranged.dragging).toBe(false)
   })
-
   test('is what the folder keeps once it lands', () => {
     arranged.show('/space/Work', ['c.md', 'a.md'])
     arranged.drop()
-
     expect(arranged.of(ROOT)).toEqual({ Work: ['c.md', 'a.md'] })
     expect(arranged.dragging).toBe(false)
   })
-
   test('a drop with nothing showing writes nothing', () => {
     arranged.drop()
-
     expect(arranged.of(ROOT)).toEqual({})
   })
 })
-
 describe('a row that has been renamed', () => {
   test('keeps the place it was arranged into', () => {
     arranged.set('/space/Work', ['c.md', 'a.md'])
     arranged.moved('/space/Work/c.md', '/space/Work/zebra.md')
-
     expect(arranged.listOf('/space/Work')).toEqual(['zebra.md', 'a.md'])
   })
-
   test('at the top of the space as well as inside a folder', () => {
     arranged.set(ROOT, ['c.md', 'a.md'])
     arranged.moved('/space/c.md', '/space/zebra.md')
-
     expect(arranged.listOf(ROOT)).toEqual(['zebra.md', 'a.md'])
   })
-
   test('costs nothing where the folder it sits in arranged nothing', () => {
     arranged.moved('/space/Work/c.md', '/space/Work/zebra.md')
-
     expect(arranged.of(ROOT)).toEqual({})
   })
 })
-
 describe('a row that has moved to another folder', () => {
   test('leaves the list it was in', () => {
     arranged.set(ROOT, ['c.md', 'a.md'])
     arranged.moved('/space/c.md', '/space/Work/c.md')
-
     expect(arranged.listOf(ROOT)).toEqual(['a.md'])
   })
-
   test('and falls to the end of the one it arrives in, which is no list at all', () => {
     arranged.set('/space/Work', ['b.md'])
     arranged.moved('/space/c.md', '/space/Work/c.md')
-
     expect(arranged.listOf('/space/Work')).toEqual(['b.md'])
   })
 })
-
 describe('a folder that has moved', () => {
   test('takes its own list and every list under it along', () => {
     arranged.set('/space/Work', ['b.md'])
     arranged.set('/space/Work/Deep', ['inner.md'])
     arranged.moved('/space/Work', '/space/Archive')
-
     expect(arranged.of(ROOT)).toEqual({ Archive: ['b.md'], 'Archive/Deep': ['inner.md'] })
   })
-
   test('and is renamed in the list of the folder that holds it', () => {
     arranged.set(ROOT, ['Work', 'Alpha'])
     arranged.moved('/space/Work', '/space/Archive')
-
     expect(arranged.listOf(ROOT)).toEqual(['Archive', 'Alpha'])
   })
 })
-
 describe('a row that has gone', () => {
   test('leaves the list of the folder it sat in', () => {
     arranged.set('/space/Work', ['c.md', 'a.md'])
     arranged.gone('/space/Work/c.md')
-
     expect(arranged.listOf('/space/Work')).toEqual(['a.md'])
   })
-
   test('and a folder takes every list under it with it', () => {
     arranged.set(ROOT, ['Work'])
     arranged.set('/space/Work', ['b.md'])
     arranged.set('/space/Work/Deep', ['inner.md'])
     arranged.gone('/space/Work')
-
     expect(arranged.of(ROOT)).toEqual({})
   })
-
   test('a row nothing arranged is nothing to forget', () => {
     arranged.set('/space/Work', ['c.md'])
     arranged.gone('/space/Work/a.md')
-
     expect(arranged.of(ROOT)).toEqual({ Work: ['c.md'] })
   })
 })
-
 describe('a space that moved or went', () => {
   test('a renamed space folder re-keys the whole map', () => {
     arranged.set('/space/Work', ['b.md'])
     arranged.spaceMoved(ROOT, '/elsewhere')
-
     expect(arranged.of('/elsewhere')).toEqual({ Work: ['b.md'] })
     expect(arranged.of(ROOT)).toEqual({})
   })
-
   test('a space that is no longer here is forgotten', () => {
     arranged.set('/space/Work', ['b.md'])
     arranged.forget(ROOT)
-
     expect(arranged.of(ROOT)).toEqual({})
   })
 })
-
 describe('what survives a relaunch', () => {
   test('the map is read back as it was written', () => {
     arranged.set('/space/Work', ['c.md', 'a.md'])
     arranged.set(ROOT, ['Work'])
-
     const again = new Arranged(() => ROOT)
     expect(again.of(ROOT)).toEqual({ Work: ['c.md', 'a.md'], '': ['Work'] })
   })
-
   test('an order showing under a drag is not written down', () => {
     arranged.show('/space/Work', ['c.md'])
-
     expect(new Arranged(() => ROOT).of(ROOT)).toEqual({})
   })
-
   test('nonsense in storage reads as nothing arranged', () => {
     localStorage.setItem(STORAGE_KEY, '{ not json')
-
     expect(new Arranged(() => ROOT).of(ROOT)).toEqual({})
   })
 })
-
 describe('the account s copy', () => {
   test('is folded into this machine s the first time the account sees the space', async () => {
     arranged.set('/space/Work', ['b.md'])
     await arranged.adopt(ROOT, { Other: ['z.md'] }, 'account-1')
-
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md'], Other: ['z.md'] })
   })
-
   test('and this machine s wins for a folder both of them arranged', async () => {
     arranged.set('/space/Work', ['b.md'])
     await arranged.adopt(ROOT, { Work: ['z.md'] }, 'account-1')
-
     expect(arranged.listOf('/space/Work')).toEqual(['b.md'])
   })
-
   test('is taken outright on every pass after the first', async () => {
     await arranged.adopt(ROOT, { Work: ['b.md'] }, 'account-1')
     await arranged.adopt(ROOT, {}, 'account-1')
-
     expect(arranged.of(ROOT)).toEqual({})
   })
-
   test('a different account signing in folds again', async () => {
     await arranged.adopt(ROOT, { Work: ['b.md'] }, 'account-1')
     await arranged.adopt(ROOT, { Other: ['z.md'] }, 'account-2')
-
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md'], Other: ['z.md'] })
   })
-
   test('nothing at all from a service that has never heard of the column', async () => {
     arranged.set('/space/Work', ['b.md'])
     await arranged.adopt(ROOT, undefined, 'account-1')
-
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md'] })
   })
 })
-
 describe('reading a map out of an unknown', () => {
   test('keeps what reads as a folder with names in it', () => {
     expect(arrangedMap({ Work: ['b.md'], '': ['a.md'] })).toEqual({
@@ -266,36 +199,28 @@ describe('reading a map out of an unknown', () => {
       '': ['a.md'],
     })
   })
-
   test('drops a folder whose value is not a list of names', () => {
     expect(arrangedMap({ Work: 'b.md', Other: [1, 2], Third: ['a.md'] })).toEqual({
       Third: ['a.md'],
     })
   })
-
   test('drops a key that is not a path inside the space', () => {
     expect(arrangedMap({ '/etc': ['a.md'], '../up': ['a.md'], 'C:/x': ['a.md'] })).toEqual({})
   })
-
   test('holds no more folders than a space may', () => {
     const many: Record<string, string[]> = {}
     for (let at = 0; at < MOST_ARRANGED + 20; at++) many[`Folder ${at}`] = ['a.md']
-
     expect(Object.keys(arrangedMap(many))).toHaveLength(MOST_ARRANGED)
   })
-
   test('holds no more names in one folder than a folder may', () => {
     const names = Array.from({ length: MOST_NAMES + 20 }, (_unused, at) => `note ${at}.md`)
-
     expect(arrangedMap({ Work: names }).Work).toHaveLength(MOST_NAMES)
   })
-
   test('nothing at all for what is not a map', () => {
     expect(arrangedMap(null)).toEqual({})
     expect(arrangedMap(['a.md'])).toEqual({})
   })
 })
-
 describe('a space that keeps places', () => {
   function places(start: Record<string, string[]> = {}) {
     const held = new Map(Object.entries(start))
@@ -317,49 +242,39 @@ describe('a space that keeps places', () => {
     }
     return { held, asked, positioned, land: () => land() }
   }
-
   test('draws a folder by its places, ahead of the map', () => {
     arranged.set('/space/Work', ['b.md', 'a.md'])
     const { positioned } = places({ Work: ['a.md', 'b.md'] })
     const stop = arranged.placeBy(positioned)
-
     expect(arranged.listOf('/space/Work')).toEqual(['a.md', 'b.md'])
     expect(arranged.savedList('/space/Work')).toEqual(['a.md', 'b.md'])
     stop()
     expect(arranged.listOf('/space/Work')).toEqual(['b.md', 'a.md'])
   })
-
   test('a folder nobody placed a row of reads the map', () => {
     arranged.set('/space/Work', ['b.md', 'a.md'])
     arranged.placeBy(places().positioned)
-
     expect(arranged.listOf('/space/Work')).toEqual(['b.md', 'a.md'])
   })
-
   test('a drop is drawn at once, turned into places, and written in the map too', async () => {
     const one = places()
     arranged.placeBy(one.positioned)
-
     arranged.set('/space/Work', ['c.md', 'a.md'])
     expect(one.asked).toEqual([{ folder: 'Work', names: ['c.md', 'a.md'] }])
     expect(arranged.listOf('/space/Work')).toEqual(['c.md', 'a.md', 'rest.md'])
     expect(arranged.of(ROOT)).toEqual({ Work: ['c.md', 'a.md'] })
-
     one.land()
     await Promise.resolve()
     await Promise.resolve()
     expect(arranged.listOf('/space/Work')).toEqual(['c.md', 'a.md'])
   })
-
   test('after a pass, an order from before places becomes places once, and places are written in the map', () => {
     arranged.set('/space/Old', ['y.md', 'x.md'])
     const one = places({ Work: ['b.md', 'a.md'] })
     arranged.placeBy(one.positioned)
-
     arranged.fromPlaces(ROOT)
     expect(one.asked).toEqual([{ folder: 'Old', names: ['y.md', 'x.md'] }])
     expect(arranged.of(ROOT)).toEqual({ Old: ['y.md', 'x.md'], Work: ['b.md', 'a.md'] })
-
     one.land()
     one.asked.length = 0
     arranged.fromPlaces(ROOT)

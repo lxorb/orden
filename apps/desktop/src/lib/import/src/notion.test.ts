@@ -9,13 +9,11 @@ const SUB = 'aaaabbbbccccddddeeeeffff00001111'
 const TASKS = '99998888777766665555444433332222'
 const ROW = '11112222333344445555666677778888'
 const pathsOf = (plan: ImportPlan): string[] => plan.files.map((one) => one.path)
-
 function fenced(note: string): string {
   const found = /```base\n([\s\S]*?)\n```/.exec(note)
   if (!found) throw new Error('no base in the note')
   return found[1] ?? ''
 }
-
 describe('a Notion export', () => {
   test('loses the ids and lands as the tree it looked like', async () => {
     const plan = await readNotion([
@@ -23,11 +21,9 @@ describe('a Notion export', () => {
       file(`Plan ${PLAN}/Kit list ${SUB}.md`, '# Kit list\n\nA tent.\n'),
       file(`Plan ${PLAN}/tent ${SUB}.png`, 'PNG'),
     ])
-
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit list.md', 'Plan/tent.png'])
     expect(noteAt(plan, 'Plan.md')).toContain('[[Kit list]]')
   })
-
   test('a page keeps its properties as front matter', async () => {
     const plan = await readNotion([
       file(
@@ -35,7 +31,6 @@ describe('a Notion export', () => {
         '# Task\nStatus: Done\nCreated: January 2, 2026\nLast edited time: March 4, 2026\nTags: work, urgent\n\nThe words.\n',
       ),
     ])
-
     const text = noteAt(plan, 'Task.md')
     expect(text).toContain('date: 2026-01-02')
     expect(text).toContain('updated: 2026-03-04')
@@ -45,16 +40,13 @@ describe('a Notion export', () => {
     expect(text).toContain('The words.')
     expect(text).not.toContain('Status: Done')
   })
-
   test('a database becomes its folder note, holding a base over its rows', async () => {
     const plan = await readNotion([
       file(`Tasks ${TASKS}.csv`, 'Name,Status\nOne,Done\n'),
       file(`Tasks ${TASKS}_all.csv`, 'Name,Status,Due\nOne,Done,\nTwo,Doing,"October 10, 2026"\n'),
       file(`Tasks ${TASKS}/One ${ROW}.md`, '# One\nStatus: Done\n\nWords.\n'),
     ])
-
     expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/One.md', 'Tasks/Two.md'])
-
     const base = readBase(fenced(noteAt(plan, 'Tasks.md')))
     expect(base.filters).toEqual({ and: ['file.folder + ".md" == this.file.path'] })
     expect(base.views[0]?.order).toEqual(['file.name', 'note.status', 'note.due'])
@@ -62,7 +54,6 @@ describe('a Notion export', () => {
     expect(noteAt(plan, 'Tasks/Two.md')).toContain('due: 2026-10-10')
     expect(plan.lost[0]).toBe('1 saved view is left out, and every row is in the table')
   })
-
   test('a row is written as what its column holds', async () => {
     const plan = await readNotion([
       file(
@@ -90,7 +81,6 @@ describe('a Notion export', () => {
       ),
       file(`Books ${TASKS}/Ubik ${ROW}.md`, '# Ubik\nPages: 224\nRead: No\nCode: 12\n\nWords.\n'),
     ])
-
     const dune = noteAt(plan, 'Books/Dune.md')
     expect(dune).toContain('pages: 412\n')
     expect(dune).toContain('read: true\n')
@@ -102,25 +92,20 @@ describe('a Notion export', () => {
     expect(noteAt(plan, 'Books/Ubik.md')).toContain('read: false\n')
     expect(noteAt(plan, 'Books/Ubik.md')).toContain("code: '12'\n")
   })
-
   test('a database with no pages at all still has every row', async () => {
     const plan = await readNotion([file(`Tasks ${TASKS}_all.csv`, 'Name,Note\n"A | B","one\ntwo"\n,Empty\n')])
-
     expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/A B.md', 'Tasks/Untitled.md'])
     expect(noteAt(plan, 'Tasks/A B.md')).toContain('note: one two')
   })
-
   test('a CSV attached to a page is the file it was, not a database', async () => {
     const plan = await readNotion([
       file(`Plan ${PLAN}.md`, `# Plan\n\n[budget.csv](Plan%20${PLAN}/budget.csv)\n`),
       file(`Plan ${PLAN}/budget.csv`, 'Item,Cost\nTent,120\n'),
     ])
-
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/budget.csv'])
     expect(plan.files.find((one) => one.path === 'Plan/budget.csv')?.kind).toBe('file')
     expect(noteAt(plan, 'Plan.md')).toContain('(Plan/budget.csv)')
   })
-
   test('lands as the workspace, not inside the folder Notion zipped it in', async () => {
     const wrap = 'Export-d2b14fbf-86de-4508-a1b2-6515ff8d7aab'
     const plan = await readNotion([
@@ -128,11 +113,9 @@ describe('a Notion export', () => {
       file(`${wrap}-Part-2/Plan ${PLAN}/Kit ${SUB}.md`, '# Kit\n'),
       file(`${wrap}/index.html`, '<ul><li>Plan</li></ul>'),
     ])
-
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit.md'])
     expect(noteAt(plan, 'Plan.md')).toContain('[[Kit]]')
   })
-
   test('a row reads its properties under the blank line Notion leaves below the title', async () => {
     const plan = await readNotion([
       file(`Habits ${TASKS}_all.csv`, 'Date,Ran today,📅 Due\n"@May 1, 2026 ",Yes,"May 2, 2026"\n'),
@@ -142,7 +125,6 @@ describe('a Notion export', () => {
       ),
       file(`Plan ${PLAN}.md`, '# Plan\n\nOne thing: it works.\n'),
     ])
-
     const row = noteAt(plan, 'Habits/@May 1, 2026.md')
     expect(row).toContain('ran-today: true\n')
     expect(row).toContain('due: 2026-05-02\n')
@@ -150,16 +132,13 @@ describe('a Notion export', () => {
     expect(row).toContain('Words.')
     expect(noteAt(plan, 'Plan.md')).toContain('One thing: it works.')
   })
-
   test('a row whose title was a date mention is the page named as it read that day', async () => {
     const plan = await readNotion([
       file(`Habits ${TASKS}_all.csv`, 'Date,Ran\n"@August 6, 2025 ","August 6, 2025 6:21 AM"\n'),
       file(`Habits ${TASKS}/@Today ${ROW}.md`, '# @Today\n\nRan: August 6, 2025 6:21 AM\n'),
     ])
-
     expect(pathsOf(plan)).toEqual(['Habits.md', 'Habits/@Today.md'])
   })
-
   test('finds the rows in a folder named the way Notion names them now', async () => {
     const plan = await readNotion([
       file(`Specs ${TASKS}_all.csv`, 'Name,Method\nLogin,POST\n'),
@@ -167,7 +146,6 @@ describe('a Notion export', () => {
       file(`Features/Untitled ${PLAN}_Checkout ${SUB}_all.csv`, 'Name,Status\nTax,Done\n'),
       file(`Features/Untitled 1a2b-7890/Checkout/Tax ${ROW}.md`, '# Tax\n\nStatus: Done\n'),
     ])
-
     expect(pathsOf(plan)).toEqual([
       'Specs.md',
       'Specs/Login.md',
@@ -176,7 +154,6 @@ describe('a Notion export', () => {
     ])
     expect(noteAt(plan, 'Specs/Login.md')).toContain('method: POST')
   })
-
   test('a link to a database goes to its folder note, and one to a linked view to its page', async () => {
     const plan = await readNotion([
       file(
@@ -187,22 +164,18 @@ describe('a Notion export', () => {
       file(`Home ${PLAN}/Tasks ${TASKS}_all.csv`, 'Name\nOne\n'),
       file(`Home ${PLAN}/Mine ${SUB}.md`, '# Mine\n'),
     ])
-
     const home = noteAt(plan, 'Home.md')
     expect(home).toContain('[[Tasks]]')
     expect(home).toContain('[[Mine]]')
   })
-
   test('a link to a database named with brackets goes to its folder note', async () => {
     const plan = await readNotion([
       file(`Home ${PLAN}.md`, `# Home\n\n[Reading (2024)](Home%20${PLAN}/Reading%20(2024)%20${TASKS}.csv)\n`),
       file(`Home ${PLAN}/Reading (2024) ${TASKS}.csv`, 'Name\nOne\n'),
       file(`Home ${PLAN}/Reading (2024) ${TASKS}_all.csv`, 'Name\nOne\n'),
     ])
-
     expect(noteAt(plan, 'Home.md')).toContain('[[Reading (2024)]]')
   })
-
   test('an HTML export keeps a row’s properties and its to-dos', async () => {
     const plan = await readNotion([
       file(
@@ -223,7 +196,6 @@ describe('a Notion export', () => {
       ),
       file(`Gear ${PLAN}.html`, '<h1>Gear</h1>'),
     ])
-
     const row = noteAt(plan, 'Gear/Espresso.md')
     expect(row).toContain('tags: [home-office, coffee]\n')
     expect(row).toContain('serviced: true\n')
@@ -234,25 +206,21 @@ describe('a Notion export', () => {
     expect(row).toContain('- [ ] Clean')
     expect(row).not.toContain('Serviced |')
   })
-
   test('a page dated twice, or with a range, keeps every date', async () => {
     const plan = await readNotion([
       file(`Two ${PLAN}.md`, '# Two\nCreated: January 2, 2026\nDate: March 5, 2026\n\nWords.\n'),
       file(`Trip ${SUB}.md`, '# Trip\nDate: May 1, 2026 → May 3, 2026\n\nWords.\n'),
     ])
-
     const two = noteAt(plan, 'Two.md')
     expect(two.match(/^date:/gm)).toHaveLength(1)
     expect(two).toContain('date: 2026-01-02\n')
     expect(two).toContain('date-2: 2026-03-05\n')
     expect(two).not.toContain('Date: March')
-
     const trip = noteAt(plan, 'Trip.md')
     expect(trip.match(/^date:/gm)).toHaveLength(1)
     expect(trip).toContain('May 1, 2026 → May 3, 2026')
     expect(trip).not.toContain('Date: May')
   })
-
   test('a database keeps every column under one key of its own, in its rows and its base', async () => {
     const plan = await readNotion([
       file(
@@ -268,21 +236,18 @@ describe('a Notion export', () => {
         '# One\nCreated: January 2, 2026\nDate: March 5, 2026\nStatus: Doing\nStatus?: done\n⭐: 5\n\nWords.\n',
       ),
     ])
-
     const one = noteAt(plan, 'Tasks/One.md')
     expect(one).toContain('date: 2026-01-02\n')
     expect(one).toContain('date-2: 2026-03-05\n')
     expect(one).toContain('status: Doing\n')
     expect(one).toContain('status-2: done\n')
     expect(one).toContain('column-6: 5\n')
-
     const two = noteAt(plan, 'Tasks/Two.md')
     expect(two).toContain('date: 2026-01-03\n')
     expect(two).toContain('date-2: May 1, 2026 → May 3, 2026\n')
     expect(two).toContain('status-2: later\n')
     expect(two).not.toMatch(/^status:/m)
     expect(two).toContain('column-6: 4\n')
-
     const base = readBase(fenced(noteAt(plan, 'Tasks.md')))
     expect(base.views[0]?.order).toEqual([
       'file.name',
@@ -296,7 +261,6 @@ describe('a Notion export', () => {
     expect(base.properties['note.status-2']?.displayName).toBe('Status?')
     expect(base.properties['note.column-6']?.displayName).toBe('⭐')
   })
-
   test('a database dates its rows by the column that reads as a day, whatever stands before it', async () => {
     const plan = await readNotion([
       file(
@@ -308,26 +272,21 @@ describe('a Notion export', () => {
         ['Name,Date,Created', 'One,"March 5, 2026","January 2, 2026"', 'Two,,"January 3, 2026"'].join('\n'),
       ),
     ])
-
     expect(noteAt(plan, 'Visits/One.md')).toContain('date: 2026-01-02\n')
     expect(noteAt(plan, 'Visits/One.md')).toContain('date-2: 2026-03-05\n')
     expect(noteAt(plan, 'Visits/Two.md')).toContain('date: 2026-01-03\n')
-
     const one = noteAt(plan, 'Trips/One.md')
     expect(one.match(/^date:/gm)).toHaveLength(1)
     expect(one).toContain('date: 2026-01-02\n')
     expect(one).toContain('date-2: May 1, 2026 → May 3, 2026\n')
-
     const two = noteAt(plan, 'Trips/Two.md')
     expect(two).toContain('date: 2026-01-03\n')
     expect(two).not.toContain('date-2')
-
     const base = readBase(fenced(noteAt(plan, 'Trips.md')))
     expect(base.views[0]?.order).toEqual(['file.name', 'note.date-2', 'note.date'])
     expect(base.properties['note.date']?.displayName).toBe('Created')
     expect(base.properties['note.date-2']?.displayName).toBe('Date')
   })
-
   test('an HTML export keeps a date it cannot read as a day beside the one it can', async () => {
     const plan = await readNotion([
       file(
@@ -345,7 +304,6 @@ describe('a Notion export', () => {
       ),
       file(`Gear ${PLAN}.html`, '<h1>Gear</h1>'),
     ])
-
     const row = noteAt(plan, 'Gear/Trip.md')
     expect(row.match(/^date:/gm)).toHaveLength(1)
     expect(row).toContain('date: 2026-01-02\n')
@@ -354,7 +312,6 @@ describe('a Notion export', () => {
     expect(row).toContain('status-2: done\n')
     expect(row).toMatch(/^property-\d+: 5$/m)
   })
-
   test('two databases of one name under one page each keep a folder of their own', async () => {
     const one = 'a'.repeat(32)
     const two = 'b'.repeat(32)
@@ -365,7 +322,6 @@ describe('a Notion export', () => {
       file(`Home ${PLAN}/Untitled ${two}_all.csv`, 'Name\nTwo\nThree\n'),
       file(`Home ${PLAN}/Untitled ${two}/Two ${SUB}.md`, '# Two\n'),
     ])
-
     expect(pathsOf(plan).sort()).toEqual([
       'Home.md',
       'Home/Untitled 2.md',
@@ -375,7 +331,6 @@ describe('a Notion export', () => {
       'Home/Untitled/One.md',
     ])
   })
-
   test('two pages of one name keep their subpages apart, in Markdown and in HTML', async () => {
     const one = 'a'.repeat(32)
     const two = 'b'.repeat(32)
@@ -391,40 +346,31 @@ describe('a Notion export', () => {
       file(`Untitled ${two}.html`, '<h1>Untitled</h1>'),
       file(`Untitled ${two}/Tent ${SUB}.html`, '<h1>Tent</h1>'),
     ])
-
     expect(pathsOf(markdown).sort()).toEqual(['Untitled 2.md', 'Untitled 2/Tent.md', 'Untitled.md', 'Untitled/Kit.md'])
     expect(noteAt(markdown, 'Untitled 2.md')).toContain('[[Tent]]')
     expect(pathsOf(html).sort()).toEqual(['Untitled 2.md', 'Untitled 2/Tent.md', 'Untitled.md', 'Untitled/Kit.md'])
   })
-
   test('an HTML export is read as HTML rather than refused', async () => {
     const plan = await readNotion([
       file(`Plan ${PLAN}.html`, '<h1>Plan</h1><p>Words</p>'),
       file(`Plan ${PLAN}/Kit ${SUB}.html`, '<h1>Kit</h1>'),
     ])
-
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit.md'])
     expect(plan.format).toBe('notion')
   })
 })
-
 describe('what counts as a page of properties', () => {
   test('is the block directly under the title, which is where Notion writes it', () => {
     const text = '# Plan\n\nOne thing: it works.\n\nMore.\n'
-
     expect(notionPage(text).body).toBe(text)
     expect(notionPage(text).meta).toEqual({})
   })
-
   test('keeps a page that opens with its words', () => {
     const text = 'Just words, no title.\n'
-
     expect(notionPage(text).body).toBe(text)
   })
-
   test('reads a property block that is not followed by any words', () => {
     const said = notionPage('# Plan\nStatus: Done\n')
-
     expect(said.meta.extra).toEqual([['Status', 'Done']])
     expect(said.body.trim()).toBe('# Plan')
   })

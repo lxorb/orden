@@ -5,7 +5,6 @@ const world = vi.hoisted(() => ({
   trusted: true,
   printed: [] as unknown[],
 }))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get active() {
@@ -44,13 +43,10 @@ vi.mock('../../pages/src/api', async (importOriginal) => ({
       },
     }),
 }))
-
 const { printOpen } = await import('./print-open')
-
 beforeEach(() => {
   world.printed = []
 })
-
 test.each([
   ['canvas', true],
   ['canvas', false],

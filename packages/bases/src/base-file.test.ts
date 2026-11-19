@@ -5,7 +5,6 @@ import { readBase, writeBase } from './base-file'
 
 const here = join(import.meta.dirname, 'fixtures')
 const fixture = (name: string) => readFileSync(join(here, name), 'utf8')
-
 const FILES = [
   ...readdirSync(join(here, 'kepano'))
     .filter((name) => name.endsWith('.base'))
@@ -13,20 +12,17 @@ const FILES = [
   'obsidian-help.base',
   'orden-example.base',
 ]
-
 describe('a base read and written unchanged', () => {
   test.each(FILES)('%s comes back byte for byte', (name) => {
     const source = fixture(name)
     expect(writeBase(readBase(source), source)).toBe(source)
   })
-
   test.each(FILES)('%s comes back the same through a copy of its base', (name) => {
     const source = fixture(name)
     const copy = structuredClone(readBase(source))
     expect(writeBase(copy, source)).toBe(source)
   })
 })
-
 describe('reading', () => {
   test("the help page's example, every part", () => {
     const base = readBase(fixture('obsidian-help.base'))
@@ -52,7 +48,6 @@ describe('reading', () => {
       summaries: { 'formula.ppu': 'Average' },
     })
   })
-
   test("a layout's own keys are kept as options", () => {
     const base = readBase(fixture('kepano/Map.base'))
     expect(base.views[1]?.options).toMatchObject({
@@ -67,7 +62,6 @@ describe('reading', () => {
       { property: 'loc', direction: 'ASC' },
     ])
   })
-
   test("Orden's key, at the top and in a view", () => {
     const base = readBase(fixture('orden-example.base'))
     expect(base.orden.template).toBe('[[Templates/Bug]]')
@@ -86,7 +80,6 @@ describe('reading', () => {
     expect(base.views[3]?.orden.rows).toBe('tasks')
     expect(base.views[3]?.filters).toEqual({ and: ['!task.done'] })
   })
-
   test("a board's own keys, and a card size Orden does not know left as written", () => {
     const source =
       'views:\n  - type: kanban\n    name: B\n    cardSize: 180\n    orden:\n      cardSize: large\n      groups: [Done, To do]\n      noneFirst: true\n      hideEmpty: true\n      colourColumns: false\n'
@@ -102,12 +95,10 @@ describe('reading', () => {
     expect(writeBase(base, source)).toBe(source)
     expect(readBase(source.replace('large', 'huge')).views[0]?.orden.cardSize).toBeUndefined()
   })
-
   test('an empty file is an empty base, and a broken one an error', () => {
     expect(readBase('').views).toEqual([])
     expect(() => readBase('views: [\n')).toThrow()
   })
-
   test('keys nobody knows are kept, at every level', () => {
     const base = readBase(
       'plugin: 1\nviews:\n  - type: chart\n    name: C\n    orden:\n      bars: 3\norden:\n  later: true\n',
@@ -117,7 +108,6 @@ describe('reading', () => {
     expect(base.orden.kept).toEqual({ later: true })
   })
 })
-
 describe('writing a change', () => {
   test('touches only the lines that change', () => {
     const source = fixture('kepano/Books.base')
@@ -131,7 +121,6 @@ describe('writing a change', () => {
     expect(after.length).toBe(before.length + 1)
     expect(after.filter((line) => !before.includes(line))).toEqual(['    limit: 5'])
   })
-
   test('a new view is added at the end and the rest stays as written', () => {
     const source = fixture('kepano/Map.base')
     const base = readBase(source)
@@ -151,7 +140,6 @@ describe('writing a change', () => {
     )
     expect(readBase(written).views.at(-1)?.orden.date).toBe('note.last')
   })
-
   test('a formula is taken out whatever it is called', () => {
     for (const name of ['other', 'toString', 'constructor', 'valueOf', 'hasOwnProperty']) {
       const source = `formulas:\n  ${name}: 1 + 1\n  kept: file.name\nviews:\n  - type: table\n    name: A\n`
@@ -160,7 +148,6 @@ describe('writing a change', () => {
       expect(writeBase(base, source)).toBe('formulas:\n  kept: file.name\nviews:\n  - type: table\n    name: A\n')
     }
   })
-
   test('a quoted filter keeps its quotes when another one changes', () => {
     const source = fixture('kepano/Books.base')
     const base = readBase(source)
@@ -171,7 +158,6 @@ describe('writing a change', () => {
     expect(written).toContain(`    - '!file.name.contains("Templates")'`)
     expect(written).toContain('    - categories.contains(link("Books"))\n')
   })
-
   test('filters set on a base whose own Orden could not read replace them, once', () => {
     const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
     const base = readBase(source)
@@ -179,12 +165,10 @@ describe('writing a change', () => {
     const written = writeBase(base, source)
     expect(written).toBe('filters: b == 1\nviews:\n  - type: table\n    name: A\n')
   })
-
   test("a base's unreadable filters keep their place at the top of a new file", () => {
     const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
     expect(writeBase(readBase(source))).toBe(source)
   })
-
   test("a view's filters and limit Orden cannot read stay as written when another key changes", () => {
     const source = 'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - a\n    limit: "10"\n'
     const base = readBase(source)
@@ -195,7 +179,6 @@ describe('writing a change', () => {
     view.name = 'B'
     expect(writeBase(base, source)).toBe(source.replace('name: A', 'name: B'))
   })
-
   test('a removed view goes, and its neighbours stay', () => {
     const source = fixture('kepano/Books.base')
     const base = readBase(source)
@@ -204,7 +187,6 @@ describe('writing a change', () => {
     expect(written).not.toContain('Top rated')
     expect(readBase(written).views.map((view) => view.name)).toEqual(['Books', 'Author', 'Genre'])
   })
-
   test("Orden's key is written where Obsidian leaves it alone", () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
     base.orden.template = '[[Templates/Bug]]'
@@ -226,7 +208,6 @@ describe('writing a change', () => {
       ].join('\n'),
     )
   })
-
   test('a new file from nothing', () => {
     const base = readBase('')
     base.filters = { and: ['file.inFolder("Bugs")'] }
@@ -256,7 +237,6 @@ describe('writing a change', () => {
     )
     expect(readBase(written)).toEqual(base)
   })
-
   test('comments in the file survive a change', () => {
     const source = '# my bugs\nviews:\n  - type: table # the main one\n    name: All\n'
     const base = readBase(source)
@@ -266,7 +246,6 @@ describe('writing a change', () => {
     expect(writeBase(base, source)).toBe('# my bugs\nviews:\n  - type: table # the main one\n    name: Everything\n')
   })
 })
-
 describe('keys this version does not know', () => {
   test('stay on an option and on the id when the base is written again', () => {
     const yaml = `views:

@@ -60,7 +60,6 @@ export const SAME: Readonly<Record<string, string>> = {
   'up-right': '↗️',
   'video-projector': '📽️',
 }
-
 export const BESIDE: Readonly<Record<string, string>> = {
   '👍': 'like-placeholder approve approval',
   '👎': 'disapprove',
@@ -147,7 +146,6 @@ export const BESIDE: Readonly<Record<string, string>> = {
   '🏭': 'factory-breakdown',
   '🚇': 'light-at-the-end-of-tunnel',
 }
-
 export const LOOSE: Readonly<Record<string, string>> = {
   'Travel & Places': 'entering-heaven-alive',
   Objects:

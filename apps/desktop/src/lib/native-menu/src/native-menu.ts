@@ -24,9 +24,7 @@ type SystemItem =
   | 'Minimize'
   | 'Maximize'
   | 'BringAllToFront'
-
 export type StandIn = 'undo' | 'redo' | 'selectAll'
-
 export interface NativeItem {
   kind: 'item'
   id: string
@@ -38,7 +36,6 @@ export interface NativeItem {
   anywhere: boolean
   standIn?: StandIn
 }
-
 export interface NativeSubmenu {
   kind: 'submenu'
   id: string
@@ -47,21 +44,17 @@ export interface NativeSubmenu {
   items: NativeEntry[]
   role?: 'window' | 'help'
 }
-
 interface NativeSystem {
   kind: 'system'
   id: string
   item: SystemItem
   text: string
 }
-
 interface NativeRule {
   kind: 'rule'
   id: string
 }
-
 export type NativeEntry = NativeItem | NativeSubmenu | NativeSystem | NativeRule
-
 export interface MenuBarWords {
   app: string
   about: string
@@ -76,7 +69,6 @@ export interface MenuBarWords {
   bringAllToFront: string
   find: string
 }
-
 export interface MenuBarSources {
   groups: MenuGroup[]
   file: { opening: MenuRow[]; closing: MenuRow[] }
@@ -88,26 +80,21 @@ export interface MenuBarSources {
   isWindowCommand(command: string): boolean
   words: MenuBarWords
 }
-
 export interface MenuBar {
   entries: NativeEntry[]
   runs: Map<string, () => void>
 }
-
 const SYSTEM_COMMANDS: Record<string, SystemItem> = {
   'fixed.cut': 'Cut',
   'fixed.copy': 'Copy',
   'fixed.paste': 'Paste',
 }
-
 const STAND_INS: Record<string, StandIn> = {
   'edit.undo': 'undo',
   'edit.redo': 'redo',
   'edit.select-all': 'selectAll',
 }
-
 const SYSTEM_ACCELERATORS = ['Cmd+Q', 'Cmd+H', 'Cmd+Alt+H', 'Cmd+M', 'Cmd+X', 'Cmd+C', 'Cmd+V']
-
 const NAMED_KEYS: Record<string, string> = {
   Enter: 'Enter',
   Tab: 'Tab',
@@ -124,40 +111,29 @@ const NAMED_KEYS: Record<string, string> = {
   ArrowLeft: 'Left',
   ArrowRight: 'Right',
 }
-
 const PUNCTUATION = new Set(['-', '=', '[', ']', '\\', ';', "'", ',', '.', '/', '`'])
-
 const FUNCTION_KEY = /^F(?:[1-9]|1\d|2[0-4])$/
-
 function acceleratorKey(key: string): string | null {
   if (/^[a-z]$/.test(key)) return key.toUpperCase()
   if (/^\d$/.test(key) || PUNCTUATION.has(key) || FUNCTION_KEY.test(key)) return key
-
   return NAMED_KEYS[key] ?? null
 }
-
 export function toAccelerator(key: string): string | null {
   const combination = parseCombination(key, 'mac')
   if (!combination) return null
-
   const named = acceleratorKey(combination.key)
   if (!named) return null
-
   const chord = combination.meta || combination.ctrl || combination.alt
   if (!chord && !FUNCTION_KEY.test(named)) return null
-
   const parts: string[] = []
   if (combination.meta) parts.push('Cmd')
   if (combination.ctrl) parts.push('Ctrl')
   if (combination.alt) parts.push('Alt')
   if (combination.shift) parts.push('Shift')
   parts.push(named)
-
   return parts.join('+')
 }
-
 const LET_PASS_WITHIN = 1000
-
 export interface SeenKey {
   event: {
     key: string
@@ -170,17 +146,13 @@ export interface SeenKey {
   }
   at: number
 }
-
 export function documentWindows(labels: string[]): number {
   return labels.filter((label) => label === 'main' || /^orden-\d+$/.test(label)).length
 }
-
 export type KeyboardAt = 'note' | 'page' | 'away'
-
 export function keyRuns(anywhere: boolean, at: KeyboardAt): boolean {
   return anywhere || at === 'note'
 }
-
 export interface Keypress {
   key: string
   code: string
@@ -189,14 +161,11 @@ export interface Keypress {
   altKey: boolean
   shiftKey: boolean
 }
-
 export function keystrokeOf(text: string): Keypress | null {
   const combination = parseCombination(text, 'mac')
   if (!combination) return null
-
   const { key } = combination
   const code = Object.keys(PHYSICAL).find((one) => PHYSICAL[one] === key) ?? (key === ' ' ? 'Space' : key)
-
   return {
     key,
     code,
@@ -206,24 +175,18 @@ export function keystrokeOf(text: string): Keypress | null {
     shiftKey: combination.shift,
   }
 }
-
 export function letPass(key: string, seen: SeenKey | null, now: number): boolean {
   if (!seen || now - seen.at > LET_PASS_WITHIN) return false
   if (seen.event.defaultPrevented) return false
-
   return matchesCombination(key, seen.event, 'mac')
 }
-
 export function leftFullscreen(was: boolean, now: boolean, appOn: boolean): boolean {
   return was && !now && appOn
 }
-
 const FINDING = ['edit.find', 'edit.replace', 'edit.find-next', 'edit.find-previous']
-
 const SMALL = new Set(
   'a an the and but for nor or so yet as at by from in into of off on onto out per to up via with'.split(' '),
 )
-
 export function titled(text: string): string {
   const words = text.split(' ')
   return words
@@ -240,7 +203,6 @@ export function titled(text: string): string {
     })
     .join(' ')
 }
-
 function tidy(rows: MenuRow[]): MenuRow[] {
   const out: MenuRow[] = []
   for (const row of rows) {
@@ -248,35 +210,27 @@ function tidy(rows: MenuRow[]): MenuRow[] {
     out.push(row)
   }
   while (out.at(-1) === DIVIDER) out.pop()
-
   return out
 }
-
 function claimer(): (accelerator: string | null) => string | null {
   const taken = new Set(SYSTEM_ACCELERATORS)
-
   return (accelerator) => {
     if (!accelerator || taken.has(accelerator)) return null
-
     taken.add(accelerator)
     return accelerator
   }
 }
-
 export function chordFor(keyFor: (command: string) => string | null, command: string): string | null {
   const key = keyFor(command)
   if (!key || !tapOf(key, 'mac')) return key
-
   const second = keyFor(`${command}.alt`)
   return second && !tapOf(second, 'mac') ? second : null
 }
-
 export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const { groups, words } = sources
   const runs = new Map<string, () => void>()
   const claim = claimer()
   const say = titled
-
   const item = (row: MenuItem, id: string): NativeItem => {
     const key = row.command ? chordFor((one) => sources.keyFor(one), row.command) : null
     const accelerator = claim(key ? toAccelerator(key) : null)
@@ -285,7 +239,6 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
       ran(row.command, 'menu')
       row.run()
     })
-
     return {
       kind: 'item',
       id,
@@ -298,7 +251,6 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
       ...(standIn ? { standIn } : {}),
     }
   }
-
   const entries = (rows: MenuRow[], parent: string): NativeEntry[] =>
     tidy(rows).map((row, index): NativeEntry => {
       const id = `${parent}.${index}`
@@ -312,15 +264,11 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
           items: entries(row.rows, id),
         }
       }
-
       const system = row.command ? SYSTEM_COMMANDS[row.command] : undefined
       if (system) return { kind: 'system', id, item: system, text: say(row.label) }
-
       return item(row, id)
     })
-
   const { settings } = sources
-
   const app: NativeSubmenu = {
     kind: 'submenu',
     id: 'orden',
@@ -340,7 +288,6 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
       { kind: 'system', id: 'orden.quit', item: 'Quit', text: say(words.quit) },
     ],
   }
-
   const fileRows = (rows: MenuRow[]): MenuRow[] => [
     ...sources.file.opening,
     DIVIDER,
@@ -348,19 +295,16 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     DIVIDER,
     ...sources.file.closing,
   ]
-
   const editRows = (rows: MenuRow[]): MenuRow[] => {
     const finding = rows.filter(
       (row): row is MenuItem => row !== DIVIDER && !isSubmenu(row) && FINDING.includes(row.command ?? ''),
     )
     const first = finding[0]
     if (!first) return rows
-
     const rest = rows.filter((row) => !finding.includes(row as MenuItem))
     rest.splice(rows.indexOf(first), 0, { label: words.find, rows: finding })
     return rest
   }
-
   const rowsOf = (group: MenuGroup): MenuRow[] => {
     if (group.id === 'file') return fileRows(group.rows)
     if (group.id === 'edit') return editRows(group.rows)
@@ -370,10 +314,8 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     if (group.id === 'view' && sources.viewRows.length) {
       return [...group.rows, DIVIDER, ...sources.viewRows]
     }
-
     return group.rows
   }
-
   const own = groups.map((group): NativeSubmenu => ({
     kind: 'submenu',
     id: group.id,
@@ -382,7 +324,6 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     items: entries(rowsOf(group), group.id),
     ...(group.id === 'help' ? { role: 'help' as const } : {}),
   }))
-
   const window: NativeSubmenu = {
     kind: 'submenu',
     id: 'window',
@@ -403,13 +344,10 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
       },
     ],
   }
-
   const help = own.findIndex((one) => one.id === 'help')
   const at = help < 0 ? own.length : help
-
   return { entries: [app, ...own.slice(0, at), window, ...own.slice(at)], runs }
 }
-
 export interface Change {
   id: string
   text?: string
@@ -417,29 +355,23 @@ export interface Change {
   checked?: boolean
   accelerator?: string | null
 }
-
 export function flatten(entries: NativeEntry[]): NativeEntry[] {
   return entries.flatMap((one) => (one.kind === 'submenu' ? [one, ...flatten(one.items)] : [one]))
 }
-
 function shapeOf(entry: NativeEntry): string {
   if (entry.kind === 'system') return `${entry.id} system ${entry.item}`
   if (entry.kind === 'item') return `${entry.id} ${entry.checked === undefined ? 'item' : 'check'}`
   if (entry.kind === 'submenu') return `${entry.id} submenu ${entry.items.length}`
-
   return `${entry.id} rule`
 }
-
 export function changesBetween(before: NativeEntry[], after: NativeEntry[]): Change[] | null {
   const was = flatten(before)
   const now = flatten(after)
   if (was.length !== now.length) return null
-
   const changes: Change[] = []
   for (const [index, next] of now.entries()) {
     const previous = was[index]
     if (!previous || shapeOf(previous) !== shapeOf(next)) return null
-
     const change: Change = { id: next.id }
     if (previous.kind !== 'rule' && next.kind !== 'rule' && previous.text !== next.text) {
       change.text = next.text
@@ -454,9 +386,7 @@ export function changesBetween(before: NativeEntry[], after: NativeEntry[]): Cha
     if (previous.kind === 'submenu' && next.kind === 'submenu' && previous.enabled !== next.enabled) {
       change.enabled = next.enabled
     }
-
     if (Object.keys(change).length > 1) changes.push(change)
   }
-
   return changes
 }

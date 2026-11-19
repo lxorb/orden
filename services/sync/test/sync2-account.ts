@@ -10,24 +10,20 @@ import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
 
 const OCTETS = 'application/octet-stream'
-
 export class WorkerAccount implements AccountAdapter {
   readonly env: TestEnv
   private readonly rooms: Live
   private readonly ready: Promise<void>
   private space = ''
   private readonly sessions = new Map<string, string>()
-
   constructor(private readonly seeded: readonly Seeded[]) {
     this.env = testEnv()
     this.rooms = live(this.env)
     this.ready = this.setUp()
   }
-
   private async setUp() {
     const token = await signIn(this.env, 'sim@example.com')
     this.space = (await call(this.env, '/v1/spaces', { token, body: { name: 'Sim' } })).json.space.id
-
     const db = this.env.db
     let seq = 0
     for (const note of this.seeded) {
@@ -43,11 +39,9 @@ export class WorkerAccount implements AccountAdapter {
     db.prepare('insert into space_cursor (space_id, next) values (?, ?)').run(this.space, seq + 1)
     db.prepare('update spaces set prepared_at = 1 where id = ?').run(this.space)
   }
-
   private async session(device: string): Promise<string> {
     const held = this.sessions.get(device)
     if (held) return held
-
     const token = await signIn(this.env, 'sim@example.com')
     const row = this.env.db
       .prepare('select id, user_id from sessions where token_hash = ?')
@@ -61,12 +55,10 @@ export class WorkerAccount implements AccountAdapter {
     this.sessions.set(device, token)
     return token
   }
-
   async handle(device: string, route: Route, body: Uint8Array): Promise<Uint8Array> {
     await this.ready
     const token = await this.session(device)
     const headers = { authorization: `Bearer ${token}`, accept: OCTETS, 'x-orden-device': device }
-
     let request: Request
     if (route === 'feed') {
       const { unframe } = await import('@orden/sync-core')
@@ -80,7 +72,6 @@ export class WorkerAccount implements AccountAdapter {
         body,
       })
     }
-
     const response = await app.fetch(request, this.env)
     if (response.status === 404 || response.status === 403) {
       const said = await response.json<{ error?: string }>()
@@ -90,11 +81,9 @@ export class WorkerAccount implements AccountAdapter {
       throw new Error(`${route} answered ${String(response.status)}: ${await response.text()}`)
     }
     const bytes = new Uint8Array(await response.arrayBuffer())
-
     if (route === 'push') await this.rooms.settle()
     return bytes
   }
-
   async view(): Promise<AccountView> {
     await this.ready
     const db = this.env.db
@@ -104,7 +93,6 @@ export class WorkerAccount implements AccountAdapter {
     const notes = db
       .prepare('select * from notes where space_id = ? and deleted = 0')
       .all(this.space) as unknown as Note[]
-
     const texts: Record<string, string> = {}
     for (const note of notes) {
       const held = await documentOf(this.env, note)
@@ -113,7 +101,6 @@ export class WorkerAccount implements AccountAdapter {
       Y.applyUpdateV2(doc, held.update)
       texts[note.id] = doc.getText(TEXT).toJSON()
     }
-
     const versions: string[] = []
     const kept = db
       .prepare(
@@ -125,7 +112,6 @@ export class WorkerAccount implements AccountAdapter {
       const object = await this.env.NOTES.get(`versions/${hash}`)
       if (object) versions.push(await object.text())
     }
-
     return {
       entries: [
         ...folders.map((one) => ({
@@ -147,12 +133,10 @@ export class WorkerAccount implements AccountAdapter {
       versions,
     }
   }
-
   close() {
     this.env.close()
   }
 }
-
 function placeOf(note: Note): string | null {
   const pos = (note as unknown as { pos?: unknown }).pos
   return typeof pos === 'string' ? pos : null

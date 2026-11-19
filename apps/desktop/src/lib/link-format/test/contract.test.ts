@@ -4,7 +4,6 @@ import { describe, expect, test } from 'vitest'
 import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
-
 test('the module stands on its own reaches no app module but the platform', () => {
   const reached = readdirSync(SRC)
     .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
@@ -14,7 +13,6 @@ test('the module stands on its own reaches no app module but the platform', () =
     .filter((specifier) => specifier?.startsWith('../'))
   expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
 })
-
 describe('the way a link is written', () => {
   test('keeps the format it was set to, a wikilink until then', () => {
     expect(linkWriting()).toBe('wikilink')
@@ -24,7 +22,6 @@ describe('the way a link is written', () => {
     expect(LINK_FORMATS.every(isLinkFormat)).toBe(true)
     expect(isLinkFormat('other')).toBe(false)
   })
-
   test('writes one target in each format', () => {
     const target = { name: 'Plan', path: 'Work/Plan.md', from: 'Home/Today.md' }
     expect(LINK_FORMATS.map((format) => formatLink(target, format))).toEqual([

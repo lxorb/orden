@@ -8,9 +8,7 @@ const said = (words: string, at: number, mine = false): Heard => ({
   mine,
   at,
 })
-
 beforeEach(() => localStorage.clear())
-
 describe('chat priorities', () => {
   test('off by default, and nothing is asked while off', async () => {
     const priorities = new Priorities()
@@ -23,7 +21,6 @@ describe('chat priorities', () => {
     expect(await priorities.heard('k', 'Lunch', [said('fire!', 1)])).toBeNull()
     expect(asked).toBe(0)
   })
-
   test("a new message by somebody else is given the AI's level, once per message", async () => {
     const priorities = new Priorities()
     const asks: string[] = []
@@ -39,7 +36,6 @@ describe('chat priorities', () => {
     expect(await priorities.heard(key, 'Lunch', [said('ok', 6, true)])).toBeNull()
     expect(new Priorities().levelOf(key)).toBe('important')
   })
-
   test("the reader's level is kept and taught to the next ask", async () => {
     const priorities = new Priorities()
     let last = ''
@@ -55,7 +51,6 @@ describe('chat priorities', () => {
     expect(last).toContain('"Server down" from Ops: "prod is down" -> urgent')
     expect(new Priorities().lessons).toHaveLength(1)
   })
-
   test("an Orden chat's level kept before is read back under the chat, and other services' go", () => {
     localStorage.setItem(
       'orden:chat-priorities',
@@ -72,7 +67,6 @@ describe('chat priorities', () => {
     expect(priorities.levelOf('c')).toBe('urgent')
   })
 })
-
 describe('drafts and actions', () => {
   test('off by default; on, a reply and a task are suggested once per message', async () => {
     const priorities = new Priorities()
@@ -92,7 +86,6 @@ describe('drafts and actions', () => {
     expect(asked).toBe(1)
     expect(style).toContain('- jo passt')
     expect(new Priorities().drafting).toBe(true)
-
     priorities.settle(key, 'reply')
     expect(priorities.suggestions[key]).toMatchObject({
       reply: null,
@@ -101,7 +94,6 @@ describe('drafts and actions', () => {
     priorities.settle(key, 'todo')
     expect(priorities.suggestions[key]).toBeUndefined()
   })
-
   test('switched off, every suggestion goes', async () => {
     const priorities = new Priorities()
     priorities.useAsker(() => () => Promise.resolve('{"reply":"ok","todo":null}'))

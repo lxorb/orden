@@ -3,11 +3,9 @@ import type { Env } from '../../../sync-server/src/api'
 import { serviceMonth } from './meter'
 
 const DOLLARS_A_EURO = 1.25
-
 function dollars(amount: number, currency: string): number {
   return currency === 'USD' ? amount : amount * DOLLARS_A_EURO
 }
-
 async function fixedMonth(env: Env): Promise<number> {
   const { results } = await env.DB.prepare(
     `select price_month as price, price_currency as currency from machines
@@ -15,17 +13,14 @@ async function fixedMonth(env: Env): Promise<number> {
   ).all<{ price: number; currency: string | null }>()
   return results.reduce((total, one) => total + dollars(one.price, one.currency ?? 'EUR'), 0)
 }
-
 export async function spentThisMonth(env: Env, at: number): Promise<number> {
   const { usage, storedBytes } = await serviceMonth(env, at)
   return spend(usage, storedBytes) + (await fixedMonth(env))
 }
-
 export async function budgetLeft(env: Env, ceiling: number, at: number): Promise<number> {
   const { usage, storedBytes } = await serviceMonth(env, at)
   return left(ceiling, usage, storedBytes) - (await fixedMonth(env))
 }
-
 export async function mayCost(
   env: Env,
   ceiling: number,
@@ -35,17 +30,14 @@ export async function mayCost(
 ): Promise<boolean> {
   return (await budgetLeft(env, ceiling, at)) - dollars(monthly, currency) >= 0
 }
-
 const AN_HOUR = 3_600_000
 const HOURS_A_MONTH = 730
-
 interface Billed {
   price_month: number | null
   price_hour: number | null
   priced_at: number | null
   spent: number
 }
-
 export function spentOn(row: Billed, at: number): number | null {
   if (row.price_month === null) return null
   const day = new Date(at)

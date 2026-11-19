@@ -1,15 +1,11 @@
 import base64
 import os
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 MOD = "Control"
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -29,22 +25,18 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 HITS = """
 () => [...document.querySelectorAll('.pages .sheet .hit')].map((one) => {
   const box = one.getBoundingClientRect()
   return { current: one.classList.contains('current'), x: box.x, y: box.y, width: box.width, height: box.height }
 })
 """
-
 LINES = [
     "The first worked exam-",
     "ple shows the method.",
     "A second line of plain words.",
     "Here the example sits whole.",
 ]
-
-
 def paper() -> bytes:
     w, h = 595, 842
     rows = [f"BT /F1 14 Tf 60 {h - 80 - row * 22} Td ({text}) Tj ET" for row, text in enumerate(LINES)]
@@ -67,8 +59,6 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size 6>>\nstartxref\n%d\n%%%%EOF\n" % table
     return bytes(out)
-
-
 def opened(context) -> Page | None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
@@ -83,24 +73,18 @@ def opened(context) -> Page | None:
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
     wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 4", "the page's words", 20)
     return page
-
-
 def typed(page: Page, term: str) -> None:
     field = page.locator(".pages .find input")
     field.fill(term)
     page.wait_for_timeout(400)
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=1)
     page = opened(context)
     if not page:
         return
-
     page.locator(".pages").first.click(position={"x": 20, "y": 20})
     page.keyboard.press(f"{MOD}+f")
     page.wait_for_selector(".pages .find input", timeout=5000)
-
     typed(page, "example")
     count = page.locator(".pages .find .count").inner_text()
     hits = page.evaluate(HITS)
@@ -110,7 +94,6 @@ def drive(browser: Browser) -> None:
     tops = sorted({round(one["y"]) for one in hits})
     if len(tops) < 3:
         wrong(f"the broken 'exam-' / 'ple' and the whole 'example' should mark three lines, marks sit on {tops}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(500)
     current = [one for one in page.evaluate(HITS) if one["current"]]
@@ -118,7 +101,6 @@ def drive(browser: Browser) -> None:
     if len(current) != 2:
         wrong(f"the current hit 'exam-' / 'ple' should mark two pieces, {len(current)} are marked")
     shot(page, "broken-word-found")
-
     typed(page, "exam")
     count = page.locator(".pages .find .count").inner_text()
     left = [one for one in page.evaluate(HITS) if one["current"]]
@@ -129,6 +111,4 @@ def drive(browser: Browser) -> None:
         wrong(f"a changed word should start the count over, the bar says {count!r}")
     shot(page, "changed-word")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a page note's find meets a PDF word broken over a line end, and a changed word marks nothing as current"))

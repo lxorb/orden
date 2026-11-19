@@ -5,22 +5,17 @@
   import type { Tab } from '../../documents/src/api'
 
   const { tab }: { tab: Tab } = $props()
-
   // svelte-ignore state_referenced_locally
   const was = tab.shown
   let typed = $state(was)
-
   let settled = false
-
   function leave(commit: boolean) {
     if (settled) return
     settled = true
     tab.naming = false
-
     if (commit && typed.trim() !== was.trim()) void rename(typed)
     focusEditor()
   }
-
   async function rename(name: string) {
     await (await tabKindLoaded(tab.kind)).rename?.(tab.id, name)
   }

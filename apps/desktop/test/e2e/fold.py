@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """# Chapter one
 
 The first words of the chapter, long enough to see.
@@ -39,9 +36,7 @@ graph TD
 
 The second chapter, so there is more than one to fold.
 """
-
 OTHER = "# Elsewhere\n\nA second note, to come back from.\n"
-
 SEED = """
 async ([first, second]) => {
   const ws = window.ordenApp.workspace
@@ -52,7 +47,6 @@ async ([first, second]) => {
   return ws.notes.map((one) => one.path)
 }
 """
-
 STATE = """
 () => ({
   hinges: document.querySelectorAll('.orden-fold-hinge').length,
@@ -63,7 +57,6 @@ STATE = """
     .filter((text) => text.length),
 })
 """
-
 PLACEMENT = """
 () => [...document.querySelectorAll('.orden-fold-hinge')].map((hinge) => {
   const line = hinge.closest('.cm-line')
@@ -81,7 +74,6 @@ PLACEMENT = """
   }
 })
 """
-
 MOTION = """
 (selector) => {
   const lines = [...document.querySelectorAll('.cm-content .cm-line')]
@@ -100,7 +92,6 @@ MOTION = """
   }
 }
 """
-
 PRESS = """
 (selector) => {
   const hinge = document.querySelector(selector).querySelector('.orden-fold-hinge')
@@ -118,13 +109,10 @@ PRESS = """
   return (%s)(selector)
 }
 """ % MOTION.strip()
-
 def state(page: Page) -> dict:
     return page.evaluate(STATE)
-
 def folds(page: Page) -> list[list[int]]:
     return page.evaluate("() => window.ordenApp.workspace.active?.folds ?? []")
-
 def audit_placement(page: Page, label: str, what: str) -> None:
     rows = page.evaluate(PLACEMENT)
     say(f"[{label}] the chevrons {what}:")
@@ -133,37 +121,30 @@ def audit_placement(page: Page, label: str, what: str) -> None:
             f"    {one['kind']:<30} {one['text']!r:<26}"
             f" gap {one['gap']}px, {one['into']}px into a {one['row']}px row"
         )
-
     if len(rows) < 4:
         wrong(f"[{label}] too few chevrons {what} to compare: {len(rows)}")
         return
-
     gaps = sorted({one["gap"] for one in rows})
     if len(gaps) != 1:
         wrong(f"[{label}] the chevrons {what} do not stand in one column: gaps {gaps}")
     if gaps[0] < 4:
         wrong(f"[{label}] a chevron {what} is on its block, not beside it: gaps {gaps}")
-
     edges = sorted({one["left"] for one in rows})
     if len(edges) != 1:
         wrong(f"[{label}] the lines {what} do not share a left edge: {edges}")
-
     for one in rows:
         if not 0 <= one["into"] <= one["row"] + 24:
             wrong(
                 f"[{label}] the chevron of {one['kind']} is not on the block's"
                 f" first row: {one['into']}px into a {one['row']}px row"
             )
-
 def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
     say(f"[{label}] folding {selector} as a movement")
     page.locator(selector).first.hover()
     page.wait_for_timeout(250)
-
     start = page.evaluate(MOTION, selector)
     pressed = page.evaluate(PRESS, selector)
     say(f"[{label}] pressed: {json.dumps(pressed)}")
-
     if pressed["moving"] < 1:
         wrong("nothing moved when a fold was asked for")
     if pressed["marks"]:
@@ -172,13 +153,11 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
         wrong("the chevron did not turn as the movement started")
     if pressed["tall"] < start["tall"] - 2:
         wrong(f"the words below jumped up: {start['tall']}px became {pressed['tall']}px at once")
-
     shrunk = f"() => ({MOTION})({json.dumps(selector)}).tall < {start['tall']}"
     DRIVE.waited(page, shrunk, "the block to shrink while it was shutting", 5)
     midway = page.evaluate(MOTION, selector)
     say(f"[{label}] midway: {json.dumps(midway)}")
     shot(page, f"{at}-folding-midway")
-
     page.wait_for_timeout(600)
     landed = page.evaluate(MOTION, selector)
     say(f"[{label}] landed: {json.dumps(landed)}")
@@ -186,7 +165,6 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
         wrong("the movement never ended")
     if landed["marks"] != 1:
         wrong("the fold never landed")
-
     opened = page.evaluate(PRESS, selector)
     say(f"[{label}] opening: {json.dumps(opened)}")
     if opened["marks"]:
@@ -195,7 +173,6 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
         wrong("the lines did not move on the way back")
     if opened["tall"] > landed["tall"] + 4:
         wrong(f"the note jumped open: {landed['tall']}px became {opened['tall']}px at once")
-
     page.wait_for_timeout(70)
     shot(page, f"{at + 1}-unfolding-midway")
     page.wait_for_timeout(600)
@@ -206,7 +183,6 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
     if back["tall"] < start["tall"] - 2:
         wrong(f"the lines did not grow all the way back: {back['tall']} of {start['tall']}px")
     shot(page, f"{at + 2}-open-after-moving")
-
 def fresh(browser: Browser, label: str, finger: bool, still: bool = False) -> Page:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820} if not finger else {"width": 420, "height": 880},
@@ -235,7 +211,6 @@ def fresh(browser: Browser, label: str, finger: bool, still: bool = False) -> Pa
     say(f"[{label}] the space holds {page.evaluate(SEED, [NOTE, OTHER])}")
     page.wait_for_timeout(400)
     return page
-
 def open_chapter(page: Page, label: str) -> None:
     page.evaluate(
         """async () => {
@@ -246,11 +221,9 @@ def open_chapter(page: Page, label: str) -> None:
     )
     wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
-
 def drive_pointer(browser: Browser) -> None:
     page = fresh(browser, "desktop", finger=False)
     open_chapter(page, "desktop")
-
     before = state(page)
     say(f"[desktop] open: {json.dumps({k: before[k] for k in ('hinges', 'marks', 'lines')})}")
     shot(page, "01-open")
@@ -258,7 +231,6 @@ def drive_pointer(browser: Browser) -> None:
         wrong(f"too few chevrons for a note this shape: {before['hinges']}")
     if before["marks"]:
         wrong("something is folded in a note nobody has folded")
-
     heading = page.locator(".cm-line.orden-h1").first
     hidden = page.evaluate(
         "() => getComputedStyle(document.querySelector('.orden-fold-hinge')).opacity"
@@ -266,7 +238,6 @@ def drive_pointer(browser: Browser) -> None:
     say(f"[desktop] a chevron nobody is pointing at: opacity {hidden}")
     if hidden != "0":
         wrong(f"the chevron is not calm: opacity {hidden}")
-
     heading.hover()
     page.wait_for_timeout(400)
     shown = page.evaluate(
@@ -276,7 +247,6 @@ def drive_pointer(browser: Browser) -> None:
     if shown != "1":
         wrong(f"the chevron does not come when the pointer is on the line: opacity {shown}")
     shot(page, "02-hover")
-
     page.locator(".orden-fold-hinge").first.click()
     page.wait_for_timeout(600)
     after = state(page)
@@ -286,7 +256,6 @@ def drive_pointer(browser: Browser) -> None:
         wrong(f"a fold left no mark behind: {after['marks']} marks")
     if any("first words" in one.lower() for one in after["shown"]):
         wrong("the folded section is still on the page")
-
     page.evaluate(
         """() => {
           window.orden.dispatch({ selection: { anchor: 2 } })
@@ -301,13 +270,11 @@ def drive_pointer(browser: Browser) -> None:
         wrong("the fold let go when the heading showed its source")
     if not any(one.startswith("# Chapter one") for one in revealed["shown"]):
         wrong("the heading did not show its own source with the caret on it")
-
     page.locator(".orden-fold-hinge").first.click()
     page.wait_for_timeout(500)
     if state(page)["marks"]:
         wrong("a second click did not open the fold")
     shot(page, "05-open-again")
-
     page.evaluate(
         """() => {
           const at = window.orden.state.doc.toString().indexOf('Something nested here')
@@ -334,19 +301,16 @@ def drive_pointer(browser: Browser) -> None:
         wrong("the chord folded nothing")
     if caret["text"].strip() not in ("## Under one", "Under one"):
         wrong(f"the caret was not brought up to the line that owns the fold: {caret['text']!r}")
-
     page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type("> Fold everything")
     page.wait_for_timeout(600)
     shot(page, "07-palette")
     page.keyboard.press("Enter")
-
     together = page.evaluate(MOTION, ".cm-line.orden-h1")
     say(f"[desktop] folding everything: {json.dumps(together)}")
     if together["moving"] < 1:
         wrong("folding everything moved nothing")
-
     wait_for(page, "() => document.querySelectorAll('.orden-folded').length >= 2", "the marks of everything folded", 15)
     page.wait_for_timeout(300)
     outline = state(page)
@@ -356,14 +320,12 @@ def drive_pointer(browser: Browser) -> None:
         wrong(f"fold everything did not leave one mark per chapter: {outline['marks']}")
     if any("nested" in one for one in outline["shown"]):
         wrong("something inside a folded chapter is still on the page")
-
     written = folds(page)
     say(f"[desktop] written down: {json.dumps(written)}")
     if len(written) < 2:
         wrong(f"the folds were not written down: {written}")
     if written != sorted(written):
         wrong(f"the folds were written down out of document order: {written}")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -379,7 +341,6 @@ def drive_pointer(browser: Browser) -> None:
     shot(page, "10-back-still-folded")
     if back["marks"] != 2:
         wrong(f"the folds did not come back with the note: {back['marks']} marks")
-
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "[desktop] the reload")
     page.wait_for_timeout(1200)
@@ -388,22 +349,18 @@ def drive_pointer(browser: Browser) -> None:
     shot(page, "11-after-reload")
     if restarted["marks"] != 2:
         wrong(f"the folds did not survive a reload: {restarted['marks']} marks")
-
     page.locator(".cm-content").click()
     page.keyboard.press("Control+Alt+BracketRight")
-
     apart = page.evaluate(MOTION, ".cm-line.orden-h1")
     say(f"[desktop] unfolding everything: {json.dumps(apart)}")
     if apart["moving"] < 1:
         wrong("unfolding everything moved nothing")
-
     page.wait_for_timeout(600)
     opened = state(page)
     say(f"[desktop] unfolded: {opened['marks']} marks, {opened['lines']} lines")
     shot(page, "12-unfolded-everything")
     if opened["marks"]:
         wrong("unfold everything left something folded")
-
     page.evaluate(
         """() => {
           window.orden.dispatch({ selection: { anchor: 2 } })
@@ -417,30 +374,24 @@ def drive_pointer(browser: Browser) -> None:
     shot(page, "13-folded-over-a-diagram")
     if over["marks"] != 1:
         wrong("folding over a rendered diagram did not hold")
-
     page.keyboard.press("Control+Alt+BracketRight")
     page.wait_for_timeout(700)
     audit_placement(page, "desktop", "beside their blocks")
     page.locator(".cm-line.orden-code-open").first.hover()
     page.wait_for_timeout(300)
     shot(page, "14-chevron-beside-a-fence")
-
     page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(500)
     audit_placement(page, "desktop", "with line numbers on")
     shot(page, "15-chevron-with-line-numbers")
     page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(400)
-
     drive_motion(page, "desktop", ".cm-line.orden-code-open", 16)
     drive_motion(page, "desktop", ".cm-line.orden-h1", 19)
-
     page.context.close()
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     open_chapter(page, "phone")
-
     box = page.evaluate(
         """() => {
           const hinge = document.querySelector('.orden-fold-hinge')
@@ -455,9 +406,7 @@ def drive_finger(browser: Browser) -> None:
         wrong("a screen with no pointer has no chevron to tap")
     if box["height"] < 44:
         wrong(f"the tap target is smaller than a thumb: {box['height']}px tall")
-
     audit_placement(page, "phone", "at a thumb's size")
-
     page.locator(".orden-fold-hinge").first.tap()
     page.wait_for_timeout(700)
     tapped = state(page)
@@ -465,24 +414,18 @@ def drive_finger(browser: Browser) -> None:
     shot(page, "21-phone-folded")
     if tapped["marks"] != 1:
         wrong("a tap folded nothing")
-
     page.context.close()
-
 def drive_still(browser: Browser) -> None:
     page = fresh(browser, "still", finger=False, still=True)
     open_chapter(page, "still")
-
     pressed = page.evaluate(PRESS, ".cm-line.orden-h1")
     say(f"[still] pressed: {json.dumps(pressed)}")
     shot(page, "30-still-folded")
-
     if pressed["moving"]:
         wrong("a fold moved for somebody who asked for no movement")
     if pressed["marks"] != 1:
         wrong("the fold did not simply happen")
-
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
@@ -491,7 +434,5 @@ def main() -> int:
         drive_finger(browser)
         say("--- as little movement as possible ---")
         drive_still(browser)
-
     return DRIVE.verdict("a note folds, stays folded, and comes back folded")
-
 raise SystemExit(main())

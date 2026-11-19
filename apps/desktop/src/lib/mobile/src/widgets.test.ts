@@ -5,10 +5,8 @@ import { todayRows, widgetRows } from './widgets.svelte'
 function note(name: string, modified: number, path = `/Notes/${name}`): Entry {
   return { name, path, is_dir: false, modified, created: 0, children: [] }
 }
-
 describe('the rows', () => {
   const notes = [note('Plan.md', 300), note('Diary.md', 500), note('Kit.md', 100), note('Trip.md', 400)]
-
   test('are the notes last written in, newest first', () => {
     expect(widgetRows(notes, [])).toEqual([
       { name: 'Diary', path: '/Notes/Diary.md' },
@@ -17,7 +15,6 @@ describe('the rows', () => {
       { name: 'Kit', path: '/Notes/Kit.md' },
     ])
   })
-
   test('with what is kept open at the top, in the order it was pinned', () => {
     expect(widgetRows(notes, ['/Notes/Kit.md', '/Notes/Plan.md']).map((one) => one.name)).toEqual([
       'Kit',
@@ -26,36 +23,28 @@ describe('the rows', () => {
       'Trip',
     ])
   })
-
   test('never twice, and never more than the layout has rows for', () => {
     const many = [...notes, note('A.md', 900), note('B.md', 800), note('C.md', 700)]
     const rows = widgetRows(many, ['/Notes/Kit.md', '/Notes/Kit.md'])
-
     expect(rows).toHaveLength(5)
     expect(rows.map((one) => one.name)).toEqual(['Kit', 'A', 'B', 'C', 'Diary'])
   })
-
   test('leave out a pinned note that is not in the space any more', () => {
     expect(widgetRows([note('Plan.md', 1)], ['/Notes/Gone.md']).map((one) => one.name)).toEqual(['Plan'])
   })
-
   test('are named the way every other list names a note', () => {
     expect(widgetRows([note('Read me.markdown', 1)], [])[0]?.name).toBe('Read me')
   })
-
   test('are nothing at all in a space with nothing in it', () => {
     expect(widgetRows([], [])).toEqual([])
     expect(widgetRows([], ['/Notes/Gone.md'])).toEqual([])
   })
-
   test('do not reorder the list they were given', () => {
     const given = [note('Plan.md', 300), note('Diary.md', 500)]
     widgetRows(given, [])
-
     expect(given.map((one) => one.name)).toEqual(['Plan.md', 'Diary.md'])
   })
 })
-
 describe('today', () => {
   test('the first five, each with where its note is on this phone', () => {
     const tasks = Array.from({ length: 7 }, (_, at) => ({
@@ -73,7 +62,6 @@ describe('today', () => {
     })
     expect(rows[0]?.path).toBe('')
   })
-
   test("a task's escapes are not on the home screen", () => {
     const rows = todayRows([{ text: 'milk \\$3 \\~5', at: 'A.md#0:a', space: 'Notes' }], () => '/N')
     expect(rows[0]?.text).toBe('milk $3 ~5')

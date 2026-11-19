@@ -12,18 +12,14 @@ export type Node =
   | { type: 'unary'; op: '!' | '-' | '+'; argument: Node }
   | { type: 'binary'; op: BinaryOp; left: Node; right: Node }
   | { type: 'logical'; op: '&&' | '||'; left: Node; right: Node }
-
 type BinaryOp = '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '>' | '<=' | '>='
-
 type TokenKind = 'number' | 'string' | 'regex' | 'name' | 'punct' | 'end'
-
 interface Token {
   kind: TokenKind
   text: string
   value?: string | number
   at: number
 }
-
 const PUNCT = [
   '&&',
   '||',
@@ -49,17 +45,14 @@ const PUNCT = [
   '.',
   ':',
 ]
-
 const NAME_START = /[\p{L}_$]/u
 const NAME_PART = /[\p{L}\p{N}_$]/u
-
 function opensRegex(previous: Token | undefined): boolean {
   if (!previous) return true
   if (previous.kind === 'number' || previous.kind === 'string' || previous.kind === 'regex') return false
   if (previous.kind === 'name') return false
   return !(previous.text === ')' || previous.text === ']' || previous.text === '}')
 }
-
 const ESCAPES: Record<string, string> = {
   n: '\n',
   t: '\t',
@@ -69,18 +62,15 @@ const ESCAPES: Record<string, string> = {
   v: '\v',
   '0': '\0',
 }
-
 function tokens(source: string): Token[] {
   const out: Token[] = []
   let at = 0
-
   while (at < source.length) {
     const char = source.charAt(at)
     if (/\s/.test(char)) {
       at++
       continue
     }
-
     if (/\d/.test(char)) {
       const found = /^\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/.exec(source.slice(at))
       const text = found?.[0] ?? char
@@ -88,7 +78,6 @@ function tokens(source: string): Token[] {
       at += text.length
       continue
     }
-
     if (char === '"' || char === "'") {
       let value = ''
       let end = at + 1
@@ -112,7 +101,6 @@ function tokens(source: string): Token[] {
       at = end + 1
       continue
     }
-
     if (char === '/' && opensRegex(out.at(-1))) {
       let end = at + 1
       let inClass = false
@@ -130,7 +118,6 @@ function tokens(source: string): Token[] {
       at = end + 1 + flags.length
       continue
     }
-
     if (NAME_START.test(char)) {
       let end = at + 1
       while (end < source.length && NAME_PART.test(source.charAt(end))) end++
@@ -138,23 +125,18 @@ function tokens(source: string): Token[] {
       at = end
       continue
     }
-
     const punct = PUNCT.find((one) => source.startsWith(one, at))
     if (!punct) throw new BasesError(`Unexpected "${char}"`, at)
     out.push({ kind: 'punct', text: punct, at })
     at += punct.length
   }
-
   out.push({ kind: 'end', text: '', at: source.length })
   return out
 }
-
 const LEVELS: string[][] = [['||'], ['&&'], ['==', '!='], ['<', '>', '<=', '>='], ['+', '-'], ['*', '/', '%']]
-
 export function parseExpression(source: string): Node {
   const list = tokens(source)
   let at = 0
-
   const peek = () => list[at] ?? { kind: 'end' as const, text: '', at: source.length }
   const next = () => {
     const token = peek()
@@ -169,7 +151,6 @@ export function parseExpression(source: string): Node {
     }
     return next()
   }
-
   const binary = (level: number): Node => {
     const ops = LEVELS[level]
     if (!ops) return unary()
@@ -184,7 +165,6 @@ export function parseExpression(source: string): Node {
     }
     return left
   }
-
   const unary = (): Node => {
     if (is('!') || is('-') || is('+')) {
       const op = next().text as '!' | '-' | '+'
@@ -192,7 +172,6 @@ export function parseExpression(source: string): Node {
     }
     return postfix(primary())
   }
-
   const args = (close: string): Node[] => {
     const out: Node[] = []
     if (is(close)) {
@@ -211,7 +190,6 @@ export function parseExpression(source: string): Node {
     expect(close)
     return out
   }
-
   const postfix = (start: Node): Node => {
     let node = start
     for (;;) {
@@ -233,7 +211,6 @@ export function parseExpression(source: string): Node {
       }
     }
   }
-
   const primary = (): Node => {
     const token = next()
     switch (token.kind) {
@@ -266,7 +243,6 @@ export function parseExpression(source: string): Node {
         throw new BasesError('The expression ends too soon', token.at)
     }
   }
-
   const object = (): Node => {
     const entries: [string, Node][] = []
     while (!is('}')) {
@@ -280,7 +256,6 @@ export function parseExpression(source: string): Node {
     expect('}')
     return { type: 'object', entries }
   }
-
   if (peek().kind === 'end') throw new BasesError('The expression is empty', 0)
   const tree = binary(0)
   const rest = peek()

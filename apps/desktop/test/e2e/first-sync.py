@@ -1,8 +1,6 @@
 import json
 import sys
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
@@ -10,28 +8,19 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 EMAIL = "first-sync@example.com"
 SPACE = "Account"
-
 NOTES = 200
-
 LATENCY = 300
 DOWN = 1_500_000 / 8
 UP = 750_000 / 8
-
 PATIENCE = 240
-
 request = harness.request
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
     def account(self) -> str:  # type: ignore[override]
         return super().account(EMAIL)
-
 def body(at: int) -> str:
     return (
         "---\nicon: rocket\nicon-color: violet\naliases:\n"
@@ -40,7 +29,6 @@ def body(at: int) -> str:
         f"See [[note-{(at + 3) % NOTES:04d}]].\n\n"
         "## What went in\n\n- Pressure on the pen\n- Slides out of a note\n"
     )
-
 STATE = """
 () => {
   const ws = window.ordenApp?.workspace
@@ -60,18 +48,15 @@ STATE = """
   }
 }
 """
-
 def when(page: Page, script: str, what: str) -> float:
     try:
         page.wait_for_function(script, timeout=PATIENCE * 1000)
     except Exception:
         say(f"gave up waiting for {what}: {page.evaluate(STATE)}")
         raise
-
     taken = page.evaluate("() => performance.now()")
     say(f"{what}: {taken:.0f}ms  {page.evaluate(STATE)}")
     return taken
-
 def slow(page: Page) -> None:
     session = page.context.new_cdp_session(page)
     session.send("Network.enable")
@@ -84,12 +69,10 @@ def slow(page: Page) -> None:
             "uploadThroughput": UP,
         },
     )
-
 def drive(browser, token: str) -> dict[str, float]:
     context = browser.new_context(viewport={"width": 1280, "height": 860})
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"page error: {error}"))
-
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=60000)
     page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=60000)
@@ -100,12 +83,9 @@ def drive(browser, token: str) -> dict[str, float]:
     )
     page.wait_for_function("() => window.ordenApp.workspace.spaces.length === 0", timeout=60000)
     page.wait_for_timeout(1500)
-
     page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     slow(page)
-
     page.reload(wait_until="commit")
-
     names = when(
         page,
         "() => Number(document.querySelector('aside [aria-setsize]')"
@@ -123,13 +103,10 @@ def drive(browser, token: str) -> dict[str, float]:
         " && (window.ordenApp.arriving.coming?.size ?? 0) === 0",
         "every body to land",
     )
-
     context.close()
     return {"names": names, "unblocked": unblocked, "words": words}
-
 def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
-
     worker = Worker()
     with DRIVE.session() as browser:
         worker.start()
@@ -142,9 +119,7 @@ def main() -> int:
                 {"path": f"note-{at:04d}.md", "content": body(at)},
             )
         say(f"the account holds {NOTES} notes in {SPACE}")
-
         taken = drive(browser, token)
-
     print()
     print(f"{tag}, signing in to {NOTES} notes on a {LATENCY}ms line:")
     for key, words in [
@@ -153,10 +128,8 @@ def main() -> int:
         ("words", "every body landed"),
     ]:
         print(f"  {words:44} {taken[key]:7.0f}ms")
-
     print()
     print(json.dumps({key: round(value) for key, value in taken.items()}))
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,19 +1,13 @@
 #![cfg_attr(not(windows), allow(dead_code))]
-
 use serde::{Deserialize, Serialize};
 
 const SCRIPT: &str = include_str!("web_swipe.js");
-
 pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')
 }
-
 pub const BINDING: &str = "ordenSwiped";
-
 const SWIPED: &str = "orden://web-swipe";
-
 const LONGEST: f64 = 10_000.0;
-
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(tag = "k")]
 enum Said {
@@ -36,7 +30,6 @@ enum Said {
     #[serde(rename = "e")]
     End { t: f64 },
 }
-
 #[derive(Clone, Debug, Serialize, PartialEq)]
 pub struct Swiped {
     tab: String,
@@ -47,7 +40,6 @@ pub struct Swiped {
     left: bool,
     right: bool,
 }
-
 pub fn read(tab: &str, payload: &str) -> Option<Swiped> {
     let said: Said = serde_json::from_str(payload).ok()?;
     let fine = |one: f64| one.is_finite() && one.abs() <= LONGEST;
@@ -68,7 +60,6 @@ pub fn read(tab: &str, payload: &str) -> Option<Swiped> {
         Said::End { t } => step("lift", 0.0, 0.0, t, false, false),
     }
 }
-
 pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     use tauri::Emitter;
 
@@ -76,7 +67,6 @@ pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
         let _ = app.emit_to(window, SWIPED, swiped);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{read, Swiped, BINDING, SCRIPT};
@@ -92,7 +82,6 @@ mod tests {
             right,
         }
     }
-
     #[test]
     fn a_frame_of_scroll_is_read_as_numbers_for_the_tab_it_came_from() {
         assert_eq!(
@@ -111,7 +100,6 @@ mod tests {
             Some(swiped("lift", 0.0, 0.0, 99.0, false, false))
         );
     }
-
     #[test]
     fn anything_else_a_page_could_say_is_nothing() {
         for said in [
@@ -127,7 +115,6 @@ mod tests {
             assert_eq!(read("t1", said), None, "{said}");
         }
     }
-
     #[test]
     fn the_window_is_told_in_its_own_words() {
         let told = serde_json::to_value(swiped("wheel", -4.0, 0.0, 10.0, false, true))
@@ -140,7 +127,6 @@ mod tests {
             })
         );
     }
-
     #[test]
     fn the_script_asks_through_the_binding_and_only_listens() {
         assert!(SCRIPT.contains(&format!("globalThis.{BINDING}")));

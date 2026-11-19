@@ -11,14 +11,10 @@ export interface Sensed {
   lid: boolean | null
   locked: boolean | null
 }
-
 const LONGEST_APP = 80
-
 const numberOr = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
-
 const flagOr = (value: unknown): boolean | null => (typeof value === 'boolean' ? value : null)
-
 function appOf(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const name = value
@@ -28,7 +24,6 @@ function appOf(value: unknown): string | null {
     .slice(0, LONGEST_APP)
   return name || null
 }
-
 export function sensedOf(value: unknown): Sensed | null {
   if (!isRecord(value)) return null
   return {
@@ -43,5 +38,4 @@ export function sensedOf(value: unknown): Sensed | null {
     locked: flagOr(value.locked),
   }
 }
-
 export const withIdle = (said: Sensed, idleMs: number): Sensed => (said.idleMs === null ? { ...said, idleMs } : said)

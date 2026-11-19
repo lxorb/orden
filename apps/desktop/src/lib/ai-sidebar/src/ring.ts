@@ -12,7 +12,6 @@ export interface Bands {
   fraction: number | null
   warn: boolean
 }
-
 export function attachedIn(turns: readonly Turn[], since?: string): number {
   const from = since ? turns.findIndex((one) => one.id === since) + 1 : 0
   let sum = 0
@@ -21,7 +20,6 @@ export function attachedIn(turns: readonly Turn[], since?: string): number {
   }
   return sum
 }
-
 export function bandsOf(
   usage: Usage,
   window: number | null,

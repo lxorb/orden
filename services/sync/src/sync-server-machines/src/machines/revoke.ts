@@ -2,7 +2,6 @@ import type { Env } from '../../../sync-server/src/api'
 import { askMachine } from './ask'
 
 const MOST_MACHINES = 100
-
 export async function machinesRevoked(
   env: Env,
   spaceId: string,
@@ -11,7 +10,6 @@ export async function machinesRevoked(
   item = '',
 ): Promise<void> {
   if (!env.MACHINES || !who) return
-
   const { results } = await env.DB.prepare(
     `select t.machine as machine, t.user_id as owner, group_concat(t.term) as terms
        from term_sessions t join notes n on n.id = t.term and t.term <> t.session
@@ -21,7 +19,6 @@ export async function machinesRevoked(
   )
     .bind(spaceId, item, who, MOST_MACHINES)
     .all<{ machine: string; owner: string; terms: string }>()
-
   await Promise.all(
     results.map((one) =>
       askMachine(env, one.machine, 'revoke', {
@@ -33,13 +30,10 @@ export async function machinesRevoked(
     ),
   )
 }
-
 const MOST_LOGINS = 100
-
 export async function machinesSignedOut(env: Env, who: string, logins: readonly string[]): Promise<void> {
   const ended = logins.filter(Boolean).slice(0, MOST_LOGINS)
   if (!env.MACHINES || !who || !ended.length) return
-
   const { results } = await env.DB.prepare(
     `select distinct t.machine as machine
        from term_sessions t left join notes n on n.id = t.term and t.term <> t.session
@@ -54,7 +48,6 @@ export async function machinesSignedOut(env: Env, who: string, logins: readonly 
   )
     .bind(who, MOST_MACHINES)
     .all<{ machine: string }>()
-
   await Promise.all(
     results.map((one) => askMachine(env, one.machine, 'signedout', { 'x-orden-logins': ended.join(',') })),
   )

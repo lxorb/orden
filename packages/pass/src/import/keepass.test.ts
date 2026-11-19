@@ -4,7 +4,6 @@ import { parseKeePass } from './keepass'
 
 const OTP = 'otpauth://totp/KeePass:me?secret=JBSWY3DPEHPK3PXP'
 const BIN = 'cmVjeWNsZWJpbg=='
-
 const entry = (strings: Record<string, string>, extra = '', times = '') =>
   `<Entry><UUID>x</UUID>${times}${Object.entries(strings)
     .map(
@@ -12,7 +11,6 @@ const entry = (strings: Record<string, string>, extra = '', times = '') =>
         `<String><Key>${key}</Key><Value${key === 'Password' || key === 'Secret' ? ' ProtectInMemory="True"' : ''}>${value}</Value></String>`,
     )
     .join('')}${extra}<History><Entry><String><Key>Title</Key><Value>old</Value></String></Entry></History></Entry>`
-
 const XML = `<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <KeePassFile>
   <Meta><DatabaseName>Mine</DatabaseName><RecycleBinEnabled>True</RecycleBinEnabled><RecycleBinUUID>${BIN}</RecycleBinUUID></Meta>
@@ -51,7 +49,6 @@ const XML = `<?xml version="1.0" encoding="utf-8" standalone="yes"?>
     <DeletedObjects/>
   </Root>
 </KeePassFile>`
-
 describe('parseKeePass', () => {
   it('reads entries, their group paths, fields, 2FA and the recycle bin', () => {
     const { vaults, skipped } = parseKeePass(XML)
@@ -85,19 +82,16 @@ describe('parseKeePass', () => {
     expect(gone).toMatchObject({ trashed: true, folder: null })
     expect(skipped).toEqual([{ reason: 'Its attachments did not come in.', title: 'Top' }])
   })
-
   it('says when values are still encrypted', () => {
     const xml = `<KeePassFile><Root><Group><Name>R</Name><Entry><String><Key>Title</Key><Value>T</Value></String><String><Key>Password</Key><Value Protected="True">AAAA</Value></String></Entry></Group></Root></KeePassFile>`
     const { vaults, skipped } = parseKeePass(xml)
     expect(skipped[0]?.title).toBe('T')
     expect(vaults[0]?.items[0]?.content).toMatchObject({ kind: 'note', title: 'T' })
   })
-
   it('finds a recycle bin by name when the meta names none', () => {
     const xml = `<KeePassFile><Root><Group><Name>R</Name><Group><Name>Recycle Bin</Name>${entry({ Title: 'T', Password: 'p' })}</Group></Group></Root></KeePassFile>`
     expect(parseKeePass(xml).vaults[0]?.items[0]?.trashed).toBe(true)
   })
-
   it('refuses another XML file', () => {
     expect(() => parseKeePass('<html></html>')).toThrow()
   })

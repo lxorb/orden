@@ -4,14 +4,12 @@ use tauri::{Runtime, Window};
 fn resizes_from_top(maximized: bool, minimized: bool, sizing_frame: bool) -> bool {
     sizing_frame && !maximized && !minimized
 }
-
 pub fn mind<R: Runtime>(window: &Window<R>) {
     #[cfg(windows)]
     strip::mind(window);
     #[cfg(not(windows))]
     let _ = window;
 }
-
 #[cfg(windows)]
 mod strip {
     use tauri::{Runtime, Window};
@@ -24,7 +22,6 @@ mod strip {
     };
 
     const OURS: usize = 0x746f_7065;
-
     #[allow(unsafe_code)]
     pub fn mind<R: Runtime>(window: &Window<R>) {
         use tauri::Manager as _;
@@ -40,7 +37,6 @@ mod strip {
             matched(window);
         });
     }
-
     #[allow(unsafe_code)]
     unsafe extern "system" fn listened(
         window: HWND,
@@ -60,7 +56,6 @@ mod strip {
         }
         answer
     }
-
     #[allow(unsafe_code)]
     fn matched(window: HWND) {
         unsafe {
@@ -84,7 +79,6 @@ mod strip {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::resizes_from_top;
@@ -93,17 +87,14 @@ mod tests {
     fn a_window_in_its_own_size_resizes_from_its_top() {
         assert!(resizes_from_top(false, false, true));
     }
-
     #[test]
     fn a_maximised_window_does_not() {
         assert!(!resizes_from_top(true, false, true));
     }
-
     #[test]
     fn a_full_screen_window_has_no_frame_to_resize_by() {
         assert!(!resizes_from_top(false, false, false));
     }
-
     #[test]
     fn a_minimised_window_does_not() {
         assert!(!resizes_from_top(false, true, true));

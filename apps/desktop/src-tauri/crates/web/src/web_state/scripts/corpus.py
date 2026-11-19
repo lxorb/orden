@@ -1,18 +1,14 @@
 from __future__ import annotations
-
 import json
 import pathlib
 import sys
 import tempfile
-
 from playwright.sync_api import BrowserContext, Page, Playwright, sync_playwright
 
 HERE = pathlib.Path(__file__).resolve().parent
 DUMP = (HERE / "dump.js").read_text(encoding="utf-8")
 RESTORE = (HERE / "restore.js").read_text(encoding="utf-8")
-
 ORIGIN = "https://corpus.orden.test"
-
 CORPUS = r"""
 globalThis.ordenCorpus = async function ordenCorpus() {
   const shared = { x: 1 }
@@ -354,9 +350,7 @@ globalThis.ordenCheck = async function ordenCheck() {
   return problems
 }
 """
-
 def dumped(page: Page, most: dict[str, int]) -> dict[str, object]:
-
     listed = json.loads(page.evaluate("(a) => ordenDump('list', a)", json.dumps({"session": True})))
     databases = {}
     for one in sorted(listed["databases"], key=lambda db: db["name"]):
@@ -364,9 +358,7 @@ def dumped(page: Page, most: dict[str, int]) -> dict[str, object]:
         databases[one["name"]] = page.evaluate("(a) => ordenDump('database', a)", json.dumps(asked))
     listed["databases"] = sorted(listed["databases"], key=lambda db: db["name"])
     return {"list": listed, "databases": databases}
-
 def fresh_page(playwright: Playwright, engine: str, folder: str) -> tuple[BrowserContext, Page]:
-
     context = getattr(playwright, engine).launch_persistent_context(folder, headless=True)
     page = context.new_page()
     page.route(
@@ -379,7 +371,6 @@ def fresh_page(playwright: Playwright, engine: str, folder: str) -> tuple[Browse
     for source in (DUMP, RESTORE, CORPUS):
         page.add_script_tag(content=source)
     return context, page
-
 def round_trip(engine: str) -> list[str]:
     problems: list[str] = []
     with sync_playwright() as playwright, tempfile.TemporaryDirectory(
@@ -391,7 +382,6 @@ def round_trip(engine: str) -> list[str]:
             first.evaluate("ordenSeed()")
             most = {"big": 1000}
             before = dumped(first, most)
-
             skipped = {
                 name for name, text in before["databases"].items() if "skip" in json.loads(text)
             }
@@ -401,7 +391,6 @@ def round_trip(engine: str) -> list[str]:
                     problems.append(f"{name} was not skipped as {why}: {str(said)[:120]}")
             if json.loads(before["databases"]["big"]).get("size", 0) < 200000:
                 problems.append("the skipped database's size is not all of it")
-
             second.evaluate("() => ordenRestore('clear', '{}')")
             second.evaluate("(a) => ordenRestore('local', a)", json.dumps(before["list"]["local"]))
             second.evaluate(
@@ -413,7 +402,6 @@ def round_trip(engine: str) -> list[str]:
                 database = json.loads(text)["db"]
                 second.evaluate("(a) => ordenRestore('database', a)", json.dumps(database))
             after = dumped(second, most)
-
             for key in ("local", "session"):
                 if before["list"][key] != after["list"][key]:
                     problems.append(f"{key} differs")
@@ -425,7 +413,6 @@ def round_trip(engine: str) -> list[str]:
                     continue
                 if text != after["databases"].get(name):
                     problems.append(f"{name} is not the same bytes after the round trip")
-
             problems.extend(second.evaluate("ordenCheck()"))
             sizes = {name: len(text) for name, text in before["databases"].items()}
             print(f"{engine}: dumped {sizes}")
@@ -433,7 +420,6 @@ def round_trip(engine: str) -> list[str]:
             one.close()
             two.close()
     return problems
-
 def main() -> int:
     engines = sys.argv[1:] or ["chromium", "webkit"]
     failed = 0
@@ -447,6 +433,5 @@ def main() -> int:
         else:
             print(f"{engine}: every value round-trips, byte for byte")
     return 1 if failed else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

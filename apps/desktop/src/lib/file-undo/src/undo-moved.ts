@@ -7,12 +7,10 @@ function did(action: FileAction, from: string, to: string): boolean {
   if (action.kind !== 'move' && action.kind !== 'rename') return false
   return (action.from === from && action.to === to) || (action.from === to && action.to === from)
 }
-
 export function heardMove(steps: readonly FileAction[], op: Extract<FileOp, { op: 'moved' }>) {
   if (op.kind !== 'space' && (landing(op.to) || steps.some((one) => did(one, op.from, op.to)))) return
   for (const action of steps) rewritten(action, op.from, op.to)
 }
-
 export function rewritten(action: FileAction, from: string, to: string) {
   const at = (path: string) => movedTo(path, from, to) ?? path
   switch (action.kind) {

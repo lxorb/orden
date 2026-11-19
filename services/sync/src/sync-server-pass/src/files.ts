@@ -6,16 +6,12 @@ import { activeIn, holdsSql, mayAct } from './access'
 import { NO_SUCH_FILE, NO_SUCH_ITEM, NO_SUCH_VAULT, NOT_A_FILE, NOT_YOUR_ROLE, TAKEN } from './refusals'
 
 export const files = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 const TOO_BIG = 'that part of the file is too big'
 const SAY_THE_LENGTH = 'say how long the part is'
-
 const OBJECT = `'pass/files/' || item_id || '/' || file_id || '/' || part`
-
 function fileObject(item: string, file: string, part: number): string {
   return `pass/files/${item}/${file}/${String(part)}`
 }
-
 export function filesGone(db: D1Database, where: string, values: readonly unknown[]): D1PreparedStatement[] {
   const at = `?${String(values.length + 1)}`
   return [
@@ -28,16 +24,13 @@ export function filesGone(db: D1Database, where: string, values: readonly unknow
     db.prepare(`delete from pass_file_parts where ${where}`).bind(...values),
   ]
 }
-
 export const ITEM_FILES_GONE = `vault_id = ?1 and item_id = ?2
   and exists (select 1 from pass_items where vault_id = ?1 and id = ?2 and deleted_at is not null)`
-
 function countIn(text: string | undefined, fallback: number | null): number | null {
   if (text === undefined) return fallback
   if (!/^\d{1,3}$/.test(text)) return null
   return Number(text)
 }
-
 interface PartDb {
   part: number
   parts: number
@@ -45,7 +38,6 @@ interface PartDb {
   user_id: string
   size: number
 }
-
 async function partsOf(env: Env, item: string, file: string): Promise<PartDb[]> {
   const { results } = await env.DB.prepare(
     `select part, parts, vault_id, user_id, size from pass_file_parts
@@ -55,14 +47,12 @@ async function partsOf(env: Env, item: string, file: string): Promise<PartDb[]> 
     .all<PartDb>()
   return results
 }
-
 function idsOf(context: { req: { param(name: string): string | undefined } }) {
   const vault = context.req.param('vault') ?? ''
   const item = context.req.param('item') ?? ''
   const file = context.req.param('file') ?? ''
   return { vault, item, file, ok: isPassId(vault) && isPassId(item) && isPassId(file) }
 }
-
 files.put('/files/:vault/:item/:file', async (context) => {
   const user = context.get('user')
   const { vault, item, file, ok } = idsOf(context)
@@ -77,7 +67,6 @@ files.put('/files/:vault/:item/:file', async (context) => {
     return context.json({ error: SAY_THE_LENGTH }, 411)
   }
   if (Number(declared) > MOST_SEALED_PART) return context.json({ error: TOO_BIG }, 413)
-
   const held = await activeIn(context.env, vault, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
@@ -87,21 +76,17 @@ files.put('/files/:vault/:item/:file', async (context) => {
     .bind(vault, item)
     .first()
   if (!alive) return context.json({ error: NO_SUCH_ITEM }, 404)
-
   const known = await partsOf(context.env, item, file)
   if (known.some((one) => one.vault_id !== vault)) return context.json({ error: TAKEN }, 409)
   if (known.some((one) => one.parts !== parts)) return context.json({ error: NOT_A_FILE }, 409)
-
   const body = await context.req.arrayBuffer()
   if (!body.byteLength) return context.json({ error: NOT_A_FILE }, 400)
   if (body.byteLength > MOST_SEALED_PART) return context.json({ error: TOO_BIG }, 413)
-
   const before = known.find((one) => one.part === part)
   const replacing = before?.user_id === user.id ? before.size : 0
   if (!(await fits(context.env, user.id, body.byteLength, replacing))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
-
   const claimed = await context.env.DB.prepare(
     `insert into pass_file_parts (item_id, file_id, part, parts, vault_id, user_id, size, at)
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
@@ -128,7 +113,6 @@ files.put('/files/:vault/:item/:file', async (context) => {
     const taken = there.some((one) => one.vault_id !== vault)
     return context.json({ error: taken ? TAKEN : NOT_A_FILE }, 409)
   }
-
   try {
     await context.env.NOTES.put(fileObject(item, file, part), body, {
       httpMetadata: { contentType: 'application/octet-stream' },
@@ -145,7 +129,6 @@ files.put('/files/:vault/:item/:file', async (context) => {
   }
   return context.json({ stored: true, size: body.byteLength }, 201)
 })
-
 files.get('/files/:vault/:item/:file', async (context) => {
   const user = context.get('user')
   const { vault, item, file, ok } = idsOf(context)
@@ -165,7 +148,6 @@ files.get('/files/:vault/:item/:file', async (context) => {
     headers: { 'content-type': 'application/octet-stream', 'cache-control': 'private, no-store' },
   })
 })
-
 files.get('/files/:vault/:item', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')
@@ -189,7 +171,6 @@ files.get('/files/:vault/:item', async (context) => {
     })),
   })
 })
-
 files.delete('/files/:vault/:item/:file', async (context) => {
   const user = context.get('user')
   const { vault, item, file, ok } = idsOf(context)

@@ -14,13 +14,11 @@ describe('an inbox stamp', () => {
     expect(newer(undefined, stamps[3])).toBe(false)
     expect(newer(stamps[3], undefined)).toBe(true)
   })
-
   test('is read back by the wire', () => {
     const stamp = inboxStamp(Date.UTC(2026, 10, 7), 3, 'laptop-1')
     expect(inboxChangeOf({ id: 'a', fields: { text: 'x' }, stamps: { text: stamp } })).not.toBeNull()
   })
 })
-
 describe('merging a change into a to-do', () => {
   test('takes each field whose stamp is later and says whether anything changed', () => {
     const held = {

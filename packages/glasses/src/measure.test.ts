@@ -12,13 +12,10 @@ describe('what text mode costs', () => {
     const marked = costOf(() => markLines(note, { inner: paging.inner }))
     const folding = costOf(() => fold(note.slice(0, 2700)))
     const wrapped = costOf(() => wrap(`x${'word '.repeat(40)}`, paging.inner))
-
     const all = pagesOf(note, paging)
     const rows = all.reduce((sum, page) => sum + page.words.split('\n').length, 0)
-
     const lines = (what: string, { set, paged }: ReturnType<typeof costOf>) =>
       `${what.padEnd(25)}${String(paged.pages)} pages, ${String(set.broken)} lines broken, ${String(set.cached)} from the cache, ${String(set.measured)} glyphs measured, ${String(set.folded)} folded`
-
     console.log(
       [
         '',
@@ -32,17 +29,13 @@ describe('what text mode costs', () => {
         '',
       ].join('\n'),
     )
-
     expect(all.length).toBeGreaterThan(100)
-
     expect(warm.paged).toEqual(cold.paged)
     expect(cold.paged.lines).toBeGreaterThan(700)
-
     expect(cold.set.broken).toBeGreaterThan(100)
     expect(warm.set.broken).toBe(1)
     expect(warm.set.cached).toBe(cold.set.broken + cold.set.cached - 1)
     expect(warm.set.measured * 2).toBeLessThan(cold.set.measured)
-
     expect(marked.set.broken).toBe(0)
     expect(folding.set.measured).toBe(0)
     expect(folding.set.folded).toBe(2700)

@@ -15,11 +15,9 @@
     ['autoLogin', 'Sign in automatically'],
     ['showUsernameField', 'Show username field'],
   ] as const
-
   const settings = $derived(pass.settings)
   const sites = $derived(Object.entries(settings.paused).sort(([a], [b]) => a.localeCompare(b)))
   let typed = $state('')
-
   function paused(site: string, change: Partial<Paused>) {
     const was = settings.paused[site]
     const blankPaused = Object.fromEntries(PAUSES.map((one) => [one, false])) as Paused
@@ -28,11 +26,9 @@
       [site]: { ...(was ?? blankPaused), ...change },
     })
   }
-
   function unpaused(site: string) {
     pass.setSetting('paused', Object.fromEntries(Object.entries(settings.paused).filter(([one]) => one !== site)))
   }
-
   function added(event: SubmitEvent) {
     event.preventDefault()
     const site = hostOf(typed.includes('://') ? typed : `https://${typed}`)
@@ -100,35 +96,29 @@
   .row {
     padding: var(--space-1) var(--space-3);
   }
-
   .site + .site,
   .site + .add {
     border-top: 1px solid var(--line);
   }
-
   .site-head {
     display: flex;
     align-items: center;
     padding: var(--space-2) var(--space-2) 0 var(--space-3);
   }
-
   .host {
     flex: 1;
     font-weight: var(--weight-strong);
     color: var(--text-strong);
     font-size: var(--text-row);
   }
-
   .pauses {
     padding-inline-start: var(--space-3);
   }
-
   .add {
     display: flex;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
   }
-
   .orden-section {
     margin: var(--space-3) 0 0;
   }

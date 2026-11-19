@@ -1,22 +1,17 @@
 import { door } from '@orden/markdown/door'
 export const HISTORY = 'orden:web-visits'
-
 export function ownStore(own: string | null | undefined): string | null {
   return own ? `note_${own}` : null
 }
-
 export function freshOwn(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8))
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
-
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; read on a press
 const copying = new Map<string, number>()
-
 export function isCopying(own: string): boolean {
   return (copying.get(own) ?? 0) > 0
 }
-
 export async function copyingOut<T>(own: string, copy: () => Promise<T>): Promise<T> {
   copying.set(own, (copying.get(own) ?? 0) + 1)
   try {
@@ -27,22 +22,17 @@ export async function copyingOut<T>(own: string, copy: () => Promise<T>): Promis
     else copying.delete(own)
   }
 }
-
 class WebData {
   private readonly merging = door(() => import('./merged').then((one) => one.mergeOld()))
-
   async store(own: string | null | undefined): Promise<string | null> {
     await this.merged()
     return ownStore(own)
   }
-
   history(): string {
     return HISTORY
   }
-
   merged(): Promise<void> {
     return this.merging()
   }
 }
-
 export const webData = new WebData()

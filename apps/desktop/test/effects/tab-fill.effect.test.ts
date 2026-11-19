@@ -9,16 +9,13 @@ vi.hoisted(() => {
     configurable: true,
   })
 })
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
-
 vi.mock('../../src/lib/start', () => ({ start: () => () => undefined }))
-
 const moved: { keyframes: Keyframe[]; options: KeyframeAnimationOptions }[] = []
 Element.prototype.animate = function animate(keyframes, options) {
   moved.push({
@@ -40,7 +37,6 @@ Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
@@ -48,7 +44,6 @@ const { STARTS_RIGHT } = (await import('../../src/lib/session/src/api')).panels
 const App = (await import('../../src/App.svelte')).default
 await import('../../src/lib/tab-fill/src/fill')
 await import('../../src/lib/tab-fill/src/FillBar.svelte')
-
 await warmWindow(
   () => {
     workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
@@ -70,10 +65,8 @@ await warmWindow(
     document.querySelectorAll('[data-pane]').length === 2 &&
     document.querySelectorAll('[data-pane] .cm-content').length === 2,
 )
-
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
-
 beforeEach(() => {
   viewport.device = 'desktop'
   workspace.panes.fills = null
@@ -88,7 +81,6 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(async () => {
   if (shown) void unmount(shown, { outro: false })
   shown = null
@@ -96,7 +88,6 @@ afterEach(async () => {
   workspace.panes.fills = null
   await vi.dynamicImportSettled()
 })
-
 async function press(key: string, held: KeyboardEventInit = {}): Promise<KeyboardEvent> {
   const event = new KeyboardEvent('keydown', {
     key,
@@ -109,9 +100,7 @@ async function press(key: string, held: KeyboardEventInit = {}): Promise<Keyboar
   await settle()
   return event
 }
-
 const shiftF11 = () => press('F11', { shiftKey: true })
-
 async function window2() {
   workspace.openBlank('Left', '# Left\n\nWords.')
   workspace.openBlank('Other', '# Other')
@@ -126,7 +115,6 @@ async function window2() {
   await settle()
   return left.id
 }
-
 function chrome() {
   return {
     sidebar: target.querySelector('aside')?.outerHTML ?? null,
@@ -138,130 +126,104 @@ function chrome() {
     status: target.querySelector('[data-region="status"]') !== null,
   }
 }
-
 test('the key fills the window with the tab being worked in, and gives the window back', async () => {
   const left = await window2()
   const before = chrome()
   const layout = JSON.stringify(workspace.panes.frame)
-
   expect(before.sidebar).not.toBeNull()
   expect(before.panes).toHaveLength(2)
   expect(before.heads).toBe(2)
-
   await shiftF11()
-
   expect(workspace.panes.fills).toBe(left)
   const filled = chrome()
   expect(filled.sidebar, 'the file list is still on screen').toBeNull()
   expect(filled.panes, 'the other pane is still on screen').toEqual([left])
   expect(filled.heads, 'a pane still carries its own strip').toBe(0)
   expect(filled.status).toBe(false)
-
   const bar = target.querySelector('.bar')
   expect(bar).not.toBeNull()
   expect((bar as HTMLElement | null)?.inert).toBe(true)
   expect(bar?.querySelector('header')).not.toBeNull()
-
   expect(JSON.stringify(workspace.panes.frame)).toBe(layout)
   expect(workspace.panel).toBe('tree')
-
   await shiftF11()
-
   expect(workspace.panes.fills).toBeNull()
   expect(chrome(), 'the window came back different').toEqual(before)
   expect(target.querySelector('.bar')).toBeNull()
 })
-
 test('the chrome goes toward its edges and comes back from them, and nothing else moves', async () => {
   await window2()
   moved.length = 0
   await shiftF11()
-
   const going = moved.splice(0)
   expect(going.length).toBeGreaterThan(0)
   for (const one of going) {
     expect(one.keyframes.at(-1)).toMatchObject({ opacity: 0 })
     expect(one.options.fill).toBe('forwards')
   }
-
   await shiftF11()
   const coming = moved.splice(0)
   expect(coming.length).toBeGreaterThan(0)
   for (const one of coming) expect(one.keyframes.at(-1)).toMatchObject({ opacity: 1 })
 })
-
 test('another tab of the same pane keeps the window filled', async () => {
   const left = await window2()
   workspace.openBlank('Third', '# Third')
   const third = workspace.activeTabId
   await settle()
   await shiftF11()
-
   const [first] = workspace.tabsIn(left)
   workspace.activate(first?.id ?? '')
   await settle()
   expect(workspace.panes.fills).toBe(left)
-
   workspace.activate(third ?? '')
   await settle()
   expect(workspace.panes.fills).toBe(left)
 })
-
 test('working in the other pane gives the window back', async () => {
   const left = await window2()
   await shiftF11()
   expect(workspace.panes.fills).toBe(left)
-
   workspace.panes.focusNext()
   await settle()
   expect(workspace.panes.fills).toBeNull()
   expect(chrome().panes).toHaveLength(2)
 })
-
 test('a pane with nothing left in front gives the window back', async () => {
   const left = await window2()
   await shiftF11()
-
   workspace.deselect(left)
   await settle()
   expect(workspace.panes.fills).toBeNull()
 })
-
 test('asking for the file list gives the window back with the list as it was', async () => {
   await window2()
   await shiftF11()
-
   await press('E', { ctrlKey: true, shiftKey: true, code: 'KeyE' })
   expect(workspace.panes.fills).toBeNull()
   expect(workspace.panel).toBe('tree')
   expect(target.querySelector('aside')).not.toBeNull()
 })
-
 test('the sidebar key shows the list that was under the fill rather than shutting it', async () => {
   await window2()
   await shiftF11()
-
   await press('L', { ctrlKey: true, shiftKey: true, code: 'KeyL' })
   expect(workspace.panes.fills).toBeNull()
   expect(workspace.panel).toBe('tree')
 })
-
 test('Escape leaves only where nothing else has a use for it', async () => {
   await window2()
   await shiftF11()
-
   const note = target.querySelector<HTMLElement>('[data-pane] .cm-content')
   note?.focus()
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   await settle()
   expect(workspace.panes.fills).not.toBeNull()
-
   note?.blur()
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   await settle()
   expect(workspace.panes.fills).toBeNull()
 })
-
 test('a phone does not fill: it shows one document already', async () => {
   workspace.openBlank('One', '# One')
   shown = mount(App, { target })

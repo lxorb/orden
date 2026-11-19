@@ -15,7 +15,6 @@ export function showPassAccount(event: MouseEvent, ui: PassUi): void {
     { until: pass.opened, title: account.user?.email ?? 'Account', up: true },
   )
 }
-
 async function signOut(): Promise<void> {
   pass.lock()
   await account.signOut('asked')

@@ -9,18 +9,15 @@ describe('whether the grammar is wanted at all', () => {
     expect(declares(':root { --orden-setting-blur: range "Blur" 0 40 20 px; }')).toBe(true)
   })
 })
-
 describe('what a value is worth', () => {
   const blur = settingOf('blur', 'range "Blur" 0 40 18 px')!
   const depth = settingOf('depth', 'choice "Depth" "Flat" flat "Deep" deep')!
   const paper = settingOf('paper', 'switch "Paper" on')!
-
   test('nothing stored at all is what the theme said it starts as', () => {
     expect(valueOf(blur, undefined)).toBe(18)
     expect(valueOf(depth, undefined)).toBe('flat')
     expect(valueOf(paper, undefined)).toBe(true)
   })
-
   test('a range is clamped, and a choice gone or a value of the wrong shape falls back', () => {
     expect(valueOf(blur, 400)).toBe(40)
     expect(valueOf(blur, -12)).toBe(0)
@@ -30,7 +27,6 @@ describe('what a value is worth', () => {
     expect(valueOf(depth, 3)).toBe('flat')
     expect(valueOf(blur, Number.NaN)).toBe(18)
   })
-
   test('a colour row holds two of the reader’s own where it says it can, and only those', () => {
     const swatches = [{ value: 'dawn', name: 'Dawn', dark: '#000000', light: '#ffffff' }]
     const plain: ThemeSetting = {
@@ -55,10 +51,8 @@ describe('what a value is worth', () => {
     expect(valueOf(paired, '#aabbcc')).toBe('dawn')
   })
 })
-
 describe('what goes onto the page', () => {
   const settings = [settingOf('blur', 'range "Blur" 0 40 18 px')!, settingOf('paper', 'switch "Paper" on')!]
-
   test('is every setting at once, so there is one thing to put on and take off', () => {
     expect(paintOf(settings, { blur: 30, paper: false }, 'dark')).toEqual({
       '--orden-blur': '30px',
@@ -67,7 +61,6 @@ describe('what goes onto the page', () => {
     expect(paintOf(settings, {}, 'dark')).toEqual({ '--orden-blur': '18px', '--orden-paper': '1' })
   })
 })
-
 describe('a theme that paints a setting’s tokens itself', () => {
   const accent: ThemeSetting = {
     id: 'accent',
@@ -79,7 +72,6 @@ describe('a theme that paints a setting’s tokens itself', () => {
     options: [{ value: 'violet', name: 'Violet', dark: '#7c6bf5', light: '#5b4be0' }],
     paint: () => ({ '--accent': '#7c6bf5', '--accent-soft': 'rgb(124 107 245 / 0.15)' }),
   }
-
   test.each([
     ["[data-theme='dark'] { --accent: #ff0000; }", true],
     ["[data-theme='dark'] { --bg: #000; }", false],

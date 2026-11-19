@@ -6,11 +6,9 @@ import type { Visit } from '@orden/scan/visits'
 
 const NOW = new Date(2026, 9, 3, 12, 0).getTime()
 const HOUR = 3_600_000
-
 function visit(url: string, last: number, title = ''): Visit {
   return { url, title, visits: 1, typed: 0, last }
 }
-
 describe('the History page', () => {
   test('lists the newest first, a heading before each day', () => {
     const rows = historyRows(
@@ -30,7 +28,6 @@ describe('the History page', () => {
     ])
     expect(rows[0]).toMatchObject({ kind: 'day', day: midnightOf(NOW) })
   })
-
   test('finds a page by every word, in its title or its address, any case', () => {
     const one = visit('https://svelte.dev/docs/runes', NOW, 'Runes • Svelte docs')
     expect(answers(one, 'svelte RUNES')).toBe(true)
@@ -39,7 +36,6 @@ describe('the History page', () => {
     expect(answers(one, '   ')).toBe(true)
     expect(historyRows([one, visit('https://react.dev/', NOW)], 'svelte')).toHaveLength(2)
   })
-
   test('calls today and yesterday by name, and the rest by date', () => {
     const words = { today: 'Today', yesterday: 'Yesterday' }
     expect(dayName(midnightOf(NOW), NOW, 'en', words)).toBe('Today')
@@ -47,12 +43,10 @@ describe('the History page', () => {
     expect(dayName(midnightOf(NOW - 72 * HOUR), NOW, 'en', words)).toBe('Wednesday, September 30')
     expect(dayName(midnightOf(new Date(2025, 0, 2).getTime()), NOW, 'en', words)).toContain('2025')
   })
-
   test('shows the host without www, as the list reads it', () => {
     expect(shownHost('https://www.bbc.co.uk/news')).toBe('bbc.co.uk')
     expect(shownHost('not an address')).toBe('not an address')
   })
-
   test('draws the rows on screen and a few either side', () => {
     expect(onScreen(0, 280, 28, 2000)).toEqual({ from: 0, to: 18 })
     expect(onScreen(28 * 100, 280, 28, 2000)).toEqual({ from: 92, to: 118 })

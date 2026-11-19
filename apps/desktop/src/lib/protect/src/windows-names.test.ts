@@ -10,12 +10,10 @@ async function on(os: string) {
   protection.set('/space', '/space/Notes/Secret.md', 'password')
   return protection
 }
-
 afterEach(() => {
   delete (globalThis as { window?: unknown }).window
   localStorage.clear()
 })
-
 describe('on Windows, a locked name spelled with the dots or spaces Windows drops', () => {
   test.each([
     '/space/Folder./Secret.md',
@@ -31,7 +29,6 @@ describe('on Windows, a locked name spelled with the dots or spaces Windows drop
     expect(protection.locked(path)).toBe(true)
   })
 })
-
 describe('elsewhere, where a dot ends a name of its own', () => {
   test('a folder named with one is another folder', async () => {
     const protection = await on('linux')

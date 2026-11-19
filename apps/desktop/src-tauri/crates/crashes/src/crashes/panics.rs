@@ -5,11 +5,9 @@ use super::report::{self, Report};
 use super::stacks::{self, Raw};
 
 static PANICKING: AtomicBool = AtomicBool::new(false);
-
 pub fn panicking() -> bool {
     PANICKING.load(Ordering::Acquire)
 }
-
 pub fn install() {
     let before = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
@@ -22,7 +20,6 @@ pub fn install() {
         }
     }));
 }
-
 pub fn message_of(info: &PanicHookInfo<'_>) -> String {
     let payload = info.payload();
     payload
@@ -31,7 +28,6 @@ pub fn message_of(info: &PanicHookInfo<'_>) -> String {
         .or_else(|| payload.downcast_ref::<String>().cloned())
         .unwrap_or_else(|| "a panic that said nothing".to_owned())
 }
-
 pub fn panicked(info: &PanicHookInfo<'_>) -> Report {
     let thread = std::thread::current();
     let raw = Raw {
@@ -52,7 +48,6 @@ pub fn panicked(info: &PanicHookInfo<'_>) -> Report {
     report.threads = vec![stacks::resolved(&raw, true)];
     report
 }
-
 #[cfg(test)]
 mod tests {
     use super::{message_of, panicked};
@@ -75,7 +70,6 @@ mod tests {
         .join();
         std::panic::set_hook(before);
         assert!(caught.is_err());
-
         let report = seen.lock().expect("held").take().expect("a report");
         assert_eq!(report.kind, "panic");
         assert!(report.summary.starts_with("forced for the report test"));

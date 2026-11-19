@@ -15,15 +15,12 @@ import type { World } from './world'
 const ROOT = '/device/space'
 const SPACE = 'space'
 const ID = 'c1'
-
 function card(id: string, text: string, x = 0): Canvas['nodes'][number] {
   return { id, type: 'text', text, x, y: 0, width: 200, height: 80 }
 }
-
 function plane(...nodes: Canvas['nodes']): Canvas {
   return readCanvas(writeCanvas({ nodes, edges: [], ink: [], at: {}, gone: {} }))
 }
-
 async function device(on: Canvas) {
   const store = new MemoryStore('d0')
   const seeding = store.open()
@@ -73,7 +70,6 @@ async function device(on: Canvas) {
   }
   return { store, engine: await Engine.start(world, store.open(), { freshens: false }) }
 }
-
 function surface(canvas: Canvas): PlaneSurface & { heard: Canvas[] } {
   const made = {
     canvas,
@@ -88,17 +84,13 @@ function surface(canvas: Canvas): PlaneSurface & { heard: Canvas[] } {
   }
   return made
 }
-
 const ids = (canvas: Canvas) => canvas.nodes.map((one) => one.id).sort()
-
 describe('a canvas under v2', () => {
   test('what the plane had that the document did not goes in as this device’s, and nothing else is written', async () => {
     const { engine } = await device(plane(card('a', 'One')))
     const board = surface(plane(card('a', 'One'), card('b', 'Two', 300)))
-
     const join = await attachPlane(engine, ID, board, () => true)
     const doc = engine.core.docs.get(ID)
-
     expect(join).not.toBeNull()
     expect(board.shared).not.toBeNull()
     expect(ids(readPlane(doc?.live ?? new Y.Doc()))).toEqual(['a', 'b'])
@@ -106,45 +98,37 @@ describe('a canvas under v2', () => {
     expect(doc?.hasPending).toBe(true)
     join?.part()
   })
-
   test('a plane that says what the document says joins without an edit', async () => {
     const { engine } = await device(plane(card('a', 'One')))
     const board = surface(plane(card('a', 'One')))
-
     await attachPlane(engine, ID, board, () => true)
     const doc = engine.core.docs.get(ID)
     expect(doc?.flush()).toBe(false)
   })
-
   test('drawing goes into the document, and writes nothing until the pause', async () => {
     const { engine, store } = await device(plane(card('a', 'One')))
     const board = surface(plane(card('a', 'One')))
     await attachPlane(engine, ID, board, () => true)
     const writes = store.writes
-
     const before = board.canvas
     const after = plane(card('a', 'One'), card('c', 'Drawn here', 600))
     board.shared?.push(before, after)
-
     const doc = engine.core.docs.get(ID)
     expect(ids(readPlane(doc?.live ?? new Y.Doc()))).toEqual(['a', 'c'])
     expect(store.writes).toBe(writes)
     await engine.saved(`${ROOT}/Board.canvas`, writeCanvas(after))
     expect(store.writes).toBe(writes + 1)
   })
-
   test('another device’s card reaches the plane on screen', async () => {
     const { engine } = await device(plane(card('a', 'One')))
     const board = surface(plane(card('a', 'One')))
     await attachPlane(engine, ID, board, () => true)
     const live = engine.core.docs.get(ID)?.live
     if (!live) throw new Error('no document')
-
     const there = new Y.Doc()
     Y.applyUpdate(there, Y.encodeStateAsUpdate(live))
     pushPlane(there, readPlane(there), plane(card('a', 'One'), card('d', 'From there', 900)))
     Y.applyUpdate(live, Y.encodeStateAsUpdate(there, Y.encodeStateVector(live)), 'pulled')
-
     expect(ids(board.canvas)).toEqual(['a', 'd'])
   })
 })

@@ -9,9 +9,7 @@
   import { wordsInVoice } from '../voice'
 
   const { chat, file }: { chat: string; file: FileRef } = $props()
-
   const RATES = [1, 1.5, 2] as const
-
   let audio = $state<HTMLAudioElement>()
   let playing = $state(false)
   let at = $state(0)
@@ -20,17 +18,14 @@
   let words = $state<string | null>(null)
   let hearing = $state(false)
   let bars = $state<HTMLElement>()
-
   const seconds = $derived(length > 0 ? length : (file.seconds ?? 0))
   const wave = $derived(file.wave?.length ? file.wave : Array.from({ length: WAVE_BARS }, () => 40))
   const done = $derived(seconds > 0 ? at / seconds : 0)
-
   function toggle() {
     if (!audio) return
     if (playing) audio.pause()
     else void audio.play()
   }
-
   function seek(event: PointerEvent) {
     if (!audio || !bars) return
     const box = bars.getBoundingClientRect()
@@ -38,7 +33,6 @@
     if (Number.isFinite(to)) audio.currentTime = to
     at = to
   }
-
   function drag(event: PointerEvent) {
     const node = bars
     if (event.button !== 0 || !node) return
@@ -48,12 +42,10 @@
     node.addEventListener('pointermove', move)
     node.addEventListener('lostpointercapture', () => node.removeEventListener('pointermove', move), { once: true })
   }
-
   function step() {
     rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length] ?? 1
     if (audio) audio.playbackRate = rate
   }
-
   async function transcribe() {
     if (hearing) return
     hearing = true
@@ -134,7 +126,6 @@
     border-radius: 99px;
     background: var(--surface-2);
   }
-
   .play {
     --glyph-size: 13px;
     flex: none;
@@ -149,11 +140,9 @@
     color: var(--accent-ink);
     transition: transform var(--dur-fast) var(--ease-spring);
   }
-
   .play:active {
     transform: scale(0.92);
   }
-
   .bars {
     flex: 1;
     min-width: 0;
@@ -164,7 +153,6 @@
     touch-action: none;
     cursor: pointer;
   }
-
   .bar {
     flex: 1;
     min-width: 1px;
@@ -172,11 +160,9 @@
     background: var(--line-strong);
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .bar.heard {
     background: var(--accent);
   }
-
   .time {
     flex: none;
     min-width: 3.2em;
@@ -184,7 +170,6 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .rate,
   .words {
     --glyph-size: 14px;
@@ -201,11 +186,9 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .words.busy {
     opacity: 0.5;
   }
-
   .heard-words {
     max-width: 360px;
     margin: var(--space-1) 0 0;

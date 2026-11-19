@@ -28,27 +28,21 @@ import { unlocks } from './unlocked.svelte'
 export const STORAGE_KEY = 'orden:protected'
 const PASSWORD_KEY = 'orden:protect-password'
 const OWNER_KEY = 'orden:protect-password-account'
-
 export type Way = 'password' | 'device'
-
 export const SPACE = ''
 const MOST_PROTECTED = 400
-
 export interface Lock {
   root: string
   key: string
   way: Way
 }
-
 export interface Hashed extends Cost {
   salt: string
   hash: string
   at?: number
 }
-
 const MOST_N = 1 << 20
 const MOST_WORK = 1 << 19
-
 export function hashedOf(value: unknown): Hashed | null {
   if (typeof value !== 'object' || value === null) return null
   const { n, r, p, salt, hash } = value as Record<string, unknown>
@@ -68,12 +62,9 @@ export function hashedOf(value: unknown): Hashed | null {
     ...(typeof at === 'number' && whole(at, Number.MAX_SAFE_INTEGER) ? { at } : {}),
   }
 }
-
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 export const lockable = (key: string) => insideItsSpace(key.replace(/^[A-Za-z]:/, '_'))
-
 export const fitted = (key: string) => (key.length > 300 ? key.slice(0, 300).replace(/\/?[^/]*$/, '') : key)
-
 export function protectedMap(value: unknown): Record<string, Way> {
   if (!isRecord(value)) return {}
   const out: Record<string, Way> = {}
@@ -84,39 +75,31 @@ export function protectedMap(value: unknown): Record<string, Way> {
   }
   return out
 }
-
 interface Kept extends Folded {
   ways: Record<string, Way>
   sent: boolean
 }
-
 function read(): Record<string, Kept> {
   return readSpaces(STORAGE_KEY, (one) => ({
     ways: protectedMap(one.ways),
     sent: one.sent !== false,
   }))
 }
-
 function same(one: Record<string, Way>, other: Record<string, Way>): boolean {
   const keys = Object.keys(one)
   return keys.length === Object.keys(other).length && keys.every((key) => one[key] === other[key])
 }
-
 const WAYS: Folding<Record<string, Way>> = {
   fold: (theirs, mine) => ({ ...theirs, ...mine }),
   same,
 }
-
 export const buried = () => import('./buried')
-
 const synced = () =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('nothing is protected in the Even Realities plugin')) : import('./synced')
-
 interface Shut {
   folds: boolean
   keys: { key: string; under: string }[]
 }
-
 function originalName(part: string): string {
   let name = part
   for (let copy = foreignCopy(name); copy !== null && copy.original !== name; copy = foreignCopy(name)) {
@@ -124,7 +107,6 @@ function originalName(part: string): string {
   }
   return name
 }
-
 function copiedFrom(path: string): string | null {
   if (!inForeignCopy(path)) return null
   return path
@@ -132,32 +114,26 @@ function copiedFrom(path: string): string | null {
     .map(originalName)
     .join('')
 }
-
 function holderOf(path: string): string | null {
   return /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
 }
-
 function originalsOf(path: string): string[] {
   const copy = copiedFrom(path)
   const found = [copy, holderOf(path), copy === null ? null : holderOf(copy)]
   return [...new Set(found.filter((one) => one !== null))]
 }
-
 function paperMoving(from: string, to: string): [string, string] | null {
   return /\.pages$/i.test(from) && /\.pages$/i.test(to) ? [`${from}.pdf`, `${to}.pdf`] : null
 }
-
 function covers(key: string, at: string, root: string): boolean {
   return key === SPACE || within(key, at, root) !== null
 }
-
 export class Protection {
   private spaces = $state<Record<string, Kept>>(read())
   private revision = $state(0)
   private hashed = $state<Hashed | null>(hashedOf(stored(PASSWORD_KEY)))
   private owner: string | null = storedText(OWNER_KEY)
   private heard = JSON.stringify(this.spaces)
-
   constructor() {
     heardElsewhere([STORAGE_KEY, PASSWORD_KEY, OWNER_KEY], (key) => {
       if (key === STORAGE_KEY || key === null) this.reread()
@@ -165,7 +141,6 @@ export class Protection {
       if (key === OWNER_KEY || key === null) this.owner = storedText(OWNER_KEY)
     })
   }
-
   private reread(): void {
     const spaces = read()
     const text = JSON.stringify(spaces)
@@ -174,21 +149,16 @@ export class Protection {
     this.spaces = spaces
     this.revision++
   }
-
   get any(): boolean {
     return Object.values(this.spaces).some((one) => Object.keys(one.ways).length > 0)
   }
-
   get count(): number {
     return Object.values(this.spaces).reduce((sum, one) => sum + Object.keys(one.ways).length, 0)
   }
-
   get seen(): string {
     return `${String(this.revision)}:${String(unlocks.revision)}`
   }
-
   private shutHeld: { spaces: Record<string, Kept>; revision: number; shut: Shut[] } | null = null
-
   private shutNow(): Shut[] {
     const spaces = this.spaces
     const revision = unlocks.revision
@@ -209,14 +179,12 @@ export class Protection {
     this.shutHeld = { spaces, revision, shut }
     return shut
   }
-
   locked(path: string | null | undefined): boolean {
     if (!path) return false
     const shut = this.shutNow()
     if (!shut.length) return false
     return this.shutAt(shut, path) || originalsOf(path).some((one) => this.shutAt(shut, one))
   }
-
   private shutAt(shut: Shut[], path: string): boolean {
     const exact = pathKeyAs(path, false)
     let folded: string | null = null
@@ -225,30 +193,25 @@ export class Protection {
       return keys.some(({ key, under }) => at === key || at.startsWith(under))
     })
   }
-
   shutIn(root: string): string[] | null {
     const shut = Object.entries(this.ways(root))
       .filter(([key, way]) => unlocks.shut([{ root, key, way }]))
       .map(([key]) => key)
     return shut.includes(SPACE) ? null : shut
   }
-
   agentsMayAllOf(root?: string | null): boolean {
     return (root ? [root] : Object.keys(this.spaces)).every((one) =>
       Object.entries(this.ways(one)).every(([key, way]) => unlocks.agentsMay([{ root: one, key, way }])),
     )
   }
-
   agentsMay(path: string | null | undefined): boolean {
     if (!path || !this.any) return true
     const locks = this.covering(path)
     return !locks.length || unlocks.agentsMay(locks)
   }
-
   get password(): Hashed | null {
     return this.hashed
   }
-
   setPassword(hashed: Hashed | null): void {
     this.hashed = hashed && { ...hashed, at: Date.now() }
     keepJson(PASSWORD_KEY, this.hashed)
@@ -259,7 +222,6 @@ export class Protection {
         .then((one) => one.pushPassword())
         .catch(() => undefined)
   }
-
   adoptPassword(theirs: Hashed | null, accountId: string): boolean {
     const foreign = this.owner !== null && this.owner !== accountId
     const mine = foreign ? null : this.hashed
@@ -273,13 +235,11 @@ export class Protection {
     this.ownedBy(accountId)
     return !theirs || (mine.at ?? 0) > (theirs.at ?? 0)
   }
-
   ownedBy(accountId: string): void {
     if (this.owner === accountId) return
     this.owner = accountId
     keep(OWNER_KEY, accountId)
   }
-
   adopt(root: string, theirs: Record<string, Way>, accountId: string): boolean {
     this.reread()
     const held = this.spaces[root]
@@ -292,7 +252,6 @@ export class Protection {
     this.write()
     return met.tell
   }
-
   said(root: string, landed: boolean, sent?: Record<string, Way>): void {
     this.reread()
     const held = this.spaces[root]
@@ -301,7 +260,6 @@ export class Protection {
     this.spaces = { ...this.spaces, [root]: { ...held, sent: sure } }
     this.keepSpaces()
   }
-
   covering(path: string): Lock[] {
     const out = this.coveringAt(path)
     for (const original of originalsOf(path)) {
@@ -311,7 +269,6 @@ export class Protection {
     }
     return out
   }
-
   private coveringAt(path: string): Lock[] {
     const out: Lock[] = []
     for (const [root, kept] of Object.entries(this.spaces)) {
@@ -323,23 +280,19 @@ export class Protection {
     }
     return out
   }
-
   own(root: string, path: string): Lock | null {
     const key = path === root ? SPACE : relativeTo(root, path)
     const way = this.spaces[root]?.ways[key]
     return way ? { root, key, way } : null
   }
-
   marked(root: string, path: string): boolean {
     if (this.own(root, path)) return true
     const original = copiedFrom(path)
     return original !== null && this.own(root, original) !== null
   }
-
   ways(root: string): Record<string, Way> {
     return this.spaces[root]?.ways ?? {}
   }
-
   set(root: string, path: string, way: Way | null): void {
     this.reread()
     const key = path === root ? SPACE : relativeTo(root, path)
@@ -352,13 +305,10 @@ export class Protection {
     if (!(key in held) && Object.keys(held).length >= MOST_PROTECTED) return
     this.put(root, { ...held, [key]: way })
   }
-
   private filesNear: (path: string) => readonly string[] = () => []
-
   seesFiles(near: (path: string) => readonly string[]): void {
     this.filesNear = near
   }
-
   heldWithin(root: string, path: string): string[] {
     const at = relativeTo(root, path)
     const original = copiedFrom(path)
@@ -372,7 +322,6 @@ export class Protection {
     }
     return held
   }
-
   agentsMayAll(path: string | null | undefined): boolean {
     if (!path || !this.any) return true
     if (!this.agentsMay(path)) return false
@@ -382,7 +331,6 @@ export class Protection {
         this.heldWithin(root, path).every((key) => this.agentsMay(insideSpace(root, key))),
     )
   }
-
   private insideCopiesKept(path: string, root: string): void {
     if (!this.any || copiedFrom(path) === null) return
     const own = this.ways(root)
@@ -394,7 +342,6 @@ export class Protection {
     }
     if (Object.keys(came).length) this.put(root, { ...own, ...came })
   }
-
   private copiesKept(path: string, root: string): void {
     this.insideCopiesKept(path, root)
     if (!this.any) return
@@ -408,7 +355,6 @@ export class Protection {
     }
     if (Object.keys(came).length) this.put(root, { ...this.ways(root), ...came })
   }
-
   moved(from: string, to: string, root: string | null, into: string | null = root): void {
     this.reread()
     if (root === null || from === to) return
@@ -423,7 +369,6 @@ export class Protection {
     const paper = paperMoving(from, to)
     if (paper) this.copied(paper[0], paper[1], root, into)
   }
-
   private carry(move: Moving, root: string): void {
     const held = Object.entries(this.ways(root)).filter(([key]) => key !== SPACE)
     if (move.across) {
@@ -448,7 +393,6 @@ export class Protection {
     }
     if (changed) this.put(root, next)
   }
-
   copied(from: string, to: string, root: string | null, into: string | null): void {
     this.reread()
     if (root === null || into === null) return
@@ -467,7 +411,6 @@ export class Protection {
     const paper = paperMoving(from, to)
     if (paper) this.copied(paper[0], paper[1], root, into)
   }
-
   async gone(path: string, root: string | null, back?: string): Promise<void> {
     if (root === null) return
     const burying = await buried()
@@ -482,17 +425,14 @@ export class Protection {
     this.put(root, Object.fromEntries(Object.entries(this.ways(root)).filter(([key]) => !went(key))))
     await rehomed
   }
-
   cameBack(path: string, root: string | null, back: string): Promise<void> | undefined {
     return root === null ? undefined : this.unbury(back, root, relativeTo(root, path))
   }
-
   async unbury(back: string | null, root: string, at: string, was = at, only = false) {
     this.reread()
     const came = await (await buried()).unburied(back, root, at, this.ways(root), was, only)
     if (came) this.put(root, { ...this.ways(root), ...came })
   }
-
   spaceMoved(from: string, to: string): void {
     this.reread()
     const kept = this.spaces[from]
@@ -501,7 +441,6 @@ export class Protection {
     this.write()
     void buried().then((one) => one.moveSpace(from, to))
   }
-
   async forget(root: string, back?: string): Promise<void> {
     const burying = await buried()
     this.reread()
@@ -511,7 +450,6 @@ export class Protection {
     this.write()
     await rehomed
   }
-
   private put(root: string, ways: Record<string, Way>): void {
     const account = this.spaces[root]?.account ?? null
     this.spaces = { ...this.spaces, [root]: { ways, account, sent: false } }
@@ -520,20 +458,16 @@ export class Protection {
       .then((one) => one.pushWays(root))
       .catch(() => undefined)
   }
-
   private write(): void {
     this.revision++
     this.keepSpaces()
   }
-
   private keepSpaces(): void {
     keepJson(STORAGE_KEY, this.spaces)
     this.heard = JSON.stringify(read())
   }
 }
-
 export function noteBehind(tab: { kind: string; path: string | null; behind?: string | null }): string | null {
   return tab.kind === 'view' ? null : (tab.path ?? tab.behind ?? null)
 }
-
 export const protection = new Protection()

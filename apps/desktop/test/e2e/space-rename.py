@@ -1,9 +1,7 @@
 import json
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,28 +9,20 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 EMAIL = "renamer@example.com"
 SPACE = "Notes"
 RENAMED = "Renamed"
 NOTE = "together.md"
 CANVAS = "Board.canvas"
 OPENING = "# Together\n\nthe first line\n"
-
 PATIENCE = 40
-
 sockets: dict[str, list[str]] = {}
-
 request = harness.request
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
     def account(self) -> str:  # type: ignore[override]
         return super().account(EMAIL)
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -40,34 +30,27 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
         if answer:
             return answer
         page.wait_for_timeout(50)
-
     raise SystemExit(f"gave up waiting for {what}")
-
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
-
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     sockets[label] = []
     page.on("websocket", lambda ws: sockets[label].append(ws.url))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
-
 def note_console(label: str, message) -> None:
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {message.text[:200]}")
-
 def opened(page: Page, label: str, note_id: str) -> None:
     wait_for(
         page,
         f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
-
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
@@ -76,7 +59,6 @@ def opened(page: Page, label: str, note_id: str) -> None:
         "}"
     )
     wait_for(page, listed, f"[{label}] the note to arrive")
-
     page.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/{NOTE}')")
     wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
     wait_for(
@@ -84,13 +66,11 @@ def opened(page: Page, label: str, note_id: str) -> None:
         f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the note to join its room",
     )
-
 def words(page: Page) -> str:
     return page.evaluate(
         "() => { window.ordenApp.workspace.flush();"
         " return window.ordenApp.workspace.active?.doc ?? '' }"
     )
-
 def type_at(page: Page, at: int, said: str) -> None:
     page.click(".cm-content")
     page.evaluate(
@@ -101,23 +81,19 @@ def type_at(page: Page, at: int, said: str) -> None:
         at,
     )
     page.keyboard.type(said, delay=12)
-
 def crosses(one: Page, two: Page, said: str, label: str) -> None:
     type_at(one, len(words(one)), said)
-
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
         if said.strip() in words(two):
             say(f"{label}: arrived")
             return
         two.wait_for_timeout(25)
-
     raise SystemExit(
         f"{label}: never arrived."
         f"\n  the one who typed holds {words(one)!r} and {state(one)}"
         f"\n  the one waiting holds {words(two)!r} and {state(two)}"
     )
-
 def state(page: Page) -> str:
     return page.evaluate(
         "() => {"
@@ -126,7 +102,6 @@ def state(page: Page) -> str:
         " present ${JSON.stringify(rooms.present)}`"
         "}"
     )
-
 def reaches_the_account(token: str, note_id: str, said: str) -> None:
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -135,13 +110,10 @@ def reaches_the_account(token: str, note_id: str, said: str) -> None:
             say("the account has them too")
             return
         time.sleep(0.5)
-
     held = request(f"/v1/notes/{note_id}", token).get("content") or ""
     raise SystemExit(f"the account never got them. it holds {held!r}")
-
 def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None:
     page = signed_in(browser, token, "restored")
-
     wait_for(
         page,
         "() => window.ordenApp.workspace.spaces.some("
@@ -155,14 +127,12 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         "  await workspace.showSpace(space.id)"
         "}"
     )
-
     looking = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
         f"  return walk(window.ordenApp.workspace.tree).find((path) => path.endsWith('/{CANVAS}')) ?? ''"
         "}"
     )
-
     until = time.monotonic() + PATIENCE
     board = ""
     while time.monotonic() < until:
@@ -170,7 +140,6 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         if board:
             break
         page.wait_for_timeout(100)
-
     if not board:
         seen = page.evaluate(
             "() => {"
@@ -184,9 +153,7 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         )
         failures.append(f"the canvas never came down to a fresh browser: {seen}")
         return
-
     say(f"[restored] the canvas came down as {board}")
-
     page.evaluate(f"async () => {{ await window.ordenApp.workspace.openEntry({json.dumps(board)}) }}")
     wait_for(
         page,
@@ -194,14 +161,12 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         " && window.ordenApp.workspace.active?.kind === 'canvas'",
         "[restored] the canvas to open as one",
     )
-
     wait_for(
         page,
         "() => (localStorage.getItem('orden:workspace') ?? '').includes"
         f"({json.dumps(CANVAS)})",
         "[restored] the session to be written down",
     )
-
     page.evaluate(
         "() => {"
         "  const held = JSON.parse(localStorage.getItem('orden:workspace'));"
@@ -217,7 +182,6 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         "  localStorage.setItem('orden:workspace', JSON.stringify(held))"
         "}"
     )
-
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "() => !!window.ordenApp", "[restored] the app to start again")
     wait_for(
@@ -225,7 +189,6 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         f"() => !!window.ordenApp.workspace.documents.find((one) => one.path === {json.dumps(board)})",
         "[restored] the canvas tab to come back",
     )
-
     kind = page.evaluate(
         "() => window.ordenApp.workspace.documents.find("
         f"  (one) => one.path === {json.dumps(board)}).kind"
@@ -234,13 +197,10 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
         failures.append(f"a canvas came back from the session as {kind!r}")
     else:
         say("a canvas whose entry said otherwise still comes back as a canvas")
-
     page.screenshot(path=str(SHOTS / "space-rename-restored.png"))
-
 def main() -> int:
     worker = Worker()
     failures: list[str] = []
-
     with DRIVE.session(
         args=[
             "--disable-background-timer-throttling",
@@ -249,7 +209,6 @@ def main() -> int:
         ],
     ) as browser:
         worker.start()
-
         token = worker.account()
         space = request("/v1/spaces", token, {"name": SPACE})["space"]
         note = request(
@@ -258,15 +217,12 @@ def main() -> int:
         note_id = note["id"]
         request(f"/v1/spaces/{space['id']}/notes", token, {"path": CANVAS, "content": "{}"})
         say(f"the account holds {SPACE}/{NOTE} as {note_id}, and {SPACE}/{CANVAS} beside it")
-
         one = signed_in(browser, token, "one")
         opened(one, "one", note_id)
         two = signed_in(browser, token, "two")
         opened(two, "two", note_id)
         say("both browsers are in the room")
-
         crosses(one, two, "\nbefore the rename\n", "before the rename, one to two")
-
         which = one.evaluate(
             "() => window.ordenApp.workspace.spaces.find("
             f"  (one) => one.name === {json.dumps(SPACE)}).id"
@@ -292,7 +248,6 @@ def main() -> int:
         say(f"the renamer has opened {len(sockets['one'])} room sockets so far")
         if f"/{RENAMED}/" not in moved:
             failures.append(f"the open note was not moved with its space: {moved!r}")
-
         try:
             wait_for(
                 one,
@@ -301,40 +256,30 @@ def main() -> int:
             )
         except SystemExit:
             failures.append("the renamed note left its room")
-
         crosses(one, two, "\nafter the rename\n", "after the rename, one to two")
         crosses(two, one, "\nand back again\n", "after the rename, two to one")
-
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until:
             if words(one) == words(two):
                 break
             one.wait_for_timeout(25)
-
         here, over_there = words(one), words(two)
         if here != over_there:
             failures.append(f"the two never agreed:\n{here!r}\n{over_there!r}")
         else:
             say("both browsers hold the same words")
-
         for expected in ("before the rename", "after the rename", "and back again"):
             if expected not in here:
                 failures.append(f"{expected!r} was lost")
-
         reaches_the_account(token, note_id, "after the rename")
-
         one.screenshot(path=str(SHOTS / "space-rename-one.png"))
         two.screenshot(path=str(SHOTS / "space-rename-two.png"))
-
         restores_a_canvas(browser, token, failures)
-
     if failures:
         print("\nFAILED")
         for failure in failures:
             print(f"  - {failure}")
         return 1
-
     print("\nPASSED: a space rename leaves the note writing in both directions")
     return 0
-
 sys.exit(main())

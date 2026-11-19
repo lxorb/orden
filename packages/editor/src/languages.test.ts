@@ -13,9 +13,7 @@ import { mermaidParser } from './mermaid'
 import { prismaParser } from './prisma'
 
 const languages = await fenceLanguages()
-
 const languageFor = (word: string) => LanguageDescription.matchLanguageName(languages, word, true)?.name ?? null
-
 describe('the word a fence is opened with', () => {
   const expected: Record<string, string> = {
     js: 'JavaScript',
@@ -67,7 +65,6 @@ describe('the word a fence is opened with', () => {
     elisp: 'Common Lisp',
     delphi: 'Pascal',
     raku: 'Perl',
-
     sh: 'Shell',
     bash: 'Shell',
     zsh: 'Shell',
@@ -77,7 +74,6 @@ describe('the word a fence is opened with', () => {
     ps1: 'PowerShell',
     powershell: 'PowerShell',
     pwsh: 'PowerShell',
-
     html: 'HTML',
     htm: 'HTML',
     hbs: 'HTML',
@@ -88,7 +84,6 @@ describe('the word a fence is opened with', () => {
     md: 'Markdown',
     markdown: 'Markdown',
     scss: 'SCSS',
-
     yml: 'YAML',
     yaml: 'YAML',
     helm: 'YAML',
@@ -119,19 +114,16 @@ describe('the word a fence is opened with', () => {
     patch: 'diff',
     wat: 'WebAssembly',
     asm: 'Gas',
-
     sql: 'SQL',
     psql: 'PostgreSQL',
     postgres: 'PostgreSQL',
     tsql: 'MS SQL',
     sqlite3: 'SQLite',
-
     zig: 'Zig',
     bicep: 'Bicep',
     awk: 'AWK',
     glsl: 'GLSL',
     solidity: 'Solidity',
-
     plaintext: 'Plain Text',
     text: 'Plain Text',
     txt: 'Plain Text',
@@ -139,33 +131,27 @@ describe('the word a fence is opened with', () => {
     nohighlight: 'Plain Text',
     rst: 'Plain Text',
   }
-
   for (const [word, language] of Object.entries(expected)) {
     test(`\`\`\`${word} is ${language}`, () => {
       expect(languageFor(word)).toBe(language)
     })
   }
-
   test.each([
     ['Python', 'Python'],
     ['JSON', 'JSON'],
     ['Dockerfile', 'Dockerfile'],
   ])('%j', (input, wanted) => expect(languageFor(input)).toEqual(wanted))
-
   test.each([['notalanguage'], [''], ['rescript'], ['applescript'], ['gleam']])('%j', (input) =>
     expect(languageFor(input)).toBeNull(),
   )
 })
-
 describe('the list itself', () => {
   test('every language is named once', () => {
     const names = languages.map((language) => language.name)
     expect(names).toHaveLength(new Set(names).size)
   })
-
   test('no two languages answer to the same word', () => {
     const claimed = new Map<string, string>()
-
     for (const language of languages) {
       for (const word of language.alias) {
         expect(claimed.get(word) ?? language.name, `\`\`\`${word}`).toBe(language.name)
@@ -173,18 +159,15 @@ describe('the list itself', () => {
       }
     }
   })
-
   test('every spelling is filed against a language that exists', () => {
     for (const [name, spellings] of Object.entries(SPELLINGS)) {
       expect(
         stock.some((original) => original.name === name),
         name,
       ).toBe(true)
-
       for (const word of spellings) expect(languageFor(word), `\`\`\`${word}`).toBe(name)
     }
   })
-
   test('the stock list is still here in full', () => {
     for (const original of stock) {
       const language = languages.find((other) => other.name === original.name)
@@ -192,35 +175,27 @@ describe('the list itself', () => {
     }
   })
 })
-
 describe('what a fence is besides code', () => {
   test('the fences drawn as pictures still are', () => {
     expect([...DIAGRAM_LANGUAGES]).toEqual(['mermaid', 'flow', 'sequence'])
     expect(languageFor('mermaid')).toBe('mermaid')
   })
-
   test('the fences the run button appears on still are', () => {
     for (const word of ['js', 'javascript', 'mjs', 'cjs']) {
       expect(isRunnableLanguage(word), word).toBe(true)
       expect(languageFor(word)).toBe('JavaScript')
     }
-
     for (const word of ['ts', 'python', 'node']) expect(isRunnableLanguage(word)).toBe(false)
   })
-
   test('the two a clipped page may not choose are the two that need no press', () => {
     const fenced = (language: string) => htmlToMarkdown(`<pre data-language="${language}"><code>x</code></pre>`)
-
     const block = (language: string) => ['```' + language, 'x', '```'].join('\n')
-
     expect(fenced('query')).toBe(block(''))
     expect(fenced('ai')).toBe(block(''))
-
     for (const word of [...DIAGRAM_LANGUAGES, 'chart', 'js', 'javascript', 'mjs', 'cjs'])
       expect(fenced(word), word).toBe(block(word))
   })
 })
-
 describe('loading a language', () => {
   const sample = [
     'py',
@@ -239,17 +214,14 @@ describe('loading a language', () => {
     'plaintext',
     'mermaid',
   ]
-
   for (const word of sample) {
     test(`\`\`\`${word} loads and parses`, async () => {
       const description = LanguageDescription.matchLanguageName(languages, word, true)!
       const support = await description.load()
-
       expect(support.language.parser.parse('x')).toBeTruthy()
     })
   }
 })
-
 describe('the token types this repo names itself', () => {
   const known = (type: string) =>
     type
@@ -259,7 +231,6 @@ describe('the token types this repo names itself', () => {
           ? typeof (tags as Record<string, unknown>)[part] === 'object'
           : typeof (tags as Record<string, unknown>)[part] === 'function',
       )
-
   const samples: [string, StreamParser<never>, string][] = [
     ['mermaid', mermaidParser as StreamParser<never>, 'graph TD\n  A["a"] --> B\n  %% a note'],
     [
@@ -278,14 +249,11 @@ describe('the token types this repo names itself', () => {
       '// a schema\ndatasource db {\n  url = env("DB")\n}\nmodel User {\n  id Int @id @default(3)\n  posts Post[]\n}',
     ],
   ]
-
   for (const [name, parser, sample] of samples) {
     test(`${name} names only tags CodeMirror knows`, () => {
       const state = parser.startState!(2)
-
       for (const line of sample.split('\n')) {
         const stream = new StringStream(line, 2, 2)
-
         while (!stream.eol()) {
           const type = parser.token(stream, state)
           expect(type === null || known(type), `${name}: ${type}`).toBe(true)

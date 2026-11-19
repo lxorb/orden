@@ -4,7 +4,6 @@
   import { asking, type ReaderAsk } from './asking.svelte'
 
   const { question }: { question: ReaderAsk } = $props()
-
   let typed = $state('')
 </script>
 
@@ -53,7 +52,6 @@
     background: var(--surface-3);
     font-family: var(--font-ui);
   }
-
   .summary {
     margin: 0;
     color: var(--text-strong);
@@ -61,17 +59,14 @@
     overflow-wrap: anywhere;
     white-space: pre-wrap;
   }
-
   .line {
     display: flex;
     margin-top: var(--space-2);
   }
-
   .line input {
     flex: 1;
     min-width: 0;
   }
-
   .rows {
     display: flex;
     flex-wrap: wrap;

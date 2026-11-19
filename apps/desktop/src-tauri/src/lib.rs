@@ -117,7 +117,6 @@ macro_rules! commands {
         ]
     };
 }
-
 #[cfg(desktop)]
 macro_rules! desktop_commands {
     () => {
@@ -380,7 +379,6 @@ macro_rules! desktop_commands {
         ]
     };
 }
-
 #[cfg(mobile)]
 #[allow(
     missing_docs,
@@ -392,12 +390,10 @@ mod entry {
         super::run();
     }
 }
-
 #[cfg(all(desktop, not(feature = "cef")))]
 compile_error!(
     "desktop builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
 );
-
 pub fn run() {
     #[cfg(target_os = "linux")]
     orden_base::linux::prepare();
@@ -406,7 +402,6 @@ pub fn run() {
     #[cfg(desktop)]
     run_on(tauri::Builder::default().runtime(engine::cef_runtime()));
 }
-
 #[cfg(desktop)]
 #[must_use]
 pub fn terminal_hold() -> Option<i32> {
@@ -415,7 +410,6 @@ pub fn terminal_hold() -> Option<i32> {
         .is_some_and(|first| first == orden_pty::terminal::hold::MODE)
         .then(orden_pty::terminal::hold::serve)
 }
-
 #[cfg(desktop)]
 #[must_use]
 pub fn cef_helper() -> bool {
@@ -425,20 +419,16 @@ pub fn cef_helper() -> bool {
     engine::renderer::run();
     true
 }
-
 pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(target_os = "macos")]
     orden_system::bundle_name::carry_over(env!("ORDEN_IDENTIFIER"));
-
     trace::begin();
-
     #[cfg(desktop)]
     if orden_placement::foreground::hold() {
         eprintln!(
             "orden: this probe started able to take the foreground; it is locked (see src-tauri/crates/placement/src/foreground.rs)"
         );
     }
-
     #[cfg_attr(
         not(desktop),
         allow(
@@ -447,14 +437,12 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         )
     )]
     let mut context = tauri::generate_context!();
-
     #[cfg(desktop)]
     if handover::handed_over(&context.config().identifier) {
         return;
     }
     #[cfg(desktop)]
     trace::mark("engine chosen");
-
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -469,45 +457,34 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = lifecycle::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
-
     let builder = links_out_and_in(builder);
     trace::mark("plugins: opener, os, deep link");
-
     let builder = builder
         .manage(orden_store::sync_store::Stores::default())
         .manage(orden_notes::space_watch::Watching::default())
         .manage(orden_notes::space_watch::Working::default());
-
     #[cfg(desktop)]
     let builder = builder.manage(orden_agents::endpoint::Waiting::default());
-
     #[cfg(desktop)]
     let builder = orden_placement::placement::managed(orden_web::web_tabs::managed(builder));
-
     #[cfg(desktop)]
     let builder = orden_pty::terminal::managed(builder);
-
     #[cfg(desktop)]
     let builder = builder.manage(orden_apps::apps_host::Hosted::default());
-
     #[cfg(desktop)]
     let builder = builder
         .manage(orden_explorer::explorer::reach::Explored::default())
         .manage(orden_explorer::explorer::watch::Watching::default());
-
     #[cfg(desktop)]
     let builder = builder.manage(std::sync::Arc::new(
         orden_dictation::dictation::Loaded::default(),
     ));
-
     #[cfg(desktop)]
     let builder = builder
         .manage(orden_ai::ai_cli::Asks::default())
         .manage(orden_secrets::chatgpt::ChatGpt::default());
-
     #[cfg(desktop)]
     let builder = builder.invoke_handler(named(desktop_commands!()));
-
     #[cfg(target_os = "ios")]
     let builder = builder.invoke_handler(commands![
         orden_secrets::owner::owner_can,
@@ -521,17 +498,13 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(target_os = "android")]
     let builder = builder.invoke_handler(commands![]);
     trace::mark("commands registered");
-
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
-
     let builder = pages_that_end(builder);
-
     #[cfg(desktop)]
     let builder = builder.setup(move |app| ready(app, ui.as_ref()));
     #[cfg(not(desktop))]
     let builder = builder.setup(|app| ready(app, None));
-
     builder
         .build(context)
         .unwrap_or_else(|error| {
@@ -540,7 +513,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         })
         .run(on_event);
 }
-
 fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     #[cfg(desktop)]
     let builder = builder.on_web_content_process_terminate(|view, ended| {
@@ -552,12 +524,10 @@ fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     });
     builder
 }
-
 #[cfg(desktop)]
 fn first_window(handle: &tauri::AppHandle) {
     orden_web::pinch::first_window(handle);
 }
-
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     #[cfg(desktop)]
     let builder = builder.on_page_load(|webview, payload| {
@@ -581,7 +551,6 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
         .manage(Picked::default())
         .manage(uris::Pending::default())
 }
-
 #[cfg(desktop)]
 fn named(
     answer: impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static,
@@ -593,14 +562,12 @@ fn named(
         answer(invoke)
     }
 }
-
 fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     #[cfg(desktop)]
     lifecycle::on_event(app, event);
     #[cfg(not(desktop))]
     let _ = (app, event);
 }
-
 #[cfg(desktop)]
 fn hearing(handle: &tauri::AppHandle) {
     orden_web::page_carry::forget_carried(handle);
@@ -609,7 +576,6 @@ fn hearing(handle: &tauri::AppHandle) {
     #[cfg(windows)]
     std::thread::spawn(orden_system::shell_menu::forget);
 }
-
 #[cfg(desktop)]
 fn reminders_started(handle: &tauri::AppHandle) {
     orden_reminders::reminders::start(
@@ -623,7 +589,6 @@ fn reminders_started(handle: &tauri::AppHandle) {
         },
     );
 }
-
 #[cfg(desktop)]
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
@@ -638,7 +603,6 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     });
     orden_extensions::extensions::preinstall(handle);
 }
-
 #[cfg(desktop)]
 fn first_of_all(handle: &tauri::AppHandle) {
     orden_crashes::crashes::start(handle);
@@ -680,40 +644,31 @@ fn first_of_all(handle: &tauri::AppHandle) {
         let _ = std::fs::remove_file(config.join("dns.json"));
     }
 }
-
 fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     trace::mark("app built, window created");
-
     let handle = app.handle();
-
     #[cfg(desktop)]
     first_of_all(handle);
-
     #[cfg(desktop)]
     let web_first = orden_notes::ahead::start(handle);
-
     #[cfg(target_os = "macos")]
     orden_system::menu_bar::leave_out_system_rows();
-
     if let Ok(root) = paths::spaces_dir(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
     }
     paths::hear_picks(handle);
     trace::mark("asset scope");
-
     uris::watch(handle);
     #[cfg(desktop)]
     reminders_started(handle);
     trace::mark("deep links");
-
     #[cfg(desktop)]
     orden_agents::endpoint::start(handle);
     #[cfg(desktop)]
     trace::mark("automation endpoint");
-
     #[cfg(desktop)]
     {
         let args: Vec<std::ffi::OsString> = std::env::args_os().collect();
@@ -728,12 +683,10 @@ fn ready(
     }
     #[cfg(not(desktop))]
     trace::mark("launch arguments");
-
     #[cfg(desktop)]
     hearing(handle);
     #[cfg(desktop)]
     engine_started(handle);
-
     #[cfg(desktop)]
     if let Some(config) = ui {
         let config = orden_placement::placement::restored(handle, config);
@@ -765,7 +718,6 @@ fn ready(
         }
         first_window(handle);
     }
-
     #[cfg(not(desktop))]
     {
         let _ = ui;
@@ -773,12 +725,10 @@ fn ready(
             window.show()?;
         }
     }
-
     #[cfg(desktop)]
     if let Some(pending) = handle.try_state::<launch::Pending>() {
         pending.launched();
     }
-
     trace::mark("window shown");
     #[cfg(desktop)]
     watched(handle);
@@ -787,20 +737,16 @@ fn ready(
         orden_web::web_tabs::warm(handle);
     }
     trace::write(handle);
-
     #[cfg(desktop)]
     kept_listed(handle);
-
     Ok(())
 }
-
 #[cfg(desktop)]
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
     orden_system::default_browser::keep_registered(handle);
     orden_ai::ai_cli::keep_enrolled(handle);
     orden_secrets::retired_chats::clear_leftovers(handle);
 }
-
 #[cfg(desktop)]
 fn watched(handle: &tauri::AppHandle) {
     logs::say(
@@ -815,12 +761,10 @@ fn watched(handle: &tauri::AppHandle) {
     handover::said(handle);
     orden_crashes::stall::start(handle);
 }
-
 #[cfg(test)]
 pub(crate) fn app_dir() -> std::path::PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
 }
-
 #[cfg(test)]
 pub(crate) fn sources() -> Vec<(String, std::path::PathBuf)> {
     let app = app_dir();
@@ -856,7 +800,6 @@ pub(crate) fn sources() -> Vec<(String, std::path::PathBuf)> {
     }
     found
 }
-
 #[cfg(test)]
 mod tests {
     use crate::calls;
@@ -883,7 +826,6 @@ mod tests {
         }
         hooks
     }
-
     #[test]
     fn the_app_has_one_page_load_hook_as_a_second_would_replace_it() {
         let mut hooks = Vec::new();
@@ -899,13 +841,11 @@ mod tests {
         let second = "fn a(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {\n    builder.on_page_load(|_, _| {})\n}\nfn b(view: WebviewBuilder) {\n    view.on_page_load(|_, _| {});\n}\n";
         assert_eq!(app_page_load_hooks(second), 1);
     }
-
     const EXCEPTED: [&str; 3] = [
         "orden_base::logs::write_log",
         "orden_carry::kept::kept_write",
         "orden_carry::kept::kept_forget",
     ];
-
     const WAITS: [&str; 38] = [
         "fs::",
         "File::",
@@ -946,13 +886,11 @@ mod tests {
         ".read_dir()",
         "blocking::",
     ];
-
     const TARGETS: [calls::Target; 3] = [
         calls::Target::WINDOWS,
         calls::Target::MACOS,
         calls::Target::LINUX,
     ];
-
     const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 6] = [
         "orden_crashes::crashes::exit::ended_well",
         "orden_placement::placement::keep",
@@ -961,20 +899,15 @@ mod tests {
         "orden_web::engine::web_store",
         "orden_agent_web::quiet::destination",
     ];
-
     const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 2] = [
         "orden_system::default_browser::platform::make_default::main#0",
         "orden_web::downloads::saving::main#0",
     ];
-
     const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];
-
     const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["crate::quick_add::bring_up"];
-
     fn own() -> calls::Crate {
         own_on(calls::Target::WINDOWS)
     }
-
     fn on_every_target(found: impl Fn(&calls::Crate) -> Vec<String>) -> Vec<String> {
         TARGETS
             .into_iter()
@@ -985,7 +918,6 @@ mod tests {
             })
             .collect()
     }
-
     fn waiting_in(
         own: &calls::Crate,
         among: &[String],
@@ -999,7 +931,6 @@ mod tests {
             .map(|path| own.chain(path, waits_on, &waits).join(" -> "))
             .collect()
     }
-
     fn own_on(target: calls::Target) -> calls::Crate {
         let own = calls::read(&crate::app_dir().join("src").join("lib.rs"), target);
         assert!(
@@ -1009,7 +940,6 @@ mod tests {
         );
         own
     }
-
     #[test]
     fn a_command_that_waits_says_async() {
         let mut seen: Vec<String> = Vec::new();
@@ -1035,7 +965,6 @@ mod tests {
             );
         }
     }
-
     const BLOCKS_THE_RUNTIME: [&str; 6] = [
         "block_on(",
         "blocking_recv(",
@@ -1044,7 +973,6 @@ mod tests {
         "blocking_read(",
         "blocking_write(",
     ];
-
     #[test]
     fn a_command_run_on_the_runtime_is_followed_to_what_blocks_on_it() {
         let source = concat!(
@@ -1063,7 +991,6 @@ mod tests {
         assert!(blocks.contains("crate::awaited"));
         assert!(!blocks.contains("crate::apart"));
     }
-
     #[test]
     fn blocking_on_the_runtime_from_inside_one_of_its_tasks_panics() {
         let panicked = tauri::async_runtime::block_on(tauri::async_runtime::spawn(async {
@@ -1072,7 +999,6 @@ mod tests {
         .expect("the task ran");
         assert!(panicked);
     }
-
     #[test]
     fn nothing_a_command_runs_on_the_runtime_blocks_on_it() {
         let late = on_every_target(|own| {
@@ -1086,7 +1012,6 @@ mod tests {
         });
         assert!(late.is_empty(), "blocks the runtime it runs on: {late:#?}");
     }
-
     const HOLDS_A_WORKER: [&str; 16] = [
         "Command::new",
         ".wait(",
@@ -1105,7 +1030,6 @@ mod tests {
         "SendMessageW",
         "TcpStream::connect",
     ];
-
     #[test]
     fn a_command_on_the_runtime_that_waits_is_found_unless_the_wait_is_handed_off() {
         let source = concat!(
@@ -1128,12 +1052,10 @@ mod tests {
         held.sort();
         assert_eq!(held, ["crate::held", "crate::slept"]);
     }
-
     const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] = [
         "orden_documents::pdf::print_pdf",
         "orden_system::updates::check_update",
     ];
-
     #[test]
     fn no_command_on_the_runtime_waits_on_one_of_its_workers() {
         let late = on_every_target(|own| {
@@ -1148,7 +1070,6 @@ mod tests {
         });
         assert!(late.is_empty(), "holds a worker of the runtime: {late:#?}");
     }
-
     #[test]
     fn nothing_the_window_s_thread_runs_waits() {
         let late = on_every_target(|own| {
@@ -1158,7 +1079,6 @@ mod tests {
         });
         assert!(late.is_empty(), "the window's thread waits in {late:#?}");
     }
-
     const ASKS_THE_WINDOW_S_THREAD: [&str; 27] = [
         ".inner_size(",
         ".outer_size(",
@@ -1188,7 +1108,6 @@ mod tests {
         "WebviewBuilder::new(",
         ".add_child(",
     ];
-
     fn asks_the_window_s_thread(said: &str) -> bool {
         let says = |word: &str| said.contains(&calls::spaced(word));
         says("run_on_main_thread(")
@@ -1197,7 +1116,6 @@ mod tests {
                 .any(|word| says(word))
             || ASKS_THE_WINDOW_S_THREAD.iter().any(|word| says(word))
     }
-
     #[test]
     fn a_lock_held_while_asking_the_window_s_thread_is_followed_to_it() {
         let source = concat!(
@@ -1216,7 +1134,6 @@ mod tests {
         assert!(found.contains("crate::SENT"), "{found}");
         assert!(!found.contains("crate::FREE"), "{found}");
     }
-
     #[test]
     fn the_window_s_thread_takes_no_lock_held_while_asking_it() {
         let late = on_every_target(|own| {
@@ -1232,7 +1149,6 @@ mod tests {
             "the window's thread could wait for itself in {late:#?}"
         );
     }
-
     #[test]
     fn a_lock_taken_again_under_itself_or_in_the_other_order_is_found() {
         let source = concat!(
@@ -1263,7 +1179,6 @@ mod tests {
         assert!(!found.contains("crate::condition"), "{found}");
         assert!(!found.contains("crate::before"), "{found}");
     }
-
     #[test]
     fn no_lock_is_taken_again_or_in_the_other_order_under_another() {
         let found = on_every_target(|own| own.lock_orders(&[]));
@@ -1272,7 +1187,6 @@ mod tests {
             "locks that wait on each other: {found:#?}"
         );
     }
-
     #[test]
     fn a_lock_held_across_a_wait_is_a_wait_for_whoever_takes_it() {
         let source = concat!(
@@ -1301,7 +1215,6 @@ mod tests {
         let own = calls::of(&[("crate", quiet)]);
         assert!(!own.waiting(&WAITS, &[]).contains("crate::free"));
     }
-
     #[test]
     fn a_method_is_followed_through_what_its_receiver_is() {
         let source = concat!(
@@ -1331,7 +1244,6 @@ mod tests {
         }
         assert!(!waits.contains("crate::calm"));
     }
-
     #[test]
     fn a_lock_is_known_by_whose_it_is() {
         let source = concat!(
@@ -1362,7 +1274,6 @@ mod tests {
             "another type's lock of the same name was taken for it"
         );
     }
-
     #[test]
     fn a_method_of_a_trait_is_followed_to_what_implements_it() {
         let source = concat!(
@@ -1403,7 +1314,6 @@ mod tests {
             "another type's method was taken for a type's own"
         );
     }
-
     #[test]
     fn a_closure_kept_in_a_field_is_followed_to_where_it_is_called() {
         let source = concat!(
@@ -1430,7 +1340,6 @@ mod tests {
         }
         assert!(!waits.contains("crate::calm"));
     }
-
     #[test]
     fn a_function_handed_on_as_a_value_is_called() {
         let source = concat!(
@@ -1446,7 +1355,6 @@ mod tests {
         assert!(waits.contains("crate::each") && waits.contains("crate::mapped"));
         assert!(!waits.contains("crate::away") && !waits.contains("crate::named"));
     }
-
     #[test]
     fn a_value_let_go_where_it_ends_runs_its_drop_there() {
         let source = concat!(
@@ -1496,7 +1404,6 @@ mod tests {
             assert!(!waits.contains(quiet), "{quiet} lets nothing go");
         }
     }
-
     #[test]
     fn a_guard_given_up_is_not_held() {
         let source = concat!(
@@ -1509,7 +1416,6 @@ mod tests {
         let own = calls::of(&[("crate", source)]);
         assert!(!own.waiting(&WAITS, &[]).contains("crate::quick"));
     }
-
     #[test]
     fn what_the_window_s_thread_runs_is_followed_and_a_thread_s_is_not() {
         let source = concat!(
@@ -1537,13 +1443,11 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_command_that_builds_a_webview_says_async() {
         let own = own();
         let builds = own.reaching(&BUILDS, &BUILT_OFF_THE_CALLBACK);
         assert!(builds.contains("crate::launch::open_window"));
-
         let late: Vec<&String> = own
             .commands()
             .iter()
@@ -1554,7 +1458,6 @@ mod tests {
             "{late:?} build a webview without saying async"
         );
     }
-
     #[test]
     fn building_a_webview_is_followed_to_the_command() {
         let source = concat!(
@@ -1568,7 +1471,6 @@ mod tests {
         assert!(own.commands().iter().all(|one| builds.contains(one)));
         assert_eq!(own.commands(), ["crate::opens", "crate::child"]);
     }
-
     #[test]
     fn a_command_waits_when_what_it_calls_waits() {
         let source = concat!(
@@ -1580,7 +1482,6 @@ mod tests {
         );
         let own = calls::of(&[("crate", source)]);
         assert_eq!(own.commands(), ["crate::here"]);
-
         let waits = own.reaching(&WAITS, &[]);
         assert!(waits.contains("crate::here"), "the chain was not followed");
         assert!(waits.contains("crate::deeper"));
@@ -1590,7 +1491,6 @@ mod tests {
         assert!(calls::called("DispatchQueue::main()").contains("DispatchQueue::main"));
         assert!(calls::called("crate::launch::main()").contains("crate::launch::main"));
     }
-
     #[test]
     fn a_name_another_module_shares_is_not_what_is_called() {
         let quiet = concat!(
@@ -1625,7 +1525,6 @@ mod tests {
             ("crate", root),
         ]);
         let waits = own.reaching(&WAITS, &[]);
-
         assert_eq!(
             own.commands(),
             [

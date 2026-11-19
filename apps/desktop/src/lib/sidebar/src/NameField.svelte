@@ -17,7 +17,6 @@
     oncancel: () => void
     wrong?: boolean
   }
-
   /* eslint-disable prefer-const, no-useless-assignment -- `wrong` is bindable: a
      $props() pattern cannot be split, and what reads it is the row outside */
   let {
@@ -32,22 +31,16 @@
     wrong = $bindable(false),
   }: Props = $props()
   /* eslint-enable prefer-const, no-useless-assignment */
-
   // svelte-ignore state_referenced_locally
   let typed = $state(value)
-
   const fault = $derived(nameFault({ typed, extension, taken, current }))
-
   const amiss = $derived(fault !== null && fault !== 'empty')
-
   $effect(() => {
     wrong = amiss
-
     return () => {
       wrong = false
     }
   })
-
   function reasonFor(reason: NameFault | null): string | null {
     switch (reason) {
       case 'separator':
@@ -67,40 +60,31 @@
         return null
     }
   }
-
   const reason = $derived(reasonFor(fault))
-
   let settled = false
-
   function leave(event?: FocusEvent) {
     if (settled || (event?.relatedTarget && event.relatedTarget === hint)) return
     settled = true
-
     const told = fault === 'agents' ? space : undefined
     const name = nameToCommit({ typed, extension, taken, was: value, current })
     if (name === null) oncancel()
     else oncommit(name)
     if (told) void notices().then((one) => one.reservedName.tell(told))
   }
-
   let field = $state<HTMLInputElement>()
   let hint = $state<HTMLButtonElement>()
-
   function follow() {
     const told = space
     escape()
     if (told) void notices().then((one) => one.openInstructions(told))
   }
-
   function escape() {
     if (settled) return
     settled = true
     oncancel()
   }
-
   function caret(node: HTMLInputElement) {
     if (appending) return caretAtEnd(node)
-
     const carries = extension !== '' && value.toLowerCase().endsWith(extension.toLowerCase())
     return carries ? selectStem(node) : selectAll(node)
   }
@@ -185,7 +169,6 @@
     display: flex;
     align-items: center;
   }
-
   input {
     width: 100%;
     min-width: 0;
@@ -197,16 +180,13 @@
     font: inherit;
     letter-spacing: inherit;
   }
-
   .wrong input:focus {
     box-shadow: none;
   }
-
   .reason {
     position: fixed;
     z-index: var(--z-bubble);
   }
-
   .go {
     padding: 0;
     border: none;

@@ -9,7 +9,6 @@ function titleFor(hostname: string | undefined, address: string): string {
   if (!hostname) return address
   return siteOf(`https://${hostname}`) ?? hostname
 }
-
 export async function newAlias(prefix?: string, hostname?: string): Promise<Item | null> {
   if (pass.state !== 'open') return null
   const account = await pass.aliasProvider()
@@ -29,7 +28,6 @@ export async function newAlias(prefix?: string, hostname?: string): Promise<Item
   const content = aliasContentOf(made, account.provider, titleFor(hostname, made.address))
   return await pass.create(vault, content)
 }
-
 export async function aliasOptions(
   hostname?: string,
 ): Promise<{ account: AliasAccount; options: AliasOptions } | null> {
@@ -37,7 +35,6 @@ export async function aliasOptions(
   if (!account) return null
   return { account, options: await aliasClient(account.provider, account.key).options(hostname) }
 }
-
 export async function providedAlias(ask: AliasAsk, content: Alias): Promise<Alias> {
   const account = await pass.aliasProvider()
   if (!account) throw new Error('pass: no alias service is connected')

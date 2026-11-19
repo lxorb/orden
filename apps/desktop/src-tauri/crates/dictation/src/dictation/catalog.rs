@@ -1,12 +1,10 @@
 pub const RUNTIME_VERSION: &str = "2.0.1";
-
 #[derive(Clone, Copy, Debug)]
 pub struct Pinned {
     pub name: &'static str,
     pub size: u64,
     pub sha256: &'static str,
 }
-
 #[derive(Clone, Copy, Debug)]
 pub struct Runtime {
     pub rid: &'static str,
@@ -14,18 +12,15 @@ pub struct Runtime {
     pub onnxruntime: Pinned,
     pub api: Pinned,
 }
-
 impl Runtime {
     pub fn url(&self) -> String {
         let id = format!("org.k2fsa.sherpa.onnx.runtime.{}", self.rid);
         format!("https://api.nuget.org/v3-flatcontainer/{id}/{RUNTIME_VERSION}/{id}.{RUNTIME_VERSION}.nupkg")
     }
 }
-
 const fn pinned(name: &'static str, size: u64, sha256: &'static str) -> Pinned {
     Pinned { name, size, sha256 }
 }
-
 const fn runtime(rid: &'static str, package: Pinned, onnxruntime: Pinned, api: Pinned) -> Runtime {
     Runtime {
         rid,
@@ -34,7 +29,6 @@ const fn runtime(rid: &'static str, package: Pinned, onnxruntime: Pinned, api: P
         api,
     }
 }
-
 pub const RUNTIMES: &[Runtime] = &[
     runtime(
         "win-x64",
@@ -145,7 +139,6 @@ pub const RUNTIMES: &[Runtime] = &[
         ),
     ),
 ];
-
 pub fn rid_of(os: &str, arch: &str) -> Option<&'static str> {
     Some(match (os, arch) {
         ("windows", "x86_64") => "win-x64",
@@ -157,12 +150,10 @@ pub fn rid_of(os: &str, arch: &str) -> Option<&'static str> {
         _ => return None,
     })
 }
-
 pub fn this_runtime() -> Option<&'static Runtime> {
     let rid = rid_of(std::env::consts::OS, std::env::consts::ARCH)?;
     RUNTIMES.iter().find(|one| one.rid == rid)
 }
-
 #[derive(Clone, Copy, Debug)]
 pub struct Model {
     pub id: &'static str,
@@ -171,17 +162,14 @@ pub struct Model {
     pub files: &'static [Pinned],
     pub memory: u64,
 }
-
 impl Model {
     pub fn url(&self, file: &Pinned) -> String {
         format!("{}/{}", self.base, file.name)
     }
-
     pub fn bytes(&self) -> u64 {
         self.files.iter().map(|one| one.size).sum()
     }
 }
-
 pub const PARAKEET: Model = Model {
     id: "parakeet-tdt-0.6b-v3-int8",
     name: "NVIDIA Parakeet TDT 0.6B v3 (CC BY 4.0)",
@@ -194,7 +182,6 @@ pub const PARAKEET: Model = Model {
     ],
     memory: 4,
 };
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -214,7 +201,6 @@ mod tests {
         }
         assert_eq!(rid_of("android", "aarch64"), None);
     }
-
     #[test]
     fn every_pin_is_a_whole_sha256() {
         let pins = RUNTIMES
@@ -230,7 +216,6 @@ mod tests {
             assert!(pin.size > 0);
         }
     }
-
     #[test]
     fn a_runtime_is_fetched_from_its_own_package() {
         let linux = RUNTIMES.iter().find(|one| one.rid == "linux-x64").unwrap();

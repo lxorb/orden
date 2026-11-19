@@ -5,18 +5,13 @@ import { FIRST_MODE, lastMove, type Mode, modeIn, movedKeys, movesAfter } from '
 import { isNumber, isRecord, isString, keepJson, stored } from '../../../platform/src/api'
 
 const STORAGE_KEY = 'orden:ai-sidebar'
-
 const FIRST_TASK_MODE: Mode = 'auto'
-
 export type TaskTool = 'browser' | 'notes' | 'edits'
-
 export const TASK_TOOLS: readonly TaskTool[] = ['browser', 'notes', 'edits']
-
 export const DEFAULT_ASK = [
   'Do this task from my notes for me.',
   'Read its note first: what is written around and under the task may be what it needs.',
 ].join(' ')
-
 interface Prefs {
   mode: Mode
   task: Mode
@@ -29,7 +24,6 @@ interface Prefs {
   models: Record<string, string>
   moved: number
 }
-
 function read(): Prefs {
   const saved = stored(STORAGE_KEY)
   const out: Prefs = {
@@ -69,9 +63,7 @@ function read(): Prefs {
   }
   return out
 }
-
 let prefs: Prefs | null = null
-
 function caughtUp(prefs: Prefs): Prefs {
   const moves = movesAfter(prefs.moved)
   if (!moves.length) return prefs
@@ -82,91 +74,72 @@ function caughtUp(prefs: Prefs): Prefs {
     moved: lastMove(moves),
   }
 }
-
 function held(): Prefs {
   prefs = caughtUp(prefs ?? read())
   return prefs
 }
-
 function save(): void {
   keepJson(STORAGE_KEY, held())
 }
-
 function modelKey(provider: string, model: string): string {
   return `${provider}/${model}`
 }
-
 export function lastMode(): Mode {
   return held().mode
 }
-
 export function rememberMode(mode: Mode): void {
   held().mode = mode
   save()
 }
-
 export function taskMode(): Mode {
   return held().task
 }
-
 export function rememberTaskMode(mode: Mode): void {
   held().task = mode
   save()
 }
-
 export function taskAsk(): string {
   return held().taskAsk
 }
-
 export function rememberTaskAsk(words: string): void {
   held().taskAsk = words.trim() ? words : ''
   save()
 }
-
 export function taskUses(tool: TaskTool): boolean {
   return !held().taskOff.includes(tool)
 }
-
 export function rememberTaskUses(tool: TaskTool, on: boolean): void {
   const off = held().taskOff.filter((one) => one !== tool)
   held().taskOff = on ? off : [...off, tool]
   save()
 }
-
 export function effortFor(provider: string, model: string): Effort {
   return held().efforts[modelKey(provider, model)] ?? 'auto'
 }
-
 export function rememberEffort(provider: string, model: string, effort: Effort): void {
   held().efforts[modelKey(provider, model)] = effort
   save()
 }
-
 export function modelFor(provider: Provider): string {
   return held().models[provider.id] ?? provider.model
 }
-
 export function rememberModel(provider: string, model: string): void {
   held().models[provider] = model
   save()
 }
-
 export function lastOpen(): { last: string | null; before: readonly string[] } {
   const prefs = held()
   return { last: prefs.last, before: Object.values(prefs.open) }
 }
-
 export function rememberOpen(id: string | null): void {
   const prefs = held()
   prefs.last = id
   prefs.open = {}
   save()
 }
-
 export function railOpen(): boolean {
   return held().rail
 }
-
 export function rememberRail(open: boolean): void {
   held().rail = open
   save()

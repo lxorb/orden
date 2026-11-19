@@ -3,7 +3,6 @@ import { nameOf } from '../../../platform/src/api'
 import type { Edit } from '../chat-parts'
 
 const SHOWN = 60
-
 export function titleOf(path: string): string {
   if (path.startsWith('unsaved:')) {
     const key = path.slice('unsaved:'.length)
@@ -11,7 +10,6 @@ export function titleOf(path: string): string {
   }
   return nameOf(path).replace(/\.md$/i, '')
 }
-
 function firstLine(words: string): string {
   const line = words
     .split('\n')
@@ -20,7 +18,6 @@ function firstLine(words: string): string {
   if (!line) return ''
   return line.length > SHOWN ? `${line.slice(0, SHOWN)}…` : line
 }
-
 export function snippetOf(change: Pick<Edit, 'spots'>): string {
   for (const spot of change.spots) {
     const said = firstLine(spot.inserted)

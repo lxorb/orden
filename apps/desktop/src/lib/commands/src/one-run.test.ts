@@ -3,11 +3,9 @@ import { providePort } from '@orden/contracts'
 import { DIVIDER, isSubmenu, type MenuItem, type MenuRow } from '../../ui-kit/src/api'
 
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
-
 const { workspace } = await import('../../workspace/src/api')
 const { appCommands } = await import('./api')
 const { appMenu } = await import('../../native-menu/src/app-menu')
-
 const searched: unknown[] = []
 providePort('search', {
   panel: {
@@ -20,12 +18,10 @@ providePort('search', {
   show: () => undefined,
   fromView: (view) => searched.push(view ?? 'nothing chosen'),
 })
-
 describe('an action the palette, the menu bar and a key all offer', () => {
   test('does the one thing its key does from each of them', () => {
     workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
     workspace.activeSpaceId = 's'
-
     appCommands()
       .find((one) => one.id === 'search-space')
       ?.run()
@@ -35,7 +31,6 @@ describe('an action the palette, the menu bar and a key all offer', () => {
     rows(menu.flatMap((group) => group.rows))
       .find((one) => one.label === 'Search')
       ?.run()
-
     expect(searched).toEqual(['nothing chosen', 'nothing chosen'])
   })
 })

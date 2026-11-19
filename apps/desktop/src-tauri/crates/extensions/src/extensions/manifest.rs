@@ -16,7 +16,6 @@ pub struct About {
     pub action: bool,
     pub permissions: Vec<String>,
 }
-
 pub fn read(folder: &Path) -> Result<About, String> {
     let text = fs::read_to_string(folder.join("manifest.json"))
         .map_err(|_| "that extension has no manifest".to_string())?;
@@ -24,7 +23,6 @@ pub fn read(folder: &Path) -> Result<About, String> {
         .map_err(|_| "that extension's manifest cannot be read".to_string())?;
     Ok(about(&manifest, |key| message(folder, &manifest, key)))
 }
-
 fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     let words = |field: &str| {
         let said = manifest
@@ -36,7 +34,6 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
             .and_then(&lookup)
             .unwrap_or_else(|| said.to_owned())
     };
-
     let action = manifest
         .get("action")
         .or_else(|| manifest.get("browser_action"))
@@ -51,7 +48,6 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
         .or_else(|| manifest.get("options_page"))
         .and_then(Value::as_str)
         .and_then(inside);
-
     let mut permissions: Vec<String> = ["permissions", "host_permissions"]
         .iter()
         .filter_map(|field| manifest.get(field).and_then(Value::as_array))
@@ -71,7 +67,6 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     permissions.extend(matched);
     let mut seen = std::collections::HashSet::new();
     permissions.retain(|one| seen.insert(one.clone()));
-
     let icon = largest(manifest.get("icons")).or_else(|| {
         action
             .and_then(|one| one.get("default_icon"))
@@ -80,7 +75,6 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
                 other => largest(Some(other)),
             })
     });
-
     About {
         name: words("name"),
         version: manifest
@@ -95,7 +89,6 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
         permissions,
     }
 }
-
 fn largest(icons: Option<&Value>) -> Option<String> {
     icons?
         .as_object()?
@@ -104,7 +97,6 @@ fn largest(icons: Option<&Value>) -> Option<String> {
         .max_by_key(|(size, _)| *size)
         .and_then(|(_, path)| inside(path))
 }
-
 fn inside(path: &str) -> Option<String> {
     let path = path.trim_start_matches('/');
     let page = path.split(['?', '#']).next().unwrap_or_default();
@@ -114,7 +106,6 @@ fn inside(path: &str) -> Option<String> {
         && page.split('/').all(|part| !part.is_empty() && part != "..");
     fine.then(|| path.to_owned())
 }
-
 fn message(folder: &Path, manifest: &Value, key: &str) -> Option<String> {
     let language = manifest.get("default_locale").and_then(Value::as_str)?;
     if language.contains(['/', '\\', '.']) {
@@ -131,7 +122,6 @@ fn message(folder: &Path, manifest: &Value, key: &str) -> Option<String> {
         .and_then(Value::as_str)
         .map(str::to_owned)
 }
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -164,7 +154,6 @@ mod tests {
             ["storage", "tabs", "<all_urls>", "https://*.example.com/*"]
         );
     }
-
     #[test]
     fn a_manifest_v2_button_and_a_plain_name_are_read_too() {
         let manifest = json!({
@@ -180,7 +169,6 @@ mod tests {
         assert_eq!(said.options.as_deref(), Some("pages/options.html"));
         assert!(said.action);
     }
-
     #[test]
     fn a_page_outside_the_extension_is_nobody_s() {
         for bad in [

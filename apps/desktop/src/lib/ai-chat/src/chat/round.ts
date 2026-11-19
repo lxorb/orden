@@ -10,19 +10,16 @@ export interface Round {
   usage: Usage | null
   model: string
 }
-
 export interface Adjusted {
   effort?: Effort
   efforts?: Effort[]
   toolsRefused?: boolean
 }
-
 function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } | null {
   if (refused.status !== 400) return null
   const said = refused.message
   const provider = ask.provider.id
   const model = ask.model.id
-
   if (ask.perMessage && /per-turn effort|per-message effort|mid-conversation/i.test(said)) {
     learn(provider, model, { perMessage: false })
     const steps = ask.steps.filter((one) => one.role !== 'effort')
@@ -55,7 +52,6 @@ function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } |
   }
   return null
 }
-
 export async function round(
   wire: Wire,
   first: Ask,
@@ -77,7 +73,6 @@ export async function round(
     }
   }
   if (!response.body) throw new Error(`The provider answered ${response.status}.`)
-
   const reader = wire.reader(ask.model.window)
   let usage: Usage | null = null
   let model = ''

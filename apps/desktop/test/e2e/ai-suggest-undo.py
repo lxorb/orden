@@ -1,66 +1,51 @@
 import json
-
 from playwright.sync_api import Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = "# Suggest\n\nThe heron waits by the water.\n\n- a list item\n- another item\n\nThe last line.\n"
-
 AGENT = {"id": "orden-p", "name": "P"}
-
 VIEW = "window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)"
-
 START = """
 async () => {
   await import('/src/lib/ai-chat/src/review/review.svelte.ts')
   window.__docs = await import('/src/lib/agent-docs/src/index.ts')
 }
 """
-
 EDIT = """
 async ([agent, quote, words]) => {
   await window.__docs.notes.editNote(agent, { path: 'Suggest.md' }, [{ at: { quote }, replace: words }])
 }
 """
-
 def text(page: Page) -> str:
     return page.evaluate(f"() => {VIEW}.state.doc.toString()")
-
 def marks(page: Page) -> int:
     return page.evaluate("() => document.querySelectorAll('.cm-review-added, .cm-review-removed').length")
-
 def press_offer(page: Page, label: str) -> None:
     page.locator(".cm-review-added").first.hover()
     page.wait_for_selector(".cm-review-offer", timeout=5000)
     page.locator(".cm-review-offer button", has_text=label).click()
     page.wait_for_timeout(500)
-
 def where_focus(page: Page) -> str:
     return page.evaluate(
         "() => { const one = document.activeElement; return one ? one.tagName + '.' + one.className : 'none' }"
     )
-
 def step(page: Page, keys: str, scheme: str, wanted: str, what: str) -> None:
     page.keyboard.press(keys)
     page.wait_for_timeout(400)
     if wanted not in text(page):
         wrong(f"[{scheme}] {keys} {what}: {text(page)!r}")
-
 def drive(page: Page, scheme: str) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Suggest")
     page.evaluate(START)
     page.wait_for_timeout(300)
-
     page.evaluate(EDIT, [AGENT, "heron", "stork"])
     wait_for(page, "document.querySelector('.cm-review-added')", "the suggestion")
     page.wait_for_timeout(400)
     shot(page, f"01-suggestion-{scheme}")
-
     page.evaluate("() => document.activeElement && document.activeElement.blur()")
     press_offer(page, "Undo")
     say(f"[{scheme}] after Undo: {text(page)!r}, focus {where_focus(page)}")
@@ -72,7 +57,6 @@ def drive(page: Page, scheme: str) -> None:
     if not marks(page):
         wrong(f"[{scheme}] the suggestion brought back by Ctrl+Z is not marked")
     step(page, "Control+y", scheme, "The heron", "did not reject it again")
-
     page.evaluate(EDIT, [AGENT, "water", "sea"])
     wait_for(page, "document.querySelector('.cm-review-added')", "the second suggestion")
     page.evaluate("() => document.activeElement && document.activeElement.blur()")
@@ -82,7 +66,6 @@ def drive(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] after Keep the keyboard is not in the note but in {where_focus(page)}")
     step(page, "Control+z", scheme, "by the water.", "did not take back the kept suggestion")
     step(page, "Control+y", scheme, "by the sea.", "did not bring the kept suggestion again")
-
     before = text(page)
     page.evaluate(EDIT, [AGENT, "another item", "a third item, rather longer than it was"])
     wait_for(page, "document.querySelector('.cm-review-added')", "the list suggestion")
@@ -109,7 +92,6 @@ def drive(page: Page, scheme: str) -> None:
     if text(page) != before:
         wrong(f"[{scheme}] Ctrl+Z did not take back exactly the AI edit: {text(page)!r}")
     step(page, "Control+y", scheme, "a third item", "did not bring the AI edit again")
-
     page.evaluate(EDIT, [AGENT, "The last line.", "The final line."])
     page.evaluate(
         """async (agent) => window.__docs.notes.undoAgent(agent, { path: 'Suggest.md' })""", AGENT
@@ -122,7 +104,6 @@ def drive(page: Page, scheme: str) -> None:
     if "a third item" not in text(page):
         wrong(f"[{scheme}] Ctrl+Z brought back only part of what undoing all took")
     step(page, "Control+y", scheme, "The last line.", "did not reject them all again")
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -130,5 +111,4 @@ def main() -> int:
             drive(page, scheme)
             page.context.close()
     return DRIVE.verdict("AI suggestions in a note are undone and redone as one step each")
-
 raise SystemExit(main())

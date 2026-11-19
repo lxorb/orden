@@ -16,23 +16,18 @@ import {
 import { carried, type Moving, moving } from '../../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:item-meta'
-
 const BURIED_KEY = 'orden:item-meta-buried'
-
 const MOST_BURIED = 200
-
 export interface Describing {
   describedIn(root: string): Readonly<Record<string, ItemMeta>> | null
   describe(root: string, patches: Readonly<Record<string, MetaPatch>>): Promise<string[] | null>
 }
-
 interface Kept {
   items: Record<string, ItemMeta>
   unsent: Record<string, MetaPatch>
   adopted: boolean
   moved: boolean
 }
-
 function itemsOf(value: unknown): Record<string, ItemMeta> {
   if (!isRecord(value)) return {}
   const out: Record<string, ItemMeta> = {}
@@ -42,7 +37,6 @@ function itemsOf(value: unknown): Record<string, ItemMeta> {
   }
   return out
 }
-
 function patchesOf(value: unknown): Record<string, MetaPatch> {
   if (!isRecord(value)) return {}
   const out: Record<string, MetaPatch> = {}
@@ -52,7 +46,6 @@ function patchesOf(value: unknown): Record<string, MetaPatch> {
   }
   return out
 }
-
 function read(): Record<string, Kept> {
   return readSpaces(STORAGE_KEY, (one) => ({
     items: itemsOf(one.items),
@@ -61,17 +54,13 @@ function read(): Record<string, Kept> {
     moved: one.moved === true,
   }))
 }
-
 function whole(meta: ItemMeta): MetaPatch {
   return { ...meta }
 }
-
 function merged(one: MetaPatch | undefined, other: MetaPatch): MetaPatch {
   return { ...one, ...other }
 }
-
 type Buried = Record<string, Record<string, ItemMeta>>
-
 function readBuried(): Buried {
   const saved = stored(BURIED_KEY)
   if (!isRecord(saved)) return {}
@@ -87,7 +76,6 @@ function readBuried(): Buried {
   }
   return out
 }
-
 function itemsUnder(items: Record<string, ItemMeta>, at: string, root: string) {
   const out: Record<string, ItemMeta> = {}
   for (const [path, meta] of Object.entries(items)) {
@@ -96,55 +84,43 @@ function itemsUnder(items: Record<string, ItemMeta>, at: string, root: string) {
   }
   return out
 }
-
 const EMPTY: Kept = { items: {}, unsent: {}, adopted: false, moved: false }
-
 export class ItemMetaStore {
   private spaces = $state<Record<string, Kept>>(read())
   private describing: Describing | null = null
   private hearing: ((path: string) => void)[] = []
-
   constructor(private readonly rootOf: (path: string | null) => string | null) {}
-
   reread(): void {
     const grown = filledIn(this.spaces, read())
     if (grown) this.spaces = grown
   }
-
   private kept(root: string): Kept {
     return this.spaces[root] ?? EMPTY
   }
-
   itemsOf(root: string): Record<string, ItemMeta> {
     return this.kept(root).items
   }
-
   of(path: string, root = this.rootOf(path)): ItemMeta | null {
     if (root === null) return null
     return this.kept(root).items[relativeTo(root, path)] ?? null
   }
-
   valueOf(path: string, key: string, root = this.rootOf(path)): string | null {
     return this.of(path, root)?.[key] ?? null
   }
-
   movedFromText(root: string): boolean {
     return this.kept(root).moved
   }
-
   markMoved(root: string) {
     if (this.kept(root).moved) return
     this.spaces = { ...this.spaces, [root]: { ...this.kept(root), moved: true } }
     this.write()
   }
-
   set(path: string, patch: MetaPatch, root = this.rootOf(path)): void {
     if (root === null) return
     const at = relativeTo(root, path)
     if (!insideItsSpace(at)) return
     this.setMany(root, { [at]: patch })
   }
-
   setMany(root: string, patches: Readonly<Record<string, MetaPatch>>): void {
     const held = this.kept(root)
     let items = held.items
@@ -163,29 +139,24 @@ export class ItemMetaStore {
     this.told(root, touched)
     void this.send(root)
   }
-
   hear(heard: (path: string) => void): () => void {
     this.hearing = [...this.hearing, heard]
     return () => {
       this.hearing = this.hearing.filter((one) => one !== heard)
     }
   }
-
   private told(root: string, paths: readonly string[]) {
     for (const at of paths) for (const heard of this.hearing) heard(joinPath(root, at))
   }
-
   describes(root: string): boolean {
     return (this.describing?.describedIn(root) ?? null) !== null
   }
-
   describeBy(describing: Describing): () => void {
     this.describing = describing
     return () => {
       if (this.describing === describing) this.describing = null
     }
   }
-
   async fromEngine(root: string): Promise<void> {
     if (!this.describes(root)) return
     const held = this.kept(root)
@@ -213,7 +184,6 @@ export class ItemMetaStore {
     this.write()
     this.told(root, changed)
   }
-
   private async send(root: string): Promise<void> {
     const describing = this.describing
     const held = this.kept(root)
@@ -231,10 +201,8 @@ export class ItemMetaStore {
     this.spaces = { ...this.spaces, [root]: { ...after, unsent } }
     this.write()
   }
-
   moved(from: string, to: string, root = this.rootOf(from), into: string | null = root) {
     if (root === null || from === to) return
-
     const move = moving(from, to, root, into)
     if (!move.was) return
     if (move.across) {
@@ -265,7 +233,6 @@ export class ItemMetaStore {
     this.write()
     this.told(root, landed)
   }
-
   copied(from: string, to: string): void {
     const root = this.rootOf(from)
     const there = this.rootOf(to)
@@ -280,7 +247,6 @@ export class ItemMetaStore {
     }
     this.setMany(there, patches)
   }
-
   private carry(move: Moving) {
     const held = this.kept(move.root)
     const across = <T>(map: Record<string, T>) =>
@@ -318,7 +284,6 @@ export class ItemMetaStore {
     )
     void this.send(move.there)
   }
-
   gone(path: string, root = this.rootOf(path), back?: string) {
     if (root === null) return
     const at = relativeTo(root, path)
@@ -332,7 +297,6 @@ export class ItemMetaStore {
     this.spaces = { ...this.spaces, [root]: { ...held, items, unsent: kept(held.unsent) } }
     this.write()
   }
-
   cameBack(path: string, root = this.rootOf(path), back?: string) {
     if (root === null || !back) return
     const buried = readBuried()
@@ -348,26 +312,22 @@ export class ItemMetaStore {
     keepJson(BURIED_KEY, without(buried, back))
     this.setMany(root, patches)
   }
-
   private bury(back: string, items: Record<string, ItemMeta>) {
     if (!Object.keys(items).length) return
     const buried = Object.entries({ ...without(readBuried(), back), [back]: items })
     keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
   }
-
   spaceMoved(from: string, to: string) {
     const held = this.spaces[from]
     if (!held || from === to) return
     this.spaces = { ...without(this.spaces, from), [to]: held }
     this.write()
   }
-
   forget(root: string) {
     if (!(root in this.spaces)) return
     this.spaces = without(this.spaces, root)
     this.write()
   }
-
   private write() {
     keepJson(STORAGE_KEY, this.spaces)
   }

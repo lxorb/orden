@@ -11,28 +11,19 @@ use tauri::Manager as _;
 use orden_base::logs::say;
 
 const STALL: Duration = Duration::from_secs(1);
-
 const HUNG: Duration = Duration::from_secs(5);
-
 const LOOK: Duration = Duration::from_millis(500);
-
 const MARKER: &str = "not-responding.json";
-
 static DOING: Mutex<Vec<String>> = Mutex::new(Vec::new());
-
 const PAGE: &str = "main";
-
 static PAGE_UP: AtomicBool = AtomicBool::new(false);
-
 pub struct Doing(());
-
 pub fn doing(what: &str) -> Doing {
     if let Ok(mut held) = DOING.lock() {
         held.push(what.to_owned());
     }
     Doing(())
 }
-
 impl Drop for Doing {
     fn drop(&mut self) {
         if let Ok(mut held) = DOING.lock() {
@@ -40,12 +31,10 @@ impl Drop for Doing {
         }
     }
 }
-
 pub fn doing_now() -> Option<String> {
     let held = DOING.lock().ok()?;
     (!held.is_empty()).then(|| held.iter().rev().cloned().collect::<Vec<_>>().join(" < "))
 }
-
 pub fn each_doing_now(mut each: impl FnMut(&str)) {
     if let Ok(held) = DOING.try_lock() {
         for one in held.iter().rev() {
@@ -53,7 +42,6 @@ pub fn each_doing_now(mut each: impl FnMut(&str)) {
         }
     }
 }
-
 fn now_doing() -> String {
     DOING
         .lock()
@@ -64,7 +52,6 @@ fn now_doing() -> String {
             |held| held.iter().rev().cloned().collect::<Vec<_>>().join(" < "),
         )
 }
-
 pub fn start(app: &AppHandle) {
     let app = app.clone();
     let watched = Watched::this_thread(&app);
@@ -83,7 +70,6 @@ pub fn start(app: &AppHandle) {
             }
         });
 }
-
 fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     let asked = Instant::now();
     let how = match watched.answers(STALL) {
@@ -91,7 +77,6 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
         Answer::Gone => return false,
         Answer::Late(how) => how,
     };
-
     let what = match how {
         Late::Stuck => now_doing(),
         Late::Nested => format!("{}, in a nested loop", now_doing()),
@@ -102,7 +87,6 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
         "warn",
         &format!("stall: the window has not answered for 1 s ({what})"),
     );
-
     let marker = marker_dir(app).map(|dir| dir.join(MARKER));
     let since = orden_base::clock::now().saturating_sub(millis(asked.elapsed()));
     let mut written = false;
@@ -123,7 +107,6 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     if let Some(freeze) = freeze {
         freeze.ended(asked.elapsed());
     }
-
     say(
         app,
         "warn",
@@ -139,18 +122,15 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     }
     false
 }
-
 fn marker_dir(app: &AppHandle) -> Option<PathBuf> {
     orden_base::paths::log_dir(app).ok()
 }
-
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Marked {
     since: u64,
     held: u64,
     doing: String,
 }
-
 fn marked(since: u64, held: Duration, doing: &str) -> String {
     serde_json::to_string(&Marked {
         since,
@@ -159,7 +139,6 @@ fn marked(since: u64, held: Duration, doing: &str) -> String {
     })
     .unwrap_or_default()
 }
-
 fn last_run(marker: &Path) -> Option<String> {
     let text = std::fs::read_to_string(marker).ok()?;
     let _ = std::fs::remove_file(marker);
@@ -171,11 +150,9 @@ fn last_run(marker: &Path) -> Option<String> {
         orden_base::clock::iso(left.since)
     ))
 }
-
 fn millis(span: Duration) -> u64 {
     u64::try_from(span.as_millis()).unwrap_or(u64::MAX)
 }
-
 fn seconds(span: Duration) -> String {
     let tenths = span.as_millis() / 100;
     if tenths < 600 {
@@ -184,14 +161,12 @@ fn seconds(span: Duration) -> String {
         format!("{} s", tenths / 10)
     }
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Answer {
     Answered,
     Late(Late),
     Gone,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Late {
     #[cfg_attr(not(windows), allow(dead_code))]
@@ -199,13 +174,11 @@ enum Late {
     Nested,
     Page,
 }
-
 struct Watched {
     app: AppHandle,
     #[cfg(windows)]
     thread: u32,
 }
-
 impl Watched {
     #[cfg_attr(windows, allow(unsafe_code))]
     fn this_thread(app: &AppHandle) -> Self {
@@ -215,7 +188,6 @@ impl Watched {
             thread: unsafe { windows::Win32::System::Threading::GetCurrentThreadId() },
         }
     }
-
     fn answers(&self, within: Duration) -> Answer {
         let asked = Instant::now();
         #[cfg(windows)]
@@ -232,7 +204,6 @@ impl Watched {
             other => other,
         }
     }
-
     fn paged(&self, within: Duration) -> Answer {
         let Some(page) = self.app.get_webview(PAGE) else {
             return Answer::Answered;
@@ -257,7 +228,6 @@ impl Watched {
             Err(_) => Answer::Answered,
         }
     }
-
     fn looped(&self, within: Duration) -> Answer {
         let (told, heard) = std::sync::mpsc::channel();
         if self
@@ -275,7 +245,6 @@ impl Watched {
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => Answer::Gone,
         }
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn held_by_the_person(&self) -> bool {
@@ -289,21 +258,18 @@ impl Watched {
         }
         held(info.flags.0, || menu_shown(self.thread))
     }
-
     #[cfg(not(windows))]
     #[allow(clippy::unused_self)]
     fn held_by_the_person(&self) -> bool {
         false
     }
 }
-
 #[cfg_attr(not(windows), allow(dead_code))]
 fn held(flags: u32, menu_shown: impl FnOnce() -> bool) -> bool {
     const MOVE_SIZE: u32 = 0x0000_0002;
     const MENUS: u32 = 0x0000_0004 | 0x0000_0008 | 0x0000_0010;
     flags & MOVE_SIZE != 0 || (flags & MENUS != 0 && menu_shown())
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn menu_shown(thread: u32) -> bool {
@@ -325,14 +291,12 @@ fn menu_shown(thread: u32) -> bool {
         }
         BOOL(1)
     }
-
     let mut found = false;
     unsafe {
         let _ = EnumThreadWindows(thread, Some(each), LPARAM(&raw mut found as isize));
     }
     found
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn pumps(thread: u32, within: Duration) -> Answer {
@@ -345,7 +309,6 @@ fn pumps(thread: u32, within: Duration) -> Answer {
         unsafe { *(found.0 as *mut isize) = window.0 as isize };
         BOOL(0)
     }
-
     let mut found: isize = 0;
     unsafe {
         let _ = EnumThreadWindows(
@@ -379,15 +342,11 @@ fn pumps(thread: u32, within: Duration) -> Answer {
         Answer::Gone
     }
 }
-
 pub fn watch_page(_app: &AppHandle, _webview: &tauri::Webview, _whose: &'static str) {}
-
 static GONE: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
-
 pub fn page_gone(label: &str) -> bool {
     GONE.held().contains(label)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{doing, held, last_run, marked, now_doing, seconds};
@@ -402,7 +361,6 @@ mod tests {
         assert!(!held(0x4 | 0x8, || false));
         assert!(!held(0x0, || true));
     }
-
     #[test]
     fn a_stall_is_said_in_tenths_below_a_minute() {
         assert_eq!(seconds(Duration::from_millis(1040)), "1.0 s");
@@ -410,7 +368,6 @@ mod tests {
         assert_eq!(seconds(Duration::from_secs(41)), "41.0 s");
         assert_eq!(seconds(Duration::from_secs(75)), "75 s");
     }
-
     #[test]
     fn what_is_running_is_said_innermost_first_and_ends_with_its_guard() {
         let outer = doing("web_open");
@@ -422,7 +379,6 @@ mod tests {
         drop(outer);
         assert_eq!(now_doing(), "nothing of Orden's own");
     }
-
     #[test]
     fn a_hang_the_last_run_ended_in_is_said_once() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -432,7 +388,6 @@ mod tests {
             marked(1_791_065_463_685, Duration::from_secs(41), "web_open"),
         )
         .expect("written");
-
         assert_eq!(
             last_run(&marker).as_deref(),
             Some("stall: Orden was not responding for 41.0 s when it was ended (web_open), since 2026-10-03T22:11:03.685Z")
@@ -440,7 +395,6 @@ mod tests {
         assert!(!marker.exists());
         assert_eq!(last_run(&marker), None);
     }
-
     #[cfg(windows)]
     #[test]
     #[allow(unsafe_code)]
@@ -496,7 +450,6 @@ mod tests {
             let _ = unsafe { DestroyWindow(window) };
         });
         let thread = heard.recv().expect("the worker");
-
         assert_eq!(pumps(thread, Duration::from_millis(500)), Answer::Answered);
         stop.send(()).expect("stop");
         std::thread::sleep(Duration::from_millis(50));

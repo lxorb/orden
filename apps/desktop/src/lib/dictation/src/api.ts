@@ -6,7 +6,5 @@ export { voice, type Dictates } from './voice.svelte'
 export { recordRows, transcribeRows } from './recorder/commands'
 export { record as recordVoice } from './recorder/microphone'
 export { appendTo } from './recorder/note'
-
 export const transcriber = () => import('./recorder/transcribe')
-
 export const loadRecordingPill = () => import('./recorder/RecordingPill.svelte')

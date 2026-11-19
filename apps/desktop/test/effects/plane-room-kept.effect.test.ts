@@ -20,12 +20,10 @@ const sockets = vi.hoisted(() => {
     heard: (message: Uint8Array) => void
     closed: (code: number, said: string) => void
   }
-
   class FakeSocket {
     private sent: Uint8Array[] = []
     private up = false
     stopped = false
-
     constructor(
       readonly noteId: string,
       readonly token: string,
@@ -33,45 +31,35 @@ const sockets = vi.hoisted(() => {
     ) {
       opened.push(this)
     }
-
     get open(): boolean {
       return this.up
     }
-
     arrive() {
       this.up = true
       this.wire.opened()
     }
-
     take(): Uint8Array[] {
       const said = this.sent
       this.sent = []
       return said
     }
-
     start() {
       // The real one connects here; this one waits to be told it is up.
     }
-
     send(message: Uint8Array): boolean {
       if (!this.up) return false
-
       this.sent.push(message)
       return true
     }
-
     stop() {
       this.up = false
       this.stopped = true
     }
   }
-
   const opened: FakeSocket[] = []
   return { FakeSocket, opened }
 })
-
 vi.mock('../../src/lib/collab-rooms/src/socket', () => ({ RoomSocket: sockets.FakeSocket }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -80,19 +68,15 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 Element.prototype.hasPointerCapture = () => false
 type Socket = InstanceType<typeof sockets.FakeSocket>
-
 const surfaces = {
   canvas: { shown: Canvas, path: '/space/Board.canvas', text: writeCanvas(emptyCanvas()) },
   pages: { shown: Pages, path: '/space/Notes.pages', text: writeCanvas(emptyPages('a4')) },
 } as const
-
 let host: HTMLElement
 let close = () => undefined
-
 beforeAll(async () => {
   await rooms.reach()
 })
-
 beforeEach(() => {
   tools.choose('draw')
   sockets.opened.length = 0
@@ -101,7 +85,6 @@ beforeEach(() => {
   host = document.createElement('div')
   document.body.append(host)
 })
-
 afterEach(() => {
   close()
   rooms.clear()
@@ -109,27 +92,22 @@ afterEach(() => {
   account.user = null
   account.token = null
 })
-
 function carry(socket: Socket, doc: Y.Doc, awareness: Awareness) {
   for (const message of socket.take()) {
     const back = receive(message, doc, awareness, 'socket')
     if (back) socket.wire.heard(back)
   }
 }
-
 async function onThePlane(kind: keyof typeof surfaces): Promise<{ socket: Socket; tab: Tab }> {
   const { shown, path, text } = surfaces[kind]
   const note = new NoteDoc({ kind, path, name: path.split('/').at(-1) ?? path, text, dirty: false }, () => undefined)
   const tab = new Tab(note, 'pane')
   rooms.follow([{ key: note.key, noteId: 'plane-1', note, hash: null, version: 1 }])
-
   const mounted = mount(shown, { target: host, props: { tab, focused: true } })
   close = () => void unmount(mounted)
   flushSync()
-
   const socket = sockets.opened.at(-1)
   if (!socket) throw new Error('the plane did not join its room')
-
   const doc = new Y.Doc()
   const server = new Awareness(doc)
   socket.arrive()
@@ -137,19 +115,15 @@ async function onThePlane(kind: keyof typeof surfaces): Promise<{ socket: Socket
   await vi.waitFor(() => expect(rooms.carries('plane-1'), 'the room to catch up').toBe(true), {
     timeout: 10_000,
   })
-
   const phone = new Awareness(new Y.Doc())
   phone.setLocalState({ who: { name: 'Phone', accent: 'blue' }, hand: { x: 40, y: 60 } })
   socket.wire.heard(awarenessUpdate(phone, [phone.clientID]))
   flushSync()
-
   return { socket, tab }
 }
-
 function handsOn(tab: Tab): string[] {
   return (CanvasStore.drawing(tab.note, [tab])?.hands ?? []).map((one) => one.name)
 }
-
 test.each([
   ['a canvas', 'canvas'],
   ['a page note', 'pages'],
@@ -158,12 +132,10 @@ test.each([
   async (_, kind) => {
     const { socket, tab } = await onThePlane(kind)
     expect(handsOn(tab)).toEqual(['Phone'])
-
     account.user = { id: 'drawer', email: 'drawer@example.com', name: null }
     flushSync()
     await idle(5)
     flushSync()
-
     expect(sockets.opened).toHaveLength(1)
     expect(socket.stopped).toBe(false)
     expect(handsOn(tab)).toEqual(['Phone'])

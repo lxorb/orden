@@ -2,9 +2,7 @@ import { log } from './log'
 import { asking, isNative } from './tauri'
 
 const STALL = 1000
-
 const MOST = 3
-
 interface Script {
   invoker: string
   sourceFunctionName: string
@@ -12,17 +10,14 @@ interface Script {
   sourceCharPosition: number
   took: number
 }
-
 interface Frame {
   startTime: number
   took: number
   scripts: Script[]
 }
-
 export function watchStalls(): void {
   if (!isNative || typeof PerformanceObserver === 'undefined') return
   if (!PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')) return
-
   new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
       const frame = frameOf(entry)
@@ -30,7 +25,6 @@ export function watchStalls(): void {
     }
   }).observe({ type: 'long-animation-frame', buffered: true })
 }
-
 export function described(frame: Frame, waitingOn: string[]): string {
   const ran = [...frame.scripts]
     .sort((a, b) => b.took - a.took)
@@ -45,11 +39,9 @@ export function described(frame: Frame, waitingOn: string[]): string {
     ...(waitingOn.length ? [`waiting on ${waitingOn.join(', ')}`] : []),
   ].join('; ')
 }
-
 export function fileOf(said: string): string {
   return /^[a-z][a-z0-9+.-]*:\/\//i.test(said) ? (said.split(/[?#]/)[0]?.split('/').pop() ?? '') : said
 }
-
 function waiting(): string[] {
   const now = performance.now()
   return [...asking.values()]
@@ -57,7 +49,6 @@ function waiting(): string[] {
     .slice(0, MOST)
     .map((one) => `${one.command} ${((now - one.at) / 1000).toFixed(1)} s`)
 }
-
 function frameOf(entry: PerformanceEntry): Frame | null {
   const scripts: unknown = (entry as { scripts?: unknown }).scripts
   if (!Array.isArray(scripts)) return null
@@ -73,9 +64,7 @@ function frameOf(entry: PerformanceEntry): Frame | null {
     })),
   }
 }
-
 type Reported = Omit<Script, 'took'> & Record<'duration', number>
-
 function isScript(one: unknown): one is Reported {
   if (typeof one !== 'object' || one === null) return false
   const held = one as Record<string, unknown>

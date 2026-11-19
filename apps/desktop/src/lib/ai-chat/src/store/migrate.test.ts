@@ -23,7 +23,6 @@ describe('an Ask conversation', () => {
     expect(thread?.turns.map((one) => one.role)).toEqual(['you', 'model'])
     expect(sourcesFor(thread?.turns ?? [], 1).map((one) => one.name)).toEqual(['Hovering'])
   })
-
   test('is nothing where there was nothing', () => {
     expect(threadFromAsk([], 's', 'p', 'm')).toBeNull()
     expect(threadFromAsk('junk', 's', 'p', 'm')).toBeNull()

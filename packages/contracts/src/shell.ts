@@ -15,9 +15,7 @@ export type FileMark =
   | 'key'
   | 'time'
   | 'settings'
-
 export type TabPanel = 'outline' | 'links'
-
 export interface TabKindTraits {
   readonly words: boolean
   readonly extension: string | null
@@ -38,7 +36,6 @@ export interface TabKindTraits {
   readonly asksToMove: boolean
   readonly single: boolean
 }
-
 export const TAB_KINDS = [
   'note',
   'graph',
@@ -56,12 +53,9 @@ export const TAB_KINDS = [
   'time',
   'settings',
 ] as const
-
 export type TabKind = (typeof TAB_KINDS)[number]
-
 export const isTabKind = (value: unknown): value is TabKind =>
   typeof value === 'string' && (TAB_KINDS as readonly string[]).includes(value)
-
 export interface CommandExtension {
   readonly id: string
   readonly label: string
@@ -74,7 +68,6 @@ export interface CommandExtension {
   readonly disabled?: boolean
   readonly run: () => void
 }
-
 export type SettingsSectionId =
   | 'general'
   | 'space'
@@ -96,9 +89,6 @@ export type SettingsSectionId =
   | 'trash'
   | 'import'
   | 'export'
-
 export type SidebarPanelId = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
-
 export type PanelSide = 'left' | 'right'
-
 export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'

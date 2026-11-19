@@ -4,7 +4,6 @@ import { describe, expect, test } from 'vitest'
 import { type FileAction, FileActions, joinLast } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
-
 describe('the module stands on its own', () => {
   test('reaches no app module but the platform and the file ops', () => {
     const reached = readdirSync(SRC)
@@ -15,7 +14,6 @@ describe('the module stands on its own', () => {
     expect([...new Set(reached)].sort()).toEqual(['../../file-ops/src/api', '../../platform/src/api'])
   })
 })
-
 describe('the record of what can be undone', () => {
   test('keeps the last twenty steps, and a new step forgets what could be redone', () => {
     const undone = new FileActions()
@@ -26,7 +24,6 @@ describe('the record of what can be undone', () => {
     undone.record({ kind: 'create', path: '/s/new.md' })
     expect(undone.next).toBeUndefined()
   })
-
   test('a batch is one step, and the record waits for it to land', async () => {
     const undone = new FileActions()
     const { landed } = await undone.batch(async () => {
@@ -38,14 +35,12 @@ describe('the record of what can be undone', () => {
     expect(undone.stack).toHaveLength(1)
     expect(undone.last?.kind).toBe('many')
   })
-
   test('a moved file is followed by the steps that name it', async () => {
     const undone = new FileActions()
     undone.record({ kind: 'create', path: '/s/A.md' })
     await undone.moved('/s/A.md', '/s/B.md')
     expect(undone.last).toEqual({ kind: 'create', path: '/s/B.md' })
   })
-
   test('two edits of the same words in a row join into one step', async () => {
     const undone = new FileActions()
     const replace = (content: string, after: string): FileAction => ({

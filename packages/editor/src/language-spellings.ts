@@ -38,10 +38,8 @@ export const SPELLINGS: Record<string, string[]> = {
   SystemVerilog: ['sv', 'svh'],
   VHDL: ['vhd'],
   Brainfuck: ['bf'],
-
   Shell: ['ksh', 'fish', 'console', 'terminal', 'shell-session', 'shellsession', 'bash-session'],
   Gas: ['asm', 'assembly', 'nasm', 'x86', 'x86asm', 'armasm'],
-
   HTML: ['htm', 'handlebars', 'hbs', 'mustache', 'erb', 'ejs', 'astro'],
   XML: ['svg', 'xsl', 'xslt', 'plist', 'xaml'],
   Markdown: ['md', 'mkd', 'mdown', 'mdx'],
@@ -49,7 +47,6 @@ export const SPELLINGS: Record<string, string[]> = {
   'Angular Template': ['angular'],
   Stylus: ['styl'],
   LaTeX: ['bibtex', 'bib'],
-
   JSON: ['jsonc', 'jsonl', 'ndjson', 'geojson'],
   YAML: ['helm', 'compose', 'docker-compose', 'ansible', 'k8s', 'kubernetes'],
   'Properties files': ['env', 'dotenv', 'conf', 'config', 'cfg', 'editorconfig', 'systemd', 'gitconfig', 'npmrc'],
@@ -60,18 +57,15 @@ export const SPELLINGS: Record<string, string[]> = {
   Turtle: ['ttl'],
   SPARQL: ['rq'],
   Gherkin: ['feature', 'cucumber'],
-
   PostgreSQL: ['psql', 'postgres', 'pgsql'],
   'MS SQL': ['mssql', 'tsql', 'sqlserver'],
   'MariaDB SQL': ['mariadb'],
   SQLite: ['sqlite3'],
   PLSQL: ['pls', 'oracle'],
 }
-
 export const spelled = stock.map((description) => {
   const extra = SPELLINGS[description.name]
   if (!extra) return description
-
   return LanguageDescription.of({
     name: description.name,
     alias: [...description.alias, ...extra],

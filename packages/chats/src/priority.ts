@@ -1,43 +1,34 @@
 export type Level = 'urgent' | 'important' | 'if-time' | 'unimportant'
-
 export const LEVELS: readonly Level[] = ['urgent', 'important', 'if-time', 'unimportant']
-
 export const isLevel = (value: unknown): value is Level =>
   typeof value === 'string' && (LEVELS as readonly string[]).includes(value)
-
 export interface Assigned {
   level: Level
   by: 'ai' | 'reader'
   at: number
 }
-
 export interface Lesson {
   title: string
   from: string
   words: string
   level: Level
 }
-
 export interface Said {
   from: string
   words: string
   mine: boolean
 }
-
 const MEANING: Record<Level, string> = {
   urgent: 'needs a reaction as fast as possible, e.g. the house is burning',
   important: 'should definitely be answered, but not immediately',
   'if-time': 'unsure, but has some importance, e.g. information to read tomorrow',
   unimportant: 'can be ignored, e.g. a reel, a newsletter, an advert',
 }
-
 const MOST_WORDS = 600
-
 function clip(text: string, most: number): string {
   const flat = text.replace(/\s+/g, ' ').trim()
   return flat.length > most ? `${flat.slice(0, most)}…` : flat
 }
-
 export function priorityAsk(
   title: string,
   said: readonly Said[],
@@ -60,7 +51,6 @@ export function priorityAsk(
     { role: 'user', content: `Conversation: ${clip(title, 120)}\n\n${lines}` },
   ]
 }
-
 export function levelIn(reply: string): Level | null {
   const said = reply.toLowerCase().replace(/[^a-z-]+/g, ' ')
   const found = LEVELS.map((level) => ({ level, at: said.search(new RegExp(`\\b${level}\\b`)) }))
@@ -68,22 +58,18 @@ export function levelIn(reply: string): Level | null {
     .sort((a, b) => a.at - b.at)[0]
   return found?.level ?? (said.includes('if time') ? 'if-time' : null)
 }
-
 export interface Waiting {
   level: Level | null
   since: number | null
 }
-
 export function byPriority(a: Waiting, b: Waiting): number {
   const rank = (one: Waiting) => (one.level ? LEVELS.indexOf(one.level) : LEVELS.length)
   return rank(a) - rank(b) || (a.since ?? Infinity) - (b.since ?? Infinity)
 }
-
 export interface Suggestion {
   reply: string | null
   todo: { title: string; priority?: number; tags?: string[]; due?: string } | null
 }
-
 export function suggestionAsk(
   title: string,
   said: readonly Said[],
@@ -106,7 +92,6 @@ export function suggestionAsk(
     { role: 'user', content: `Conversation: ${clip(title, 120)}\n\n${lines}` },
   ]
 }
-
 export function suggestionIn(reply: string): Suggestion | null {
   const start = reply.indexOf('{')
   const end = reply.lastIndexOf('}')

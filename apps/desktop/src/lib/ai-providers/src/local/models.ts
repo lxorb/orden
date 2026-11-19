@@ -2,25 +2,20 @@ import type { Effort, ModelInfo } from '../chat/types'
 import type { LocalKind } from '../providers'
 
 const SCALE: readonly Effort[] = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
-
 function levelOf(word: unknown): Effort | null {
   if (word === 'none') return 'off'
   return SCALE.find((one) => one === word) ?? null
 }
-
 function effortsOf(words: readonly unknown[]): Effort[] {
   const listed = new Set(words.map(levelOf).filter((one): one is Effort => one !== null))
   return ['auto', ...SCALE.filter((one) => listed.has(one))]
 }
-
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
-
 function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
-
 const GEMINI_CLI_MODELS: ModelInfo[] = [
   ['auto', 'Auto'],
   ['pro', 'Pro'],
@@ -34,11 +29,9 @@ const GEMINI_CLI_MODELS: ModelInfo[] = [
   images: false,
   fast: false,
 }))
-
 function claudeWindow(...names: unknown[]): number | null {
   return names.some((name) => typeof name === 'string' && name.endsWith('[1m]')) ? 1_000_000 : null
 }
-
 export function modelsIn(kind: LocalKind, listed: unknown): ModelInfo[] {
   if (kind === 'gemini-cli') return GEMINI_CLI_MODELS
   if (kind === 'claude-code') {

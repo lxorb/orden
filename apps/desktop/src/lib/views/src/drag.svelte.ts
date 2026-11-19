@@ -5,18 +5,14 @@ export interface Point {
   x: number
   y: number
 }
-
 type Take = (row: Row, at: Point, place: HTMLElement, from: Value | undefined) => void
 const SLOP = 4
 export const HOLD = 350
 export const THUMB_SLOP = SLOP * 2
-
 function keepThumb(event: TouchEvent) {
   if (isThumbCarrying() && event.cancelable) event.preventDefault()
 }
-
 const listening = new WeakMap<HTMLElement, number>()
-
 export function holdsThumb(node: HTMLElement) {
   const list = node.parentElement ?? node
   const rows = listening.get(list) ?? 0
@@ -31,7 +27,6 @@ export function holdsThumb(node: HTMLElement) {
     },
   }
 }
-
 class Dragging {
   row = $state.raw<Row | null>(null)
   label = $state('')
@@ -39,11 +34,9 @@ class Dragging {
   y = $state(0)
   over = $state.raw<HTMLElement | null>(null)
 }
-
 export const dragging = new Dragging()
 const ghosts: symbol[] = []
 let drawing = $state<symbol | null>(null)
-
 export function ghostOwner(): { mine: () => boolean; release: () => void } {
   const me = Symbol('ghost')
   ghosts.push(me)
@@ -56,9 +49,7 @@ export function ghostOwner(): { mine: () => boolean; release: () => void } {
     },
   }
 }
-
 const takers = new WeakMap<HTMLElement, Take>()
-
 export function droppable(node: HTMLElement, take: Take) {
   takers.set(node, take)
   node.dataset.drop = ''
@@ -71,12 +62,10 @@ export function droppable(node: HTMLElement, take: Take) {
     },
   }
 }
-
 function targetAt(at: Point): HTMLElement | null {
   const found = document.elementFromPoint(at.x, at.y)?.closest<HTMLElement>('[data-drop]')
   return found ?? null
 }
-
 function scrollerAt(at: Point): HTMLElement | null {
   for (let box = document.elementFromPoint(at.x, at.y); box; box = box.parentElement) {
     if (!(box instanceof HTMLElement)) continue
@@ -90,7 +79,6 @@ function scrollerAt(at: Point): HTMLElement | null {
   }
   return null
 }
-
 function nudge(at: Point) {
   const box = scrollerAt(at)
   if (!box) return
@@ -102,14 +90,12 @@ function nudge(at: Point) {
   if (at.x < rect.left + edge) box.scrollLeft -= step(at.x - rect.left)
   else if (at.x > rect.right - edge) box.scrollLeft += step(rect.right - at.x)
 }
-
 export interface Carry {
   row: Row
   label: string
   disabled?: boolean
   from?: Value | undefined
 }
-
 export function draggable(node: HTMLElement, start: Carry) {
   let carry = start
   let from: Point | null = null
@@ -119,14 +105,12 @@ export function draggable(node: HTMLElement, start: Carry) {
   let went = false
   const thumb = holdsThumb(node)
   let thumbed = false
-
   const lift = () => {
     lifted = true
     dragging.row = carry.row
     dragging.label = carry.label
     node.classList.add('is-carried')
   }
-
   const move = (event: PointerEvent) => {
     const at = { x: event.clientX, y: event.clientY }
     if (!lifted) {
@@ -152,7 +136,6 @@ export function draggable(node: HTMLElement, start: Carry) {
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => nudge(at))
   }
-
   const finish = (event: PointerEvent | null) => {
     clearTimeout(held)
     window.removeEventListener('pointermove', move)
@@ -177,7 +160,6 @@ export function draggable(node: HTMLElement, start: Carry) {
     setTimeout(() => window.removeEventListener('click', swallow, true), 0)
     if (event && target && row) takers.get(target)?.(row, { x: event.clientX, y: event.clientY }, target, carry.from)
   }
-
   const up = (event: PointerEvent) => finish(event)
   const cancel = () => finish(null)
   const key = (event: KeyboardEvent) => {
@@ -186,7 +168,6 @@ export function draggable(node: HTMLElement, start: Carry) {
     event.stopPropagation()
     cancel()
   }
-
   const down = (event: PointerEvent) => {
     if (carry.disabled || event.button !== 0) return
     if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]')) return
@@ -205,7 +186,6 @@ export function draggable(node: HTMLElement, start: Carry) {
       }, HOLD)
     }
   }
-
   const menu = (event: Event) => {
     if (!lifted) return
     if (went) {
@@ -213,7 +193,6 @@ export function draggable(node: HTMLElement, start: Carry) {
       event.stopImmediatePropagation()
     } else cancel()
   }
-
   node.addEventListener('pointerdown', down)
   node.addEventListener('contextmenu', menu, true)
   return {
@@ -228,12 +207,10 @@ export function draggable(node: HTMLElement, start: Carry) {
     },
   }
 }
-
 function swallow(event: MouseEvent) {
   event.preventDefault()
   event.stopPropagation()
 }
-
 export function placeAmong(items: readonly Element[], at: Point, across = false): number {
   for (let index = 0; index < items.length; index++) {
     const box = items[index]?.getBoundingClientRect()

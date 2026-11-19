@@ -3,18 +3,13 @@ import { execFileSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 
 const STABLE = /^v\d+\.\d+\.\d+$/
-
 const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim()
-
 const subjectOf = (line) => /^(\w+)(?:\([^)]*\))?!?:\s*(.+)$/.exec(line)
-
 const issuesIn = (text) => [...text.matchAll(/#(\d+)/g)].map((found) => found[1])
-
 const told = (text) => {
   const plain = text.replace(/\s*\((?:#\d+(?:,\s*)?)+\)\s*$/, '').trim()
   return plain.charAt(0).toUpperCase() + plain.slice(1)
 }
-
 function releaseNotes(subjects, since) {
   const parsed = subjects.map(subjectOf).filter((one) => one !== null)
   const fixes = parsed.filter(([, kind]) => kind === 'fix').map(([, , text]) => text)
@@ -26,7 +21,6 @@ function releaseNotes(subjects, since) {
   if (added.length > 0) lines.push('', '### New', '', ...added)
   return `${lines.join('\n')}\n`
 }
-
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const tag = process.argv[2] ?? ''
   if (STABLE.test(tag)) {

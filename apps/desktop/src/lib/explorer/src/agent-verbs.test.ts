@@ -13,7 +13,6 @@ vi.mock('../../workspace/src/api', () => ({
     undone: { record: (one: unknown) => recorded.push(one) },
   },
 }))
-
 interface FakeView {
   listing: { path: string; own: boolean; spaces: boolean }
   folder: string
@@ -30,7 +29,6 @@ interface FakeView {
   reload: () => Promise<void>
   tell: (words: string) => void
 }
-
 function fakeView(): FakeView {
   const made: FakeView = {
     listing: { path: '/home/me/Downloads', own: false, spaces: false },
@@ -59,10 +57,8 @@ function fakeView(): FakeView {
   }
   return made
 }
-
 let view = fakeView()
 vi.mock('./view.svelte', () => ({ viewOf: () => view }))
-
 const trashed: string[][] = []
 const carried: { paths: string[]; to: string; how: string }[] = []
 const fences: boolean[] = []
@@ -79,17 +75,14 @@ vi.mock('./changes', () => ({
   },
   renamePath: () => Promise.resolve(),
 }))
-
 vi.mock('./commands', () => ({
   listFolder: (path: string) =>
     Promise.resolve({ path, own: path.includes('.config/orden'), spaces: false, entries: [] }),
   makeIn: (folder: string, name: string) => Promise.resolve(`${folder}/${name}`),
 }))
-
 vi.mock('./places.svelte', () => ({
   places: { home: () => Promise.resolve('/home/me') },
 }))
-
 const asked: { command: string; args: Record<string, unknown> }[] = []
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
@@ -100,22 +93,18 @@ vi.mock('../../platform/src/api', async (original) => ({
     return Promise.resolve({ status: 'ok', result: {} })
   },
 }))
-
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
   reachedAs: () => null,
   reachedByOthersIn: () => false,
 }))
-
 const { explorerTabs, namesAt } = await import('./agent-verbs')
-
 const call = (args: Record<string, unknown>, mode = 'confirm') =>
   explorerTabs({
     verb: 'explorer_tabs',
     args,
     caller: callerOf({ id: 'claude', name: 'Claude', scopes: ['files'], mode }),
   }).catch((error: unknown) => error)
-
 beforeEach(() => {
   view = fakeView()
   asked.length = 0
@@ -123,7 +112,6 @@ beforeEach(() => {
   carried.length = 0
   recorded.length = 0
 })
-
 describe("an agent's file explorer", () => {
   test('lists the tabs and what each shows, marked as the disk’s words', async () => {
     expect(await call({ op: 'list' })).toMatchObject({
@@ -131,7 +119,6 @@ describe("an agent's file explorer", () => {
       untrusted: 'the names of files on this computer',
     })
   })
-
   test('goes to a folder under ~/, asking first as files outside the spaces do', async () => {
     expect(await call({ op: 'go', tab: 'e1', path: '~/Music' })).toMatchObject({ status: 'ok' })
     expect(view.went).toEqual(['/home/me/Music'])
@@ -140,14 +127,12 @@ describe("an agent's file explorer", () => {
       args: { category: 'files', site: '/home/me/Music' },
     })
   })
-
   test('never reaches Orden’s own folder', async () => {
     expect(await call({ op: 'go', tab: 'e1', path: '~/.config/orden' })).toMatchObject({
       code: 'not_granted',
     })
     expect(view.went).toEqual([])
   })
-
   test('picks a thousand of a thousand rows without comparing each with each', () => {
     const names = Array.from({ length: 4000 }, (_, at) => `File ${at}.txt`)
     const picked = linearly((count) => {
@@ -157,7 +142,6 @@ describe("an agent's file explorer", () => {
     }, 4000)
     expect(picked).toHaveLength(4000)
   })
-
   test('names at most 1000 paths at once, and asks about none past that', async () => {
     const many = Array.from({ length: 1001 }, (_, at) => `f${at}.txt`)
     for (const op of ['select', 'trash', 'copy']) {
@@ -168,7 +152,6 @@ describe("an agent's file explorer", () => {
     expect(trashed).toEqual([])
     expect(carried).toEqual([])
   })
-
   test('picks and trashes through the tab, so the reader can undo it', async () => {
     await call({ op: 'select', tab: 'e1', paths: ['a.zip'] })
     expect(view.picked).toEqual(['a.zip'])
@@ -176,7 +159,6 @@ describe("an agent's file explorer", () => {
     expect(trashed).toEqual([['/home/me/Downloads/a.zip']])
     expect(asked.at(-1)).toMatchObject({ args: { category: 'trashing' } })
   })
-
   test('moves and copies outside the spaces only, and sends a space’s files to the note tools', async () => {
     await call({ op: 'copy', tab: 'e1', paths: ['b.pdf'], to: '~/Documents' })
     expect(carried).toEqual([{ paths: ['/home/me/Downloads/b.pdf'], to: '/home/me/Documents', how: 'copy' }])
@@ -189,13 +171,11 @@ describe("an agent's file explorer", () => {
     expect(refused).toMatchObject({ code: 'not_granted' })
     expect(carried).toHaveLength(1)
   })
-
   test('makes a folder that one undo takes away again', async () => {
     await call({ op: 'mkdir', tab: 'e1', name: 'Scans' }, 'unsupervised')
     expect(recorded).toEqual([{ kind: 'outside', steps: [{ op: 'made', path: '/home/me/Downloads/Scans' }] }])
   })
 })
-
 test('a path that steps aside with . or .. is never carried, so nothing leaves the spaces by way of a folder outside them', async () => {
   for (const paths of [
     ['../Orden/Work/Private/Diary.md'],
@@ -207,7 +187,6 @@ test('a path that steps aside with . or .. is never carried, so nothing leaves t
   }
   expect(carried).toEqual([])
 })
-
 test('an agent’s copy is carried fenced, so a source that is a space by another spelling is refused where it is read', async () => {
   fences.length = 0
   await call({ op: 'copy', tab: 'e1', paths: ['a.zip'], to: '~/Desktop' }, 'autonomous')

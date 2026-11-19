@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import contextlib
 import errno
 import faulthandler
@@ -36,12 +35,9 @@ SERVICE = ROOT / "services" / "sync"
 MACHINE = ROOT / "services" / "machine"
 MACHINE_BUNDLE = MACHINE / "dist" / "machine.bin"
 SHOTS = HERE / "shots"
-
 POINTED = ".orden-build"
-
 SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
-
 BUILT_IN = (
     "try { if (localStorage.getItem('orden:theme') === null) {"
     " localStorage.setItem('orden:theme', 'default'); localStorage.setItem('orden:theme-moved', 'yes') }"
@@ -51,36 +47,26 @@ BUILT_IN = (
     " localStorage.setItem('orden:crash-reports-told', 'true'); localStorage.setItem('orden:crash-reports', 'false') } }"
     " catch {}"
 )
-
 PATIENCE = 30
-
 HARMLESS = (
     "ResizeObserver loop completed with undelivered notifications.",
     "ResizeObserver loop limit exceeded",
 )
-
 def harmless(error: Any, origin: str | None = None) -> bool:
     said = str(getattr(error, "message", None) or error).strip()
     return said.startswith(HARMLESS)
-
 MOD = "Control"
-
 WORKER_PATIENCE = 90
 DROPPED = b"Network connection lost"
 BUILD_PATIENCE = 600
-
 TEARDOWN = 90
-
 NEEDS = {
     "native": "a native probe build (Windows, ORDEN_PROBE_EXE and ORDEN_PROBE_IDENTIFIER)",
     "chromium": "Chromium's own DevTools, flags or routing, which WebKit does not have",
     "tab-stops": "Tab stopping at buttons, which a Mac leaves to Keyboard navigation, off on a runner",
 }
-
 RELEASE_IDENTIFIER = "so.orden.Orden"
-
 LAUNCHED = "orden: launch order finished"
-
 CHATS_ON = (
     "try { const kept = JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]');"
     " const list = Array.isArray(kept) ? kept : [];"
@@ -88,16 +74,12 @@ CHATS_ON = (
     " if (add.length) localStorage.setItem('orden:hidden-kinds', JSON.stringify([...list, ...add])) }"
     " catch {}"
 )
-
 SIGNED_IN = (
     "() => { const account = window.ordenApp.account;"
     " account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' };"
     " account.token = 'drive' }"
 )
-
 EXPERIMENTAL_SWITCH = '[role=switch][aria-label="Enable experimental features"]'
-
-
 def experimental_on(page: Any) -> None:
     page.evaluate("() => window.ordenApp.settings.show('experimental')")
     knob = page.locator(EXPERIMENTAL_SWITCH)
@@ -110,18 +92,13 @@ def experimental_on(page: Any) -> None:
         f"document.querySelector('{EXPERIMENTAL_SWITCH}')?.getAttribute('aria-checked') === 'true'",
         timeout=15_000,
     )
-
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 if os.environ.get("ORDEN_HANG_AFTER"):
     faulthandler.dump_traceback_later(float(os.environ["ORDEN_HANG_AFTER"]), exit=False)
-
 for _stream in (sys.stdout, sys.stderr):
     with contextlib.suppress(AttributeError, ValueError):
         _stream.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
-
 class Lost:
     def __init__(self, page: Any, pieces: Sequence[str]) -> None:
         self.context = page.context
@@ -129,67 +106,48 @@ class Lost:
         self.asked = 0
         for piece in self.pieces:
             self.context.route(piece, self.refuse)
-
     def refuse(self, route: Any) -> None:
         self.asked += 1
         route.abort("connectionreset")
-
     def found(self) -> None:
         for piece in self.pieces:
             self.context.unroute(piece, self.refuse)
-
-
 def lose(page: Any, *pieces: str) -> Lost:
     return Lost(page, pieces)
-
-
 def answering(browser: Any) -> Any:
     made_context = browser.new_context
     made_page = browser.new_page
-
     def answered(context: Any, first_look: bool) -> None:
         if not first_look:
             context.add_init_script(BUILT_IN)
-
     def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
         context = made_context(*args, **options)
         answered(context, first_look)
         return context
-
     def new_page(*args: Any, first_look: bool = False, **options: Any) -> Any:
         page = made_page(*args, **options)
         answered(page.context, first_look)
         return page
-
     browser.new_context = new_context
     browser.new_page = new_page
     return browser
-
 def _hear_no_harmless() -> None:
     from playwright.sync_api import Page
-
     listen = Page.on
-
     def on(self: Any, event: str, handler: Any) -> Any:
         if event == "pageerror":
             heard = handler
             page = self
-
             def handler(error: Any) -> Any:
                 return None if harmless(error, page.url) else heard(error)
-
         return listen(self, event, handler)
-
     Page.on = on  # type: ignore[method-assign]
-
 _hear_no_harmless()
-
 def tool(package: Path, name: str) -> list[str]:
     shim = package / "node_modules" / ".bin" / (f"{name}.cmd" if os.name == "nt" else name)
     if shim.exists():
         return [str(shim)]
     return [shutil.which("npx") or "npx", name]
-
 def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     kind = "worker" if served_by_worker else "plain"
     if os.environ.get("ORDEN_SKIP_BUILD") and built(into, kind):
@@ -197,7 +155,6 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
         if served_by_worker:
             machine_bundle(fresh=False)
         return
-
     say(f"building the web app into {into.name}")
     started = time.monotonic()
     shutil.rmtree(into, ignore_errors=True)
@@ -225,7 +182,6 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     say(f"built in {time.monotonic() - started:.0f}s")
     if served_by_worker:
         machine_bundle(fresh=True)
-
 def machine_bundle(fresh: bool) -> None:
     if not fresh and MACHINE_BUNDLE.exists():
         return
@@ -242,14 +198,12 @@ def machine_bundle(fresh: bool) -> None:
     )
     if done.returncode != 0:
         raise SystemExit(f"the machine's bundle failed:\n{done.stdout}\n{done.stderr}")
-
 def built(into: Path, kind: str) -> bool:
     if not (into / "index.html").exists():
         return False
     pointed = into / POINTED
     said = pointed.read_text(encoding="utf-8").strip() if pointed.exists() else "plain"
     return said == kind
-
 TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -273,30 +227,21 @@ TYPES = {
     ".pdf": "application/pdf",
     "": "application/octet-stream",
 }
-
 STAMP = "Mon, 01 Jan 2024 00:00:00 GMT"
-
 Answer = Callable[["Files"], bool]
-
 class Files(http.server.SimpleHTTPRequestHandler):
-
     protocol_version = "HTTP/1.1"
     extensions_map = TYPES
     timeout = 10
-
     folder = str(DIST)
     answer: Answer | None = None
     extra: Mapping[str, str] = {}
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, directory=self.folder, **kwargs)
-
     def log_message(self, format: str, *args: object) -> None:  # noqa: A002
         return
-
     def tally(self) -> dict[str, int]:
         return self.server.tally  # type: ignore[attr-defined, no-any-return]
-
     def do_GET(self) -> None:  # noqa: N802 - the name http.server wants
         if self.answer is not None and self.answer(self):
             return
@@ -304,12 +249,10 @@ class Files(http.server.SimpleHTTPRequestHandler):
             self.reply(SEED_PAGE)
             return
         super().do_GET()
-
     def do_HEAD(self) -> None:  # noqa: N802
         if self.answer is not None and self.answer(self):
             return
         super().do_HEAD()
-
     def send_response(self, code: int, message: str | None = None) -> None:
         held = self.tally()
         held["asked"] += 1
@@ -318,14 +261,12 @@ class Files(http.server.SimpleHTTPRequestHandler):
         elif code == 304:
             held["again"] += 1
         super().send_response(code, message)
-
     def send_header(self, keyword: str, value: str) -> None:
         if keyword == "Last-Modified":
             value = STAMP
         if keyword == "Content-Length":
             self.tally()["bytes"] += int(value)
         super().send_header(keyword, value)
-
     def end_headers(self) -> None:
         said = b"".join(getattr(self, "_headers_buffer", [])).lower()
         if b"cache-control:" not in said:
@@ -337,7 +278,6 @@ class Files(http.server.SimpleHTTPRequestHandler):
         for keyword, value in self.extra.items():
             super().send_header(keyword, value)
         super().end_headers()
-
     def reply(self, body: bytes | str, kind: str = "text/html; charset=utf-8", code: int = 200) -> bool:
         data = body.encode("utf-8") if isinstance(body, str) else body
         self.send_response(code)
@@ -348,22 +288,17 @@ class Files(http.server.SimpleHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(data)
         return True
-
 class _Loopback(http.server.ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
     request_queue_size = 256
-
     def handle_error(self, request: Any, client_address: Any) -> None:
         if isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):
             return
         super().handle_error(request, client_address)
-
 class _Loopback6(_Loopback):
     address_family = socket.AF_INET6
-
 class Served:
-
     def __init__(
         self,
         folder: Path | None = None,
@@ -382,7 +317,6 @@ class Served:
                 },
             )
         self.handler = handler
-
         self.servers: list[http.server.ThreadingHTTPServer] = []
         for _ in range(20):
             first = _Loopback(("127.0.0.1", 0), handler)
@@ -397,29 +331,23 @@ class Served:
             break
         else:
             raise SystemExit("no free port on the loopback for the file server")
-
         self.port = self.servers[0].server_address[1]
         self.tally = {"asked": 0, "sent": 0, "again": 0, "bytes": 0}
         for one in self.servers:
             one.tally = self.tally  # type: ignore[attr-defined]
             threading.Thread(target=one.serve_forever, name=f"serve {self.port}", daemon=True).start()
-
     def origin(self, host: str = "127.0.0.1") -> str:
         return f"http://{host}:{self.port}"
-
     def close(self) -> None:
         for one in self.servers:
             one.shutdown()
             one.server_close()
-
 def side(handler: type[http.server.BaseHTTPRequestHandler]) -> Served:
     return Served(handler=handler)
-
 def free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
         probe.bind(("127.0.0.1", 0))
         return int(probe.getsockname()[1])
-
 def spawn(command: Sequence[str], **options: Any) -> subprocess.Popen[bytes]:
     if os.name == "nt":
         options.setdefault("creationflags", subprocess.CREATE_NEW_PROCESS_GROUP)
@@ -428,9 +356,7 @@ def spawn(command: Sequence[str], **options: Any) -> subprocess.Popen[bytes]:
     process = subprocess.Popen(list(command), **options)
     SPAWNED.add(process)
     return process
-
 SPAWNED: set[subprocess.Popen[Any]] = set()
-
 def end(process: subprocess.Popen[Any] | None, grace: float = 10) -> None:
     SPAWNED.discard(process)  # type: ignore[arg-type]
     if process is None or process.poll() is not None:
@@ -450,32 +376,26 @@ def end(process: subprocess.Popen[Any] | None, grace: float = 10) -> None:
                 os.killpg(process.pid, signal.SIGKILL)
         process.kill()
         process.wait(timeout=grace)
-
 def _driver(play: Any) -> int | None:
     with contextlib.suppress(AttributeError, TypeError):
         return int(play.stop.__self__._connection._transport._proc.pid)
     return None
-
 def _kill(pid: int) -> None:
     if os.name == "nt":
         subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True, check=False)
     else:
         with contextlib.suppress(ProcessLookupError, PermissionError):
             os.kill(pid, signal.SIGKILL)
-
 class _Closing:
-
     def __init__(self, drive: Drive) -> None:
         self.drive = drive
         self.driver: int | None = None
         self.done = threading.Event()
         self.fired = False
         self.clean = True
-
     def start(self) -> None:
         self.clean = sys.exc_info()[1] is None
         threading.Thread(target=self._watch, name="closing watch", daemon=True).start()
-
     def _watch(self) -> None:
         if self.done.wait(TEARDOWN):
             return
@@ -491,9 +411,7 @@ class _Closing:
         code = self.drive.verdict() if self.clean else 1
         sys.stdout.flush()
         os._exit(code)
-
 ASYNC = re.compile(r"\s*async\b")
-
 def awaited(page: Any, expression: str, what: str, patience: float) -> Any:
     until = time.monotonic() + patience
     while True:
@@ -503,16 +421,13 @@ def awaited(page: Any, expression: str, what: str, patience: float) -> Any:
         if time.monotonic() >= until:
             raise SystemExit(f"gave up waiting for {what}")
         page.wait_for_timeout(50)
-
 WRITE = """async ([files]) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
   await ws.loadTree()
 }"""
-
 class Drive:
-
     def __init__(
         self,
         file: str,
@@ -547,39 +462,31 @@ class Drive:
             self.origin = self.server.origin(f"{self.name}.localhost")
         else:
             self.origin = ""
-
     def header(self, name: str, value: str) -> None:
         if self.server is not None:
             self.server.handler.extra[name] = value  # type: ignore[attr-defined]
-
     def answers(self, answer: Answer) -> Answer:
         if self.server is not None:
             self.server.handler.answer = staticmethod(answer)  # type: ignore[attr-defined]
         return answer
-
     def say(self, words: str) -> None:
         say(words)
-
     def wrong(self, what: str) -> None:
         say(f"FAILED: {what}")
         self.failures.append(what)
-
     def shot(self, page: Any, name: str, **options: Any) -> Path:
         path = self.shots / f"{name}.png"
         path.parent.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(path), **options)
         say(f"shot {name}.png")
         return path
-
     def steady(self, page: Any, name: str, **options: Any) -> Path:
         from settling import steady
-
         self.shots.mkdir(parents=True, exist_ok=True)
         path = self.shots / f"{name}.png"
         path.write_bytes(steady(page, lambda: page.screenshot(**options), say, name))
         say(f"shot {name}.png")
         return path
-
     def wait_for(self, page: Any, expression: str, what: str, patience: float = PATIENCE) -> Any:
         if ASYNC.match(expression):
             return awaited(page, expression, what, patience)
@@ -590,7 +497,6 @@ class Drive:
                 raise
             raise SystemExit(f"gave up waiting for {what}") from None
         return came.json_value()
-
     def waited(self, page: Any, expression: str, what: str, patience: float = PATIENCE) -> bool:
         try:
             self.wait_for(page, expression, what, patience)
@@ -598,40 +504,33 @@ class Drive:
             self.wrong(f"gave up waiting for {what}")
             return False
         return True
-
     def browser(self, play: Any, **options: Any) -> Any:
         channel = os.environ.get("ORDEN_BROWSER", "chromium")
         options.setdefault("channel", channel)
         return answering(play.chromium.launch(**options))
-
     def context(self, browser: Any, **options: Any) -> Any:
         context = browser.new_context(**options)
         if self.chats:
             context.add_init_script(CHATS_ON)
         return context
-
     def persistent(self, play: Any, profile: Path, **options: Any) -> Any:
         options.setdefault("channel", os.environ.get("ORDEN_BROWSER", "chromium"))
         context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         context.add_init_script(BUILT_IN)
         return context
-
     def page(self, browser: Any, errors: bool = True, **options: Any) -> Any:
         page = self.context(browser, **options).new_page()
         if errors:
             page.on("pageerror", lambda error: self.wrong(f"page error: {error}"))
         return page
-
     def open(
         self, page: Any, path: str = "/", origin: str | None = None, patience: float = PATIENCE
     ) -> None:
         page.goto(f"{origin or self.origin}{path}", wait_until="domcontentloaded", timeout=patience * 1000)
         self.ready(page, patience)
-
     def sign_in(self, page: Any) -> None:
         page.evaluate(SIGNED_IN)
         self.wait_for(page, "window.ordenApp.account.accountToken", "the account")
-
     def ready(self, page: Any, patience: float = PATIENCE) -> None:
         self.wait_for(page, "window.ordenApp", "the app", patience)
         self.wait_for(page, "window.ordenApp.workspace.activeSpace", "a space", patience)
@@ -641,14 +540,11 @@ class Drive:
             "the launch order to finish",
             patience,
         )
-
     def choosers(self, page: Any) -> None:
         page.on("filechooser", lambda _chooser: None)
         page.evaluate("0")
-
     def inject(self, page: Any, script: Path) -> None:
         page.evaluate(script.read_text(encoding="utf-8"))
-
     def preload(self, page: Any, folder: Path | None = None) -> int:
         assets = (folder or self.folder) / "assets"
         chunks = sorted(f"/assets/{one.name}" for one in assets.glob("*.js"))
@@ -668,19 +564,16 @@ class Drive:
             [chunks, sheets],
         )
         return len(chunks) + len(sheets)
-
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
         page.evaluate("() => window.ordenApp.workspace.toggleReading()")
         self.wait_for(
             page, "document.querySelector('article.orden-write')?.childElementCount", "the reading view", patience
         )
         self.settled(page)
-
     def settled(self, page: Any) -> None:
         page.evaluate(
             "() => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(() => go())))"
         )
-
     def seed(self, page: Any, *texts: str, folder: str | None = None) -> list[str]:
         return page.evaluate(  # type: ignore[no-any-return]
             """
@@ -695,7 +588,6 @@ class Drive:
             """,
             [list(texts), folder],
         )
-
     def open_note(self, page: Any, starts: str, patience: float = PATIENCE) -> None:
         page.evaluate(
             """async (starts) => {
@@ -714,7 +606,6 @@ class Drive:
             patience,
         )
         self.settled(page)
-
     def pick_export(self, page: Any, format: str, option: bool = False) -> Any:  # noqa: A002
         page.keyboard.press("Control+Shift+P")
         page.wait_for_selector(".palette input")
@@ -729,19 +620,15 @@ class Drive:
         if switch.count() and (switch.get_attribute("aria-checked") == "true") != option:
             switch.click()
         return page.locator('[role="dialog"] .go')
-
     def side(self, handler: type[http.server.BaseHTTPRequestHandler]) -> str:
         server = side(handler)
         self._stack.callback(server.close)
         return server.origin()
-
     def later(self, callback: Callable[[], object]) -> None:
         self._stack.callback(callback)
-
     @contextlib.contextmanager
     def session(self, browser: bool = True, playwright: bool = False, **launch: Any) -> Iterator[Any]:
         from playwright.sync_api import sync_playwright
-
         self.clear()
         closing = _Closing(self)
         try:
@@ -788,7 +675,6 @@ class Drive:
             say("closing was ended from outside; the drive's steps had all run")
         finally:
             closing.done.set()
-
     def _develop(self) -> None:
         say(f"serving the app from a dev server on {self.origin}")
         server = spawn(
@@ -816,14 +702,12 @@ class Drive:
             except OSError:
                 time.sleep(0.3)
         raise SystemExit("the dev server never answered")
-
     def clear(self) -> None:
         if not self._cleared:
             self._cleared = True
             if self.fresh:
                 shutil.rmtree(self.shots, ignore_errors=True)
         self.shots.mkdir(parents=True, exist_ok=True)
-
     def verdict(self, passed: str = "") -> int:
         known = [one for one in self.failures if any(words in one for words in self.known)]
         new = [one for one in self.failures if one not in known]
@@ -840,19 +724,15 @@ class Drive:
         if passed:
             print(f"\n{passed}", flush=True)
         return 0
-
     def run(self, steps: Callable[[Any], object], passed: str = "", **launch: Any) -> int:
         with self.session(**launch) as browser:
             steps(browser)
         return self.verdict(passed)
-
 @functools.cache
 def worker_port() -> int:
     return free_port()
-
 def worker_origin() -> str:
     return f"http://127.0.0.1:{worker_port()}"
-
 def opened(call: urllib.request.Request, timeout: float = 60) -> bytes:
     tries = 3
     while True:
@@ -867,14 +747,12 @@ def opened(call: urllib.request.Request, timeout: float = 60) -> bytes:
                     refused.url, refused.code, refused.msg, refused.headers, io.BytesIO(said)
                 ) from None
         time.sleep(0.5)
-
 def session_row(digest: str, user: str, now: int) -> str:
     return (
         "insert into sessions (token_hash, user_id, created_at, expires_at, id, name, last_used_at)"
         f" values ('{digest}', '{user}', {now}, {now + 86_400_000}, '{uuid.uuid4().hex[:16]}',"
         f" 'Drive', {now});"
     )
-
 def request(
     path: str,
     token: str | None = None,
@@ -897,9 +775,7 @@ def request(
         said = answer.read()
         return {"status": answer.code, **(json.loads(said) if said else {})}
     return json.loads(said) if said else ({} if refused else None)
-
 class Worker:
-
     def __init__(self, drive: Drive, variables: Mapping[str, str] | None = None) -> None:
         self.drive = drive
         self.port = worker_port()
@@ -909,7 +785,6 @@ class Worker:
         self.state: Path | None = None
         self.log = drive.shots / "worker.log"
         self._output: Any = None
-
     def wrangler(self, *args: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [*tool(SERVICE, "wrangler"), *args],
@@ -921,7 +796,6 @@ class Worker:
             timeout=BUILD_PATIENCE,
             check=False,
         )
-
     def prepare(self) -> None:
         if self.state is not None:
             return
@@ -934,10 +808,8 @@ class Worker:
         done = self.wrangler("d1", "migrations", "apply", "nib", "--local", "--persist-to", str(self.state))
         if done.returncode != 0:
             raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
     def start(self, upstream: str | None = None, assets: Path | None = None) -> None:
         self.prepare()
-
         say(f"starting the Worker on {self.origin}" + (f" as {upstream}" if upstream else ""))
         self._output = self.log.open("ab")
         command = [
@@ -976,7 +848,6 @@ class Worker:
                 time.sleep(0.5)
             else:
                 raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
     def answering(self) -> bool:
         try:
             urllib.request.urlopen(f"{self.origin}/health", timeout=5).read()
@@ -985,7 +856,6 @@ class Worker:
             return True
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
             return False
-
     def stop(self) -> None:
         if self.process is not None:
             say("stopping the Worker")
@@ -994,29 +864,23 @@ class Worker:
         if self._output is not None:
             self._output.close()
             self._output = None
-
     def close(self) -> None:
         self.stop()
         if self.state is not None:
             shutil.rmtree(self.state, ignore_errors=True)
             self.state = None
-
     def said(self, lines: int = 40) -> str:
         if not self.log.exists():
             return "(nothing)"
         return "\n".join(self.log.read_text("utf-8", errors="replace").splitlines()[-lines:])
-
     def written(self) -> str:
         return self.log.read_text("utf-8", errors="replace") if self.log.exists() else ""
-
     def sql(self, statement: str) -> str:
         return self._execute(statement).stdout
-
     def query(self, statement: str) -> list[dict[str, Any]]:
         done = self._execute(statement, "--json")
         answer = json.loads(done.stdout)
         return list(answer[0].get("results", [])) if answer else []
-
     def _execute(self, statement: str, *how: str) -> subprocess.CompletedProcess[str]:
         self.prepare()
         for tries in range(10):
@@ -1037,7 +901,6 @@ class Worker:
         if done.returncode != 0:
             raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
         return done
-
     def request(
         self,
         path: str,
@@ -1047,7 +910,6 @@ class Worker:
         timeout: float = 20,
     ) -> Any:
         return request(path, token, body, method, timeout)
-
     def account(self, email: str) -> str:
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
@@ -1058,7 +920,6 @@ class Worker:
             + session_row(digest, user, now)
         )
         return token
-
     def mail_to(self, address: str, after: int = 0) -> str:
         lines = self.written()[after:].splitlines()
         found = [at for at, line in enumerate(lines) if line.strip() == f"To: {address}"]
@@ -1073,7 +934,6 @@ class Worker:
                 if text.exists():
                     message += text.read_text("utf-8", errors="replace")
         return message
-
     def waits_for_mail(
         self, address: str, pattern: str, what: str, after: int = 0, patience: float = 40
     ) -> re.Match[str]:
@@ -1087,7 +947,6 @@ class Worker:
             f"gave up waiting for {what}. the last message to {address} was:\n"
             f"{self.mail_to(address, after)!r}"
         )
-
 def identifier_of(exe: Path, given: str | None = None) -> str | None:
     said = given or os.environ.get("ORDEN_PROBE_IDENTIFIER")
     if said:
@@ -1096,7 +955,6 @@ def identifier_of(exe: Path, given: str | None = None) -> str | None:
     with contextlib.suppress(OSError, ValueError, KeyError, TypeError):
         return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
     return None
-
 def refused(exe: Path, identifier: str | None) -> str:
     local = os.environ.get("LOCALAPPDATA")
     for installed in ("Nib", "nibeditor", "Orden"):
@@ -1107,19 +965,15 @@ def refused(exe: Path, identifier: str | None) -> str:
     if identifier == RELEASE_IDENTIFIER or not identifier.startswith(RELEASE_IDENTIFIER + "."):
         return f"{exe} is built under {identifier}, not one of its own like {RELEASE_IDENTIFIER}.probe.<name>"
     return ""
-
 class Native:
-
     def __init__(
         self, drive: Drive, exe: Path, env: Mapping[str, str] | None = None, identifier: str | None = None
     ) -> None:
         self.identifier = identifier_of(exe, identifier)
         if why := refused(exe, self.identifier):
             raise SystemExit(f"not launched: {why}")
-
         sys.path.insert(0, str(ROOT / "scripts"))
         import probe_app
-
         self.probe = probe_app
         self.drive = drive
         self.exe = exe
@@ -1127,18 +981,15 @@ class Native:
         self.env = {**os.environ, **(env or {}), "ORDEN_SPACES_DIR": str(self.spaces)}
         self.app: subprocess.Popen[bytes] | None = None
         drive.later(self.stop)
-
     def start(self, args: Sequence[str] = (), quiet: bool = True) -> subprocess.Popen[bytes]:
         self.app = self.probe.run_probe(self.exe, env=self.env, quiet=quiet, args=args)
         return self.app
-
     def stop(self) -> None:
         if self.app is not None and self.app.poll() is None:
             if not self.probe.close_app(self.app):
                 end(self.app)
         self.app = None
         shutil.rmtree(self.spaces, ignore_errors=True)
-
 def needs_of(source: str) -> tuple[str, ...]:
     found = re.search(r"^NEEDS = \(([^)]*)\)", source, re.MULTILINE)
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
@@ -1150,7 +1001,6 @@ def needs_of(source: str) -> tuple[str, ...]:
     if "chromium" not in said and re.search(chromium_only, source):
         said = (*said, "chromium")
     return said
-
 def missing(needs: Sequence[str]) -> str:
     for one in needs:
         if one == "native" and not (sys.platform == "win32" and os.environ.get("ORDEN_PROBE_EXE")):

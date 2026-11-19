@@ -20,7 +20,6 @@
     canReact: boolean
     onmore: (from: HTMLElement) => void
   } = $props()
-
   const list = $derived(Object.entries(message.reactions).filter(([, who]) => who.length))
   const named = (who: readonly Message['author'][]) => who.map((one) => nameOf(one, page.members, space)).join(', ')
 </script>
@@ -62,7 +61,6 @@
     gap: var(--space-1);
     margin-top: var(--space-1);
   }
-
   .chip {
     display: inline-flex;
     align-items: center;
@@ -82,35 +80,29 @@
       border-color var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   @media (hover: hover) {
     .chip:hover:not(:disabled) {
       border-color: var(--line-strong);
       background: var(--surface-hover);
     }
   }
-
   .chip:active:not(:disabled) {
     transform: scale(0.94);
   }
-
   .chip.mine {
     border-color: var(--accent-line);
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .emoji {
     font-size: 15px;
     line-height: 1;
   }
-
   .more {
     --glyph-size: 15px;
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   :global(.message:hover) .more,
   :global(.message:focus-within) .more,
   :global([data-touch]) .more {

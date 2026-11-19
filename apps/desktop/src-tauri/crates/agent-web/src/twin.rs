@@ -18,7 +18,6 @@ const KEPT: [&str; 11] = [
     "sourcePort",
     "partitionKey",
 ];
-
 pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
     let said = crate::tabs::bare(app, reader).and_then(|(source, built)| {
         let read = cdp::call(&source, "Network.getAllCookies", &json!({}));
@@ -41,7 +40,6 @@ pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
         );
     }
 }
-
 fn settable(answer: &Value) -> Vec<Value> {
     answer
         .get("cookies")
@@ -62,7 +60,6 @@ fn settable(answer: &Value) -> Vec<Value> {
         })
         .collect()
 }
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;

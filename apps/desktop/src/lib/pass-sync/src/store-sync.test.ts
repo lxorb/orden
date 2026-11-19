@@ -13,21 +13,17 @@ import { accountKeyringOf, cursorOf, keepAccountKeyring, keepCursor } from './sy
 const FAST = { m: 64, t: 1, p: 1 }
 const MINE = 'the password on this device'
 const ACCOUNT = 'the password of the account'
-
 configurePass({ kdf: FAST, pinKdf: FAST })
-
 async function opened(): Promise<PassStore> {
   const store = new PassStore()
   await store.start()
   await store.setup(MINE)
   return store
 }
-
 beforeEach(async () => {
   await forgetLocal()
   vi.stubGlobal('localStorage', memoryStorage())
 })
-
 describe('the store under sync', () => {
   test('tells its listeners after a change of its own, and not after one sync made', async () => {
     const store = await opened()
@@ -39,14 +35,12 @@ describe('the store under sync', () => {
     await Promise.resolve()
     expect(heard).toHaveBeenCalledTimes(1)
   })
-
   test('lends its keys to sync only while open', async () => {
     const store = await opened()
     expect(await store.exclusive((held) => Promise.resolve(held !== null))).toBe(true)
     store.lock()
     expect(await store.exclusive((held) => Promise.resolve(held !== null))).toBe(false)
   })
-
   test('shows what sync opened, and nothing while locked', async () => {
     const store = await opened()
     const item = await store.create(store.vaults[0]?.id ?? '', { ...blank('login'), title: 'A' })
@@ -61,7 +55,6 @@ describe('the store under sync', () => {
     store.shown({ ...nothingShown(), items: [item] })
     expect(store.items).toEqual([])
   })
-
   test('a keyring taken from the account makes a new device ask for the password', async () => {
     const store = new PassStore()
     await store.start()
@@ -70,7 +63,6 @@ describe('the store under sync', () => {
     store.tookKeyring({ keyring: made.keyring, rev: 1, pending: false })
     expect(store.state).toBe('locked')
   })
-
   test('folds this device’s Pass into the account’s with the account’s password', async () => {
     const store = await opened()
     const item = await store.create(store.vaults[0]?.id ?? '', {
@@ -84,11 +76,9 @@ describe('the store under sync', () => {
     await keepAccountKeyring(deviceRows, { keyring: account.keyring, rev: 3 })
     await keepCursor(deviceRows, { account: 'ada', seq: 0 })
     store.conflict = true
-
     expect(await store.adoptAccountPass('wrong')).toBe(false)
     expect(store.conflict).toBe(true)
     expect(await store.adoptAccountPass(ACCOUNT)).toBe(true)
-
     expect(store.conflict).toBe(false)
     expect(store.state).toBe('open')
     expect(store.vaults.map((one) => one.name)).toEqual(['From this device'])
@@ -100,13 +90,11 @@ describe('the store under sync', () => {
     expect(await cursorOf(deviceRows)).toBeNull()
     const pending = (await readItems()).filter((one) => one.pending)
     expect(pending.map((one) => one.id)).toEqual([item.id])
-
     store.lock()
     expect(await store.unlock({ password: MINE })).toBe(false)
     expect(await store.unlock({ password: ACCOUNT })).toBe(true)
     expect(store.items.map((one) => one.content.title)).toEqual(['Mail'])
   })
-
   test('folds a locked device in when its password is the same', async () => {
     const store = await opened()
     await store.create(store.vaults[0]?.id ?? '', { ...blank('login'), title: 'Mail' })

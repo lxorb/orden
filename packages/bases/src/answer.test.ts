@@ -8,7 +8,6 @@ import type { Answer, Row, Value } from './types'
 const context = contextAt()
 const names = (rows: readonly Row[]) => rows.map((row) => row.task?.text ?? row.file.basename)
 const groups = (result: Answer) => result.groups.map((group) => [group.key, names(group.rows)])
-
 const books = [
   noteRow('Books/Dune.md', 'status: Doing\npages: 412\nrating: 5\nread: true\nfinished: 2026-09-01'),
   noteRow('Books/Emma.md', 'status: To do\npages: 474\nrating: 3\nread: false'),
@@ -16,7 +15,6 @@ const books = [
   noteRow('Books/Beloved.md', 'status: Doing\npages: 324\nrating: 4\nread: false'),
   noteRow('Films/Heat.md', 'status: Done\nrating: 5'),
 ]
-
 const base = readBase(`filters:
   and:
     - file.inFolder("Books")
@@ -73,14 +71,12 @@ orden:
         - { value: Review, group: doing }
         - { value: Done, group: done }
 `)
-
 describe('a view of notes', () => {
   test("filters by the base's filter, sorts by the view's sort", () => {
     const result = answer(base, 'All', books, context)
     expect(result.total).toBe(4)
     expect(groups(result)).toEqual([[null, ['Ulysses', 'Emma', 'Dune', 'Beloved']]])
   })
-
   test('summarises with the defaults', () => {
     expect(answer(base, 'All', books, context).summaries).toEqual({
       pages: 1940,
@@ -90,11 +86,9 @@ describe('a view of notes', () => {
       status: 3,
     })
   })
-
   test("summarises with the base's own formula over values", () => {
     expect(answer(base, 'Custom', books, context).summaries).toEqual({ pages: 3880 })
   })
-
   test('groups in the order the options say, empty groups kept, and a manual order first', () => {
     const result = answer(base, 'Board', books, context)
     expect(groups(result)).toEqual([
@@ -104,11 +98,9 @@ describe('a view of notes', () => {
       ['Done', ['Ulysses']],
     ])
   })
-
   test("a view's filters add to the base's, formulas included, and the limit comes after the sort", () => {
     expect(groups(answer(base, 'Long', books, context))).toEqual([[null, ['Dune']]])
   })
-
   test("the view's own search looks through what the view shows", () => {
     expect(names(answer(base, 'All', books, { ...context, search: 'doing' }).groups[0]?.rows ?? [])).toEqual([
       'Dune',
@@ -116,7 +108,6 @@ describe('a view of notes', () => {
     ])
     expect(names(answer(base, 'All', books, { ...context, search: 'emm 474' }).groups[0]?.rows ?? [])).toEqual(['Emma'])
   })
-
   test('the first view when none is named, and a cell as the view shows it', () => {
     expect(answer(base, undefined, books, context).total).toBe(4)
     const dune = books[0]
@@ -125,7 +116,6 @@ describe('a view of notes', () => {
     expect(cellValue(base, 'note.status', dune, context)).toBe('Doing')
   })
 })
-
 describe('the limit', () => {
   const limited = readBase(`views:
   - type: kanban
@@ -141,7 +131,6 @@ describe('the limit', () => {
       order:
         Doing: [Books/Beloved.md]
 `)
-
   test('cuts each group after its manual order, so no column loses all its cards', () => {
     const result = answer(limited, 'Board', books, context)
     expect(groups(result)).toEqual([
@@ -152,7 +141,6 @@ describe('the limit', () => {
     expect(result.total).toBe(3)
   })
 })
-
 describe('groups', () => {
   const rows = [
     noteRow('a.md', 'kind: b\nsize: 2'),
@@ -160,7 +148,6 @@ describe('groups', () => {
     noteRow('c.md', 'size: 3'),
     noteRow('d.md', 'kind: b\nsize: 1'),
   ]
-
   test('by value either way round, the group with no value last', () => {
     const view = (direction: string) =>
       readBase(
@@ -173,7 +160,6 @@ describe('groups', () => {
     ])
     expect(groups(answer(view('DESC'), 'L', rows, context)).map(([key]) => key)).toEqual(['b', 'a', null])
   })
-
   test('a sub-group splits each group, with its own summaries', () => {
     const view = readBase(`views:
   - type: kanban
@@ -196,7 +182,6 @@ describe('groups', () => {
       [2, ['a'], { size: 2 }],
     ])
   })
-
   test('the lanes across every column come in the sub-group order, with no value last', () => {
     const cards = [
       noteRow('a.md', 'status: Doing\npriority: 1'),
@@ -217,7 +202,6 @@ describe('groups', () => {
 `)
     expect(answer(view, 'K', cards, context).lanes).toEqual([1, 2, 3, null])
   })
-
   test("a lane keeps its column's order, not the order of a column of its name", () => {
     const cards = [noteRow('a.md', 'status: Doing'), noteRow('b.md', 'status: Doing')]
     const view = readBase(`views:
@@ -238,7 +222,6 @@ describe('groups', () => {
     expect(names(doing?.rows ?? [])).toEqual(['b', 'a'])
     expect(doing?.sub?.map((lane) => [lane.key, names(lane.rows)])).toEqual([[null, ['b', 'a']]])
   })
-
   test('in the order their first row comes, for headings', () => {
     const tasks = [
       taskRow('P.md', '- [ ] one', 2, { section: ['Zeta'] }),
@@ -261,7 +244,6 @@ describe('groups', () => {
     ])
   })
 })
-
 describe('a view of tasks', () => {
   const rows = [
     noteRow('Inbox.md'),
@@ -284,13 +266,11 @@ describe('a view of tasks', () => {
       rows: both
       showCompleted: true
 `)
-
   test('takes task rows only, done and cancelled ones out unless asked', () => {
     expect(names(answer(tasks, 'Open', rows, context).groups[0]?.rows ?? [])).toEqual(['Pay', 'Call the bank'])
     expect(answer(tasks, 'All', rows, context).total).toBe(5)
   })
 })
-
 describe('answering again', () => {
   test('reuses what it knew about rows that did not change, and sees the one that did', () => {
     let runs = 0
@@ -327,7 +307,6 @@ views:
     expect(runs).toBeLessThan(first / 10)
     expect(result.groups[0]?.rows.at(-1)).toBe(changed)
   })
-
   test('starts again when the day changes', () => {
     const today = readBase('views:\n  - type: table\n    name: T\n    filters:\n      and:\n        - due == today()\n')
     const rows = [noteRow('a.md', 'due: 2026-10-04'), noteRow('b.md', 'due: 2026-10-05')]
@@ -335,7 +314,6 @@ views:
     expect(names(answer(today, 'T', rows, contextAt({ today: '2026-10-05' })).groups[0]?.rows ?? [])).toEqual(['b'])
   })
 })
-
 describe('a filter that fails on a row', () => {
   test('leaves that row out and the view stands', () => {
     const odd = readBase(
@@ -345,25 +323,21 @@ describe('a filter that fails on a row', () => {
     expect(names(answer(odd, 'T', rows, context).groups[0]?.rows ?? [])).toEqual(['a'])
   })
 })
-
 describe('the names a view gives', () => {
   test('a view by name, by place, or the first', () => {
     expect(viewOf(base, 'Board')?.type).toBe('kanban')
     expect(viewOf(base, 2)?.name).toBe('Long')
     expect(viewOf(base, 'nope')?.name).toBe('All')
   })
-
   test('a group by its key as text, the group of nothing as empty', () => {
     expect(groupName('Doing')).toBe('Doing')
     expect(groupName(null)).toBe('')
     expect(groupName({ kind: 'date', iso: '2026-10-04' })).toBe('2026-10-04')
   })
-
   test('a row by its path, a task by its line too', () => {
     expect(rowId(noteRow('a.md'))).toBe('a.md')
     expect(rowId(taskRow('a.md', '- [ ] x', 7))).toBe('a.md#7')
   })
-
   test('every default summary has a name a view can use', () => {
     const rows = [noteRow('a.md', { n: 1, b: true }), noteRow('b.md', { n: 3, b: false })]
     for (const name of DEFAULT_SUMMARIES) {
@@ -372,7 +346,6 @@ describe('the names a view gives', () => {
     }
   })
 })
-
 describe('a board', () => {
   const tagged = [
     noteRow('a.md', { tags: ['iOS', 'Sync'] as Value }),
@@ -384,7 +357,6 @@ describe('a board', () => {
     readBase(
       `orden:\n  properties:\n    tags:\n      options:\n        - value: Sync\n        - value: iOS\nviews:\n  - type: kanban\n    name: B\n    groupBy:\n      property: note.tags\n      direction: ASC\n${extra}`,
     )
-
   test('puts a card of a list in the column of each of its members', () => {
     expect(groups(answer(board(), 'B', tagged, context))).toEqual([
       ['Sync', ['a', 'b']],
@@ -393,7 +365,6 @@ describe('a board', () => {
     ])
     expect(answer(board(), 'B', tagged, context).total).toBe(4)
   })
-
   test('a table grouped by a list keeps one group per list', () => {
     const table = readBase(
       'views:\n  - type: table\n    name: T\n    groupBy:\n      property: note.tags\n      direction: ASC\n',
@@ -401,12 +372,10 @@ describe('a board', () => {
     const found = answer(table, 'T', tagged, context).groups.flatMap((one) => names(one.rows))
     expect(found.sort()).toEqual(['a', 'b', 'c', 'd'])
   })
-
   test("keeps the view's own column order, the group of no value first where it says", () => {
     const own = board('    orden:\n      groups: [iOS]\n      noneFirst: true\n')
     expect(groups(answer(own, 'B', tagged, context)).map(([key]) => key)).toEqual([null, 'iOS', 'Sync'])
   })
-
   test('orders a task by its words, and by its line as an order written before did', () => {
     const tasks = [taskRow('n.md', '- [ ] one', 0), taskRow('n.md', '- [ ] two', 1)]
     const hashed = orderId(tasks[1]!)
@@ -421,7 +390,6 @@ describe('a board', () => {
     expect(names(answer(old, 'B', tasks, context).groups[0]?.rows ?? [])).toEqual(['two', 'one'])
   })
 })
-
 describe('a formula that throws on one row', () => {
   const failing = readBase(`formulas:
   fixed: note.x.toFixed(note.places)
@@ -436,14 +404,12 @@ views:
         direction: ASC
 `)
   const some = [noteRow('Bad.md', 'x: 1\nplaces: 200'), noteRow('Good.md', 'x: 1\nplaces: 2')]
-
   test('answers nothing on that row and the view still answers', () => {
     const shown = answer(failing, 0, some, context)
     expect(names(shown.groups[0]?.rows ?? []).sort()).toEqual(['Bad', 'Good'])
     expect(cellValue(failing, 'formula.fixed', some[0]!, context)).toBeNull()
     expect(cellValue(failing, 'formula.fixed', some[1]!, context)).toBe('1.00')
   })
-
   test('and a filter that throws on a row only leaves that row out', () => {
     const filtered = readBase(`filters: note.x.toFixed(note.places) == "1.00"
 views:

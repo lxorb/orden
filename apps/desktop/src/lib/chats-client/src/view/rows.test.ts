@@ -10,12 +10,9 @@ const MIA: Who = 'user:mia'
 const MINUTE = 60_000
 const DAY = 24 * 60 * MINUTE
 const START = Date.UTC(2026, 9, 2, 9, 0)
-
 const message = (seq: number, author: Who, minutes: number, more: Partial<Message> = {}) =>
   messageOf(seq, { at: START + minutes * MINUTE, author, ...more })
-
 const dayOf = (at: number) => new Date(at).toISOString().slice(0, 10)
-
 function rows(messages: Message[], more: Partial<Rowing> = {}): Item[] {
   return rowsOf({
     messages,
@@ -27,7 +24,6 @@ function rows(messages: Message[], more: Partial<Rowing> = {}): Item[] {
     ...more,
   })
 }
-
 function said(items: Item[]): string[] {
   return items.map((item) => {
     if (item.kind === 'day') return `day ${item.day}`
@@ -38,7 +34,6 @@ function said(items: Item[]): string[] {
     }`
   })
 }
-
 describe('rows', () => {
   test('one person within five minutes is one group, under the day it is on', () => {
     expect(
@@ -53,7 +48,6 @@ describe('rows', () => {
       ),
     ).toEqual(['day 2026-10-02', 'head emil m1', 'more m2', 'head emil m3', 'head lucile m4', 'more m5'])
   })
-
   test('a new day starts a group, and says the day', () => {
     expect(said(rows([message(1, EMIL, 0), message(2, EMIL, DAY / MINUTE)]))).toEqual([
       'day 2026-10-02',
@@ -62,7 +56,6 @@ describe('rows', () => {
       'head emil m2',
     ])
   })
-
   test('the New line sits above the first unread message somebody else wrote', () => {
     const list = [message(1, LUCILE, 0), message(2, EMIL, 1), message(3, LUCILE, 2)]
     expect(said(rows(list, { readAtOpen: 1 }))).toEqual([
@@ -74,7 +67,6 @@ describe('rows', () => {
     ])
     expect(said(rows(list, { readAtOpen: 3 }))).not.toContain('new')
   })
-
   test('a deleted message goes, unless replies hang from it', () => {
     const list = [
       message(1, EMIL, 0),
@@ -84,18 +76,15 @@ describe('rows', () => {
     ]
     expect(said(rows(list))).toEqual(['day 2026-10-02', 'head emil m1', 'head emil m3', 'head emil m4'])
   })
-
   test('an agent writing for a person starts a group of its own', () => {
     const list = [message(1, EMIL, 0), message(2, EMIL, 1, { via: { agent: 'Claude Code' } })]
     expect(said(rows(list))).toEqual(['day 2026-10-02', 'head emil m1', 'head emil m2'])
   })
-
   test('posts in the outbox come last and group with the reader’s own', () => {
     const list = [message(1, EMIL, 0)]
     const outbox = [message(0, EMIL, 1, { id: 'out1' })]
     expect(said(rows(list, { outbox, readAtOpen: 0 }))).toEqual(['day 2026-10-02', 'head emil m1', 'more out1 pending'])
   })
-
   test('receipts sit under the newest message each person has read', () => {
     const list = [message(1, EMIL, 0), message(2, LUCILE, 1), message(4, EMIL, 2)]
     const reads = new Map<Who, number>([
@@ -110,12 +99,10 @@ describe('rows', () => {
       'head emil m4 seen mia',
     ])
   })
-
   test('nobody who read to before the first message drawn is drawn', () => {
     const reads = new Map<Who, number>([[LUCILE, 3]])
     expect(said(rows([message(5, EMIL, 0)], { reads }))).toEqual(['day 2026-10-02', 'head emil m5'])
   })
-
   test('a long window takes time in step with its length', () => {
     const people = [EMIL, LUCILE, MIA]
     const many = Array.from({ length: 16_000 }, (_, at) =>

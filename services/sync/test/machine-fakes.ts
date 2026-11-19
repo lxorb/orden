@@ -11,35 +11,29 @@ class FakeLink {
   silent = false
   closed = false
   private readonly listeners = new Map<string, ((event: unknown) => void)[]>()
-
   send(bytes: Uint8Array) {
     const frame = unframe(bytes) as MachineFrame
     this.sent.push(frame)
     if (frame.t === 'sleep') queueMicrotask(() => this.onSleep?.())
     if (frame.t === 'ping' && !this.silent) queueMicrotask(() => this.say({ t: 'pong' }))
   }
-
   say(frame: OrdendFrame) {
     const bytes = linkFrame(frame)
     const data = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
     for (const one of this.listeners.get('message') ?? []) one({ data })
   }
-
   addEventListener(kind: string, listener: (event: unknown) => void) {
     this.listeners.set(kind, [...(this.listeners.get(kind) ?? []), listener])
   }
-
   close() {
     if (this.closed) return
     this.closed = true
     for (const one of this.listeners.get('close') ?? []) one({})
   }
-
   take(): MachineFrame[] {
     return this.sent.splice(0, this.sent.length)
   }
 }
-
 class FakeHost implements MachineHost {
   readonly calls: string[] = []
   up = false
@@ -52,20 +46,16 @@ class FakeHost implements MachineHost {
   failBackup: Error | null = null
   hangRestore = false
   alwaysOn = false
-
   reboot(): Promise<void> {
     this.calls.push('reboot')
     return Promise.resolve()
   }
-
   remove(): Promise<void> {
     this.calls.push('remove')
     return Promise.resolve()
   }
-
   resizeSteps = 2
   failResize: Error | null = null
-
   resize(_id: string, type: string, hard: boolean): Promise<boolean> {
     this.calls.push(`resize ${type}${hard ? ' hard' : ''}`)
     const failure = this.failResize
@@ -74,7 +64,6 @@ class FakeHost implements MachineHost {
     this.resizeSteps -= 1
     return Promise.resolve(this.resizeSteps <= 0)
   }
-
   start(_id: string, image: string): Promise<void> {
     this.calls.push(`start ${image}`)
     if (this.failStart) {
@@ -84,17 +73,14 @@ class FakeHost implements MachineHost {
     this.up = true
     return Promise.resolve()
   }
-
   stop(): Promise<void> {
     this.calls.push('stop')
     this.up = false
     return Promise.resolve()
   }
-
   running(): Promise<boolean> {
     return Promise.resolve(this.up)
   }
-
   link(): Promise<WebSocket> {
     this.calls.push('link')
     if (this.failLinks > 0) {
@@ -105,12 +91,10 @@ class FakeHost implements MachineHost {
     this.link_.onSleep = this.onSleep
     return Promise.resolve(this.link_ as unknown as WebSocket)
   }
-
   snapshot(): Promise<string> {
     this.calls.push('snapshot')
     return Promise.resolve(`snap-${String(++this.snapshots)}`)
   }
-
   backup(_id: string, dir: string): Promise<string> {
     this.calls.push(`backup ${dir}`)
     const failure = this.failBackup
@@ -119,18 +103,15 @@ class FakeHost implements MachineHost {
     const id = `backup-${String(++this.backups)}`
     return Promise.resolve(JSON.stringify({ id, key: `${id}.tar.zst` }))
   }
-
   restore(_id: string, from: { snapshot?: string; backup?: string }): Promise<void> {
     this.calls.push(from.snapshot ? `restore snapshot ${from.snapshot}` : `restore backup ${from.backup ?? ''}`)
     if (from.backup && this.hangRestore) return new Promise<void>(() => undefined)
     return Promise.resolve()
   }
-
   usage(): Promise<{ cpuS: number; egressBytes: number }> {
     return Promise.resolve({ cpuS: 0, egressBytes: 0 })
   }
 }
-
 export class MachineSocket {
   readonly said: { t: string; [key: string]: unknown }[] = []
   readonly bytes: Uint8Array[] = []
@@ -139,36 +120,29 @@ export class MachineSocket {
   beatAt: Date | null = null
   readonly tags: string[] = []
   private attachment: unknown = null
-
   send(data: string | Uint8Array) {
     if (typeof data === 'string') this.said.push(JSON.parse(data) as { t: string })
     else this.bytes.push(data)
   }
-
   close(code?: number, reason?: string) {
     this.readyState = 3
     this.closedWith = { code, reason }
   }
-
   serializeAttachment(value: unknown) {
     this.attachment = structuredClone(value)
   }
-
   deserializeAttachment(): unknown {
     return structuredClone(this.attachment)
   }
-
   of(t: string) {
     return this.said.filter((one) => one.t === t)
   }
 }
-
 export interface Running {
   machine: Machine
   state: HubState
   host: FakeHost
 }
-
 export async function machine(env: Env, id: string, user: string): Promise<Running> {
   const state = new HubState()
   Object.assign(state, {
@@ -184,7 +158,6 @@ export async function machine(env: Env, id: string, user: string): Promise<Runni
   )
   return { machine: made, state, host }
 }
-
 export async function join(
   running: Running,
   viewer: Partial<Viewer> & { who: string },
@@ -210,18 +183,15 @@ export async function join(
   )
   return socket
 }
-
 export async function say(running: Running, socket: MachineSocket, frame: unknown) {
   await running.machine.webSocketMessage(
     socket as unknown as WebSocket,
     typeof frame === 'string' ? frame : JSON.stringify(frame),
   )
 }
-
 export async function ordend(running: Running, frame: OrdendFrame) {
   await running.machine.fromOrdend(frame)
 }
-
 export async function fire(running: Running): Promise<boolean> {
   const { state } = running
   if (state.alarm === null || state.alarm > Date.now()) return false
@@ -229,7 +199,6 @@ export async function fire(running: Running): Promise<boolean> {
   await running.machine.alarm()
   return true
 }
-
 export function doorway(): {
   MACHINES: DurableObjectNamespace
   asked: { id: string; headers: Headers }[]

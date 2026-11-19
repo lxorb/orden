@@ -7,10 +7,8 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
-
 document.elementFromPoint = () => null
 document.elementsFromPoint = () => []
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -22,14 +20,10 @@ Element.prototype.animate = () =>
     playState: 'finished',
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
-
 const STRIP = { left: 0, right: 1000, top: 0, bottom: 38, x: 0, y: 0, width: 1000, height: 38 }
-
 let target: HTMLElement
-
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
@@ -38,12 +32,10 @@ beforeEach(() => {
     return { ...box, toJSON: () => box }
   })
 })
-
 afterEach(() => {
   target.remove()
   vi.restoreAllMocks()
 })
-
 function pointer(type: string, clientX: number, clientY = 20, buttons = 1): PointerEvent {
   return new PointerEvent(type, {
     bubbles: true,
@@ -56,7 +48,6 @@ function pointer(type: string, clientX: number, clientY = 20, buttons = 1): Poin
     buttons,
   })
 }
-
 async function carriedOut() {
   await import('../../src/lib/tab-strip/src/carrying')
   workspace.tabs = []
@@ -78,25 +69,19 @@ async function carriedOut() {
   flushSync()
   return { app, paneId, strip }
 }
-
 test('a tab closed while carried over the panes ends the drag on the next release anywhere', async () => {
   const { app, paneId, strip } = await carriedOut()
-
   document.body.dispatchEvent(pointer('pointerup', 300, 400, 0))
   flushSync()
-
   expect(workspace.panes.dragging).toBeNull()
   expect(workspace.panes.landing).toBeNull()
   expect(workspace.tabsIn(paneId).map((one) => one.id)).toEqual(strip.slice(1))
   void unmount(app, { outro: false })
 })
-
 test('a tab closed while carried, let go outside the window, ends on the next bare move', async () => {
   const { app } = await carriedOut()
-
   document.body.dispatchEvent(pointer('pointermove', 320, 420, 0))
   flushSync()
-
   expect(workspace.panes.dragging).toBeNull()
   void unmount(app, { outro: false })
 })

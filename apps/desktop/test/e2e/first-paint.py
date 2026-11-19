@@ -1,24 +1,19 @@
 import json
 import statistics
 from pathlib import Path
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 APP = harness.APP
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 NOTES = 3000
 ROUNDS = 9
-
 SEED = """
 async (count) => {
   const open = () => new Promise((go, no) => {
@@ -108,7 +103,6 @@ async (count) => {
   return stores
 }
 """
-
 MARKS = """
 window.__marks = { tree: null, note: null, worst: 0, frames: 0, task: 0 }
 
@@ -140,9 +134,7 @@ const tick = (at) => {
 }
 requestAnimationFrame(tick)
 """
-
 WATCHING = 4000
-
 LISTING = """
 async (rounds) => {
   const ws = window.ordenApp.workspace
@@ -158,7 +150,6 @@ async (rounds) => {
   return taken.sort((a, b) => a - b)[Math.floor(rounds / 2)]
 }
 """
-
 SCAN = """
 async (rounds) => {
   const links = window.ordenApp.links
@@ -186,7 +177,6 @@ async (rounds) => {
   return { scan: taken.sort((a, b) => a - b)[Math.floor(rounds / 2)], worst }
 }
 """
-
 LIST = """
 async () => {
   const box = document.querySelector('aside [data-region="list"]')
@@ -224,10 +214,8 @@ async () => {
   return { rows: seen, scroll: worst, height: Math.round(box.scrollHeight) }
 }
 """
-
 def numbers(page: Page) -> dict[str, float]:
     return page.evaluate("() => window.__marks")
-
 def warm(page: Page, origin: str) -> None:
     page.goto(origin, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=60000)
@@ -238,26 +226,21 @@ def warm(page: Page, origin: str) -> None:
         timeout=60000,
     )
     page.wait_for_timeout(2000)
-
 def launch(page: Page, origin: str) -> dict[str, float]:
     page.goto(origin, wait_until="commit")
     page.wait_for_function("() => window.__marks && window.__marks.tree !== null", timeout=60000)
     page.wait_for_function("() => window.__marks.note !== null", timeout=60000)
-
     page.wait_for_function(
         "() => window.ordenApp && window.ordenApp.links.rootOf() && !window.ordenApp.links.scanning",
         timeout=120000,
     )
     index = page.evaluate("() => performance.now()")
-
     page.wait_for_timeout(WATCHING)
     taken = numbers(page)
     taken["index"] = index
     return taken
-
 def middle(rounds: list[dict[str, float]], key: str) -> float:
     return statistics.median(one[key] for one in rounds)
-
 SAID = [
     ("tree", "time to tree (first row painted)", "ms"),
     ("note", "time to the open note (editor painted)", "ms"),
@@ -271,9 +254,7 @@ SAID = [
     ("scroll", "worst frame gap flicking the list", "ms"),
     ("height", "how far the list runs", "px"),
 ]
-
 class Lane:
-
     def __init__(self, tag: str, folder: Path) -> None:
         self.tag = tag
         self.folder = folder
@@ -282,16 +263,13 @@ class Lane:
         self.warm: dict[str, float] = {}
         self.server: harness.Served | None = None
         self.page: Page | None = None
-
     def start(self) -> None:
         self.server = harness.Served(self.folder)
         self.origin = self.server.origin(f"{self.tag}.localhost")
         say(f"{self.tag}: serving {self.folder} on {self.origin}")
-
     def stop(self) -> None:
         if self.server:
             self.server.close()
-
     def ready(self, browser) -> None:
         context = browser.new_context(
             viewport={"width": 1440, "height": 900},
@@ -300,24 +278,19 @@ class Lane:
         context.add_init_script(MARKS)
         page = context.new_page()
         page.on("pageerror", lambda error: say(f"{self.tag}: page error: {error}"))
-
         page.goto(f"{self.origin}{harness.SEED_PATH}", wait_until="domcontentloaded")
         stores = page.evaluate(SEED, NOTES)
         say(f"{self.tag}: {NOTES} notes seeded into {stores}")
-
         self.page = page
         warm(page, self.origin)
         say(f"{self.tag}: session written")
-
     def park(self) -> None:
         if self.page:
             self.page.goto("about:blank", wait_until="domcontentloaded")
-
     def round(self) -> None:
         page = self.page
         if not page:
             return
-
         taken = launch(page, self.origin)
         self.rounds.append(taken)
         say(
@@ -327,12 +300,10 @@ class Lane:
             f"  worst frame gap {taken['worst']:.0f}ms"
             f"  longest task {taken['task']:.0f}ms"
         )
-
     def measure(self) -> None:
         page = self.page
         if not page:
             return
-
         warm(page, self.origin)
         listed = page.evaluate(LIST) or {}
         scanning = page.evaluate(SCAN, 3)
@@ -342,13 +313,11 @@ class Lane:
             "longest": scanning["worst"],
             **{key: listed[key] for key in ("rows", "scroll", "height") if key in listed},
         }
-
     def numbers(self) -> dict[str, float]:
         return {
             **{key: middle(self.rounds, key) for key, *_ in SAID if key in self.rounds[0]},
             **self.warm,
         }
-
 def main() -> int:
     if harness.OWN_BUILD:
         harness.build()
@@ -360,22 +329,18 @@ def main() -> int:
     if not lanes:
         say("nothing built")
         return 1
-
     for lane in lanes:
         lane.start()
-
     try:
         with DRIVE.session() as browser:
             for lane in lanes:
                 lane.ready(browser)
-
             for _ in range(ROUNDS):
                 for lane in lanes:
                     for other in lanes:
                         if other is not lane:
                             other.park()
                     lane.round()
-
             for lane in lanes:
                 for other in lanes:
                     if other is not lane:
@@ -384,19 +349,15 @@ def main() -> int:
     finally:
         for lane in lanes:
             lane.stop()
-
     print()
     print(f"median of {ROUNDS} launches over {NOTES} notes, run turn and turn about:")
     print(f"  {'':44} {'  '.join(f'{lane.tag:>9}' for lane in lanes)}")
     found = {lane.tag: lane.numbers() for lane in lanes}
-
     for key, words, unit in SAID:
         row = "  ".join(f"{found[lane.tag].get(key, 0):7.0f}{unit:<2}" for lane in lanes)
         print(f"  {words:44} {row}")
-
     print()
     print(json.dumps({tag: {key: round(value) for key, value in one.items()} for tag, one in found.items()}))
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

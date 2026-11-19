@@ -5,17 +5,14 @@ import { backtracksWildly, patternJudge } from '@orden/markdown/pattern-cost'
 export const LOOP_LIMIT = 3000
 const SPIN = '__ordenSpin'
 const LOOPS = new Set(['ForStatement', 'WhileStatement', 'DoStatement'])
-
 export function guarded(code: string): string | null {
   const tree = parser.parse(code)
   const edits: { at: number; text: string }[] = []
   const found = { broken: false }
-
   tree.iterate({
     enter(node) {
       if (node.type.isError) found.broken = true
       if (!LOOPS.has(node.name)) return
-
       const body = node.name === 'DoStatement' ? node.node.firstChild?.nextSibling : node.node.lastChild
       if (!body) {
         found.broken = true
@@ -29,15 +26,12 @@ export function guarded(code: string): string | null {
       }
     },
   })
-
   if (found.broken) return null
   if (!edits.length) return code
-
   let out = code
   for (const edit of edits.sort((a, b) => b.at - a.at)) out = out.slice(0, edit.at) + edit.text + out.slice(edit.at)
   return out
 }
-
 const PRELUDE = `;(function () {
   var since = 0
   var armed = false
@@ -63,9 +57,7 @@ const PRELUDE = `;(function () {
     },
   })
 })()`
-
 const MADE_WILD = 'Orden makes no pattern that could take forever to match: it could not stop it'
-
 const PATTERNS = `;(function () {
   var wild = (${patternJudge.toString()})().backtracksWildly
   var Native = RegExp
@@ -166,13 +158,9 @@ const PATTERNS = `;(function () {
     })
   })
 })()`
-
 const UNREAD = 'Orden could not read this script, so it does not run it'
-
 const WILD = 'Orden does not run a script with a pattern that could take forever to match: it could not stop it'
-
 const MADE = new Set(['NewExpression', 'CallExpression'])
-
 const ESCAPES: Record<string, string> = {
   n: '\n',
   t: '\t',
@@ -182,7 +170,6 @@ const ESCAPES: Record<string, string> = {
   v: '\v',
   '0': '\0',
 }
-
 function written(literal: string): string | null {
   if (literal.startsWith('`') && literal.includes('${')) return null
   let out = ''
@@ -213,7 +200,6 @@ function written(literal: string): string | null {
   }
   return out
 }
-
 function patternMade(code: string, node: { node: SyntaxNode }): [string, string] | null {
   const callee = node.node.getChild('VariableName')
   if (callee === null || code.slice(callee.from, callee.to) !== 'RegExp') return null
@@ -229,7 +215,6 @@ function patternMade(code: string, node: { node: SyntaxNode }): [string, string]
       : ''
   return [source, flags ?? '']
 }
-
 export function backtracks(code: string): boolean {
   let wild = false
   parser.parse(code).iterate({
@@ -248,23 +233,18 @@ export function backtracks(code: string): boolean {
   })
   return wild
 }
-
 const ELSEWHERE = 'Orden does not run a script from elsewhere in a block: it could not stop one that never ends'
-
 const ADDRESSES = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'data'])
-
 function runs(script: HTMLScriptElement): boolean {
   const type = (script.getAttribute('type') ?? '').trim().toLowerCase()
   if (type === 'module') return true
   if (script.hasAttribute('nomodule')) return false
   return type === '' || /^(?:text|application)\/(?:x-)?(?:java|ecma)script$/.test(type)
 }
-
 function refuse(script: HTMLScriptElement, why: string) {
   script.removeAttribute('src')
   script.textContent = `console.error(${JSON.stringify(why)})`
 }
-
 function scripted(attribute: Attr): boolean {
   const name = attribute.name.toLowerCase()
   if (name.startsWith('on')) return true
@@ -274,7 +254,6 @@ function scripted(attribute: Attr): boolean {
     if (attribute.value.charCodeAt(at) > 32) written += attribute.value.charAt(at)
   return written.toLowerCase() === 'javascript:'
 }
-
 function unhandled(root: DocumentFragment): boolean {
   let changed = false
   for (const element of root.querySelectorAll('*')) {
@@ -286,14 +265,12 @@ function unhandled(root: DocumentFragment): boolean {
   }
   return changed
 }
-
 export function guardedBlock(html: string): string {
   const holder = document.createElement('template')
   holder.innerHTML = html
   const changed = unhandled(holder.content)
   const scripts = [...holder.content.querySelectorAll('script')].filter(runs)
   if (!scripts.length) return changed ? holder.innerHTML : html
-
   for (const script of scripts) {
     if (script.hasAttribute('src')) {
       refuse(script, ELSEWHERE)

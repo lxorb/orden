@@ -48,13 +48,11 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .line:hover {
       color: var(--text);
     }
   }
-
   .caret {
     flex: none;
     width: 11px;
@@ -66,15 +64,12 @@
     stroke-linejoin: round;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .caret.open {
     transform: rotate(90deg);
   }
-
   .verb {
     flex: none;
   }
-
   .object {
     min-width: 0;
     overflow: hidden;
@@ -82,34 +77,28 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .object.code {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
   }
-
   .line :global(.tally) {
     flex: none;
     font-size: inherit;
     font-variant-numeric: tabular-nums;
   }
-
   .going .verb {
     animation: breathe calc(var(--dur-slow) * 4) var(--ease-in-out) infinite;
   }
-
   @keyframes breathe {
     50% {
       opacity: 0.45;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .going .verb {
       animation: none;
     }
   }
-
   .failed .verb {
     color: var(--danger);
   }

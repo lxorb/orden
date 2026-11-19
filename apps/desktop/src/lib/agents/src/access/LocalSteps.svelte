@@ -7,15 +7,11 @@
   import type { AgentsPane } from '../settings/pane.svelte'
 
   const { pane, client }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'antigravity' | 'other' } = $props()
-
   const lineOf = (way: typeof client): McpClient =>
     way === 'claude-code' ? 'claude' : way === 'codex' ? 'codex' : 'json'
-
   let making = $state(false)
   let name = $state('')
-
   const line = $derived(pane.program === null ? null : mcpLine(pane.program, lineOf(client)))
-
   function fold() {
     making = !making
     if (making) return
@@ -90,42 +86,35 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .disclose:hover {
       color: var(--text-strong);
     }
   }
-
   .disclose:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
-
   .disclose .chevron {
     width: 12px;
     height: 12px;
     stroke: currentColor;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .disclose .chevron.open {
     transform: rotate(90deg);
   }
-
   .made {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     padding-inline-start: 17px;
   }
-
   .make {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .named {
     flex: 1;
     min-width: 0;
@@ -138,11 +127,9 @@
     font-size: var(--text-sm);
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .named::placeholder {
     color: var(--muted);
   }
-
   .named:focus {
     background: var(--bg);
   }

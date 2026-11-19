@@ -10,20 +10,13 @@ import { heard, isStopped, nothing, overviewed, type Seen, wrote } from './seen'
 import type { Source } from './source'
 
 export const MOST_LOG_LINES = 5_000
-
 export class Activity {
   seen = $state<Seen>(nothing())
-
   now = $state(Date.now())
-
   lines = $state.raw<readonly unknown[]>([])
-
   holds = $state(false)
-
   constructor(readonly source: Source) {}
-
   private meanwhile: AgentEvent[] | null = null
-
   async load(): Promise<void> {
     this.meanwhile = []
     try {
@@ -36,13 +29,10 @@ export class Activity {
       this.meanwhile = null
     }
   }
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
   private answering = new Set<string>()
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
   private shown = new Set<string>()
-
   hear(event: AgentEvent): void {
     const now = Date.now()
     this.meanwhile?.push(event)
@@ -58,7 +48,6 @@ export class Activity {
       void this.show(said.tab, false)
     }
     this.now = now
-
     if (event.kind === 'connected' && event.agents.some((one) => !this.grantOf(one))) {
       void this.source
         .state()
@@ -66,22 +55,18 @@ export class Activity {
         .catch(() => undefined)
     }
   }
-
   wrote(agent: string, tabs: readonly string[]): void {
     const now = Date.now()
     wrote(this.seen, agent, tabs, now)
     this.now = now
   }
-
   private logDay = ''
   private logTo = 0
   private logging: Promise<void> = Promise.resolve()
-
   readLog(): Promise<void> {
     this.logging = this.logging.catch(() => undefined).then(() => this.readMore())
     return this.logging
   }
-
   private async readMore(): Promise<void> {
     const day = today()
     const same = day === this.logDay
@@ -91,19 +76,15 @@ export class Activity {
     this.logDay = day
     this.logTo = read.to
   }
-
   grantOf(agent: string): Grant | undefined {
     return this.seen.agents.find((one) => one.id === agent)
   }
-
   nameOf(agent: string): string {
     return this.grantOf(agent)?.name ?? agent
   }
-
   colourOf(agent: string): string {
     return accentFor(this.nameOf(agent), theme.current)
   }
-
   get listed(): string[] {
     const seen = this.seen
     const ids = [
@@ -113,36 +94,28 @@ export class Activity {
     ]
     return ids.filter((one, at) => ids.indexOf(one) === at)
   }
-
   callsOf(agent: string): Call[] {
     return callsOf(this.lines, agent)
   }
-
   stopped(agent: string): boolean {
     return isStopped(this.seen, agent)
   }
-
   get questions(): Approval[] {
     return this.seen.approvals.filter((one) => one.category !== 'pairing')
   }
-
   async stop(agent?: string): Promise<void> {
     await this.source.stop(agent)
   }
-
   async resume(agent?: string): Promise<void> {
     await this.source.resume(agent)
   }
-
   async act(tab: string, what: TabAct): Promise<void> {
     const agent = this.seen.acting[tab]?.agent
     if (agent === undefined) return
-
     if (what === 'stop') await this.source.stop(agent)
     else if (agent in this.seen.halted) await this.source.resume(agent)
     else if (this.seen.stopped !== null) await this.source.resume()
   }
-
   async answer(approval: Approval, allow: boolean, always = false): Promise<void> {
     this.answering.add(approval.id)
     const answered = await this.source.answer(approval.id, allow, always)
@@ -150,7 +123,6 @@ export class Activity {
       await this.show(answered.tab, true)
     }
   }
-
   async show(agentTab: string, front = true): Promise<void> {
     const held = this.seen.tabs[agentTab]
     if (!held || this.shown.has(agentTab)) return
@@ -158,7 +130,6 @@ export class Activity {
     try {
       const id = workspace.openPage(held.url, front ? 'front' : 'behind', workspace.activeTabId ?? undefined)
       if (id === null) return
-
       const touch = this.seen.acting[agentTab]
       if (touch) this.seen.acting[id] = touch
       const handing = () => this.source.adopt(agentTab, id)
@@ -168,29 +139,23 @@ export class Activity {
       this.shown.delete(agentTab)
     }
   }
-
   peek(agentTab: string): Promise<Picture> {
     return this.source.peek(agentTab)
   }
-
   goTo(tab: string): void {
     if (workspace.tabs.some((one) => one.id === tab)) workspace.activate(tab)
   }
-
   async addToNote(agent: string): Promise<void> {
     await this.readLog()
     await keepInNote(sessionMarkdown(this.nameOf(agent), this.callsOf(agent)))
   }
-
   undoable(agent: string): string | null {
     const path = workspace.active?.path ?? null
     return touchedBy(path).some((one) => one.id === agent) ? path : null
   }
-
   async undo(agent: string): Promise<void> {
     const path = this.undoable(agent)
     if (path === null) return
-
     const { undoAgentIn } = await agentDocs()
     await undoAgentIn({ id: agent, name: this.nameOf(agent) }, path)
   }

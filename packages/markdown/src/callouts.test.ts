@@ -10,20 +10,17 @@ describe('a callout’s opening line', () => {
     expect(calloutOf('[!NOTE]')?.type).toBe('note')
     expect(calloutOf('[!Warning]')?.type).toBe('warning')
   })
-
   test('resolves an alias to the look it wears, keeping the word that was written', () => {
     const found = calloutOf('[!hint] Try this')
     expect(found?.type).toBe('hint')
     expect(found?.look).toBe('tip')
   })
-
   test('leaves a type nothing knows without a look', () => {
     const found = calloutOf('[!recipe]')
     expect(found?.type).toBe('recipe')
     expect(found?.look).toBeNull()
     expect(found?.label).toBe('Recipe')
   })
-
   test('leaves a type an object would answer from its prototype without a look; folds the two GitHub alert kinds in, the way Obsidian does', () => {
     for (const word of ['constructor', 'Constructor', '__proto__', 'toString', 'hasOwnProperty']) {
       const found = calloutOf(`[!${word}] T`)
@@ -35,7 +32,6 @@ describe('a callout’s opening line', () => {
     expect(calloutOf('[!caution]')?.look).toBe('warning')
     expect(calloutOf('[!caution]')?.type).toBe('caution')
   })
-
   test('knows the thirteen types Obsidian has, and every alias of them', () => {
     const types = 'note abstract info todo tip success question warning failure danger bug example quote'.split(' ')
     for (const type of types) expect(calloutOf(`[!${type}]`)?.look, type).toBe(type)
@@ -59,7 +55,6 @@ describe('a callout’s opening line', () => {
       expect(calloutOf(`[!${word}]`)?.look, word).toBe(look)
     }
   })
-
   test('says the words that are not words in capitals; reads the fold sign, and reads none as none; takes the rest of the line as the title', () => {
     expect(calloutOf('[!tldr]')?.label).toBe('TLDR')
     expect(calloutOf('[!faq]')?.label).toBe('FAQ')
@@ -71,7 +66,6 @@ describe('a callout’s opening line', () => {
     expect(calloutOf('[!tip]-   Mind the gap  ')?.title).toBe('Mind the gap')
     expect(calloutOf('[!tip]')?.title).toBe('')
   })
-
   test('measures the marker line so the words after it can be cut off exactly; leaves nothing behind for a marker on a line of its own; reads a marker the writer indented', () => {
     const found = calloutOf('[!tip]- Mind the gap\nBelow it.')
     expect(found?.taken).toBe('[!tip]- Mind the gap\n'.length)
@@ -81,7 +75,6 @@ describe('a callout’s opening line', () => {
     expect(calloutOf('  [!note] Titled')?.taken).toBe('  [!note] Titled'.length)
   })
 })
-
 describe('a callout’s icon', () => {
   test('is one svg with every child closed, so an EPUB can be parsed; is nothing for a type nothing knows; is nothing for those, and the note around them still renders', () => {
     const icon = calloutIcon('warning')
@@ -100,7 +93,6 @@ describe('a callout’s icon', () => {
       expect(html).not.toContain('callout-icon')
     }
   })
-
   test('draws in the colour of the words around it', () => {
     expect(calloutIcon('note')).toContain('stroke="currentColor"')
   })

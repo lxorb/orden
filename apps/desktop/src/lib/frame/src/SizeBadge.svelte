@@ -5,26 +5,20 @@
   import { modes } from '../../modes/src/api'
 
   const HELD = 900
-
   let shown = $state(false)
   let last = modes.zoom
   let timer: ReturnType<typeof setTimeout> | undefined
-
   $effect(() => {
     const size = modes.zoom
     if (size === last) return
-
     last = size
     shown = true
-
     clearTimeout(timer)
     timer = setTimeout(() => {
       shown = false
     }, HELD)
   })
-
   onDestroy(() => clearTimeout(timer))
-
   const percent = $derived(Math.round(modes.zoom * 100))
 </script>
 

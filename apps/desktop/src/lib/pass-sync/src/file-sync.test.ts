@@ -9,9 +9,7 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
-
 const BYTES = new Uint8Array([1, 2, 3])
-
 function worldWith(waiting: FileWaiting[], put: FileApi['put']) {
   const kept = new Map<string, unknown>([['files-waiting', waiting]])
   const sent: string[] = []
@@ -42,9 +40,7 @@ function worldWith(waiting: FileWaiting[], put: FileApi['put']) {
   } as unknown as SyncWorld
   return { world, rows, sent }
 }
-
 const waiting = (item: string): FileWaiting => ({ item, file: `${item}-f`, parts: 1, gone: null })
-
 describe('an attachment the account will not take now', () => {
   test.each([
     ['out of space', () => new FileRefused(507, 'out of space')],
@@ -58,13 +54,11 @@ describe('an attachment the account will not take now', () => {
     expect(sent).toEqual(['b'])
     expect(await waitingFiles(rows)).toEqual([waiting('a')])
   })
-
   test('that is refused for good is let go', async () => {
     const { world, rows } = worldWith([waiting('a')], () => Promise.reject(new FileRefused(413, 'too big', true)))
     await expect(pushedFiles(world)).resolves.toBe('sent')
     expect(await waitingFiles(rows)).toEqual([])
   })
-
   test.each([403, 413])('that something in the way answers %i for stays queued', async (status) => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('<html>blocked</html>', { status })))
     const real = fileApi('https://orden.so', 't')
@@ -72,7 +66,6 @@ describe('an attachment the account will not take now', () => {
     await expect(pushedFiles(world)).resolves.toBe('stuck')
     expect(await waitingFiles(rows)).toEqual([waiting('a')])
   })
-
   test('that the account refuses for good through the network is let go', async () => {
     vi.stubGlobal('fetch', () =>
       Promise.resolve(Response.json({ error: 'your role in this vault does not allow that' }, { status: 403 })),
@@ -82,13 +75,11 @@ describe('an attachment the account will not take now', () => {
     await expect(pushedFiles(world)).resolves.toBe('sent')
     expect(await waitingFiles(rows)).toEqual([])
   })
-
   test('for a fault of this device still stops the sync', async () => {
     const { world } = worldWith([waiting('a')], () => Promise.reject(new RangeError('broken')))
     await expect(pushedFiles(world)).rejects.toThrow(RangeError)
   })
 })
-
 describe('a file part sent to the account', () => {
   test('that never finishes is given up, as a network that is not there', async () => {
     vi.useFakeTimers()

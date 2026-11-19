@@ -4,6 +4,5 @@ export function hashOf(text: string): string {
     hash ^= text.charCodeAt(at)
     hash = Math.imul(hash, 0x01000193)
   }
-
   return (hash >>> 0).toString(16).padStart(8, '0')
 }

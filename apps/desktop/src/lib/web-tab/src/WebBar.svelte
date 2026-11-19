@@ -69,33 +69,26 @@
       onadd: (anchor: HTMLElement) => void
     } | null
   } = $props()
-
   const progress = $derived(progressOf(downloads.list))
   const RING = 2 * Math.PI * 10
   const mark = $derived(siteMark(page.icon, page.url))
   let marked = $state(true)
-
   $effect(() => {
     if (mark) marked = true
   })
-
   let field = $state<{ take(): void }>()
   const resting = $derived(shownUrl(page.url ?? ''))
   const started = untrack(() => page.url === null)
-
   onMount(() => {
     const was = page.keyboard
     page.keyboard = null
     if (focused && (was === 'address' || (started && !page.seen))) take()
     else if (focused && was === 'page' && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
     page.seen = true
-
     const key = (event: KeyboardEvent) => {
       if (!focused || overlays.depth > 0) return
-
       const said = barKey(event, shortcuts)
       if (!said || (said.to === 'zoom' && !page.live)) return
-
       event.preventDefault()
       if (said.to === 'address') take()
       else if (said.to === 'history' || said.to === 'clear') onbrowser(said.to)
@@ -103,14 +96,11 @@
       else if (said.to === 'zoom') onzoom(said.step)
       else showTab(said.at)
     }
-
     const escape = (event: KeyboardEvent) => {
       if (!focused || !stops(event, page.loading, shortcuts)) return
-
       event.preventDefault()
       onstep('stop')
     }
-
     window.addEventListener('keydown', key, true)
     window.addEventListener('keydown', escape)
     return () => {
@@ -119,17 +109,14 @@
       if (focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
     }
   })
-
   function take() {
     field?.take()
   }
-
   const answered = untrack(() => addressing.asked)
   $effect(() => {
     const asked = addressing.asked
     if (asked && asked !== answered && asked.page === page) untrack(take)
   })
-
   let row = $state<HTMLElement>()
   let alone = $state(false)
   $effect(() => {
@@ -269,57 +256,46 @@
       background-color var(--dur-slow) var(--ease-out),
       border-color var(--dur-slow) var(--ease-out);
   }
-
   .webbar.alone {
     row-gap: 0;
   }
-
   .webbar.alone::before {
     content: '';
     order: 1;
     flex: 1 1 0;
   }
-
   .webbar.alone > :global(.field) ~ :global(*) {
     order: 2;
   }
-
   .webbar.alone::after {
     content: '';
     order: 3;
     flex-basis: 100%;
     height: var(--space-1);
   }
-
   .webbar.alone > :global(.field) {
     order: 4;
   }
-
   .webbar.grounded {
     border-bottom-color: transparent;
   }
-
   .site {
     margin-inline-start: var(--space-1);
   }
-
   .privately {
     flex: none;
     display: flex;
     align-items: center;
     color: var(--muted-strong);
   }
-
   .mark {
     width: var(--icon-md);
     height: var(--icon-md);
     border-radius: var(--radius-sm);
   }
-
   .saving {
     position: relative;
   }
-
   .orden-glyph > .ring {
     position: absolute;
     top: 2px;
@@ -328,24 +304,20 @@
     height: calc(100% - 4px);
     transform: rotate(-90deg);
   }
-
   .ring > circle {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
     transition: stroke-dashoffset var(--dur-base) var(--ease-out);
   }
-
   .orden-glyph > .ring.sweeping {
     animation: turn 1s linear infinite;
   }
-
   @media (prefers-reduced-motion: reduce) {
     .orden-glyph > .ring.sweeping {
       animation: none;
     }
   }
-
   @keyframes turn {
     to {
       transform: rotate(1turn);

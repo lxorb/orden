@@ -14,9 +14,7 @@ const SAID = [
   '{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","resetsAt":1790819400,"rateLimitType":"five_hour","unifiedWindows":{"five_hour":{"utilization":0.26,"resetsAt":1790819400}}},"session_id":"s"}',
   '{"type":"result","subtype":"success","is_error":false,"result":"ok","session_id":"s","total_cost_usd":0.004}',
 ]
-
 const readAll = (lines: readonly string[]): Heard[] => lines.map(claudeReader())
-
 describe('an answer', () => {
   test('arrives delta by delta, once, with the model named without its [1m]', () => {
     const heard = readAll(SAID)
@@ -24,12 +22,10 @@ describe('an answer', () => {
     expect(heard.find((one) => one.model)?.model).toBe('claude-opus-5-5')
     expect(heard.some((one) => one.trouble)).toBe(false)
   })
-
   test('says where the plan stands', () => {
     const limit = readAll(SAID).find((one) => one.limit)?.limit
     expect(limit).toEqual({ state: 'fine', until: 1790819400_000, untilWords: null })
   })
-
   test('is the whole message where a version printed no deltas', () => {
     const plain = SAID.filter((line) => !line.includes('content_block_delta'))
     expect(
@@ -38,21 +34,18 @@ describe('an answer', () => {
         .join(''),
     ).toBe('ok')
   })
-
   test('never takes words from a subagent', () => {
     const read = claudeReader()
     expect(
       read('{"type":"assistant","message":{"content":[{"type":"text","text":"inner"}]},"parent_tool_use_id":"t"}'),
     ).toEqual({})
   })
-
   test('reads past a line that is not an event', () => {
     const read = claudeReader()
     expect(read('Update available: 2.1.281')).toEqual({})
     expect(read('')).toEqual({})
   })
 })
-
 describe('a failure', () => {
   test('signed out is told apart', () => {
     const read = claudeReader()
@@ -62,7 +55,6 @@ describe('a failure', () => {
     expect(heard.trouble).toBe('Not logged in · Please run /login')
     expect(heard.signedOut).toBe(true)
   })
-
   test('the plan at its limit carries when it resets', () => {
     const read = claudeReader()
     expect(
@@ -77,7 +69,6 @@ describe('a failure', () => {
       'reached',
     )
   })
-
   test('an error with no words is its subtype', () => {
     const read = claudeReader()
     expect(read('{"type":"result","subtype":"error_during_execution","is_error":true}').trouble).toBe(
@@ -85,7 +76,6 @@ describe('a failure', () => {
     )
   })
 })
-
 describe('a session turn', () => {
   test('thinks, calls Orden’s tools by their own names and hears their answers', () => {
     const read = claudeReader()
@@ -105,7 +95,6 @@ describe('a session turn', () => {
       ).tool,
     ).toEqual({ id: 'u1', name: '', done: { text: 'Herons wade.', error: false } })
   })
-
   test('knows the app’s own tools under its new server name as well', () => {
     const read = claudeReader()
     expect(
@@ -114,7 +103,6 @@ describe('a session turn', () => {
       ).tool,
     ).toEqual({ id: 'u2', name: 'read_note', args: { path: 'Herons.md' } })
   })
-
   test('counts the request, and learns the window from the result', () => {
     const read = claudeReader()
     expect(
@@ -131,7 +119,6 @@ describe('a session turn', () => {
     expect(end.ended).toBe('end')
     expect(end.usage).toEqual({ input: 530, cached: 500, output: 42, window: 1000000 })
   })
-
   test('a compaction is said, and a failed turn ends in error', () => {
     const read = claudeReader()
     expect(read('{"type":"system","subtype":"compact_boundary"}').compacted).toBe(true)

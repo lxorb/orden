@@ -6,10 +6,8 @@ import '../test/no-device'
 const { pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const Generator = (await import('./Generator.svelte')).default
-
 let ui: InstanceType<typeof PassUi>
 const used = vi.fn<(password: string) => void>()
-
 beforeEach(() => {
   localStorage.clear()
   used.mockClear()
@@ -17,15 +15,12 @@ beforeEach(() => {
   ui.sheet = { kind: 'generator', use: used }
   showing(Generator, { ui })
 })
-
 afterEach(() => {
   closed()
   document.body.innerHTML = ''
   vi.restoreAllMocks()
 })
-
 const result = () => document.querySelector('.generated')?.textContent ?? ''
-
 function button(name: string): HTMLButtonElement {
   const found = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
     (one) => one.textContent.trim() === name || one.getAttribute('aria-label') === name,
@@ -33,7 +28,6 @@ function button(name: string): HTMLButtonElement {
   if (!found) throw new Error(`no ${name}`)
   return found
 }
-
 describe('the generator', () => {
   test('makes a password as long as asked, of the kinds asked', () => {
     expect(result()).toHaveLength(20)
@@ -43,20 +37,17 @@ describe('the generator', () => {
     slider.dispatchEvent(new Event('input', { bubbles: true }))
     flushSync()
     expect(result()).toHaveLength(8)
-
     button('Symbols').click()
     button('Numbers').click()
     button('Capital letters').click()
     flushSync()
     expect(result()).toMatch(/^[a-z]{8}$/)
   })
-
   test('makes words in the memorable mode', () => {
     button('Memorable').click()
     flushSync()
     expect(result().match(/(?:^|-)[A-Z]/g)).toHaveLength(5)
   })
-
   test('hands the password to Use and closes', () => {
     const made = result()
     button('Use').click()
@@ -64,14 +55,12 @@ describe('the generator', () => {
     expect(used).toHaveBeenCalledWith(made)
     expect(ui.sheet).toBeNull()
   })
-
   test('copies through Pass', () => {
     const copy = vi.spyOn(pass, 'copy').mockResolvedValue()
     const made = result()
     button('Copy').click()
     expect(copy).toHaveBeenCalledWith(made)
   })
-
   test('makes another on Regenerate', () => {
     const first = result()
     button('Regenerate').click()

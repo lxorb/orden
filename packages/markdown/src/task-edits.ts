@@ -25,7 +25,6 @@ import {
 } from './task-line'
 
 export type TaskChange = { [K in keyof TaskFields]?: TaskFields[K] | null }
-
 const RANK: Record<FieldToken['field'], number> = {
   time: 10,
   duration: 11,
@@ -47,9 +46,7 @@ const RANK: Record<FieldToken['field'], number> = {
   block: 50,
   tag: 20,
 }
-
 const WRITTEN: readonly FieldName[] = [...ORDEN_FIELDS, ...TASKS_FIELDS, 'block']
-
 function valueText(field: FieldName, fields: Partial<TaskFields>, form: 'emoji' | 'bracket'): string | null {
   switch (field) {
     case 'priority': {
@@ -83,11 +80,9 @@ function valueText(field: FieldName, fields: Partial<TaskFields>, form: 'emoji' 
     }
   }
 }
-
 function fieldText(field: FieldName, value: string, form: 'emoji' | 'bracket'): string {
   if (field === 'block') return `^${value}`
   if (form === 'bracket' || ORDEN_FIELDS.includes(field)) return `[${KEY_BY_FIELD[field]}:: ${value}]`
-
   switch (field) {
     case 'priority':
       return value
@@ -113,24 +108,20 @@ function fieldText(field: FieldName, value: string, form: 'emoji' | 'bracket'): 
       return `${EMOJI_BY_DATE[field] ?? ''} ${value}`
   }
 }
-
 function bracketStyle(parsed: ParsedTask): boolean {
   const tasks = parsed.tokens.filter(
     (token) => token.field !== 'tag' && token.field !== 'other' && TASKS_FIELDS.includes(token.field),
   )
   return tasks.length > 0 && tasks.every((token) => token.form !== 'emoji')
 }
-
 function removal(line: string, from: number, to: number, wordsFrom: number): TextEdit {
   let start = from
   while (start > wordsFrom && /[ \t]/.test(line.charAt(start - 1))) start--
   if (start > wordsFrom) return { from: start, to, insert: '' }
-
   let end = to
   while (end < line.length && /[ \t]/.test(line.charAt(end))) end++
   return { from, to: end, insert: '' }
 }
-
 function removals(line: string, spans: readonly { from: number; to: number }[], wordsFrom: number): TextEdit[] {
   const runs: { from: number; to: number }[] = []
   for (const span of [...spans].sort((a, b) => a.from - b.from)) {
@@ -140,9 +131,7 @@ function removals(line: string, spans: readonly { from: number; to: number }[], 
   }
   return runs.map((run) => removal(line, run.from, run.to, wordsFrom))
 }
-
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
-
 function nextStatus(fields: TaskFields, change: TaskChange): string | null {
   let status = fields.status
   if (change.status != null) status = change.status
@@ -152,23 +141,19 @@ function nextStatus(fields: TaskFields, change: TaskChange): string | null {
   else if (change.cancelled === false && fields.cancelled) status = ' '
   return status === fields.status ? null : status
 }
-
 function touches(change: TaskChange, token: FieldToken): boolean {
   if (token.field === 'other') return change.fields != null
   if (token.field === 'tag') return false
   return token.field in change || (token.field === 'time' && 'zone' in change)
 }
-
 interface Arrival {
   rank: number
   text: string
 }
-
 export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const parsed = parseTask(line)
   if (!parsed) return []
   const change = withoutOrphans(parsed.fields, asked)
-
   const { fields, tokens } = parsed
   const edits: TextEdit[] = []
   const gone = new Set<FieldToken>()
@@ -177,7 +162,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const form = bracketStyle(parsed) ? 'bracket' : 'emoji'
   const status = nextStatus(fields, change)
   if (status !== null) edits.push({ from: parsed.box + 1, to: parsed.box + 1 + fields.status.length, insert: status })
-
   const textChanges = change.text != null && change.text !== fields.text
   let newWords = ''
   if (textChanges) {
@@ -190,7 +174,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
     edits.push({ from: parsed.wordsFrom, to: parsed.wordsTo, insert: open + words + close })
     for (const token of inline) gone.add(token)
   }
-
   if (change.tags != null && !same(change.tags, fields.tags)) {
     const next = change.tags
     const spans: { from: number; to: number }[] = []
@@ -210,7 +193,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
       arriving.push({ rank: RANK.tag, text: `#${tag}` })
     }
   }
-
   if (textChanges && change.tags != null) {
     const onLine = new Set([
       ...tagsIn(newWords),
@@ -224,11 +206,9 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
       }
     }
   }
-
   for (const field of WRITTEN) {
     const touched = field in change || (field === 'time' && 'zone' in change)
     if (!touched) continue
-
     const after: Partial<TaskFields> = { ...fields }
     const given = change[field]
     if (given === null) Reflect.deleteProperty(after, field)
@@ -239,14 +219,12 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
     }
     if (field === 'priority' && given === null) after.priority = NO_PRIORITY
     if ((field === 'remind' || field === 'dependsOn') && given === null) after[field] = []
-
     const written = tokens.filter((one) => one.field === field && !gone.has(one))
     const token = written.at(-1)
     const was = token ? valueText(field, fields, token.form === 'emoji' ? 'emoji' : 'bracket') : null
     const tokenForm = token?.form === 'emoji' ? 'emoji' : token ? 'bracket' : form
     const value = valueText(field, after, tokenForm)
     if (value === was || (token === undefined && value === null)) continue
-
     if (token && value === null) {
       const every = tokens.filter(
         (one) => !gone.has(one) && (one.field === field || (one.key !== undefined && fieldOfKey(one.key) === field)),
@@ -264,14 +242,11 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
       arriving.push({ rank: RANK[field], text: fieldText(field, value, form) })
     }
   }
-
   edits.push(...unknownFieldEdits(parsed, change, gone, arriving, taking))
   edits.push(...arrivals(line, parsed, gone, arriving))
   edits.push(...removals(line, taking, parsed.wordsFrom))
-
   return ordered(edits)
 }
-
 function unknownFieldEdits(
   parsed: ParsedTask,
   change: TaskChange,
@@ -283,9 +258,7 @@ function unknownFieldEdits(
   const edits: TextEdit[] = []
   const next = change.fields
   const before = parsed.fields.fields
-
   const own = (fields: Record<string, string>, key: string) => (Object.hasOwn(fields, key) ? fields[key] : undefined)
-
   for (const token of parsed.tokens) {
     if (token.field !== 'other' || token.key === undefined) continue
     const key = token.key.trim()
@@ -306,7 +279,6 @@ function unknownFieldEdits(
   }
   return edits
 }
-
 function tagsAmongWords(line: string, tag: string, from: number, to: number): number[] {
   const words = line.slice(from, to)
   const code = codeSpans(words)
@@ -318,12 +290,10 @@ function tagsAmongWords(line: string, tag: string, from: number, to: number): nu
   }
   return found
 }
-
 function arrivals(line: string, parsed: ParsedTask, gone: Set<FieldToken>, arriving: Arrival[]): TextEdit[] {
   const staying = parsed.tokens.filter((token) => !token.inline && !gone.has(token))
   const before = new Map<number, Arrival[]>()
   const after: Arrival[] = []
-
   for (const arrival of arriving) {
     const next = staying.find((token) => RANK[token.field] > arrival.rank)
     if (next) {
@@ -332,13 +302,11 @@ function arrivals(line: string, parsed: ParsedTask, gone: Set<FieldToken>, arriv
       else before.set(next.from, [arrival])
     } else after.push(arrival)
   }
-
   const byRank = (list: Arrival[]) =>
     [...list]
       .sort((a, b) => a.rank - b.rank)
       .map((one) => one.text)
       .join(' ')
-
   const edits: TextEdit[] = [...before].map(([at, list]) => ({
     from: at,
     to: at,
@@ -351,13 +319,10 @@ function arrivals(line: string, parsed: ParsedTask, gone: Set<FieldToken>, arriv
   }
   return edits
 }
-
 const ordered = (edits: TextEdit[]): TextEdit[] =>
   edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
-
 const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
 const takes = (value: string | null | undefined) => value === null || value === ''
-
 export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
   if (!DATES.some((date) => fields[date] !== undefined)) return false
   return !DATES.some((date) => {
@@ -365,7 +330,6 @@ export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
     return said === undefined ? fields[date] !== undefined : !takes(said)
   })
 }
-
 function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
   if (fields.recurrence === undefined && fields.time === undefined) return change
   if (!lastDateTaken(fields, change)) return change
@@ -374,9 +338,7 @@ function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
   if (change.time === undefined) out.time = null
   return out
 }
-
 export const changedTask = (line: string, change: TaskChange): string => appliedEdits(line, writeTask(line, change))
-
 export function taskLine(fields: TaskFields, prefix = '- '): string {
   const parts = [fields.text]
   for (const field of ORDEN_FIELDS) {
@@ -384,16 +346,12 @@ export function taskLine(fields: TaskFields, prefix = '- '): string {
     if (value !== null) parts.push(fieldText(field, value, 'bracket'))
   }
   for (const [key, value] of Object.entries(fields.fields)) parts.push(`[${key}:: ${value}]`)
-
   const inText = new Set(tagsWritten(fields.text))
   for (const tag of fields.tags) if (!inText.has(tag)) parts.push(`#${tag}`)
-
   for (const field of [...TASKS_FIELDS, 'block'] as const) {
     const value = valueText(field, fields, 'emoji')
     if (value !== null) parts.push(fieldText(field, value, 'emoji'))
   }
-
   return `${prefix}[${fields.status}] ${parts.filter((part) => part !== '').join(' ')}`
 }
-
 const tagsWritten = (text: string): string[] => parseTask(`- [ ] ${text}`)?.fields.tags ?? []

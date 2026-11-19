@@ -2,7 +2,6 @@ import { blank } from '../envelope'
 import type { Custom, Field, Passkey, Section, SshKey, Wifi, WifiSecurity } from '../types'
 
 const WIFI_ORDER: readonly WifiSecurity[] = ['wpa3', 'wpa2', 'wpa', 'wep']
-
 export interface CustomParts {
   title: string
   note?: string
@@ -10,11 +9,9 @@ export interface CustomParts {
   sections?: Section[]
   fields?: Field[]
 }
-
 function nonEmpty(sections: readonly Section[]): Section[] {
   return sections.filter((section) => section.fields.length > 0)
 }
-
 export function customOf(parts: CustomParts): Custom {
   return {
     ...blank('custom'),
@@ -25,7 +22,6 @@ export function customOf(parts: CustomParts): Custom {
     fields: parts.fields ?? [],
   }
 }
-
 export interface SshParts {
   title: string
   note?: string
@@ -34,7 +30,6 @@ export interface SshParts {
   sections?: Section[]
   fields?: Field[]
 }
-
 export function sshOf(parts: SshParts): SshKey {
   return {
     ...blank('ssh'),
@@ -46,7 +41,6 @@ export function sshOf(parts: SshParts): SshKey {
     fields: parts.fields ?? [],
   }
 }
-
 export interface WifiParts {
   title: string
   note?: string
@@ -56,13 +50,11 @@ export interface WifiParts {
   sections?: Section[]
   fields?: Field[]
 }
-
 export function wifiSecurityOf(text: string): WifiSecurity {
   const word = text.toLowerCase().replace(/[^a-z0-9]/g, '')
   if (word === '' || word === 'open' || word === 'nopassword') return 'none'
   return WIFI_ORDER.find((one) => word.includes(one)) ?? 'wpa2'
 }
-
 export function wifiOf(parts: WifiParts): Wifi {
   return {
     ...blank('wifi'),
@@ -75,7 +67,6 @@ export function wifiOf(parts: WifiParts): Wifi {
     fields: parts.fields ?? [],
   }
 }
-
 export interface PasskeyParts {
   rpId: string
   rpName?: string
@@ -89,7 +80,6 @@ export interface PasskeyParts {
   created?: number | null
   note?: string
 }
-
 export function passkeyOf(parts: PasskeyParts): Passkey {
   return {
     id: globalThis.crypto.randomUUID(),
@@ -106,13 +96,11 @@ export function passkeyOf(parts: PasskeyParts): Passkey {
     note: parts.note ?? '',
   }
 }
-
 export function dayOf(ms: number | null): string {
   if (ms === null) return ''
   const date = new Date(ms)
   return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10)
 }
-
 export function folderPaths(
   folders: readonly { id: string; name: string; parent: string | null }[],
 ): Map<string, string> {
@@ -133,10 +121,8 @@ export function folderPaths(
   for (const folder of folders) pathOf(folder.id, new Set())
   return paths
 }
-
 const MONTHS = `january february march april may june july august september october november
   december`.split(/\s+/)
-
 export function monthNumberOf(text: string): string {
   const word = text.trim().toLowerCase()
   if (/^\d{1,2}$/.test(word)) return word

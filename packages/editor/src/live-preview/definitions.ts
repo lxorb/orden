@@ -5,16 +5,12 @@ import { linkDestination } from '../links'
 import { linkAddress, linkBrackets } from '../nodes'
 
 const CONTAINERS = new Set(['Document', 'Blockquote', 'BulletList', 'OrderedList', 'ListItem'])
-
 const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
-
 const known = new WeakMap<Tree, Map<string, string>>()
-
 function definitions(state: EditorState): Map<string, string> {
   const tree = syntaxTree(state)
   const cached = known.get(tree)
   if (cached) return cached
-
   const found = new Map<string, string>()
   const { doc } = state
   tree.iterate({
@@ -33,11 +29,9 @@ function definitions(state: EditorState): Map<string, string> {
   known.set(tree, found)
   return found
 }
-
 function definitionOf(state: EditorState, label: string): string | undefined {
   return definitions(state).get(labelKey(label))
 }
-
 export function referenceOf(
   state: EditorState,
   link: SyntaxNode,
@@ -51,7 +45,6 @@ export function referenceOf(
     : state.doc.sliceString(brackets.open.to, brackets.close.from)
   return { target: definitionOf(state, key), label }
 }
-
 export function unlinked(state: EditorState, link: SyntaxNode): boolean {
   if (link.name !== 'Link' && link.name !== 'Image') return false
   const reference = referenceOf(state, link)

@@ -8,7 +8,6 @@ const said = (text: string): Ended => ({
   turn: { id: 'm', role: 'model', at: 0, parts: [{ kind: 'text', text }] },
   usage: null,
 })
-
 describe('/loop', () => {
   test('reads an interval first, and the prompt after it', () => {
     expect(loopAsk('5m check the inbox')).toEqual({ every: 5 * 60_000, prompt: 'check the inbox' })
@@ -19,7 +18,6 @@ describe('/loop', () => {
     expect(intervalIn('9d')).toBe(24 * 3_600_000)
     expect(intervalIn('soon')).toBeNull()
   })
-
   test("runs the prompt given, else the reader's last message, else carries on", () => {
     const you = (text: string): Turn => ({
       id: text,
@@ -32,13 +30,11 @@ describe('/loop', () => {
     expect(loopPrompt({ every: null, prompt: '' }, { turns: [you('a'), you('b')] })).toBe('b')
     expect(loopPrompt({ every: null, prompt: '' }, { turns: [] })).toBe(CARRY_ON)
   })
-
   test("reads the model's own pace from its last next: line", () => {
     expect(nextIn('All good.\nnext: 20m')).toBe(20 * 60_000)
     expect(nextIn('next: 5m\nmore\n`next: done`')).toBe('done')
     expect(nextIn('nothing said')).toBeNull()
   })
-
   test('paces itself, and ends when the model says it is done', async () => {
     const answers = [said('one\nnext: 3m'), said('two'), said('three\nnext: done')]
     const sent: string[] = []
@@ -64,7 +60,6 @@ describe('/loop', () => {
     expect(waits).toEqual([3 * 60_000, PACED])
     expect(ends).toEqual([''])
   })
-
   test('keeps its interval until stopped, and stops on an error the reader has to fix', async () => {
     const stopper = new AbortController()
     let runs = 0
@@ -83,7 +78,6 @@ describe('/loop', () => {
       stopper.signal,
     )
     expect(runs).toBe(3)
-
     const ends: string[] = []
     await runLoop(
       { every: 60_000, prompt: 'p' },

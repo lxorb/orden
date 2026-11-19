@@ -4,14 +4,12 @@ import { describe, expect, test } from 'vitest'
 import { SOURCE, svelte, walk } from './files'
 
 const LIB = join(SOURCE, 'lib')
-
 function markup(text: string): string {
   return text
     .replace(/<script[\s\S]*?<\/script>/g, '')
     .replace(/<style[\s\S]*?<\/style>/g, '')
     .replace(/<!--[\s\S]*?-->/g, '')
 }
-
 function tagEnd(text: string, from: number): number {
   let depth = 0
   for (let at = from; at < text.length; at++) {
@@ -22,13 +20,11 @@ function tagEnd(text: string, from: number): number {
   }
   return text.length
 }
-
 function rootTags(text: string): string[] {
   const body = markup(text)
   const roots: string[] = []
   let elements = 0
   let blocks = 0
-
   for (let at = 0; at < body.length; at++) {
     if (body.startsWith('{#', at)) blocks++
     else if (body.startsWith('{/', at)) blocks--
@@ -43,17 +39,13 @@ function rootTags(text: string): string[] {
       at = tagEnd(body, at)
     }
   }
-
   return roots
 }
-
 const MOVES = /\s(?:transition|in|out):/
-
 const NOT_YET = new Set([
   'lib/settings/src/SettingsPanel.svelte: ./DeleteAccount.svelte',
   'lib/web-tab/src/WebTab.svelte: findBar',
 ])
-
 function doors(): Map<string, string> {
   const text = readFileSync(join(LIB, 'surfaces/src/api.ts'), 'utf8')
   const found = new Map<string, string>()
@@ -64,12 +56,10 @@ function doors(): Map<string, string> {
   }
   return found
 }
-
 describe('a component fetched through a door', () => {
   test('that moves as it goes is drawn through Door.svelte, so its way out plays', () => {
     const named = doors()
     const wrong: string[] = []
-
     for (const file of walk(SOURCE, svelte)) {
       const body = markup(readFileSync(file, 'utf8'))
       const awaits = /\{#await\s+(?:(\w+)\(\)|import\('([^']+\.svelte)'\))\s+then\b/g
@@ -81,10 +71,8 @@ describe('a component fetched through a door', () => {
         if (rootTags(readFileSync(opened, 'utf8')).some((tag) => MOVES.test(tag))) wrong.push(said)
       }
     }
-
     expect(wrong).toEqual([])
   })
-
   test('which is what the list of spaces is', () => {
     const switcher = readFileSync(join(LIB, 'sidebar/src/SpaceSwitcher.svelte'), 'utf8')
     expect(switcher).toMatch(/<Door \{open\} load=\{\(\) => spacesMenu\(\)\}>/)
@@ -93,12 +81,10 @@ describe('a component fetched through a door', () => {
     )
   })
 })
-
 describe('a popup', () => {
   test('moves as one transition, which turns round where it is', () => {
     const popup = /class="[^"]*\borden-layer\b|role="(?:menu|dialog|listbox)"/
     const wrong: string[] = []
-
     for (const file of walk(SOURCE, svelte)) {
       const body = markup(readFileSync(file, 'utf8'))
       for (const match of body.matchAll(/<[a-zA-Z][\w-]*/g)) {
@@ -108,11 +94,9 @@ describe('a popup', () => {
         }
       }
     }
-
     expect(wrong).toEqual([])
   })
 })
-
 describe('reading a component', () => {
   test('finds what is at its top and nothing under it', () => {
     const roots = rootTags(

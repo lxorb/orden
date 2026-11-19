@@ -4,12 +4,10 @@ import { store } from './source.svelte'
 
 const FIRST_WAIT = 2_000
 const LONGEST_WAIT = 5 * 60_000
-
 interface Miss {
   tries: number
   timer: ReturnType<typeof setTimeout> | null
 }
-
 const known = new SvelteMap<string, string>()
 const freed = new SvelteMap<string, number>()
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- what was asked; nothing draws from it
@@ -18,7 +16,6 @@ const asked = new Set<string>()
 const out = new Set<string>()
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the misses; nothing draws from it
 const missed = new Map<string, Miss>()
-
 let session: { store: Chats; me: string | null; epoch: number; n: number } = {
   store: store(),
   me: null,
@@ -26,7 +23,6 @@ let session: { store: Chats; me: string | null; epoch: number; n: number } = {
   n: 0,
 }
 let listening = false
-
 export function fileUrl(chat: string, hash: string): string | null {
   const current = store()
   const { me, fileEpoch } = current
@@ -41,7 +37,6 @@ export function fileUrl(chat: string, hash: string): string | null {
   }
   return known.get(key) ?? null
 }
-
 function begin(current: Chats): void {
   session = { store: current, me: current.me, epoch: current.fileEpoch, n: session.n + 1 }
   asked.clear()
@@ -55,7 +50,6 @@ function begin(current: Chats): void {
     }
   })
 }
-
 function ask(chat: string, hash: string, key: string): void {
   const asking = session
   const answered = (url: string | null) => {
@@ -74,7 +68,6 @@ function ask(chat: string, hash: string, key: string): void {
     .fileUrl(chat, hash)
     .then(answered, () => answered(null))
 }
-
 function miss(key: string): void {
   const was = missed.get(key)
   if (was?.timer) clearTimeout(was.timer)
@@ -86,14 +79,12 @@ function miss(key: string): void {
     window.addEventListener('online', again)
   }
 }
-
 function free(key: string): void {
   const was = missed.get(key)
   if (was) was.timer = null
   asked.delete(key)
   freed.set(key, (freed.get(key) ?? 0) + 1)
 }
-
 function again(): void {
   for (const [key, was] of missed) {
     if (out.has(key) || !asked.has(key)) continue

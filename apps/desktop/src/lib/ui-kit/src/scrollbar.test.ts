@@ -4,7 +4,6 @@ import { contentPerThumb, thumbFor, type Track } from './scrollbar'
 function track(patch: Partial<Track> = {}): Track {
   return { content: 1600, visible: 400, at: 0, track: 400, least: 28, ...patch }
 }
-
 describe('the thumb', () => {
   test.each([
     [{}, { size: 100, offset: 0 }],
@@ -29,12 +28,10 @@ describe('the thumb', () => {
       expect(thumbFor(track(patch))).toEqual(shape)
     },
   )
-
   test('shows once more than the scroller’s own padding runs past', () => {
     expect(thumbFor(track({ content: 432, slack: 4 }))).not.toBeNull()
   })
 })
-
 describe('dragging the thumb', () => {
   test.each([
     [{}, 4],

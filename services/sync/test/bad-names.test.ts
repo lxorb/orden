@@ -9,7 +9,6 @@ let env: TestEnv
 let token: string
 let space: string
 let orden: string
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'rooms@example.com')
@@ -17,11 +16,8 @@ beforeEach(async () => {
   orden = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 })
-
 afterEach(() => env.close())
-
 const LONG = `${'x'.repeat(300)}.md`
-
 async function tool(name: string, args: Record<string, unknown>): Promise<string> {
   const answer = await call<RpcView>(env, '/mcp', {
     token: orden,
@@ -34,7 +30,6 @@ async function tool(name: string, args: Record<string, unknown>): Promise<string
   })
   return answer.json.result.content[0]?.text ?? JSON.stringify(answer.json)
 }
-
 async function feed(): Promise<{ read: { items: FeedItem[] } | null; raw: FeedItem[] }> {
   const answer = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
   return {
@@ -42,7 +37,6 @@ async function feed(): Promise<{ read: { items: FeedItem[] } | null; raw: FeedIt
     raw: (answer.json as unknown as { items: FeedItem[] }).items,
   }
 }
-
 async function baseFile(path: string, text: string) {
   const hash = await sha256(text)
   await env.NOTES.put(`blobs/${hash}`, text)
@@ -54,7 +48,6 @@ async function baseFile(path: string, text: string) {
     .bind(crypto.randomUUID(), space, path, text.length, hash, path, path.toLowerCase())
     .run()
 }
-
 function badRow(table: 'notes' | 'folders', id: string, name: string, deleted = 0) {
   return table === 'notes'
     ? env.DB.prepare(
@@ -71,7 +64,6 @@ function badRow(table: 'notes' | 'folders', id: string, name: string, deleted = 
         .bind(id, space, name, name, deleted)
         .run()
 }
-
 test('a name no disk holds is refused by every way in', async () => {
   expect(await tool('write_note', { path: LONG, content: 'hello' })).toBe('That is not a note path.')
   const posted = await call(env, `/v1/spaces/${space}/notes`, {
@@ -79,7 +71,6 @@ test('a name no disk holds is refused by every way in', async () => {
     body: { path: LONG, content: 'v1' },
   })
   expect(posted.status).toBe(400)
-
   const made = await call(env, `/v1/spaces/${space}/notes`, {
     token,
     body: { path: 'ok.md', content: 'v1' },
@@ -90,12 +81,10 @@ test('a name no disk holds is refused by every way in', async () => {
     body: { baseVersion: made.json.note.version, path: LONG, content: 'v1' },
   })
   expect(renamed.status).toBe(400)
-
   const { read, raw } = await feed()
   expect(raw.every((one) => isName(one.name))).toBe(true)
   expect(read?.items.map((one) => one.name)).toContain('ok.md')
 })
-
 test('a folder of a base cannot name its way out of the space', async () => {
   await baseFile(
     'T.base',
@@ -112,7 +101,6 @@ test('a folder of a base cannot name its way out of the space', async () => {
   expect(raw.every((one) => isName(one.name))).toBe(true)
   expect(read).not.toBeNull()
 })
-
 test('a page holding names from before reads, each under a name a device can hold', async () => {
   await call(env, `/v1/spaces/${space}/notes`, {
     token,
@@ -120,7 +108,6 @@ test('a page holding names from before reads, each under a name a device can hol
   })
   await badRow('notes', 'a'.repeat(32), LONG)
   await badRow('folders', 'b'.repeat(32), '..')
-
   const { read, raw } = await feed()
   expect(read?.items).toHaveLength(3)
   expect(raw.every((one) => isName(one.name))).toBe(true)
@@ -131,7 +118,6 @@ test('a page holding names from before reads, each under a name a device can hol
   const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
   expect((page.json as unknown as { cursor: number }).cursor).toBe(902)
 })
-
 test('the delete of such a name is told too', async () => {
   await badRow('notes', 'c'.repeat(32), LONG, 1)
   const { read, raw } = await feed()
@@ -140,12 +126,10 @@ test('the delete of such a name is told too', async () => {
   expect(isName(raw[0]?.name)).toBe(true)
   expect(read?.items).toHaveLength(1)
 })
-
 test('a note that already has such a name can still be read, and a save of it still lands', async () => {
   const id = 'd'.repeat(32)
   await badRow('notes', id, LONG)
   expect(await tool('read_note', { path: LONG })).not.toContain('not a note path')
-
   const held = await call(env, `/v1/notes/${id}`, { token })
   const saved = await call(env, `/v1/notes/${id}`, {
     token,
@@ -154,7 +138,6 @@ test('a note that already has such a name can still be read, and a save of it st
   })
   expect(saved.status).toBe(200)
 })
-
 test('a copy kept beside a note named near the limit, or under a bad folder, still lands', async () => {
   const near = `${'n'.repeat(250)}.md`
   const made = await call(env, `/v1/spaces/${space}/notes`, {
@@ -167,7 +150,6 @@ test('a copy kept beside a note named near the limit, or under a bad folder, sti
   const second = await noteBeside(env, held!, 'more other words')
   expect(second?.path).not.toBe(copy?.path)
   expect(cleanPath(second?.path ?? '')).toBe(second?.path)
-
   const lost = await noteBeside(
     env,
     { ...held!, path: '../../Other/pwn.md', id: 'e'.repeat(32) },
@@ -176,12 +158,10 @@ test('a copy kept beside a note named near the limit, or under a bad folder, sti
   expect(lost?.path.startsWith('pwn')).toBe(true)
   expect((await feed()).read).not.toBeNull()
 })
-
 test('an answer to a change of such a note is read, and names it as the feed does', async () => {
   const id = 'f'.repeat(32)
   await badRow('notes', id, LONG)
   const change = { ops: [{ op: 'p1', t: 'place', id, pos: 'V', seen: 901 }] }
-
   for (const time of ['first', 'again']) {
     const answer = opsResponseOf((await call(env, `/v2/spaces/${space}/ops`, { token, body: change })).json)
     expect(answer?.results[0], time).toMatchObject({ op: 'p1', ok: true, id })
@@ -189,15 +169,12 @@ test('an answer to a change of such a note is read, and names it as the feed doe
     expect(named && 'name' in named && named.name).toBe((await feed()).read?.items.find((one) => one.id === id)?.name)
   }
 })
-
 test('two names one letter apart at the limit are told apart within it when a space is prepared', async () => {
   const other = (await call(env, '/v1/spaces', { token, body: { name: 'Twins' } })).json.space.id
   for (const path of [`${'x'.repeat(252)}.md`, `X${'x'.repeat(251)}.md`]) {
     await call(env, `/v1/spaces/${other}/notes`, { token, body: { path, content: path } })
   }
-
   await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
-
   const names = (
     await env.DB.prepare('select name from notes where space_id = ?').bind(other).all<{ name: string }>()
   ).results.map((one) => one.name)
@@ -205,7 +182,6 @@ test('two names one letter apart at the limit are told apart within it when a sp
   expect(names.every((one) => isName(one))).toBe(true)
   expect(new Set(names.map((one) => one.toLowerCase())).size).toBe(2)
 })
-
 test('notes of one folder named past the limit stay together in one folder when a space is prepared', async () => {
   const other = (await call(env, '/v1/spaces', { token, body: { name: 'Legacy' } })).json.space.id
   const folders = ['L'.repeat(300), '']
@@ -219,9 +195,7 @@ test('notes of one folder named past the limit stay together in one folder when 
         .run()
     }
   }
-
   await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
-
   const placed = (
     await env.DB.prepare(
       `select f.name as folder from notes n join folders f on f.id = n.folder_id

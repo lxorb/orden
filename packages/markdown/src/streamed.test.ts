@@ -9,7 +9,6 @@ function streamed(text: string, size: number): string {
   for (let at = 0; at < text.length; at += size) out += spelling.push(text.slice(at, at + size))
   return out + spelling.end()
 }
-
 const SPELLINGS: [string, string][] = [
   ['So \\( x^2 \\) is.', 'So $x^2$ is.'],
   ['So \\(x\\) and \\(y\\).', 'So $x$ and $y$.'],
@@ -25,16 +24,13 @@ const SPELLINGS: [string, string][] = [
   ['Press the ` key.\n\nThen \\(x\\)', 'Press the ` key.\n\nThen $x$'],
   ['a `b\nc \\(x\\)\nd` and \\(y\\)', 'a `b\nc \\(x\\)\nd` and $y$'],
 ]
-
 describe('LaTeX delimiters, spelled a note’s way', () => {
   test.each(SPELLINGS)('%j', (written, spelled) => {
     expect(dollarMaths(written)).toBe(spelled)
   })
-
   test.each(SPELLINGS)('%j the same however it arrives', (written, spelled) => {
     for (const size of [1, 2, 3, 5, 8]) expect(streamed(written, size), `${size}`).toBe(spelled)
   })
-
   test('holds back no more than it cannot read yet; draws as formulas once spelled', () => {
     const spelling = new TexDelimiters()
     expect(spelling.push('So \\')).toBe('So ')
@@ -48,7 +44,6 @@ describe('LaTeX delimiters, spelled a note’s way', () => {
     expect(html).not.toContain('\\(')
   })
 })
-
 describe('an answer still arriving', () => {
   test.each([
     ['$$\nx^2 +', '$$\nx^2 +\n$$'],
@@ -64,7 +59,6 @@ describe('an answer still arriving', () => {
   ])('%j is drawn closed', (arriving, closed) => {
     expect(settled(arriving)).toBe(closed)
   })
-
   test('draws every length of an answer as what it is becoming', () => {
     const answer = [
       '# Heading',

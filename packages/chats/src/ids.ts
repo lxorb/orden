@@ -1,9 +1,6 @@
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-
 const MOST_TIME = 2 ** 48 - 1
-
 const ULID = /^[0-7][0-9A-HJKMNP-TV-Z]{25}$/
-
 export function ulid(now: number, random: () => number): string {
   if (!Number.isSafeInteger(now) || now < 0 || now > MOST_TIME) {
     throw new RangeError(`no ULID holds the time ${String(now)}`)
@@ -17,11 +14,8 @@ export function ulid(now: number, random: () => number): string {
   for (let left = 16; left > 0; left -= 1) noise += digit(Math.floor(random() * 32))
   return time + noise
 }
-
 const digit = (value: number): string => ALPHABET.charAt(Math.min(31, Math.max(0, value)))
-
 export const isUlid = (value: unknown): value is string => typeof value === 'string' && ULID.test(value)
-
 export function ulidTime(id: string): number | null {
   if (!isUlid(id)) return null
   let time = 0

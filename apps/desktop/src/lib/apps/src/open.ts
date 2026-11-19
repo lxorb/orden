@@ -5,7 +5,6 @@ import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 
 export const appName = (path: string): string => nameOf(path).replace(/\.application$/i, '') || nameOf(path)
-
 export function openApplication(path: string, how: OpenHow = {}): Tab | null {
   if (__EVEN_PLUGIN__ || !appsOn()) return null
   const open = workspace.tabs.find((one) => one.kind === 'application' && samePath(one.path, path))

@@ -24,14 +24,12 @@
   const { tab: shown }: { tab: Tab } = $props()
   const tab = untrack(() => shown)
   const session = appSessionOf(tab)
-
   let place = $state<HTMLElement>()
   let video = $state<HTMLVideoElement>()
   let audio = $state<HTMLAudioElement>()
   let typing = $state<HTMLTextAreaElement>()
   let typingAt = $state({ x: 0, y: 0 })
   let dpr = $state(window.devicePixelRatio || 1)
-
   $effect(() => {
     const stream = session.picture.stream
     if (video && video.srcObject !== stream) video.srcObject = stream
@@ -43,9 +41,7 @@
   $effect(() => {
     session.picture.share(clipboardSharing.on)
   })
-
   let hz = 60
-
   function view() {
     const box = place?.getBoundingClientRect()
     return {
@@ -55,7 +51,6 @@
       hz,
     }
   }
-
   onMount(() => {
     void session.start(view())
     const settling = new Settling(
@@ -68,7 +63,6 @@
     const changed = () => settling.saw(null)
     const watching = new ResizeObserver(changed)
     if (place) watching.observe(place)
-
     let measuring = 0
     const measure = () => {
       cancelAnimationFrame(measuring)
@@ -91,7 +85,6 @@
       measuring = requestAnimationFrame(frame)
     }
     measure()
-
     let ratio: MediaQueryList | null = null
     const ratioChanged = () => {
       dpr = window.devicePixelRatio || 1
@@ -116,13 +109,11 @@
       document.removeEventListener('visibilitychange', measure)
     }
   })
-
   const appName = $derived.by(() => {
     const run = session.file?.run
     if (!run) return ''
     return run.kind === 'installed' ? run.name : (run.path.split(/[\\/]/).pop() ?? run.path)
   })
-
   const status = $derived(session.status)
   const device = $derived(session.hostName || 'another device')
   const SAID: Record<Exclude<AppStatus['is'], 'unread' | 'away' | 'held' | 'here'>, string> = {
@@ -169,7 +160,6 @@
     if (status.state === 'exited' && status.code !== null) return `Exited with code ${String(status.code)}`
     return `Not running on ${device}`
   })
-
   const picture = $derived(session.picture.status)
   const showing = $derived(status.is === 'here' && status.state === 'running' && picture.is === 'showing')
   function noPicture(picture: PictureStatus, device: string): string | null {
@@ -189,7 +179,6 @@
     }
   }
   const pictureLine = $derived(noPicture(picture, device))
-
   let wheelLeft = { x: 0, y: 0 }
   const held = new HeldKeys()
   function send(event: InputEvent) {
@@ -268,7 +257,6 @@
   function letGoButtons() {
     for (const one of held.letGoButtons()) session.picture.input(one)
   }
-
   let overlay = $state(false)
   $effect(() => {
     if (overlay && showing) return session.picture.hold()
@@ -286,7 +274,6 @@
     return () => over.cancelVideoFrameCallback(handle)
   })
   const figure = (value: number | null | undefined, digits = 0) => value?.toFixed(digits) ?? '–'
-
   const waiting = $derived(
     ['reading', 'connecting', 'syncing', 'away'].includes(status.is) ||
       (status.is === 'here' && status.state === 'starting' && !status.unanswered),
@@ -412,7 +399,6 @@
     position: relative;
     height: 100%;
   }
-
   video {
     position: absolute;
     inset: 0;
@@ -422,11 +408,9 @@
     visibility: hidden;
     touch-action: none;
   }
-
   video.shown {
     visibility: visible;
   }
-
   .typing {
     position: absolute;
     width: 1px;
@@ -439,7 +423,6 @@
     pointer-events: none;
     caret-color: transparent;
   }
-
   .bar {
     position: absolute;
     top: var(--space-2);
@@ -449,12 +432,10 @@
     opacity: 0;
     transition: opacity var(--duration-fast, 120ms);
   }
-
   .application:hover .bar,
   .bar:focus-within {
     opacity: 1;
   }
-
   .stats {
     position: absolute;
     top: var(--space-2);
@@ -464,7 +445,6 @@
     background: color-mix(in srgb, var(--surface) 85%, transparent);
     pointer-events: none;
   }
-
   .stats p {
     display: flex;
     flex-wrap: wrap;
@@ -474,7 +454,6 @@
     font-size: var(--text-xs);
     text-align: start;
   }
-
   .status {
     position: absolute;
     top: 50%;
@@ -491,7 +470,6 @@
     background: var(--surface);
     box-shadow: var(--shadow-md);
   }
-
   p {
     margin: 0;
     color: var(--text-strong);
@@ -499,16 +477,13 @@
     font-size: var(--text-sm);
     text-align: center;
   }
-
   .quiet {
     color: var(--muted-strong);
   }
-
   .row {
     display: flex;
     gap: var(--space-2);
   }
-
   .sweep {
     width: 6rem;
   }

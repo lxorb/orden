@@ -11,45 +11,35 @@
   import Tile from './Tile.svelte'
 
   const UNLISTED = 'unlisted'
-
   let view = $state<'main' | 'other'>('main')
   let picked = $state<string | null>(null)
   let query = $state('')
   let bringing = $state(false)
-
   const main = MAIN_NOTES.map((id) => NOTES_APPS.find((one) => one.id === id)).filter((one) => one !== undefined)
   const shown = $derived(matching(NOTES_APPS, query))
   const nothing = $derived(!!query.trim() && !shown.length)
-
   const chosen = $derived.by((): NotesApp | null => {
     if (picked === UNLISTED) {
       return { id: UNLISTED, name: typedName(query), icon: null, colour: null, bring: null }
     }
     return NOTES_APPS.find((one) => one.id === picked) ?? null
   })
-
   const way = $derived(chosen === null ? null : setup.phone ? phoneBringing(chosen.id, chosen.bring) : chosen.bring)
   const elsewhere = $derived(way === 'computer')
-
   const prompt = $derived(chosen && !chosen.bring ? importPrompt(chosen.name) : '')
-
   function pick(id: string) {
     picked = id
   }
-
   function other() {
     view = 'other'
     picked = null
     query = ''
   }
-
   function leave() {
     view = 'main'
     picked = null
   }
-
   $effect(() => closeOnBack(view === 'other', leave))
-
   async function done() {
     if (!chosen || bringing) return
     const app = chosen.id === UNLISTED ? null : chosen.id
@@ -151,27 +141,23 @@
     height: 40px;
     fill: var(--muted);
   }
-
   .elsewhere {
     margin: 0;
     color: var(--muted);
     font-size: 14px;
     text-align: center;
   }
-
   .ask {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
-
   .anyway {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-
   .anyway-head {
     display: flex;
     align-items: center;
@@ -180,7 +166,6 @@
     font-weight: 600;
     color: var(--text-strong);
   }
-
   .prompt {
     margin: 0;
     max-height: 150px;

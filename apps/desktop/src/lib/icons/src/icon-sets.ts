@@ -14,12 +14,9 @@ import { outlineName, plain } from './outline-names'
 import { loadSites } from './site-set'
 
 let tagged: Map<string, string> | null = null
-
 async function loadTags(): Promise<Map<string, string>> {
   if (tagged) return tagged
-
   const found = new Map<string, string>()
-
   try {
     const tags = (await import('lucide-static/tags.json')).default as Record<string, string[]>
     for (const [name, words] of Object.entries(tags)) {
@@ -31,17 +28,14 @@ async function loadTags(): Promise<Map<string, string>> {
     // and a picker that would not open because a list of search words was missing is
     // a picker as it never was.
   }
-
   tagged = found
   return found
 }
-
 export type IconShape =
   | { kind: 'emoji'; text: string }
   | { kind: 'stroked'; icon: IconNode }
   | { kind: 'drawn'; body: string; box: string }
   | { kind: 'picture'; src: string }
-
 export interface LoadedSet {
   entries: IconEntry[]
   groups: { label: string; names: string[] }[]
@@ -50,34 +44,27 @@ export interface LoadedSet {
   twin?(emoji: string): string | null
   readonly unoffered?: boolean
 }
-
 export type IconPlace = { same: string } | { after: string } | { group: string }
-
 export interface IconSet {
   id: string
   label: string
   credit: string
   load(): Promise<LoadedSet>
 }
-
 interface EmojiGroup {
   name: string
   slug: string
   emojis: { emoji: string; name: string; slug: string }[]
 }
-
 async function loadEmojiWords(): Promise<Map<string, string>> {
   const said = new Map<string, string[]>()
-
   try {
     const listed = (await import('emojilib/emojis.json')).default as Record<
       string,
       { char?: string; keywords?: string[] }
     >
-
     for (const [shortcode, one] of Object.entries(listed)) {
       if (!one.char) continue
-
       const found = said.get(plain(one.char)) ?? []
       found.push(...(one.keywords ?? []), shortcode)
       said.set(plain(one.char), found)
@@ -86,7 +73,6 @@ async function loadEmojiWords(): Promise<Map<string, string>> {
     // The plugin leaves the emoji out altogether, so this never runs there; and a
     // chunk that will not arrive costs the keywords rather than the set.
   }
-
   return new Map(
     [...said].map(([char, words]) => [
       char,
@@ -103,16 +89,12 @@ async function loadEmojiWords(): Promise<Map<string, string>> {
     ]),
   )
 }
-
 async function loadEmoji(): Promise<LoadedSet> {
   const [groups, said] = await Promise.all([import('unicode-emoji-json/data-by-group.json'), loadEmojiWords()])
-
   const entries: IconEntry[] = []
   const shown: { label: string; names: string[] }[] = []
-
   for (const group of groups.default as EmojiGroup[]) {
     const names: string[] = []
-
     for (const one of group.emojis) {
       entries.push({
         name: one.emoji,
@@ -121,45 +103,36 @@ async function loadEmoji(): Promise<LoadedSet> {
       })
       names.push(one.emoji)
     }
-
     shown.push({ label: group.name, names })
   }
-
   return {
     entries,
     groups: shown,
     shape: (name) => ({ kind: 'emoji', text: name }),
   }
 }
-
 export async function tonedEmoji(): Promise<Set<string>> {
   const groups = (await import('unicode-emoji-json/data-by-group.json')).default as Toned[]
   return new Set(groups.flatMap((group) => group.emojis.filter((one) => one.skin_tone_support).map((one) => one.emoji)))
 }
-
 interface Toned {
   emojis: { emoji: string; skin_tone_support: boolean }[]
 }
-
 async function loadLucide(): Promise<LoadedSet> {
   const [library, tags] = await Promise.all([loadIcons(), loadTags()])
-
   const alike = new Map<IconNode, string[]>()
   for (const [name, icon] of Object.entries(library)) {
     const named = alike.get(icon)
     if (named) named.push(name)
     else alike.set(icon, [name])
   }
-
   const terms = new Map<string, string>()
   for (const named of alike.values()) {
     const said = [...new Set(named.flatMap((one) => tags.get(squash(one)) ?? []))]
-
     for (const name of named) {
       terms.set(name, [...named.filter((one) => one !== name).map(spaced), ...said].join(' '))
     }
   }
-
   return {
     entries: Object.keys(library).map((name) => ({
       name,
@@ -173,17 +146,14 @@ async function loadLucide(): Promise<LoadedSet> {
     },
   }
 }
-
 interface IconifyCollection {
   icons: Record<string, { body: string; width?: number; height?: number }>
   width?: number
   height?: number
 }
-
 function iconify(collection: IconifyCollection, tags: Map<string, string>): LoadedSet {
   const wide = collection.width ?? 24
   const tall = collection.height ?? 24
-
   return {
     entries: Object.keys(collection.icons).map((name) => ({
       name,
@@ -194,7 +164,6 @@ function iconify(collection: IconifyCollection, tags: Map<string, string>): Load
     shape: (name) => {
       const icon = Object.hasOwn(collection.icons, name) ? collection.icons[name] : undefined
       if (!icon) return null
-
       return {
         kind: 'drawn',
         body: icon.body,
@@ -203,14 +172,12 @@ function iconify(collection: IconifyCollection, tags: Map<string, string>): Load
     },
   }
 }
-
 async function loadFlatColour(): Promise<LoadedSet> {
   const [collection, tags, places] = await Promise.all([
     import('@iconify-json/flat-color-icons/icons.json'),
     loadTags(),
     import('./flat-colour-places'),
   ])
-
   const placed = new Map<string, IconPlace>()
   for (const [name, emoji] of Object.entries(places.SAME)) placed.set(name, { same: emoji })
   for (const [emoji, names] of Object.entries(places.BESIDE)) {
@@ -219,19 +186,15 @@ async function loadFlatColour(): Promise<LoadedSet> {
   for (const [group, names] of Object.entries(places.LOOSE)) {
     for (const name of names.split(' ')) placed.set(name, { group })
   }
-
   return { ...iconify(collection.default, tags), place: (name) => placed.get(name) ?? null }
 }
-
 interface Aliased extends IconifyCollection {
   aliases?: Record<string, { parent: string; hFlip?: boolean; vFlip?: boolean }>
 }
-
 function flipped(body: string, wide: number, tall: number, h: boolean, v: boolean): string {
   if (!h && !v) return body
   return `<g transform="translate(${h ? wide : 0} ${v ? tall : 0}) scale(${h ? -1 : 1} ${v ? -1 : 1})">${body}</g>`
 }
-
 function ownIds(body: string, name: string): string {
   const ids = [...body.matchAll(/\bid="([^"]+)"/g)].flatMap((one) => (one[1] ? [one[1]] : []))
   return ids.reduce(
@@ -243,7 +206,6 @@ function ownIds(body: string, name: string): string {
     body,
   )
 }
-
 async function loadOutlines(): Promise<LoadedSet> {
   const [collection, chars, groups, noto] = await Promise.all([
     import('@iconify-json/fluent-emoji-high-contrast/icons.json'),
@@ -266,7 +228,6 @@ async function loadOutlines(): Promise<LoadedSet> {
   for (const [name, body] of Object.entries(noto.default)) icons[name] = { body }
   const held = iconify({ ...set, icons }, new Map())
   const named = chars.default as Record<string, string>
-
   const twins = new Map<string, string>()
   for (const group of groups.default as EmojiGroup[]) {
     for (const one of group.emojis) {
@@ -274,12 +235,9 @@ async function loadOutlines(): Promise<LoadedSet> {
       if (icons[name]) twins.set(one.emoji, name)
     }
   }
-
   return { ...held, twin: (emoji) => twins.get(emoji) ?? null }
 }
-
 export const ORDEN = 'orden'
-
 const ORDEN_MARK = {
   body:
     '<g fill="currentColor">' +
@@ -291,7 +249,6 @@ const ORDEN_MARK = {
   width: 24,
   height: 24,
 }
-
 async function loadBrands(): Promise<LoadedSet> {
   const [collection, names] = await Promise.all([
     import('@iconify-json/simple-icons/icons.json'),
@@ -299,7 +256,6 @@ async function loadBrands(): Promise<LoadedSet> {
   ])
   const set = collection.default as IconifyCollection
   const held = iconify({ ...set, icons: { ...set.icons, [ORDEN]: ORDEN_MARK } }, new Map())
-
   return {
     ...held,
     entries: held.entries.map((one) => ({
@@ -309,7 +265,6 @@ async function loadBrands(): Promise<LoadedSet> {
     })),
   }
 }
-
 function spaced(name: string): string {
   return name
     .replace(/([a-z\d])([A-Z])/g, '$1 $2')
@@ -317,9 +272,7 @@ function spaced(name: string): string {
     .replace(/[-_]+/g, ' ')
     .toLowerCase()
 }
-
 export const FLAT_COLOUR = 'flat-color-icons'
-
 export const ICON_SETS: readonly IconSet[] = [
   {
     id: LUCIDE,
@@ -358,27 +311,21 @@ export const ICON_SETS: readonly IconSet[] = [
     load: loadBrands,
   },
 ]
-
 export function setNamed(id: string): IconSet | null {
   return ICON_SETS.find((one) => one.id === id) ?? null
 }
-
 export const PICKER_SETS: readonly string[] = [EMOJI_SET, FLAT_COLOUR, LUCIDE, BRANDS]
-
 export const LATER_SETS: ReadonlySet<string> = new Set([BRANDS])
-
 export function pickerCredit(): string {
   return [...PICKER_SETS, EMOJI_OUTLINE]
     .map((id) => setNamed(id)?.credit ?? '')
     .filter(Boolean)
     .join('; ')
 }
-
 export interface TabHeld {
   entries: IconEntry[]
   groups: { label: string; names: string[] }[]
 }
-
 export function mergeSets(parts: readonly { id: string; held: LoadedSet }[]): TabHeld {
   const frame = parts.find((part) => part.held.groups.length)
   const entries = new Map<string, IconEntry>()
@@ -390,55 +337,43 @@ export function mergeSets(parts: readonly { id: string; held: LoadedSet }[]): Ta
       names: group.names.map((name) => writtenIcon(frame.id, name)),
     })) ?? []
   const labels = new Set(groups.map((group) => group.label))
-
   const push = (map: Map<string, string[]>, key: string, written: string) => {
     const held = map.get(key)
     if (held) held.push(written)
     else map.set(key, [written])
   }
-
   for (const part of [...(frame ? [frame] : []), ...parts.filter((one) => one !== frame)]) {
     const unplaced: string[] = []
-
     for (const one of part.held.entries) {
       const written = writtenIcon(part.id, one.name)
       if (entries.has(written)) continue
-
       if (!frame || part === frame) {
         entries.set(written, { ...one, name: written })
         continue
       }
-
       const place = part.held.place?.(one.name) ?? null
       const anchor =
         place && !('group' in place) ? writtenIcon(frame.id, 'same' in place ? place.same : place.after) : null
       const twin = anchor === null ? undefined : entries.get(anchor)
-
       if (place && 'same' in place && twin) {
         const terms = [twin.terms, one.words, one.terms].filter(Boolean).join(' ')
         entries.set(twin.name, { ...twin, terms })
         continue
       }
-
       entries.set(written, { ...one, name: written })
-
       if (anchor !== null && twin) push(after, anchor, written)
       else if (place && 'group' in place && labels.has(place.group)) push(ends, place.group, written)
       else unplaced.push(written)
     }
-
     if (frame && unplaced.length) {
       groups.push({ label: setNamed(part.id)?.label ?? part.id, names: unplaced })
     }
   }
-
   if (!frame) return { entries: [...entries.values()], groups }
-
   const shown = groups.map((group) => ({
     label: group.label,
     names: [...group.names.flatMap((name) => [name, ...(after.get(name) ?? [])]), ...(ends.get(group.label) ?? [])],
   }))
-
   return {
     entries: shown.flatMap((group) => group.names.flatMap((name) => entries.get(name) ?? [])),
     groups: shown,

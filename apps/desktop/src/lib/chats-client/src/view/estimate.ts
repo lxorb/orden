@@ -5,13 +5,11 @@ import type { Item } from './rows'
 const LINE = 21
 const GUTTER = 64
 const CHARACTER = 7.2
-
 export function estimate(item: Item, width: number): number {
   if (item.kind === 'day') return 36
   if (item.kind === 'new') return 22
   return messageHeight(item.message, item.head, width) + (item.seen.length ? 20 : 0)
 }
-
 function messageHeight(message: Message, head: boolean, width: number): number {
   const column = Math.max(120, width - GUTTER)
   let height = head ? 30 : 6
@@ -32,7 +30,6 @@ function messageHeight(message: Message, head: boolean, width: number): number {
   if (message.replies) height += 28
   return height
 }
-
 function linesOf(body: string, column: number): number {
   if (!body) return 0
   const across = Math.max(10, Math.floor(column / CHARACTER))

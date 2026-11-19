@@ -7,23 +7,18 @@ import type { Ordend } from './ordend'
 
 const BEHIND = 8 * 1024 * 1024
 const CAUGHT_UP = 1024 * 1024
-
 const LINK_PATH = '/link'
-
 function digest(value: string): Buffer {
   return createHash('sha256').update(value).digest()
 }
-
 function allowed(request: IncomingMessage, secret: string): boolean {
   if (!secret) return false
   const given = /^Bearer (.+)$/.exec(request.headers.authorization ?? '')?.[1]
   return given !== undefined && timingSafeEqual(digest(given), digest(secret))
 }
-
 export interface Options {
   silentFor?: number
 }
-
 export function serve(ordend: Ordend, secret: string, options: Options = {}): Server {
   const silentFor = options.silentFor ?? SILENT_FOR
   const sockets = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 })
@@ -31,7 +26,6 @@ export function serve(ordend: Ordend, secret: string, options: Options = {}): Se
   let paused = false
   let heard = 0
   let pinged = false
-
   const watch = setInterval(() => {
     const behind = current?.bufferedAmount ?? 0
     if (!paused && behind > BEHIND) ordend.pause((paused = true))
@@ -39,7 +33,6 @@ export function serve(ordend: Ordend, secret: string, options: Options = {}): Se
     if (current && pinged && Date.now() - heard > silentFor) current.terminate()
   }, 50)
   watch.unref()
-
   sockets.on('connection', (socket) => {
     current?.close(4000, 'replaced')
     current = socket
@@ -64,7 +57,6 @@ export function serve(ordend: Ordend, secret: string, options: Options = {}): Se
       if (paused) ordend.pause((paused = false))
     })
   })
-
   const server = createServer((request, response) => {
     if (request.method === 'GET' && request.url === '/health') {
       response.writeHead(200, { 'content-type': 'text/plain' }).end('ok')
@@ -72,7 +64,6 @@ export function serve(ordend: Ordend, secret: string, options: Options = {}): Se
     }
     response.writeHead(404).end()
   })
-
   server.on('upgrade', (request: IncomingMessage, socket: Duplex, head: Buffer) => {
     if (request.url !== LINK_PATH || !allowed(request, secret)) {
       socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n')
@@ -82,7 +73,6 @@ export function serve(ordend: Ordend, secret: string, options: Options = {}): Se
       sockets.emit('connection', ws, request)
     })
   })
-
   server.on('close', () => {
     clearInterval(watch)
   })

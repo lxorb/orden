@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import json
 import queue
 import subprocess
@@ -10,17 +9,11 @@ import urllib.request
 from typing import Any, Callable
 
 Answer = dict[str, Any]
-
 ANSWER_META = "so.orden.Orden/answer"
-
 NO_VERB = "there is no verb called"
-
 def answer(status: str, ms: float, **rest: Any) -> Answer:
-
     return {"status": status, "ms": round(ms, 1), **rest}
-
 def from_contract(said: Any, ms: float) -> Answer:
-
     if not isinstance(said, dict):
         return answer("error", ms, code="unreadable", message=str(said))
     if said.get("status") in ("ok", "needs_approval", "error"):
@@ -31,16 +24,12 @@ def from_contract(said: Any, ms: float) -> Answer:
     if error.startswith(NO_VERB):
         return answer("missing", ms, message=error)
     return answer("error", ms, code="window", message=error)
-
 class Endpoint:
-
     name = "endpoint"
-
     def __init__(self, port: int, token: str) -> None:
         self.port = port
         self.token = token
         self.known: dict[str, bool] = {}
-
     def call(self, verb: str, args: dict[str, Any], seconds: float = 60) -> Answer:
         body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
         request = urllib.request.Request(
@@ -64,24 +53,16 @@ class Endpoint:
             return from_contract(json.loads(text), ms)
         except ValueError:
             return answer("error", ms, code="unreadable", message=text[:400])
-
     def has(self, verb: str) -> bool:
-
         if verb not in self.known:
             self.known[verb] = self.call(verb, {"harness": "is this verb here"}, seconds=10)["status"] != "missing"
         return self.known[verb]
-
     def close(self) -> None:
         return
-
 class Mcp:
-
     name = "mcp"
-
     PROTOCOL = "2025-06-18"
-
     CLIENT = "orden-agent-harness"
-
     def __init__(self, process: subprocess.Popen[bytes]) -> None:
         self.process = process
         self.lines: queue.Queue[dict[str, Any]] = queue.Queue()
@@ -102,7 +83,6 @@ class Mcp:
             self.notify("notifications/initialized", {})
             listed = self.request("tools/list", {})
             self.tools = {str(one.get("name")) for one in (listed.get("result") or {}).get("tools", [])}
-
     def _read(self) -> None:
         assert self.process.stdout is not None
         for raw in self.process.stdout:
@@ -112,15 +92,12 @@ class Mcp:
                 said = {"jsonrpc": "2.0", "id": None, "stray": raw[:200].decode("utf-8", "replace")}
             if isinstance(said, dict):
                 self.lines.put(said)
-
     def send(self, message: dict[str, Any]) -> None:
         assert self.process.stdin is not None
         self.process.stdin.write((json.dumps(message) + "\n").encode())
         self.process.stdin.flush()
-
     def notify(self, method: str, params: dict[str, Any]) -> None:
         self.send({"jsonrpc": "2.0", "method": method, "params": params})
-
     def request(self, method: str, params: dict[str, Any], seconds: float = 60) -> dict[str, Any]:
         self.next += 1
         wanted = self.next
@@ -138,7 +115,6 @@ class Mcp:
             if said.get("id") == wanted:
                 return said
         return {"error": {"message": f"{method}: no answer in {seconds:.0f} s"}}
-
     def call(self, verb: str, args: dict[str, Any], seconds: float = 60) -> Answer:
         started = time.perf_counter()
         if verb not in self.tools:
@@ -149,10 +125,8 @@ class Mcp:
         if "error" in said:
             return answer("error", ms, code="rpc", message=str(said["error"].get("message")))
         return from_tool(said.get("result") or {}, ms)
-
     def has(self, verb: str) -> bool:
         return verb in self.tools
-
     def close(self) -> None:
         if self.process.stdin is not None:
             self.process.stdin.close()
@@ -160,9 +134,7 @@ class Mcp:
             self.process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             self.process.kill()
-
 def from_tool(result: dict[str, Any], ms: float) -> Answer:
-
     text = "\n".join(str(one.get("text", "")) for one in result.get("content", []) if one.get("type") == "text")
     pictures = [one for one in result.get("content", []) if one.get("type") == "image"]
     untrusted = marked_source(text)
@@ -173,13 +145,9 @@ def from_tool(result: dict[str, Any], ms: float) -> Answer:
     status = "error" if result.get("isError") else "ok"
     return answer(status, ms, text=text, message=text if status == "error" else None,
                   untrusted=untrusted, pictures=len(pictures), result=None)
-
 class Sidebar:
-
     name = "sidebar"
-
     AGENT = {"id": "claude-code", "name": "Claude Code"}
-
     def __init__(self, reader: Callable[[str, float], dict[str, Any]], mode: str = "auto") -> None:
         self.reader = reader
         self.mode = mode
@@ -187,10 +155,8 @@ class Sidebar:
         self.absent = "" if listed["status"] == "ok" else f"ai_agent_tools: {listed.get('message')}"
         tools = (listed.get("result") or {}).get("tools", []) if not self.absent else []
         self.tools = {str(one.get("name")) for one in tools}
-
     def invoke(self, command: str, args: dict[str, Any], seconds: float = 60) -> dict[str, Any]:
         return self.reader(f"return await window.__TAURI_INTERNALS__.invoke({json.dumps(command)}, {json.dumps(args)})", seconds)
-
     def call(self, verb: str, args: dict[str, Any], seconds: float = 60) -> Answer:
         if verb not in self.tools:
             return answer("missing", 0, message=f"the sidebar's {self.mode} mode lists no tool called {verb}")
@@ -200,15 +166,11 @@ class Sidebar:
         if said["status"] != "ok" or not isinstance(said.get("result"), dict):
             return answer("error", ms, code="window", message=str(said.get("message") or said.get("result")))
         return from_tool(said["result"], ms)
-
     def has(self, verb: str) -> bool:
         return verb in self.tools
-
     def close(self) -> None:
         return
-
 def marked_source(text: str) -> str | None:
-
     at = text.find("<untrusted")
     if at < 0:
         return None

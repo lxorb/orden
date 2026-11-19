@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 NEEDS = ("chromium",)
-
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -26,7 +22,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 600))
 }
 """
-
 LOOK = """
 () => {
   const zoom = Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform)?.[1] ?? 1)
@@ -52,14 +47,12 @@ LOOK = """
   return { zoom, captions, spaces }
 }
 """
-
 def wheel(page: Page, notches: int) -> None:
     page.mouse.move(700, 430)
     for _ in range(abs(notches)):
         page.mouse.wheel(0, 100 if notches > 0 else -100)
         page.wait_for_timeout(60)
     page.wait_for_timeout(900)
-
 def look(page: Page, label: str) -> None:
     seen = page.evaluate(LOOK)
     shot(page, label)
@@ -80,7 +73,6 @@ def look(page: Page, label: str) -> None:
     long = [one for one in captions if one["text"].startswith("A rather long")]
     if long and seen["zoom"] < 1 and not long[0]["cut"]:
         wrong(f"[{label}] the long title does not end in dots inside its window: {long[0]}")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -106,5 +98,4 @@ def drive(browser: Browser) -> None:
     wheel(page, 12)
     look(page, "05-dark")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "the overview's window captions stay readable zoomed out"))

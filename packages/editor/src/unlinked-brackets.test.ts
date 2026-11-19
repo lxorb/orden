@@ -9,7 +9,6 @@ import { type Inline, parseInline } from './table/inline'
 import { parsed } from '../test/parsed'
 
 const PARK = '\n\nx'
-
 function state(doc: string) {
   return parsed(
     EditorState.create({
@@ -19,12 +18,10 @@ function state(doc: string) {
     }),
   )
 }
-
 interface Spec {
   class?: string
   attributes?: Record<string, string>
 }
-
 function linkMarks(doc: string) {
   const full = doc + PARK
   const out: { text: string; href?: string }[] = []
@@ -36,7 +33,6 @@ function linkMarks(doc: string) {
   })
   return out
 }
-
 function cell(source: string): string {
   const show = (nodes: Inline[]): string =>
     nodes
@@ -48,30 +44,25 @@ function cell(source: string): string {
       .join('')
   return show(parseInline(source))
 }
-
 describe('an email address in the note', () => {
   test('drawn as a link opens a mail, as the reading view does', () => {
     expect(renderMarkdown('write to foo@bar.com today')).toContain('href="mailto:foo@bar.com"')
     expect(linkMarks('write to foo@bar.com today')).toEqual([{ text: 'foo@bar.com', href: 'mailto:foo@bar.com' }])
   })
-
   test('written between angle brackets opens a mail too', () => {
     expect(linkMarks('<foo@bar.com>')).toEqual([{ text: 'foo@bar.com', href: 'mailto:foo@bar.com' }])
   })
 })
-
 describe('a web address inside square brackets that are not a link', () => {
   test('is still drawn as a link that opens', () => {
     expect(linkMarks('see [docs at https://x.com] now')).toEqual([{ text: 'https://x.com', href: 'https://x.com' }])
   })
 })
-
 describe('words in square brackets in a drawn table cell', () => {
   test('keep their brackets and are not a link, as in the note and the reading view', () => {
     expect(renderMarkdown('| s |\n| - |\n| [WIP] |')).toContain('<td>[WIP]</td>')
     expect(cell('[WIP]')).toBe('[WIP]')
   })
-
   test('a ticked box written as [x] keeps its brackets', () => {
     expect(cell('[x] done')).toBe('[x] done')
   })

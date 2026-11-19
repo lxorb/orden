@@ -14,7 +14,6 @@
     held?: boolean
     children: Snippet
   } = $props()
-
   const number = $derived(String(place + 1))
   const typing = $derived(isNumber(typed))
   const hit = $derived(typing && number.startsWith(typed) ? typed.length : 0)
@@ -35,14 +34,12 @@
     flex: none;
     display: flex;
   }
-
   .place {
     position: absolute;
     inset-inline-end: 0;
     bottom: 0;
     transform: translate(40%, 40%);
   }
-
   b {
     color: var(--text-strong);
     font-weight: var(--weight-strong);

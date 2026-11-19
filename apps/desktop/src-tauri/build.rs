@@ -17,20 +17,15 @@ fn main() {
         app_intents::build();
     }
 }
-
 mod app_intents {
     use std::env;
     use std::path::PathBuf;
     use std::process::Command;
 
     const SOURCES: &[&str] = &["swift/AddTask.swift"];
-
     const MODULE: &str = "OrdenIntents";
-
     const PROTOCOLS: &str = r#"["AppIntent","AppEntity","AppEnum","EntityQuery","TransientAppEntity","AppShortcutsProvider","AppIntentsPackage","DynamicOptionsProvider"]"#;
-
     const METADATA: &str = "gen/app-intents";
-
     pub fn build() {
         for source in SOURCES {
             println!("cargo:rerun-if-changed={source}");
@@ -52,13 +47,11 @@ mod app_intents {
             .nth(3)
             .unwrap()
             .to_path_buf();
-
         let protocols = out.join("protocols.json");
         std::fs::write(&protocols, PROTOCOLS).unwrap();
         let object = out.join(format!("{MODULE}.o"));
         let values = out.join(format!("{MODULE}.swiftconstvalues"));
         let sources: Vec<PathBuf> = SOURCES.iter().map(|one| manifest.join(one)).collect();
-
         let mut swiftc = Command::new("xcrun");
         swiftc
             .args(["swiftc", "-parse-as-library", "-wmo", "-c", "-O"])
@@ -71,7 +64,6 @@ mod app_intents {
             .arg(&protocols)
             .args(&sources);
         run(&mut swiftc);
-
         let source_list = out.join("sources.txt");
         let values_list = out.join("constvalues.txt");
         std::fs::write(&source_list, lines(&sources)).unwrap();
@@ -102,7 +94,6 @@ mod app_intents {
             .arg(&object)
             .arg("--force");
         run(&mut processor);
-
         println!("cargo:rustc-link-arg-bins={}", object.display());
         println!("cargo:rustc-link-search=native={sdk}/usr/lib/swift");
         println!(
@@ -111,19 +102,16 @@ mod app_intents {
         );
         println!("cargo:rustc-link-arg-bins=-Wl,-rpath,/usr/lib/swift");
     }
-
     fn lines(paths: &[PathBuf]) -> String {
         paths.iter().fold(String::new(), |all, one| {
             all + &one.display().to_string() + "\n"
         })
     }
-
     fn xcrun(args: &[&str]) -> String {
         let out = Command::new("xcrun").args(args).output().expect("xcrun");
         assert!(out.status.success(), "xcrun {args:?} failed");
         String::from_utf8(out.stdout).unwrap().trim().to_owned()
     }
-
     fn xcode_build() -> String {
         let out = Command::new("xcodebuild")
             .arg("-version")
@@ -136,7 +124,6 @@ mod app_intents {
             .trim()
             .to_owned()
     }
-
     fn run(command: &mut Command) {
         let status = command.status().expect("could not start xcrun");
         assert!(status.success(), "{command:?} failed");

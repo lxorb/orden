@@ -10,7 +10,6 @@ pub use super::super::events::InputEvent;
 
 const MOST_TEXT: usize = 1000;
 const DOUBLE_WITHIN: std::time::Duration = std::time::Duration::from_millis(500);
-
 pub struct Input {
     display: CGDirectDisplayID,
     pid: i32,
@@ -20,7 +19,6 @@ pub struct Input {
     reader_was: Option<CGPoint>,
     last_press: Option<(std::time::Instant, CGPoint, u32, i64)>,
 }
-
 impl Input {
     pub fn open(name: &str) -> Result<Input, String> {
         let (display, pid) = super::capture::parse(name).ok_or("not an application's display")?;
@@ -35,7 +33,6 @@ impl Input {
             last_press: None,
         })
     }
-
     pub fn play(&mut self, event: InputEvent) {
         match event {
             InputEvent::Move { x, y } => {
@@ -70,7 +67,6 @@ impl Input {
             InputEvent::Clipboard { .. } | InputEvent::Share { .. } | InputEvent::Ping { .. } => {}
         }
     }
-
     pub fn let_go(&mut self) {
         for code in std::mem::take(&mut self.keys) {
             self.typed(code, None, false);
@@ -80,13 +76,11 @@ impl Input {
             self.button(button, false);
         }
     }
-
     fn point(&self, x: f64, y: f64) -> CGPoint {
         let bounds = CGDisplayBounds(self.display);
         let (width, height) = super::display::pixels_of(self.display);
         global(bounds, (width, height), x, y)
     }
-
     fn flags(&self) -> CGEventFlags {
         let mut flags = CGEventFlags::empty();
         for &code in &self.keys {
@@ -100,7 +94,6 @@ impl Input {
         }
         flags
     }
-
     fn button(&mut self, button: u32, down: bool) {
         if down {
             if self.buttons.is_empty() && self.reader_was.is_none() {
@@ -124,7 +117,6 @@ impl Input {
             }
         }
     }
-
     fn click_count(&mut self, button: u32) -> i64 {
         let now = std::time::Instant::now();
         let count = match self.last_press {
@@ -141,7 +133,6 @@ impl Input {
         self.last_press = Some((now, self.at, button, count));
         count
     }
-
     fn post_global(&self, kind: CGEventType, button: u32, count: i64) {
         let Some(event) = mouse(kind, self.at, button, self.flags()) else {
             return;
@@ -155,13 +146,11 @@ impl Input {
         }
         CGEvent::post(CGEventTapLocation::HIDEventTap, Some(&event));
     }
-
     fn post_to_app(&self, event: Option<objc2_core_foundation::CFRetained<CGEvent>>) {
         if let Some(event) = event {
             CGEvent::post_to_pid(self.pid, Some(&event));
         }
     }
-
     fn key(&mut self, key: &str, code: &str, down: bool) {
         let Some(virtual_key) = key_code(code) else {
             let mut chars = key.chars();
@@ -185,7 +174,6 @@ impl Input {
         };
         self.typed(virtual_key, character, down);
     }
-
     #[allow(unsafe_code)]
     fn typed(&self, virtual_key: u16, character: Option<char>, down: bool) {
         let Some(event) = CGEvent::new_keyboard_event(None, virtual_key, down) else {
@@ -206,13 +194,11 @@ impl Input {
         CGEvent::post_to_pid(self.pid, Some(&event));
     }
 }
-
 impl Drop for Input {
     fn drop(&mut self) {
         self.let_go();
     }
 }
-
 pub fn global(bounds: CGRect, pixels: (usize, usize), x: f64, y: f64) -> CGPoint {
     #[allow(clippy::cast_precision_loss)]
     let (width, height) = (pixels.0.max(1) as f64, pixels.1.max(1) as f64);
@@ -228,7 +214,6 @@ pub fn global(bounds: CGRect, pixels: (usize, usize), x: f64, y: f64) -> CGPoint
         bounds.origin.y + inside(y, height) * bounds.size.height / height,
     )
 }
-
 pub fn mac_button(button: u8) -> Option<u32> {
     match button {
         0 => Some(0),
@@ -239,7 +224,6 @@ pub fn mac_button(button: u8) -> Option<u32> {
         _ => None,
     }
 }
-
 fn pressed(button: u32) -> CGEventType {
     match button {
         0 => CGEventType::LeftMouseDown,
@@ -247,7 +231,6 @@ fn pressed(button: u32) -> CGEventType {
         _ => CGEventType::OtherMouseDown,
     }
 }
-
 fn released(button: u32) -> CGEventType {
     match button {
         0 => CGEventType::LeftMouseUp,
@@ -255,7 +238,6 @@ fn released(button: u32) -> CGEventType {
         _ => CGEventType::OtherMouseUp,
     }
 }
-
 fn dragged(button: u32) -> CGEventType {
     match button {
         0 => CGEventType::LeftMouseDragged,
@@ -263,7 +245,6 @@ fn dragged(button: u32) -> CGEventType {
         _ => CGEventType::OtherMouseDragged,
     }
 }
-
 fn mouse(
     kind: CGEventType,
     at: CGPoint,
@@ -274,7 +255,6 @@ fn mouse(
     CGEvent::set_flags(Some(&event), flags);
     Some(event)
 }
-
 #[allow(clippy::too_many_lines)]
 pub fn key_code(code: &str) -> Option<u16> {
     let found = match code {
@@ -393,7 +373,6 @@ pub fn key_code(code: &str) -> Option<u16> {
     };
     Some(found)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -409,7 +388,6 @@ mod tests {
         assert!((outside.x - 3000.0).abs() < 1e-9);
         assert!(outside.y < 1600.0);
     }
-
     #[test]
     fn presses_the_button_the_pointer_pressed() {
         assert_eq!(mac_button(0), Some(0));
@@ -417,7 +395,6 @@ mod tests {
         assert_eq!(mac_button(1), Some(2));
         assert_eq!(mac_button(9), None);
     }
-
     #[test]
     fn knows_a_keys_place_on_a_mac() {
         assert_eq!(key_code("KeyA"), Some(0x00));

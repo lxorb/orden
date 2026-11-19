@@ -10,18 +10,15 @@
   let entered = $state(untrack(() => shown.on && !startup.reached('index')))
   const narrow = $derived(!shown.on || !entered)
   let moving = $state(false)
-
   $effect(() => {
     if (shown.on) kept = true
     else entered = false
   })
-
   $effect(() => {
     if (!shown.on || entered || !column) return
     column.getBoundingClientRect()
     entered = true
   })
-
   let wasNarrow = untrack(() => narrow)
   $effect.pre(() => {
     if (narrow === wasNarrow) return
@@ -29,7 +26,6 @@
     moving = dur(1) > 0
     if (!moving && !shown.on) kept = false
   })
-
   function slid(event: TransitionEvent) {
     if (event.target !== event.currentTarget || event.propertyName !== 'width') return
     moving = false
@@ -63,23 +59,19 @@
       width var(--dur-base) var(--ease-out),
       visibility 0s;
   }
-
   .coming,
   .shut {
     width: 0;
   }
-
   :global(html:not([data-device='desktop'])) .pad:not(.coming, .shut) {
     width: 100%;
   }
-
   .shut {
     visibility: hidden;
     transition:
       width var(--dur-base) var(--ease-out),
       visibility 0s var(--dur-base);
   }
-
   .moving,
   .coming,
   .shut {

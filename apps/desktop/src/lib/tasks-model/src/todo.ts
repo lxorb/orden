@@ -3,23 +3,19 @@ import { inboxChangeOf, inboxStamp, type InboxFields, type InboxValue } from '@o
 
 export const PRIORITIES = [0, 1, 2, 3] as const
 export type Priority = (typeof PRIORITIES)[number]
-
 export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
   0: 'No priority',
   1: 'Low',
   2: 'Medium',
   3: 'High',
 }
-
 export const priorityTone = (priority: number): string | undefined =>
   (({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>)[priority]
-
 interface Subtask {
   readonly id: string
   readonly title: string
   readonly done: boolean
 }
-
 export interface Todo {
   readonly id: string
   readonly title: string
@@ -35,9 +31,7 @@ export interface Todo {
   readonly order: number
   readonly created: number
 }
-
 export type TodoPatch = Partial<Omit<Todo, 'id' | 'created' | 'doneAt'>>
-
 export const LIMITS = {
   title: 500,
   description: 8000,
@@ -45,17 +39,14 @@ export const LIMITS = {
   label: 50,
   subtasks: 50,
 } as const
-
 export const KIND = 'todo'
 const DESCRIPTION_BYTES = 12_000
 const encoder = new TextEncoder()
 const bytesOf = (text: string): number => encoder.encode(JSON.stringify(text)).length
-
 function wholeSlice(text: string, end: number): string {
   const code = text.charCodeAt(end - 1)
   return text.slice(0, code >= 0xd800 && code <= 0xdbff ? end - 1 : end)
 }
-
 function cutToBytes(text: string, most: number): string {
   if (bytesOf(text) <= most) return text
   let low = 0
@@ -67,10 +58,8 @@ function cutToBytes(text: string, most: number): string {
   }
   return wholeSlice(text, low)
 }
-
 export const fittedDescription = (text: string): string =>
   cutToBytes(wholeSlice(text, LIMITS.description), DESCRIPTION_BYTES)
-
 export function titledOf(text: string): { title: string; description?: string } {
   if (text.length <= LIMITS.title) return { title: text }
   return {
@@ -78,22 +67,15 @@ export function titledOf(text: string): { title: string; description?: string } 
     description: fittedDescription(text),
   }
 }
-
 const DAY = /^\d{4}-\d{2}-\d{2}$/
-
 const isDay = (value: unknown): value is string =>
   typeof value === 'string' && DAY.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
-
 export const isPriority = (value: unknown): value is Priority =>
   typeof value === 'number' && (PRIORITIES as readonly number[]).includes(value)
-
 export const cleanLabel = (label: string): string => label.trim().replace(/\s+/g, ' ')
-
 const text = (value: InboxValue | undefined, fallback = ''): string => (typeof value === 'string' ? value : fallback)
-
 const texts = (value: InboxValue | undefined): string[] =>
   Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
-
 function subtaskOf(value: string): Subtask | null {
   try {
     const read: unknown = JSON.parse(value)
@@ -105,7 +87,6 @@ function subtaskOf(value: string): Subtask | null {
     return null
   }
 }
-
 export function todoOf(id: string, fields: InboxFields): Todo | null {
   if (fields.kind !== KIND || fields.gone === true || typeof fields.title !== 'string') return null
   const priority = fields.priority
@@ -127,7 +108,6 @@ export function todoOf(id: string, fields: InboxFields): Todo | null {
     created: typeof fields.created === 'number' ? fields.created : 0,
   }
 }
-
 export function fieldsOf(patch: TodoPatch): InboxFields {
   const fields: InboxFields = {}
   if (patch.title !== undefined) fields.title = patch.title
@@ -144,10 +124,8 @@ export function fieldsOf(patch: TodoPatch): InboxFields {
   if (patch.order !== undefined) fields.order = patch.order
   return fields
 }
-
 const refused = (message: string) => err(failure('tasks-model', 'invalid', message))
 type Mutable<T> = { -readonly [K in keyof T]: T[K] }
-
 export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
   const out: Mutable<TodoPatch> = {}
   if (patch.title !== undefined) {
@@ -200,7 +178,6 @@ export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
   }
   return ok(out)
 }
-
 export function fitsOneChange(id: string, fields: InboxFields, device: string): Result<void> {
   const stamp = inboxStamp(Number.MAX_SAFE_INTEGER, 0, device)
   const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stamp]))
@@ -208,5 +185,4 @@ export function fitsOneChange(id: string, fields: InboxFields, device: string): 
     ? ok(undefined)
     : refused('this todo is too long to keep; shorten its description or subtasks')
 }
-
 export const newId = (): string => `t${crypto.randomUUID().replace(/-/g, '').slice(0, 15)}`

@@ -1,16 +1,12 @@
 import type { RoomNews } from './wire'
 
 export type Framed = string | number | boolean | null | Uint8Array | readonly unknown[] | object
-
 const VERSION = 1
 const PART = '$part'
-
 const MOST_PARTS = 10_000
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-
 function lifted(value: unknown, parts: Uint8Array[]): unknown {
   if (value instanceof Uint8Array) {
     parts.push(value)
@@ -18,34 +14,28 @@ function lifted(value: unknown, parts: Uint8Array[]): unknown {
   }
   if (Array.isArray(value)) return value.map((one: unknown) => lifted(one, parts))
   if (typeof value !== 'object' || value === null) return value
-
   const out: Record<string, unknown> = {}
   for (const [key, one] of Object.entries(value)) {
     if (one !== undefined) out[key] = lifted(one, parts)
   }
   return out
 }
-
 function lowered(value: unknown, parts: readonly Uint8Array[]): unknown {
   if (Array.isArray(value)) return value.map((one: unknown) => lowered(one, parts))
   if (!isRecord(value)) return value
-
   const keys = Object.keys(value)
   if (keys.length === 1 && keys[0] === PART) {
     const at = value[PART]
     return typeof at === 'number' ? parts[at] : undefined
   }
-
   const out: Record<string, unknown> = {}
   for (const [key, one] of Object.entries(value)) out[key] = lowered(one, parts)
   return out
 }
-
 export function frame(value: Framed): Uint8Array {
   const parts: Uint8Array[] = []
   const header = new TextEncoder().encode(JSON.stringify(lifted(value, parts)))
   const size = 1 + 4 + header.length + 4 + parts.reduce((sum, part) => sum + 4 + part.length, 0)
-
   const out = new Uint8Array(size)
   const view = new DataView(out.buffer)
   let at = 0
@@ -65,16 +55,13 @@ export function frame(value: Framed): Uint8Array {
   }
   return out
 }
-
 export function unframe(bytes: Uint8Array): unknown {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const fits = (at: number, length: number) => at + length <= bytes.length
-
   if (!fits(0, 5) || bytes[0] !== VERSION) return null
   const headerLength = view.getUint32(1)
   let at = 5
   if (!fits(at, headerLength + 4)) return null
-
   let header: unknown
   try {
     header = JSON.parse(
@@ -84,11 +71,9 @@ export function unframe(bytes: Uint8Array): unknown {
     return null
   }
   at += headerLength
-
   const count = view.getUint32(at)
   at += 4
   if (count > MOST_PARTS) return null
-
   const parts: Uint8Array[] = []
   for (let part = 0; part < count; part++) {
     if (!fits(at, 4)) return null
@@ -98,13 +83,10 @@ export function unframe(bytes: Uint8Array): unknown {
     parts.push(bytes.subarray(at, at + length))
     at += length
   }
-
   return at === bytes.length ? lowered(header, parts) : null
 }
-
 const ACK = 100
 const EPOCH = 101
-
 export function ackFrame(seq: number, sv: Uint8Array): Uint8Array {
   const out = new Uint8Array(1 + 8 + sv.length)
   out[0] = ACK
@@ -112,7 +94,6 @@ export function ackFrame(seq: number, sv: Uint8Array): Uint8Array {
   out.set(sv, 9)
   return out
 }
-
 export function epochFrame(epoch: number, epochBase: string): Uint8Array {
   const body = new TextEncoder().encode(JSON.stringify({ epoch, epochBase }))
   const out = new Uint8Array(1 + body.length)
@@ -120,7 +101,6 @@ export function epochFrame(epoch: number, epochBase: string): Uint8Array {
   out.set(body, 1)
   return out
 }
-
 export function roomNews(bytes: Uint8Array): RoomNews | null {
   if (bytes[0] === ACK) {
     if (bytes.length < 9) return null
@@ -129,7 +109,6 @@ export function roomNews(bytes: Uint8Array): RoomNews | null {
     return { t: 'ack', seq, sv: bytes.slice(9) }
   }
   if (bytes[0] !== EPOCH) return null
-
   try {
     const body: unknown = JSON.parse(
       new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes.subarray(1)),

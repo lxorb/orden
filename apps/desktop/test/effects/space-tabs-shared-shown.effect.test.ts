@@ -3,14 +3,11 @@ import { expect, test, vi } from 'vitest'
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 const SPACES = [
   { name: 'Work', path: '/spaces/Work' },
   { name: 'Home', path: '/spaces/Home' },
 ]
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -21,23 +18,19 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const PLAN = '/spaces/Work/Plan.md'
 const FOOD = '/spaces/Home/Food.md'
-
 async function run() {
   const { workspace } = await import('../../src/lib/workspace/src/api')
   const onScreen = () => workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
   return { workspace, onScreen }
 }
-
 test('the shared set on screen becomes the space on screen’s own', async () => {
   const { Disk } = await import('../disk')
   disk.current = new Disk()
   disk.current.files.set(PLAN, '# Plan\n')
   disk.current.files.set(FOOD, '# Food\n')
   localStorage.clear()
-
   {
     const { workspace } = await run()
     workspace.spaces = [
@@ -51,14 +44,12 @@ test('the shared set on screen becomes the space on screen’s own', async () =>
     await workspace.openEntry(FOOD)
     workspace.persist()
   }
-
   const session = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
     sets: { on: string }
   }
   session.sets.on = 'global'
   localStorage.setItem('orden:workspace', JSON.stringify(session))
   localStorage.setItem('orden:space-tabs', JSON.stringify({ work: 'space' }))
-
   await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace, onScreen } = await run()
@@ -66,13 +57,11 @@ test('the shared set on screen becomes the space on screen’s own', async () =>
   flushSync()
   expect(workspace.activeSpaceId).toBe('home')
   expect(onScreen()).toEqual(['Food.md'])
-
   const { tabSets } = await import('../../src/lib/workspace/src/spaces')
   await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Plan.md'), {
     timeout: 15_000,
   })
-
   await workspace.showSpace('work')
   expect(onScreen()).toEqual(['Plan.md'])
   await workspace.showSpace('home')

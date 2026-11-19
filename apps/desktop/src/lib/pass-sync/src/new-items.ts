@@ -10,7 +10,6 @@ import type { PassUi } from './ui.svelte'
 function make(ui: PassUi, content: Content): () => void {
   return () => void ui.newItem(content)
 }
-
 function templateEntries(ui: PassUi): MenuEntry[] {
   return TEMPLATES.map((one) => ({
     label: one.label(),
@@ -18,7 +17,6 @@ function templateEntries(ui: PassUi): MenuEntry[] {
     run: () => void ui.newItem(contentFromTemplate(one.id)),
   }))
 }
-
 export function newItemEntries(ui: PassUi, at: { x: number; y: number }): MenuEntry[] {
   const others = () => {
     const event = new MouseEvent('contextmenu', { clientX: at.x, clientY: at.y })

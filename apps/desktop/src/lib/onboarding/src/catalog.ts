@@ -6,29 +6,22 @@ export interface Brand {
   icon: string | null
   colour: string | null
 }
-
 export type PresetSetting = 'fitTabs' | 'iconTabs' | 'byUse' | 'swipe'
-
 export type Preset = Partial<Record<PresetSetting, boolean>>
-
 export const SETTING_NAMES: Record<PresetSetting, string> = {
   fitTabs: 'Tabs as wide as their names',
   iconTabs: 'Show other tabs as icons',
   byUse: 'Ctrl+Tab in order of use',
   swipe: 'Swipe between pages',
 }
-
 export const CUSTOM_SETTINGS: readonly PresetSetting[] = ['fitTabs', 'iconTabs', 'byUse', 'swipe']
-
 const LIKE_CHROME: Preset = { fitTabs: true, iconTabs: false, byUse: false }
 const LIKE_SAFARI: Preset = { fitTabs: false, iconTabs: false, swipe: true }
 const LIKE_ZEN: Preset = { iconTabs: true, byUse: true }
-
 export interface Browser extends Brand {
   preset: Preset | null
   importer: Importer | null
 }
-
 const browser = (
   id: string,
   name: string,
@@ -37,7 +30,6 @@ const browser = (
   preset: Preset | null,
   importer: Importer | null = null,
 ): Browser => ({ id, name, icon, colour, preset, importer })
-
 export const BROWSERS: readonly Browser[] = [
   browser('chrome', 'Chrome', 'googlechrome', '#4285F4', LIKE_CHROME, 'chrome'),
   browser('safari', 'Safari', 'safari', '#006CFF', LIKE_SAFARI, 'safari'),
@@ -54,9 +46,7 @@ export const BROWSERS: readonly Browser[] = [
   browser('floorp', 'Floorp', 'floorp', '#1F8FFF', LIKE_CHROME),
   browser('tor', 'Tor', 'torbrowser', '#7D4698', LIKE_CHROME),
 ]
-
 export const MAIN_BROWSERS = ['chrome', 'safari', 'edge', 'firefox'] as const
-
 export const LATER_BROWSERS: readonly Brand[] = [
   { id: 'orion', name: 'Orion', icon: null, colour: '#5856D6' },
   { id: 'dia', name: 'Dia', icon: null, colour: '#1C1C1C' },
@@ -65,11 +55,9 @@ export const LATER_BROWSERS: readonly Brand[] = [
   { id: 'samsung', name: 'Samsung Internet', icon: null, colour: '#1428A0' },
   { id: 'yandex', name: 'Yandex', icon: null, colour: '#FC3F1D' },
 ]
-
 export interface NotesApp extends Brand {
   bring: NotesFrom | null
 }
-
 const app = (
   id: string,
   name: string,
@@ -77,7 +65,6 @@ const app = (
   colour: string | null,
   bring: NotesFrom | null,
 ): NotesApp => ({ id, name, icon, colour, bring })
-
 export const NOTES_APPS: readonly NotesApp[] = [
   app('obsidian', 'Obsidian', 'obsidian', '#7C3AED', 'vault'),
   app('notion', 'Notion', 'notion', null, 'files'),
@@ -100,22 +87,17 @@ export const NOTES_APPS: readonly NotesApp[] = [
   app('tana', 'Tana', null, '#1C1C1C', null),
   app('workflowy', 'Workflowy', null, '#1C1C1C', null),
 ]
-
 export const MAIN_NOTES = ['obsidian', 'notion', 'apple', 'markdown'] as const
-
 export type Plan = 'claude' | 'chatgpt' | 'gemini'
-
 export const PLANS: readonly (Brand & { id: Plan })[] = [
   { id: 'claude', name: 'Claude', icon: 'claude', colour: '#D97757' },
   { id: 'chatgpt', name: 'ChatGPT', icon: 'openai', colour: null },
   { id: 'gemini', name: 'Gemini', icon: 'googlegemini', colour: '#8E75B2' },
 ]
-
 export interface Compatible extends Brand {
   baseUrl: string | null
   keyed: boolean
 }
-
 const compatible = (
   id: string,
   name: string,
@@ -124,7 +106,6 @@ const compatible = (
   baseUrl: string | null,
   keyed = true,
 ): Compatible => ({ id, name, icon, colour, baseUrl, keyed })
-
 export const MORE_AI: readonly Compatible[] = [
   compatible('ollama', 'Ollama', 'ollama', null, 'http://localhost:11434', false),
   compatible('lmstudio', 'LM Studio', 'lmstudio', null, 'http://localhost:1234', false),
@@ -136,7 +117,6 @@ export const MORE_AI: readonly Compatible[] = [
   compatible('copilot', 'Microsoft Copilot', null, '#0078D4', null),
   compatible('metaai', 'Meta AI', 'meta', '#0467DF', null),
 ]
-
 export const HEARD = [
   { id: 'ai', name: 'AI assistant' },
   { id: 'friend', name: 'Friend or colleague' },
@@ -144,9 +124,7 @@ export const HEARD = [
   { id: 'social', name: 'Social media' },
   { id: 'other', name: 'Other' },
 ] as const
-
 export type Heard = (typeof HEARD)[number]['id']
-
 export function importPrompt(app: string): string {
   return `Convert my ${app} notes into a folder that the notes app Orden can import.
 

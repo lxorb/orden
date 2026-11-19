@@ -14,7 +14,6 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   if (!from || !to || samePath(from.root, to.root)) return none
   const pointers = await pointersMoving(path)
   if (!pointers.length) return none
-
   const moved: string[] = []
   const owned: [string, string][] = []
   const home = sync.remoteIdFor(from.root)
@@ -36,10 +35,8 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   if (!mayCarry(path, to.root, pointers)) await refuse(new Error('only the owner can do that'))
   const space = sync.remoteIdFor(to.root)
   if (!space || space === home) return none
-
   const listing = await listChats().catch(() => null)
   const spaces = listing ? new Map(listing.chats.map((one) => [one.id, one.space])) : null
-
   const carrying = new Map<string, string>()
   for (const pointer of pointers) {
     const chat = await readPointer(pointer)
@@ -56,12 +53,10 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     if (!staying) carrying.set(chat, pointer)
   }
   if (!carrying.size) return none
-
   const names = [...carrying.values()].map((pointer) => chatName(pointer))
   const answer = await carryAsked(names, from.name, to.name)
   if (answer === null) await refuse(new Error('not moved'))
   if (answer === 'file') return none
-
   for (const [chat, pointer] of carrying) {
     const moving = await moveChat(chat, space).catch((error: unknown) =>
       error instanceof ApiError ? error : new Error(String(error)),
@@ -75,7 +70,6 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   }
   return back
 }
-
 async function carryAsked(names: readonly string[], from: string, to: string): Promise<'chat' | 'file' | null> {
   const { prompt } = await import('../../ui-kit/src/api')
   const answer = await prompt.choose(carryQuestion(names, from, to))

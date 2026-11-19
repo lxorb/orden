@@ -11,7 +11,6 @@ export async function writtenOf(core: Core, id: string): Promise<string | null> 
   const [row] = await core.store.read([get('written', id)])
   return row?.text ?? null
 }
-
 async function unsynced(core: Core, entry: EntryRow, full: string, read: string): Promise<void> {
   if (!read.trim()) return
   const kept = `${entry.id}:${await core.world.digest(read)}`
@@ -21,7 +20,6 @@ async function unsynced(core: Core, entry: EntryRow, full: string, read: string)
   }
   saidUnsynced(core, entry)
 }
-
 export async function readAgain(core: Core, space: SpaceState): Promise<Change[]> {
   const changes: Change[] = []
   for (const id of [...core.unreadFor.keys()]) {
@@ -40,7 +38,6 @@ export async function readAgain(core: Core, space: SpaceState): Promise<Change[]
   }
   return changes
 }
-
 export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Promise<Change[]> {
   if (!entry.local_path || core.isHeld(entry.id)) return []
   const full = core.world.join(space.row.root, entry.local_path)
@@ -52,7 +49,6 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   }
   core.unreadFor.delete(entry.id)
   const file = unixLines(read)
-
   const doc = await core.doc(entry.id)
   if (!doc) return []
   const ours = doc.text()
@@ -64,13 +60,11 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   readFine(core, entry.id)
   if (file === ancestor) return []
   if (file === ours) return await wrote(core, entry, file)
-
   if (ours === ancestor) {
     doc.write((live) => turn(doc.shape, live, ours, file, MINE))
     doc.flush()
     return [...core.docChanges(doc), ...(await wrote(core, entry, file))]
   }
-
   const times = { local: core.world.now(), remote: doc.pendingAt }
   const judged = judge(doc.shape, ancestor, file, ours, times)
   const held = judged.resolution === null
@@ -85,7 +79,6 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
       ...(judged.merged === undefined ? {} : { merged: judged.merged }),
     })
   }
-
   if (judged.resolution === null) {
     const against = { t: 'file', base: ancestor, local: file } as const
     const holding: Holding = {
@@ -100,7 +93,6 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
     }
     return core.holdChanges(holding)
   }
-
   const resolution = judged.resolution
   const changes = keepLosers(core, space, entry.id, judged.lost, file, ours)
   doc.write((live) => turn(doc.shape, live, ours, resolution, MINE))

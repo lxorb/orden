@@ -14,15 +14,12 @@ function board(readable = true): Clipboard & { held: string; writes: string[] } 
   }
   return one
 }
-
 beforeEach(() => {
   vi.useFakeTimers()
 })
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 describe('a copied secret', () => {
   test('is cleared after the time chosen while the clipboard still holds it', async () => {
     const clipboard = board()
@@ -33,7 +30,6 @@ describe('a copied secret', () => {
     await vi.advanceTimersByTimeAsync(1_000)
     expect(clipboard.held).toBe('')
   })
-
   test('is left alone when something else was copied since', async () => {
     const clipboard = board()
     await copySecret('s3cret', 15, clipboard)
@@ -42,21 +38,18 @@ describe('a copied secret', () => {
     expect(clipboard.held).toBe('a link')
     expect(clipboard.writes).toEqual(['s3cret'])
   })
-
   test('is cleared when the clipboard cannot be read', async () => {
     const clipboard = board(false)
     await copySecret('s3cret', 60, clipboard)
     await vi.advanceTimersByTimeAsync(60_000)
     expect(clipboard.writes).toEqual(['s3cret', ''])
   })
-
   test('is never cleared when the reader chose never', async () => {
     const clipboard = board()
     await copySecret('s3cret', 0, clipboard)
     await vi.advanceTimersByTimeAsync(600_000)
     expect(clipboard.held).toBe('s3cret')
   })
-
   test('copied again starts its own clock, and the first one does nothing', async () => {
     const clipboard = board(false)
     await copySecret('first', 15, clipboard)
@@ -67,7 +60,6 @@ describe('a copied secret', () => {
     await vi.advanceTimersByTimeAsync(50_000)
     expect(clipboard.writes).toEqual(['first', 'second', ''])
   })
-
   test('is known by its digest while it may be on the clipboard, and nothing else is', async () => {
     const clipboard = board()
     await copySecret('s3cret', 15, clipboard)

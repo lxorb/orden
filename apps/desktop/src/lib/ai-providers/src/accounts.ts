@@ -2,28 +2,22 @@ import { withOrWithout, isRecord, isString } from '../../platform/src/api'
 import { isLocal, KIND_NAMES, type Provider, type ProviderKind } from './providers'
 
 export type Vendor = string
-
 export const CLAUDE: Vendor = 'claude'
 export const OPENAI: Vendor = 'openai'
 export const GEMINI: Vendor = 'gemini'
-
 export interface Account extends Provider {
   own?: true
 }
-
 export interface Accounts {
   accounts: Account[]
   active: Record<Vendor, string>
   defaultVendor: Vendor
   uses: Record<string, Vendor>
 }
-
 export const NONE: Accounts = { accounts: [], active: {}, defaultVendor: '', uses: {} }
-
 export function repeatable(kind: ProviderKind): boolean {
   return kind !== 'chatgpt'
 }
-
 export function vendorOf(account: Pick<Provider, 'id' | 'kind'>): Vendor {
   switch (account.kind) {
     case 'anthropic':
@@ -40,16 +34,13 @@ export function vendorOf(account: Pick<Provider, 'id' | 'kind'>): Vendor {
       return account.id
   }
 }
-
 function isKind(value: unknown): value is ProviderKind {
   if (value === 'claude-code' && !__CLAUDE_CODE__) return false
   return isString(value) && Object.hasOwn(KIND_NAMES, value)
 }
-
 function isId(value: unknown): value is string {
   return isString(value) && /^[A-Za-z0-9_-]{1,64}$/.test(value)
 }
-
 function accountIn(value: unknown): Account | null {
   if (!isRecord(value)) return null
   const { id, kind, name, baseUrl, model, own } = value
@@ -63,12 +54,10 @@ function accountIn(value: unknown): Account | null {
     ...(own === true && isLocal(kind) ? { own: true as const } : {}),
   }
 }
-
 function namesIn(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {}
   return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => isString(entry[1])))
 }
-
 export function accountsIn(value: unknown): Accounts {
   if (!isRecord(value)) return NONE
   const seen = new Set<string>()
@@ -86,52 +75,42 @@ export function accountsIn(value: unknown): Accounts {
     uses: namesIn(value.uses),
   })
 }
-
 export function accountsText({ accounts, active, defaultVendor, uses }: Accounts): string {
   return JSON.stringify({ version: 1, accounts, active, defaultVendor, uses })
 }
-
 export function vendors(state: Accounts): Vendor[] {
   const all = [...new Set(state.accounts.map(vendorOf))]
   const rank = (one: Vendor) => (one === CLAUDE ? 0 : one === OPENAI ? 1 : one === GEMINI ? 2 : 3)
   return all.sort((a, b) => rank(a) - rank(b))
 }
-
 export function accountsOf(state: Accounts, vendor: Vendor): Account[] {
   return state.accounts.filter((one) => vendorOf(one) === vendor)
 }
-
 export function activeOf(state: Accounts, vendor: Vendor): Account | null {
   const mine = accountsOf(state, vendor)
   return mine.find((one) => one.id === state.active[vendor]) ?? mine[0] ?? null
 }
-
 export function defaultOf(state: Accounts): Account | null {
   return activeOf(state, state.defaultVendor)
 }
-
 export function actives(state: Accounts): Account[] {
   return vendors(state)
     .map((vendor) => activeOf(state, vendor))
     .filter((one): one is Account => one !== null)
 }
-
 function vendorNamed(state: Accounts, id: string): Vendor | null {
   const account = state.accounts.find((one) => one.id === id)
   if (account) return vendorOf(account)
   return state.accounts.some((one) => vendorOf(one) === id) ? id : null
 }
-
 export function resolve(state: Accounts, id: string): Account | null {
   const vendor = vendorNamed(state, id)
   return vendor === null ? null : activeOf(state, vendor)
 }
-
 export function isActive(state: Accounts, id: string): boolean {
   const account = state.accounts.find((one) => one.id === id)
   return !!account && activeOf(state, vendorOf(account))?.id === id
 }
-
 export function freshId(kind: ProviderKind, taken: (id: string) => boolean): string {
   if (kind !== 'compatible' && !taken(kind)) return kind
   for (let number = kind === 'compatible' ? 1 : 2; ; number++) {
@@ -139,7 +118,6 @@ export function freshId(kind: ProviderKind, taken: (id: string) => boolean): str
     if (!taken(id)) return id
   }
 }
-
 function tidied(state: Accounts): Accounts {
   const there = vendors(state)
   const active: Record<Vendor, string> = {}
@@ -156,7 +134,6 @@ function tidied(state: Accounts): Accounts {
     uses: Object.fromEntries(Object.entries(state.uses).filter(([, one]) => there.includes(one))),
   }
 }
-
 export function added(state: Accounts, kind: ProviderKind): { state: Accounts; account: Account } {
   const held = repeatable(kind) ? undefined : state.accounts.find((one) => one.kind === kind)
   if (held) return { state, account: held }
@@ -171,19 +148,16 @@ export function added(state: Accounts, kind: ProviderKind): { state: Accounts; a
   }
   return { state: including(state, account), account }
 }
-
 export function including(state: Accounts, account: Account): Accounts {
   if (state.accounts.some((one) => one.id === account.id)) return state
   return tidied({ ...state, accounts: [...state.accounts, account] })
 }
-
 export function updated(state: Accounts, id: string, change: Partial<Omit<Account, 'id' | 'kind' | 'own'>>): Accounts {
   return {
     ...state,
     accounts: state.accounts.map((one) => (one.id === id ? { ...one, ...change } : one)),
   }
 }
-
 export function renamed(state: Accounts, from: string, to: string): Accounts {
   const account = state.accounts.find((one) => one.id === from)
   if (!account) return state
@@ -196,28 +170,23 @@ export function renamed(state: Accounts, from: string, to: string): Accounts {
     uses: Object.fromEntries(Object.entries(state.uses).map(([feature, one]) => [feature, vendor(one)])),
   }
 }
-
 export function removed(state: Accounts, id: string): Accounts {
   return tidied({ ...state, accounts: state.accounts.filter((one) => one.id !== id) })
 }
-
 export function activated(state: Accounts, id: string): Accounts {
   const account = state.accounts.find((one) => one.id === id)
   if (!account) return state
   return { ...state, active: { ...state.active, [vendorOf(account)]: id } }
 }
-
 export function defaulted(state: Accounts, id: string): Accounts {
   const vendor = vendorNamed(state, id)
   if (vendor === null) return state
   return { ...activated(state, id), defaultVendor: vendor }
 }
-
 export function used(state: Accounts, feature: string, id: string): Accounts {
   const vendor = id ? vendorNamed(state, id) : null
   return { ...state, uses: withOrWithout(state.uses, feature, vendor) }
 }
-
 export function migrated(old: unknown): Accounts {
   if (!isRecord(old)) return NONE
   const accounts = accountsIn({ accounts: old.providers }).accounts
@@ -234,7 +203,6 @@ export function migrated(old: unknown): Accounts {
   }
   return tidied({ accounts, active, defaultVendor: named(defaultId) ?? '', uses })
 }
-
 export function merged(kept: Accounts, brought: Accounts): Accounts {
   const fresh = brought.accounts.filter((one) => !kept.accounts.some((there) => there.id === one.id))
   if (!fresh.length) return kept

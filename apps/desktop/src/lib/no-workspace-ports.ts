@@ -3,7 +3,6 @@ import { providePort } from '@orden/contracts'
 const nothing = () => undefined
 const done = () => Promise.resolve()
 const unheard = () => nothing
-
 providePort('sync.workspace', {
   spaces: [],
   shownSpaces: [],

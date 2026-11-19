@@ -8,7 +8,6 @@ use super::link::Store;
 use super::unzip;
 
 const LIST: &str = "library.json";
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Kept {
@@ -20,11 +19,9 @@ pub struct Kept {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub addon: Option<String>,
 }
-
 pub fn folder_of(root: &Path, id: &str, version: &str) -> PathBuf {
     root.join(id).join(version)
 }
-
 pub fn read(root: &Path) -> Vec<Kept> {
     fs::read_to_string(root.join(LIST))
         .ok()
@@ -34,14 +31,12 @@ pub fn read(root: &Path) -> Vec<Kept> {
         .filter(|kept| super::link::is_id(&kept.id) && plain_version(&kept.version))
         .collect()
 }
-
 pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
     written(
         &root.join(LIST),
         &serde_json::to_string_pretty(list).map_err(|e| e.to_string())?,
     )
 }
-
 fn written(path: &Path, text: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| error.to_string())?;
@@ -50,7 +45,6 @@ fn written(path: &Path, text: &str) -> Result<(), String> {
     fs::write(&beside, text).map_err(|error| error.to_string())?;
     fs::rename(&beside, path).map_err(|error| error.to_string())
 }
-
 pub fn plain_version(version: &str) -> bool {
     !version.is_empty()
         && version.len() <= 64
@@ -59,7 +53,6 @@ pub fn plain_version(version: &str) -> bool {
             .split('.')
             .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
 }
-
 pub fn unpack_firefox(
     root: &Path,
     id: &str,
@@ -73,7 +66,6 @@ pub fn unpack_firefox(
     })?;
     Ok((version, gaps))
 }
-
 fn unpack_with(
     root: &Path,
     id: &str,
@@ -81,7 +73,6 @@ fn unpack_with(
     finish: impl FnOnce(&Path) -> Result<(), String>,
 ) -> Result<String, String> {
     static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-
     let home = root.join(id);
     fs::create_dir_all(&home).map_err(|error| error.to_string())?;
     let making = home.join(format!(
@@ -90,7 +81,6 @@ fn unpack_with(
         NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     ));
     let _ = fs::remove_dir_all(&making);
-
     let made = (|| {
         unzip::unzip(zip, &making)?;
         finish(&making)?;
@@ -100,7 +90,6 @@ fn unpack_with(
         }
         Ok(about.version)
     })();
-
     let version = match made {
         Ok(version) => version,
         Err(why) => {
@@ -117,7 +106,6 @@ fn unpack_with(
     }
     Ok(version)
 }
-
 pub fn prune(root: &Path, id: &str, keep: &str) {
     let Ok(entries) = fs::read_dir(root.join(id)) else {
         return;
@@ -128,13 +116,11 @@ pub fn prune(root: &Path, id: &str, keep: &str) {
         }
     }
 }
-
 pub fn forget(root: &Path, id: &str) {
     if super::link::is_id(id) {
         let _ = fs::remove_dir_all(root.join(id));
     }
 }
-
 pub fn tidy(root: &Path) {
     let list = read(root);
     let Ok(entries) = fs::read_dir(root) else {
@@ -151,7 +137,6 @@ pub fn tidy(root: &Path) {
         }
     }
 }
-
 pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
     read(root)
         .into_iter()
@@ -162,7 +147,6 @@ pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
         })
         .collect()
 }
-
 #[cfg(test)]
 mod amo_tests {
     use sha2::{Digest as _, Sha256};
@@ -205,7 +189,6 @@ mod amo_tests {
         };
         (bytes, listing)
     }
-
     #[test]
     fn an_amo_add_on_installs_from_its_file_and_updates() {
         let root = tempfile::tempdir().expect("a folder");
@@ -215,7 +198,6 @@ mod amo_tests {
         let mut other = listing.clone();
         other.hash = "0".repeat(64);
         assert!(checked(&bytes, &other).is_err());
-
         let (id, key) = id_and_key(&listing.guid);
         let (version, gaps) = unpack_firefox(root, &id, &bytes, &listing.guid).expect("unpacked");
         assert_eq!(version, chromium_version("1.0b1"));
@@ -233,7 +215,6 @@ mod amo_tests {
         assert!(folder.join("orden/background.html").is_file());
         let popup = std::fs::read_to_string(folder.join("popup.html")).expect("there");
         assert!(popup.contains("/orden/browser-polyfill.js"), "{popup}");
-
         let kept = Kept {
             id: id.clone(),
             store: Store::Firefox,
@@ -244,7 +225,6 @@ mod amo_tests {
         };
         write(root, std::slice::from_ref(&kept)).expect("written");
         assert_eq!(read(root), vec![kept.clone()]);
-
         let (bytes, listing) = xpi("1.0");
         let (newer, _) = unpack_firefox(root, &id, &bytes, &listing.guid).expect("unpacked");
         assert_eq!(newer, "1.0");

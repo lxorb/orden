@@ -33,7 +33,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current!.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 disk.current = d
@@ -45,14 +44,11 @@ const { put, renameTo, transfer } = await import('./commands')
 const { openExplorer } = await import('./open')
 const { readSpec } = await import('./spec')
 const { viewOf } = await import('./view.svelte')
-
 function pinned(...paths: string[]) {
   for (const one of [...places.pinned]) places.unpin(one)
   for (const one of paths) places.pin(one)
 }
-
 const kept = (): unknown => JSON.parse(localStorage.getItem('orden:explorer-pinned') ?? 'null')
-
 describe('a pinned folder follows a rename or move made in Orden', () => {
   beforeEach(async () => {
     await workspace.writesSettled()
@@ -66,20 +62,17 @@ describe('a pinned folder follows a rename or move made in Orden', () => {
     workspace.activeSpaceId = 'S'
     await workspace.loadTree()
   })
-
   test('renaming a pinned folder outside a space', async () => {
     pinned('/home/me/Projects', '/home/me/Music')
     await renameTo('/home/me/Projects', 'Work')
     expect(places.pinned).toEqual(['/home/me/Work', '/home/me/Music'])
     expect(kept()).toEqual(['/home/me/Work', '/home/me/Music'])
   })
-
   test('renaming the folder that holds a pinned one', async () => {
     pinned('/home/me/Projects/orden')
     await renameTo('/home/me/Projects', 'Work')
     expect(places.pinned).toEqual(['/home/me/Work/orden'])
   })
-
   test('moving a pinned folder, and taking the move back', async () => {
     pinned('/home/me/Projects')
     await transfer('job', ['/home/me/Projects'], '/mnt/disk', 'move', 'keep')
@@ -87,33 +80,28 @@ describe('a pinned folder follows a rename or move made in Orden', () => {
     await put('job', [{ from: '/mnt/disk/Projects', to: '/home/me/Projects' }], 'move')
     expect(places.pinned).toEqual(['/home/me/Projects'])
   })
-
   test('a copy, or a move that stayed, leaves the pin where it is', async () => {
     pinned('/home/me/Projects')
     await transfer('job', ['/home/me/Projects'], '/mnt/disk', 'copy', 'keep')
     await transfer('job', ['/home/me/Projects'], '/mnt/disk', 'move', 'keep', ['/home/me/Projects'])
     expect(places.pinned).toEqual(['/home/me/Projects'])
   })
-
   test('renaming a pinned folder in a space', async () => {
     pinned('/s/Trips/Rome')
     await workspace.rename('/s/Trips', 'Travel')
     expect(places.pinned).toEqual(['/s/Travel/Rome'])
     expect(kept()).toEqual(['/s/Travel/Rome'])
   })
-
   test('renaming the space that holds a pinned folder', async () => {
     pinned('/s/Trips')
     await workspace.fileMoved('/s', '/t', 'space')
     expect(places.pinned).toEqual(['/t/Trips'])
   })
-
   test('a pin moved onto one already pinned is kept once', async () => {
     pinned('/home/me/A', '/home/me/B')
     await renameTo('/home/me/A', 'B')
     expect(places.pinned).toEqual(['/home/me/B'])
   })
-
   test('an explorer tab in or past a renamed folder goes along, its way back too', async () => {
     const tab = await openExplorer('/home/me/Projects/orden', false)
     tab.note.replace(
@@ -134,7 +122,6 @@ describe('a pinned folder follows a rename or move made in Orden', () => {
     expect(view.folder).toBe('/home/me/Work/orden')
     expect(tab.name).toBe('orden')
   })
-
   test('an explorer tab in a renamed space folder goes along', async () => {
     const tab = await openExplorer('/s/Trips/Rome', false)
     await workspace.rename('/s/Trips', 'Travel')

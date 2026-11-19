@@ -3,27 +3,21 @@ import { account, api, type AccountSettings, stands } from '../../accounts/src/a
 import { heardElsewhere, isBoolean, isRecord, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden.chat-hush'
-
 export const WEEKDAYS = [1, 2, 3, 4, 5]
 export const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6]
-
 export const WORKING_HOURS: Hours = { days: WEEKDAYS, from: 9 * 60, to: 18 * 60 }
-
 class Hush {
   keywords = $state<string[]>([])
   hours = $state<Hours | null>(null)
   previews = $state(true)
   sound = $state(false)
-
   constructor() {
     this.heard()
   }
-
   heard() {
     const saved = stored(KEY)
     if (isRecord(saved)) this.took(saved)
   }
-
   setKeywords(line: string) {
     const words = [
       ...new Set(
@@ -37,23 +31,19 @@ class Hush {
     this.keywords = words
     this.changed({ chatKeywords: words })
   }
-
   setHours(hours: Hours | null) {
     if (hours !== null && !isHours(hours)) return
     this.hours = hours
     this.changed({ chatHours: hours })
   }
-
   setPreviews(on: boolean) {
     this.previews = on
     this.changed({ chatPreviews: on })
   }
-
   setSound(on: boolean) {
     this.sound = on
     this.changed({ chatSound: on })
   }
-
   receive(remote: AccountSettings) {
     this.took({
       keywords: remote.chatKeywords,
@@ -63,20 +53,17 @@ class Hush {
     })
     this.persist()
   }
-
   private took(value: Record<string, unknown>) {
     if (isKeywords(value.keywords)) this.keywords = value.keywords
     if (value.hours === null || isHours(value.hours)) this.hours = value.hours
     if (isBoolean(value.previews)) this.previews = value.previews
     if (isBoolean(value.sound)) this.sound = value.sound
   }
-
   private changed(patch: AccountSettings) {
     this.persist()
     const token = account.accountToken
     if (token) void api.saveSettings(token, patch).catch(() => undefined)
   }
-
   private persist() {
     keepJson(KEY, {
       keywords: this.keywords,
@@ -86,11 +73,8 @@ class Hush {
     })
   }
 }
-
 export const hush = /* @__PURE__ */ new Hush()
-
 heardElsewhere([KEY], () => hush.heard())
-
 export function dndUntil(): number | null {
   const status = account.user?.status
   if (!status?.quiet || !stands(status, Date.now())) return null

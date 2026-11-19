@@ -8,15 +8,12 @@
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { content = $bindable(), oninput }: { content: Card; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   const brands = $derived(CARD_BRANDS.map((brand) => ({ value: brand, label: brandLabel(brand) })))
-
   function numberTyped() {
     const guessed = brandOf(content.number)
     if (guessed !== null) content.brand = guessed
     oninput()
   }
-
   function expiryTyped() {
     const digits = content.expiry.replace(/\D/g, '').slice(0, 4)
     content.expiry = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits
@@ -72,14 +69,12 @@
     gap: var(--space-3);
     padding: var(--space-2) var(--space-3);
   }
-
   .label {
     flex: 1;
     padding-inline-start: calc(var(--icon-md) + var(--space-2));
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .brand > :global(:last-child) {
     flex: none;
     width: 12rem;

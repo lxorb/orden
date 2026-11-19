@@ -4,7 +4,6 @@
   const EVERY = 400
   let near = false
   let last = -Infinity
-
   addEventListener(
     'pointermove',
     function (event) {

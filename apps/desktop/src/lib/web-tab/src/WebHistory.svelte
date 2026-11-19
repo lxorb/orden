@@ -22,7 +22,6 @@
     onopen: (url: string, ask: TabAsk) => void
     onclear: () => void
   } = $props()
-
   let all = $state.raw(visited.all(untrack(() => book)))
   let now = $state(Date.now())
   let typed = $state('')
@@ -33,18 +32,14 @@
   let field = $state<HTMLInputElement>()
   const rows = $derived(historyRows(all, typed))
   const shown = $derived(onScreen(scrolled, height, rowHeight, rows.length))
-
   $effect(() => atTop(typed))
-
   function atTop(_search: string) {
     untrack(() => {
       if (list) list.scrollTop = 0
       scrolled = 0
     })
   }
-
   const CLOCK: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' }
-
   onMount(() => {
     const stop = visited.watch((which) => {
       if (which !== book) return
@@ -58,23 +53,18 @@
     if (focused) field?.focus({ preventScroll: true })
     return stop
   })
-
   function visitOf(row: HistoryRow): Visit | null {
     return row.kind === 'visit' ? row.visit : null
   }
-
   function dayAt(row: HistoryRow): number {
     return row.kind === 'day' ? row.day : 0
   }
-
   function titleOf(visit: Visit): string {
     return visit.title === '' ? shownHost(visit.url) : visit.title
   }
-
   function remove(visit: Visit) {
     visited.remove(book, visit.url)
   }
-
   function rowMenu(event: MouseEvent, visit: Visit) {
     event.preventDefault()
     menu.show(event, [
@@ -83,7 +73,6 @@
       { label: 'Remove from history', run: () => remove(visit) },
     ])
   }
-
   function rowKey(event: KeyboardEvent, visit: Visit, index: number) {
     if (event.key === 'Delete') {
       event.preventDefault()
@@ -99,7 +88,6 @@
     if (next < 0) field?.focus()
     else focusRow(next)
   }
-
   function focusRow(index: number) {
     let at = Math.min(index, rows.length - 1)
     while (at > 0 && rows[at]?.kind === 'day') at--
@@ -210,21 +198,18 @@
     background: var(--bg);
     font-family: var(--font-ui);
   }
-
   .top,
   .room,
   .none {
     width: min(48rem, calc(100% - var(--space-4) * 2));
     margin-inline: auto;
   }
-
   .top {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     padding-block: var(--space-4) var(--space-2);
   }
-
   .find {
     flex: 1;
     min-width: 0;
@@ -240,22 +225,18 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .find:focus {
     border-color: var(--accent);
   }
-
   .list {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     padding-bottom: var(--space-4);
   }
-
   .room {
     position: relative;
   }
-
   .day,
   .line {
     position: absolute;
@@ -263,7 +244,6 @@
     height: var(--row-height);
     margin: 0;
   }
-
   .day {
     display: flex;
     align-items: flex-end;
@@ -276,48 +256,40 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .line {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .page {
     flex: 1;
     min-width: 0;
     color: var(--text);
   }
-
   .when {
     width: 4.5em;
     text-align: start;
   }
-
   .orden-row-mark img {
     width: var(--icon-md);
     height: var(--icon-md);
     border-radius: 3px;
   }
-
   .host {
     max-width: 14rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .gone {
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .line:hover .gone,
   .line:focus-within .gone,
   :global([data-touch]) .gone {
     opacity: 1;
   }
-
   .none {
     padding: var(--space-4) var(--row-pad);
     color: var(--muted);

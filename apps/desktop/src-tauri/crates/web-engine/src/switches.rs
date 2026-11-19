@@ -1,17 +1,13 @@
 use std::path::Path;
 
 pub type Switch = (String, Option<String>);
-
 pub const ENGINE_SWIPE: (&str, &str, &str) = (
     "TouchpadOverscrollHistoryNavigation",
     "overscroll-history-navigation",
     "0",
 );
-
 pub const LOAD_EXTENSION_OFF: &str = "DisableLoadExtensionCommandLineSwitch";
-
 pub const LOAD_EXTENSION: &str = "load-extension";
-
 #[must_use]
 pub fn overlay_scrollbars() -> Option<&'static str> {
     if cfg!(target_os = "linux") {
@@ -22,7 +18,6 @@ pub fn overlay_scrollbars() -> Option<&'static str> {
         None
     }
 }
-
 #[must_use]
 pub fn switches(written: &str) -> Vec<Switch> {
     written
@@ -35,7 +30,6 @@ pub fn switches(written: &str) -> Vec<Switch> {
         })
         .collect()
 }
-
 pub fn with_extensions(asked: &mut Vec<Switch>, folders: &[impl AsRef<Path>]) -> bool {
     let ours: Vec<String> = folders
         .iter()
@@ -56,7 +50,6 @@ pub fn with_extensions(asked: &mut Vec<Switch>, folders: &[impl AsRef<Path>]) ->
     asked.push((LOAD_EXTENSION.to_owned(), Some(ours.join(","))));
     true
 }
-
 #[must_use]
 pub fn from_run(drive: bool, name: &str) -> Option<String> {
     drive.then(|| std::env::var(name).ok()).flatten()

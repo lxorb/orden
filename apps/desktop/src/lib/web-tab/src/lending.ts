@@ -2,7 +2,6 @@ import type { WebLent } from '@orden/contracts'
 import { inSight, OUT_OF_THE_WAY, pages, type Rect } from './pages.svelte'
 
 const UNSEEN: Rect = { x: 0, y: 0, width: 1280, height: 800 }
-
 export async function lend(tabId: string, as: WebLent): Promise<void> {
   const page = pages.of(tabId)
   page.url ??= as.url
@@ -12,7 +11,6 @@ export async function lend(tabId: string, as: WebLent): Promise<void> {
   page.lent = true
   while (page.opening) await new Promise((go) => setTimeout(go, 50))
   if (page.onScreen || page.url === null) return
-
   const pane = page.pane ?? UNSEEN
   if (page.live) {
     await pages.thaw(tabId)
@@ -24,7 +22,6 @@ export async function lend(tabId: string, as: WebLent): Promise<void> {
   page.pane = pane
   page.shown = false
 }
-
 export function unlend(tabId: string): void {
   const page = pages.each().find(([id]) => id === tabId)?.[1]
   if (!page?.lent) return

@@ -8,16 +8,13 @@ use objc2_foundation::NSString;
 
 use crate::apps_host::clipped;
 const EVERY: Duration = Duration::from_millis(250);
-
 pub type Listener = Arc<dyn Fn(String) + Send + Sync>;
-
 pub struct Clipboard {
     pid: i32,
     listener: Mutex<Option<Listener>>,
     ours: AtomicIsize,
     ended: AtomicBool,
 }
-
 impl Clipboard {
     pub fn open(pid: i32) -> Arc<Clipboard> {
         let clipboard = Arc::new(Clipboard {
@@ -32,11 +29,9 @@ impl Clipboard {
             .spawn(move || watch(&watched));
         clipboard
     }
-
     pub fn listen(&self, listener: Option<Listener>) {
         *self.listener.held() = listener;
     }
-
     pub fn give(&self, text: &str) {
         let board = NSPasteboard::generalPasteboard();
         board.clearContents();
@@ -44,18 +39,15 @@ impl Clipboard {
         self.ours.store(board.changeCount(), Ordering::SeqCst);
     }
 }
-
 impl Drop for Clipboard {
     fn drop(&mut self) {
         self.ended.store(true, Ordering::SeqCst);
     }
 }
-
 #[allow(unsafe_code)]
 fn unsafe_string_type() -> &'static NSString {
     unsafe { NSPasteboardTypeString }
 }
-
 fn watch(clipboard: &Weak<Clipboard>) {
     let mut seen = NSPasteboard::generalPasteboard().changeCount();
     loop {
@@ -83,7 +75,6 @@ fn watch(clipboard: &Weak<Clipboard>) {
         listener(clipped(&text.to_string()).to_owned());
     }
 }
-
 fn in_front(pid: i32) -> bool {
     NSWorkspace::sharedWorkspace()
         .frontmostApplication()

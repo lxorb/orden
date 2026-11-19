@@ -12,10 +12,8 @@
   import { addTask } from './write'
 
   const labels = $derived(labelsOf(todos.todos, { onlySpace: false, space: null, today: dayOf() }))
-
   $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
   $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))
-
   async function added(entry: Entry, open: boolean): Promise<boolean> {
     const went = (await addTask(entry, { open })) !== null
     if (went && open) quickAdd.hide()
@@ -50,10 +48,8 @@
   .scrim {
     --scrim-z: var(--z-screen);
   }
-
   .sheet {
     --screen-width: var(--screen-list);
-
     z-index: var(--z-screen);
   }
 </style>

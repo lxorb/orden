@@ -12,7 +12,6 @@
     border-radius: 50%;
     background: var(--accent);
   }
-
   .corner {
     position: absolute;
     top: 3px;

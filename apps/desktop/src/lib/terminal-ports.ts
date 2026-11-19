@@ -2,13 +2,10 @@ import { providePort } from '@orden/contracts'
 import { invoke, platform, waited } from './platform/src/api'
 
 const STARTING = 20_000
-
 providePort('terminal.previews', {
   scrollback: (tab) => import('./terminal/src/api').then((one) => one.scrollbackOf(tab)),
 })
-
 const terminal = () => import('./terminal/src/api')
-
 providePort('terminal.making', {
   open: async (shell) => {
     await (await terminal()).openTerminal(shell)
@@ -25,7 +22,6 @@ providePort('terminal.making', {
     await (await terminal()).openOnline()
   },
 })
-
 providePort('terminal.judge', {
   runsFree: async (program, args, programs, folder) => {
     const [free, { osOf }] = await Promise.all([
@@ -35,7 +31,6 @@ providePort('terminal.judge', {
     return free.runsFree(program, args, programs, folder, osOf(platform()))
   },
 })
-
 providePort('terminal.lines', {
   typeIn: async (line, pick) => {
     const [{ openTerminal, shells, ptyOf }, { workspace }] = await Promise.all([
@@ -44,11 +39,9 @@ providePort('terminal.lines', {
     ])
     const shell = pick(await shells.ask(), shells.chosen)
     if (!shell) return false
-
     await openTerminal(shell.id, { folder: null })
     const tab = workspace.activeTabId
     if (!tab) return false
-
     const started = Date.now()
     while (Date.now() - started < STARTING) {
       const pty = ptyOf(tab)

@@ -16,19 +16,15 @@ enum Asked {
     Window(&'static str),
     Crate(mpsc::Sender<Result<Value, String>>),
 }
-
 type Waiting = Arc<Mutex<HashMap<String, Asked>>>;
-
 fn waiting(held: &Waiting) -> MutexGuard<'_, HashMap<String, Asked>> {
     held.held()
 }
-
 pub struct Claude {
     running: Running,
     next: AtomicU64,
     waiting: Waiting,
 }
-
 impl Claude {
     pub fn start(
         command: Command,
@@ -62,11 +58,9 @@ impl Claude {
             waiting: held,
         })
     }
-
     pub fn stop(&self) {
         self.running.stop();
     }
-
     pub fn say(&self, say: &Say) -> Result<(), String> {
         let line = match say {
             Say::Turn { text, images } => user(text, images),
@@ -88,7 +82,6 @@ impl Claude {
             .write_line(&line)
             .map_err(|error| format!("Claude Code is not listening: {error}"))
     }
-
     pub fn ask(&self, request: Value, patience: Duration) -> Result<Value, String> {
         let (sent, answer) = mpsc::channel();
         let id = self.id();
@@ -100,15 +93,12 @@ impl Claude {
             .recv_timeout(patience)
             .map_err(|_| "Claude Code did not answer".to_owned())?
     }
-
     pub fn close_input(&self) {
         self.running.close_input();
     }
-
     fn id(&self) -> String {
         format!("orden-{}", self.next.fetch_add(1, Ordering::SeqCst))
     }
-
     fn control(&self, request: Value, to: Option<&'static str>) -> String {
         let id = self.id();
         if let Some(to) = to {
@@ -117,11 +107,9 @@ impl Claude {
         control_line(&id, request)
     }
 }
-
 fn control_line(id: &str, request: Value) -> String {
     json!({ "type": "control_request", "request_id": id, "request": request }).to_string()
 }
-
 fn user(text: &str, images: &[Image]) -> String {
     let mut content: Vec<Value> = images
         .iter()
@@ -140,7 +128,6 @@ fn user(text: &str, images: &[Image]) -> String {
     content.push(json!({ "type": "text", "text": words }));
     message(Value::Array(content))
 }
-
 fn goal_line(goal: &GoalSay) -> Result<String, String> {
     match goal {
         GoalSay::Set { objective, .. } => Ok(command(&format!("/goal {}", one_line(objective)))),
@@ -151,11 +138,9 @@ fn goal_line(goal: &GoalSay) -> Result<String, String> {
         GoalSay::Get => Err("Claude Code says where a goal is as it goes".into()),
     }
 }
-
 fn command(line: &str) -> String {
     message(json!([{ "type": "text", "text": line }]))
 }
-
 fn message(content: Value) -> String {
     json!({
         "type": "user",
@@ -164,7 +149,6 @@ fn message(content: Value) -> String {
     })
     .to_string()
 }
-
 fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message> {
     let event: Value = match serde_json::from_str(line) {
         Ok(event) => event,
@@ -209,7 +193,6 @@ fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message>
         }),
     }
 }
-
 fn refusal(id: &str, request: &Value) -> String {
     let response = if request["subtype"] == "can_use_tool" {
         json!({
@@ -222,7 +205,6 @@ fn refusal(id: &str, request: &Value) -> String {
     };
     json!({ "type": "control_response", "response": response }).to_string()
 }
-
 fn effort_line(effort: Option<Effort>) -> Result<String, String> {
     let word = effort
         .map(|one| one.word(Tool::ClaudeCode))
@@ -230,7 +212,6 @@ fn effort_line(effort: Option<Effort>) -> Result<String, String> {
         .unwrap_or("auto");
     Ok(command(&format!("/effort {word}")))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -238,7 +219,6 @@ mod tests {
     fn parsed(line: &str) -> Value {
         serde_json::from_str(line).expect("JSON")
     }
-
     #[test]
     fn a_goal_is_set_or_cleared_and_never_paused() {
         let text = |goal: &GoalSay| {
@@ -254,7 +234,6 @@ mod tests {
         assert!(text(&GoalSay::Resume).is_err());
         assert!(text(&GoalSay::Get).is_err());
     }
-
     #[test]
     fn a_turn_is_a_user_message_with_its_pictures_first() {
         let line = user(
@@ -271,7 +250,6 @@ mod tests {
         assert_eq!(content[0]["source"]["media_type"], "image/png");
         assert_eq!(content[1]["text"], "what is this");
     }
-
     #[test]
     fn the_reader_s_slash_is_words_not_a_command() {
         let message = parsed(&user("/clear everything", &[]));
@@ -282,7 +260,6 @@ mod tests {
         let message = parsed(&user("  /model opus", &[]));
         assert_eq!(message["message"]["content"][0]["text"], " /model opus");
     }
-
     #[test]
     fn effort_is_typed_as_claude_code_s_own_command() {
         let line = effort_line(Some(Effort::Xhigh)).expect("line");
@@ -297,7 +274,6 @@ mod tests {
         );
         assert!(effort_line(Some(Effort::Off)).is_err());
     }
-
     #[test]
     fn a_reply_goes_to_who_asked_and_a_request_of_its_own_is_refused() {
         let held: Waiting = Arc::default();
@@ -321,7 +297,6 @@ mod tests {
             None
         )
         .is_none());
-
         let refused = parsed(&refusal("x", &json!({ "subtype": "can_use_tool" })));
         assert_eq!(refused["response"]["response"]["behavior"], "deny");
         assert!(read(
@@ -330,7 +305,6 @@ mod tests {
             None
         )
         .is_none());
-
         let line = r#"{"type":"assistant","message":{"content":[]}}"#;
         assert_eq!(
             read(line, &held, None),

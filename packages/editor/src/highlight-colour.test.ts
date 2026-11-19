@@ -8,7 +8,6 @@ import { ordenMarkdownExtensions } from './markdown/extensions'
 import { clearFormatting, highlightAcross } from './marks'
 
 const RED = highlightTone(1)
-
 function stateOf(doc: string, from: number, to = from): EditorState {
   return parsed(
     EditorState.create({
@@ -18,12 +17,10 @@ function stateOf(doc: string, from: number, to = from): EditorState {
     }),
   )
 }
-
 function typedAfter(state: EditorState, words: string): string {
   const { from, to } = state.selection.main
   return state.update({ changes: { from, to, insert: words } }).state.doc.toString()
 }
-
 describe('a coloured highlight started at a caret', () => {
   test('keeps its colour when the words are typed in', () => {
     let state = stateOf('be  here', 3)
@@ -31,7 +28,6 @@ describe('a coloured highlight started at a caret', () => {
     expect(typedAfter(state, 'careful')).toBe('be ==🔴 careful== here')
   })
 })
-
 describe('a highlight over two blocks of a quote', () => {
   test('goes on each paragraph', () => {
     const doc = '> a\n>\n> b'
@@ -40,7 +36,6 @@ describe('a highlight over two blocks of a quote', () => {
     expect(state.doc.toString()).toBe('> ==🔴 a==\n>\n> ==🔴 b==')
   })
 })
-
 describe('clear formatting over a coloured highlight', () => {
   test('takes the colour off along with the marks', () => {
     const doc = 'be ==🔴 careful== here'

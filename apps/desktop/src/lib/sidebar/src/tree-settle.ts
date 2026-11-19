@@ -2,7 +2,6 @@ import { tick } from 'svelte'
 import { dur } from '../../platform/src/api'
 
 const SETTLING = 180
-
 export function anchorShift(
   was: readonly string[],
   now: ReadonlyMap<string, number>,
@@ -23,13 +22,11 @@ export function anchorShift(
   }
   return 0
 }
-
 export function indexed(ids: readonly string[]): Map<string, number> {
   const out = new Map<string, number>()
   ids.forEach((id, index) => out.set(id, index))
   return out
 }
-
 export interface Settling {
   list: HTMLElement
   box: HTMLElement
@@ -37,7 +34,6 @@ export interface Settling {
   top: number
   refresh: () => void
 }
-
 function rowsIn(list: HTMLElement): [string, HTMLElement][] {
   const out: [string, HTMLElement][] = []
   for (const line of list.querySelectorAll<HTMLElement>('li[data-id]')) {
@@ -47,22 +43,18 @@ function rowsIn(list: HTMLElement): [string, HTMLElement][] {
   }
   return out
 }
-
 export function settle(was: readonly string[], now: readonly string[], at: Settling): void {
   const { list, box, row } = at
   if (!was.length || row <= 0) return
-
   const nowAt = indexed(now)
   const wasAt = indexed(was)
   const first = Math.floor(Math.max(0, at.top) / row)
   const last = Math.floor((Math.max(0, at.top) + box.clientHeight) / row)
   const shift = at.top > 0 ? anchorShift(was, nowAt, first, last) : 0
-
   const moving = dur(SETTLING) > 0 && typeof list.animate === 'function'
   const listTop = list.getBoundingClientRect().top
   const placed = new Map<string, number>()
   if (moving) for (const [id, one] of rowsIn(list)) placed.set(id, one.getBoundingClientRect().top)
-
   void tick().then(async () => {
     if (shift !== 0) {
       box.scrollTop += shift * row
@@ -70,7 +62,6 @@ export function settle(was: readonly string[], now: readonly string[], at: Settl
       await tick()
     }
     if (!moving) return
-
     const room = box.clientHeight
     for (const [id, one] of rowsIn(list)) {
       const top = one.getBoundingClientRect().top

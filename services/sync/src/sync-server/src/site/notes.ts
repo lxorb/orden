@@ -1,9 +1,7 @@
 import type { Env } from '../types'
 
 const ROWS_A_PAGE = 500
-
 const MOST_READ = 50_000
-
 export async function* notesOfSite<Row extends { path: string }>(
   env: Env,
   spaceId: string,

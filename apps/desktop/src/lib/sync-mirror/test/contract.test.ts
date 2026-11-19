@@ -5,7 +5,6 @@ import { conflictRule, DEFAULT_RULE, mirrorsFor, newMirror, readMirror, returnin
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 describe('the module stands on its own', () => {
   test('the api names what the shell reads at startup and leaves the passes behind doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
@@ -18,7 +17,6 @@ describe('the module stands on its own', () => {
     expect(api).toMatch(/import\('\.\/pass'\)/)
   })
 })
-
 describe('what the sync remembers', () => {
   test('a conflict rule is one of three, and both copies when nothing was said', () => {
     expect(DEFAULT_RULE).toBe('both')
@@ -27,7 +25,6 @@ describe('what the sync remembers', () => {
     expect(conflictRule('loudest')).toBeNull()
     expect(conflictRule(3)).toBeNull()
   })
-
   test('what is kept of the first engine is read for its own account alone, in either shape it was written', () => {
     const mirrors = { '/Notes': { ...newMirror('s1', '/Notes'), cursor: 4 } }
     expect(Object.keys(mirrorsFor({ account: 'u1', mirrors }, 'u1'))).toEqual(['/Notes'])
@@ -37,7 +34,6 @@ describe('what the sync remembers', () => {
     expect(Object.keys(mirrorsFor(mirrors, 'u1'))).toEqual(['/Notes'])
     expect(mirrorsFor('nonsense', 'u1')).toEqual({})
   })
-
   test('a mirror written down is read back, and nonsense is no mirror', () => {
     const mirror = { ...newMirror('s1', '/Notes'), cursor: 4 }
     const saved = savedRecord({ account: 'u1', mirrors: { '/Notes': mirror } })
@@ -47,7 +43,6 @@ describe('what the sync remembers', () => {
     expect(readMirror('/Notes', { cursor: 2 })).toBeNull()
     expect(savedRecord('nothing')).toBeNull()
   })
-
   test('a device that held another account asks before its notes meet the new one', async () => {
     const { apartName, asksOnReturn, baseFor } = await returning()
     expect(baseFor(null, 'u1')).toBe('none')

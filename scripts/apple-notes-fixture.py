@@ -7,22 +7,15 @@ import zlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "apps" / "desktop" / "src-tauri" / "crates" / "import" / "tests" / "apple-notes"
-
 FROM_2001 = 978_307_200
-
 MADE = 1_788_480_000
 EDITED = 1_788_566_400
-
 ACCOUNT = "ACCT-0001-0002-0003"
 NOTE_ONE = "11111111-2222-3333-4444-555555555555"
-
 OBJECT = "￼"
-
 KINDS = {"ICAccount": 7, "ICAttachment": 9, "ICFolder": 12, "ICMedia": 14, "ICNote": 16}
-
 TITLE = 0
 CHECKBOX = 103
-
 def varint(value: int) -> bytes:
     out = bytearray()
     while True:
@@ -33,33 +26,25 @@ def varint(value: int) -> bytes:
         else:
             out.append(byte)
             return bytes(out)
-
 def number(field: int, value: int) -> bytes:
     return varint(field << 3) + varint(value)
-
 def block(field: int, value: bytes) -> bytes:
     return varint((field << 3) | 2) + varint(len(value)) + value
-
 def style(kind: int, indent: int = 0, done: bool | None = None) -> bytes:
     out = number(1, kind)
     if indent:
         out += number(4, indent)
     if done is not None:
         out += block(5, number(2, 1 if done else 0))
-
     return out
-
 def run(text: str, parts: bytes = b"") -> bytes:
     units = sum(2 if ord(one) > 0xFFFF else 1 for one in text)
     return block(5, number(1, units) + parts)
-
 def attachment(identifier: str, uti: str) -> bytes:
     return block(12, block(1, identifier.encode()) + block(2, uti.encode()))
-
 def note_data(text: str, runs: list[bytes]) -> bytes:
     inner = block(2, text.encode()) + b"".join(runs)
     return gzip.compress(block(2, block(3, inner)), mtime=0)
-
 def object_id(*, index: int | None = None, count: int | None = None, text: str | None = None) -> bytes:
     out = b""
     if count is not None:
@@ -69,20 +54,17 @@ def object_id(*, index: int | None = None, count: int | None = None, text: str |
     if index is not None:
         out += number(6, index)
     return out
-
 def custom_map(kind: int, entries: list[tuple[int, bytes]]) -> bytes:
     inner = number(1, kind)
     for key, value in entries:
         inner += block(3, number(1, key) + block(2, value))
     return block(13, inner)
-
 def dictionary(pairs: list[tuple[int, int]]) -> bytes:
     inner = b"".join(
         block(1, block(1, object_id(index=key)) + block(2, object_id(index=value)))
         for key, value in pairs
     )
     return block(6, inner)
-
 def ordered(uuids: list[bytes], pairs: list[tuple[int, int]]) -> bytes:
     array = b"".join(
         block(2, number(1, at) + block(2, uuid)) for at, uuid in enumerate(uuids)
@@ -92,24 +74,19 @@ def ordered(uuids: list[bytes], pairs: list[tuple[int, int]]) -> bytes:
         for key, value in pairs
     )
     return block(16, block(1, block(1, array) + block(2, contents)))
-
 def cell(text: str) -> bytes:
     return block(10, block(2, text.encode()) + run(text))
-
 def mergeable(objects: list[bytes], keys: list[str], types: list[str], uuids: list[bytes]) -> bytes:
     data = b"".join(block(3, one) for one in objects)
     data += b"".join(block(4, one.encode()) for one in keys)
     data += b"".join(block(5, one.encode()) for one in types)
     data += b"".join(block(6, one) for one in uuids)
     return gzip.compress(block(2, block(3, data)), mtime=0)
-
 def table() -> bytes:
     rows = [b"row-0-uuid-00000", b"row-1-uuid-00000"]
     columns = [b"col-0-uuid-00000", b"col-1-uuid-00000"]
-
     def uuid(at: int) -> bytes:
         return custom_map(1, [(3, object_id(count=at))])
-
     objects = [
         custom_map(0, [(0, object_id(index=1)), (1, object_id(index=2)), (2, object_id(index=3))]),
         ordered(rows, [(4, 4), (5, 5)]),
@@ -132,13 +109,10 @@ def table() -> bytes:
         ["com.apple.notes.ICTable", "com.apple.CRDT.NSUUID"],
         rows + columns,
     )
-
 def gallery(pages: list[str]) -> bytes:
     objects = [custom_map(0, [(0, object_id(text=page))]) for page in pages]
     return mergeable(objects, ["self"], ["com.apple.notes.gallery"], [])
-
 def png() -> bytes:
-
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
             struct.pack(">I", len(body))
@@ -146,14 +120,12 @@ def png() -> bytes:
             + body
             + struct.pack(">I", zlib.crc32(kind + body) & 0xFFFFFFFF)
         )
-
     return (
         b"\x89PNG\r\n\x1a\n"
         + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
         + chunk(b"IDAT", zlib.compress(b"\x00\x28\x64\xc8"))
         + chunk(b"IEND", b"")
     )
-
 OBJECT_COLUMNS = [
     "Z_PK INTEGER PRIMARY KEY",
     "Z_ENT INTEGER",
@@ -184,19 +156,15 @@ OBJECT_COLUMNS = [
     "ZSIZEWIDTH REAL",
     "ZSIZEHEIGHT REAL",
 ]
-
 def build(db: sqlite3.Connection) -> None:
     db.execute("CREATE TABLE Z_PRIMARYKEY (Z_ENT INTEGER, Z_NAME TEXT)")
     db.execute(f"CREATE TABLE ZICCLOUDSYNCINGOBJECT ({', '.join(OBJECT_COLUMNS)})")
     db.execute(
         "CREATE TABLE ZICNOTEDATA (Z_PK INTEGER PRIMARY KEY, ZNOTE INTEGER, ZDATA BLOB)"
     )
-
     for name, ent in KINDS.items():
         db.execute("INSERT INTO Z_PRIMARYKEY (Z_ENT, Z_NAME) VALUES (?, ?)", (ent, name))
-
     row(db, 1, "ICAccount", ZNAME="iCloud", ZIDENTIFIER=ACCOUNT)
-
     row(db, 2, "ICFolder", ZTITLE2="Notes", ZIDENTIFIER="DefaultFolder-CloudKit", ZOWNER=1)
     row(db, 3, "ICFolder", ZTITLE2="Work", ZIDENTIFIER="folder-work", ZOWNER=1)
     row(db, 4, "ICFolder", ZTITLE2="Deeper", ZIDENTIFIER="folder-deep", ZPARENT=3, ZOWNER=1)
@@ -218,10 +186,8 @@ def build(db: sqlite3.Connection) -> None:
         ZFOLDERTYPE=3,
         ZOWNER=1,
     )
-
     notes(db)
     attachments(db)
-
 def row(db: sqlite3.Connection, pk: int, kind: str, **values: object) -> None:
     values = {"Z_PK": pk, "Z_ENT": KINDS[kind], **values}
     names = ", ".join(values)
@@ -230,7 +196,6 @@ def row(db: sqlite3.Connection, pk: int, kind: str, **values: object) -> None:
         f"INSERT INTO ZICCLOUDSYNCINGOBJECT ({names}) VALUES ({marks})",
         tuple(values.values()),
     )
-
 def notes(db: sqlite3.Connection) -> None:
     groceries = "Groceries\nMilk\nEggs\n"
     made(
@@ -248,7 +213,6 @@ def notes(db: sqlite3.Connection) -> None:
             ],
         ),
     )
-
     ideas = f"Ideas\nSee {OBJECT} and {OBJECT}\n"
     made(
         db,
@@ -271,7 +235,6 @@ def notes(db: sqlite3.Connection) -> None:
             ],
         ),
     )
-
     kinds = [
         ("Table", "att-table", "com.apple.notes.table"),
         ("Sketch", "att-drawing", "com.apple.paper"),
@@ -291,7 +254,6 @@ def notes(db: sqlite3.Connection) -> None:
         title="Plans",
         data=note_data(plans, parts),
     )
-
     sums = f"Sums\n2 + 2 {OBJECT}\nSee {OBJECT}\n"
     made(
         db,
@@ -317,7 +279,6 @@ def notes(db: sqlite3.Connection) -> None:
             ],
         ),
     )
-
     made(
         db,
         12,
@@ -329,9 +290,7 @@ def notes(db: sqlite3.Connection) -> None:
             [run("Nested\n", block(2, style(TITLE))), run("Words\n")],
         ),
     )
-
     made(db, 13, "44444444-2222-3333-4444-555555555555", folder=3, title="Locked", locked=True)
-
     made(
         db,
         14,
@@ -340,7 +299,6 @@ def notes(db: sqlite3.Connection) -> None:
         title="Binned",
         data=note_data("Binned\n", [run("Binned\n", block(2, style(TITLE)))]),
     )
-
 def made(
     db: sqlite3.Connection,
     pk: int,
@@ -366,7 +324,6 @@ def made(
         "INSERT INTO ZICNOTEDATA (ZNOTE, ZDATA) VALUES (?, ?)",
         (pk, None if data is None else sqlite3.Binary(data)),
     )
-
 def attachments(db: sqlite3.Connection) -> None:
     row(db, 20, "ICMedia", ZIDENTIFIER="media-photo", ZFILENAME="photo.png", ZGENERATION1=None)
     row(db, 21, "ICAttachment", ZIDENTIFIER="att-photo", ZMEDIA=20)
@@ -377,7 +334,6 @@ def attachments(db: sqlite3.Connection) -> None:
         ZIDENTIFIER="att-link",
         ZTOKENCONTENTIDENTIFIER=f"applenotes:note/{NOTE_ONE.lower()}",
     )
-
     row(db, 23, "ICAttachment", ZIDENTIFIER="att-sum", ZALTTEXT="= 4")
     row(
         db,
@@ -387,13 +343,10 @@ def attachments(db: sqlite3.Connection) -> None:
         ZALTTEXT="Locked",
         ZTOKENCONTENTIDENTIFIER="applenotes:note/44444444-2222-3333-4444-555555555555",
     )
-
     where = OUT / "Accounts" / ACCOUNT / "Media" / "media-photo"
     where.mkdir(parents=True, exist_ok=True)
     (where / "photo.png").write_bytes(png())
-
     drawn(db)
-
 def drawn(db: sqlite3.Connection) -> None:
     row(db, 30, "ICAttachment", ZIDENTIFIER="att-table", ZMERGEABLEDATA1=table())
     row(db, 31, "ICAttachment", ZIDENTIFIER="att-drawing", ZFALLBACKIMAGEGENERATION="gen-1")
@@ -403,7 +356,6 @@ def drawn(db: sqlite3.Connection) -> None:
     row(db, 35, "ICAttachment", ZIDENTIFIER="page-two", ZMEDIA=34)
     row(db, 36, "ICAttachment", ZIDENTIFIER="att-marked", ZFALLBACKPDFGENERATION="gen-2")
     row(db, 37, "ICAttachment", ZIDENTIFIER="att-lost", ZFALLBACKIMAGEGENERATION="gen-9")
-
     account = OUT / "Accounts" / ACCOUNT
     files = {
         account / "FallbackImages" / "att-drawing" / "gen-1" / "FallbackImage.png": png(),
@@ -414,22 +366,18 @@ def drawn(db: sqlite3.Connection) -> None:
     for path, body in files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(body)
-
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     database = OUT / "NoteStore.sqlite"
     database.unlink(missing_ok=True)
-
     db = sqlite3.connect(database)
     try:
         build(db)
         db.commit()
     finally:
         db.close()
-
     print(f"wrote {database.relative_to(ROOT)} ({database.stat().st_size} bytes)")
     print(f"and   {(OUT / 'Accounts').relative_to(ROOT)}")
     return 0
-
 if __name__ == "__main__":
     sys.exit(main())

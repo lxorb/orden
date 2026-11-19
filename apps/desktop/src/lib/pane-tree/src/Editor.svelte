@@ -63,23 +63,19 @@
     view?: EditorView | undefined
   } = $props()
   /* eslint-enable prefer-const */
-
   function previewCard(host: HTMLElement, note: PreviewNote): (() => void) | null {
     if (workspace.activeSpace?.root === undefined) return null
-
     const from = tab.path
     let release: (() => void) | null = null
     let gone = false
     void import('./preview-card').then(({ mountPreview }) => {
       if (!gone) release = mountPreview(host, note, from)
     })
-
     return () => {
       gone = true
       release?.()
     }
   }
-
   let host: HTMLDivElement
   const rise = firstScreen.rise()
   const states = new EditorStates()
@@ -112,15 +108,12 @@
       ...(one.folds?.length ? { folds: one.folds } : {}),
     }
   }
-
   function placeOf(one: Tab): StateEffect<unknown> | null {
     return one.anchor === undefined ? null : placeAt(one.anchor)
   }
-
   function dressing(one: Tab): string {
     return JSON.stringify([modes.settingsFor(one), shortcuts.forEditor])
   }
-
   function fitting(
     one: Tab,
     index: NoteIndex | undefined,
@@ -130,7 +123,6 @@
     const stamp = dressing(one)
     const dressed = states.fitted(one) === stamp
     states.fit(one, stamp)
-
     return [
       ...(index ? [noteIndexEffect(index)] : []),
       trustedMarkupEffect(trusted),
@@ -139,12 +131,10 @@
       ...(dressed ? [] : [shortcutEffect(shortcuts.forEditor)]),
     ]
   }
-
   $effect(() => {
     const first = untrack(() => tab)
     const created = createEditor({ parent: host, ...untrack(() => optionsFor(first)) })
     mark('editor built')
-
     states.started(
       first,
       created,
@@ -153,7 +143,6 @@
     view = created
     bar = overlayScrollbar(created.scrollDOM, created.dom)
     if (__DRIVEABLE__) Object.assign(window, { orden: created })
-
     return () => {
       states.releaseAll(created)
       bar?.stop()
@@ -162,46 +151,35 @@
       view = undefined
     }
   })
-
   $effect(() => {
     view?.contentDOM.setAttribute('aria-label', 'The note')
   })
-
   $effect(() => {
     if (focused) view?.contentDOM.setAttribute('id', 'write')
     else view?.contentDOM.removeAttribute('id')
   })
-
   const shownIndex = $derived(notes?.(tab))
-
   $effect(() => {
     const current = view
     const showing = tab
     if (!current) return
-
     const switching = !states.shows(showing)
     const index = shownIndex
     const trusted = trustsHtmlIn(showing.note)
     const cover = keptCoverOf(showing.path)
-
     untrack(() => {
       modes.shows(current, showing, () => workspace.scheduleSession())
       states.show(current, showing, () => build(showing), fitting(showing, index, trusted, cover))
-
       if (switching) bar?.settle()
-
       if (switching && showing.anchor === undefined && showing.scroll) {
         current.scrollDOM.scrollTop = showing.scroll
       }
-
       if (switching) onselection?.(current)
     })
   })
-
   function build(one: Tab): HeldState {
     return HeldState.waiting(one.note.live, editorState(optionsFor(one)), placeOf(one))
   }
-
   $effect(() => {
     states.keepOnly(kept)
   })
@@ -225,11 +203,9 @@
     min-height: 0;
     overflow: hidden;
   }
-
   .rise {
     animation: rise var(--dur-slow) var(--ease-out);
   }
-
   @keyframes rise {
     from {
       opacity: 0;

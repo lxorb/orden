@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-
 import { EditorState, EditorView } from '@orden/editor'
 import { select } from '@orden/editor/agent-hands'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -38,13 +37,11 @@ vi.mock('../../workspace/src/api', () => ({
     showing: (pane: string) => tabs.find((one) => one.id === showing[pane]) ?? null,
   },
 }))
-
 const locked = new Set<string>()
 const othersWrite = new Set<string>()
 vi.mock('../../protect/src/api', () => ({
   protection: { agentsMay: (path: string) => !locked.has(path) },
 }))
-
 const views = {
   held: new Map<string, EditorView>(),
   onPut: null as ((pane: string, view: EditorView) => void) | null,
@@ -60,7 +57,6 @@ vi.mock('../../panes/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../panes/src/api')>()),
   views,
 }))
-
 vi.mock('../../agent-verbs/src/api', async (original) => ({
   ...(await original<typeof import('../../agent-verbs/src/api')>()),
   namedTab: (call: { args: { tab?: unknown } }) => {
@@ -69,15 +65,12 @@ vi.mock('../../agent-verbs/src/api', async (original) => ({
     return { tab, relative: tab.note.path }
   },
 }))
-
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
   reachedAs: (path: string | null) => (path !== null && othersWrite.has(path) ? 'space' : null),
   reachedByOthersIn: () => false,
 }))
-
 const { noteEditor, keepMarksOf } = await import('./editor')
-
 const open: EditorView[] = []
 function editorFor(pane: string, doc: string): EditorView {
   const view = new EditorView({ state: EditorState.create({ doc }), parent: document.body })
@@ -85,7 +78,6 @@ function editorFor(pane: string, doc: string): EditorView {
   views.put(pane, view)
   return view
 }
-
 function call(args: Record<string, unknown>, scopes = ['editor']) {
   return {
     verb: 'note_editor',
@@ -93,7 +85,6 @@ function call(args: Record<string, unknown>, scopes = ['editor']) {
     caller: callerOf({ id: 'claude', name: 'Claude', scopes, mode: 'unsupervised' }),
   }
 }
-
 beforeEach(() => {
   showing.p1 = 'n1'
   editorFor('p1', 'teh plan\nsecond line\n')
@@ -103,7 +94,6 @@ afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
   views.held.clear()
 })
-
 describe('a note’s editor', () => {
   test('a protected note the reader has not let agents read shows an agent nothing of itself', () => {
     locked.add('/s/Work/Plan.md')
@@ -121,7 +111,6 @@ describe('a note’s editor', () => {
       locked.clear()
     }
   })
-
   test('its selections are read, and set only by an agent that may move the reader', () => {
     expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).toMatchObject({
       result: { selections: [{ anchor: { line: 1, ch: 0 }, head: { line: 1, ch: 0 } }] },
@@ -136,7 +125,6 @@ describe('a note’s editor', () => {
       result: { selections: [{ text: 'second' }] },
     })
   })
-
   test('the selections of a note others write in are read as data', () => {
     const select = {
       tab: 'n1',
@@ -144,7 +132,6 @@ describe('a note’s editor', () => {
       selections: [{ anchor: { line: 2, ch: 0 }, head: { line: 2, ch: 6 } }],
     }
     expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).not.toHaveProperty('untrusted')
-
     othersWrite.add('/s/Work/Plan.md')
     try {
       expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).toMatchObject({
@@ -158,7 +145,6 @@ describe('a note’s editor', () => {
       othersWrite.clear()
     }
   })
-
   test('at most 500 selections are set or read, with at most 20000 characters of their words', () => {
     const view = new EditorView({
       state: EditorState.create({
@@ -177,7 +163,6 @@ describe('a note’s editor', () => {
       /at most 500 selections/,
     )
     expect(view.state.selection.ranges).toHaveLength(1)
-
     select(view, [{ anchor: place(1), head: { line: 1, ch: 30_000 } }, ...many(599)])
     const read = noteEditor(call({ tab: 'n1', op: 'selection' })) as {
       result: { selections: { text: string; truncated?: true }[]; more?: number }
@@ -187,7 +172,6 @@ describe('a note’s editor', () => {
     expect(read.result.selections[0]?.text).toHaveLength(20_000)
     expect(read.result.selections[0]?.truncated).toBe(true)
   })
-
   test('at most 500 marks, each saying at most 2000 characters', () => {
     const mark = (message: string) => ({
       from: { line: 1, ch: 0 },
@@ -202,7 +186,6 @@ describe('a note’s editor', () => {
     )
     expect(document.querySelector('.cm-agent-mark')).toBeNull()
   })
-
   test('marks are drawn, kept for the note and drawn again in an editor built later', () => {
     noteEditor(
       call({
@@ -219,15 +202,12 @@ describe('a note’s editor', () => {
       }),
     )
     expect(document.querySelector('.cm-agent-mark-warning')?.getAttribute('title')).toBe('the?')
-
     for (const view of open.splice(0)) view.destroy()
     editorFor('p1', 'teh plan\nsecond line\n')
     expect(document.querySelector('.cm-agent-mark-warning')?.getAttribute('title')).toBe('the?')
-
     noteEditor(call({ tab: 'n1', op: 'clear_marks' }))
     expect(document.querySelector('.cm-agent-mark')).toBeNull()
   })
-
   test('marks go with an agent that goes', () => {
     noteEditor(
       call({
@@ -239,7 +219,6 @@ describe('a note’s editor', () => {
     keepMarksOf(new Set(['codex']))
     expect(document.querySelector('.cm-agent-mark')).toBeNull()
   })
-
   test('a note not on screen has no editor but keeps its marks for when it is', () => {
     expect(() => noteEditor(call({ tab: 'n2', op: 'selection' }))).toThrow(/not on screen/)
     expect(
@@ -252,7 +231,6 @@ describe('a note’s editor', () => {
       ),
     ).toMatchObject({ result: { marks: 1 } })
   })
-
   test('a line is revealed only by an agent that may move the reader', () => {
     expect(() => noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }))).toThrow(/workspace.focus/)
     expect(noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }, ['editor', 'workspace.focus']))).toMatchObject({

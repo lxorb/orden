@@ -21,7 +21,6 @@
     scale?: number
     seen?: Box | null
   } = $props()
-
   const FIRST = 2
   const CLOSE_UP = 160
   const STRETCH = 1.1
@@ -35,12 +34,9 @@
   let tall = $state(0)
   let lost = $state(false)
   let tries = $state(0)
-
   const fit = $derived(paper && wide && tall ? Math.min(wide / paper.width, tall / paper.height) : 0)
-
   const wanted = $derived(fit * scale * pixelRatio.now)
   const density = $derived(wanted ? densityFor(wanted) : FIRST)
-
   $effect(() => {
     const release = holdPaper({ file, note, root })
     return () => {
@@ -49,7 +45,6 @@
       release()
     }
   })
-
   $effect(() => {
     const at = { file, note, root }
     const number = page
@@ -64,27 +59,22 @@
     })
     return () => leaving.abort()
   })
-
   $effect(() => {
     if (!lost || tries >= MOST_TRIES) return
     const timer = setTimeout(() => (tries += 1), RETRY)
     return () => clearTimeout(timer)
   })
-
   $effect(() => {
     const target = sheet
     const image = paper?.image
     if (!target || !image) return
-
     target.width = image.width
     target.height = image.height
     target.getContext('2d')?.drawImage(image, 0, 0)
   })
-
   const part = $derived.by((): Part | null => {
     if (!paper || !box || !seen || !fit) return null
     if (wanted <= (paper.image.width / paper.width) * STRETCH) return null
-
     const left = box.x + (box.width - paper.width * fit) / 2
     const top = box.y + (box.height - paper.height * fit) / 2
     const from = Math.max(0, Math.floor((seen.x - left) / fit))
@@ -92,7 +82,6 @@
     const above = Math.max(0, Math.floor((seen.y - top) / fit))
     const below = Math.min(paper.height, Math.ceil((seen.y + seen.height - top) / fit))
     if (to <= from || below <= above) return null
-
     return {
       x: from / paper.width,
       y: above / paper.height,
@@ -100,7 +89,6 @@
       height: (below - above) / paper.height,
     }
   })
-
   $effect(() => {
     const want = part
     const across = paper ? paper.width * wanted : 0
@@ -108,7 +96,6 @@
       closeUp = null
       return
     }
-
     const at = { file, note, root }
     const number = page
     paperEdition(at)
@@ -120,7 +107,6 @@
           image.close()
           return
         }
-
         close.width = image.width
         close.height = image.height
         close.getContext('2d')?.drawImage(image, 0, 0)
@@ -128,13 +114,11 @@
         closeUp = want
       })
     }, CLOSE_UP)
-
     return () => {
       clearTimeout(timer)
       leaving.abort()
     }
   })
-
   const name = $derived(file.split(/[\\/]/).pop() ?? file)
 </script>
 
@@ -173,27 +157,22 @@
     overflow: hidden;
     background: var(--surface);
   }
-
   .paper {
     position: relative;
     background: white;
   }
-
   canvas {
     display: block;
     width: 100%;
     height: 100%;
   }
-
   canvas.close {
     position: absolute;
     opacity: 0;
   }
-
   canvas.close.there {
     opacity: 1;
   }
-
   .missing {
     position: absolute;
     inset-inline: 0;
@@ -204,7 +183,6 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .name {
     position: absolute;
     right: 4px;
@@ -220,7 +198,6 @@
     color: var(--text-strong);
     font: var(--text-sm) / 1.2 var(--font-ui);
   }
-
   .name span:last-child {
     overflow: hidden;
     text-overflow: ellipsis;

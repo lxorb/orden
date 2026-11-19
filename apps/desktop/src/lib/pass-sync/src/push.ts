@@ -22,19 +22,14 @@ import {
 } from './synced'
 
 export type Pushed = 'pushed' | 'again' | 'conflict' | 'stuck'
-
 const TRIES = 3
-
 type Sent = 'sent' | 'again' | 'stuck'
-
 function key(vault: string, id: string): string {
   return `${vault}\n${id}`
 }
-
 function baseOf(row: WireItem | ItemRow): ItemBase {
   return { rev: row.rev, key: row.key, body: row.body, keyVersion: row.keyVersion }
 }
-
 async function pushedKeyring(world: SyncWorld): Promise<Pushed> {
   const { rows, api } = world
   let row = await rows.keyring()
@@ -71,7 +66,6 @@ async function pushedKeyring(world: SyncWorld): Promise<Pushed> {
   }
   return 'stuck'
 }
-
 async function settledKeyring(world: SyncWorld, sent: KeyringRow, rev: number): Promise<void> {
   const { rows } = world
   await world.exclusive(async () => {
@@ -85,7 +79,6 @@ async function settledKeyring(world: SyncWorld, sent: KeyringRow, rev: number): 
     world.tookKeyring(row)
   })
 }
-
 async function settledVault(world: SyncWorld, sent: VaultRow, landed: Landed): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async (held) => {
@@ -99,7 +92,6 @@ async function settledVault(world: SyncWorld, sent: VaultRow, landed: Landed): P
   })
   return 'sent'
 }
-
 async function openedMeta(box: HeldVault, id: string, sealed: string): Promise<VaultMeta | null> {
   try {
     return await openVault(box.key, id, sealed)
@@ -107,7 +99,6 @@ async function openedMeta(box: HeldVault, id: string, sealed: string): Promise<V
     return null
   }
 }
-
 async function mergedVault(
   world: SyncWorld,
   sent: VaultRow,
@@ -132,7 +123,6 @@ async function mergedVault(
     return row
   })
 }
-
 async function pushedVault(world: SyncWorld, first: VaultRow): Promise<Sent> {
   const { rows, api } = world
   let row = first
@@ -162,7 +152,6 @@ async function pushedVault(world: SyncWorld, first: VaultRow): Promise<Sent> {
   }
   return 'again'
 }
-
 async function settledVaultGone(world: SyncWorld, sent: VaultRow): Promise<void> {
   const { rows } = world
   await world.exclusive(async () => {
@@ -175,7 +164,6 @@ async function settledVaultGone(world: SyncWorld, sent: VaultRow): Promise<void>
     })
   })
 }
-
 async function pushedVaultGone(world: SyncWorld, row: VaultRow): Promise<Sent> {
   const base = await vaultBaseOf(world.rows, row.id)
   if (base) {
@@ -186,7 +174,6 @@ async function pushedVaultGone(world: SyncWorld, row: VaultRow): Promise<Sent> {
   await settledVaultGone(world, row)
   return 'sent'
 }
-
 async function settledItem(world: SyncWorld, sent: ItemRow, landed: Landed): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async (held) => {
@@ -200,7 +187,6 @@ async function settledItem(world: SyncWorld, sent: ItemRow, landed: Landed): Pro
   })
   return 'sent'
 }
-
 async function settledTombstone(world: SyncWorld, sent: ItemRow, rev: number | null): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async () => {
@@ -211,7 +197,6 @@ async function settledTombstone(world: SyncWorld, sent: ItemRow, rev: number | n
   })
   return 'sent'
 }
-
 async function opened(
   box: HeldVault,
   row: { vault: string; id: string; key: string; body: string; keyVersion: number },
@@ -223,7 +208,6 @@ async function opened(
     return null
   }
 }
-
 async function versionOf(
   box: HeldVault,
   row: WireItem | ItemRow,
@@ -233,11 +217,9 @@ async function versionOf(
   const sealed = await sealVersion(box.key, row.vault, row.id, rev, was.envelope, was.itemKey)
   return { vault: row.vault, id: row.id, rev, at: row.at, ...sealed }
 }
-
 function nextRevOf(rev: number, ...bodies: string[]): number {
   return bodies.map((one) => (sealedRevOf(one) ?? 0) + 1).reduce((high, one) => Math.max(high, one), rev)
 }
-
 async function mergedItem(world: SyncWorld, sent: ItemRow, current: WireItem): Promise<ItemRow | null> {
   const { rows } = world
   return await world.exclusive(async (held) => {
@@ -280,7 +262,6 @@ async function mergedItem(world: SyncWorld, sent: ItemRow, current: WireItem): P
     return row
   })
 }
-
 async function trashedOf(world: SyncWorld, row: ItemRow): Promise<boolean | undefined> {
   return await world.exclusive(async (held) => {
     const box = held?.vaults.get(row.vault)
@@ -288,7 +269,6 @@ async function trashedOf(world: SyncWorld, row: ItemRow): Promise<boolean | unde
     return open ? open.envelope.trashed !== null : undefined
   })
 }
-
 async function pushedItem(world: SyncWorld, first: ItemRow): Promise<Sent> {
   const { rows, api } = world
   let row = first
@@ -314,7 +294,6 @@ async function pushedItem(world: SyncWorld, first: ItemRow): Promise<Sent> {
   }
   return 'again'
 }
-
 async function revived(world: SyncWorld, sent: ItemRow, current: WireItem): Promise<void> {
   await world.exclusive(async (held) => {
     const now = await world.rows.item(sent.vault, sent.id)
@@ -323,7 +302,6 @@ async function revived(world: SyncWorld, sent: ItemRow, current: WireItem): Prom
     await appliedItems(world, held, [current])
   })
 }
-
 async function pushedTombstone(world: SyncWorld, row: ItemRow): Promise<Sent> {
   const base = await itemBaseOf(world.rows, row.vault, row.id)
   if (!base || base.body === '') return await settledTombstone(world, row, null)
@@ -336,7 +314,6 @@ async function pushedTombstone(world: SyncWorld, row: ItemRow): Promise<Sent> {
   await revived(world, row, current)
   return 'sent'
 }
-
 async function pushedMove(world: SyncWorld, from: ItemRow, to: ItemRow): Promise<Sent> {
   const base = await itemBaseOf(world.rows, from.vault, from.id)
   if (!base || base.body === '') return await pushedItem(world, to)
@@ -356,12 +333,10 @@ async function pushedMove(world: SyncWorld, from: ItemRow, to: ItemRow): Promise
   if (made !== 'sent') return made
   return await pushedTombstone(world, from)
 }
-
 function worst(a: Sent, b: Sent): Sent {
   if (a === 'stuck' || b === 'stuck') return 'stuck'
   return a === 'again' || b === 'again' ? 'again' : 'sent'
 }
-
 async function pushedItems(world: SyncWorld, gone: ReadonlySet<string>): Promise<Sent> {
   const waiting = (await world.rows.items()).filter((one) => one.pending && !gone.has(one.vault))
   const live = new Map(waiting.filter((one) => !one.deleted).map((one) => [one.id, one]))
@@ -383,7 +358,6 @@ async function pushedItems(world: SyncWorld, gone: ReadonlySet<string>): Promise
   }
   return all
 }
-
 export async function pushed(world: SyncWorld): Promise<Pushed> {
   const keyring = await pushedKeyring(world)
   if (keyring !== 'pushed') return keyring

@@ -7,7 +7,6 @@ interface Asked {
   cost: Cost
   length: number
 }
-
 self.onmessage = (event: MessageEvent<Asked>) => {
   const { id, password, salt, cost, length } = event.data
   scrypt(password, salt, cost, length).then(

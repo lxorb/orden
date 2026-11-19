@@ -27,14 +27,12 @@ import {
 import { type TaskChange, taskLine } from '@orden/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
-
 function rowsOfText(space: string, path: string, text: string) {
   const { front, tasks } = scanRows(text)
   const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
   const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
   return rowsOf(space, { path, front, tasks, stamp: null, tags, links })
 }
-
 const NOTE = [
   '# Errands',
   '- [ ] Call the bank [time:: 16:00] #admin ⏫ 📅 2026-10-04',
@@ -46,14 +44,12 @@ const NOTE = [
   '- [ ] Renew the gym 📅 2026-10-20',
   '',
 ].join('\n')
-
 const rows = rowsOfText('Home', 'Errands.md', NOTE)
 const task = (words: string) => {
   const found = rows.find((row) => row.task?.text === words)
   if (!found) throw new Error(words)
   return found
 }
-
 describe('a task as an agent reads it', () => {
   test('only the fields it has, and an anchor it hands back', () => {
     const out = taskOut(task('Call the bank'))
@@ -73,13 +69,11 @@ describe('a task as an agent reads it', () => {
       hash: task('Call the bank').anchor?.hash,
     })
   })
-
   test('a note with # in its name keeps it', () => {
     expect(readAt('C#/Notes.md#4:abc').path).toBe('C#/Notes.md')
     expect(() => readAt('Notes.md')).toThrow(AgentError)
   })
 })
-
 describe('the arguments', () => {
   test('dates, a time with its zone, Todoist priorities, a rule, reminders, minutes', () => {
     expect(
@@ -105,14 +99,12 @@ describe('the arguments', () => {
       tags: ['a', 'b'],
     })
   })
-
   test('each refused in a sentence that says what it takes', () => {
     expect(() => taskChange({ due: 'tomorrow' })).toThrow('due is a date, YYYY-MM-DD, or null')
     expect(() => taskChange({ priority: 7 })).toThrow('priority is 1 to 4')
     expect(() => taskChange({ recurrence: 'sometimes' })).toThrow('recurrence is a rule')
     expect(() => taskChange({ text: 'two\nlines' })).toThrow('one line')
   })
-
   test('a new task reads the marks in its words and the fields beside them', () => {
     const fields = newTask({
       text: 'Pay rent 📅 2026-10-31 #home',
@@ -122,25 +114,20 @@ describe('the arguments', () => {
     expect(taskLine(fields.fields)).toBe('- [ ] Pay rent [duration:: 15m] #home 🔺 📅 2026-10-31')
   })
 })
-
 describe('words read the way quick add reads them', () => {
   const read = quickWords(['en'], new Date('2026-10-04T09:00:00'))
-
   test('the grammar', () => {
     const said = read('Call mum tomorrow 4pm p1')
     expect(taskLine(said.fields)).toBe('- [ ] Call mum [time:: 16:00] 🔺 🛫 2026-10-05')
   })
-
   test("the Tasks plugin's marks written in the words win", () => {
     const said = read('Pay rent tomorrow 📅 2026-10-31 #home')
     expect(said.fields.due).toBe('2026-10-31')
     expect(said.fields.tags).toEqual(['home'])
   })
 })
-
 describe('a task changed', () => {
   const anchor = (words: string) => readAt(atOf(task(words)))
-
   test('a field, one line', () => {
     const edited = editedTask(
       NOTE,
@@ -153,7 +140,6 @@ describe('a task changed', () => {
     )
     expect(edited.text.split('\n')[1]).toBe('- [ ] Call the bank [time:: 16:00] #admin ⏫ 📅 2026-10-05')
   })
-
   test('ticked: its open sub-task with it', () => {
     const edited = editedTask(NOTE, 'Home', 'Errands.md', anchor('Call the bank'), {}, true, context.today)
     const lines = edited.text.split('\n')
@@ -162,7 +148,6 @@ describe('a task changed', () => {
     expect(lines[3]).toBe('  - [x] Find the card')
     expect(readAt(edited.at).line).toBe(1)
   })
-
   test('a recurring one writes its next occurrence above, and says where', () => {
     const edited = editedTask(NOTE, 'Home', 'Errands.md', anchor('Water the plants'), {}, true, context.today)
     const lines = edited.text.split('\n')
@@ -171,7 +156,6 @@ describe('a task changed', () => {
     expect(readAt(edited.at).line).toBe(5)
     expect(edited.next && readAt(edited.next).line).toBe(4)
   })
-
   test('refused where it takes the last date away and asks for a repeat or a time', () => {
     const at = anchor('Water the plants')
     const asked = (change: TaskChange) => () =>
@@ -180,7 +164,6 @@ describe('a task changed', () => {
     expect(asked({ due: null, time: '10:00' })).toThrow(/needs a date/)
     expect(asked({ due: null })().text.split('\n')[4]).toBe('- [ ] Water the plants')
   })
-
   test('found again where lines above it moved, refused where it is gone', () => {
     const moved = `Intro\n\n${NOTE}`
     const edited = editedTask(
@@ -197,7 +180,6 @@ describe('a task changed', () => {
       editedTask('# Empty\n', 'Home', 'Errands.md', anchor('Renew the gym'), {}, true, context.today),
     ).toThrow('not in the note any more')
   })
-
   test('moved, with everything under it', () => {
     const moved = movedTask(
       { text: NOTE, space: 'Home', path: 'Errands.md', anchor: anchor('Call the bank') },
@@ -210,13 +192,11 @@ describe('a task changed', () => {
     )
   })
 })
-
 describe('lists', () => {
   test('Today: overdue first, then today, open only', () => {
     const { tasks } = listTasks(rows, { view: 'today' }, context)
     expect(tasks.map((one) => one.text)).toEqual(['Call the bank', 'Water the plants'])
   })
-
   test("Todoist's filter, on top of a view or alone", () => {
     expect(listTasks(rows, { filter: '#admin' }, context).tasks.map((one) => one.text)).toEqual(['Call the bank'])
     expect(listTasks(rows, { filter: 'p2 | no date' }, context).tasks.map((one) => one.text)).toEqual([
@@ -224,24 +204,20 @@ describe('lists', () => {
       'Find the card',
     ])
   })
-
   test('a limit of nothing answers no tasks, and the total', () => {
     const { total, tasks } = listTasks(rows, { limit: 0 }, context)
     expect(tasks).toEqual([])
     expect(total).toBeGreaterThan(0)
   })
-
   test('a limit, and the total past it', () => {
     const { total, tasks } = listTasks(rows, { limit: 1 }, context)
     expect(total).toBe(4)
     expect(tasks).toHaveLength(1)
   })
-
   test('a view or a filter that does not read is refused', () => {
     expect(() => listTasks(rows, { view: 'someday' }, context)).toThrow(AgentError)
     expect(() => listTasks(rows, { filter: 'today &' }, context)).toThrow(AgentError)
   })
-
   test('a base: its groups and the columns its view shows', () => {
     const books = [
       ...rowsOfText('Home', 'Books/Dune.md', '---\nstatus: reading\npages: 412\n---\n'),
@@ -260,7 +236,6 @@ describe('lists', () => {
       pages: 412,
     })
   })
-
   test('the clock in a zone', () => {
     expect(clockOf(new Date('2026-10-04T23:30:00Z'), 'Europe/Zurich')).toEqual({
       today: '2026-10-05',
@@ -268,14 +243,12 @@ describe('lists', () => {
       zone: 'Europe/Zurich',
     })
   })
-
   test("words like tomorrow read from the wall clock of the account's zone", () => {
     const wall = wallClock(new Date('2026-10-04T23:30:00Z'), 'Pacific/Auckland')
     expect([wall.getFullYear(), wall.getMonth() + 1, wall.getDate(), wall.getHours()]).toEqual([2026, 10, 5, 12])
     expect(taskLine(quickWords(['en'], wall)('Call mum tomorrow').fields)).toContain('2026-10-06')
   })
 })
-
 describe('bases', () => {
   test('a new row goes where the filter looks', () => {
     const base = readBase(
@@ -286,7 +259,6 @@ describe('bases', () => {
       properties: { status: 'to read', tags: ['book'] },
     })
   })
-
   test('a new row takes the view’s template first, then the base’s, filled and without its own keys', () => {
     const base = readBase(
       'orden:\n  template: "[[Templates/Book]]"\nviews:\n  - type: table\n    name: All\n  - type: cards\n    name: Shelf\n    orden:\n      template: "[[Templates/Shelf|shelf]]"\n',
@@ -303,7 +275,6 @@ describe('bases', () => {
       ),
     ).toBe('---\nstatus: new\n---\n# Emma\nAdded 2026-10-04 at 09:00, due 2026-10-11\n')
   })
-
   test('properties written, taken away, a list as a list', () => {
     expect(withProperties('Words', { status: 'done', pages: 3, read: true, tags: ['a', 'b'] })).toBe(
       '---\nstatus: done\npages: 3\nread: true\ntags: [a, b]\n---\nWords',
@@ -311,7 +282,6 @@ describe('bases', () => {
     expect(withProperties('---\nstatus: done\n---\nWords', { status: null })).toBe('Words')
     expect(() => withProperties('', { 'a: b': 1 })).toThrow(AgentError)
   })
-
   test('a key is whatever front matter reads back as one, and a note. one is the bare key', () => {
     expect(withProperties('Words', { priorität: 'Hoch', 'a.b': 1, 'Size (cm)': 2, '💰': 3 })).toBe(
       '---\npriorität: Hoch\na.b: 1\nSize (cm): 2\n💰: 3\n---\nWords',
@@ -325,7 +295,6 @@ describe('bases', () => {
       "---\nscores: [1, 10, true, null, '2']\n---\nWords",
     )
   })
-
   test('a base edited: a view added, a filter set, a formula, a view gone', () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
     const edited = editedBase(base, [
@@ -348,7 +317,6 @@ describe('bases', () => {
     expect(() => editedBase(base, views(501))).toThrow('at most 500 ops')
   })
 })
-
 describe('Today without the engine', () => {
   test('is what the engine answers for Today, row for row', async () => {
     const { todayTasks } = await import('./today')
@@ -374,32 +342,26 @@ describe('Today without the engine', () => {
     expect(engine).toHaveLength(5)
   })
 })
-
 describe('a base edited where Orden could not read it', () => {
   const SOURCE =
     'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - b\n    limit: "10"\n'
-
   test("a view's limit cleared is gone from the file", () => {
     const edited = editedBase(readBase(SOURCE), [{ op: 'edit_view', view: 'A', limit: null }])
     expect(writeBase(edited, SOURCE)).not.toContain('limit')
   })
-
   test("a view's limit set and then cleared does not bring the old one back", () => {
     const set = editedBase(readBase(SOURCE), [{ op: 'edit_view', view: 'A', limit: 5 }])
     const cleared = editedBase(set, [{ op: 'edit_view', view: 'A', limit: null }])
     expect(writeBase(cleared, SOURCE)).not.toContain('limit')
   })
-
   test("a view's filters cleared are gone from the file", () => {
     const edited = editedBase(readBase(SOURCE), [{ op: 'set_filter', view: 'A', filter: null }])
     expect(writeBase(edited, SOURCE)).not.toContain('- b')
   })
-
   test("the base's filters cleared are gone from the file", () => {
     const edited = editedBase(readBase(SOURCE), [{ op: 'set_filter', filter: null }])
     expect(writeBase(edited, SOURCE)).not.toContain('- a\n')
   })
-
   test("the base's filters set replace the unreadable ones", () => {
     const edited = editedBase(readBase(SOURCE), [{ op: 'set_filter', filter: 'c == 1' }])
     const written = writeBase(edited, SOURCE)
@@ -407,7 +369,6 @@ describe('a base edited where Orden could not read it', () => {
     expect(written).not.toContain('- a\n')
   })
 })
-
 describe('a new row of a base', () => {
   test('keeps the tags its template has, beside the ones the base needs and the ones asked for', () => {
     const base = readBase('filters: file.hasTag("reading")\nviews:\n  - type: table\n    name: All\n')
@@ -419,7 +380,6 @@ describe('a new row of a base', () => {
     expect(text).toMatch(/tags: \[book, fiction, reading, sci-fi\]|book[\s\S]*fiction[\s\S]*reading[\s\S]*sci-fi/)
     expect(text).toContain('status: new')
   })
-
   test('is answered by its own path and space, whatever its properties are called', () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
     const rows = rowsOfText('Home', 'Courses/Rust.md', '---\npath: beginner\nspace: Mars\n---\nbody\n')

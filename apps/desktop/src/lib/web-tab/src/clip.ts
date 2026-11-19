@@ -11,7 +11,6 @@ export async function clipPage(
   const read = await pages.read(tabId, true)
   const url = clipSource(read?.url, fallback.url)
   if (url === null) return null
-
   const named = (read?.title ?? fallback.title).trim()
   const page = { url, title: named.length ? named : plainOrigin(url), html: read?.html ?? '' }
   const root = workspace.spaces.find((one) => one.id === space)?.root

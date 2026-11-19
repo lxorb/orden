@@ -7,23 +7,18 @@ vi.mock('../../agent-verbs/src/api', async (original) => ({
   ...(await original<typeof import('../../agent-verbs/src/api')>()),
   asked: () => Promise.resolve(null),
 }))
-
 function holding(held: string) {
   vi.stubGlobal('navigator', { clipboard: { readText: () => Promise.resolve(held) } })
 }
-
 const read = { verb: 'clipboard', args: { op: 'read' }, caller: READER }
-
 afterEach(() => {
   vi.unstubAllGlobals()
 })
-
 describe('an agent reading the clipboard', () => {
   test('reads what the reader copied', async () => {
     holding('a link')
     expect(await clipboard(read)).toMatchObject({ ok: true, result: { text: 'a link' } })
   })
-
   test('is refused while the clipboard holds a secret Pass copied', async () => {
     const board = { read: () => Promise.resolve(''), write: () => Promise.resolve() }
     await copySecret('hunter2', 0, board)

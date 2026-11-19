@@ -6,7 +6,6 @@ const { callerOf } = await import('../../src/lib/automation/src/api')
 await import('../agent-verbs-wired')
 const { runAgentVerb } = await import('@orden/contracts')
 const { agentMarks } = await import('../../src/lib/workspace/src/api')
-
 const agent = callerOf({
   id: 'claude',
   name: 'Claude',
@@ -24,20 +23,16 @@ const agent = callerOf({
   spaces: 'all',
   mode: 'autonomous',
 })
-
 let view: EditorView | null = null
-
 beforeEach(() => {
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
   workspace.activeSpaceId = 's'
 })
-
 afterEach(() => {
   view?.destroy()
   view = null
   document.body.replaceChildren()
 })
-
 function reading() {
   const words = `${'line\n'.repeat(80)}alpha beta gamma\n${'more\n'.repeat(80)}`
   const tab = workspace.openUnsaved('note', words, undefined, null, true)
@@ -56,7 +51,6 @@ function reading() {
   view.scrollDOM.scrollTop = 120
   return tab
 }
-
 function readerState() {
   const state = view?.state
   const main = state?.selection.main
@@ -68,12 +62,10 @@ function readerState() {
     scroll: view?.scrollDOM.scrollTop ?? null,
   }
 }
-
 test('nothing an agent does moves the reader’s tab, keyboard, selection or scroll', async () => {
   const tab = reading()
   const before = readerState()
   expect(before).toMatchObject({ front: tab.id, keyboard: true, chosen: 'beta', scroll: 120 })
-
   const runs: [string, Record<string, unknown>][] = [
     ['workspace_tabs', { op: 'new', kind: 'note', content: 'An agent’s note' }],
     ['workspace_tabs', { op: 'new', kind: 'canvas' }],
@@ -90,7 +82,6 @@ test('nothing an agent does moves the reader’s tab, keyboard, selection or scr
     expect(said, `${verb} ${JSON.stringify(said)}`).not.toMatchObject({ ok: false })
     expect(readerState(), `${verb} ${JSON.stringify(args)}`).toEqual(before)
   }
-
   const words = view?.state.doc.toString() ?? ''
   expect(words.startsWith('AGENT\n')).toBe(true)
   expect(words.trimEnd().endsWith('THE END')).toBe(true)

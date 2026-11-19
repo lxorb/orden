@@ -14,21 +14,13 @@ use orden_base::paths::{config_dir, made, write_atomically};
 fn one_at_a_time<T>(build: impl FnOnce() -> tauri::Result<T>) -> tauri::Result<T> {
     orden_web_engine::one_at_a_time(|| tauri::Error::FailedToReceiveMessage, build)
 }
-
 const FILE: &str = "window.json";
-
 const STAYS: f64 = 64.0;
-
 const MOST: u64 = 512;
-
 const OFF_SCREEN: &str = "ORDEN_OFF_SCREEN";
-
 const OFF: f64 = -32000.0;
-
 static AWAY: OnceLock<(f64, f64)> = OnceLock::new();
-
 static PUT: OnceLock<(f64, f64)> = OnceLock::new();
-
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 struct Placement {
     x: f64,
@@ -39,7 +31,6 @@ struct Placement {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     scale: Option<f64>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Area {
     x: f64,
@@ -48,9 +39,7 @@ struct Area {
     height: f64,
     scale: f64,
 }
-
 const DESK_IN_PIXELS: bool = cfg!(not(target_os = "macos"));
-
 impl Area {
     fn overlap(&self, placed: &Placement) -> f64 {
         let (mine, its) = scales(self, placed);
@@ -71,27 +60,23 @@ impl Area {
         wide.max(0.0) * tall.max(0.0)
     }
 }
-
 fn scales(screen: &Area, placed: &Placement) -> (f64, f64) {
     match placed.scale {
         Some(its) if DESK_IN_PIXELS && its > 0.0 && screen.scale > 0.0 => (screen.scale, its),
         _ => (1.0, 1.0),
     }
 }
-
 #[derive(Default)]
 struct Placements {
     windows: Mutex<HashMap<String, Followed>>,
     remembered: Mutex<Option<Placement>>,
 }
-
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 struct Followed {
     latest: Option<Placement>,
     before: Option<Placement>,
     maximized: bool,
 }
-
 impl Followed {
     fn starting(remembered: Option<Placement>) -> Self {
         let normal = remembered.map(|was| Placement {
@@ -104,7 +89,6 @@ impl Followed {
             maximized: remembered.is_some_and(|was| was.maximized),
         }
     }
-
     fn saw(&mut self, bounds: Option<Placement>, maximized: bool) {
         if maximized {
             if !self.maximized {
@@ -113,14 +97,12 @@ impl Followed {
             self.maximized = true;
             return;
         }
-
         self.maximized = false;
         if let Some(bounds) = bounds {
             self.before = self.latest;
             self.latest = Some(bounds);
         }
     }
-
     fn placement(&self) -> Option<Placement> {
         self.latest.map(|was| Placement {
             maximized: self.maximized,
@@ -128,15 +110,12 @@ impl Followed {
         })
     }
 }
-
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     builder.manage(Placements::default()).on_window_event(noted)
 }
-
 fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join(FILE))
 }
-
 pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
     let mut config = named(config, asked_away());
     if let (Some(x), Some(y)) = (config.x, config.y) {
@@ -155,10 +134,8 @@ pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
         }
         return config;
     };
-
     put_into(config, placed)
 }
-
 fn put_into(mut config: WindowConfig, placed: Placement) -> WindowConfig {
     if positions() {
         config.x = Some(placed.x);
@@ -170,7 +147,6 @@ fn put_into(mut config: WindowConfig, placed: Placement) -> WindowConfig {
     config.maximized = placed.maximized;
     config
 }
-
 pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
     app: &AppHandle,
     builder: tauri::WebviewWindowBuilder<'a, R, M>,
@@ -192,10 +168,8 @@ pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
         .inner_size(placed.width, placed.height)
         .maximized(placed.maximized)
 }
-
 const DEFAULT_WIDTH: f64 = 1180.0;
 const DEFAULT_HEIGHT: f64 = 760.0;
-
 fn first_place(app: &AppHandle, width: f64, height: f64) -> Option<Placement> {
     if !cfg!(target_os = "macos") {
         return None;
@@ -204,7 +178,6 @@ fn first_place(app: &AppHandle, width: f64, height: f64) -> Option<Placement> {
         .first()
         .map(|screen| under_the_menu_bar(screen, width, height))
 }
-
 fn under_the_menu_bar(screen: &Area, width: f64, height: f64) -> Placement {
     let width = width.min(screen.width);
     let height = height.min(screen.height);
@@ -217,11 +190,9 @@ fn under_the_menu_bar(screen: &Area, width: f64, height: f64) -> Placement {
         scale: None,
     }
 }
-
 fn positions() -> bool {
     true
 }
-
 fn last_place(app: &AppHandle) -> Option<Placement> {
     let placed = read(app)?;
     if let Some(kept) = app.try_state::<Placements>() {
@@ -240,7 +211,6 @@ fn last_place(app: &AppHandle) -> Option<Placement> {
         sized_for_any(placed, &screens)
     })
 }
-
 pub fn settled<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::Result<WebviewWindow<R>> {
@@ -248,7 +218,6 @@ pub fn settled<R: Runtime, M: Manager<R>>(
     settle(&window);
     Ok(window)
 }
-
 fn settle<R: Runtime>(window: &WebviewWindow<R>) {
     #[cfg(windows)]
     {
@@ -275,7 +244,6 @@ fn settle<R: Runtime>(window: &WebviewWindow<R>) {
     #[cfg(not(windows))]
     let _ = window;
 }
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn moves(
     put: (f64, f64),
@@ -290,7 +258,6 @@ fn moves(
         put.0 < x || put.0 >= x + width || put.1 < y || put.1 >= y + height
     })
 }
-
 pub fn moved_as_it_is<R: Runtime>(
     window: &WebviewWindow<R>,
     to: impl Into<tauri::Position>,
@@ -305,7 +272,6 @@ pub fn moved_as_it_is<R: Runtime>(
     }
     Ok(())
 }
-
 fn sized_for_any(placed: Placement, screens: &[Area]) -> Placement {
     let widest = screens
         .iter()
@@ -324,11 +290,9 @@ fn sized_for_any(placed: Placement, screens: &[Area]) -> Placement {
         ..placed
     }
 }
-
 pub fn names_its_place(config: &WindowConfig) -> bool {
     config.x.is_some() || config.y.is_some()
 }
-
 fn named(config: &WindowConfig, away: bool) -> WindowConfig {
     let mut config = config.clone();
     if away {
@@ -340,15 +304,12 @@ fn named(config: &WindowConfig, away: bool) -> WindowConfig {
     }
     config
 }
-
 pub fn asked_away() -> bool {
     std::env::var_os(OFF_SCREEN).is_some_and(|value| !value.is_empty() && value != "0")
 }
-
 pub fn away() -> Option<(f64, f64)> {
     AWAY.get().copied()
 }
-
 pub fn built_away<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
     (x, y): (f64, f64),
@@ -367,7 +328,6 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
     window.show()?;
     Ok(window)
 }
-
 #[cfg(windows)]
 mod created_away {
     use std::cell::Cell;
@@ -380,11 +340,9 @@ mod created_away {
     };
 
     const PARKED: i32 = -32_000;
-
     thread_local! {
         static ASKING: Cell<bool> = const { Cell::new(false) };
     }
-
     #[allow(unsafe_code)]
     unsafe extern "system" fn creating(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         if u32::try_from(code) == Ok(HCBT_CREATEWND) && ASKING.get() {
@@ -400,7 +358,6 @@ mod created_away {
         }
         unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
     }
-
     #[allow(unsafe_code)]
     pub fn during<T>(making: impl FnOnce() -> T) -> T {
         let hook = unsafe {
@@ -420,7 +377,6 @@ mod created_away {
         made
     }
 }
-
 pub fn built<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::Result<WebviewWindow<R>> {
@@ -431,7 +387,6 @@ pub fn built<R: Runtime, M: Manager<R>>(
     crate::top_edge::mind(&window.as_ref().window());
     Ok(window)
 }
-
 pub fn raised<R: Runtime>(window: &Window<R>) {
     if away().is_some() {
         return;
@@ -439,26 +394,22 @@ pub fn raised<R: Runtime>(window: &Window<R>) {
     let _ = window.unminimize();
     let _ = window.set_focus();
 }
-
 pub fn keyboard_to<R: Runtime>(webview: &Webview<R>) {
     if away().is_some() {
         return;
     }
     let _ = webview.set_focus();
 }
-
 #[tauri::command]
 pub fn take_keyboard(webview: Webview) {
     keyboard_to(&webview);
 }
-
 #[tauri::command]
 pub fn raise_window(app: AppHandle, label: String) {
     if let Some(window) = app.get_window(&label) {
         raised(&window);
     }
 }
-
 fn read(app: &AppHandle) -> Option<Placement> {
     let path = file(app).ok()?;
     if std::fs::metadata(&path).ok()?.len() > MOST {
@@ -467,7 +418,6 @@ fn read(app: &AppHandle) -> Option<Placement> {
     let placed: Placement = serde_json::from_str(&std::fs::read_to_string(path).ok()?).ok()?;
     sane(&placed).then_some(placed)
 }
-
 fn sane(placed: &Placement) -> bool {
     [placed.x, placed.y, placed.width, placed.height]
         .iter()
@@ -475,7 +425,6 @@ fn sane(placed: &Placement) -> bool {
         && placed.width >= 1.0
         && placed.height >= 1.0
 }
-
 fn areas(app: &AppHandle) -> Vec<Area> {
     let mut screens = app.available_monitors().unwrap_or_default();
     if let Ok(Some(primary)) = app.primary_monitor() {
@@ -488,7 +437,6 @@ fn areas(app: &AppHandle) -> Vec<Area> {
     }
     screens.iter().map(area_of).collect()
 }
-
 fn area_of(screen: &Monitor) -> Area {
     let scale = screen.scale_factor();
     let work = screen.work_area();
@@ -500,7 +448,6 @@ fn area_of(screen: &Monitor) -> Area {
         scale,
     }
 }
-
 fn onto(placed: Placement, screens: &[Area]) -> Placement {
     let best = screens
         .iter()
@@ -512,7 +459,6 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
     let Some((screen, overlap)) = best else {
         return placed;
     };
-
     let (mine, its) = scales(screen, &placed);
     let placed = Placement {
         x: placed.x * its / mine,
@@ -520,10 +466,8 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
         scale: placed.scale.map(|_| screen.scale),
         ..placed
     };
-
     let width = placed.width.min(screen.width);
     let height = placed.height.min(screen.height);
-
     let (x, y) = if overlap > 0.0 {
         (
             placed
@@ -538,7 +482,6 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
             screen.y + (screen.height - height) / 2.0,
         )
     };
-
     Placement {
         x,
         y,
@@ -548,7 +491,6 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
         scale: placed.scale,
     }
 }
-
 fn noted(window: &Window, event: &WindowEvent) {
     match event {
         WindowEvent::Moved(_) | WindowEvent::Resized(_) => follow(window),
@@ -556,13 +498,11 @@ fn noted(window: &Window, event: &WindowEvent) {
         _ => {}
     }
 }
-
 pub fn note_every_window(app: &AppHandle) {
     for window in app.windows().values() {
         follow(window);
     }
 }
-
 fn follow(window: &Window) {
     if window.is_minimized().unwrap_or(true) || window.is_fullscreen().unwrap_or(true) {
         return;
@@ -580,7 +520,6 @@ fn follow(window: &Window) {
         .or_insert_with(|| Followed::starting(kept.remembered.lock().ok().and_then(|was| *was)))
         .saw(bounds, maximized);
 }
-
 fn bounds(window: &Window) -> Option<Placement> {
     let scale = window.scale_factor().ok()?;
     let at = window.outer_position().ok()?.to_logical::<f64>(scale);
@@ -595,7 +534,6 @@ fn bounds(window: &Window) -> Option<Placement> {
     };
     sane(&placed).then_some(placed)
 }
-
 fn keep(window: &Window) {
     follow(window);
     let Some(kept) = window.try_state::<Placements>() else {
@@ -622,7 +560,6 @@ fn keep(window: &Window) {
     }
     let _ = write_atomically(&path, text.as_bytes());
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -641,7 +578,6 @@ mod tests {
             scale: None,
         }
     }
-
     const LAPTOP: Area = Area {
         x: 0.0,
         y: 0.0,
@@ -649,7 +585,6 @@ mod tests {
         height: 860.0,
         scale: 1.0,
     };
-
     const MONITOR: Area = Area {
         x: 1440.0,
         y: -200.0,
@@ -657,16 +592,13 @@ mod tests {
         height: 1400.0,
         scale: 1.0,
     };
-
     #[test]
     fn a_window_on_a_screen_stays_where_it_was() {
         let was = placed(100.0, 80.0, 1180.0, 760.0);
         assert_eq!(onto(was, &[LAPTOP, MONITOR]), was);
-
         let there = placed(1800.0, 0.0, 1600.0, 1000.0);
         assert_eq!(onto(there, &[LAPTOP, MONITOR]), there);
     }
-
     #[test]
     fn a_window_on_a_screen_that_has_gone_comes_back_to_the_first() {
         let was = placed(1800.0, 0.0, 1600.0, 1000.0);
@@ -675,35 +607,29 @@ mod tests {
             placed(0.0, 0.0, 1440.0, 860.0),
             "made to fit"
         );
-
         let small = placed(3000.0, 300.0, 800.0, 600.0);
         assert_eq!(onto(small, &[LAPTOP]), placed(320.0, 130.0, 800.0, 600.0));
     }
-
     #[test]
     fn a_window_hanging_off_an_edge_keeps_a_strip_on_screen() {
         let half = placed(-500.0, 100.0, 1000.0, 600.0);
         assert_eq!(onto(half, &[LAPTOP]), half);
-
         let mostly_off = placed(1420.0, 100.0, 1000.0, 600.0);
         assert_eq!(
             onto(mostly_off, &[LAPTOP]),
             placed(1440.0 - 64.0, 100.0, 1000.0, 600.0)
         );
-
         let low = placed(100.0, 850.0, 1000.0, 600.0);
         assert_eq!(
             onto(low, &[LAPTOP]),
             placed(100.0, 860.0 - 64.0, 1000.0, 600.0)
         );
     }
-
     #[test]
     fn the_top_edge_is_never_above_the_screen() {
         let high = placed(100.0, -300.0, 1000.0, 600.0);
         assert_eq!(onto(high, &[LAPTOP]), placed(100.0, 0.0, 1000.0, 600.0));
     }
-
     #[test]
     fn where_the_compositor_places_it_only_the_biggest_screen_bounds_it() {
         let portrait = Area {
@@ -721,13 +647,11 @@ mod tests {
         );
         assert_eq!(sized_for_any(was, &[]), was);
     }
-
     #[test]
     fn a_window_bigger_than_its_screen_is_made_to_fit() {
         let big = placed(0.0, 0.0, 2000.0, 1200.0);
         assert_eq!(onto(big, &[LAPTOP]), placed(0.0, 0.0, 1440.0, 860.0));
     }
-
     #[test]
     fn the_screen_it_is_mostly_on_is_the_one_it_is_kept_on() {
         let was = placed(1400.0, 1180.0, 1200.0, 800.0);
@@ -736,7 +660,6 @@ mod tests {
             placed(1400.0, -200.0 + 1400.0 - 64.0, 1200.0, 800.0)
         );
     }
-
     #[test]
     fn maximised_stays_maximised() {
         let was = Placement {
@@ -745,18 +668,15 @@ mod tests {
         };
         assert!(onto(was, &[LAPTOP]).maximized);
     }
-
     #[test]
     fn no_screens_leaves_it_where_it_was() {
         let was = placed(-9000.0, 0.0, 800.0, 600.0);
         assert_eq!(onto(was, &[]), was);
     }
-
     #[test]
     fn a_maximise_goes_back_to_the_bounds_before_it() {
         let normal = placed(140.0, 120.0, 887.0, 612.0);
         let screen = placed(-6.5, -6.5, 1472.0, 919.5);
-
         let mut followed = Followed::starting(None);
         followed.saw(Some(normal), false);
         followed.saw(Some(normal), false);
@@ -769,11 +689,9 @@ mod tests {
                 ..normal
             })
         );
-
         followed.saw(Some(normal), false);
         assert_eq!(followed.placement(), Some(normal));
     }
-
     #[test]
     fn opened_maximised_keeps_what_the_file_said() {
         let was = Placement {
@@ -783,25 +701,21 @@ mod tests {
         let mut followed = Followed::starting(Some(was));
         followed.saw(None, true);
         assert_eq!(followed.placement(), Some(was));
-
         followed.saw(Some(placed(100.0, 80.0, 1000.0, 700.0)), false);
         assert_eq!(
             followed.placement(),
             Some(placed(100.0, 80.0, 1000.0, 700.0))
         );
     }
-
     #[test]
     fn a_window_that_cannot_be_read_keeps_the_place_last_noted() {
         let dragged = placed(300.0, 140.0, 940.0, 640.0);
-
         let mut followed = Followed::starting(None);
         followed.saw(Some(placed(300.0, 140.0, 943.0, 642.0)), false);
         followed.saw(Some(dragged), false);
         followed.saw(None, false);
         assert_eq!(followed.placement(), Some(dragged));
     }
-
     #[test]
     fn a_config_that_names_a_place_keeps_it() {
         assert!(!names_its_place(&WindowConfig::default()));
@@ -811,21 +725,18 @@ mod tests {
             ..WindowConfig::default()
         };
         assert!(names_its_place(&off));
-
         let config: serde_json::Value =
             serde_json::from_str(include_str!("../../../tauri.conf.json"))
                 .expect("the app's config");
         let window = &config["app"]["windows"][0];
         assert!(window["x"].is_null() && window["y"].is_null());
     }
-
     #[test]
     fn a_drive_that_asks_gets_its_window_off_the_screen_and_unfocused() {
         let away = named(&WindowConfig::default(), true);
         assert_eq!((away.x, away.y), (Some(OFF), Some(OFF)));
         assert!(!away.focus);
     }
-
     #[test]
     fn a_named_place_is_kept_and_never_focused() {
         let built = WindowConfig {
@@ -837,14 +748,12 @@ mod tests {
         assert_eq!((away.x, away.y), (Some(-20000.0), Some(-20000.0)));
         assert!(!away.focus);
     }
-
     #[test]
     fn nothing_named_and_nothing_asked_changes_nothing() {
         let plain = named(&WindowConfig::default(), false);
         assert_eq!(plain.x, None);
         assert!(plain.focus);
     }
-
     #[test]
     fn a_file_that_is_not_a_window_is_not_read_as_one() {
         assert!(!sane(&placed(f64::NAN, 0.0, 800.0, 600.0)));
@@ -853,7 +762,6 @@ mod tests {
         assert!(sane(&placed(-100.0, -20.0, 800.0, 600.0)));
         assert!(serde_json::from_str::<Placement>("{\"x\":1}").is_err());
     }
-
     #[test]
     fn a_first_window_on_a_mac_opens_under_the_menu_bar_across_the_middle() {
         let screen = Area {
@@ -879,7 +787,6 @@ mod tests {
             placed(0.0, 25.0, 1024.0, 640.0)
         );
     }
-
     const PRIMARY: Area = Area {
         x: 0.0,
         y: 0.0,
@@ -894,14 +801,12 @@ mod tests {
         height: 860.0,
         scale: 2.0,
     };
-
     fn at_scale(scale: f64, x: f64, y: f64, width: f64, height: f64) -> Placement {
         Placement {
             scale: Some(scale),
             ..placed(x, y, width, height)
         }
     }
-
     #[test]
     fn a_window_on_a_screen_of_another_scale_stays_on_it() {
         let was = at_scale(2.0, PANEL.x + 20.0, 100.0, 900.0, 600.0);
@@ -919,13 +824,11 @@ mod tests {
             assert!(PRIMARY.overlap(&logical) >= PANEL.overlap(&logical));
         }
     }
-
     #[test]
     fn a_window_on_the_primary_screen_beside_a_panel_stays_on_it() {
         let was = at_scale(1.0, 100.0, 80.0, 1180.0, 760.0);
         assert_eq!(onto(was, &[PRIMARY, PANEL]), was);
     }
-
     #[test]
     fn a_window_from_a_panel_that_has_gone_comes_back_at_its_size() {
         let was = at_scale(2.0, PANEL.x + 140.0, 100.0, 1000.0, 600.0);
@@ -938,7 +841,6 @@ mod tests {
         assert_eq!(back.scale, Some(1.0));
         assert!(back.x >= PRIMARY.x && back.x + back.width <= PRIMARY.x + PRIMARY.width);
     }
-
     #[test]
     fn a_place_from_before_the_scale_is_compared_as_it_was() {
         let was = placed(100.0, 80.0, 1180.0, 760.0);
@@ -951,7 +853,6 @@ mod tests {
             .expect("written")
             .contains("scale"));
     }
-
     #[test]
     fn a_window_reopens_as_it_was_left() {
         let normal = at_scale(1.0, 140.0, 120.0, 887.0, 612.0);
@@ -974,7 +875,6 @@ mod tests {
             assert!(!config.center);
         }
     }
-
     #[test]
     fn a_maximised_window_is_moved_only_off_the_wrong_screen() {
         let put = (1960.0, 200.0);

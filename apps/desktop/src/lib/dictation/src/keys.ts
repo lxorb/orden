@@ -3,10 +3,8 @@ import { type Dictates, voice } from './voice.svelte'
 import type { Field } from './spot'
 
 export const HOLD = 350
-
 export function dictating(field: Field, owner: Dictates) {
   let held: { at: number; started: boolean } | null = null
-
   const down = (event: KeyboardEvent) => {
     if (event.isComposing) return
     const now = voice.of(owner)
@@ -19,7 +17,6 @@ export function dictating(field: Field, owner: Dictates) {
       return
     }
     if (now === 'idle') return
-
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -41,17 +38,14 @@ export function dictating(field: Field, owner: Dictates) {
       })
     }
   }
-
   const up = () => {
     const was = held
     held = null
     if (was?.started && performance.now() - was.at >= HOLD) void voice.finish()
   }
-
   const element: HTMLElement = field
   element.addEventListener('keydown', down)
   element.addEventListener('keyup', up)
-
   return {
     update(next: Dictates) {
       owner = next

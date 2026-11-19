@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const notes: Record<string, string> = {}
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -13,7 +12,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return doc === undefined ? Promise.reject(new Error(`no ${path}`)) : Promise.resolve(doc)
   },
 }))
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -28,7 +26,6 @@ function memoryStorage(): Storage {
   }
 }
 vi.stubGlobal('localStorage', memoryStorage())
-
 vi.mock('./tree', () => ({
   entryIn: () => Promise.resolve({ path: '/space/Finance/Bank.url', is_dir: false }),
   moveFile: vi.fn(),
@@ -55,7 +52,6 @@ vi.spyOn(protection, 'agentsMay').mockImplementation((path) => !String(path).sta
 vi.spyOn(protection, 'locked').mockImplementation((path) => String(path).startsWith('/space/Finance'))
 const { workspaceTabs } = await import('./tabs')
 const { answerTheCrate } = await import('./crate')
-
 test('a copy of a locked web note made by a split stays behind its lock, for the reader and for agents', async () => {
   workspace.collapsePanes()
   workspace.tabs = []
@@ -83,7 +79,6 @@ test('a copy of a locked web note made by a split stays behind its lock, for the
   })
   const locked = workspace.tabs.find((one) => one.path === LOCKED)
   expect(locked).toBeDefined()
-
   const split = await workspaceTabs({
     verb: 'workspace_tabs',
     caller,
@@ -97,7 +92,6 @@ test('a copy of a locked web note made by a split stays behind its lock, for the
   await answerTheCrate('agent.lend', { tab: copy?.id })
   expect(lent).toEqual([])
 })
-
 test('the copy is not saved by an agent, and saved by the reader it is as locked as its note', async () => {
   const caller = callerOf({
     id: 'x',
@@ -115,7 +109,6 @@ test('the copy is not saved by an agent, and saved by the reader it is as locked
       args: { op: 'save', tab: copy?.id, path: 'Open/Bank copy.url' },
     }),
   ).rejects.toMatchObject({ code: 'protected' })
-
   protection.set('/space', '/space/Finance', 'password')
   const saved = copy ? await workspace.save(copy, '/space/Open', 'Bank copy.url') : null
   expect(saved).toBe('/space/Open/Bank copy.url')

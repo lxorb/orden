@@ -3,10 +3,8 @@ import type { Env } from '../../../sync-server/src/api'
 import { GRANTS, issuer, resourceUrl, SCOPES } from './protocol'
 
 export const oauthMetadata = new Hono<{ Bindings: Env }>()
-
 oauthMetadata.get('/oauth-authorization-server', (context) => {
   const base = issuer(context.env, context.req.url)
-
   return context.json({
     issuer: base,
     authorization_endpoint: `${base}/oauth/authorize`,
@@ -22,7 +20,6 @@ oauthMetadata.get('/oauth-authorization-server', (context) => {
     authorization_response_iss_parameter_supported: true,
   })
 })
-
 function protectedResource(env: Env, at: string) {
   return {
     resource: resourceUrl(env, at),
@@ -32,14 +29,12 @@ function protectedResource(env: Env, at: string) {
     resource_name: 'Orden',
   }
 }
-
 oauthMetadata.get('/oauth-protected-resource', (context) =>
   context.json(protectedResource(context.env, context.req.url)),
 )
 oauthMetadata.get('/oauth-protected-resource/mcp', (context) =>
   context.json(protectedResource(context.env, context.req.url)),
 )
-
 export function challenge(env: Env, at: string, invalid: boolean): string {
   const parts = [
     `resource_metadata="${issuer(env, at)}/.well-known/oauth-protected-resource/mcp"`,

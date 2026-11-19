@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import sys
 import time
@@ -8,7 +7,6 @@ from linux_desk import DESK, OUT, failures, move, shoot, ratio, box, at, press, 
 
 ROUNDS = int(sys.argv[4]) if len(sys.argv) > 4 else 5
 done = []
-
 HEARD = (
     "(() => { if (window.__popupHeard) return true; window.__popupHeard = [];"
     " const say = (what) => { window.__popupHeard.push(Math.round(performance.now()) + ' ' + what);"
@@ -20,13 +18,11 @@ HEARD = (
     " addEventListener('click', (e) => say('click on ' + (e.target.className || e.target.tagName)), true);"
     " return true })()"
 )
-
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
     print(f"{DESK}: the page heard: {run('window.__popupHeard')}")
     failures.append(what)
     shoot(name)
-
 def over_the_page():
     pane = run(
         "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
@@ -36,7 +32,6 @@ def over_the_page():
         move(*at(pane))
         time.sleep(0.5)
     return isinstance(pane, dict)
-
 def answer():
     for _ in range(3):
         button = run(
@@ -49,11 +44,9 @@ def answer():
             return
         press(button)
         time.sleep(1)
-
 ACTIVE = "orden.workspace.activeSpace && orden.workspace.activeSpace.name"
 SWITCHER = '[data-space-drop="switcher"]'
 SPACES = "[data-spaces-open]"
-
 def choose_space(name, round_):
     answer()
     button = box(SWITCHER)
@@ -98,9 +91,7 @@ def choose_space(name, round_):
             f" (the switcher is {'still open' if open_ else 'closed'}; on top where the row is: {under})",
             f"{round_}-switcher-missed",
         )
-
 MENU = '[role="menu"]'
-
 def zoom_in_the_menu(round_):
     answer()
     button = box('.webbar button[aria-haspopup="menu"]')
@@ -148,9 +139,7 @@ def zoom_in_the_menu(round_):
             return
     run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
     until(f"!document.querySelector('{MENU}')", 2)
-
 PANEL = ".cluster .panel"
-
 def pens(round_):
     answer()
     pen = box(".cluster button.pen")
@@ -188,7 +177,6 @@ def pens(round_):
         )
     run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
     until(f"!document.querySelector('{PANEL}')", 2)
-
 VISIBLE = "orden.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
@@ -196,7 +184,6 @@ WEB_TAB = (
     " if (!one) return null; const r = one.getBoundingClientRect();"
     " return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
 )
-
 def web_tab_in_front():
     for _ in range(30):
         if run(VISIBLE):
@@ -206,7 +193,6 @@ def web_tab_in_front():
             press(tab)
         time.sleep(1)
     return bool(run(VISIBLE))
-
 if not web_tab_in_front():
     raise SystemExit(f"::error::{DESK}: no web tab's page in sight to put popups over")
 first = run(ACTIVE)
@@ -218,7 +204,6 @@ if (run("orden.workspace.spaces.length") or 0) < 2:
         time.sleep(1.5)
 other = run(f"orden.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
 print(f"{DESK}: spaces {first!r} and {other!r}, the page's ratio {ratio()}")
-
 run(HEARD)
 for round_ in range(1, ROUNDS + 1):
     if first and other:
@@ -228,14 +213,12 @@ for round_ in range(1, ROUNDS + 1):
     web_tab_in_front()
     zoom_in_the_menu(round_)
     time.sleep(0.5)
-
 run("orden.workspace.newCanvas()")
 if until("!!document.querySelector('.cluster button.pen')", 10):
     for round_ in range(1, ROUNDS + 1):
         pens(round_)
 else:
     fail("no canvas came up for its pens", "canvas")
-
 for line in done:
     print(f"{DESK}: {line}")
 (OUT / "popups.json").write_text(json.dumps({"done": done, "failures": failures}, indent=2))

@@ -10,32 +10,26 @@ function page(path: string, front: Listed['front'] = {}): Listed {
   const title = path.replace(/\.md$/, '').split('/').pop() ?? path
   return { slug: path.replace(/\.md$/, '').toLowerCase(), title, path, front }
 }
-
 describe('what a reader typed into the search box', () => {
   test('is words, a phrase, a refusal, a tag and a folder', () => {
     const one = asked('rust "the plan" -draft tag:work path:Notes')
-
     expect(one.words).toEqual(['rust'])
     expect(one.phrases).toEqual(['the plan'])
     expect(one.without).toEqual(['draft'])
     expect(one.tags).toEqual(['work'])
     expect(one.folders).toEqual(['notes'])
   })
-
   test('a hash on a tag is the same tag', () => {
     expect(asked('tag:#work').tags).toEqual(['work'])
   })
-
   test('nothing to ask the index about is said out loud', () => {
     expect(hasWords(asked('tag:work'))).toBe(false)
     expect(hasWords(asked('plan'))).toBe(true)
   })
-
   test('a word that would steer the query is a word', () => {
     expect(asked('AND (NOT)').words).toEqual(['AND', '(NOT)'])
   })
 })
-
 describe('the words a note is indexed by', () => {
   test('are its prose, not its markup', () => {
     const said = plainWords(
@@ -54,7 +48,6 @@ describe('the words a note is indexed by', () => {
         '![a shot](/i/abc.png)',
       ].join('\n'),
     )
-
     expect(said).toContain('We shipped it')
     expect(said).toContain('the note')
     expect(said).toContain('another')
@@ -63,7 +56,6 @@ describe('the words a note is indexed by', () => {
     expect(said).not.toContain('title: The plan')
   })
 })
-
 describe('the navigation down the left', () => {
   const pages = [
     page('One.md', { order: 2 }),
@@ -71,27 +63,21 @@ describe('the navigation down the left', () => {
     page('Work/Deep.md'),
     page('Work/Early.md', { order: 0 }),
   ]
-
   test('reads a level at a time: its pages in order, then its folders', () => {
     expect(inOrder(pages).map((one) => one.path)).toEqual(['Two.md', 'One.md', 'Work/Early.md', 'Work/Deep.md'])
   })
-
   test('draws a folder as a disclosure, open where the reader is inside it', () => {
     const inside = navigation(pages, 'work/deep')
     expect(inside).toContain('<details open><summary>Work</summary>')
     expect(inside).toContain('aria-current="page"')
-
     expect(navigation(pages, 'one')).toContain('<details><summary>Work</summary>')
   })
-
   test('and the page before and after, across folders', () => {
     const { before, after } = around(pages, 'one')
-
     expect(before?.path).toBe('Two.md')
     expect(after?.path).toBe('Work/Early.md')
   })
 })
-
 describe('what links to a page', () => {
   test('is read off what each page said about itself', () => {
     const pages = [
@@ -99,33 +85,26 @@ describe('what links to a page', () => {
       page('Notes/One.md', { links: ['plan'] }),
       page('Notes/Two.md', { links: ['notes/one'] }),
     ]
-
     const said = backlinks(pages, page('Plan.md'))
     expect(said).toContain('Linked from')
     expect(said).toContain('href="/notes/one"')
     expect(said).not.toContain('href="/notes/two"')
     expect(backlinks(pages, page('Notes/Two.md'))).toBe('')
   })
-
   test('a path from the top of the space names only the note there', () => {
     const pages = [page('Plan.md'), page('Notes/Plan.md'), page('Notes/One.md', { links: ['/plan'] })]
-
     expect(backlinks(pages, pages[0]!)).toContain('href="/notes/one"')
     expect(backlinks(pages, pages[1]!)).toBe('')
   })
-
   test('and an alias counts as a name for it', () => {
     const pages = [page('Plan.md', { aliases: ['the-plan'] }), page('One.md', { links: ['the-plan'] })]
-
     expect(backlinks(pages, pages[0]!)).toContain('One')
   })
-
   test('never a page the site does not publish', () => {
     const pages = [page('Plan.md')]
     expect(backlinks(pages, pages[0]!)).toBe('')
   })
 })
-
 describe('a form in a note', () => {
   const fence = [
     'title: Say hello',
@@ -136,10 +115,8 @@ describe('a form in a note', () => {
     '  - * What you want to say: lines',
     '  - Which day: choice Monday | Tuesday',
   ].join('\n')
-
   test('is read as the questions it asks', () => {
     const form = formOf(fence)
-
     expect(form?.title).toBe('Say hello')
     expect(form?.send).toBe('Send it')
     expect(form?.fields.map((one) => [one.label, one.kind, one.required])).toEqual([
@@ -150,126 +127,99 @@ describe('a form in a note', () => {
     ])
     expect(form?.fields[3]?.choices).toEqual(['Monday', 'Tuesday'])
   })
-
   test('a fence that is not a form stays a fence', () => {
     expect(formOf('const a = 1')).toBeNull()
     expect(formOf('fields:')).toBeNull()
   })
-
   test('is drawn as a form that posts to the note that asked', () => {
     const html = formHtml(formOf(fence)!, 'note-1', false, null)
-
     expect(html).toContain('method="post" action="/form/note-1"')
     expect(html).toContain('<textarea name="what-you-want-to-say" rows="4" required>')
     expect(html).toContain('<option>Monday</option>')
     expect(html).toContain('Send it')
   })
-
   test('and says thank you where the answer landed', () => {
     expect(formHtml(formOf(fence)!, 'note-1', true, null)).toContain('Thank you')
   })
-
   test('reads an answer against the questions, not as it arrives', () => {
     const form = formOf(fence)!
     const sent = new FormData()
     sent.set('your-name', 'Ada')
     sent.set('what-you-want-to-say', 'Hello')
     sent.set('nothing-asked', 'dropped')
-
     const read = answersFrom(form, sent)
     expect(read).toEqual({ answers: { 'Your name': 'Ada', 'What you want to say': 'Hello' } })
   })
-
   test('refuses a question it needs answered', () => {
     const sent = new FormData()
     sent.set('your-name', 'Ada')
-
     expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: '2-needed' })
     expect(formHtml(formOf(fence)!, 'note-1', false, '2-needed')).toContain(
       '<p class="wrong">What you want to say is needed.</p>',
     )
   })
-
   test('says only what the form can say went wrong, not what a link wrote', () => {
     for (const wrong of ['Pay at evil.example', '9-needed', 'constructor']) {
       expect(formHtml(formOf(fence)!, 'note-1', false, wrong)).not.toContain('class="wrong"')
     }
   })
-
   test('and an address that is not one', () => {
     const sent = new FormData()
     sent.set('your-email', 'ada')
     sent.set('what-you-want-to-say', 'Hello')
-
     expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: '1-address' })
   })
-
   test('the answers become a spreadsheet, one column per question', () => {
     const csv = asCsv([
       { at: 0, path: 'Hello.md', answers: { 'Your name': 'Ada', 'What you want to say': 'Hello' } },
       { at: 1000, path: 'Hello.md', answers: { 'Your name': 'Grace' } },
     ])
-
     expect(csv.split('\n')[0]).toBe('"when","page","Your name","What you want to say"')
     expect(csv).toContain('"Hello.md","Ada","Hello"')
     expect(csv).toContain('"Grace",""')
   })
-
   test('where an answer is never run as a formula, and a number stays one', () => {
     const csv = asCsv([
       { at: 0, path: 'Hello.md', answers: { Name: '=HYPERLINK("http://evil.example","x")' } },
       { at: 0, path: 'Hello.md', answers: { Name: '@SUM(A1)', Age: '-5' } },
     ])
-
     expect(csv).toContain(`"'=HYPERLINK(""http://evil.example"",""x"")"`)
     expect(csv).toContain(`"'@SUM(A1)","-5"`)
   })
-
   test('and a question called page leaves the page column alone', () => {
     const csv = asCsv([{ at: 0, path: 'Hello.md', answers: { page: 'forged' } }])
-
     expect(csv).toBe('"when","page","page"\n"1970-01-01T00:00:00.000Z","Hello.md","forged"\n')
   })
 })
-
 describe('a site with forms on it', () => {
   let env: TestEnv
   let token: string
   let space: string
   let note: string
-
   const HOST = 'field.nibeditor.com'
   const FENCE = ['```form', 'title: Say hello', 'fields:', '  - * Your name', '```'].join('\n')
-
   beforeEach(async () => {
     env = testEnv()
     token = await signIn(env, 'a@b.dev')
-
     const made = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
     space = made.json.space.id
-
     const wrote = await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'Hello.md', content: `# Hello\n\n${FENCE}\n` },
     })
     note = wrote.json.note.id
-
     await call(env, `/v1/spaces/${space}/blog`, {
       method: 'PUT',
       token,
       body: { subdomain: 'field' },
     })
   })
-
   afterEach(() => env.close())
-
   test('draws the form on the page', async () => {
     const answer = await call(env, '/hello', { host: HOST })
-
     expect(answer.text).toContain(`action="/form/${note}"`)
     expect(answer.text).toContain('Your name *')
   })
-
   test('takes an answer and sends the reader back to the page', async () => {
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
@@ -277,15 +227,12 @@ describe('a site with forms on it', () => {
       raw: 'your-name=Ada',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     expect(sent.status).toBe(303)
     expect(sent.headers.get('location')).toBe(`/hello?sent=${note}`)
-
     const held = await call(env, `/v1/spaces/${space}/answers`, { token })
     expect(held.json.answers).toHaveLength(1)
     expect(held.json.answers[0]?.answers).toEqual({ 'Your name': 'Ada' })
   })
-
   test('a page in another script is sent back to at the address it has', async () => {
     const wrote = await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -297,16 +244,13 @@ describe('a site with forms on it', () => {
       raw: 'your-name=Ada',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     expect(sent.status).toBe(303)
     expect(sent.headers.get('location')).toBe(`${encodeURI('/привет')}?sent=${wrote.json.note.id}`)
   })
-
   test('and says so on the page it comes back to', async () => {
     const answer = await call(env, `/hello?sent=${note}`, { host: HOST })
     expect(answer.text).toContain('Thank you')
   })
-
   test('takes no answer for another note when the site is one note', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -317,7 +261,6 @@ describe('a site with forms on it', () => {
       token,
       body: { subdomain: 'field', note: 'Home.md' },
     })
-
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
       method: 'POST',
@@ -327,14 +270,12 @@ describe('a site with forms on it', () => {
     expect(sent.status).toBe(404)
     expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(0)
   })
-
   test('and takes one for the note it is, back at its root', async () => {
     await call(env, `/v1/spaces/${space}/blog`, {
       method: 'PUT',
       token,
       body: { subdomain: 'field', note: 'Hello.md' },
     })
-
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
       method: 'POST',
@@ -345,17 +286,14 @@ describe('a site with forms on it', () => {
     expect(sent.headers.get('location')).toBe(`/?sent=${note}`)
     expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(1)
   })
-
   test('takes no answer for a form the writer commented out', async () => {
     const wrote = await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'Draft.md', content: `# Draft\n\n%%\n${FENCE}\n%%\n` },
     })
     const draft = wrote.json.note.id
-
     const page = await call(env, '/draft', { host: HOST })
     expect(page.text).not.toContain(`action="/form/${draft}"`)
-
     await call(env, `/form/${draft}`, {
       host: HOST,
       method: 'POST',
@@ -364,7 +302,6 @@ describe('a site with forms on it', () => {
     })
     expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(0)
   })
-
   test('refuses an answer the form did not ask for', async () => {
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
@@ -372,37 +309,29 @@ describe('a site with forms on it', () => {
       raw: 'nothing=asked',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     expect(sent.headers.get('location')).toContain('wrong=')
-
     const held = await call(env, `/v1/spaces/${space}/answers`, { token })
     expect(held.json.answers).toEqual([])
   })
-
   test('never takes one for a note the site does not publish', async () => {
     await call(env, `/v1/spaces/${space}/site`, {
       method: 'PUT',
       token,
       body: { rules: { exclude: ['Hello.md'], otherwise: 'all' } },
     })
-
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
       method: 'POST',
       raw: 'your-name=Ada',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     expect(sent.status).toBe(404)
   })
-
   test('the answers are the owner’s alone', async () => {
     const other = await signIn(env, 'c@d.dev')
     const refused = await call(env, `/v1/spaces/${space}/answers`, { token: other })
-
     expect(refused.status).toBe(404)
   })
-
   test('and come back as a spreadsheet as well', async () => {
     await call(env, `/form/${note}`, {
       host: HOST,
@@ -410,13 +339,11 @@ describe('a site with forms on it', () => {
       raw: 'your-name=Ada',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     const csv = await call(env, `/v1/spaces/${space}/answers.csv`, { token })
     expect(csv.headers.get('content-type')).toContain('text/csv')
     expect(csv.text).toContain('"Your name"')
     expect(csv.text).toContain('"Ada"')
   })
-
   const answer = (name = 'Ada') =>
     call(env, `/form/${note}`, {
       host: HOST,
@@ -424,7 +351,6 @@ describe('a site with forms on it', () => {
       raw: `your-name=${encodeURIComponent(name)}`,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
   let batches = 0
   function held(count: number, bytes: number, at = Date.now()) {
     batches += 1
@@ -436,7 +362,6 @@ describe('a site with forms on it', () => {
       )
       .run(count, `held-${batches}`, space, note, at, bytes)
   }
-
   const shown = async () =>
     (
       await call<{
@@ -445,18 +370,14 @@ describe('a site with forms on it', () => {
         full: boolean
       }>(env, `/v1/spaces/${space}/answers`, { token })
     ).json
-
   test('says how long it keeps them, and that it is taking more', async () => {
     const said = await shown()
-
     expect(said.keptDays).toBe(180)
     expect(said.full).toBe(false)
   })
-
   test('stops taking answers once the space holds as many as it keeps', async () => {
     held(4999, 2)
     expect((await answer()).headers.get('location')).toBe(`/hello?sent=${note}`)
-
     const refused = await answer('Grace')
     expect(refused.headers.get('location')).toBe('/hello?wrong=full')
     expect(env.db.prepare('select count(*) as many from form_answers').get()).toEqual({
@@ -464,18 +385,14 @@ describe('a site with forms on it', () => {
     })
     expect((await shown()).full).toBe(true)
   })
-
   test('or as many bytes of them', async () => {
     held(9, 1024 * 1024)
     held(1, 1024 * 1024 - 20)
-
     expect((await answer('A')).headers.get('location')).toBe(`/hello?sent=${note}`)
     expect((await answer('A name longer than the room left')).headers.get('location')).toContain('wrong=')
   })
-
   test('and measures an answer in the bytes it is stored as', async () => {
     await answer('Zoë 🌱')
-
     const row = env.db.prepare('select answers, bytes from form_answers').get() as {
       answers: string
       bytes: number
@@ -483,21 +400,17 @@ describe('a site with forms on it', () => {
     expect(row.bytes).toBe(new TextEncoder().encode(row.answers).byteLength)
     expect(row.bytes).toBeGreaterThan(row.answers.length)
   })
-
   test('and the nightly job lets go of an answer older than it keeps them', async () => {
     const DAY = 24 * 60 * 60 * 1000
     held(1, 2, Date.now() - 181 * DAY)
     await answer()
-
     const waiting: Promise<unknown>[] = []
     const context = { waitUntil: (work: Promise<unknown>) => waiting.push(work) }
     worker.scheduled({} as ScheduledEvent, env, context as unknown as ExecutionContext)
     await Promise.all(waiting)
-
     const left = (await shown()).answers
     expect(left.map((one) => one.answers)).toEqual([{ 'Your name': 'Ada' }])
   })
-
   test('and the theme the author chose is linked after the site’s own sheet', async () => {
     const hash = 'a'.repeat(64)
     await call(env, `/v1/spaces/${space}/site`, {
@@ -505,12 +418,10 @@ describe('a site with forms on it', () => {
       token,
       body: { theme: { name: 'Paper', hash } },
     })
-
     const answer = await call(env, '/hello', { host: HOST })
     expect(answer.text).toContain(`/i/${hash}.css`)
     expect(answer.text.indexOf(`/i/${hash}.css`)).toBeGreaterThan(answer.text.indexOf('/s/'))
   })
-
   test('a note emptied for good takes its answers and its old paths with it', async () => {
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
@@ -526,27 +437,22 @@ describe('a site with forms on it', () => {
       body: { path: 'Renamed.md', content: `# Hello\n\n${FENCE}\n`, baseVersion: version },
     })
     expect(env.db.prepare('select count(*) as n from blog_paths where note_id = ?').get(note)).toEqual({ n: 1 })
-
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token })
     expect((await call(env, `/v1/trash/notes/${note}`, { method: 'DELETE', token })).status).toBe(200)
-
     expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toEqual([])
     for (const table of ['form_answers', 'blog_paths']) {
       expect(env.db.prepare(`select count(*) as n from ${table} where note_id = ?`).get(note), table).toEqual({ n: 0 })
     }
   })
 })
-
 describe('a form on a site behind a password', () => {
   let env: TestEnv
   let token: string
   let space: string
   let note: string
-
   const HOST = 'field.nibeditor.com'
   const PASSWORD = 'the quiet part'
   const FENCE = ['```form', 'title: Say hello', 'fields:', '  - * Your name', '```'].join('\n')
-
   const sending = (headers: Record<string, string> = {}) =>
     call(env, `/form/${note}`, {
       host: HOST,
@@ -554,7 +460,6 @@ describe('a form on a site behind a password', () => {
       raw: 'your-name=Ada',
       headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
     })
-
   async function letIn(headers: Record<string, string> = {}) {
     return call(env, '/hello', {
       host: HOST,
@@ -563,60 +468,46 @@ describe('a form on a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
     })
   }
-
   const answers = async () => (await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers
-
   beforeEach(async () => {
     env = testEnv()
     token = await signIn(env, 'a@b.dev')
-
     const made = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
     space = made.json.space.id
-
     const wrote = await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'Hello.md', content: `# Hello\n\n${FENCE}\n` },
     })
     note = wrote.json.note.id
-
     await call(env, `/v1/spaces/${space}/blog`, {
       method: 'PUT',
       token,
       body: { subdomain: 'field' },
     })
-
     await call(env, `/v1/spaces/${space}/site`, {
       method: 'PUT',
       token,
       body: { password: PASSWORD },
     })
   })
-
   afterEach(() => env.close())
-
   test('is taken from a reader who is through the gate', async () => {
     const ticket = ((await letIn()).headers.get('set-cookie') ?? '').split(';')[0] ?? ''
     const sent = await sending({ cookie: ticket })
-
     expect(sent.status).toBe(303)
     expect(sent.headers.get('location')).toBe(`/hello?sent=${note}`)
     expect(await answers()).toHaveLength(1)
   })
-
   test('and a reader who is not lands back on the form', async () => {
     const sent = await sending()
-
     expect(sent.status).toBe(303)
     expect(sent.headers.get('location')).toBe('/')
     expect(await answers()).toEqual([])
   })
-
   test('and sending one is never a guess at the password', async () => {
     const machine = { 'cf-connecting-ip': '198.51.100.9' }
     for (let at = 0; at < 20; at++) expect((await sending(machine)).status).toBe(303)
-
     const said = await letIn(machine)
-
     expect(said.status).toBe(303)
     expect(said.headers.get('set-cookie')).toContain('orden_site=')
   })

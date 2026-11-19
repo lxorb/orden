@@ -9,14 +9,12 @@ describe('a modifier tapped twice', () => {
     expect(taps.released({ key: 'Shift' }, 40)).toBeNull()
     taps.pressed(shift, 100)
     expect(taps.released({ key: 'Shift' }, 140)).toBe('Shift')
-
     const slow = new DoubleTap()
     slow.pressed(shift, 0)
     slow.released({ key: 'Shift' }, 40)
     slow.pressed(shift, 40 + WITHIN + 1)
     expect(slow.released({ key: 'Shift' }, 80 + WITHIN)).toBeNull()
   })
-
   test('is not one when another key comes between', () => {
     const taps = new DoubleTap()
     taps.pressed({ key: 'Control', ctrlKey: true }, 0)
@@ -25,7 +23,6 @@ describe('a modifier tapped twice', () => {
     taps.pressed({ key: 'Control', ctrlKey: true }, 100)
     expect(taps.released({ key: 'Control' }, 140)).toBeNull()
   })
-
   test('is written as the modifier twice and read back, with Mod for the primary one', () => {
     expect(writeTap('Meta', 'mac')).toBe('Mod Mod')
     expect(writeTap('Control', 'win')).toBe('Mod Mod')

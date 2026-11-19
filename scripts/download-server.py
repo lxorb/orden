@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import http.server
 import sys
 import time
@@ -7,11 +6,9 @@ import time
 PORT, LOG = int(sys.argv[1]), sys.argv[2]
 PIECE = b"x" * 65536
 PIECES = 200
-
 def say(line):
     with open(LOG, "a") as log:
         log.write(line + "\n")
-
 class Serve(http.server.BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         if self.path.startswith("/slow") or self.path.startswith("/fast"):
@@ -36,8 +33,6 @@ class Serve(http.server.BaseHTTPRequestHandler):
         self.send_header("content-type", "text/html")
         self.end_headers()
         self.wfile.write(b"<!doctype html><title>downloads</title><p>a page with a file</p>")
-
     def log_message(self, *_):
         pass
-
 http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Serve).serve_forever()

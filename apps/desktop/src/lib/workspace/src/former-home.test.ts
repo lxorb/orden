@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const asked = vi.hoisted(() => [] as { command: string; args?: unknown }[])
 const homes = vi.hoisted(() => ({
   said: [] as { from: string; to: string }[] | null,
@@ -32,11 +31,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(0)
   },
 }))
-
 const { finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
-
 const SCRIPT = readFileSync(join(import.meta.dirname, '../../../../src-tauri/crates/carry/src/former.js'), 'utf8')
-
 interface Said {
   homes: { from: string; to: string }[]
   waiting: boolean
@@ -44,7 +40,6 @@ interface Said {
   after: string | null
   carried?: boolean
 }
-
 function said(): Said | null {
   if (homes.said === null) return null
   return {
@@ -54,7 +49,6 @@ function said(): Said | null {
     after: homes.waiting ? null : homes.dumped,
   }
 }
-
 function pageStarts(former: Said | null): void {
   const page: Record<string, unknown> = { localStorage }
   page.top = page
@@ -64,19 +58,16 @@ function pageStarts(former: Said | null): void {
   run(page)
   vi.stubGlobal('__ORDEN_FORMER__', page.__ORDEN_FORMER__)
 }
-
 async function start(): Promise<boolean> {
   pageStarts(said())
   return finishFormerHome()
 }
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { ROOTS_MOVED } = await import('./roots-moved')
-
 interface Profile {
   base: { from: string; to: string }
   join: (...parts: string[]) => string
 }
-
 const mac: Profile = {
   base: {
     from: '/Users/ada/Library/Application Support/former.app.id',
@@ -84,7 +75,6 @@ const mac: Profile = {
   },
   join: (...parts) => parts.join('/'),
 }
-
 const windows: Profile = {
   base: {
     from: 'C:\\Users\\ada\\AppData\\Local\\former.app.id',
@@ -92,7 +82,6 @@ const windows: Profile = {
   },
   join: (...parts) => parts.join('\\'),
 }
-
 function oldProfile({ base, join }: Profile) {
   const root = join(base.from, 'Spaces', 'Work')
   localStorage.setItem(
@@ -114,7 +103,6 @@ function oldProfile({ base, join }: Profile) {
   localStorage.setItem('orden:workspace', JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }))
   localStorage.setItem('orden:theme', 'dark')
 }
-
 function startedAfterTheMove({ base, join }: Profile) {
   const root = join(base.to, 'Spaces', 'Work')
   const kept = JSON.parse(localStorage.getItem('orden:item-meta') ?? '{}') as object
@@ -133,7 +121,6 @@ function startedAfterTheMove({ base, join }: Profile) {
   )
   localStorage.setItem('orden:workspace', JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }))
 }
-
 beforeEach(() => {
   localStorage.clear()
   asked.length = 0
@@ -142,13 +129,11 @@ beforeEach(() => {
   homes.dumped = null
   relaunched.count = 0
 })
-
 describe.each([
   ['a Mac', mac],
   ['Windows', windows],
 ])('an older profile on %s brought to this build', (_, profile) => {
   const now = profile.join(profile.base.to, 'Spaces', 'Work')
-
   test('keeps every item’s metadata and the chosen inbox', async () => {
     oldProfile(profile)
     homes.said = [profile.base]
@@ -163,7 +148,6 @@ describe.each([
     expect(asked).toContainEqual({ command: 'rehome_snapshots', args: profile.base })
     expect(JSON.parse(localStorage.getItem(ROOTS_MOVED) ?? '[]')).toEqual([profile.base])
   })
-
   test('joins what a start after the move already kept, and loses neither', async () => {
     oldProfile(profile)
     startedAfterTheMove(profile)
@@ -181,7 +165,6 @@ describe.each([
     expect(session.active).toBe(now)
   })
 })
-
 describe('a browser profile an early start made beside the old one', () => {
   test('is kept by the app, which starts again so the old one comes back joined with it', async () => {
     const now = mac.join(mac.base.to, 'Spaces', 'Work')
@@ -204,7 +187,6 @@ describe('a browser profile an early start made beside the old one', () => {
     }
     expect(localStorage.getItem('orden:font')).toBe('Lato')
   })
-
   test('that cannot step aside yet is kept again, and the app does not start again', async () => {
     homes.said = [mac.base]
     homes.waiting = true
@@ -215,7 +197,6 @@ describe('a browser profile an early start made beside the old one', () => {
     expect(JSON.parse(homes.dumped)).toEqual({ 'orden:font': 'Lato' })
   })
 })
-
 describe('carrying the former home', () => {
   test('happens once, and a profile with nothing under the old name reloads nothing', async () => {
     homes.said = [mac.base]
@@ -226,7 +207,6 @@ describe('carrying the former home', () => {
     expect(await start()).toBe(false)
     expect(asked).toEqual([])
   })
-
   test('is done by the script the window is given, before any of the app runs', () => {
     oldProfile(mac)
     homes.said = [mac.base]
@@ -235,7 +215,6 @@ describe('carrying the former home', () => {
     vi.stubGlobal('__ORDEN_FORMER__', undefined)
     expect(formerSaid()).toBeNull()
   })
-
   test('is not marked done by a build that has no former home, so the update still carries it', async () => {
     homes.said = []
     oldProfile(mac)
@@ -244,7 +223,6 @@ describe('carrying the former home', () => {
     homes.said = [mac.base]
     await start()
   })
-
   test('waits for a later start when the app cannot say where the old home was', async () => {
     homes.said = null
     expect(await start()).toBe(false)

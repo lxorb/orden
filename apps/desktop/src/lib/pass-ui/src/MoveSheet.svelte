@@ -7,14 +7,11 @@
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()
-
   const asked = $derived(ui.sheet?.kind === 'move' ? ui.sheet : null)
   const close = () => (ui.sheet = null)
-
   function childrenOf(vault: Vault, parent: string | null): Folder[] {
     return vault.folders.filter((one) => one.parent === parent).sort((a, b) => a.name.localeCompare(b.name))
   }
-
   async function moved(vault: string, folder: string | null) {
     if (!asked) return
     const ids = asked.ids
@@ -61,7 +58,6 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .vault {
     --row-height-sm: 22px;
   }

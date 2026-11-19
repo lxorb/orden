@@ -1,30 +1,23 @@
 use tauri::AppHandle;
 
 const SHIPPED: &str = "so.orden.Orden";
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const PROG_ID: &str = "NibURL";
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const DESCRIPTION: &str = "Notes and the web in one window.";
-
 #[tauri::command]
 pub async fn default_browser(app: AppHandle) -> bool {
     orden_base::lane::off_the_runtime(move || -> bool { platform::is_default(&app) }).await
 }
-
 #[tauri::command(async)]
 pub fn make_default_browser(app: AppHandle) -> Result<(), String> {
     if !ships(&app) {
         return Err("only the installed app can be the default browser".into());
     }
-
     platform::make_default(&app)
 }
-
 pub fn keep_registered(app: &AppHandle) {
     #[cfg(windows)]
     if ships(app) {
@@ -36,13 +29,11 @@ pub fn keep_registered(app: &AppHandle) {
     #[cfg(not(windows))]
     let _ = app;
 }
-
 fn ships(app: &AppHandle) -> bool {
     !cfg!(debug_assertions)
         && app.config().identifier == SHIPPED
         && orden_placement::placement::away().is_none()
 }
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Value {
@@ -50,7 +41,6 @@ struct Value {
     name: String,
     data: String,
 }
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn registration(app: &str, exe: &str) -> Vec<Value> {
     let client = format!(r"Software\Clients\StartMenuInternet\{app}");
@@ -58,7 +48,6 @@ fn registration(app: &str, exe: &str) -> Vec<Value> {
     let class = format!(r"Software\Classes\{PROG_ID}");
     let icon = format!("{exe},0");
     let link = orden_base::handed::LINK_FLAG;
-
     [
         (client.clone(), "", app.to_owned()),
         (format!(r"{client}\DefaultIcon"), "", icon.clone()),
@@ -120,14 +109,12 @@ fn registration(app: &str, exe: &str) -> Vec<Value> {
     })
     .collect()
 }
-
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn exe_of(command: &str) -> Option<String> {
     let rest = command.strip_prefix('"')?;
     let end = rest.find('"')?;
     Some(rest[..end].to_owned()).filter(|exe| !exe.is_empty())
 }
-
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 const ENTRIES: [&str; 8] = [
     "nib-handler.desktop",
@@ -139,7 +126,6 @@ const ENTRIES: [&str; 8] = [
     "so.orden.Orden.desktop",
     "orden_orden.desktop",
 ];
-
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn kept(
     entry: &str,
@@ -161,14 +147,12 @@ fn kept(
         )
         .any(|dir| there(&dir.join("applications").join(entry.trim())))
 }
-
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn is_ours(entry: &str) -> bool {
     ENTRIES
         .iter()
         .any(|one| one.eq_ignore_ascii_case(entry.trim()))
 }
-
 #[cfg(windows)]
 mod platform {
     use super::{exe_of, registration, Value, OLD_NAMES, PROG_ID};
@@ -183,7 +167,6 @@ mod platform {
             .into_iter()
             .all(|scheme| handler_of(scheme).as_deref() == Some(PROG_ID))
     }
-
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
         use tauri::Manager as _;
 
@@ -191,14 +174,12 @@ mod platform {
             std::env::current_exe().map_err(|error| format!("could not find Orden: {error}"))?;
         let name = app.package_info().name.clone();
         write(CURRENT_USER, &registration(&name, &exe.to_string_lossy()))?;
-
         let page = format!("ms-settings:defaultapps?registeredAppUser={name}");
         app.run_on_main_thread(move || {
             let _ = tauri_plugin_opener::open_url(page, None::<&str>);
         })
         .map_err(|error| format!("could not open Settings: {error}"))
     }
-
     pub fn repair(name: &str) {
         let Ok(exe) = std::env::current_exe() else {
             return;
@@ -211,7 +192,6 @@ mod platform {
             forget_old(CURRENT_USER, old, name, &exe);
         }
     }
-
     pub(super) fn forget_old(root: &Key, old: &str, name: &str, exe: &str) {
         if old.eq_ignore_ascii_case(name) {
             return;
@@ -233,18 +213,15 @@ mod platform {
             .create(r"Software\RegisteredApplications")
             .and_then(|key| key.remove_value(old));
     }
-
     pub(super) fn whole(root: &Key, name: &str) -> bool {
         let Some(exe) = registered_exe(root) else {
             return false;
         };
-
         Path::new(&exe).is_file()
             && registration(name, &exe)
                 .iter()
                 .all(|value| read(root, value).as_deref() == Some(value.data.as_str()))
     }
-
     fn registered_exe(root: &Key) -> Option<String> {
         let command = root
             .open(format!(r"Software\Classes\{PROG_ID}\shell\open\command"))
@@ -253,11 +230,9 @@ mod platform {
             .ok()?;
         exe_of(&command)
     }
-
     fn read(root: &Key, value: &Value) -> Option<String> {
         root.open(&value.key).ok()?.get_string(&value.name).ok()
     }
-
     pub(super) fn write(root: &Key, values: &[Value]) -> Result<(), String> {
         for value in values {
             root.create(&value.key)
@@ -266,13 +241,11 @@ mod platform {
         }
         Ok(())
     }
-
     #[allow(unsafe_code)]
     pub(super) fn handler_of(scheme: &str) -> Option<String> {
         let asked: Vec<u16> = scheme.encode_utf16().chain(Some(0)).collect();
         let mut out = [0u16; 256];
         let mut room = u32::try_from(out.len()).ok()?;
-
         let answer = unsafe {
             AssocQueryStringW(
                 ASSOCF_IS_PROTOCOL,
@@ -286,12 +259,10 @@ mod platform {
         if answer.is_err() {
             return None;
         }
-
         let end = out.iter().position(|&one| one == 0).unwrap_or(out.len());
         Some(String::from_utf16_lossy(&out[..end])).filter(|id| !id.is_empty())
     }
 }
-
 #[cfg(target_os = "macos")]
 mod platform {
     use objc2_app_kit::{NSApplicationActivationOptions, NSRunningApplication, NSWorkspace};
@@ -300,14 +271,12 @@ mod platform {
     use tauri::AppHandle;
 
     const ASKER: &str = "com.apple.coreservices.uiagent";
-
     pub fn is_default(_app: &AppHandle) -> bool {
         let Some(ours) = NSBundle::mainBundle().bundleIdentifier() else {
             return false;
         };
         let ours = ours.to_string();
         let workspace = NSWorkspace::sharedWorkspace();
-
         ["http:", "https:"].into_iter().all(|scheme| {
             NSURL::URLWithString(&NSString::from_str(scheme))
                 .and_then(|url| workspace.URLForApplicationToOpenURL(&url))
@@ -316,7 +285,6 @@ mod platform {
                 .is_some_and(|id| id.to_string() == ours)
         })
     }
-
     pub fn make_default(_app: &AppHandle) -> Result<(), String> {
         let main = NSBundle::mainBundle();
         if main.bundleIdentifier().is_none() {
@@ -331,7 +299,6 @@ mod platform {
                 None,
             );
         }
-
         let _ = std::thread::Builder::new()
             .name("browser question".into())
             .spawn(|| {
@@ -347,7 +314,6 @@ mod platform {
         Ok(())
     }
 }
-
 #[cfg(target_os = "linux")]
 mod platform {
     use super::{is_ours, kept};
@@ -361,7 +327,6 @@ mod platform {
             handler_of(scheme).is_some_and(|entry| is_ours(&entry) && installed(&entry))
         })
     }
-
     fn installed(entry: &str) -> bool {
         if std::env::var_os("FLATPAK_ID").is_some() || std::env::var_os("SNAP").is_some() {
             return true;
@@ -375,7 +340,6 @@ mod platform {
         let system = std::env::var("XDG_DATA_DIRS").unwrap_or_default();
         kept(entry, own, &system, std::path::Path::is_file)
     }
-
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
         for scheme in ["http", "https"] {
             app.deep_link()
@@ -384,7 +348,6 @@ mod platform {
         }
         Ok(())
     }
-
     fn handler_of(scheme: &str) -> Option<String> {
         let out = orden_base::printed::output(
             Command::new("xdg-mime").args([
@@ -399,7 +362,6 @@ mod platform {
         (!entry.is_empty()).then_some(entry)
     }
 }
-
 #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 mod platform {
     use tauri::AppHandle;
@@ -407,26 +369,21 @@ mod platform {
     pub fn is_default(_app: &AppHandle) -> bool {
         false
     }
-
     pub fn make_default(_app: &AppHandle) -> Result<(), String> {
         Err("this system has no default browser to be".into())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{exe_of, is_ours, kept, registration, Value, OLD_NAMES, PROG_ID};
 
     const EXE: &str = r"C:\Users\me\AppData\Local\Orden\orden.exe";
-
     fn values_under<'a>(table: &'a [Value], key: &str) -> Vec<&'a Value> {
         table.iter().filter(|one| one.key.ends_with(key)).collect()
     }
-
     #[test]
     fn orden_takes_the_two_web_schemes_and_nothing_else() {
         let table = registration("Orden", EXE);
-
         let schemes: Vec<&str> = values_under(&table, r"\URLAssociations")
             .iter()
             .map(|one| one.name.as_str())
@@ -435,13 +392,11 @@ mod tests {
         assert!(values_under(&table, r"\URLAssociations")
             .iter()
             .all(|one| one.data == PROG_ID));
-
         assert!(table
             .iter()
             .all(|one| !one.key.contains("FileAssociations")));
         assert!(table.iter().all(|one| !one.key.contains(".htm")));
     }
-
     #[test]
     fn a_link_starts_this_copy_and_says_it_is_a_link() {
         let table = registration("Orden", EXE);
@@ -449,11 +404,9 @@ mod tests {
             .iter()
             .find(|one| one.key == format!(r"Software\Classes\{PROG_ID}\shell\open\command"))
             .expect("a command for the ProgID");
-
         assert_eq!(command.data, format!("\"{EXE}\" --url \"%1\""));
         assert_eq!(exe_of(&command.data).as_deref(), Some(EXE));
     }
-
     #[test]
     fn default_apps_is_pointed_at_the_capabilities() {
         let table = registration("Orden", EXE);
@@ -461,7 +414,6 @@ mod tests {
             .iter()
             .find(|one| one.key == r"Software\RegisteredApplications")
             .expect("an entry in RegisteredApplications");
-
         assert_eq!(listed.name, "Orden");
         assert_eq!(
             listed.data,
@@ -469,7 +421,6 @@ mod tests {
         );
         assert!(table.iter().any(|one| one.key == listed.data));
     }
-
     #[test]
     fn a_command_names_its_program_at_the_front() {
         assert_eq!(
@@ -480,7 +431,6 @@ mod tests {
         assert_eq!(exe_of(r#""" --url"#), None);
         assert_eq!(exe_of(r#""C:\nib.exe"#), None);
     }
-
     #[test]
     fn a_desktop_entry_is_ours_by_its_known_names() {
         assert!(is_ours("nib-handler.desktop\n"));
@@ -493,13 +443,11 @@ mod tests {
         assert!(!is_ours(""));
         assert!(!is_ours("ordenx.desktop"));
     }
-
     #[test]
     fn the_snap_s_and_flathub_s_entries_are_ours() {
         assert!(is_ours("orden_orden.desktop"));
         assert!(is_ours("so.orden.Orden.desktop"));
     }
-
     #[test]
     fn a_desktop_entry_is_looked_for_where_the_system_looks() {
         use std::path::{Path, PathBuf};
@@ -509,7 +457,6 @@ mod tests {
         ];
         let there = |path: &Path| on_disk.iter().any(|one| Path::new(one) == path);
         let own = || Some(PathBuf::from("/home/a/.local/share"));
-
         assert!(kept("nib-handler.desktop\n", own(), "/usr/share", there));
         assert!(
             kept("Orden.desktop", own(), "", there),
@@ -524,7 +471,6 @@ mod tests {
         ));
         assert!(!kept("Orden.desktop", own(), "/opt/x", there));
     }
-
     #[test]
     fn the_linux_packages_replace_both_old_names() {
         let parsed: serde_json::Value =
@@ -534,7 +480,6 @@ mod tests {
         assert_eq!(linux["deb"]["conflicts"], both);
         assert_eq!(linux["deb"]["replaces"], both);
         assert_eq!(linux["rpm"]["obsoletes"], both);
-
         let template = linux["deb"]["desktopTemplate"]
             .as_str()
             .expect("a template");
@@ -544,11 +489,9 @@ mod tests {
         assert!(entry.lines().any(|line| line == "Name={{name}}"));
         assert!(entry.lines().any(|line| line == "MimeType={{mime_type}}"));
     }
-
     fn in_words(app: &str, exe: &str, line: impl Fn(&Value) -> String) -> Vec<String> {
         registration(app, exe).iter().map(line).collect()
     }
-
     fn source(relative: &str) -> String {
         std::fs::read_to_string(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -557,7 +500,6 @@ mod tests {
         )
         .expect("a file beside the crate")
     }
-
     #[test]
     fn the_installer_writes_what_the_app_writes() {
         let script = source("installer.nsh");
@@ -573,12 +515,10 @@ mod tests {
                 format!("WriteRegStr SHCTX \"{}\" \"{}\" {data}", one.key, one.name)
             },
         );
-
         for line in lines {
             assert!(script.contains(&line), "installer.nsh does not say: {line}");
         }
     }
-
     #[test]
     fn and_its_uninstaller_takes_all_of_it_away() {
         let script = source("installer.nsh");
@@ -586,7 +526,6 @@ mod tests {
             .split("!macro NSIS_HOOK_POSTUNINSTALL")
             .nth(1)
             .expect("an uninstall hook");
-
         for line in [
             r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}""#,
             &format!(r#"DeleteRegKey SHCTX "Software\Classes\{PROG_ID}""#),
@@ -598,7 +537,6 @@ mod tests {
             );
         }
     }
-
     fn product_name(config: &str) -> String {
         let parsed: serde_json::Value = serde_json::from_str(config).expect("the config");
         parsed["productName"]
@@ -606,7 +544,6 @@ mod tests {
             .expect("a product name")
             .to_owned()
     }
-
     #[test]
     fn the_msi_writes_what_the_app_writes() {
         let fragment = source("wix/browser.wxs");
@@ -624,16 +561,13 @@ mod tests {
                 one.data.replace('"', "&quot;")
             )
         });
-
         for line in lines {
             assert!(fragment.contains(&line), "browser.wxs does not say: {line}");
         }
-
         assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs", "wix/pdf.wxs"]"#));
         assert!(config.contains(r#""componentRefs": ["NibBrowser", "NibOldShortcuts", "NibPdf"]"#));
         assert!(fragment.contains(r#"<Component Id="NibBrowser""#));
     }
-
     #[test]
     fn the_installer_forgets_the_old_names_and_keeps_the_prog_id() {
         let script = source("installer.nsh");
@@ -664,7 +598,6 @@ mod tests {
         ] {
             assert!(script.contains(line), "installer.nsh does not say: {line}");
         }
-
         let (install, uninstall) = script
             .split_once("!macro NSIS_HOOK_POSTUNINSTALL")
             .expect("an uninstall hook");
@@ -687,13 +620,11 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn the_msi_replaces_the_one_under_either_old_name() {
         let config = source("tauri.conf.json");
         let fragment = source("wix/browser.wxs");
         assert!(config.contains(r#""upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e""#));
-
         let parsed: serde_json::Value = serde_json::from_str(&config).expect("the config");
         let publisher = parsed["bundle"]["publisher"].as_str().expect("a publisher");
         let mut last = 0;
@@ -707,7 +638,6 @@ mod tests {
             let at = fragment.find(&key).expect("searched");
             assert!(at > last, "{old} is searched before an older name");
             last = at;
-
             for shortcut in [
                 format!(r#"Name="{old}.lnk""#),
                 format!(r#"Name="Uninstall {old}.lnk""#),
@@ -720,7 +650,6 @@ mod tests {
         }
         assert!(fragment.contains(r#"<SetProperty Id="INSTALLDIR""#));
     }
-
     #[test]
     fn a_mac_bundle_asks_for_the_two_web_schemes() {
         let config = source("tauri.macos.conf.json");
@@ -729,7 +658,6 @@ mod tests {
         assert!(!config.contains("public.html"));
         assert!(!config.contains("fileAssociations"));
     }
-
     #[cfg(windows)]
     #[test]
     fn a_registration_is_whole_until_a_value_or_its_program_goes() {
@@ -742,27 +670,21 @@ mod tests {
                 let _ = CURRENT_USER.remove_tree(self.0);
             }
         }
-
         let scratch = Scratch(r"Software\orden-tests");
         let at = format!(r"{}\default-browser-{}", scratch.0, std::process::id());
         let root = CURRENT_USER.create(&at).expect("a test key");
         let exe = std::env::current_exe().expect("this test's own program");
         let exe = exe.to_string_lossy();
-
         assert!(!whole(&root, "Orden"), "an empty key was whole");
-
         write(&root, &registration("Orden", &exe)).expect("written");
         assert!(whole(&root, "Orden"));
-
         root.create(r"Software\Clients\StartMenuInternet\Orden\Capabilities\URLAssociations")
             .and_then(|key| key.remove_value("https"))
             .expect("a value removed");
         assert!(!whole(&root, "Orden"));
-
         write(&root, &registration("Orden", r"C:\nowhere\nib.exe")).expect("written");
         assert!(!whole(&root, "Orden"));
     }
-
     #[cfg(windows)]
     #[test]
     fn an_old_name_is_forgotten_unless_it_is_another_copy() {
@@ -776,7 +698,6 @@ mod tests {
                 let _ = std::fs::remove_file(&self.1);
             }
         }
-
         let id = std::process::id();
         let scratch = Scratch(
             format!(r"Software\nib-tests-old-name-{id}"),
@@ -801,18 +722,15 @@ mod tests {
                         .and_then(|key| key.get_string(old))
                         .is_ok()
             };
-
             std::fs::write(&scratch.1, b"").expect("another copy");
             let other = scratch.1.to_string_lossy();
             write(&root, &registration(old, &other)).expect("written");
             forget_old(&root, old, "Orden", &here);
             assert!(there(&root), "another copy's was taken");
-
             std::fs::remove_file(&scratch.1).expect("the copy removed");
             forget_old(&root, old, "Orden", &here);
             assert!(root.open(&client).is_err());
             assert!(!there(&root));
-
             write(&root, &registration(old, &here)).expect("written");
             forget_old(&root, old, old, &here);
             assert!(there(&root), "{old} forgot itself");
@@ -820,7 +738,6 @@ mod tests {
             assert!(!there(&root));
         }
     }
-
     #[cfg(windows)]
     #[test]
     fn the_shell_is_asked_which_program_opens_the_web() {
@@ -833,11 +750,9 @@ mod tests {
                 let _ = CURRENT_USER.remove_tree(format!(r"Software\Classes\{}", self.0));
             }
         }
-
         let scheme = format!("orden-test-{}", std::process::id());
         let scratch = Scratch(scheme.clone());
         assert_eq!(handler_of(&scheme), None, "a scheme nothing registered");
-
         let key = CURRENT_USER
             .create(format!(r"Software\Classes\{scheme}"))
             .expect("a test scheme");
@@ -846,7 +761,6 @@ mod tests {
             .and_then(|command| command.set_string("", r#""C:\nowhere\nib.exe" "%1""#))
             .expect("a command");
         assert_eq!(handler_of(&scheme), Some(scheme.clone()));
-
         drop(scratch);
         assert_eq!(handler_of(&scheme), None, "a scheme taken away");
         assert_eq!(handler_of("no-such-scheme-anywhere"), None);

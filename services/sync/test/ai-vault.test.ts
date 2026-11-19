@@ -12,17 +12,14 @@ interface Listed {
   revealed: string | null
   approved: boolean
 }
-
 interface Read {
   rev: number
   blob: string | null
   wrapped: string | null
   devices: Listed[]
 }
-
 const base64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes))
 const random = (length: number) => crypto.getRandomValues(new Uint8Array(length))
-
 async function sha(...parts: Uint8Array[]): Promise<Uint8Array> {
   const all = new Uint8Array(parts.reduce((sum, one) => sum + one.length, 0))
   let at = 0
@@ -32,7 +29,6 @@ async function sha(...parts: Uint8Array[]): Promise<Uint8Array> {
   }
   return new Uint8Array(await crypto.subtle.digest('SHA-256', all))
 }
-
 async function aDevice() {
   const pub = random(65)
   const nonce = random(32)
@@ -44,13 +40,11 @@ async function aDevice() {
     commitment: base64(await sha(pub, nonce)),
   }
 }
-
 describe('the AI vault', () => {
   let env: TestEnv
   let running: ReturnType<typeof hubs>
   let token: string
   let auth: string
-
   beforeEach(async () => {
     env = testEnv()
     running = hubs(env)
@@ -58,26 +52,21 @@ describe('the AI vault', () => {
     token = await signIn(env, 'vault@example.com')
     auth = base64(random(32))
   })
-
   afterEach(() => {
     env.close()
   })
-
   const read = (device: string, as = token) => call<Read>(env, `/v2/ai?device=${device}`, { token: as })
-
   const register = (one: { id: string; commitment: string }, name: string, as = token) =>
     call(env, '/v2/ai/devices', {
       token: as,
       body: { id: one.id, name, commitment: one.commitment },
     })
-
   const reveal = (id: string, pub: string, nonce: string, as = token) =>
     call<{ error?: string }>(env, `/v2/ai/devices/${id}/reveal`, {
       token: as,
       method: 'PUT',
       body: { pub, nonce },
     })
-
   async function first() {
     const laptop = await aDevice()
     await register(laptop, 'Laptop')
@@ -96,16 +85,13 @@ describe('the AI vault', () => {
     expect(wrapped.status).toBe(200)
     return laptop
   }
-
   test('is empty for an account that never sealed one', async () => {
     const said = await read('a'.repeat(32))
     expect(said.status).toBe(200)
     expect(said.json).toEqual({ rev: 0, blob: null, wrapped: null, devices: [] })
   })
-
   test('lets a device in in three steps, and carries nothing in the clear', async () => {
     const laptop = await first()
-
     const phoneToken = await signIn(env, 'vault@example.com')
     const phone = await aDevice()
     await register(phone, 'Phone', phoneToken)
@@ -119,7 +105,6 @@ describe('the AI vault', () => {
       ],
     })
     expect((await reveal(phone.id, phone.pub, phone.nonce, phoneToken)).status).toBe(409)
-
     const answer = base64(random(32))
     const answered = await call(env, `/v2/ai/devices/${phone.id}/nonce`, {
       token,
@@ -127,7 +112,6 @@ describe('the AI vault', () => {
       body: { nonce: answer, from: laptop.id, auth },
     })
     expect(answered.status).toBe(200)
-
     const other = await aDevice()
     expect((await reveal(phone.id, other.pub, phone.nonce, phoneToken)).status).toBe(400)
     expect((await reveal(phone.id, phone.pub, other.nonce, phoneToken)).status).toBe(400)
@@ -139,7 +123,6 @@ describe('the AI vault', () => {
       nonceFrom: laptop.id,
       revealed: phone.nonce,
     })
-
     await call(env, `/v2/ai/devices/${phone.id}/wrap`, {
       token,
       method: 'PUT',
@@ -149,7 +132,6 @@ describe('the AI vault', () => {
     const told = running.asked.filter((one) => one.ask === 'ai')
     expect(told.length).toBeGreaterThanOrEqual(6)
   })
-
   test('takes the first answer only', async () => {
     const laptop = await first()
     const phone = await aDevice()
@@ -163,7 +145,6 @@ describe('the AI vault', () => {
     expect((await answer(laptop.id)).status).toBe(200)
     expect((await answer('c'.repeat(32))).status).toBe(409)
   })
-
   test('refuses a write over a revision another device moved past', async () => {
     await first()
     const write = (rev: number, blob: string) =>
@@ -178,14 +159,12 @@ describe('the AI vault', () => {
     expect(stale.json).toMatchObject({ error: 'stale', rev: 2 })
     expect((await write(0, 'Zm91cg')).status).toBe(409)
   })
-
   test('changes nothing for a session without the vault key', async () => {
     const laptop = await first()
     const phone = await aDevice()
     await register(phone, 'Phone')
     const forged = base64(random(32))
     const as = (path: string, method: string, body: unknown) => call(env, path, { token, method, body })
-
     expect(
       (
         await as(`/v2/ai/devices/${phone.id}/nonce`, 'PUT', {
@@ -211,7 +190,6 @@ describe('the AI vault', () => {
       ],
     })
   })
-
   test('a device that is let in keeps its key; one still asking starts its asking over', async () => {
     const laptop = await first()
     await register(laptop, 'Laptop again')
@@ -219,7 +197,6 @@ describe('the AI vault', () => {
       wrapped: 'd3JhcDE',
       devices: [{ name: 'Laptop again', pub: laptop.pub, approved: true }],
     })
-
     const phone = await aDevice()
     await register(phone, 'Phone')
     await call(env, `/v2/ai/devices/${phone.id}/nonce`, {
@@ -237,7 +214,6 @@ describe('the AI vault', () => {
       approved: false,
     })
   })
-
   test('starting over lets go of the vault and every wrap, by the key or once no device is allowed', async () => {
     const laptop = await first()
     expect((await call(env, '/v2/ai/vault', { token, method: 'DELETE', body: { auth } })).status).toBe(200)
@@ -247,12 +223,10 @@ describe('the AI vault', () => {
       wrapped: null,
       devices: [{ id: laptop.id, approved: false }],
     })
-
     const again = await first()
     await call(env, `/v2/ai/devices/${again.id}`, { token, method: 'DELETE', body: { auth } })
     expect((await call(env, '/v2/ai/vault', { token, method: 'DELETE' })).status).toBe(200)
   })
-
   async function three() {
     const laptop = await first()
     const allowed = async (name: string) => {
@@ -281,16 +255,13 @@ describe('the AI vault', () => {
     })
     return { laptop, phone, tablet }
   }
-
   const rotate = (body: Record<string, unknown>) =>
     call<{ rev?: number; error?: string }>(env, '/v2/ai/rotate', { token, method: 'PUT', body })
-
   test('lets an allowed device go by changing the key, and only so', async () => {
     const { laptop, phone, tablet } = await three()
     expect((await call(env, `/v2/ai/devices/${phone.id}`, { token, method: 'DELETE', body: { auth } })).status).toBe(
       409,
     )
-
     const next = base64(random(32))
     const turned = await rotate({
       rev: 1,
@@ -314,13 +285,11 @@ describe('the AI vault', () => {
       ],
     })
     expect((await read(phone.id)).json.wrapped).toBeNull()
-
     const write = (as: string) =>
       call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 2, blob: 'eA', auth: as } })
     expect((await write(auth)).status).toBe(403)
     expect((await write(next)).status).toBe(200)
   })
-
   test('changes the key only over the revision and the token it was read at', async () => {
     const { laptop, phone } = await three()
     const turn = (rev: number, as: string) =>
@@ -342,7 +311,6 @@ describe('the AI vault', () => {
     expect((await read(phone.id)).json).toMatchObject({ rev: 2, wrapped: 'd3JhcCPhone' })
     expect((await turn(2, auth)).status).toBe(200)
   })
-
   test('puts a device let in that the change did not name back to asking', async () => {
     const { laptop, phone, tablet } = await three()
     const turned = await rotate({
@@ -364,7 +332,6 @@ describe('the AI vault', () => {
       ],
     })
   })
-
   test('takes no new key that is not one', async () => {
     const { laptop, phone } = await three()
     const body = {
@@ -384,7 +351,6 @@ describe('the AI vault', () => {
     expect((await rotate({ ...body, next: '' })).status).toBe(400)
     expect((await rotate({ ...body, auth: base64(random(32)) })).status).toBe(403)
   })
-
   test('takes only what a device makes, and only from somebody signed in', async () => {
     const bad = await call(env, '/v2/ai/devices', {
       token,
@@ -394,7 +360,6 @@ describe('the AI vault', () => {
     expect((await call(env, '/v2/ai/vault', { method: 'PUT', body: { rev: 0, blob: 'eA', auth } })).status).toBe(401)
     expect((await call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 0, blob: 'eA' } })).status).toBe(403)
   })
-
   test('holds no more devices than an account keeps when two ask at the same moment', async () => {
     const user = (
       env.db.prepare("select id from users where email = 'vault@example.com'").get() as {
@@ -409,12 +374,10 @@ describe('the AI vault', () => {
     env.justBefore(/insert into ai_devices/, () => {
       add.run(user, 'f'.repeat(32))
     })
-
     const laptop = await aDevice()
     expect((await register(laptop, 'Laptop')).status).toBe(409)
     expect(env.db.prepare('select count(*) as n from ai_devices where user_id = ?').get(user)).toEqual({ n: 30 })
   })
-
   test('is the account’s alone', async () => {
     const laptop = await first()
     const other = await signIn(env, 'other@example.com')

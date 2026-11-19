@@ -18,15 +18,12 @@ export interface Showing {
     | 'connect'
   reading: boolean
 }
-
 export interface Claims {
   overlaid: boolean
   renaming: boolean
   touch: boolean
 }
-
 let stayingOn: Element | null = null
-
 export function staysOn(at: Element): void {
   stayingOn = at
   const goes = ['focusout', 'keydown', 'pointerdown']
@@ -36,11 +33,9 @@ export function staysOn(at: Element): void {
   }
   for (const event of goes) at.addEventListener(event, gone, true)
 }
-
 export function keyboardStays(): boolean {
   return stayingOn !== null && document.activeElement === stayingOn
 }
-
 export function takesCaret(showing: Showing | null, claims: Claims): boolean {
   if (showing?.kind !== 'note' || showing.reading) return false
   return !claims.overlaid && !claims.renaming && !claims.touch

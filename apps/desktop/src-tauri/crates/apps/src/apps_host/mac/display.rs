@@ -15,7 +15,6 @@ use objc2_foundation::{NSArray, NSString};
 
 const MOST_PIXELS: u32 = 6144;
 const COMES_UP_WITHIN: Duration = Duration::from_secs(3);
-
 enum Ask {
     Make {
         width: u32,
@@ -33,19 +32,16 @@ enum Ask {
         id: CGDirectDisplayID,
     },
 }
-
 pub struct Display {
     pub id: CGDirectDisplayID,
     asks: Sender<Ask>,
 }
-
 pub fn available() -> bool {
     AnyClass::get(c"CGVirtualDisplay").is_some()
         && AnyClass::get(c"CGVirtualDisplayDescriptor").is_some()
         && AnyClass::get(c"CGVirtualDisplaySettings").is_some()
         && AnyClass::get(c"CGVirtualDisplayMode").is_some()
 }
-
 pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     let side = |css: f64| {
         let pixels = (css * dpr.clamp(1.0, 4.0)).round();
@@ -56,7 +52,6 @@ pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     };
     (side(width), side(height))
 }
-
 impl Display {
     pub fn start(width: u32, height: u32, dpr: f64) -> Result<Display, String> {
         let asks = thread()?;
@@ -73,7 +68,6 @@ impl Display {
             .map_err(|_| "the display did not come up")??;
         Ok(Display { id, asks })
     }
-
     pub fn fit(&self, width: u32, height: u32, dpr: f64) {
         let _ = self.asks.send(Ask::Fit {
             id: self.id,
@@ -83,13 +77,11 @@ impl Display {
         });
     }
 }
-
 impl Drop for Display {
     fn drop(&mut self) {
         let _ = self.asks.send(Ask::End { id: self.id });
     }
 }
-
 pub fn pixels_of(id: CGDirectDisplayID) -> (usize, usize) {
     let mode = CGDisplayCopyDisplayMode(id);
     (
@@ -97,7 +89,6 @@ pub fn pixels_of(id: CGDirectDisplayID) -> (usize, usize) {
         CGDisplayMode::pixel_height(mode.as_deref()),
     )
 }
-
 fn thread() -> Result<Sender<Ask>, String> {
     static ASKS: OnceLock<Option<Sender<Ask>>> = OnceLock::new();
     ASKS.get_or_init(|| {
@@ -111,7 +102,6 @@ fn thread() -> Result<Sender<Ask>, String> {
     .clone()
     .ok_or_else(|| "the display thread did not start".to_owned())
 }
-
 fn serve(heard: &Receiver<Ask>) {
     let mut held: Vec<(CGDirectDisplayID, Retained<AnyObject>)> = Vec::new();
     for ask in heard {
@@ -138,7 +128,6 @@ fn serve(heard: &Receiver<Ask>) {
         }
     }
 }
-
 fn handed<T>(
     answer: Result<(CGDirectDisplayID, T), String>,
     made: &Sender<Result<CGDirectDisplayID, String>>,
@@ -151,7 +140,6 @@ fn handed<T>(
         }
     }
 }
-
 #[allow(unsafe_code)]
 fn make(
     width: u32,
@@ -191,7 +179,6 @@ fn make(
     out_of_the_way(id);
     Ok((id, display))
 }
-
 #[allow(unsafe_code)]
 fn apply(display: &AnyObject, width: u32, height: u32, dpr: f64) -> bool {
     let (Some(settings_class), Some(mode_class)) = (
@@ -216,7 +203,6 @@ fn apply(display: &AnyObject, width: u32, height: u32, dpr: f64) -> bool {
         applied.as_bool()
     }
 }
-
 #[allow(unsafe_code)]
 fn active() -> Vec<CGDirectDisplayID> {
     let mut ids = [0 as CGDirectDisplayID; 32];
@@ -227,7 +213,6 @@ fn active() -> Vec<CGDirectDisplayID> {
     }
     ids[..usize::try_from(count).unwrap_or(0).min(32)].to_vec()
 }
-
 pub fn corner(others: &[CGRect]) -> CGPoint {
     let right = others
         .iter()
@@ -239,7 +224,6 @@ pub fn corner(others: &[CGRect]) -> CGPoint {
         .fold(0.0, f64::max);
     CGPoint::new(right, bottom)
 }
-
 #[allow(unsafe_code)]
 fn out_of_the_way(id: CGDirectDisplayID) {
     let others: Vec<CGRect> = active()
@@ -265,7 +249,6 @@ fn out_of_the_way(id: CGDirectDisplayID) {
         CGCompleteDisplayConfiguration(config, CGConfigureOption::ForSession);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -276,7 +259,6 @@ mod tests {
         assert_eq!(screen(801.0, 10.0, 1.0), (800, 64));
         assert_eq!(screen(100_000.0, 500.0, 2.0), (MOST_PIXELS, 1000));
     }
-
     #[test]
     fn a_display_nobody_waits_for_any_more_is_let_go() {
         struct Held(std::sync::Arc<std::sync::atomic::AtomicBool>);
@@ -286,18 +268,15 @@ mod tests {
             }
         }
         let gone = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-
         let (made, answer) = mpsc::channel();
         drop(answer);
         assert!(handed(Ok((7, Held(gone.clone()))), &made).is_none());
         assert!(gone.load(std::sync::atomic::Ordering::SeqCst));
-
         let (made, answer) = mpsc::channel();
         let kept = handed(Ok((8, ())), &made);
         assert_eq!(kept.map(|(id, ())| id), Some(8));
         assert_eq!(answer.recv().ok(), Some(Ok(8)));
     }
-
     #[test]
     fn goes_to_the_far_corner_of_the_others() {
         let main = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(1512.0, 982.0));

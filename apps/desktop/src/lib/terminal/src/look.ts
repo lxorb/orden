@@ -9,10 +9,8 @@ const ANSI = {
   magenta: '--canvas-6',
   cyan: '--canvas-5',
 } as const
-
 function resolver(): (value: string, fallback: string) => string {
   const context = document.createElement('canvas').getContext('2d')
-
   return (value, fallback) => {
     if (!context || !value.trim()) return fallback
     context.fillStyle = fallback
@@ -20,35 +18,28 @@ function resolver(): (value: string, fallback: string) => string {
     return context.fillStyle
   }
 }
-
 function mix(resolve: (value: string, fallback: string) => string, a: string, b: string, part: number) {
   return resolve(`color-mix(in srgb, ${a} ${part}%, ${b})`, a)
 }
-
 function seeThrough(style: CSSStyleDeclaration): boolean {
   const said = style.getPropertyValue('--content-alpha').trim()
   return said.endsWith('%') && Number.parseFloat(said) < 100
 }
-
 export function terminalContrast(root: Element = document.documentElement): number {
   return seeThrough(getComputedStyle(root)) ? TERMINAL_CONTRAST : 4.5
 }
-
 function clear(colour: string): string {
   const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(opaque(colour).slice(at, at + 2), 16))
   return `rgba(${String(r)}, ${String(g)}, ${String(b)}, 0)`
 }
-
 export function terminalGround(theme: ITheme): string | null {
   const ground = theme.background?.trim()
   if (!ground || /,\s*0(\.0*)?\)$/.test(ground) || ground === 'transparent') return null
   return ground
 }
-
 const EIGHT = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'] as const
 type Bright = `bright${Capitalize<(typeof EIGHT)[number]>}`
 const brightOf = (name: string) => `bright${name[0]?.toUpperCase() ?? ''}${name.slice(1)}`
-
 const OWN = [
   ...EIGHT,
   ...EIGHT.map((name) => brightOf(name) as Bright),
@@ -59,7 +50,6 @@ const OWN = [
   'selectionBackground',
 ] as const
 type Own = (typeof OWN)[number]
-
 export interface TerminalTokens {
   light: boolean
   background: string
@@ -73,16 +63,13 @@ export interface TerminalTokens {
   hues: Record<keyof typeof ANSI, string>
   own?: Partial<Record<Own, string>>
 }
-
 const HUE_FLOOR = AA
 const QUIET_FLOOR = 3
-
 const mixed = ([r, g, b]: Rgb, [r0, g0, b0]: Rgb, part: number): Rgb => [
   r * part + r0 * (1 - part),
   g * part + g0 * (1 - part),
   b * part + b0 * (1 - part),
 ]
-
 function legible(colour: Rgb, ground: Rgb, ink: Rgb, floor: number): Rgb {
   for (let part = 1; part > 0; part -= 0.05) {
     const one = mixed(colour, ink, part)
@@ -90,7 +77,6 @@ function legible(colour: Rgb, ground: Rgb, ink: Rgb, floor: number): Rgb {
   }
   return ink
 }
-
 export function terminalPalette(tokens: TerminalTokens): ITheme {
   const read = (said: string, fallback: Rgb): Rgb => rgbOf(said) ?? fallback
   const ground = read(tokens.background, tokens.light ? [255, 255, 255] : [14, 16, 19])
@@ -99,7 +85,6 @@ export function terminalPalette(tokens: TerminalTokens): ITheme {
   const muted = read(tokens.muted, ink)
   const raised = read(tokens.ground, ground)
   const surface = read(tokens.surface, ground)
-
   const out: Record<string, string> = {}
   for (const [name, said] of Object.entries(tokens.hues)) {
     const hue = legible(read(said, ink), ground, ink, HUE_FLOOR)
@@ -113,7 +98,6 @@ export function terminalPalette(tokens: TerminalTokens): ITheme {
   out.brightBlack = hexOf(legible(muted, ground, ink, QUIET_FLOOR))
   out.white = hexOf(tokens.light ? raised : ink)
   out.brightWhite = hexOf(tokens.light ? surface : strong)
-
   const palette: ITheme = {
     background: hexOf(ground),
     foreground: hexOf(ink),
@@ -127,7 +111,6 @@ export function terminalPalette(tokens: TerminalTokens): ITheme {
   }
   return palette
 }
-
 export const FIXED_PALETTE: ITheme = {
   background: '#16181d',
   foreground: '#d5d9e0',
@@ -151,14 +134,12 @@ export const FIXED_PALETTE: ITheme = {
   brightCyan: '#94e6ea',
   brightWhite: '#f4f6f9',
 }
-
 export function terminalTheme(root: Element = document.documentElement, fixed = false): ITheme {
   if (fixed) return { ...FIXED_PALETTE }
   const style = getComputedStyle(root)
   const resolve = resolver()
   const token = (name: string, fallback: string) => resolve(style.getPropertyValue(name), fallback)
   const light = root.getAttribute('data-theme') === 'light'
-
   const background = token('--bg', light ? '#ffffff' : '#0e1013')
   const foreground = token('--text', light ? '#1b1f24' : '#dde2ea')
   const accent = token('--accent', '#7c6bf5')
@@ -168,7 +149,6 @@ export function terminalTheme(root: Element = document.documentElement, fixed = 
     const said = style.getPropertyValue(`--terminal-${name}`).trim()
     if (said) own[name] = resolve(said, '')
   }
-
   const palette = terminalPalette({
     light,
     background,
@@ -184,7 +164,6 @@ export function terminalTheme(root: Element = document.documentElement, fixed = 
     ) as TerminalTokens['hues'],
     own,
   })
-
   const paper = palette.background ?? background
   return {
     ...palette,
@@ -195,7 +174,6 @@ export function terminalTheme(root: Element = document.documentElement, fixed = 
     scrollbarSliderActiveBackground: token('--scrollbar-hover', muted),
   }
 }
-
 export function findColours(root: Element = document.documentElement): {
   match: string
   here: string
@@ -204,13 +182,10 @@ export function findColours(root: Element = document.documentElement): {
   const resolve = resolver()
   const background = resolve(style.getPropertyValue('--bg'), '#0e1013')
   const accent = resolve(style.getPropertyValue('--accent'), '#7c6bf5')
-
   return { match: opaque(mix(resolve, accent, background, 30)), here: opaque(accent) }
 }
-
 function opaque(colour: string): string {
   if (/^#[0-9a-f]{6}$/i.test(colour)) return colour
-
   const parts = /rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(colour)
   if (!parts) return '#7c6bf5'
   return `#${parts
@@ -218,7 +193,6 @@ function opaque(colour: string): string {
     .map((one) => Number(one).toString(16).padStart(2, '0'))
     .join('')}`
 }
-
 export function monospace(root: Element = document.documentElement): string {
   return (
     getComputedStyle(root).getPropertyValue('--font-mono').trim() ||

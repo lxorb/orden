@@ -5,27 +5,22 @@ const told: string[] = []
 const kept: string[] = []
 const buried: string[] = []
 const disk = new Map<string, string>()
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''
     sent.push(`${command} ${path}`)
-
     if (command === 'read_note') {
       const held = disk.get(path)
       return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
     }
-
     if (command === 'write_note') disk.set(path, content)
     if (command === 'delete_note') disk.delete(path)
     return Promise.resolve('')
   },
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
-
 const taking = new Set<string>()
-
 vi.mock('../../link-index/src/api', () => ({
   links: {
     takesOver: (path: string) => taking.has(path),
@@ -33,26 +28,20 @@ vi.mock('../../link-index/src/api', () => ({
     rebased: (text: string) => (text.includes('[[x/Plan]]') ? text.replace('[[x/Plan]]', '[[a/x/Plan]]') : null),
   },
 }))
-
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
 }))
-
 const { freePath } = await import('@orden/markdown/paths')
 const { extractSelection, mergeInto, splitAtCaret } = await import('./composing')
 const { FileActions } = await import('../../file-undo/src/api')
 type Composes = import('./composing').Composes
-
 const SPACE = '/space'
 const OTHER = '/other'
-
 function space(notes: Record<string, string>, openAt?: string) {
   disk.clear()
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
-
   const tab = openAt ? { id: 't1', path: openAt, doc: notes[openAt] ?? '' } : null
-
   const ws = {
     activeSpace: { id: 's1', name: 'space', root: SPACE },
     active: tab,
@@ -80,10 +69,8 @@ function space(notes: Record<string, string>, openAt?: string) {
         void kept.push(`${from} -> ${to} in ${String(root)} -> ${String(into)}`),
     },
   }
-
   return ws as unknown as Composes
 }
-
 beforeEach(() => {
   sent.length = 0
   told.length = 0
@@ -91,11 +78,9 @@ beforeEach(() => {
   buried.length = 0
   readOnly.clear()
 })
-
 describe('a note merged into another', () => {
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
-
   test('appends, moves the links before the note goes, and opens the one that is left', async () => {
     const ws = space({ [A]: '# a\n\nfirst\n', [B]: '# b\n\nsecond\n' })
     await mergeInto(ws, A, B)
@@ -112,20 +97,17 @@ describe('a note merged into another', () => {
     ])
     expect(told).toEqual([`saved ${B}`, `reloaded ${B}`, `retargeted ${A} -> ${B}`, `gone ${A}`, `opened ${B}`])
   })
-
   test('takes the words of an open note as they stand, typing not yet written included', async () => {
     const ws = space({ [A]: '# a\n\nfirst\n', [B]: '# b\n\nsecond\n' }, A)
     const typed = { text: '# a\n\nfirst\ntyped not saved\n' }
     await mergeInto({ ...ws, documentAt: (path) => (path === A ? typed : null) }, A, B)
     expect(disk.get(B)).toContain('typed not saved')
   })
-
   test('pastes the words relinked for the folder they arrive in', async () => {
     const ws = space({ [A]: 'see [[x/Plan]]\n', [B]: '# b\n' })
     await mergeInto(ws, A, B)
     expect(disk.get(B)).toContain('see [[a/x/Plan]]')
   })
-
   test('is one thing to undo, holding both notes as they were', async () => {
     const ws = space({ [A]: '# a\n', [B]: '# b\n' })
     await mergeInto(ws, A, B)
@@ -144,14 +126,12 @@ describe('a note merged into another', () => {
     ])
     expect(buried).toEqual([expect.any(String)])
   })
-
   test('and a note merged into itself does nothing at all', async () => {
     const ws = space({ [A]: '# a\n' })
     await mergeInto(ws, A, A)
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
   })
-
   test('and a note that cannot be read is left alone', async () => {
     const ws = space({ [A]: '# a\n' })
     await mergeInto(ws, A, `${SPACE}/gone.md`)
@@ -159,11 +139,9 @@ describe('a note merged into another', () => {
     expect(ws.undone.stack).toEqual([])
   })
 })
-
 describe('a merge that may not be made', () => {
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
-
   test('leaves both notes alone in a space shared to be read', async () => {
     readOnly.add(SPACE)
     const ws = space({ [A]: '# a\n', [B]: '# b\n' })
@@ -172,7 +150,6 @@ describe('a merge that may not be made', () => {
     expect(disk.get(A)).toBe('# a\n')
     expect(ws.undone.stack).toEqual([])
   })
-
   test('leaves a note of another space where it is', async () => {
     const away = `${OTHER}/a.md`
     const ws = space({ [away]: '# a\n', [B]: '# b\n' })
@@ -181,7 +158,6 @@ describe('a merge that may not be made', () => {
     expect(disk.get(away)).toBe('# a\n')
     expect(disk.get(B)).toBe('# b\n')
   })
-
   test('and does not reach into another space either', async () => {
     const away = `${OTHER}/b.md`
     const ws = space({ [A]: '# a\n', [away]: '# b\n' })
@@ -189,7 +165,6 @@ describe('a merge that may not be made', () => {
     expect(sent).toEqual([])
     expect(disk.has(A)).toBe(true)
   })
-
   test('leaves a page note and its paper alone', async () => {
     const page = `${SPACE}/Lecture.pages`
     const ws = space({ [page]: '{"pages":[]}', [B]: '# b\n' })
@@ -199,7 +174,6 @@ describe('a merge that may not be made', () => {
     expect(disk.get(B)).toBe('# b\n')
     expect(ws.undone.stack).toEqual([])
   })
-
   test('and does not write words into a canvas either', async () => {
     const board = `${SPACE}/Board.canvas`
     const ws = space({ [A]: '# a\n', [board]: '{"nodes":[]}' })
@@ -208,7 +182,6 @@ describe('a merge that may not be made', () => {
     expect(disk.get(board)).toBe('{"nodes":[]}')
     expect(disk.has(A)).toBe(true)
   })
-
   test('nor into a chat, whose pointer would no longer say where the chat is', async () => {
     const chat = `${SPACE}/Team.chat`
     const pointer = '{"chat":"c1"}'
@@ -220,11 +193,9 @@ describe('a merge that may not be made', () => {
     expect(ws.undone.stack).toEqual([])
   })
 })
-
 describe('a note split at the caret', () => {
   const NOTE = `${SPACE}/plan.md`
   const DOC = '# Plan\n\nfirst\n\n## Later\n\nsecond\n'
-
   test('writes the new note, then what is left of this one', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
@@ -234,14 +205,12 @@ describe('a note split at the caret', () => {
     expect(disk.get(NOTE)).toContain('first')
     expect(disk.get(NOTE)).not.toContain('second')
   })
-
   test('is one thing to undo, holding the note as it was', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
     expect(ws.undone.stack).toHaveLength(1)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'split', from: NOTE, fromContent: DOC })
   })
-
   test('and steps the new name aside from one that would take over links to a namesake', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     taking.add(`${SPACE}/Later.md`)
@@ -251,39 +220,33 @@ describe('a note split at the caret', () => {
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(NOTE)).toContain('[[Later 2]]')
   })
-
   test('and steps the new name aside from one the folder already has', async () => {
     const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(`${SPACE}/Later.md`)).toBe('# taken')
   })
-
   test('and the link left behind names the stepped-aside note, not the one it stepped from', async () => {
     const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
     expect(disk.get(NOTE)).toContain('[[Later 2]]')
     expect(disk.get(NOTE)).not.toContain('[[Later]]')
   })
-
   test('and nothing happens where there is nothing after the caret', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.length)
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
   })
-
   test('and nothing happens in a pane holding no file', async () => {
     const ws = space({ [NOTE]: DOC })
     await splitAtCaret(ws, 3)
     expect(sent).toEqual([])
   })
 })
-
 describe('a selection made into a note of its own', () => {
   const NOTE = `${SPACE}/plan.md`
   const DOC = '# Plan\n\nkeep this\n\ntake this\n'
-
   test('leaves a link where the words were', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     const from = DOC.indexOf('take this')
@@ -292,7 +255,6 @@ describe('a selection made into a note of its own', () => {
     expect(disk.get(NOTE)).toMatch(/\[\[.+]]/)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'extract', from: NOTE })
   })
-
   test('and links to the note by the name it was stepped aside to', async () => {
     const doc = '# Plan\n\nkeep this\n\nLater\n'
     const ws = space({ [NOTE]: doc, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
@@ -301,18 +263,15 @@ describe('a selection made into a note of its own', () => {
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(NOTE)).toContain('[[Later 2|Later]]')
   })
-
   test('and nothing happens where nothing is selected', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await extractSelection(ws, 4, 4)
     expect(sent).toEqual([])
   })
 })
-
 describe('a file that is not a note of the open space', () => {
   const JSON_FILE = `${SPACE}/snippets.json`
   const DOC = '{\n  "a": 1\n}\n'
-
   test('is not split', async () => {
     const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
     await splitAtCaret(ws, 1)
@@ -320,21 +279,18 @@ describe('a file that is not a note of the open space', () => {
     expect([...disk.keys()]).toEqual([JSON_FILE])
     expect(disk.get(JSON_FILE)).toBe(DOC)
   })
-
   test('nor has a selection extracted', async () => {
     const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
     await extractSelection(ws, 0, 1)
     expect(sent).toEqual([])
     expect(disk.get(JSON_FILE)).toBe(DOC)
   })
-
   test('while a note of another space is still split, beside it', async () => {
     const note = `${OTHER}/plan.md`
     const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
     await splitAtCaret(ws, 10)
     expect([...disk.keys()].some((path) => path.startsWith(`${OTHER}/`) && path !== note)).toBe(true)
   })
-
   test('nor a note of a space shared to be read', async () => {
     readOnly.add(SPACE)
     const note = `${SPACE}/plan.md`
@@ -343,11 +299,9 @@ describe('a file that is not a note of the open space', () => {
     expect(sent).toEqual([])
   })
 })
-
 describe('words carved from or merged out of a protected note', () => {
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
-
   test('keep its protection where they land, split, extracted or merged', async () => {
     const doc = '# a\n\nfirst\n\nsecond\n'
     await splitAtCaret(space({ [A]: doc }, A), doc.indexOf('second'))

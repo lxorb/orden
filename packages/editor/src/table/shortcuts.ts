@@ -6,7 +6,6 @@ import { highlightSelection } from '../highlight'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 
 let cellLanguage: Extension | null = null
-
 function inCellLanguage(): Extension {
   cellLanguage ??= markdown({
     base: markdownLanguage,
@@ -15,7 +14,6 @@ function inCellLanguage(): Extension {
   })
   return cellLanguage
 }
-
 export function runInCell(
   command: StateCommand,
   text: string,
@@ -28,7 +26,6 @@ export function runInCell(
     extensions: inCellLanguage(),
   })
   ensureSyntaxTree(state, text.length, 1000)
-
   let result: { text: string; from: number; to: number } | null = null
   command({
     state,
@@ -39,20 +36,16 @@ export function runInCell(
   })
   return result
 }
-
 export function inlineShortcut(event: KeyboardEvent): StateCommand | null {
   const mod = event.ctrlKey || event.metaKey
-
   if (event.altKey && event.shiftKey && !mod && event.code === 'Digit5') return toggleWrap('~~')
   if (!mod || event.altKey) return null
-
   const key = event.key.toLowerCase()
   if (event.shiftKey) {
     if (key === 'h') return highlightSelection
     if (event.code === 'Backquote') return toggleWrap('`')
     return null
   }
-
   switch (key) {
     case 'b':
       return toggleWrap('**')

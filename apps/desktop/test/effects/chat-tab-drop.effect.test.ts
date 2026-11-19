@@ -26,9 +26,7 @@ vi.stubGlobal(
     }
   },
 )
-
 const { droppedOnChat, overChat } = await import('../../src/lib/tab-strip/src/chat-drop')
-
 test('a tab let go of on a chat is dropped on it as its file, and the chat itself is not', () => {
   document.body.innerHTML = '<div data-chat-drop="chat"><p id="words"></p></div><p id="away"></p>'
   const taken: string[] = []
@@ -38,7 +36,6 @@ test('a tab let go of on a chat is dropped on it as its file, and the chat itsel
   })
   let under = document.getElementById('words')
   document.elementFromPoint = () => under
-
   overChat({ x: 1, y: 1 })
   expect(droppedOnChat('note')).toBe(true)
   overChat({ x: 1, y: 1 })

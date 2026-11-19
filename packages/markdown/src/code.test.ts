@@ -13,7 +13,6 @@ describe('what a fence says', () => {
     expect(languageIn('   ')).toBe('')
     expect(captionIn('   ')).toBe('')
   })
-
   test('reads the other editors’ way of writing it; leaves anything else as the words it is', () => {
     expect(captionIn('js title="setup.js"')).toBe('setup.js')
     expect(captionIn("js title='setup.js'")).toBe('setup.js')

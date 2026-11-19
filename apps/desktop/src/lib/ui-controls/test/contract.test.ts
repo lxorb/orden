@@ -19,7 +19,6 @@ import {
 import { putsAway } from '../src/sheet-pull'
 
 const SRC = join(import.meta.dirname, '../src')
-
 describe('the module stands on its own', () => {
   test('nothing under src reaches past the platform, theme, ui-kit and windows apis', () => {
     const reaching = readdirSync(SRC)
@@ -34,7 +33,6 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 })
-
 describe('legibility', () => {
   test('a colour is read from hex or rgb and written back as hex', () => {
     expect(rgbOf('#fff')).toEqual([255, 255, 255])
@@ -43,7 +41,6 @@ describe('legibility', () => {
     expect(rgbOf('red')).toBeNull()
     expect(hexOf([10, 20, 30])).toBe('#0a141e')
   })
-
   test('contrast is symmetric, black on white is 21, and the readable ink is chosen', () => {
     const black: readonly [number, number, number] = [0, 0, 0]
     const white: readonly [number, number, number] = [255, 255, 255]
@@ -56,7 +53,6 @@ describe('legibility', () => {
     expect(over(white, 0.5, black)).toEqual([127.5, 127.5, 127.5])
     expect(linkOf([0, 0, 255], black)).toEqual(over([0, 0, 255], 0.7, black))
   })
-
   test('a content level is an alpha, layers add up to the whole, and percent rounds', () => {
     expect(CONTENT_LEVELS).toEqual(['opaque', 'tinted', 'clear'])
     expect(alphaFor('opaque', 0.3)).toBe(1)
@@ -66,7 +62,6 @@ describe('legibility', () => {
     expect(percent(0.456)).toBe('46%')
   })
 })
-
 describe('a sheet pulled down', () => {
   test('goes away on a flick or past a quarter of its height, never on a twitch', () => {
     expect(putsAway(5, 800, 2)).toBe(false)
@@ -76,7 +71,6 @@ describe('a sheet pulled down', () => {
     expect(putsAway(60, 200, 0)).toBe(true)
   })
 })
-
 describe('picked paths', () => {
   test('are tidied to forward slashes with nothing in front', () => {
     expect(tidyPath('.\\Notes\\a.md')).toBe('Notes/a.md')

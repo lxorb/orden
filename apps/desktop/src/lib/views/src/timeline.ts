@@ -5,7 +5,6 @@ import { dayIn, isDateValue } from './values'
 export type Scale = 'day' | 'week' | 'month' | 'quarter'
 export const SCALES: readonly Scale[] = ['day', 'week', 'month', 'quarter']
 export const DAY_WIDTH: Record<Scale, number> = { day: 36, week: 14, month: 4.5, quarter: 1.6 }
-
 export interface Bar {
   row: Row
   start: string
@@ -18,17 +17,14 @@ export interface Bar {
   toShift?: number
   ownDates?: boolean
 }
-
 const shiftIn = (value: Value, day: string | null): number =>
   isDateValue(value) && day !== null ? dayNumber(value.iso) - dayNumber(day) : 0
-
 function timeIn(value: Value): string {
   if (typeof value === 'string') return value.slice(10)
   if (!isDateValue(value) || !value.time) return ''
   const zone = value.zone === 'UTC' ? 'Z' : (value.zone ?? '')
   return `T${value.time.replace(/^(\d{2}:\d{2}):00$/, '$1')}${zone}`
 }
-
 export function barOf(
   row: Row,
   dates: { start?: string | undefined; end?: string | undefined },
@@ -46,7 +42,6 @@ export function barOf(
     if (end < start) end = start
     return { row, start, end, from, to, ownDates: true }
   }
-
   const fromProperty = dates.start ?? 'file.ctime'
   const startValue = read(row, fromProperty)
   const start = dayIn(startValue)
@@ -67,9 +62,7 @@ export function barOf(
     toShift: endRead === null ? 0 : shiftIn(endValue, endRead),
   }
 }
-
 const FURTHEST = 3650
-
 export function spanOf(bars: readonly Bar[], today: string): { first: string; last: string } {
   const starts = bars.map((bar) => bar.start).sort()
   const middle = starts[Math.floor(starts.length / 2)] ?? today
@@ -84,15 +77,12 @@ export function spanOf(bars: readonly Bar[], today: string): { first: string; la
   }
   return { first, last }
 }
-
 export function drawnOf(bar: Bar, span: { first: string; last: string }): { start: string; end: string; far: boolean } {
   const start = bar.start < span.first ? span.first : bar.start > span.last ? span.last : bar.start
   const end = bar.end > span.last ? span.last : bar.end < span.first ? span.first : bar.end
   return { start, end, far: start !== bar.start || end !== bar.end }
 }
-
 export const daysBetween = (from: string, to: string): number => dayNumber(to) - dayNumber(from)
-
 export function dragged(bar: Bar, part: 'move' | 'start' | 'end', days: number): Record<string, string> {
   if (!days) return {}
   const { fromTime = '', toTime = '', fromShift = 0, toShift = 0 } = bar
@@ -111,7 +101,6 @@ export function dragged(bar: Bar, part: 'move' | 'start' | 'end', days: number):
   const end = addDays(bar.end, days)
   return { [bar.to]: to(end < bar.start ? bar.start : end) }
 }
-
 function stretched(bar: Bar, part: 'start' | 'end', days: number): Record<string, string> {
   if (!bar.ownDates) return {}
   const start = part === 'start' ? addDays(bar.start, days) : bar.start
@@ -122,12 +111,10 @@ function stretched(bar: Bar, part: 'start' | 'end', days: number): Record<string
   }
   return part === 'start' ? { [bar.from]: start, 'task.deadline': end } : { 'task.deadline': end }
 }
-
 export interface Arrow {
   from: { bar: Bar; at: number }
   to: { bar: Bar; at: number }
 }
-
 export function arrowsOf(bars: readonly Bar[]): Arrow[] {
   const byId = new Map<string, { bar: Bar; at: number }>()
   bars.forEach((bar, at) => {

@@ -7,10 +7,8 @@ export interface Place {
   name: string
   ms: number
 }
-
 export const isOwn = (span: Span): boolean => span.source === 'manual' || span.source === 'timer'
 const ruleKey = (lane: string, place: string) => `${lane}\u0000${place}`
-
 export function counted(spans: readonly Span[], rules: readonly Rule[]): Span[] {
   const by = new Map(rules.map((rule) => [ruleKey(rule.lane, rule.place), rule]))
   const out: Span[] = []
@@ -24,7 +22,6 @@ export function counted(spans: readonly Span[], rules: readonly Rule[]): Span[] 
   }
   return out
 }
-
 export function placesOf(pieces: readonly Piece[], lane: Lane): Place[] {
   const by = new Map<string, Place>()
   for (const piece of pieces) {
@@ -36,7 +33,6 @@ export function placesOf(pieces: readonly Piece[], lane: Lane): Place[] {
   }
   return [...by.values()].filter((one) => counts(one.ms)).sort((one, other) => other.ms - one.ms)
 }
-
 export function recentFirst(activities: readonly Activity[], spans: readonly Span[]): Activity[] {
   const left = new Map(activities.filter((one) => !one.archived).map((one) => [one.id, one]))
   const seen: Activity[] = []

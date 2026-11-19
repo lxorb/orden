@@ -1,16 +1,12 @@
 from typing import Any
-
 from PIL import Image, ImageChops
-
 from harness import Drive
 from settling import HIDE_CARET, quiet
 from shell import PHONE_AGENT, SEED, TABLET_AGENT
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SHEET = "document.getElementById('orden-user-theme')?.textContent ?? ''"
-
 INSETS = """
 (insets) => {
   for (const [side, px] of Object.entries(insets)) {
@@ -18,7 +14,6 @@ INSETS = """
   }
 }
 """
-
 BOX = """
 (selector) => {
   const one = document.querySelector(selector)
@@ -32,7 +27,6 @@ BOX = """
   return { x, y, width: right - x, height: bottom - y, corner: Math.ceil(corner * devicePixelRatio) }
 }
 """
-
 BARE = """
 (selector) => {
   const kept = document.querySelector(selector)
@@ -42,7 +36,6 @@ BARE = """
   }
 }
 """
-
 GROUND_ONLY = """
 (selector) => {
   for (const one of document.querySelector(selector).querySelectorAll('*')) {
@@ -50,15 +43,12 @@ GROUND_ONLY = """
   }
 }
 """
-
 HANDHELDS = [
     ("phone", 390, 844, PHONE_AGENT, {"top": 47, "bottom": 34}),
     ("phone-side", 844, 390, PHONE_AGENT, {"left": 47, "right": 47, "bottom": 21}),
     ("tablet", 820, 1180, TABLET_AGENT, {"top": 24}),
 ]
-
 JITTER = 50
-
 def through(shown: Image.Image, bare: Image.Image, corner: int) -> int:
     difference = ImageChops.difference(shown.convert("RGB"), bare.convert("RGB"))
     width, height = difference.size
@@ -70,7 +60,6 @@ def through(shown: Image.Image, bare: Image.Image, corner: int) -> int:
             if max(difference.getpixel((x, y))) > 32:
                 changed += 1
     return changed
-
 def compare(page: Any, name: str, selector: str) -> None:
     quiet(page)
     box = page.evaluate(BOX, selector)
@@ -88,12 +77,10 @@ def compare(page: Any, name: str, selector: str) -> None:
     say(f"{name}: {box}, {changed} pixels show what is under it")
     if changed > JITTER:
         wrong(f"{name}: what is under the sidebar shows through it, {changed} pixels")
-
 def wallpaper(page: Any) -> None:
     wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
     page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
     wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
-
 def handheld(browser: Any, name: str, width: int, height: int, agent: str, insets: dict, theme: str, side: str) -> None:
     page = DRIVE.page(
         browser,
@@ -121,7 +108,6 @@ def handheld(browser: Any, name: str, width: int, height: int, agent: str, inset
     page.wait_for_timeout(700)
     compare(page, f"{name}-{side}-{theme}", selector)
     page.context.close()
-
 def desktop(browser: Any, theme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800}, color_scheme="light")
     page.context.add_init_script(HIDE_CARET)
@@ -143,12 +129,10 @@ def desktop(browser: Any, theme: str) -> None:
     page.wait_for_timeout(300)
     compare(page, f"desktop-peek-{theme}", ".panels .column.floating aside")
     page.context.close()
-
 def drive(browser: Any) -> None:
     for theme in ("plain", "wallpaper"):
         for name, width, height, agent, insets in HANDHELDS:
             for side in ("left", "right"):
                 handheld(browser, name, width, height, agent, insets, theme, side)
         desktop(browser, theme)
-
 raise SystemExit(DRIVE.run(drive))

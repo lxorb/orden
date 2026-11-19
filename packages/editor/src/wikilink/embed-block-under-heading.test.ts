@@ -8,14 +8,11 @@ import { embedWidget } from './embed'
 import { type NoteIndex, noteIndex } from './notes'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const PLAN =
   '# Plan\n\n## Goals\nShip the beta by May. ^goal\n\n## Risks\nHiring is slow. ^hiring\n## Budget\nTen thousand.\n'
-
 const SPACE: NoteIndex = {
   notes: [
     {
@@ -31,7 +28,6 @@ const SPACE: NoteIndex = {
   read: () => Promise.resolve(PLAN),
   render: (source) => Promise.resolve(source),
 }
-
 async function embedded(inner: string): Promise<string> {
   const parsed = parseWikilink(inner, true)
   if (!parsed) throw new Error(`${inner} is not a link`)
@@ -47,14 +43,12 @@ async function embedded(inner: string): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 0))
   return frame.querySelector('.orden-embed-body')?.innerHTML ?? ''
 }
-
 describe('an embed of a block named on a paragraph written right under its heading', () => {
   test('shows that paragraph, not the heading above it', async () => {
     const shown = await embedded('Plan#^goal')
     expect(shown).toContain('Ship the beta by May.')
     expect(shown).not.toContain('Goals')
   })
-
   test('shows that paragraph, not the heading written right under it', async () => {
     const shown = await embedded('Plan#^hiring')
     expect(shown).toContain('Hiring is slow.')

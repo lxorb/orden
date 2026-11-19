@@ -27,7 +27,6 @@ export { default as TickBox } from './TickBox.svelte'
 export { tick } from './tick'
 export { IN_A_PAGE, trap } from './trap'
 export { adrift, pressedThrough } from './adrift'
-
 export { accelerator } from './accelerator'
 export { longPaste } from './long-paste'
 export { default as Outward } from './Outward.svelte'
@@ -41,5 +40,4 @@ export { spendClick } from './spent-click'
 export { chooseFiles, PICTURES } from './choose-files'
 export { droppedFiles, filesUnder, pickFiles, pickFolder, tidyPath } from './picking'
 export { hidePointerWhileTyping, takesWords, writes } from './typing-pointer'
-
 export const watchKeyboard = () => import('./keyboard-home')

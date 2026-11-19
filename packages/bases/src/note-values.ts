@@ -5,9 +5,7 @@ import { civil } from './dates'
 import type { Value } from './types'
 
 const WIKILINK = /^!?\[\[([^\]|#]*(?:#[^\]|]*)?)(?:\|([^\]]*))?\]\]$/
-
 const DATE = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/
-
 export function scalarValue(written: string): Value {
   const text = written.trim()
   if (text === '' || text === 'null' || text === '~') return null
@@ -15,7 +13,6 @@ export function scalarValue(written: string): Value {
   if (/^-?\d+(?:\.\d+)?$/.test(text)) return Number(text)
   return stringValue(text)
 }
-
 function stringValue(written: string): Value {
   const text = written.trim()
   const link = WIKILINK.exec(text)
@@ -23,7 +20,6 @@ function stringValue(written: string): Value {
     const target = (link[1] ?? '').trim()
     return link[2] === undefined ? { kind: 'link', target } : { kind: 'link', target, display: link[2] }
   }
-
   const date = DATE.exec(text)
   if (date?.[1] && civil(date[1])) {
     const value: Value = { kind: 'date', iso: date[1] }
@@ -33,9 +29,7 @@ function stringValue(written: string): Value {
   }
   return text
 }
-
 const readValue = (text: string, quoted: boolean | undefined): Value => (quoted ? stringValue(text) : scalarValue(text))
-
 function propertyValue(property: Property): Value {
   const quoted = property.quotedItems ?? []
   switch (property.kind) {
@@ -55,7 +49,6 @@ function propertyValue(property: Property): Value {
       return readValue(property.value, property.quoted)
   }
 }
-
 function fromYaml(read: unknown): Value {
   if (read === null || read === undefined) return null
   if (typeof read === 'string') return stringValue(read)
@@ -66,7 +59,6 @@ function fromYaml(read: unknown): Value {
   }
   return null
 }
-
 export function noteValues(text: string): Record<string, Value> {
   const source = text.startsWith('---') ? text : `---\n${text}${text.endsWith('\n') ? '' : '\n'}---\n`
   const rows = readProperties(source)
@@ -75,7 +67,6 @@ export function noteValues(text: string): Record<string, Value> {
     for (const row of rows) if (!firsts.has(row.key)) firsts.set(row.key, propertyValue(row))
     return Object.fromEntries(firsts)
   }
-
   const block = frontMatterBlock(source)
   if (!block) return {}
   try {
@@ -97,7 +88,6 @@ export function noteValues(text: string): Record<string, Value> {
     }
   }
 }
-
 export function listAsWritten(
   text: string,
   key: string,
@@ -105,7 +95,6 @@ export function listAsWritten(
   const block = frontMatterBlock(text)
   if (!block) return 'absent'
   const body = text.slice(block.body.from, block.body.to)
-
   let whole: unknown
   try {
     whole = parse(body, { schema: 'core' })
@@ -116,7 +105,6 @@ export function listAsWritten(
   const read = whole === null ? {} : (whole as Record<string, unknown>)
   const spelled = key in read ? key : (Object.keys(read).find((one) => one.toLowerCase() === key.toLowerCase()) ?? key)
   const held = read[spelled]
-
   const lines = body.split('\n')
   const opens = new RegExp(`^${spelled.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[ \\t]*:`)
   const starts = lines.flatMap((line, at) => (opens.test(line) ? [at] : []))
@@ -133,7 +121,6 @@ export function listAsWritten(
   const own = lines.slice(first, last + 1)
   const to = from + own.join('\n').replace(/\r$/, '').length
   const span = own.map((line) => line.replace(/\r$/, '')).join('\n')
-
   let doc
   try {
     doc = parseDocument(span, { schema: 'core' })
@@ -149,12 +136,10 @@ export function listAsWritten(
     }
   })
   if (commented) return null
-
   const pair = doc.contents && 'items' in doc.contents ? doc.contents.items[0] : undefined
   const value = pair && typeof pair === 'object' && 'value' in pair ? pair.value : undefined
   const nodes = isSeq(value) ? value.items : isScalar(value) && value.value !== null ? [value] : []
   if (value !== null && value !== undefined && !isSeq(value) && !isScalar(value)) return null
-
   const items: string[] = []
   const written: string[] = []
   const quoted: boolean[] = []
@@ -167,11 +152,9 @@ export function listAsWritten(
     written.push(said)
     quoted.push(inQuotes)
   }
-
   const members: unknown = isSeq(value) ? value.toJSON() : nodes.map((one) => (one as Scalar).value)
   const expected = held === undefined || held === null ? [] : Array.isArray(held) ? held : [held]
   if (JSON.stringify(members) !== JSON.stringify(expected)) return null
-
   const property: Property = {
     key: spelled,
     kind: 'list',
@@ -183,5 +166,4 @@ export function listAsWritten(
   }
   return { from, to, property }
 }
-
 export { taskHash } from './task-hash'

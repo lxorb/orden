@@ -17,7 +17,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 const writes: string[] = []
 const versions: string[] = []
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 disk.current = d
@@ -25,12 +24,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { startAcross } = await import('./across')
 await startAcross()
-
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`
 const BASE = 'first\n\nsecond\n'
 const WORDS = 'first\nTYPED\n\nsecond\n'
-
 const draft = {
   kind: 'note' as const,
   path: PATH,
@@ -42,7 +39,6 @@ const draft = {
   scroll: 0,
   share: 'k1',
 }
-
 async function fresh(file: string | null) {
   await workspace.writesSettled()
   refused.write = false
@@ -57,7 +53,6 @@ async function fresh(file: string | null) {
   writes.length = 0
   versions.length = 0
 }
-
 const ways = {
   async 'an open tab a launch restores'() {
     await workspace.applyLayout(
@@ -74,14 +69,12 @@ const ways = {
     await workspace.reopenClosed()
   },
 }
-
 describe.each(Object.entries(ways))('%s', (_, back) => {
   const after = async () => {
     await vi.waitFor(() => expect(workspace.tabs.at(-1)).toBeDefined())
     await workspace.writesSettled()
     return workspace.tabs.at(-1)!
   }
-
   test('the file went on: both words, once each, on the disk', async () => {
     const newer = 'first\n\nsecond\nNEWER\n'
     await fresh(newer)
@@ -93,7 +86,6 @@ describe.each(Object.entries(ways))('%s', (_, back) => {
     expect(file.match(/NEWER/g)).toHaveLength(1)
     expect(tab.note.latest).toBe(file)
   })
-
   test('the file went on with those words in it: the file, clean, nothing written', async () => {
     const landed = `${WORDS}NEWER\n`
     await fresh(landed)
@@ -103,7 +95,6 @@ describe.each(Object.entries(ways))('%s', (_, back) => {
     expect(tab.note.dirty).toBe(false)
     expect(writes).toEqual([])
   })
-
   test('the file at the version they were typed on: they go down, what is under them is kept', async () => {
     await fresh(BASE)
     await back()
@@ -112,7 +103,6 @@ describe.each(Object.entries(ways))('%s', (_, back) => {
     expect(tab.note.latest).toBe(WORDS)
     expect(versions).toContain(BASE)
   })
-
   test('the file gone: a draft, and the file stays gone', async () => {
     await fresh(null)
     await back()
@@ -122,7 +112,6 @@ describe.each(Object.entries(ways))('%s', (_, back) => {
     expect(d.files.has(PATH)).toBe(false)
   })
 })
-
 describe('the closed stack and its base', () => {
   const close = async () => {
     await workspace.open(PATH)
@@ -133,7 +122,6 @@ describe('the closed stack and its base', () => {
     await workspace.writesSettled()
     return workspace.closed.stack.at(-1)?.draft
   }
-
   test('a write that landed leaves nothing to weigh: no words, no base, the file wins', async () => {
     await fresh(BASE)
     const entry = await close()
@@ -147,7 +135,6 @@ describe('the closed stack and its base', () => {
     expect(workspace.tabs.at(-1)?.note.latest).toBe(newer)
     expect(writes).toEqual([])
   })
-
   test('a write that was refused keeps its base: reopened over a newer file, it merges', async () => {
     await fresh(BASE)
     refused.write = true
@@ -159,7 +146,6 @@ describe('the closed stack and its base', () => {
     await vi.waitFor(() => expect(d.files.get(PATH)).toContain('TYPED'), { timeout: 3_000 })
     expect(d.files.get(PATH)).toContain('NEWER')
   })
-
   test('a delete of its file leaves a draft with no base to weigh against', async () => {
     await fresh(BASE)
     refused.write = true

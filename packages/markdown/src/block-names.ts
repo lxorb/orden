@@ -17,7 +17,6 @@ import {
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
 const TABLE_RULE = /^[\s|:-]*-[\s|:-]*$/u
-
 function nameStandsApart(run: readonly Row[]): boolean {
   const last = run.at(-1)?.text.trimEnd() ?? ''
   if (run.at(-1)?.code) return true
@@ -26,9 +25,7 @@ function nameStandsApart(run: readonly Row[]): boolean {
   }
   return run.some((row) => row.text.includes('|') && TABLE_RULE.test(row.text))
 }
-
 const listed = (row: Row | undefined): boolean => !!row && !row.code && LIST_ITEM.test(row.text)
-
 function endOf(rows: readonly Row[], line: number): number {
   const { held: blocks, goesOn, runOf } = layoutOf(rows)
   const quoted = quotedRows(rows)
@@ -36,7 +33,6 @@ function endOf(rows: readonly Row[], line: number): number {
   if (held?.first === line) return held.last
   const quote = quoteAround(rows, line)
   if (quote) return quote.last
-
   let end = line
   for (;;) {
     const next = rows[end + 1]
@@ -56,7 +52,6 @@ function endOf(rows: readonly Row[], line: number): number {
     end++
   }
 }
-
 export function namedBlock(source: string, line: number, id: () => string): { id: string; source: string } | null {
   const rows = rowsOf(source)
   const row = rows[line]
@@ -78,7 +73,6 @@ export function namedBlock(source: string, line: number, id: () => string): { id
     (under && !under.code && ownLine(under.text) ? blockIdOf(under.text) : null) ??
     (rows[end]?.code ? (rows[end].fenceName ?? null) : blockIdOf(last))
   if (had) return { id: had, source }
-
   const name = id()
   if (nameStandsApart(rows.slice(from, end + 1))) {
     const below = rows[end + 1]
@@ -90,7 +84,6 @@ export function namedBlock(source: string, line: number, id: () => string): { id
   }
   return { id: name, source: lines.join('\n') }
 }
-
 function namedItem(
   rows: readonly Row[],
   source: string,
@@ -114,12 +107,10 @@ function namedItem(
   ) {
     end++
   }
-
   for (let at = line; at <= end; at++) {
     const had = blockIdOf(lines[at] ?? '')
     if (had) return { id: had, source }
   }
-
   const name = id()
   const last = lines[end] ?? ''
   lines[end] = `${last.trimEnd()} ^${name}${last.endsWith('\r') ? '\r' : ''}`

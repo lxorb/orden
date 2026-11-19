@@ -1,8 +1,6 @@
 import json
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,7 +9,6 @@ say, wrong = DRIVE.say, DRIVE.wrong
 ORIGIN = harness.worker_origin()
 OWNER = "sorter@example.com"
 PATIENCE = 60
-
 def wait(page: Page, script: str, what: str) -> object:
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -20,7 +17,6 @@ def wait(page: Page, script: str, what: str) -> object:
             return answer
         page.wait_for_timeout(250)
     raise SystemExit(f"gave up waiting for {what}")
-
 def device(browser: Browser, label: str, token: str, before: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
@@ -35,18 +31,15 @@ def device(browser: Browser, label: str, token: str, before: str | None = None) 
         " if (ws.activeSpace?.id !== s.id) await ws.showSpace(s.id) }"
     )
     return page
-
 def on_account(worker: harness.Worker, space: str) -> str:
     try:
         return str(worker.query(f"select sort from spaces where id = '{space}'")[0]["sort"])
     except (SystemExit, Exception):  # noqa: BLE001 - a busy database is asked again
         return ""
-
 def drive(browser: Browser, worker: harness.Worker, token: str, space: str) -> None:
     probe = device(browser, "probe", token)
     root = probe.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     probe.context.close()
-
     desk = device(browser, "desk", token, json.dumps({root: "created-desc"}))
     wait(desk, "() => window.ordenApp.workspace.sortMode === 'created-desc'", "[desk] the order it had chosen")
     until = time.monotonic() + PATIENCE
@@ -56,7 +49,6 @@ def drive(browser: Browser, worker: harness.Worker, token: str, space: str) -> N
         wrong(f"[desk] the order chosen before did not reach the account: {on_account(worker, space)!r}")
     else:
         say("ok   [desk] the order chosen before is carried to the account, once")
-
     desk.evaluate("() => window.ordenApp.workspace.setSort('manual')")
     until = time.monotonic() + PATIENCE
     while on_account(worker, space) != "manual" and time.monotonic() < until:
@@ -65,14 +57,12 @@ def drive(browser: Browser, worker: harness.Worker, token: str, space: str) -> N
         wrong(f"[desk] Manual did not reach the account: {on_account(worker, space)!r}")
     else:
         say("ok   [desk] Manual is written to the space")
-
     other = device(browser, "other", token)
     try:
         wait(other, "() => window.ordenApp.workspace.sortMode === 'manual'", "[other] Manual")
         say("ok   [other] the space is read in Manual on another device")
     except SystemExit as gave_up:
         wrong(f"[other] {gave_up}: {other.evaluate('() => window.ordenApp.workspace.sortMode')}")
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
@@ -82,5 +72,4 @@ def main() -> int:
         worker.request(f"/v1/spaces/{space}/notes", token=token, body={"path": "Plan.md", "content": "# Plan\n"})
         drive(browser, worker, token, space)
     return DRIVE.verdict("a space's order is the space's on every device")
-
 raise SystemExit(main())

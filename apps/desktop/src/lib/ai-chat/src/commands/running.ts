@@ -23,7 +23,6 @@ function goalWord(state: GoalState): string {
       return 'Goal'
   }
 }
-
 function goalStatus(goal: Goal, now: number): string {
   const minutes = Math.round((now - goal.started) / 60_000)
   return [
@@ -34,7 +33,6 @@ function goalStatus(goal: Goal, now: number): string {
     .filter(Boolean)
     .join('\n')
 }
-
 function road(host: Host, thread: Thread, signal: AbortSignal): GoalRoad {
   return {
     turn: (text) => host.turn(thread, text, { signal }),
@@ -46,7 +44,6 @@ function road(host: Host, thread: Thread, signal: AbortSignal): GoalRoad {
     now: () => Date.now(),
   }
 }
-
 function start(host: Host, thread: Thread, goal: Goal, first?: string): void {
   tasks.stop(thread.id, 'goal')
   const stopper = new AbortController()
@@ -64,7 +61,6 @@ function start(host: Host, thread: Thread, goal: Goal, first?: string): void {
   })
   void pursue(goal, road(host, thread, stopper.signal), stopper.signal, first).finally(() => tasks.done(task.id))
 }
-
 export function goal(host: Host, thread: Thread, args: string): void {
   const asked = goalAsk(args)
   const held = thread.goal
@@ -93,7 +89,6 @@ export function goal(host: Host, thread: Thread, args: string): void {
     }
   }
 }
-
 export function loop(host: Host, thread: Thread, args: string): void {
   const asked = loopAsk(args)
   const prompt = loopPrompt(asked, thread)

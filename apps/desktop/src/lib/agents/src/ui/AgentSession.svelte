@@ -18,12 +18,9 @@
   import { wordFor } from './words'
 
   const { agent }: { agent: string } = $props()
-
   const activity = started()
-
   const FIRST = 12
   const LOG_EVERY = 1000
-
   const name = $derived(activity.nameOf(agent))
   const colour = $derived(activity.colourOf(agent))
   const stopped = $derived(activity.stopped(agent))
@@ -35,36 +32,28 @@
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
   let all = $state(false)
   let watched = $state<string | null>(null)
-
   const doing = $derived.by(() => {
     const last = activity.seen.doing[agent]
     if (!last || activity.now - last.at >= ACTIVE_FOR) return null
-
     const word = wordFor(last.verb)
     if (word === null) return null
-
     const about = last.tab === null ? null : titleOf(last.tab)
     return [word, about]
   })
-
   const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
-
   const readSoon = afterQuiet(() => void activity.readLog().catch(() => undefined), LOG_EVERY, LOG_EVERY)
   $effect(() => {
     if (latest !== 0) readSoon()
   })
-
   onMount(() => {
     void activity.readLog().catch(() => undefined)
     return () => readSoon.cancel()
   })
-
   function titleOf(tab: string): string | null {
     const own = activity.seen.tabs[tab]
     if (own) return own.title || own.url
     return workspace.tabs.find((one) => one.id === tab)?.shown ?? null
   }
-
   function timeOf(at: number): string {
     return localDate(at, { hour: '2-digit', minute: '2-digit' })
   }
@@ -167,21 +156,18 @@
     padding: var(--space-2) var(--space-1) var(--space-3);
     font-family: var(--font-ui);
   }
-
   .head {
     display: flex;
     align-items: center;
     gap: var(--row-gap);
     padding-inline-start: var(--row-pad);
   }
-
   .who {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
   }
-
   .name {
     color: var(--text-strong);
     font-size: var(--text-row);
@@ -191,7 +177,6 @@
     white-space: nowrap;
     unicode-bidi: isolate;
   }
-
   .doing {
     color: var(--muted);
     font-size: var(--text-xs);
@@ -199,20 +184,17 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .orden-glyph svg path,
   .orden-glyph svg rect {
     fill: currentColor;
     stroke: none;
   }
-
   .tabs,
   .calls {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .call {
     display: flex;
     align-items: baseline;
@@ -223,12 +205,10 @@
     font-size: var(--text-sm);
     line-height: var(--row-height-sm);
   }
-
   .word {
     flex: none;
     color: var(--text);
   }
-
   .about {
     flex: 1;
     min-width: 0;
@@ -237,22 +217,18 @@
     white-space: nowrap;
     unicode-bidi: isolate;
   }
-
   .failed .word {
     color: var(--danger);
   }
-
   .more {
     color: var(--muted);
   }
-
   .acts {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
     padding: 0 var(--row-pad);
   }
-
   .acts:empty {
     display: none;
   }

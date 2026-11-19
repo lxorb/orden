@@ -25,26 +25,20 @@ import { crossing } from './renaming'
 import type { ExplorerView } from './view.svelte'
 
 const MOST_BROUGHT = 48 * 1024 * 1024
-
 function record(steps: OutsideStep[]) {
   if (steps.length) workspace.undone.record({ kind: 'outside', steps })
 }
-
 const split = (paths: readonly string[]): { inside: string[]; outside: string[] } => ({
   inside: paths.filter((one) => inASpace(one)),
   outside: paths.filter((one) => !inASpace(one)),
 })
-
 export function changeable(view: ExplorerView): boolean {
   const listing = view.listing
   return !!listing && !listing.own && (!listing.spaces || inASpace(listing.path))
 }
-
 export const takenNames = (names: readonly string[]): Set<string> => new Set(names.map((one) => one.toLowerCase()))
-
 export const freeName = (taken: ReadonlySet<string>, name: string): string =>
   freePath(name, (candidate) => taken.has(candidate.toLowerCase()))
-
 export async function newFolder(view: ExplorerView) {
   const folder = view.listing?.path
   if (!folder || !changeable(view)) return
@@ -71,7 +65,6 @@ export async function newFolder(view: ExplorerView) {
     view.tell(message(error, 'could not make the folder'))
   }
 }
-
 export async function renamePath(view: ExplorerView, from: string, name: string) {
   const clean = name.trim()
   if (!clean || clean === nameOf(from)) return
@@ -91,10 +84,8 @@ export async function renamePath(view: ExplorerView, from: string, name: string)
     view.tell(message(error, 'could not rename this'))
   }
 }
-
 const stayedSaid = (failed: readonly Failed[] | undefined): string | null =>
   failed?.length ? failed.map((one) => one.why).join('; ') : null
-
 export async function trash(view: ExplorerView, paths: readonly string[]) {
   if (!paths.length || !changeable(view)) return
   const { inside, outside } = split(paths)
@@ -111,7 +102,6 @@ export async function trash(view: ExplorerView, paths: readonly string[]) {
   })
   await view.reload()
 }
-
 export async function removeForGood(view: ExplorerView, paths: readonly string[]) {
   if (!paths.length || !changeable(view)) return
   const { inside, outside } = split(paths)
@@ -132,7 +122,6 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   }
   await view.reload()
 }
-
 export async function paste(view: ExplorerView, into?: string) {
   const folder = into ?? view.listing?.path
   const paths = [...fileClipboard.paths]
@@ -141,7 +130,6 @@ export async function paste(view: ExplorerView, into?: string) {
   if (cut) fileClipboard.hold([], false)
   await carry(view, paths, folder, cut ? 'move' : 'copy')
 }
-
 export async function duplicate(view: ExplorerView, paths: readonly string[]) {
   const folder = view.listing?.path
   if (!folder || !paths.length || !changeable(view)) return
@@ -156,7 +144,6 @@ export async function duplicate(view: ExplorerView, paths: readonly string[]) {
     for (const [at, some] of beside) await carry(view, some, at, 'copy')
   })
 }
-
 export async function carry(
   view: ExplorerView | null,
   sources: readonly string[],
@@ -181,14 +168,12 @@ export async function carry(
   })
   await view?.reload()
 }
-
 interface Carrying {
   how: 'copy' | 'move'
   clash: Clash
   staying: readonly string[]
   fenced: boolean
 }
-
 async function across(
   sources: readonly string[],
   folder: string,
@@ -221,7 +206,6 @@ async function across(
   if (failed) tell(`${nameOf(failed.path)}: ${failed.why}`)
   return kept.map((one) => one.from)
 }
-
 async function clashFor(sources: readonly string[], folder: string): Promise<Clash | null> {
   const names = await clashesIn(sources, folder).catch(() => [])
   if (!names.length) return 'keep'
@@ -241,7 +225,6 @@ async function clashFor(sources: readonly string[], folder: string): Promise<Cla
   })
   return answer === 'keep' || answer === 'replace' || answer === 'skip' ? answer : null
 }
-
 async function bringInto(paths: readonly string[], folder: string, moving: boolean, tell: (said: string) => void) {
   const brought: PickedFile[] = []
   const whole: string[] = []
@@ -257,7 +240,6 @@ async function bringInto(paths: readonly string[], folder: string, moving: boole
   await workspace.bringIn(brought, folder)
   if (moving && whole.length) record([{ op: 'trashed', tickets: await trashPaths(whole) }])
 }
-
 async function gather(path: string, under: string, into: PickedFile[]) {
   const listing = await listFolder(path).catch(() => null)
   if (!listing) {
@@ -270,7 +252,6 @@ async function gather(path: string, under: string, into: PickedFile[]) {
     else into.push(broughtFile(inner, `${under}/${one.name}`))
   }
 }
-
 function broughtFile(path: string, under: string): PickedFile {
   const nested = under.includes('/')
   return {
@@ -283,7 +264,6 @@ function broughtFile(path: string, under: string): PickedFile {
     },
   }
 }
-
 async function putBack(staged: readonly { from: string; at: string }[], done: readonly { from: string; to: string }[]) {
   const left = new Set(staged.map((one) => one.from))
   for (const [index, { from, to }] of [...done.entries()].reverse()) {
@@ -294,7 +274,6 @@ async function putBack(staged: readonly { from: string; at: string }[], done: re
     if (left.has(from) && at !== from) await renameTo(at, nameOf(from)).catch(() => undefined)
   }
 }
-
 export async function renameMany(view: ExplorerView, pairs: readonly { from: string; name: string }[]) {
   const moving = pairs.filter(({ from, name }) => nameOf(from) !== name)
   if (!moving.length || !changeable(view)) return

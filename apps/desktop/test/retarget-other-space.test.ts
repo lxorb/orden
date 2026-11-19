@@ -2,7 +2,6 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
 
 const disk = vi.hoisted(() => ({ current: null as import('./disk').Disk | null }))
-
 vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -22,7 +21,6 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('./disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
@@ -30,9 +28,7 @@ const { workspace } = await import('../src/lib/workspace/src/api')
 const { links } = await import('../src/lib/link-index/src/api')
 const { startup } = await import('../src/lib/launch/src/api')
 void startup.shown()
-
 const files = () => disk.current?.files ?? new Map<string, string>()
-
 beforeEach(async () => {
   files().clear()
   files().set('/A/Plan.md', '# Plan\n')
@@ -49,36 +45,28 @@ beforeEach(async () => {
   await links.build('/A')
   await workspace.loadTree()
 })
-
 test('a rename undone from another space puts the links back too', async () => {
   await workspace.rename('/A/Plan.md', 'Roadmap.md')
   expect(files().get('/A/Note.md')).toBe('see [[Roadmap]]\n')
-
   await workspace.selectSpace('b')
   await links.scanned()
   await workspace.undoFileAction()
-
   expect(files().has('/A/Plan.md')).toBe(true)
   expect(files().get('/A/Note.md')).toBe('see [[Plan]]\n')
 })
-
 test('and done again from there, they follow it again', async () => {
   await workspace.rename('/A/Plan.md', 'Roadmap.md')
   await workspace.selectSpace('b')
   await links.scanned()
   await workspace.undoFileAction()
   await workspace.redoFileAction()
-
   expect(files().has('/A/Roadmap.md')).toBe(true)
   expect(files().get('/A/Note.md')).toBe('see [[Roadmap]]\n')
 })
-
 test('a note of another space renamed while this one is open takes its links along', async () => {
   workspace.activeSpaceId = 'b'
   await links.build('/B')
   await workspace.loadTree()
-
   await workspace.rename('/A/Plan.md', 'Roadmap.md')
-
   expect(files().get('/A/Note.md')).toBe('see [[Roadmap]]\n')
 })

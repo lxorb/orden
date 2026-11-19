@@ -10,16 +10,13 @@ vi.stubGlobal('localStorage', {
   length: 0,
   clear: () => held.clear(),
 })
-
 const { sync } = await import('../src/api')
-
 describe('the sync store', () => {
   test('starts off, holding no space and no note', () => {
     expect(sync.status).toBe('off')
     expect(sync.remoteIdFor('/spaces/Work')).toBeNull()
     expect(sync.tracked('/spaces/Work/Plan.md')).toBeNull()
   })
-
   test('serves what the lower modules ask of it through the sync.store port', () => {
     const store = syncStore()
     expect(store).not.toBeNull()

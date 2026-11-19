@@ -5,9 +5,7 @@ import { expect, test } from 'vitest'
 import { svelte, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
-
 const MOST_SECONDS = 15
-
 test('every component compiles in seconds, not a minute', () => {
   const slow: string[] = []
   for (const path of walk(SOURCE, svelte)) {

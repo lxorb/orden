@@ -17,9 +17,7 @@
   import { Hint } from '../../ui-controls/src/api'
 
   let days = $state(1)
-
   const back = $derived(rollbackSteps(modes.keepVersions))
-
   const chosen = $derived(back.includes(days) ? days : (back.at(-1) ?? 1))
   let asked = $state<{
     notes: number
@@ -32,7 +30,6 @@
   let rolling = $state(false)
   let rolled = $state<number | null>(null)
   let wrong = $state<string | null>(null)
-
   interface Shown {
     at: number
     space: string
@@ -41,15 +38,11 @@
     clashed: number
     failed: string | null
   }
-
   const SHOWN = 20
-
   let logged = $state<Shown[]>([])
-
   $effect(() => {
     const engine = asking.engine
     if (!engine) return
-
     let live = true
     const read = () =>
       void logOf(engine)
@@ -64,7 +57,6 @@
       stop()
     }
   })
-
   async function logOf(engine: Engine): Promise<Shown[]> {
     const [rows, spaces] = await engine.store.read([scan('log'), scan('spaces')])
     const nameFor = (id: string | null) => {
@@ -72,7 +64,6 @@
       if (root === undefined) return id ?? ''
       return rootedAt(workspace.spaces, root)?.name ?? nameOf(root)
     }
-
     return rows
       .slice(-SHOWN)
       .reverse()
@@ -85,30 +76,22 @@
         failed: row.failed,
       }))
   }
-
   const passes = $derived(asking.engine ? logged : record.passes.slice(0, SHOWN))
-
   const rules = [
     { value: 'both', label: 'Keep both copies' },
     { value: 'newest', label: 'Let the newest win' },
     { value: 'ask', label: 'Ask me each time' },
   ]
-
   const spaceId = $derived(workspace.activeSpace ? sync.remoteIdFor(workspace.activeSpace.root) : null)
-
   const preview = $derived(asked?.days === chosen && asked.space === spaceId ? asked : null)
-
   function moment(): number {
     return Date.now() - chosen * 24 * 60 * 60 * 1000
   }
-
   async function look() {
     const token = account.accountToken
     if (!token || !spaceId) return
-
     wrong = null
     rolled = null
-
     try {
       const at = moment()
       const days = chosen
@@ -126,18 +109,14 @@
       wrong = error instanceof Error ? error.message : 'That did not work.'
     }
   }
-
   const ROUNDS = 100
-
   async function roll() {
     const token = account.accountToken
     const shown = preview
     if (!token || !spaceId || !shown || rolling) return
-
     rolling = true
     wrong = null
     rolled = 0
-
     try {
       const { at, days, space } = shown
       let put = 0
@@ -147,10 +126,8 @@
         put += done.notes
         rolled = put
         left = done.partial ? (done.left ?? 0) : 0
-
         if (!done.partial || done.notes === 0) break
       }
-
       asked = left > 0 ? { notes: left, paths: [], more: false, at, days, space } : null
       if (left > 0) wrong = 'That did not work.'
       sync.nudge()
@@ -160,11 +137,9 @@
       rolling = false
     }
   }
-
   const copies = $derived(syncedCopies(asking.engine))
   let removing = $state(false)
   let copiesGone = $state(false)
-
   async function removeCopies() {
     removing = true
     try {
@@ -176,16 +151,13 @@
       removing = false
     }
   }
-
   async function settle(clash: Clash, answer: Answer) {
     await record.settle(clash, answer)
     sync.nudge()
   }
-
   function shortPath(path: string): string {
     return path.split(/[\\/]/).slice(-2).join('/')
   }
-
   const horizons = [
     { value: String(KEEP_MONTH), label: 'A month' },
     { value: String(KEEP_YEAR), label: 'A year' },
@@ -376,53 +348,44 @@
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   h3:first-child,
   :global(h2) + h3 {
     margin-top: 0;
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
   }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted-strong);
     line-height: 1.6;
   }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.bad {
     color: var(--danger);
   }
-
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
-
   :global(.sheet.phone) .pass,
   :global(.sheet.phone) .clash {
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .setting {
     position: relative;
     gap: var(--touch-gap);
@@ -430,7 +393,6 @@
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   .clash {
     display: flex;
     flex-wrap: wrap;
@@ -439,7 +401,6 @@
     width: 100%;
     padding: var(--space-2) 0;
   }
-
   .clash .name {
     flex: 1;
     min-width: 0;
@@ -447,17 +408,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .answers {
     display: flex;
     gap: var(--space-2);
     width: 100%;
   }
-
   .held {
     gap: var(--space-3);
   }
-
   .held .name {
     flex: 1;
     min-width: 0;
@@ -465,11 +423,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   :global(.sheet.phone) .held {
     padding: 0 var(--touch-pad);
   }
-
   .pass {
     display: flex;
     align-items: baseline;
@@ -479,18 +435,15 @@
     font-size: var(--text-sm);
     color: var(--muted-strong);
   }
-
   .pass .at {
     flex: none;
     font-variant-numeric: tabular-nums;
     color: var(--muted);
   }
-
   .pass .what {
     flex: 1;
     min-width: 0;
   }
-
   .pass .where {
     flex: none;
     max-width: 40%;
@@ -499,7 +452,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .pass.bad .what {
     color: var(--danger);
   }

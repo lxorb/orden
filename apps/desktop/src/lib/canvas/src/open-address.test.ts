@@ -2,21 +2,16 @@ import { expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 const opened = vi.hoisted(() => ({ hrefs: [] as string[], paths: [] as string[] }))
-
 vi.mock('../../workspace/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../workspace/src/api')>()),
   openHref: (href: string) => opened.hrefs.push(href),
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { run } = await import('./actions')
 const { CanvasStore } = await import('./store.svelte')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { workspace } = await import('../../workspace/src/api')
-
 const ADDRESS = 'https://orden.so/i/abc.png'
-
 function board() {
   const file = (id: string, path: string) => ({
     id,
@@ -34,7 +29,6 @@ function board() {
   )
   return new CanvasStore(new Tab(note, 'pane'))
 }
-
 test('a card holding an address opens the address, and one holding a path the file', async () => {
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
   workspace.activeSpaceId = 's'
@@ -43,11 +37,9 @@ test('a card holding an address opens the address, and one holding a path the fi
     return Promise.resolve()
   })
   const store = board()
-
   await run.open(store, { node: 'kept', edge: null } as never, { x: 0, y: 0 })
   expect(opened.hrefs).toEqual([ADDRESS])
   expect(opened.paths).toEqual([])
-
   await run.open(store, { node: 'note', edge: null } as never, { x: 0, y: 0 })
   expect(opened.paths).toEqual(['/space/a.md'])
 })

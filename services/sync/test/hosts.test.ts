@@ -5,20 +5,16 @@ import { isMachineHost, machineDomain } from '../src/sync-server-machines/src/ma
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
-
 beforeEach(() => {
   env = testEnv()
 })
-
 afterEach(() => {
   env.close()
   vi.restoreAllMocks()
 })
-
 const OLD = 'https://nibeditor.com'
 const NEW = 'https://orden.so'
 const CALLBACK = 'https://chatgpt.com/connector/oauth/abc123'
-
 describe('the names', () => {
   test('are the one links name, then the others, each once and as an origin', () => {
     const named = testEnv({
@@ -28,7 +24,6 @@ describe('the names', () => {
     expect(origins(named)).toEqual([NEW, OLD])
     named.close()
   })
-
   test('answer for themselves and for nobody else', () => {
     expect(isOwnOrigin(env, NEW)).toBe(true)
     expect(isOwnOrigin(env, OLD)).toBe(true)
@@ -36,26 +31,22 @@ describe('the names', () => {
     expect(isOwnOrigin(env, 'https://orden.so.evil.example')).toBe(false)
     expect(isOwnOrigin(env, 'null')).toBe(false)
   })
-
   test('a request is answered in the name it used, or in the one links name', () => {
     expect(originAt(env, 'https://orden.so/.well-known/x')).toBe(NEW)
     expect(originAt(env, 'https://nibeditor.com/oauth/token')).toBe(OLD)
     expect(originAt(env, 'https://notes.example.com/')).toBe(NEW)
   })
-
   test('every name is a blog root, and the longest one a host is under wins', () => {
     expect(blogRoots(env)).toEqual(['orden.so', 'nibeditor.com'])
     expect(blogRootOf(env, 'field.orden.so')).toBe('orden.so')
     expect(blogRootOf(env, 'orden.so')).toBe('orden.so')
     expect(blogRootOf(env, 'field.nibeditor.com.orden.so')).toBe('orden.so')
     expect(blogRootOf(env, 'notorden.so')).toBeNull()
-
     const nested = testEnv({ OTHER_BLOG_ROOTS: 'blogs.nibeditor.com' })
     expect(blogRootOf(nested, 'a.blogs.nibeditor.com')).toBe('blogs.nibeditor.com')
     nested.close()
   })
 })
-
 describe('the web app under the new name', () => {
   test('may call the API under the old one, and the other way round', async () => {
     for (const host of ['nibeditor.com', 'orden.so']) {
@@ -65,7 +56,6 @@ describe('the web app under the new name', () => {
       }
     }
   })
-
   test('is signed in under either name with the same session', async () => {
     const token = await signIn(env, 'a@b.dev')
     for (const host of ['nibeditor.com', 'orden.so']) {
@@ -75,10 +65,8 @@ describe('the web app under the new name', () => {
     }
   })
 })
-
 describe('Pass under its own name', () => {
   const PASS = 'https://pass.orden.so'
-
   test('may call the API under either name', async () => {
     for (const host of ['nibeditor.com', 'orden.so']) {
       const response = await call(env, '/v1/me', { host, headers: { origin: PASS } })
@@ -87,12 +75,10 @@ describe('Pass under its own name', () => {
     expect(isOwnOrigin(env, 'http://pass.orden.so')).toBe(false)
     expect(isOwnOrigin(env, 'https://pass.orden.so.evil.example')).toBe(false)
   })
-
   test('is not one of the names a connector finds the server under', () => {
     expect(origins(env)).not.toContain(PASS)
     expect(originAt(env, `${PASS}/.well-known/x`)).toBe(NEW)
   })
-
   test('cannot be taken as a site', async () => {
     const token = await signIn(env, 'a@b.dev')
     const space = (await call(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space.id
@@ -102,11 +88,9 @@ describe('Pass under its own name', () => {
     }
   })
 })
-
 describe('a published site', () => {
   let token: string
   let space: string
-
   beforeEach(async () => {
     token = await signIn(env, 'a@b.dev')
     space = (await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })).json.space.id
@@ -115,14 +99,12 @@ describe('a published site', () => {
       body: { path: 'Hello world.md', content: '# Hello world\n\nFirst **post**.\n' },
     })
   })
-
   test('is the same site under both names', async () => {
     await call(env, `/v1/spaces/${space}/blog`, {
       method: 'PUT',
       token,
       body: { subdomain: 'field' },
     })
-
     const old = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     const now = await call(env, '/hello-world', { host: 'field.orden.so' })
     expect(old.status).toBe(200)
@@ -132,19 +114,16 @@ describe('a published site', () => {
     expect(old.text).toContain('https://field.nibeditor.com/hello-world')
     expect(now.text).toContain('https://field.orden.so/hello-world')
   })
-
   test('a name nobody publishes under sends the visitor to the app', async () => {
     const response = await call(env, '/some/note', { host: 'unused.orden.so' })
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toBe(NEW)
   })
-
   test('the new name itself is the app, not a site', async () => {
     const response = await call(env, '/', { host: 'orden.so' })
     expect(response.status).not.toBe(302)
     expect(response.text).not.toContain('Field notes')
   })
-
   test('cannot take the new name, or a name under it, as a domain of its own', async () => {
     for (const domain of ['orden.so', 'www.orden.so', 'EVIL.ORDEN.SO.']) {
       const response = await call(env, `/v1/spaces/${space}/blog`, {
@@ -155,7 +134,6 @@ describe('a published site', () => {
       expect(response.status, domain).toBe(400)
     }
   })
-
   test('cannot be called after the new name', async () => {
     const response = await call(env, `/v1/spaces/${space}/blog`, {
       method: 'PUT',
@@ -165,7 +143,6 @@ describe('a published site', () => {
     expect(response.status).toBe(409)
   })
 })
-
 async function pkce() {
   const verifier = 'v'.repeat(20) + Math.random().toString(36).slice(2).padEnd(30, 'x')
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
@@ -175,7 +152,6 @@ async function pkce() {
     .replace(/=+$/, '')
   return { verifier, challenge }
 }
-
 async function codeSentTo(action: () => Promise<unknown>): Promise<string> {
   const logged: string[] = []
   const spy = vi.spyOn(console, 'log').mockImplementation((message) => {
@@ -187,12 +163,10 @@ async function codeSentTo(action: () => Promise<unknown>): Promise<string> {
   if (!match) throw new Error('no code was sent')
   return `${match[1]}${match[2]}`
 }
-
 const form = (fields: Record<string, string>) => ({
   raw: new URLSearchParams(fields).toString(),
   headers: { 'content-type': 'application/x-www-form-urlencoded' },
 })
-
 describe('a connector', () => {
   test('finds the server in the name it was given', async () => {
     for (const [host, origin] of [
@@ -202,11 +176,9 @@ describe('a connector', () => {
       const server = await call(env, '/.well-known/oauth-authorization-server', { host })
       expect(server.json.issuer).toBe(origin)
       expect(server.json.token_endpoint).toBe(`${origin}/oauth/token`)
-
       const resource = await call(env, '/.well-known/oauth-protected-resource/mcp', { host })
       expect(resource.json.resource).toBe(`${origin}/mcp`)
       expect(resource.json.authorization_servers).toEqual([origin])
-
       const refused = await call(env, '/mcp', { host, body: { jsonrpc: '2.0', id: 1 } })
       expect(refused.status).toBe(401)
       expect(refused.headers.get('www-authenticate')).toContain(
@@ -214,7 +186,6 @@ describe('a connector', () => {
       )
     }
   })
-
   test('added under the old name connects through the new one, and the token works under both', async () => {
     const registered = await call(env, '/oauth/register', {
       host: 'orden.so',
@@ -232,7 +203,6 @@ describe('a connector', () => {
       code_challenge: challenge,
       resource: `${OLD}/mcp`,
     }
-
     const code = await codeSentTo(() =>
       call(env, '/oauth/authorize', {
         host: 'orden.so',
@@ -246,7 +216,6 @@ describe('a connector', () => {
     expect(allowed.status).toBe(302)
     const sentTo = new URL(allowed.headers.get('location')!)
     expect(sentTo.searchParams.get('iss')).toBe(NEW)
-
     const tokens = await call(env, '/oauth/token', {
       host: 'orden.so',
       ...form({
@@ -259,7 +228,6 @@ describe('a connector', () => {
       }),
     })
     expect(tokens.status).toBe(200)
-
     for (const host of ['orden.so', 'nibeditor.com']) {
       const listed = await call<RpcView>(env, '/mcp', {
         host,
@@ -269,7 +237,6 @@ describe('a connector', () => {
       expect(listed.status, host).toBe(200)
     }
   })
-
   test('asking for a resource that is neither name is refused', async () => {
     const registered = await call(env, '/oauth/register', {
       host: 'orden.so',
@@ -285,17 +252,14 @@ describe('a connector', () => {
       code_challenge_method: 'S256',
       resource: 'https://orden.so.evil.example/mcp',
     })
-
     const response = await call(env, `/oauth/authorize?${query.toString()}`, { host: 'orden.so' })
     const sentTo = new URL(response.headers.get('location')!)
     expect(sentTo.searchParams.get('error')).toBe('invalid_target')
     expect(sentTo.searchParams.get('iss')).toBe(NEW)
   })
 })
-
 describe('a machine', () => {
   const HEX = '0123456789abcdef0123456789abcdef'
-
   test('keeps its hostname under the zone its records are in when the links move', async () => {
     const moved = testEnv({
       APP_ORIGIN: NEW,
@@ -306,18 +270,15 @@ describe('a machine', () => {
     expect(machineDomain(moved)).toBe('nibeditor.com')
     expect(isMachineHost(`m-${HEX}.nibeditor.com`, machineDomain(moved))).toBe(true)
     expect(isMachineHost(`m-${HEX}.orden.so`, machineDomain(moved))).toBe(false)
-
     const single = testEnv({ APP_ORIGIN: NEW })
     delete single.MACHINE_DOMAIN
     expect(machineDomain(single)).toBe('orden.so')
-
     const outward = vi.fn(() => Promise.resolve(new Response('ordend')))
     vi.stubGlobal('fetch', outward)
     const answer = await worker.fetch(new Request(`https://m-${HEX}.nibeditor.com/link`), moved)
     expect(await answer.text()).toBe('ordend')
     expect(outward).toHaveBeenCalledTimes(1)
     vi.unstubAllGlobals()
-
     moved.close()
     single.close()
   })

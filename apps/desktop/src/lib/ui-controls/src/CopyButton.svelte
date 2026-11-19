@@ -12,9 +12,7 @@
     word?: string
     disabled?: boolean
   } = $props()
-
   const said = new Copied()
-
   $effect(() => () => said.stop())
 </script>
 
@@ -40,28 +38,23 @@
       color var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
-
   .copy.wide {
     align-self: flex-start;
     min-width: 6rem;
   }
-
   .copy.done {
     border-color: var(--success);
     color: var(--success);
   }
-
   @media (hover: hover) {
     .copy:hover:not(.done):not(:disabled) {
       border-color: var(--accent);
       color: var(--accent);
     }
   }
-
   .copy:active:not(:disabled) {
     background: var(--press);
   }
-
   .copy:focus-visible {
     outline-offset: 2px;
   }

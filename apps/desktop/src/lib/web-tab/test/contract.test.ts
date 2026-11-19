@@ -11,7 +11,6 @@ describe('the pages, to other modules', () => {
     expect(webPages().addressOf('no-such-tab')).toBeNull()
     expect(webPages().tabs()).toContain('contract-tab')
   })
-
   test("a site's mark is the page's own, else none for a site never seen", () => {
     expect(siteMark('data:image/png;base64,AA', 'https://example.com/')).toBe('data:image/png;base64,AA')
     expect(siteMark(null, 'https://never.example/', null)).toBeNull()

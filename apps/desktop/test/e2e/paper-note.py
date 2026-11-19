@@ -1,18 +1,14 @@
 import base64
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 def paper_bytes(sizes: list[tuple[float, float]]) -> str:
     objects: list[str] = []
     kids = " ".join(f"{3 + at * 2} 0 R" for at in range(len(sizes)))
     objects.append("1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj")
     objects.append(f"2 0 obj<</Type/Pages/Kids[{kids}]/Count {len(sizes)}>>endobj")
-
     for at, (wide, tall) in enumerate(sizes):
         page = 3 + at * 2
         stream = f"0 0 0 rg 40 40 {wide - 80:.0f} {tall - 80:.0f} re f"
@@ -21,14 +17,11 @@ def paper_bytes(sizes: list[tuple[float, float]]) -> str:
             f"/MediaBox[0 0 {wide:.2f} {tall:.2f}]/Contents {page + 1} 0 R>>endobj"
         )
         objects.append(f"{page + 1} 0 obj<</Length {len(stream)}>>stream\n{stream}\nendstream\nendobj")
-
     body = "\n".join(
         ["%PDF-1.4", *objects, f"trailer<</Root 1 0 R/Size {2 + len(sizes) * 2 + 1}>>", "%%EOF"]
     )
     return base64.b64encode(body.encode("latin-1")).decode("ascii")
-
 PAPER = paper_bytes([(595.28, 841.89), (612.0, 792.0)])
-
 IMPORT = """
 async ({ base64, name }) => {
   const binary = atob(base64)
@@ -45,7 +38,6 @@ async ({ base64, name }) => {
   return { format: importing.format, error: importing.error, folder: importing.folder }
 }
 """
-
 SEED_PDF = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -65,14 +57,12 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 LISTED = """
 (under) => window.ordenApp.workspace.files
   .map((one) => one.path)
   .filter((path) => !under || path.includes('/' + under + '/'))
   .map((path) => path.split('/').pop())
 """
-
 DARK_ON_SHEET = """
 (number) => {
   const sheet = [...document.querySelectorAll('.sheet')].find(
@@ -88,7 +78,6 @@ DARK_ON_SHEET = """
   return dark
 }
 """
-
 def drawn(page: Page, label: str, pages: int) -> None:
     page.wait_for_selector(".pages", timeout=15000)
     DRIVE.waited(page, f"window.ordenApp.pages.current?.store.count === {pages}", f"[{label}] the page note")
@@ -108,7 +97,6 @@ def drawn(page: Page, label: str, pages: int) -> None:
             wrong(f"[{label}] page {at + 1} is not on the page")
         elif count < 100:
             wrong(f"[{label}] page {at + 1} drew nothing of the paper")
-
 def only_the_note(page: Page, label: str, under: str, note: str) -> None:
     names = page.evaluate(LISTED, under)
     say(f"[{label}] the list: {names}")
@@ -117,7 +105,6 @@ def only_the_note(page: Page, label: str, under: str, note: str) -> None:
     papers = [name for name in names if name.lower().endswith(".pdf")]
     if papers:
         wrong(f"[{label}] the list still shows a PDF beside the note: {papers}")
-
 def imported(page: Page) -> None:
     say("--- a PDF through the Import door ---")
     wait_for(page, "!!window.ordenApp.importing", "the import sheet's store")
@@ -125,10 +112,8 @@ def imported(page: Page) -> None:
     if made.get("format") != "pdf-pages" or made.get("error"):
         wrong(f"the import read the paper as {made.get('format')!r}: {made.get('error')!r}")
         return
-
     folder = made.get("folder") or ""
     only_the_note(page, "import", folder, "Lecture 4.pages")
-
     path = page.evaluate(
         "() => window.ordenApp.workspace.files.find((one) => one.name === 'Lecture 4.pages')?.path ?? null"
     )
@@ -136,14 +121,12 @@ def imported(page: Page) -> None:
         return
     page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path)", path)
     drawn(page, "import", 2)
-
     files = page.evaluate(
         "() => window.ordenApp.pages.current.store.pages.map((one) => one.file ?? null)"
     )
     if files != ["Lecture 4.pages.pdf", "Lecture 4.pages.pdf"]:
         wrong(f"[import] the pages name {files}")
     shot(page, "01-imported")
-
 def opened_in_place(page: Page) -> str | None:
     say("--- a PDF already in the space, opened ---")
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
@@ -152,7 +135,6 @@ def opened_in_place(page: Page) -> str | None:
         wrong("the seeded PDF is not in the list")
         return None
     shot(page, "02-a-pdf-in-the-space")
-
     page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path)", pdf)
     wait_for(
         page,
@@ -163,7 +145,6 @@ def opened_in_place(page: Page) -> str | None:
     drawn(page, "in place", 2)
     shot(page, "03-replaced-by-its-page-note")
     return page.evaluate("() => window.ordenApp.workspace.active.path")
-
 def stroke(page: Page, cdp) -> None:
     page.keyboard.press("Escape")
     box = page.locator(".pages").first.bounding_box()
@@ -171,10 +152,8 @@ def stroke(page: Page, cdp) -> None:
     page.mouse.click(box["x"] + 30, box["y"] + 30)
     page.keyboard.press("d")
     page.wait_for_timeout(150)
-
     middle = box["x"] + box["width"] / 2
     points = [(middle - 120 + n * 12, box["y"] + 40 + (n % 4) * 9) for n in range(22)]
-
     def send(what: str, x: float, y: float, force: float) -> None:
         cdp.send(
             "Input.dispatchMouseEvent",
@@ -189,14 +168,12 @@ def stroke(page: Page, cdp) -> None:
                 "force": force,
             },
         )
-
     send("mousePressed", *points[0], 0.4)
     for x, y in points[1:]:
         send("mouseMoved", x, y, 0.7)
         page.wait_for_timeout(8)
     send("mouseReleased", *points[-1], 0)
     page.wait_for_timeout(300)
-
 def ink_kept(page: Page, cdp, path: str) -> None:
     say("--- ink on it, kept ---")
     ink = "window.ordenApp.pages.current?.store.canvas.ink.length ?? -1"
@@ -205,7 +182,6 @@ def ink_kept(page: Page, cdp, path: str) -> None:
     if page.evaluate(f"() => {ink}") != before + 1:
         wrong("a pen stroke on the page note left no ink")
         return
-
     page.evaluate("() => window.ordenApp.pages.current?.store.part()")
     page.wait_for_timeout(600)
     page.evaluate(
@@ -219,14 +195,12 @@ def ink_kept(page: Page, cdp, path: str) -> None:
     wait_for(page, f"{ink} === {before + 1}", "the stroke to be there when the note opens again")
     drawn(page, "opened again", 2)
     shot(page, "04-the-ink-kept")
-
 def exported(page: Page) -> None:
     say("--- Export as PDF ---")
     page.keyboard.press("Escape")
     go = DRIVE.pick_export(page, "pdf")
     with page.expect_download(timeout=40000) as caught:
         go.click()
-
     where = DRIVE.shots / "exported.pdf"
     caught.value.save_as(str(where))
     body = where.read_bytes()
@@ -234,7 +208,6 @@ def exported(page: Page) -> None:
     if not body.startswith(b"%PDF"):
         wrong("Export as PDF handed back something that is not a PDF")
         return
-
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     back = f"{root}/Exported.pdf"
     page.evaluate(SEED_PDF, {"path": back, "data": base64.b64encode(body).decode("ascii")})
@@ -245,7 +218,6 @@ def exported(page: Page) -> None:
         "the exported PDF to open as a page note",
     )
     drawn(page, "exported", 2)
-
     inked = page.evaluate(
         """() => {
           const sheet = document.querySelector('.sheet canvas')
@@ -264,18 +236,15 @@ def exported(page: Page) -> None:
     if inked <= 0:
         wrong("the exported PDF has no ink on it")
     shot(page, "05-the-export-read-back")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     cdp = page.context.new_cdp_session(page)
     DRIVE.open(page)
-
     imported(page)
     path = opened_in_place(page)
     if path:
         ink_kept(page, cdp, path)
         exported(page)
-
 raise SystemExit(
     DRIVE.run(drive, "a PDF is one page note, drawn, written on, kept and exported")
 )

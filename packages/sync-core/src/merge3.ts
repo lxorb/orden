@@ -4,22 +4,17 @@ export interface Span {
   from: number
   to: number
 }
-
 export interface Edit extends Span {
   insert: string
 }
-
 export type Whose = 'local' | 'remote'
-
 export interface Meeting {
   base: Span
   local: readonly Edit[]
   remote: readonly Edit[]
   size: number
 }
-
 export type Settle = Whose | 'both'
-
 export interface Analysis {
   local: readonly Edit[]
   remote: readonly Edit[]
@@ -27,35 +22,27 @@ export interface Analysis {
   meetings: readonly Meeting[]
   alone: { local: readonly Edit[]; remote: readonly Edit[] }
 }
-
 export interface Merged extends Analysis {
   text: string
 }
-
 function isInsertion(edit: Edit): boolean {
   return edit.from === edit.to
 }
-
 function sameEdit(one: Edit, other: Edit): boolean {
   return one.from === other.from && one.to === other.to && one.insert === other.insert
 }
-
 function shared(one: string, other: string): number {
   const [first, second] = one < other ? [one, other] : [other, one]
   return wordEdits(first, second).reduce((left, edit) => left - (edit.to - edit.from), first.length)
 }
-
 const ONE_PASSAGE = 16
-
 const HELD_WHOLE = 8
-
 function samePassage(one: string, other: string): boolean {
   if (shared(one, other) > ONE_PASSAGE) return true
   const [shorter, longer] = one.trim().length <= other.trim().length ? [one, other] : [other, one]
   const words = shorter.trim()
   return words.length >= HELD_WHOLE && longer.includes(words)
 }
-
 function meets(one: Edit, other: Edit): boolean {
   if (isInsertion(one) && isInsertion(other)) {
     return one.from === other.from && samePassage(one.insert, other.insert)
@@ -68,21 +55,17 @@ function meets(one: Edit, other: Edit): boolean {
   }
   return one.from < other.to && other.from < one.to
 }
-
 function lineStart(base: string, at: number): number {
   return at === 0 ? 0 : base.lastIndexOf('\n', at - 1) + 1
 }
-
 function lineEnd(base: string, at: number): number {
   const newline = base.indexOf('\n', at)
   return newline === -1 ? base.length : newline + 1
 }
-
 function wholeLines(base: string, edit: Edit): boolean {
   const ends = edit.to === edit.from || edit.to === base.length || base.charAt(edit.to - 1) === '\n'
   return lineStart(base, edit.from) === edit.from && ends && (edit.insert === '' || edit.insert.endsWith('\n'))
 }
-
 function reach(base: string, edit: Edit): Span {
   if (wholeLines(base, edit)) return { from: edit.from, to: edit.to }
   const keepsEnd = edit.to > edit.from && base.charAt(edit.to - 1) === '\n' && edit.insert.endsWith('\n')
@@ -91,13 +74,10 @@ function reach(base: string, edit: Edit): Span {
     to: lineEnd(base, keepsEnd ? edit.to - 1 : edit.to),
   }
 }
-
 function breaks(base: string, edit: Edit): boolean {
   return edit.insert.includes('\n') || base.slice(edit.from, edit.to).includes('\n')
 }
-
 const WORDY = /[\p{L}\p{N}]/u
-
 function rewrittenLines(base: string, side: readonly Edit[]): boolean[] {
   const out = side.map(() => false)
   let first = 0
@@ -123,7 +103,6 @@ function rewrittenLines(base: string, side: readonly Edit[]): boolean[] {
   }
   return out
 }
-
 function glued(base: string, one: Edit, other: Edit): boolean {
   if (!isInsertion(one) && !isInsertion(other)) {
     const [first, then] = one.to === other.from ? [one, other] : [other, one]
@@ -145,7 +124,6 @@ function glued(base: string, one: Edit, other: Edit): boolean {
   }
   return false
 }
-
 function sameLine(
   base: string,
   one: Edit,
@@ -182,18 +160,15 @@ function sameLine(
   }
   return false
 }
-
 function paired(mine: readonly Edit[], theirs: readonly Edit[]) {
   const identical: Edit[] = []
   const local: Edit[] = []
   const remote: Edit[] = []
   let one = 0
   let other = 0
-
   while (one < mine.length || other < theirs.length) {
     const left = mine[one]
     const right = theirs[other]
-
     if (left && right && sameEdit(left, right)) {
       identical.push(left)
       one++
@@ -206,10 +181,8 @@ function paired(mine: readonly Edit[], theirs: readonly Edit[]) {
       other++
     }
   }
-
   return { identical, local, remote }
 }
-
 function grouped(base: string, local: readonly Edit[], remote: readonly Edit[]): Meeting[] {
   const parent = new Map<number, number>()
   const root = (at: number): number => {
@@ -224,13 +197,11 @@ function grouped(base: string, local: readonly Edit[], remote: readonly Edit[]):
     const b = root(other)
     if (a !== b) parent.set(Math.max(a, b), Math.min(a, b))
   }
-
   const reaches = remote.map((edit) => reach(base, edit))
   const mineRewritten = rewrittenLines(base, local)
   const theirsRewritten = rewrittenLines(base, remote)
   const reachedBy: number[] = []
   for (const span of reaches) reachedBy.push(Math.max(reachedBy.at(-1) ?? 0, span.to))
-
   const taken: Span[] = []
   for (const edit of [...local, ...remote].sort((a, b) => a.from - b.from)) {
     if (edit.from === edit.to) continue
@@ -256,50 +227,41 @@ function grouped(base: string, local: readonly Edit[], remote: readonly Edit[]):
     asked.set(key, !words)
     return !words
   }
-
   const touched = new Set<number>()
   let window = 0
   for (const [index, edit] of local.entries()) {
     const mine = reach(base, edit)
     while (window < remote.length && (reachedBy[window] ?? 0) < mine.from) window++
-
     for (let at = window; at < remote.length; at++) {
       const other = remote[at]
       const theirs = reaches[at]
       if (!other || !theirs || theirs.from > mine.to) break
       const rewritten = [!!mineRewritten[index], !!theirsRewritten[at]] as const
       if (!meets(edit, other) && !sameLine(base, edit, other, { rewritten, bare })) continue
-
       touched.add(index)
       touched.add(local.length + at)
       join(index, local.length + at)
     }
   }
-
   const groups = new Map<number, { local: Edit[]; remote: Edit[] }>()
   for (const node of [...touched].sort((a, b) => a - b)) {
     const key = root(node)
     const group = groups.get(key) ?? { local: [], remote: [] }
     groups.set(key, group)
-
     const isLocal = node < local.length
     const edit = isLocal ? local[node] : remote[node - local.length]
     if (edit) (isLocal ? group.local : group.remote).push(edit)
   }
-
   const meetings: Meeting[] = []
   for (const group of groups.values()) {
     const all = [...group.local, ...group.remote]
     const from = all.map((edit) => edit.from).reduce((low, one) => Math.min(low, one), Infinity)
     const to = all.map((edit) => edit.to).reduce((high, one) => Math.max(high, one), -Infinity)
     const written = all.reduce((sum, edit) => sum + edit.insert.length, 0)
-
     meetings.push({ base: { from, to }, ...group, size: written + (to - from) })
   }
-
   return meetings.sort((a, b) => a.base.from - b.base.from)
 }
-
 function apart(base: string, side: readonly Edit[], other: readonly Edit[]): Edit[] {
   const points = new Set(other.filter((one) => one.from === one.to).map((one) => one.from))
   return side.flatMap((edit) => {
@@ -312,7 +274,6 @@ function apart(base: string, side: readonly Edit[], other: readonly Edit[]): Edi
     return finer.length > 1 && finer.every((one) => one.from === one.to) ? finer : [edit]
   })
 }
-
 function applied(base: string, side: readonly Edit[]): string {
   let out = ''
   let at = 0
@@ -322,17 +283,14 @@ function applied(base: string, side: readonly Edit[]): string {
   }
   return out + base.slice(at)
 }
-
 function cost(side: readonly Edit[]): number {
   return side.reduce((sum, edit) => sum + (edit.to - edit.from) + edit.insert.length, 0)
 }
-
 function besideACopy(base: string, edit: Edit): boolean {
   const copied = (piece: string, at: number, after: number) =>
     piece !== '' && (base.slice(at - piece.length, at) === piece || base.slice(after, after + piece.length) === piece)
   return copied(base.slice(edit.from, edit.to), edit.from, edit.to) || copied(edit.insert, edit.from, edit.from)
 }
-
 function heldBy(base: string, side: readonly Edit[], others: readonly Edit[], other: string): Edit[] {
   const whole = cost(edits(base, other, 'semantic'))
   return side.filter((edit) => {
@@ -341,7 +299,6 @@ function heldBy(base: string, side: readonly Edit[], others: readonly Edit[], ot
     return rest + cost([edit]) !== whole
   })
 }
-
 export function analyse(base: string, local: string, remote: string): Analysis {
   const roughMine = edits(base, local, 'semantic')
   const roughTheirs = edits(base, remote, 'semantic')
@@ -350,7 +307,6 @@ export function analyse(base: string, local: string, remote: string): Analysis {
   const mine = heldBy(base, finerMine, theirs, applied(base, theirs))
   const { identical, local: onlyMine, remote: onlyTheirs } = paired(mine, theirs)
   const meetings = grouped(base, onlyMine, onlyTheirs)
-
   const met = new Set<Edit>(meetings.flatMap((meeting) => [...meeting.local, ...meeting.remote]))
   return {
     local: mine,
@@ -363,22 +319,18 @@ export function analyse(base: string, local: string, remote: string): Analysis {
     },
   }
 }
-
 interface Piece extends Edit {
   rank: number
 }
-
 function both(base: string, meeting: Meeting, first: Whose): string {
   const { from, to } = meeting.base
   const gone = new Uint8Array(to - from)
   const inserts = new Map<number, string[]>()
-
   const sides: [Whose, readonly Edit[]][] = [
     ['local', meeting.local],
     ['remote', meeting.remote],
   ]
   if (first === 'remote') sides.reverse()
-
   for (const [, list] of sides) {
     for (const edit of list) {
       gone.fill(1, edit.from - from, edit.to - from)
@@ -388,7 +340,6 @@ function both(base: string, meeting: Meeting, first: Whose): string {
       inserts.set(edit.from, here)
     }
   }
-
   let out = ''
   for (let at = from; at <= to; at++) {
     out += (inserts.get(at) ?? []).join('')
@@ -396,12 +347,10 @@ function both(base: string, meeting: Meeting, first: Whose): string {
   }
   return out
 }
-
 export interface Writing {
   settle: (meeting: Meeting) => Settle
   first?: (at: number) => Whose
 }
-
 export function sharedPoints(analysis: Analysis): number[] {
   const side = (whose: Whose) => [...analysis.alone[whose], ...analysis.meetings.flatMap((meeting) => meeting[whose])]
   const mine = new Set(side('local').map((edit) => edit.from))
@@ -409,16 +358,13 @@ export function sharedPoints(analysis: Analysis): number[] {
   for (const edit of side('remote')) if (mine.has(edit.from)) points.add(edit.from)
   return [...points].sort((a, b) => a - b)
 }
-
 export function written(base: string, analysis: Analysis, writing: Writing): string {
   const first = writing.first ?? (() => 'local')
   const rankOf = (whose: Whose, at: number) => (whose === first(at) ? 0 : 1)
   const pieces: Piece[] = []
-
   for (const edit of analysis.alone.local) pieces.push({ ...edit, rank: rankOf('local', edit.from) })
   for (const edit of analysis.alone.remote) pieces.push({ ...edit, rank: rankOf('remote', edit.from) })
   for (const edit of analysis.identical) pieces.push({ ...edit, rank: 0 })
-
   for (const meeting of analysis.meetings) {
     const settled = writing.settle(meeting)
     if (settled === 'both') {
@@ -428,7 +374,6 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
     }
     for (const edit of meeting[settled]) pieces.push({ ...edit, rank: rankOf(settled, edit.from) })
   }
-
   const inside = (piece: Piece) => (wholeLines(base, piece) ? 0 : 1)
   const replaces = (piece: Piece) => (piece.to > piece.from ? 1 : 0)
   const opens = (piece: Piece) => (piece.insert.startsWith('\n') ? 1 : 0)
@@ -441,21 +386,17 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
       a.rank - b.rank ||
       a.to - b.to,
   )
-
   let out = ''
   let at = 0
   for (const piece of pieces) {
     out += base.slice(at, piece.from) + piece.insert
     at = Math.max(at, piece.to)
   }
-
   return out + base.slice(at)
 }
-
 function inWord(text: string, at: number): boolean {
   return WORDY.test(text.charAt(at - 1)) && WORDY.test(text.charAt(at))
 }
-
 function heldIn(words: string, other: string): boolean {
   const these = words.trim()
   if (!these) return false
@@ -467,20 +408,17 @@ function heldIn(words: string, other: string): boolean {
   }
   return false
 }
-
 function linesAlike(one: string, other: string): string {
   let at = 0
   while (at < one.length && one.charAt(at) === other.charAt(at)) at++
   if (at === 0) return ''
   return one.slice(0, one.lastIndexOf('\n', at - 1) + 1)
 }
-
 export function mergedOn(base: string, local: string, remote: string): string {
   const analysis = analyse(base, local, remote)
   const mine = [...analysis.alone.local, ...analysis.meetings.flatMap((one) => one.local)]
   const theirs = [...analysis.alone.remote, ...analysis.meetings.flatMap((one) => one.remote)]
   const told = new Map<Edit, Edit | null>()
-
   for (const one of mine) {
     const other = theirs.find((edit) => edit.from === one.from && edit.to === one.to)
     if (!other) continue
@@ -492,7 +430,6 @@ export function mergedOn(base: string, local: string, remote: string): string {
     const alike = linesAlike(one.insert, other.insert)
     if (alike) told.set(other, { ...other, insert: other.insert.slice(alike.length) })
   }
-
   const left = (side: readonly Edit[]) =>
     side.flatMap((edit) => {
       const said = told.has(edit) ? told.get(edit) : edit
@@ -512,7 +449,6 @@ export function mergedOn(base: string, local: string, remote: string): string {
     { settle: () => 'both' },
   )
 }
-
 export function merge3(
   base: string,
   local: string,

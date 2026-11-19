@@ -9,19 +9,14 @@ export interface Judging {
   times: Times
   merged?: string
 }
-
 export type Classify = (judging: Judging) => Promise<Judged>
-
 export const inline: Classify = (one) =>
   Promise.resolve(judge(one.shape, one.base, one.local, one.remote, one.times, one.merged))
-
 export const LARGE = 64 * 1024
-
 export function classifier(): Classify {
   let worker: Worker | null = null
   let asked = 0
   const waiting = new Map<number, (judged: Judged | null) => void>()
-
   const open = (): Worker | null => {
     if (worker) return worker
     try {
@@ -44,7 +39,6 @@ export function classifier(): Classify {
       return null
     }
   }
-
   return async (one) => {
     const size = one.base.length + one.local.length + one.remote.length
     const away = size >= LARGE ? open() : null

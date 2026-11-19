@@ -9,17 +9,14 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   platform: () => 'linux',
   invoke: () => Promise.resolve(null),
 }))
-
 vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
   },
   invoke: () => Promise.resolve(null),
 }))
-
 let said: ((what: Said) => void) | null = null
 const sent: string[] = []
-
 vi.mock('../../src/lib/terminal/src/online/source', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/terminal/src/online/source')>()),
   onlineSource: () => ({
@@ -37,10 +34,8 @@ vi.mock('../../src/lib/terminal/src/online/source', async (importOriginal) => ({
     end: () => undefined,
   }),
 }))
-
 let typing: ((data: string) => void) | null = null
 const written: string[] = []
-
 vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 80
@@ -116,19 +111,15 @@ vi.mock('@xterm/addon-unicode11', () => ({
     activate = () => undefined
   },
 }))
-
 Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },
 })
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { openTerm } = await import('../../src/lib/terminal/src/online/open')
 const { statusLine } = await import('../../src/lib/terminal/src/online/arrival.svelte')
-
 let place: HTMLElement
-
 beforeEach(() => {
   said = null
   sent.length = 0
@@ -139,14 +130,12 @@ beforeEach(() => {
   place = document.createElement('div')
   document.body.append(place)
 })
-
 afterEach(() => {
   vi.useRealTimers()
   workspace.tabs = []
   flushSync()
   place.remove()
 })
-
 async function live() {
   const tab = openTerm('/home/emil/Terminal.term')
   if (!tab) throw new Error('no tab')
@@ -159,43 +148,34 @@ async function live() {
   await vi.waitFor(() => expect(session.live).toBe(true))
   return session
 }
-
 const line = (session: Awaited<ReturnType<typeof live>>) => (session.status ? statusLine(session.status) : null)
-
 test('a relink keeps the screen, says nothing, and sends what was typed once it is back', async () => {
   const session = await live()
-
   said?.({ link: false })
   flushSync()
   expect(line(session)).toBeNull()
   typing?.('ls\r')
   await new Promise((settle) => setTimeout(settle, 0))
   expect(sent).toEqual([])
-
   said?.({ link: true })
   await vi.waitFor(() => expect(sent).toEqual(['ls\r']))
   expect(session.live).toBe(true)
   expect(line(session)).toBeNull()
 })
-
 test('an older server\'s "starting" for a relink is held the same, and never shown', async () => {
   const session = await live()
-
   said?.({ machine: 'starting' })
   flushSync()
   expect(line(session)).toBeNull()
   typing?.('pwd\r')
-
   said?.({ machine: 'awake' })
   await vi.waitFor(() => expect(sent).toEqual(['pwd\r']))
   expect(session.live).toBe(true)
   expect(line(session)).toBeNull()
 })
-
 test('a relink that lasts says Connecting, not Starting machine, and the screen comes back', async () => {
   const session = await live()
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-
   said?.({ link: false })
   vi.advanceTimersByTime(4000)
   flushSync()
@@ -203,18 +183,15 @@ test('a relink that lasts says Connecting, not Starting machine, and the screen 
   vi.advanceTimersByTime(1500)
   flushSync()
   expect(line(session)).toBe('Connecting…')
-
   vi.useRealTimers()
   said?.({ link: true })
   said?.({ screen: 'emil@machine:~$ ', cols: 80, rows: 24, restored: null })
   await vi.waitFor(() => expect(session.live).toBe(true))
   expect(line(session)).toBeNull()
 })
-
 test('a machine that really restarts says Starting machine once it is plain it is one', async () => {
   const session = await live()
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-
   said?.({ link: false })
   said?.({ machine: 'starting' })
   vi.advanceTimersByTime(5500)

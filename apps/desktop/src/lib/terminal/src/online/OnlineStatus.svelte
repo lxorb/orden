@@ -3,7 +3,6 @@
   import { type Status, statusLine } from './arrival.svelte'
 
   const { status, onretry }: { status: Status; onretry: () => void } = $props()
-
   const failed = $derived('failed' in status)
   const gone = $derived('gone' in status)
   const held = $derived('held' in status ? status : null)
@@ -38,11 +37,9 @@
     box-shadow: var(--shadow-md);
     animation: arrive var(--dur-base) var(--ease-out) var(--dur-slow) both;
   }
-
   .status.failed {
     animation-delay: 0s;
   }
-
   p {
     margin: 0;
     color: var(--muted-strong);
@@ -50,22 +47,18 @@
     font-size: var(--text-sm);
     text-align: center;
   }
-
   .failed p {
     color: var(--text-strong);
   }
-
   .sweep {
     width: 6rem;
   }
-
   @keyframes arrive {
     from {
       opacity: 0;
       scale: 0.97;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .status {
       animation-name: none;

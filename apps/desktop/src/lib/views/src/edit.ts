@@ -17,7 +17,6 @@ function withView(base: Base, at: number, change: (view: View) => View): Base {
   views[at] = change(view)
   return { ...base, views }
 }
-
 function withOrden(view: View, change: { [K in keyof OrdenView]?: OrdenView[K] | undefined }): View {
   const orden: OrdenView = { ...view.orden }
   for (const [key, value] of Object.entries(change) as [keyof OrdenView, unknown][]) {
@@ -26,24 +25,18 @@ function withOrden(view: View, change: { [K in keyof OrdenView]?: OrdenView[K] |
   }
   return { ...view, orden }
 }
-
 export const setLayout = (base: Base, at: number, type: string): Base =>
   withView(base, at, (view) => ({ ...view, type }))
-
 export const setSort = (base: Base, at: number, sort: Sort[]): Base => withView(base, at, (view) => ({ ...view, sort }))
-
 function lacking(view: View, key: 'groupBy' | 'filters'): View {
   const out = { ...view }
   Reflect.deleteProperty(out, key)
   return out
 }
-
 export const setGroup = (base: Base, at: number, group: Sort | undefined): Base =>
   withView(base, at, (view) => (group ? { ...view, groupBy: group } : lacking(view, 'groupBy')))
-
 export const setSubGroup = (base: Base, at: number, sub: Sort | undefined): Base =>
   withView(base, at, (view) => withOrden(view, { subGroupBy: sub }))
-
 export const setFilter = (base: Base, at: number, filters: Filter | undefined): Base =>
   withView(base, at, (view) => {
     const options = { ...view.options }
@@ -51,13 +44,10 @@ export const setFilter = (base: Base, at: number, filters: Filter | undefined): 
     const next = { ...view, options }
     return filters === undefined ? lacking(next, 'filters') : { ...next, filters }
   })
-
 export const setShowCompleted = (base: Base, at: number, shown: boolean): Base =>
   withView(base, at, (view) => withOrden(view, { showCompleted: shown ? true : undefined }))
-
 export const setColumns = (base: Base, at: number, order: string[]): Base =>
   withView(base, at, (view) => ({ ...view, order }))
-
 export const setSummary = (base: Base, at: number, property: string, name: string | null): Base =>
   withView(base, at, (view) => {
     const summaries = { ...view.summaries }
@@ -65,14 +55,12 @@ export const setSummary = (base: Base, at: number, property: string, name: strin
     else summaries[property] = name
     return { ...view, summaries }
   })
-
 export const setHidden = (base: Base, at: number, group: string, hidden: boolean): Base =>
   withView(base, at, (view) => {
     const was = view.orden.hidden ?? []
     const next = hidden ? [...new Set([...was, group])] : was.filter((one) => one !== group)
     return withOrden(view, { hidden: next.length ? next : undefined })
   })
-
 export const setManualOrder = (base: Base, at: number, group: string, ids: string[]): Base =>
   withView(base, at, (view) => {
     const order = {
@@ -81,7 +69,6 @@ export const setManualOrder = (base: Base, at: number, group: string, ids: strin
     }
     return withOrden(view, { order })
   })
-
 function mergedOrder(stored: readonly string[], shown: readonly string[]): string[] {
   const shownSet = new Set(shown)
   const storedSet = new Set(stored)
@@ -104,7 +91,6 @@ function mergedOrder(stored: readonly string[], shown: readonly string[]): strin
   let next = 0
   return stored.flatMap((id) => (shownSet.has(id) ? (runs[next++] ?? []) : [id]))
 }
-
 export const setOrdenOption = (base: Base, at: number, key: string, value: unknown): Base =>
   withView(base, at, (view) => {
     if (key === 'date' || key === 'end') {
@@ -115,7 +101,6 @@ export const setOrdenOption = (base: Base, at: number, key: string, value: unkno
     else kept[key] = value
     return withOrden(view, { kept })
   })
-
 export function freeViewName(base: Base, wanted: string): string {
   const taken = new Set(base.views.map((view) => view.name))
   if (!taken.has(wanted)) return wanted
@@ -124,7 +109,6 @@ export function freeViewName(base: Base, wanted: string): string {
     if (!taken.has(name)) return name
   }
 }
-
 export function addView(base: Base, at: number, type?: string): Base {
   const from = base.views[at]
   const name = freeViewName(base, from?.name.trim() ? from.name : 'View')
@@ -143,18 +127,15 @@ export function addView(base: Base, at: number, type?: string): Base {
   views.splice(at + 1, 0, made)
   return { ...base, views }
 }
-
 export function renameView(base: Base, at: number, name: string): Base {
   const trimmed = name.trim()
   if (!trimmed || base.views[at]?.name === trimmed) return base
   return withView(base, at, (view) => ({ ...view, name: freeViewName(base, trimmed) }))
 }
-
 export function removeView(base: Base, at: number): Base {
   if (base.views.length < 2 || !base.views[at]) return base
   return { ...base, views: base.views.filter((_, index) => index !== at) }
 }
-
 export const setViewOption = (base: Base, at: number, key: string, value: unknown): Base =>
   withView(base, at, (view) => {
     const options = { ...view.options }
@@ -162,14 +143,12 @@ export const setViewOption = (base: Base, at: number, key: string, value: unknow
     else options[key] = value
     return { ...view, options }
   })
-
 export const setViewOrden = <K extends Exclude<keyof OrdenView, 'kept'>>(
   base: Base,
   at: number,
   key: K,
   value: OrdenView[K] | undefined,
 ): Base => withView(base, at, (view) => withOrden(view, { [key]: value }))
-
 export function setBaseOrden<K extends 'template' | 'id' | 'locked'>(
   base: Base,
   key: K,
@@ -180,14 +159,12 @@ export function setBaseOrden<K extends 'template' | 'id' | 'locked'>(
   else Reflect.set(orden, key, value)
   return { ...base, orden }
 }
-
 export function setFormula(base: Base, name: string, source: string | null): Base {
   const formulas = { ...base.formulas }
   if (source === null) Reflect.deleteProperty(formulas, name)
   else formulas[name] = source
   return { ...base, formulas }
 }
-
 export function setProperty(
   base: Base,
   key: string,
@@ -204,13 +181,11 @@ export function setProperty(
   else properties[key] = next
   return { ...base, orden: { ...base.orden, properties } }
 }
-
 export function freeFormulaName(base: Base, wanted: string): string {
   const name = wanted.trim() || 'Formula'
   if (!(name in base.formulas)) return name
   for (let count = 2; ; count++) if (!(`${name} ${count}` in base.formulas)) return `${name} ${count}`
 }
-
 export function setDisplayName(base: Base, column: string, words: string): Base {
   const key = column.startsWith('note.') ? column.slice(5) : column
   const was = base.properties[key] ?? base.properties[column] ?? { kept: {} }
@@ -223,7 +198,6 @@ export function setDisplayName(base: Base, column: string, words: string): Base 
   else properties[key] = next
   return { ...base, properties }
 }
-
 export function renamedGroup(base: Base, property: string, from: string, to: string, merge = false): Base {
   if (from === to) return base
   const name = property.replace(/^note\./, '')
@@ -262,7 +236,6 @@ export function renamedGroup(base: Base, property: string, from: string, to: str
   })
   return { ...base, views, ...(base.filters ? { filters: literal(base.filters) } : {}) }
 }
-
 export function forgottenGroup(base: Base, property: string, value: string): Base {
   const name = bare(property)
   const same = (one: string | undefined) => one !== undefined && bare(one) === name
@@ -278,7 +251,6 @@ export function forgottenGroup(base: Base, property: string, value: string): Bas
   })
   return { ...base, views }
 }
-
 export function placeColumn(
   base: Base,
   at: number,
@@ -294,7 +266,6 @@ export function placeColumn(
   rest.splice(after ? index + 1 : index, 0, moving)
   return setViewOrden(base, at, 'groups', rest)
 }
-
 export const prunedOrder = (base: Base, at: number, group: string, alive: (id: string) => boolean) =>
   withView(base, at, (view) => {
     const was = view.orden.order?.[group]

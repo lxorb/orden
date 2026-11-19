@@ -6,7 +6,6 @@ import { shellName, shells } from './shells.svelte'
 import { hostIdOf, readSpec, writeSpec } from './spec'
 
 const NAME_MOST = 120
-
 export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
   if (isOnlineTab(tab) && tab.path !== null) {
     const name = typed.trim().slice(0, NAME_MOST).replace(/[\\/]/g, ' ') || MADE_NAME
@@ -19,21 +18,17 @@ export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
     workspace.scheduleSession()
     return
   }
-
   const before = readSpec(tab.doc)
   if (tab.kind !== 'terminal' || !before) return
-
   const name = typed.trim().slice(0, NAME_MOST) || null
   if (name === before.name) return
   const called = name ?? (await shellCalled(before.via ?? before.shell))
-
   const spec = readSpec(tab.doc) ?? before
   tab.name = called
   tab.note.replace(writeSpec({ ...spec, name }), false)
   workspace.scheduleSession()
   if (spec.key) void invoke('pty_name', { key: spec.key, name: name ?? '' }).catch(() => undefined)
 }
-
 async function shellCalled(id: string): Promise<string> {
   const host = hostIdOf(id)
   if (host !== null) {
@@ -41,7 +36,6 @@ async function shellCalled(id: string): Promise<string> {
     await remote.ready()
     return remote.byId(host)?.name ?? host
   }
-
   const found = (await shells.ask()).find((one) => one.id === id)
   return found ? shellName(found) : id
 }

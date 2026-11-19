@@ -6,9 +6,7 @@ export interface Accent {
   dark: string
   light: string
 }
-
 const VIOLET: Accent = { id: 'violet', name: 'Violet', dark: '#7c6bf5', light: '#5b4be0' }
-
 export const ACCENTS: Accent[] = [
   VIOLET,
   { id: 'blue', name: 'Blue', dark: '#3584e4', light: '#1b6ed3' },
@@ -20,30 +18,23 @@ export const ACCENTS: Accent[] = [
   { id: 'pink', name: 'Pink', dark: '#e56ba8', light: '#c4287f' },
   { id: 'slate', name: 'Slate', dark: '#8aa0b8', light: '#5b6b7f' },
 ]
-
 export const DEFAULT_ACCENT = VIOLET.id
-
 function accentById(id: string): Accent {
   return ACCENTS.find((accent) => accent.id === id) ?? VIOLET
 }
-
 export function accentColour(id: string, scheme: 'dark' | 'light'): string {
   return accentById(id)[scheme]
 }
-
 export function accentIdFor(name: string): string {
   let sum = 0
   for (const character of name.trim().toLowerCase()) {
     sum = (sum + (character.codePointAt(0) ?? 0)) % 4093
   }
-
   return ACCENTS[sum % ACCENTS.length]?.id ?? DEFAULT_ACCENT
 }
-
 export function accentFor(name: string, scheme: 'dark' | 'light'): string {
   return accentColour(accentIdFor(name), scheme)
 }
-
 function channels(hex: string): [number, number, number] {
   const value = hex.replace('#', '')
   return [
@@ -52,16 +43,13 @@ function channels(hex: string): [number, number, number] {
     Number.parseInt(value.slice(4, 6), 16),
   ]
 }
-
 function toHex([r, g, b]: [number, number, number]): string {
   return `#${[r, g, b].map((one) => Math.round(one).toString(16).padStart(2, '0')).join('')}`
 }
-
 function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
   const target = towards === 'light' ? 255 : 0
   return toHex(channels(hex).map((one) => one + (target - one) * amount) as [number, number, number])
 }
-
 export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<string, string> {
   const away = scheme === 'dark' ? 'light' : 'dark'
   const base = accentById(id)[scheme]
@@ -69,7 +57,6 @@ export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<strin
   const soft = scheme === 'dark' ? 0.15 : 0.1
   const line = scheme === 'dark' ? 0.42 : 0.38
   const chosen = scheme === 'dark' ? 0.28 : 0.18
-
   return {
     '--accent': base,
     '--accent-hover': shift(base, away),
@@ -79,7 +66,6 @@ export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<strin
     '--selection': `rgb(${r} ${g} ${b} / ${chosen})`,
   }
 }
-
 export function accentSetting(): ThemeSetting {
   return {
     id: 'accent',

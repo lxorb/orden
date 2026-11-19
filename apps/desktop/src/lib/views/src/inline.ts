@@ -8,7 +8,6 @@ export interface Piece {
   struck?: boolean
   link?: string
 }
-
 const FORMS: { pattern: RegExp; make: (found: RegExpExecArray) => Piece }[] = [
   { pattern: /`([^`]+)`/, make: (found) => ({ text: found[1] ?? '', code: true }) },
   {
@@ -30,13 +29,11 @@ const FORMS: { pattern: RegExp; make: (found: RegExpExecArray) => Piece }[] = [
     make: (found) => ({ text: found[1] ?? found[2] ?? '', em: true }),
   },
 ]
-
 export const pieces = (words: string): Piece[] =>
   heldPieces(heldEscapes(words)).map((one) => {
     const text = released(one.text, one.code === true)
     return one.link === undefined ? { ...one, text } : { ...one, text, link: released(one.link) }
   })
-
 function heldPieces(words: string): Piece[] {
   const out: Piece[] = []
   let rest = words
@@ -58,7 +55,6 @@ function heldPieces(words: string): Piece[] {
   }
   return out
 }
-
 export const plain = (words: string): string =>
   pieces(words)
     .map((one) => one.text)

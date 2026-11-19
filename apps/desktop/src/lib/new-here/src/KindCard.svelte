@@ -67,12 +67,10 @@
       border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .kind .orden-row-label {
     flex: initial;
     max-width: 100%;
   }
-
   @media (hover: hover) {
     .kind:hover {
       background: var(--surface-hover);
@@ -80,11 +78,9 @@
       color: var(--text-strong);
     }
   }
-
   .kind:active {
     background: var(--surface-press);
   }
-
   .mark {
     display: block;
     flex: none;
@@ -96,17 +92,14 @@
     stroke-width: 1.6;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .kind:hover .mark {
       color: var(--accent);
     }
   }
-
   .kind:focus-visible .mark {
     color: var(--accent);
   }
-
   kbd {
     position: absolute;
     top: var(--space-3);
@@ -116,17 +109,14 @@
     line-height: 1;
     color: var(--muted);
   }
-
   @media (hover: hover) {
     .kind:hover kbd {
       color: var(--muted-strong);
     }
   }
-
   .kind:focus-visible kbd {
     color: var(--muted-strong);
   }
-
   .more {
     --target: calc(var(--icon-sm) + var(--space-2));
     position: absolute;
@@ -143,32 +133,26 @@
     stroke-width: 2.2;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   .chevron {
     display: block;
     width: var(--icon-sm);
     height: var(--icon-sm);
     transition: translate var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .more:hover {
       color: var(--accent);
     }
-
     .kind:hover:has(.more:hover) .mark {
       color: var(--muted);
     }
   }
-
   .more:active .chevron {
     translate: 0 1px;
   }
-
   .kind:active:has(.more:active) {
     background: var(--surface-hover);
   }
-
   :global([data-touch]) .kind {
     flex-direction: row;
     justify-content: flex-start;
@@ -179,17 +163,14 @@
     font-size: var(--touch-text);
     text-align: start;
   }
-
   :global([data-touch]) .mark {
     width: var(--touch-icon);
     height: var(--touch-icon);
     font-size: var(--touch-icon);
   }
-
   :global([data-touch]) kbd {
     display: none;
   }
-
   :global([data-touch]) .more {
     position: static;
     margin-inline-start: auto;

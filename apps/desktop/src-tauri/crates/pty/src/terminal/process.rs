@@ -5,7 +5,6 @@ pub struct Process {
     pub parent: u32,
     pub name: String,
 }
-
 #[cfg_attr(not(windows), allow(dead_code))]
 const IDLE: [&str; 13] = [
     "conhost.exe",
@@ -22,17 +21,13 @@ const IDLE: [&str; 13] = [
     "wslrelay.exe",
     "git-bash.exe",
 ];
-
 #[cfg_attr(not(windows), allow(dead_code))]
 const AGENTS: [&str; 2] = ["claude.exe", "codex.exe"];
-
 #[cfg_attr(not(windows), allow(dead_code))]
 fn idle(one: &Process) -> bool {
     IDLE.contains(&one.name.to_ascii_lowercase().as_str())
 }
-
 type Born<'a> = &'a dyn Fn(u32) -> Option<u64>;
-
 #[cfg_attr(not(windows), allow(dead_code))]
 fn first_below<'a>(
     root: u32,
@@ -43,7 +38,6 @@ fn first_below<'a>(
 ) -> Option<&'a Process> {
     let mut below = vec![root];
     let mut at = 0;
-
     while let Some(&parent) = below.get(at) {
         at += 1;
         let parent_born = born(parent);
@@ -63,10 +57,8 @@ fn first_below<'a>(
             }
         }
     }
-
     None
 }
-
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn front_below<'a>(root: u32, processes: &'a [Process], born: Born<'_>) -> Option<&'a Process> {
     let front = first_below(root, processes, idle, |one| !idle(one), born)?;
@@ -76,12 +68,10 @@ pub fn front_below<'a>(root: u32, processes: &'a [Process], born: Born<'_>) -> O
     }
     Some(first_below(front.id, processes, |_| true, agent, born).unwrap_or(front))
 }
-
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn busy_below(root: u32, processes: &[Process], born: Born<'_>) -> bool {
     first_below(root, processes, idle, |one| !idle(one), born).is_some()
 }
-
 fn program_name(file: &str) -> String {
     let stem = file
         .len()
@@ -90,36 +80,30 @@ fn program_name(file: &str) -> String {
         .map_or(file, |at| &file[..at]);
     stem.to_owned()
 }
-
 #[cfg(windows)]
 pub fn busy(shell: Option<u32>) -> bool {
     shell.is_some_and(|root| busy_below(root, &processes(), &started()))
 }
-
 #[cfg(unix)]
 pub fn busy(shell: Option<u32>) -> bool {
     shell.is_some_and(|shell| front_group(shell).is_some_and(|front| front != shell))
 }
-
 #[cfg(windows)]
 fn front(shell: Option<u32>) -> Option<(u32, String)> {
     let processes = processes();
     front_below(shell?, &processes, &started()).map(|one| (one.id, program_name(&one.name)))
 }
-
 #[cfg(unix)]
 fn front(shell: Option<u32>) -> Option<(u32, String)> {
     let shell = shell?;
     let front = front_group(shell).filter(|front| *front != shell)?;
     name_of(front).map(|name| (front, program_name(&name)))
 }
-
 #[cfg(target_os = "linux")]
 fn front_group(shell: u32) -> Option<u32> {
     let front = orden_base::stat::read(shell)?.front;
     u32::try_from(front).ok().filter(|one| *one > 0)
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn front_group(shell: u32) -> Option<u32> {
@@ -141,27 +125,22 @@ fn front_group(shell: u32) -> Option<u32> {
     let info = unsafe { info.assume_init() };
     Some(info.e_tpgid).filter(|one| *one > 0)
 }
-
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
 fn front_group(_shell: u32) -> Option<u32> {
     None
 }
-
 pub fn program(shell: Option<u32>) -> Option<String> {
     front(shell).map(|(_, name)| name)
 }
-
 pub fn command(shell: Option<u32>) -> Option<(String, Vec<String>)> {
     let (pid, name) = front(shell)?;
     Some((name, arguments_of(pid)?))
 }
-
 #[cfg(target_os = "linux")]
 fn arguments_of(pid: u32) -> Option<Vec<String>> {
     let line = std::fs::read(format!("/proc/{pid}/cmdline")).ok()?;
     Some(split_arguments(&line, 1))
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn split_arguments(bytes: &[u8], skip: usize) -> Vec<String> {
     bytes
@@ -172,7 +151,6 @@ fn split_arguments(bytes: &[u8], skip: usize) -> Vec<String> {
         .map(|one| String::from_utf8_lossy(one).into_owned())
         .collect()
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn arguments_of(pid: u32) -> Option<Vec<String>> {
@@ -193,7 +171,6 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
     if read != 0 {
         return None;
     }
-
     let mut buffer = vec![0_u8; usize::try_from(most).ok()?];
     let mut size = buffer.len();
     let mut name = [libc::CTL_KERN, libc::KERN_PROCARGS2, pid];
@@ -212,7 +189,6 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
     }
     procargs(&buffer[..size.min(buffer.len())])
 }
-
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn procargs(buffer: &[u8]) -> Option<Vec<String>> {
     let count = usize::try_from(i32::from_ne_bytes(buffer.get(..4)?.try_into().ok()?)).ok()?;
@@ -230,10 +206,8 @@ fn procargs(buffer: &[u8]) -> Option<Vec<String>> {
     words.remove(0);
     Some(words)
 }
-
 #[cfg(windows)]
 const MOST_COMMAND_LINE: usize = 8200;
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn arguments_of(pid: u32) -> Option<Vec<String>> {
@@ -278,7 +252,6 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
         }
         std::slice::from_raw_parts(text.Buffer.0, units).to_vec()
     };
-
     let mut line = line;
     line.push(0);
     let mut count = 0_i32;
@@ -295,41 +268,34 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
         Some(found)
     }
 }
-
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
 fn arguments_of(_pid: u32) -> Option<Vec<String>> {
     None
 }
-
 #[cfg(target_os = "linux")]
 fn name_of(pid: u32) -> Option<String> {
     let name = std::fs::read_to_string(format!("/proc/{pid}/comm")).ok()?;
     let name = name.trim();
     (!name.is_empty()).then(|| name.to_owned())
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn name_of(pid: u32) -> Option<String> {
     let pid = libc::c_int::try_from(pid).ok()?;
     let mut buffer = vec![0_u8; 4096];
     let size = u32::try_from(buffer.len()).ok()?;
-
     let written = unsafe { libc::proc_pidpath(pid, buffer.as_mut_ptr().cast(), size) };
     let written = usize::try_from(written).ok().filter(|&length| length > 0)?;
-
     let path = String::from_utf8_lossy(&buffer[..written.min(buffer.len())]).into_owned();
     path.rsplit('/')
         .next()
         .filter(|name| !name.is_empty())
         .map(str::to_owned)
 }
-
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
 fn name_of(_pid: u32) -> Option<String> {
     None
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 pub fn processes() -> Vec<Process> {
@@ -341,7 +307,6 @@ pub fn processes() -> Vec<Process> {
 
     let mut found = Vec::new();
     let size = u32::try_from(std::mem::size_of::<PROCESSENTRY32W>()).unwrap_or(u32::MAX);
-
     unsafe {
         let Ok(snapshot) = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) else {
             return found;
@@ -350,7 +315,6 @@ pub fn processes() -> Vec<Process> {
             dwSize: size,
             ..Default::default()
         };
-
         let mut more = Process32FirstW(snapshot, &raw mut entry).is_ok();
         while more {
             let end = entry
@@ -365,13 +329,10 @@ pub fn processes() -> Vec<Process> {
             });
             more = Process32NextW(snapshot, &raw mut entry).is_ok();
         }
-
         let _ = CloseHandle(snapshot);
     }
-
     found
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn started() -> impl Fn(u32) -> Option<u64> {
@@ -405,20 +366,17 @@ fn started() -> impl Fn(u32) -> Option<u64> {
         })
     }
 }
-
 #[cfg(target_os = "linux")]
 pub fn folder(shell: Option<u32>) -> Option<String> {
     let link = std::fs::read_link(format!("/proc/{}/cwd", shell?)).ok()?;
     Some(link.to_string_lossy().into_owned())
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 pub fn folder(shell: Option<u32>) -> Option<String> {
     let pid = libc::c_int::try_from(shell?).ok()?;
     let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_vnodepathinfo>()).ok()?;
     let mut info = std::mem::MaybeUninit::<libc::proc_vnodepathinfo>::zeroed();
-
     let written = unsafe {
         libc::proc_pidinfo(
             pid,
@@ -431,7 +389,6 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     if written != size {
         return None;
     }
-
     let info = unsafe { info.assume_init() };
     let path: Vec<u8> = info
         .pvi_cdir
@@ -443,7 +400,6 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
         .collect();
     (!path.is_empty()).then(|| String::from_utf8_lossy(&path).into_owned())
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 pub fn folder(shell: Option<u32>) -> Option<String> {
@@ -460,13 +416,11 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     fn read_into(handle: HANDLE, at: usize, into: *mut c_void, size: usize) -> Option<()> {
         unsafe { ReadProcessMemory(handle, at as *const c_void, into, size, None) }.ok()
     }
-
     fn read<T: Default>(handle: HANDLE, at: usize) -> Option<T> {
         let mut value = T::default();
         read_into(handle, at, (&raw mut value).cast(), size_of::<T>())?;
         Some(value)
     }
-
     fn folder_of(handle: HANDLE) -> Option<String> {
         let mut basic = PROCESS_BASIC_INFORMATION::default();
         let size = u32::try_from(size_of::<PROCESS_BASIC_INFORMATION>()).ok()?;
@@ -502,19 +456,16 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
         };
         (!path.is_empty()).then_some(path)
     }
-
     let access = PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ;
     let handle = unsafe { OpenProcess(access, false, shell?) }.ok()?;
     let found = folder_of(handle);
     let _ = unsafe { CloseHandle(handle) };
     found
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 pub fn folder(_shell: Option<u32>) -> Option<String> {
     None
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -529,9 +480,7 @@ mod tests {
             std::fs::canonicalize(here).unwrap()
         );
     }
-
     const UNKNOWN: fn(u32) -> Option<u64> = |_| None;
-
     fn process(id: u32, parent: u32, name: &str) -> Process {
         Process {
             id,
@@ -539,7 +488,6 @@ mod tests {
             name: name.to_owned(),
         }
     }
-
     #[test]
     fn a_shell_at_its_prompt_is_not_busy() {
         let listed = [
@@ -549,7 +497,6 @@ mod tests {
         ];
         assert!(!busy_below(20, &listed, &UNKNOWN));
     }
-
     #[test]
     fn shells_inside_shells_are_still_a_prompt() {
         let listed = [
@@ -558,11 +505,9 @@ mod tests {
             process(30, 5, "node.exe"),
         ];
         assert!(!busy_below(20, &listed, &UNKNOWN));
-
         let nested = [process(20, 10, "pwsh.exe"), process(22, 20, "CMD.EXE")];
         assert!(!busy_below(20, &nested, &UNKNOWN));
     }
-
     #[test]
     fn anything_else_below_it_is_something_running() {
         let listed = [
@@ -572,7 +517,6 @@ mod tests {
         ];
         assert!(busy_below(20, &listed, &UNKNOWN));
     }
-
     #[test]
     fn the_program_in_front_is_the_first_that_is_not_a_shell() {
         let listed = [
@@ -588,7 +532,6 @@ mod tests {
         );
         assert_eq!(front_below(20, &listed[..3], &UNKNOWN), None);
     }
-
     #[test]
     fn an_agent_a_launcher_started_is_the_program_in_front() {
         let codex = [
@@ -601,7 +544,6 @@ mod tests {
             front_below(20, &codex, &UNKNOWN).map(|one| one.id),
             Some(31)
         );
-
         let claude = [
             process(20, 10, "pwsh.exe"),
             process(40, 20, "cmd.exe"),
@@ -613,7 +555,6 @@ mod tests {
             Some(41)
         );
     }
-
     #[test]
     fn a_program_is_named_without_its_ending() {
         assert_eq!(program_name("node.exe"), "node");
@@ -622,7 +563,6 @@ mod tests {
         assert_eq!(program_name(".exe"), "");
         assert_eq!(program_name("ä.exe"), "ä");
     }
-
     #[test]
     fn a_process_that_is_its_own_parent_ends_the_walk() {
         let listed = [
@@ -631,7 +571,6 @@ mod tests {
         ];
         assert!(!busy_below(20, &listed, &UNKNOWN));
     }
-
     #[test]
     fn a_command_line_is_split_at_its_nuls() {
         assert_eq!(
@@ -641,7 +580,6 @@ mod tests {
         assert_eq!(split_arguments(b"ssh\0\0pi", 1), ["", "pi"]);
         assert!(split_arguments(b"ssh", 1).is_empty());
     }
-
     #[test]
     fn a_macs_process_arguments_are_after_its_path() {
         let mut buffer = 3_i32.to_ne_bytes().to_vec();
@@ -652,7 +590,6 @@ mod tests {
         );
         assert_eq!(procargs(&buffer[..6]), None);
     }
-
     #[cfg(any(target_os = "linux", target_os = "macos", windows))]
     #[test]
     fn the_kernel_says_what_a_process_was_started_with() {
@@ -679,7 +616,6 @@ mod tests {
         let _ = child.wait();
         assert_eq!(found, Some(wanted));
     }
-
     #[cfg(any(target_os = "linux", target_os = "macos", windows))]
     #[test]
     fn the_kernel_says_a_command_line_near_the_longest_windows_takes() {
@@ -720,7 +656,6 @@ mod tests {
         assert_eq!(found.as_ref().map(Vec::len), Some(wanted.len()));
         assert!(found == Some(wanted), "the long line came back changed");
     }
-
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn the_kernel_says_where_a_process_is() {
@@ -733,12 +668,10 @@ mod tests {
         let found = folder(Some(child.id()));
         let _ = child.kill();
         let _ = child.wait();
-
         let wanted = dir.path().canonicalize().unwrap();
         assert_eq!(found.map(std::path::PathBuf::from), Some(wanted));
         assert_eq!(folder(None), None);
     }
-
     #[test]
     fn a_process_older_than_the_shell_is_not_running_in_it() {
         let listed = [

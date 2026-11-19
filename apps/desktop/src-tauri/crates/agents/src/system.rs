@@ -8,7 +8,6 @@ use crate::verbs::{Answer, Category, Code, Display, System, SystemDone, SystemIn
 use crate::{files, policy, Caller};
 
 const SCHEMES: [&str; 4] = ["http", "https", "mailto", "tel"];
-
 const SECRET_WORDS: [&str; 7] = [
     "TOKEN",
     "SECRET",
@@ -18,9 +17,7 @@ const SECRET_WORDS: [&str; 7] = [
     "PRIVATE",
     "COOKIE",
 ];
-
 const SECRET_ENDINGS: [&str; 4] = ["_KEY", "_PAT", "_AUTH", "APIKEY"];
-
 pub fn answer(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
     if !caller.holds(Scope::Processes) {
         return Answer::error(
@@ -48,7 +45,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
         }),
     }
 }
-
 fn handed(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
     let target = match (asked.op, asked.url.as_deref(), asked.path.as_deref()) {
         (SystemOp::Open, Some(url), None) => match address(url) {
@@ -89,12 +85,10 @@ fn handed(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
         Err(why) => Answer::error(Code::Failed, why.to_string()),
     }
 }
-
 enum Target {
     Url(String),
     Path(std::path::PathBuf),
 }
-
 impl std::fmt::Display for Target {
     fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -103,7 +97,6 @@ impl std::fmt::Display for Target {
         }
     }
 }
-
 fn fenced(
     app: &AppHandle,
     caller: &Caller,
@@ -124,7 +117,6 @@ fn fenced(
     }
     Ok(path)
 }
-
 fn address(url: &str) -> Result<String, String> {
     let parsed: tauri::Url = url
         .trim()
@@ -139,7 +131,6 @@ fn address(url: &str) -> Result<String, String> {
     }
     Ok(parsed.to_string())
 }
-
 fn site_refused(grant: &Grant, target: &Target) -> Option<Answer> {
     let Target::Url(url) = target else {
         return None;
@@ -155,7 +146,6 @@ fn site_refused(grant: &Grant, target: &Target) -> Option<Answer> {
     };
     Some(Answer::error(Code::SiteDenied, why))
 }
-
 fn question(app: &AppHandle, grant: &Grant, op: SystemOp, target: &Target) -> Option<Answer> {
     if !grant.asks(Category::Terminal) {
         return None;
@@ -173,21 +163,18 @@ fn question(app: &AppHandle, grant: &Grant, op: SystemOp, target: &Target) -> Op
     };
     approvals::unless_allowed(app, Asking::of(grant, Category::Terminal, summary, key))
 }
-
 fn secret(name: &str) -> bool {
     let name = name.to_ascii_uppercase();
     SECRET_WORDS.iter().any(|word| name.contains(word))
         || SECRET_ENDINGS.iter().any(|ending| name.ends_with(ending))
         || name == "KEY"
 }
-
 fn secret_value(value: &str) -> bool {
     value
         .trim()
         .parse::<tauri::Url>()
         .is_ok_and(|url| url.password().is_some())
 }
-
 fn environment(
     vars: impl Iterator<Item = (String, String)>,
     full: bool,
@@ -204,7 +191,6 @@ fn environment(
     withheld.sort();
     (env, withheld)
 }
-
 fn info(app: &AppHandle) -> SystemInfo {
     let mut screens = app.available_monitors().unwrap_or_default();
     if let Ok(Some(primary)) = app.primary_monitor() {
@@ -233,7 +219,6 @@ fn info(app: &AppHandle) -> SystemInfo {
             .collect(),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -265,7 +250,6 @@ mod tests {
         assert_eq!(env.len(), 13);
         assert!(withheld.is_empty());
     }
-
     #[test]
     fn only_the_webs_mails_and_telephones_addresses_are_opened() {
         for fine in [
@@ -287,7 +271,6 @@ mod tests {
             assert!(address(refused).is_err(), "{refused}");
         }
     }
-
     #[test]
     fn a_site_the_grant_keeps_from_the_reader_s_browser_is_not_opened_there() {
         let mut grant = Grant::own("system-sites".into(), "A");

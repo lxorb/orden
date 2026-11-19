@@ -10,7 +10,6 @@ interface StandIn {
   setAttribute(name: string, value: string): void
   addEventListener(): void
 }
-
 function standIn(): StandIn {
   return {
     type: '',
@@ -25,9 +24,7 @@ function standIn(): StandIn {
     },
   }
 }
-
 const made: StandIn[] = []
-
 Object.assign(globalThis, {
   document: {
     createElement: () => {
@@ -37,11 +34,9 @@ Object.assign(globalThis, {
     },
   },
 })
-
 afterEach(() => {
   made.length = 0
 })
-
 describe("a task's box", () => {
   test('is named for what ticking it means', () => {
     new CheckboxWidget(false, 2, 5).toDOM({} as EditorView)

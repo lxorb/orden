@@ -5,25 +5,21 @@ const PART = /[^\s"'!*(){}|\\^<>`\u2500-\u257f]/
 const LEADING = /^[^\s"'!*(){}|\\^<>`\u2500-\u257f]+/
 const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i
 const FURTHEST = 64
-
 export interface Cell {
   x: number
   y: number
 }
-
 export interface Found {
   text: string
   start: Cell
   end: Cell
 }
-
 interface Row {
   text: string
   at: Cell[]
   wide: boolean[]
   typed: boolean[]
 }
-
 function rowOf(buffer: IBuffer, y: number, cols: number, cell: IBufferCell): Row | null {
   const line = buffer.getLine(y)
   if (!line) return null
@@ -45,11 +41,9 @@ function rowOf(buffer: IBuffer, y: number, cols: number, cell: IBufferCell): Row
   }
   return { text, at, wide, typed }
 }
-
 function trimmed(row: Row): Row {
   return cut(row, 0, row.text.replace(/ +$/, '').length)
 }
-
 function cut(row: Row, from: number, to = row.text.length): Row {
   return {
     text: row.text.slice(from, to),
@@ -58,10 +52,8 @@ function cut(row: Row, from: number, to = row.text.length): Row {
     typed: row.typed.slice(from, to),
   }
 }
-
 const LEFT = /^[ \u2500-\u257f]*/
 const RIGHT = /[ \u2500-\u257f]*$/
-
 interface Framed {
   left: number
   right: number
@@ -69,7 +61,6 @@ interface Framed {
   border: string
   content: string
 }
-
 function framed(row: Row): Framed {
   const left = LEFT.exec(row.text)?.[0].length ?? 0
   const right = left === row.text.length ? 0 : (RIGHT.exec(row.text)?.[0].length ?? 0)
@@ -77,21 +68,17 @@ function framed(row: Row): Framed {
   const border = row.text.slice(0, left).trimStart()
   return { left, right, start: row.at[left]?.x ?? -1, border, content }
 }
-
 function fills(row: Row, frame: Framed): boolean {
   const edge = row.text.slice(row.text.length - frame.right)
   const closing = frame.border.split('').reverse().join('')
   if (!closing) return edge === ''
   return edge.replace(/ +$/, '') === closing
 }
-
 const PROMPT_SIGN = /[$#%]$/
-
 function prompted(row: Row, frame: Framed): boolean {
   const after = frame.left + frame.content.length
   return PROMPT_SIGN.test(frame.content) && row.text[after] === ' ' && row.typed[after] === true
 }
-
 function looksContinued(before: Row, next: Row, column: number | null): boolean {
   const above = framed(before)
   const below = framed(next)
@@ -103,35 +90,29 @@ function looksContinued(before: Row, next: Row, column: number | null): boolean 
   if (above.border && next.text.trimEnd().length !== before.text.trimEnd().length) return false
   return column === null || below.start === above.start || below.start === column
 }
-
 function runStart(text: string, end: number): number {
   let at = end
   while (at > 0 && !/\s/.test(text[at - 1] ?? '')) at--
   return at
 }
-
 function inAddress(text: string, end = text.length): boolean {
   return text.slice(runStart(text, end), end).includes('://')
 }
-
 function addressColumn(line: Row, end = line.text.length): number | null {
   return line.at[runStart(line.text, end)]?.x ?? null
 }
-
 function shorten(row: Row, end: number) {
   row.text = row.text.slice(0, end)
   row.at.length = end
   row.wide.length = end
   row.typed.length = end
 }
-
 function append(row: Row, more: Row) {
   row.text += more.text
   row.at.push(...more.at)
   row.wide.push(...more.wide)
   row.typed.push(...more.typed)
 }
-
 function lineAround(buffer: IBuffer, cols: number, y: number) {
   const cell = buffer.getNullCell()
   const rows = new Map<number, Row | null>()
@@ -145,10 +126,8 @@ function lineAround(buffer: IBuffer, cols: number, y: number) {
     if (!a || !b) return false
     return buffer.getLine(below)?.isWrapped === true || looksContinued(a, b, null)
   }
-
   let top = y
   while (top > 0 && y - top < FURTHEST && joins(top - 1, top)) top--
-
   let last = row(top)
   if (!last) return null
   let line = cut(last, 0)
@@ -175,7 +154,6 @@ function lineAround(buffer: IBuffer, cols: number, y: number) {
   }
   return { ...trimmed(line), broken }
 }
-
 export function linksOn(buffer: IBuffer, cols: number, y: number): Found[] {
   const line = lineAround(buffer, cols, y)
   if (!line) return []
@@ -193,7 +171,6 @@ export function linksOn(buffer: IBuffer, cols: number, y: number): Found[] {
   }
   return found
 }
-
 function isAddress(text: string): boolean {
   try {
     const url = new globalThis.URL(text)
@@ -202,7 +179,6 @@ function isAddress(text: string): boolean {
     return false
   }
 }
-
 export function unbroken(buffer: IBuffer, cols: number, start: Cell, end: Cell): string | null {
   if (end.y <= start.y) return null
   const line = lineAround(buffer, cols, start.y)
@@ -218,13 +194,11 @@ export function unbroken(buffer: IBuffer, cols: number, start: Cell, end: Cell):
   }
   return null
 }
-
 export class AddressLinks implements ILinkProvider {
   constructor(
     private readonly term: Terminal,
     private readonly pointed: (uri: string | null) => void,
   ) {}
-
   provideLinks(y: number, callback: (links: ILink[] | undefined) => void): void {
     const found = linksOn(this.term.buffer.active, this.term.cols, y - 1)
     callback(
@@ -243,7 +217,6 @@ export class AddressLinks implements ILinkProvider {
     )
   }
 }
-
 export function chosenText(term: Terminal): string {
   const range = term.getSelectionPosition()
   const whole = range && unbroken(term.buffer.active, term.cols, range.start, range.end)

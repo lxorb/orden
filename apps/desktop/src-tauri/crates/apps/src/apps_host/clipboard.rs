@@ -26,9 +26,7 @@ x11rb::atom_manager! {
         ORDEN_CLIPBOARD,
     }
 }
-
 pub type Listener = Arc<dyn Fn(String) + Send + Sync>;
-
 pub struct Clipboard {
     x: Arc<RustConnection>,
     window: Window,
@@ -36,7 +34,6 @@ pub struct Clipboard {
     given: Mutex<Option<String>>,
     listener: Mutex<Option<Listener>>,
 }
-
 impl Clipboard {
     pub fn open(x: Arc<RustConnection>, root: Window) -> Result<Clipboard, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
@@ -78,11 +75,9 @@ impl Clipboard {
             listener: Mutex::new(None),
         })
     }
-
     pub fn listen(&self, listener: Option<Listener>) {
         *self.listener.held() = listener;
     }
-
     pub fn give(&self, text: &str) {
         let text: String = clipped(text).to_owned();
         *self.given.held() = Some(text);
@@ -91,7 +86,6 @@ impl Clipboard {
             .set_selection_owner(self.window, self.atoms.CLIPBOARD, CURRENT_TIME);
         let _ = self.x.flush();
     }
-
     pub fn heard(&self, event: &Event) -> bool {
         match event {
             Event::XfixesSelectionNotify(changed) if changed.selection == self.atoms.CLIPBOARD => {
@@ -127,7 +121,6 @@ impl Clipboard {
             _ => false,
         }
     }
-
     fn read(&self, property: Atom) -> Option<String> {
         let most = u32::try_from(MOST / 4).unwrap_or(u32::MAX);
         let reply = self
@@ -141,7 +134,6 @@ impl Clipboard {
         }
         Some(String::from_utf8_lossy(&reply.value).into_owned())
     }
-
     fn serve(&self, asked: &SelectionRequestEvent) {
         let property = if asked.property == NONE {
             asked.target
@@ -198,13 +190,11 @@ impl Clipboard {
         let _ = self.x.flush();
     }
 }
-
 pub fn latin1(text: &str) -> Vec<u8> {
     text.chars()
         .map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?'))
         .collect()
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -216,7 +206,6 @@ mod tests {
         assert_eq!(clipped(&long).len(), MOST);
         assert_eq!(clipped("short"), "short");
     }
-
     #[test]
     #[allow(clippy::too_many_lines)]
     fn carries_text_both_ways_between_the_holder_and_the_application() {
@@ -232,7 +221,6 @@ mod tests {
             clipboard.listen(Some(Arc::new(move |text| {
                 let _ = heard.send(text);
             })));
-
             let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
             let root = x.setup().roots[screen].root;
             let atoms = Atoms::new(&x).unwrap().reply().unwrap();
@@ -251,7 +239,6 @@ mod tests {
                 &CreateWindowAux::new(),
             )
             .unwrap();
-
             x.set_selection_owner(window, atoms.CLIPBOARD, CURRENT_TIME)
                 .unwrap();
             x.flush().unwrap();
@@ -293,7 +280,6 @@ mod tests {
                 copied.recv_timeout(Duration::from_secs(5)).as_deref(),
                 Ok("von der Anwendung")
             );
-
             clipboard.give("vom Halter: 日本");
             let until = Instant::now() + Duration::from_secs(5);
             while x

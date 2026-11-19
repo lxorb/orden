@@ -8,7 +8,6 @@
   import { objectOf } from './verbs'
 
   const { rows, live = false }: { rows: Extract<Part, { kind: 'tool' }>[]; live?: boolean } = $props()
-
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
   const going = $derived(live && rows.some((one) => one.state === 'running'))
@@ -32,7 +31,6 @@
     flex-direction: column;
     min-width: 0;
   }
-
   .inner {
     display: flex;
     flex-direction: column;

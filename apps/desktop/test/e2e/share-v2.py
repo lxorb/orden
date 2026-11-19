@@ -1,9 +1,7 @@
 import json
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -12,24 +10,19 @@ say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 PATIENCE = 60
-
 OWNER = "owner-v2@example.com"
 ALONE = "alone-v2@example.com"
 SPACE = "Solo"
 ITEM = "one.md"
 OPENING = "# One note\n\nshared on its own\n"
 TYPED = "typed on v2 "
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -38,7 +31,6 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
@@ -50,12 +42,10 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     if page.evaluate("() => window.ordenApp.sync.version") != 2:
         failed(f"[{label}] started v1 on an account on v2")
     return page
-
 def words(page: Page) -> str:
     return page.evaluate(
         "() => { window.ordenApp.workspace.flush(); return window.ordenApp.workspace.active?.doc ?? '' }"
     )
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session() as browser:
@@ -63,7 +53,6 @@ def main() -> int:
         owner_token = worker.account(OWNER)
         alone_token = worker.account(ALONE)
         worker.sql(f"update users set sync_version = 2 where email in ('{OWNER}', '{ALONE}')")
-
         space = worker.request("/v1/spaces", token=owner_token, body={"name": SPACE})["space"]
         note = worker.request(
             f"/v1/spaces/{space['id']}/notes",
@@ -71,7 +60,6 @@ def main() -> int:
             body={"path": ITEM, "content": OPENING},
         )["note"]
         say(f"the owner holds {SPACE}/{ITEM} as {note['id']}")
-
         owner = signed_in(browser, owner_token, "owner")
         wait_for(
             owner,
@@ -103,13 +91,11 @@ def main() -> int:
             failed("the owner's v2 never put the note on an epoch")
         else:
             say(f"the owner's note is on epoch {epoch}")
-
         now = int(time.time() * 1000)
         worker.sql(
             "insert into space_members (space_id, email, item, role, joined_at, created_at)"
             f" values ('{space['id']}', '{ALONE}', '{note['id']}', 'write', {now}, {now})"
         )
-
         alone = signed_in(browser, alone_token, "alone")
         wait_for(alone, "() => window.ordenApp.sharedWithYou.items.length === 1", "[alone] the shared file")
         alone.evaluate("() => window.ordenApp.sharedWithYou.open(window.ordenApp.sharedWithYou.items[0])")
@@ -120,11 +106,9 @@ def main() -> int:
             "[alone] the shared note to join its room",
         )
         say("the shared note is in its room under v2")
-
         alone.click(".cm-content")
         alone.evaluate("() => { window.orden.dispatch({ selection: { anchor: 0 } }); window.orden.focus() }")
         alone.keyboard.type(TYPED, delay=12)
-
         try:
             until = time.monotonic() + PATIENCE
             while TYPED not in words(owner):
@@ -136,7 +120,6 @@ def main() -> int:
             failed(str(gave_up))
         alone.screenshot(path=str(SHOTS / "shared-v2-alone.png"))
         owner.screenshot(path=str(SHOTS / "shared-v2-owner.png"))
-
         kept = ""
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until and TYPED not in kept:
@@ -146,10 +129,8 @@ def main() -> int:
             failed(f"the account never kept what was typed: {kept!r}")
         else:
             say("the account keeps what was typed")
-
         if words(alone).count(TYPED) != 1:
             failed(f"the shared tab holds {words(alone)!r}")
-
     if wrong:
         print("\nFAILED", flush=True)
         for one in wrong:
@@ -157,5 +138,4 @@ def main() -> int:
         return 1
     print("\na note shared on its own carries and keeps its words with both sides on v2", flush=True)
     return 0
-
 sys.exit(main())

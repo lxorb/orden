@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { expect, test } from 'vitest'
 
 const E2E = join(import.meta.dirname, 'e2e')
-
 const ASKING = `
 import json, sys, time, types
 
@@ -46,18 +45,15 @@ except SystemExit as gave:
     came = str(gave)
 print(json.dumps({"came": came, "asked": page.asked}))
 `
-
 function waited(answers: unknown[], patience: number): { came: unknown; asked: number } {
   const said = execFileSync('python3', ['-c', ASKING, E2E, JSON.stringify(answers), String(patience)], {
     encoding: 'utf8',
   })
   return JSON.parse(said) as { came: unknown; asked: number }
 }
-
 test('a drive waiting on an async check waits until its promise comes back true', () => {
   expect(waited([false, null, 0, { ready: true }], 10)).toEqual({ came: { ready: true }, asked: 4 })
 })
-
 test('a drive waiting on an async check that never comes true gives up', () => {
   expect(waited([false], 0.2).came).toBe('gave up waiting for it')
 })

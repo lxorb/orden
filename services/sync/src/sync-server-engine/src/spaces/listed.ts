@@ -1,7 +1,6 @@
 import type { Env } from '../../../sync-server/src/api'
 
 const MOST_SPACES = 500
-
 export interface ListedSpace {
   id: string
   name: string
@@ -10,7 +9,6 @@ export interface ListedSpace {
   shared: boolean
   items: boolean
 }
-
 export async function spacesFor(env: Env, userId: string): Promise<ListedSpace[]> {
   const { results } = await env.DB.prepare(
     `select sp.id, sp.name, sp.user_id,
@@ -33,6 +31,5 @@ export async function spacesFor(env: Env, userId: string): Promise<ListedSpace[]
   )
     .bind(userId, MOST_SPACES)
     .all<Omit<ListedSpace, 'shared' | 'items'> & { shared: number; items: number }>()
-
   return results.map((row) => ({ ...row, shared: !!row.shared, items: !!row.items }))
 }

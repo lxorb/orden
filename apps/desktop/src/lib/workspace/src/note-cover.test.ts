@@ -7,42 +7,32 @@ const SPACE: Record<string, string> = {
   '/space/covered.md': '---\ncover: assets/old.jpg\ncover-position: 20\n---\n\n# Covered\n',
   '/space/only.md': '---\ncover: assets/only.jpg\n---\n\n# Only a cover\n',
 }
-
 let notes: Record<string, string> = { ...SPACE }
-
 const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'string' ? args.path : '')
-
 const sent: { command: string; path: string; content: string }[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = pathOf(args)
     const content = typeof args?.content === 'string' ? args.content : ''
     sent.push({ command, path, content })
-
     if (command === 'write_note') {
       notes[path] = content
       return undefined
     }
     if (command !== 'read_note') return undefined
-
     const doc = notes[path]
     if (doc === undefined) throw new Error(`no such note: ${path}`)
     return doc
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { removeCover, setCover } = await import('./note-cover')
 const { workspace } = await import('./api')
-
 function written(path: string): string | null {
   const write = sent.filter((one) => one.command === 'write_note' && one.path === path).pop()
   return write?.content ?? null
 }
-
 function fresh() {
   notes = { ...SPACE }
   workspace.spaces = [{ id: 's', name: 'space', root: '/space' }]
@@ -52,9 +42,7 @@ function fresh() {
   workspace.undone.stack = []
   sent.length = 0
 }
-
 const kept = (path: string) => workspace.itemMeta.of(path, '/space')
-
 describe('the cover a note is given (#1210)', () => {
   test("is the note's own metadata, and the note's words are not touched", async () => {
     fresh()
@@ -62,13 +50,11 @@ describe('the cover a note is given (#1210)', () => {
     expect(kept('/space/plain.md')).toEqual({ cover: 'assets/wide.jpg' })
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
-
   test('a picture whose name YAML would read as more than a name is kept as it is', async () => {
     fresh()
     await setCover('/space/plain.md', 'assets/Meeting: notes.jpg')
     expect(kept('/space/plain.md')).toEqual({ cover: 'assets/Meeting: notes.jpg' })
   })
-
   test('replaces the picture that was there, puts its band back in the middle, and takes the keys its front matter still said out of it', async () => {
     fresh()
     workspace.itemMeta.set('/space/plain.md', { cover: 'assets/old.jpg', 'cover-position': '20' })
@@ -77,7 +63,6 @@ describe('the cover a note is given (#1210)', () => {
     await setCover('/space/covered.md', 'assets/new.jpg')
     expect(written('/space/covered.md')).toBe('# Covered\n')
   })
-
   test('leaves the rest of the front matter as it was', async () => {
     fresh()
     notes['/space/titled.md'] = '---\ntitle: Titled\ncover: a.jpg\n---\n\n# Titled\n'
@@ -85,7 +70,6 @@ describe('the cover a note is given (#1210)', () => {
     expect(written('/space/titled.md')).toBe('---\ntitle: Titled\n---\n\n# Titled\n')
   })
 })
-
 describe('taking a note’s cover away', () => {
   test('takes it and its place out of the metadata', async () => {
     fresh()
@@ -93,20 +77,17 @@ describe('taking a note’s cover away', () => {
     await removeCover('/space/plain.md')
     expect(kept('/space/plain.md')).toBeNull()
   })
-
   test('and out of the front matter where the note still said it, the block with it', async () => {
     fresh()
     await removeCover('/space/only.md')
     expect(written('/space/only.md')).toBe('# Only a cover\n')
   })
-
   test('a note that never had one is not written to', async () => {
     fresh()
     await removeCover('/space/plain.md')
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 })
-
 describe('a note that is open while its cover changes', () => {
   test('keeps its words as they were, and stays saved', async () => {
     fresh()

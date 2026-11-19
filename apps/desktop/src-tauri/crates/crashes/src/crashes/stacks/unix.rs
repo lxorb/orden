@@ -10,24 +10,18 @@ use super::{Place, Raw, MOST_FRAMES, MOST_THREADS};
 struct UnwindContext {
     _opaque: [u8; 0],
 }
-
 type Step = extern "C" fn(*mut UnwindContext, *mut c_void) -> c_int;
-
 #[allow(unsafe_code)]
 unsafe extern "C" {
     fn _Unwind_Backtrace(step: Step, held: *mut c_void) -> c_int;
     fn _Unwind_GetIP(context: *mut UnwindContext) -> usize;
 }
-
 const NO_REASON: c_int = 0;
-
 const END_OF_STACK: c_int = 5;
-
 struct Gathered<'a> {
     ips: &'a mut [usize],
     len: usize,
 }
-
 #[allow(unsafe_code)]
 extern "C" fn step(context: *mut UnwindContext, held: *mut c_void) -> c_int {
     let gathered = unsafe { &mut *held.cast::<Gathered>() };
@@ -42,7 +36,6 @@ extern "C" fn step(context: *mut UnwindContext, held: *mut c_void) -> c_int {
     gathered.len += 1;
     NO_REASON
 }
-
 #[allow(unsafe_code)]
 pub fn trace(ips: &mut [usize]) -> usize {
     let _walking = walking();
@@ -52,35 +45,23 @@ pub fn trace(ips: &mut [usize]) -> usize {
     }
     gathered.len
 }
-
 #[cfg(target_os = "linux")]
 fn asking_signal() -> c_int {
     libc::SIGRTMIN() + 6
 }
-
 #[cfg(target_os = "macos")]
 fn asking_signal() -> c_int {
     libc::SIGUSR2
 }
-
 static ASKED: AtomicUsize = AtomicUsize::new(0);
-
 static TARGET: AtomicUsize = AtomicUsize::new(0);
-
 static ANSWERED: AtomicUsize = AtomicUsize::new(0);
-
 static ANSWER_LEN: AtomicUsize = AtomicUsize::new(0);
-
 static ANSWER: [AtomicUsize; MOST_FRAMES] = [const { AtomicUsize::new(0) }; MOST_FRAMES];
-
 static ASKING: Mutex<()> = Mutex::new(());
-
 const MOST_WALKING: usize = 32;
-
 static WALKING: [AtomicUsize; MOST_WALKING] = [const { AtomicUsize::new(0) }; MOST_WALKING];
-
 pub struct Walking(Option<usize>);
-
 impl Drop for Walking {
     fn drop(&mut self) {
         if let Some(at) = self.0 {
@@ -88,7 +69,6 @@ impl Drop for Walking {
         }
     }
 }
-
 pub fn walking() -> Walking {
     let me = this_thread();
     if me == 0 || is_walking(me) {
@@ -99,37 +79,30 @@ pub fn walking() -> Walking {
             .is_ok()
     }))
 }
-
 fn is_walking(me: usize) -> bool {
     WALKING
         .iter()
         .any(|slot| slot.load(Ordering::Acquire) == me)
 }
-
 #[cfg(target_os = "linux")]
 fn unwinding() -> bool {
     std::thread::panicking()
 }
-
 #[cfg(target_os = "macos")]
 fn unwinding() -> bool {
     false
 }
-
 static INSTALLED: Once = Once::new();
-
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 fn this_thread() -> usize {
     usize::try_from(unsafe { libc::gettid() }).unwrap_or(0)
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn this_thread() -> usize {
     unsafe { libc::pthread_self() }
 }
-
 extern "C" fn answer(_signal: c_int) {
     let asked = ASKED.load(Ordering::Acquire);
     let me = this_thread();
@@ -148,7 +121,6 @@ extern "C" fn answer(_signal: c_int) {
     ANSWER_LEN.store(len, Ordering::Relaxed);
     ANSWERED.store(asked, Ordering::Release);
 }
-
 #[allow(unsafe_code)]
 pub fn start() {
     INSTALLED.call_once(|| unsafe {
@@ -159,13 +131,11 @@ pub fn start() {
         libc::sigaction(asking_signal(), &raw const action, std::ptr::null_mut());
     });
 }
-
 enum Asked {
     Answered(Vec<usize>),
     Unreached,
     Silent,
 }
-
 fn asked_of(target: usize, within: Duration, send: impl FnOnce(c_int) -> bool) -> Asked {
     TARGET.store(target, Ordering::Release);
     let asked = ASKED.fetch_add(1, Ordering::AcqRel) + 1;
@@ -187,7 +157,6 @@ fn asked_of(target: usize, within: Duration, send: impl FnOnce(c_int) -> bool) -
             .collect(),
     )
 }
-
 fn asking(
     target: usize,
     silent: &mut u32,
@@ -206,7 +175,6 @@ fn asking(
         }
     }
 }
-
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 pub fn every_thread(within: Duration) -> Vec<Raw> {
@@ -224,7 +192,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
         .filter(|tid| *tid != me)
         .collect();
     ids.sort_unstable();
-
     let mut found = Vec::new();
     let mut silent = 0;
     for tid in ids.into_iter().take(MOST_THREADS) {
@@ -253,7 +220,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     }
     found
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 #[allow(deprecated)]
@@ -261,7 +227,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     unsafe extern "C" {
         fn mach_port_deallocate(task: libc::mach_port_t, name: libc::mach_port_t) -> c_int;
     }
-
     start();
     let _one_at_a_time = ASKING.held();
     let started = Instant::now();
@@ -275,7 +240,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     let ports: Vec<libc::thread_act_t> = (0..count as usize)
         .map(|at| unsafe { *list.add(at) })
         .collect();
-
     let mut found = Vec::new();
     let mut silent = 0;
     for port in &ports {
@@ -306,7 +270,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
         );
         found.push(Raw { name, main, ips });
     }
-
     for port in ports {
         unsafe {
             mach_port_deallocate(task, port);
@@ -321,7 +284,6 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     }
     found
 }
-
 #[cfg(all(test, target_os = "linux"))]
 #[allow(unsafe_code)]
 fn one_thread(target: usize, within: Duration) -> Vec<usize> {
@@ -333,10 +295,8 @@ fn one_thread(target: usize, within: Duration) -> Vec<usize> {
             .is_ok_and(|tid| unsafe { libc::tgkill(libc::getpid(), tid, signal) == 0 })
     })
 }
-
 #[cfg(target_os = "macos")]
 static MAIN: std::sync::OnceLock<libc::pthread_t> = std::sync::OnceLock::new();
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 pub fn mark_main() {
@@ -344,15 +304,12 @@ pub fn mark_main() {
         let _ = MAIN.set(unsafe { libc::pthread_self() });
     }
 }
-
 #[cfg(target_os = "linux")]
 pub fn mark_main() {}
-
 #[cfg(target_os = "macos")]
 fn main_thread() -> Option<libc::pthread_t> {
     MAIN.get().copied()
 }
-
 #[allow(unsafe_code)]
 pub fn place_of(ip: usize, place: &mut Place) {
     let mut found: libc::Dl_info = unsafe { std::mem::zeroed() };
@@ -369,14 +326,12 @@ pub fn place_of(ip: usize, place: &mut Place) {
         place.name_symbol(name.to_bytes());
     }
 }
-
 #[allow(unsafe_code)]
 fn own_image(base: *mut c_void) -> bool {
     let mut info: libc::Dl_info = unsafe { std::mem::zeroed() };
     let here = own_image as fn(*mut c_void) -> bool as *const c_void;
     (unsafe { libc::dladdr(here, &raw mut info) } != 0) && info.dli_fbase == base
 }
-
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use std::process::{Command, Stdio};
@@ -384,7 +339,6 @@ mod tests {
     use std::time::Duration;
 
     const CHILD: &str = "ORDEN_STACKS_TEST_CHILD";
-
     #[allow(unsafe_code)]
     fn small_alternate_stack() {
         let page = 4096;
@@ -407,7 +361,6 @@ mod tests {
             assert_eq!(libc::sigaltstack(&raw const stack, std::ptr::null_mut()), 0);
         }
     }
-
     #[test]
     fn a_thread_is_walked_on_its_own_stack_not_its_small_alternate_one() {
         if std::env::var_os(CHILD).is_some() {
@@ -445,7 +398,6 @@ mod tests {
             .expect("the child ran");
         assert!(status.success(), "the child ended with {status}");
     }
-
     fn frames_of(
         name: &str,
         waiting: impl FnOnce(mpsc::Sender<()>, mpsc::Receiver<()>) + Send + 'static,
@@ -467,7 +419,6 @@ mod tests {
         let _ = waiter.join();
         ips.len()
     }
-
     #[test]
     fn a_thread_already_walking_its_stack_is_not_walked_again_inside_itself() {
         let frames = frames_of("orden walking", |ready, heard| {
@@ -483,19 +434,16 @@ mod tests {
         });
         assert!(frames >= 3, "only {frames} frames");
     }
-
     struct WaitsWhileUnwinding {
         ready: mpsc::Sender<()>,
         heard: mpsc::Receiver<()>,
     }
-
     impl Drop for WaitsWhileUnwinding {
         fn drop(&mut self) {
             self.ready.send(()).expect("ready");
             let _ = self.heard.recv();
         }
     }
-
     #[test]
     fn a_thread_unwinding_from_a_panic_is_not_walked_inside_its_unwinder() {
         let frames = frames_of("orden unwinding", |ready, heard| {

@@ -1,7 +1,5 @@
 import sys
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,27 +9,21 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 PATIENCE = 40
-
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
     return page
-
 AS_PHONE = """
 () => {
   const app = window.ordenApp
@@ -46,7 +38,6 @@ AS_PHONE = """
   root.toggleAttribute('data-narrow', true)
 }
 """
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -70,7 +61,6 @@ async () => {
   return ws.notes.map((one) => one.path).sort()
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('aside .row')].map((row) =>
   [
@@ -79,34 +69,26 @@ ROWS = """
     row.textContent.trim().slice(0, 30),
   ].join(' | '))
 """
-
 MENU = """
 () => [...document.querySelectorAll('[role="menuitem"]')].map((one) => one.textContent.trim())
 """
-
 def row(page: Page, path_ends: str):
     return page.locator(f'aside .row[data-path$="{path_ends}"]').first
-
 def relist(page: Page, where: str) -> None:
     if where != "phone":
         return
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(350)
-
 def unlist(page: Page, where: str) -> None:
     if where != "phone":
         return
-
     page.evaluate("() => { window.ordenApp.workspace.panel = null }")
     page.wait_for_timeout(350)
-
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     label = where
     page = fresh(browser, label, viewport)
     try:
         say(f"[{label}] the space holds {page.evaluate(SEED)}")
-
         if where == "phone":
             page.evaluate(AS_PHONE)
             page.evaluate(
@@ -114,14 +96,11 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
                 " if (!ws.panel) ws.showPanel('tree') }"
             )
             page.wait_for_timeout(350)
-
         page.wait_for_timeout(500)
         for one in page.evaluate(ROWS):
             say(f"[{label}] {one}")
-
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"vault-{where}.png"))
         say(f"[{label}] wrote vault-{where}.png")
-
         quiet = row(page, "Projects")
         check(quiet.count() == 1, f"[{label}] the folder is one row, named after itself")
         check(
@@ -136,7 +115,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             page.locator("aside .row .mark svg").count() > 0,
             f"[{label}] and a mark of the same family as every other row",
         )
-
         quiet.click(button="right")
         page.wait_for_selector('[role="menu"]:visible', timeout=5000)
         offered = page.evaluate(MENU)
@@ -151,7 +129,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         )
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
-
         quiet.click()
         wait_for(
             page,
@@ -172,7 +149,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         relist(page, where)
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"opened-{where}.png"))
         say(f"[{label}] wrote opened-{where}.png")
-
         unlist(page, where)
         page.locator(".cm-content").first.click()
         page.keyboard.type("The two of them")
@@ -191,7 +167,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         )
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"written-{where}.png"))
         say(f"[{label}] wrote written-{where}.png")
-
         row(page, "Loft.md").click()
         wait_for(
             page,
@@ -207,7 +182,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.wait_for_timeout(300)
         page.screenshot(path=str(SHOTS / f"move-{where}.png"))
         say(f"[{label}] wrote move-{where}.png")
-
         offered = [one.strip() for one in page.locator(".found-row").all_inner_texts()]
         say(f"[{label}] the sheet offers {offered}")
         check(
@@ -221,7 +195,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.keyboard.press("Escape")
         page.wait_for_timeout(250)
         relist(page, where)
-
         book = row(page, "Handbook")
         check(
             book.inner_text().strip().startswith("Handbook"),
@@ -237,12 +210,9 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         )
     finally:
         page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         shoot(browser, "desktop", DESKTOP)
         shoot(browser, "phone", PHONE)
-
     return DRIVE.verdict("a vault's folders read as notes nobody has written yet")
-
 sys.exit(main())

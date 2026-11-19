@@ -3,9 +3,7 @@ import json
 import re
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -15,15 +13,11 @@ SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 PATIENCE = 40
 SYNCED = 90
-
 NOTE = "Lecture.pages"
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: float = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -32,7 +26,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: f
             return answer
         page.wait_for_timeout(200)
     raise SystemExit(f"gave up waiting for {what}")
-
 def paper_bytes(sizes: list[tuple[float, float]]) -> str:
     objects: list[str] = []
     kids = " ".join(f"{3 + at * 2} 0 R" for at in range(len(sizes)))
@@ -50,9 +43,7 @@ def paper_bytes(sizes: list[tuple[float, float]]) -> str:
         ["%PDF-1.4", *objects, f"trailer<</Root 1 0 R/Size {2 + len(sizes) * 2 + 1}>>", "%%EOF"]
     )
     return base64.b64encode(body.encode("latin-1")).decode("ascii")
-
 PAPER = paper_bytes([(595.28, 841.89), (612.0, 792.0)])
-
 IMPORT = """
 async ({ base64, name, root }) => {
   const binary = atob(base64)
@@ -67,7 +58,6 @@ async ({ base64, name, root }) => {
   return { format: importing.format, error: importing.error }
 }
 """
-
 DARK_ON_SHEETS = """
 () => [...document.querySelectorAll('.sheet canvas')].map((sheet) => {
   const context = sheet.getContext('2d', { willReadFrequently: true })
@@ -80,7 +70,6 @@ DARK_ON_SHEETS = """
   return dark
 })
 """
-
 KEPT = """
 async (path) => {
   const open = indexedDB.open('orden')
@@ -97,7 +86,6 @@ async (path) => {
   return !!row && typeof row.data === 'string' && row.data.length > 0
 }
 """
-
 ENGINE = """() => {
   const engine = window.ordenApp.sync.engine?.engine
   if (!engine) return 'no engine'
@@ -107,7 +95,6 @@ ENGINE = """() => {
     outbox: space.outbox.map((one) => JSON.stringify(one.record).slice(0, 200)),
   }))
 }"""
-
 def device(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900})
     if token:
@@ -117,7 +104,6 @@ def device(browser: Browser, label: str, at: str, token: str | None = None) -> P
     page.goto(at, wait_until="domcontentloaded")
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app")
     return page
-
 def space_root(page: Page, label: str, space: str) -> str:
     return wait_for(
         page,
@@ -128,7 +114,6 @@ def space_root(page: Page, label: str, space: str) -> str:
         space,
         patience=SYNCED,
     )
-
 def drawn(page: Page, label: str, pages: int) -> None:
     try:
         wait_for(
@@ -141,7 +126,6 @@ def drawn(page: Page, label: str, pages: int) -> None:
     except SystemExit as gave_up:
         failed(f"{gave_up}: {page.evaluate(DARK_ON_SHEETS)}")
     page.screenshot(path=str(SHOTS / f"{label}.png"))
-
 def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
     worker.request(
         f"/v1/spaces/{space}/share/link?item={note}",
@@ -154,7 +138,6 @@ def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
     if not found:
         raise SystemExit(f"that is not a join link: {link}")
     return f"{ORIGIN}/join/{found.group(1)}"
-
 def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     say(f"--- sync v{version} ---")
     email = f"paper-v{version}@example.com"
@@ -162,7 +145,6 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     if version == 2:
         worker.sql(f"update users set sync_version = 2 where email = '{email}'")
     space = worker.request("/v1/spaces", token=token, body={"name": f"Papers {version}"})["space"]
-
     owner = device(browser, f"v{version}-owner", ORIGIN, token)
     wait_for(owner, "() => !!window.ordenApp?.account.user", f"[v{version}-owner] the account")
     if owner.evaluate("() => window.ordenApp.sync.version") != version:
@@ -202,7 +184,6 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
         ]
         if files:
             failed(f"[v2] the paper is a file of the tree beside its note: {files}")
-
     second = device(browser, f"v{version}-second", ORIGIN, token)
     there = space_root(second, f"v{version}-second", space["id"])
     wait_for(
@@ -224,17 +205,14 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
         say(f"[v{version}-second] the paper is kept beside the note")
     except SystemExit as gave_up:
         failed(str(gave_up))
-
     guest = device(browser, f"v{version}-guest", link_to(worker, token, space["id"], note))
     try:
         wait_for(guest, "() => !!window.ordenApp.workspace.active?.note.shared", f"[v{version}-guest] the shared tab")
         drawn(guest, f"v{version}-guest", 2)
     except SystemExit as gave_up:
         failed(str(gave_up))
-
     for page in (owner, second, guest):
         page.context.close()
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session(
@@ -250,7 +228,6 @@ def main() -> int:
                 one_version(browser, worker, version)
             except SystemExit as gave_up:
                 failed(str(gave_up))
-
     if wrong:
         print("\nFAILED", flush=True)
         for one in wrong:
@@ -258,5 +235,4 @@ def main() -> int:
         return 1
     print("\na page note's paper goes with it, to another device and to a guest", flush=True)
     return 0
-
 sys.exit(main())

@@ -19,16 +19,13 @@ export interface V1Space {
   moving?: Moving
   untold?: Readonly<Record<string, Untold>>
 }
-
 const EMPTY_SV = Y.encodeStateVector(new Y.Doc())
-
 interface Matched {
   entry: EntryRow
   item: FeedItem
   file: string
   tracked: Tracked | undefined
 }
-
 export async function firstPass(
   core: Core,
   space: SpaceState,
@@ -40,13 +37,10 @@ export async function firstPass(
   const alive = () => core.life === life
   const world = core.world
   const full = (path: string) => world.join(space.row.root, path)
-
   if ((await world.account.ask('prepare', {}, space.id)) === null || !alive()) return false
-
   space.row.cursor = 0
   const items = new Map<string, FeedItem>()
   if (!(await readFeed(core, space, alive, (item) => items.set(item.id, item)))) return false
-
   const listed = world.list ? await world.list(space.row.root) : []
   if (listed === null || !alive()) return false
   const everything = [...listed]
@@ -69,7 +63,6 @@ export async function firstPass(
   const changes: Change[] = []
   const matched: Matched[] = []
   const claimed = new Set<string>()
-
   const untold = Object.entries(v1?.untold ?? {}).filter(([id, one]) => v1?.notes[one.from]?.id === id)
   const left = new Set(untold.map(([, one]) => one.from))
   const away = new Set(untold.map(([id]) => id))
@@ -99,7 +92,6 @@ export async function firstPass(
     const item = items.get(entry.id)
     if (item && shapeOf(entry.kind)) matched.push({ entry, item, file, tracked })
   }
-
   const strays: { path: string; dir: boolean }[] = []
   for (const listed of listing) {
     const gone = listed.dir ? null : await deletedUnseen(listed.path)
@@ -121,7 +113,6 @@ export async function firstPass(
     const read = await world.disk.read(full(listed.path))
     if (read !== null) await match(entry, unixLines(read), v1?.notes[listed.path])
   }
-
   const idOf = (path: string): { id?: string } => {
     const id = carried.get(space.key(path))
     return id !== undefined && !core.entry(id) && !claimed.has(id) ? { id } : {}
@@ -132,7 +123,6 @@ export async function firstPass(
     const folder = { path: stray.path, folder: true, ...idOf(stray.path) }
     changes.push(...(await made(core, space, folder)).changes)
   }
-
   const vacated = new Set<string>()
   const renamed = await renamedHere(core, space, v1, strays, claimed)
   for (const { entry, from, path, file, tracked } of renamed) {
@@ -142,7 +132,6 @@ export async function firstPass(
     changes.push(...moved(core, space, from, path))
     await match(entry, file, tracked)
   }
-
   const needs: Matched[] = []
   for (const one of matched) {
     const digest = await world.digest(one.file)
@@ -153,7 +142,6 @@ export async function firstPass(
       needs.push(one)
     }
   }
-
   for (let at = 0; at < needs.length; at += PULL_BATCH) {
     let batch = needs.slice(at, at + PULL_BATCH)
     while (batch.length) {
@@ -182,7 +170,6 @@ export async function firstPass(
       batch = left
     }
   }
-
   if (v1) {
     for (const tracked of Object.values(v1.notes)) {
       const entry = space.entries.get(tracked.id)
@@ -192,7 +179,6 @@ export async function firstPass(
       changes.push(...send(core, space, op))
     }
   }
-
   for (const id of vacated) {
     const folder = space.entries.get(id)
     if (!v1 || folder?.kind !== 'folder' || claimed.has(id) || !space.isLive(id)) continue
@@ -201,7 +187,6 @@ export async function firstPass(
     changes.push(...send(core, space, { op: core.nextId('o'), t: 'delete', id, seen: v1.cursor }))
     if (folder.parent !== null) vacated.add(folder.parent)
   }
-
   for (const stray of strays) {
     if (stray.dir || renamed.some((one) => one.path === stray.path)) continue
     const document = !!shapeOf(kindOfName(stray.path))
@@ -215,13 +200,11 @@ export async function firstPass(
     })
     changes.push(...madeHere.changes)
   }
-
   changes.push(...done)
   if (!alive()) return false
   await core.commit(changes)
   return true
 }
-
 interface Renamed {
   entry: EntryRow
   from: string
@@ -229,7 +212,6 @@ interface Renamed {
   file: string
   tracked: Tracked
 }
-
 async function renamedHere(
   core: Core,
   space: SpaceState,
@@ -246,7 +228,6 @@ async function renamedHere(
     else left.set(tracked.hash, [tracked])
   }
   if (!left.size) return []
-
   const loose: { path: string; file: string; hashes: string[] }[] = []
   for (const stray of strays) {
     if (stray.dir || !shapeOf(kindOfName(stray.path))) continue
@@ -254,7 +235,6 @@ async function renamedHere(
     if (read === null) continue
     loose.push({ path: stray.path, file: unixLines(read), hashes: await hashesOf(core, read) })
   }
-
   const out: Renamed[] = []
   for (const [id, untold] of Object.entries(v1?.untold ?? {})) {
     const tracked = v1?.notes[untold.from]
@@ -280,20 +260,17 @@ async function renamedHere(
   }
   return out
 }
-
 async function hashesOf(core: Core, text: string): Promise<string[]> {
   const plain = unixLines(text)
   const hashes = [await core.world.digest(text)]
   if (plain !== text) hashes.push(await core.world.digest(plain))
   return hashes
 }
-
 function send(core: Core, space: SpaceState, op: Op): Change[] {
   const { one, change } = core.outgoing(space, { t: 'op', op }, op.seen)
   space.queue(one)
   return [change, core.counterRow()]
 }
-
 function seed(core: Core, space: SpaceState, one: Matched, changes: Change[]) {
   const shape = shapeOf(one.entry.kind) ?? 'words'
   const epoch = one.item.epoch ?? 1
@@ -301,7 +278,6 @@ function seed(core: Core, space: SpaceState, one: Matched, changes: Change[]) {
   core.wanted(space.id).set(one.entry.id, { docSeq: one.item.docSeq ?? 0, epoch })
   changes.push(...core.docChanges(doc))
 }
-
 async function reconcile(
   core: Core,
   space: SpaceState,
@@ -321,7 +297,6 @@ async function reconcile(
     doc.write((live) => turn(shape, live, remote, to, MINE))
     doc.flush()
   }
-
   const remoteDigest = await core.world.digest(remote)
   if (local === remote) {
     // Nothing to do: the two agree.
@@ -348,12 +323,10 @@ async function reconcile(
       changes.push(...hold(core, one.entry.id, remote, local))
     }
   }
-
   changes.push(...core.docChanges(doc), ...(await wrote(core, one.entry, local)))
   if (!core.isHeld(one.entry.id)) changes.push(...(await project(core, space, one.entry, doc)))
   return changes
 }
-
 function hold(core: Core, id: string, base: string, local: string): Change[] {
   const against = { t: 'file', base, local } as const
   return core.holdChanges({
@@ -367,7 +340,6 @@ function hold(core: Core, id: string, base: string, local: string): Change[] {
     against,
   })
 }
-
 interface V1Note {
   id: string
   path: string
@@ -376,14 +348,11 @@ interface V1Note {
   seq: number
   deleted: boolean
 }
-
 export interface V1Listing {
   cursor: number
   notes: readonly V1Note[]
 }
-
 const UNPROVEN = 0
-
 export async function mirrorsFrom(
   core: Core,
   listings: ReadonlyMap<string, V1Listing> | null,
@@ -409,7 +378,6 @@ export async function mirrorsFrom(
   }
   return out
 }
-
 async function confirmed(core: Core, space: SpaceState): Promise<Record<string, Tracked>> {
   const notes: Record<string, Tracked> = {}
   for (const entry of space.entries.values()) {
@@ -424,7 +392,6 @@ async function confirmed(core: Core, space: SpaceState): Promise<Record<string, 
   }
   return notes
 }
-
 async function proven(
   core: Core,
   space: SpaceState,
@@ -440,7 +407,6 @@ async function proven(
   }
   return { cursor: Math.max(0, cursor), notes }
 }
-
 async function provenOne(core: Core, space: SpaceState, remote: V1Note): Promise<Tracked | null> {
   const entry = space.entries.get(remote.id)
   if (!entry || entry.deleted || entry.local_path !== remote.path || !shapeOf(entry.kind)) {

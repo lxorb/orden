@@ -9,7 +9,6 @@ interface FakeServer {
   userData: string
   firewall: number
 }
-
 interface FakeType {
   cores: number
   memory: number
@@ -20,7 +19,6 @@ interface FakeType {
   hourly: string
   deprecated?: boolean
 }
-
 const TYPES: Record<string, FakeType> = {
   cx23: {
     cores: 2,
@@ -78,14 +76,12 @@ const TYPES: Record<string, FakeType> = {
     deprecated: true,
   },
 }
-
 interface Failure {
   method: string
   path: RegExp
   status: number
   code: string
 }
-
 export class Cloud {
   readonly asked: string[] = []
   readonly servers: FakeServer[] = []
@@ -104,11 +100,9 @@ export class Cloud {
   changeLooks = 2
   stubborn = false
   private next = 100
-
   fail(method: string, path: RegExp, status: number, code: string): void {
     this.failures.push({ method, path, status, code })
   }
-
   readonly fetch: typeof fetch = async (input, init) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
     const method = (init?.method ?? 'GET').toUpperCase()
@@ -134,14 +128,12 @@ export class Cloud {
     const socket = { accept: () => undefined, close: () => undefined }
     return { status: 101, webSocket: socket } as unknown as Response
   }
-
   private labelled<T extends { labels: Record<string, string> }>(list: T[], url: URL): T[] {
     const selector = url.searchParams.get('label_selector')
     if (!selector) return list
     const [key, value] = selector.split('==')
     return list.filter((one) => key !== undefined && one.labels[key] === value)
   }
-
   private hetzner(method: string, url: URL, body: unknown): Response {
     const path = url.pathname.replace('/v1', '')
     const given = (body ?? {}) as Record<string, unknown>
@@ -304,7 +296,6 @@ export class Cloud {
     }
     return Response.json({ error: { code: 'not_found', message: path } }, { status: 404 })
   }
-
   private cloudflare(method: string, url: URL, body: unknown): Response {
     const path = url.pathname.replace('/client/v4', '')
     const given = (body ?? {}) as Record<string, unknown>

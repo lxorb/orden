@@ -1,13 +1,9 @@
 from typing import Any
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PRESSED = "() => [...document.querySelectorAll('.canvas .cluster button.on')].map((one) => one.getAttribute('aria-label')).join(',')"
-
-
 def drive(browser: Any) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 820})
     DRIVE.open(page)
@@ -35,7 +31,6 @@ def drive(browser: Any) -> None:
     if shown[0] < 1 or shown[1] < 1:
         wrong(f"wanted a canvas beside a page note, drew {shown}")
         return
-
     box = page.locator(".canvas").first.bounding_box()
     say(f"canvas box {box}")
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 3)
@@ -47,7 +42,6 @@ def drive(browser: Any) -> None:
     if "Rectangle" not in pressed:
         wrong(f"the rectangle chosen on the canvas did not stay chosen beside a page note: {pressed!r}")
         return
-
     paper = page.locator(".pages").first.bounding_box()
     page.mouse.click(paper["x"] + paper["width"] / 2, paper["y"] + paper["height"] / 2)
     page.wait_for_timeout(400)
@@ -55,6 +49,4 @@ def drive(browser: Any) -> None:
     say(f"the canvas bar once the page note is used: {later!r}")
     if "Rectangle" in later:
         wrong("the page note took up a tool it has not got")
-
-
 raise SystemExit(DRIVE.run(drive))

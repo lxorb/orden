@@ -8,7 +8,6 @@ const world = vi.hoisted(() => ({
   file: { text: null as string | null, stamp: 0 },
   chatgpt: null as { email: string } | null,
 }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -38,7 +37,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-
 vi.mock('../../src/lib/ai-providers/src/accounts-file', () => ({
   COPY: 'orden:ai-accounts',
   STALE: 'stale',
@@ -50,7 +48,6 @@ vi.mock('../../src/lib/ai-providers/src/accounts-file', () => ({
   },
   hearChanges: () => Promise.resolve(),
 }))
-
 vi.mock('../../src/lib/ai-providers/src/keys', () => ({
   keysAreGuarded: () => true,
   keysInFile: () => Promise.resolve(false),
@@ -68,23 +65,19 @@ vi.mock('../../src/lib/ai-providers/src/keys', () => ({
   writeSecret: () => Promise.resolve(),
   readSecret: () => Promise.resolve(null),
 }))
-
 vi.mock('../../src/lib/ai-providers/src/complete', () => ({
   listModels: () => Promise.resolve(['model-a']),
 }))
-
 vi.mock('../../src/lib/ai-providers/src/vault/start.svelte', () => ({
   browserVault: { on: false },
   keepBrowserInVault: () => Promise.resolve(),
   vault: { standing: 'open', allowed: [], seen: {}, remove: () => Promise.resolve(true) },
   startVault: () => undefined,
 }))
-
 const { default: AiPane } = await import('../../src/lib/ai-sidebar/src/AiPane.svelte')
 const { ai } = await import('../../src/lib/ai-providers/src/store.svelte')
 const { NONE, added } = await import('../../src/lib/ai-providers/src/accounts')
 const { usage } = await import('../../src/lib/ai-providers/src/usage.svelte')
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -99,25 +92,20 @@ Element.prototype.animate = () =>
       if (done) queueMicrotask(done)
     },
   }) as unknown as Animation
-
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
-
 function open() {
   shown = mount(AiPane, { target: host })
   flushSync()
 }
-
 const card = (id: string) => host.querySelector<HTMLElement>(`[data-account="${id}"]`)
 const cards = () => [...host.querySelectorAll<HTMLElement>('[data-account]')]
 const buttonIn = (root: ParentNode, words: string) =>
   [...root.querySelectorAll<HTMLButtonElement>('button')].find((one) => one.textContent.trim() === words)
 const sheet = () => document.querySelector<HTMLElement>('[role="dialog"]')
-
 function start(...kinds: Parameters<typeof added>[1][]) {
   ai.adopt(kinds.reduce((state, kind) => added(state, kind).state, NONE))
 }
-
 beforeEach(() => {
   world.asked = []
   world.keys = new Map()
@@ -127,13 +115,11 @@ beforeEach(() => {
   host = document.createElement('div')
   document.body.append(host)
 })
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
   document.body.innerHTML = ''
 })
-
 describe('Settings > AI accounts', () => {
   test('are one flat list of cards, each naming its provider', async () => {
     start('claude-code', 'anthropic', 'codex')
@@ -145,7 +131,6 @@ describe('Settings > AI accounts', () => {
     expect(card('anthropic')?.textContent).toContain('Claude')
     expect(card('codex')?.textContent).toContain('OpenAI')
   })
-
   test('mark exactly one default, and Make default moves it', async () => {
     start('claude-code', 'anthropic', 'codex')
     open()
@@ -153,19 +138,16 @@ describe('Settings > AI accounts', () => {
     const defaults = () => cards().filter((one) => one.classList.contains('fallback'))
     expect(defaults().map((one) => one.dataset.account)).toEqual(['claude-code'])
     expect(buttonIn(card('claude-code')!, 'Make default')).toBeUndefined()
-
     buttonIn(card('codex')!, 'Make default')?.click()
     flushSync()
     expect(defaults().map((one) => one.dataset.account)).toEqual(['codex'])
     expect(ai.defaultAccount?.id).toBe('codex')
     expect(buttonIn(card('claude-code')!, 'Make default')).toBeDefined()
-
     buttonIn(card('anthropic')!, 'Make default')?.click()
     flushSync()
     expect(defaults().map((one) => one.dataset.account)).toEqual(['anthropic'])
     expect(host.textContent).not.toContain('In use')
   })
-
   test('hold no model field, model list or the removed sentences', async () => {
     start('claude-code', 'anthropic', 'chatgpt', 'compatible')
     open()
@@ -175,7 +157,6 @@ describe('Settings > AI accounts', () => {
     expect(host.textContent).not.toContain('AI can be wrong')
     expect(host.textContent).not.toContain('end-to-end encrypted')
   })
-
   test('show a plan’s weekly usage with when it resets', async () => {
     start('claude-code', 'anthropic')
     open()
@@ -188,7 +169,6 @@ describe('Settings > AI accounts', () => {
     expect(card('claude-code')?.textContent).toContain('Resets ')
     expect(card('anthropic')?.querySelector('[data-week]')).toBeNull()
   })
-
   test('put the three task switches under Permissions', async () => {
     open()
     await vi.waitFor(() => {
@@ -199,7 +179,6 @@ describe('Settings > AI accounts', () => {
     expect(permissions.querySelectorAll('[role="switch"]')).toHaveLength(3)
   })
 })
-
 describe('Add', () => {
   async function through(maker: string, road: string | null) {
     open()
@@ -215,14 +194,12 @@ describe('Add', () => {
     }
     return sheet()!.querySelector<HTMLFormElement>('[data-step="connect"]')!
   }
-
   function type(form: HTMLElement, at: number, words: string) {
     const field = form.querySelectorAll('input')[at]!
     field.value = words
     field.dispatchEvent(new Event('input'))
     flushSync()
   }
-
   async function submit(form: HTMLFormElement) {
     form.requestSubmit()
     await vi.waitFor(() => {
@@ -230,7 +207,6 @@ describe('Add', () => {
     })
     await settle()
   }
-
   test('offers the providers as tiles, then only their ways', async () => {
     open()
     await settle()
@@ -246,7 +222,6 @@ describe('Add', () => {
     flushSync()
     expect(sheet()!.querySelectorAll('[data-maker]')).toHaveLength(4)
   })
-
   for (const [maker, road] of [
     ['anthropic', 'anthropic'],
     ['openai', 'openai'],
@@ -264,7 +239,6 @@ describe('Add', () => {
       expect(made!.model).toBe('model-a')
     })
   }
-
   for (const [maker, road] of [
     ['anthropic', 'claude-code'],
     ['openai', 'codex'],
@@ -278,7 +252,6 @@ describe('Add', () => {
       expect(world.asked.some((one) => one.command === 'ai_cli_status')).toBe(true)
     })
   }
-
   test('signs in to ChatGPT before adding it', async () => {
     const form = await through('openai', 'chatgpt')
     expect(form.querySelectorAll('input')).toHaveLength(0)
@@ -286,7 +259,6 @@ describe('Add', () => {
     expect(world.asked.some((one) => one.command === 'chatgpt_sign_in')).toBe(true)
     expect(ai.accounts.map((one) => one.kind)).toEqual(['chatgpt'])
   })
-
   test('connects an OpenAI-compatible server by its URL, the key optional', async () => {
     const form = await through('compatible', null)
     expect(form.querySelectorAll('input')).toHaveLength(3)

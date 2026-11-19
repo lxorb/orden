@@ -6,7 +6,6 @@ describe('the permission modes', () => {
     expect(MODES).toEqual(['approve', 'auto', 'full', 'plan'])
     expect(FIRST_MODE).toBe('approve')
   })
-
   test('read the words older threads and notes wrote', () => {
     expect(modeIn('ask')).toBe('approve')
     expect(modeIn('agent')).toBe('full')
@@ -14,7 +13,6 @@ describe('the permission modes', () => {
     expect(modeIn('bypassPermissions')).toBeNull()
     expect(modeIn(3)).toBeNull()
   })
-
   test('step with Shift+Tab through Approve, Auto and Plan, never into Full permissions', () => {
     const seen = new Set<string>()
     let mode = FIRST_MODE
@@ -25,11 +23,9 @@ describe('the permission modes', () => {
     expect([...seen].sort()).toEqual(['approve', 'auto', 'plan'])
     expect(nextMode('full')).toBe('plan')
   })
-
   test('say which make changes without asking', () => {
     expect(MODES.filter(actsAlone)).toEqual(['auto', 'full'])
   })
-
   test('are what an outside agent’s grant supervises its helper as', () => {
     expect(modeOfGrant('confirm')).toBe('approve')
     expect(modeOfGrant('unsupervised')).toBe('auto')

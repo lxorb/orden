@@ -8,7 +8,6 @@ export interface Marks {
   fence: boolean
   link: boolean
 }
-
 export const MARKS: Marks = {
   heading: false,
   bold: false,
@@ -19,12 +18,8 @@ export const MARKS: Marks = {
   fence: true,
   link: false,
 }
-
 export type Compaction = 'none' | 'collapse' | 'aggressive'
-
 export const COMPACTIONS: readonly Compaction[] = ['none', 'collapse', 'aggressive']
-
 export const DEFAULT_COMPACTION: Compaction = 'collapse'
-
 export const isCompaction = (value: unknown): value is Compaction =>
   typeof value === 'string' && (COMPACTIONS as readonly string[]).includes(value)

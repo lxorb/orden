@@ -3,18 +3,13 @@ import { folderOf, nameOf, relativePath } from '../../platform/src/api'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
 export const LINK_FORMATS: readonly LinkFormat[] = ['wikilink', 'shortest', 'relative', 'absolute']
-
 export const isLinkFormat = (value: unknown): value is LinkFormat =>
   typeof value === 'string' && (LINK_FORMATS as readonly string[]).includes(value)
-
 let writing: LinkFormat = 'wikilink'
-
 export function setLinkWriting(format: LinkFormat) {
   writing = format
 }
-
 export const linkWriting = (): LinkFormat => writing
-
 export interface LinkTarget {
   name: string
   markdown?: string | null
@@ -25,32 +20,25 @@ export interface LinkTarget {
   file?: string | null
   embed?: boolean
 }
-
 export function formatLink(target: LinkTarget, format: LinkFormat): string {
   const bang = target.embed ? '!' : ''
   const fragment = target.fragment ?? ''
   const shown = target.shown && (target.shown !== target.name || fragment) ? target.shown : ''
-
   if (format === 'wikilink' && !beyondWikilink(target.name, fragment, shown)) {
     const inner = fragment ? `${target.name}#${fragment}` : target.name
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
-
   const named = target.name.replace(/^\/+/, '')
   const label = (shown || named || bareFragment(fragment)).replace(/[\\[\]|`]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
   const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
-
   return `${bang}[${label}](${encodeTarget(path)}${anchor})`
 }
-
 function beyondWikilink(name: string, fragment: string, shown: string): boolean {
   return wikilinkCannotName(name) || /[[\]|`]/.test(fragment) || /[[\]`]/.test(shown)
 }
-
 function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): string {
   if (!target.path && !target.name) return ''
-
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
   if (format === 'shortest') {
@@ -61,12 +49,9 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
   }
   return target.from ? relativePath(folderOf(target.from), path) : path
 }
-
 const bareFragment = (fragment: string): string => (fragment.startsWith('^') ? fragment.slice(1) : fragment)
-
 const EXTENSION = /\.[^./]+$/
 const withExtension = (name: string): string => (EXTENSION.test(name) ? name : `${name}.md`)
-
 function markdownFragment(fragment: string): string {
   if (fragment.startsWith('^') || /^page=\d+$/i.test(fragment)) return fragment
   return slugify(fragment)

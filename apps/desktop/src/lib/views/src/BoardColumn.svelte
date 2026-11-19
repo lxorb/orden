@@ -13,7 +13,6 @@
     height: number
     card: Snippet<[Row, number]>
   } = $props()
-
   let list = $state<HTMLElement>()
   const win = new ListView()
   $effect(() => {
@@ -22,16 +21,13 @@
     const tall = height
     return untrack(() => win.follow(box, () => tall))
   })
-
   const keyOf = (row: Row) => `${row.space}:${rowId(row)}`
-
   const carried = $derived.by(() => {
     const row = dragging.row
     if (!row) return -1
     const key = keyOf(row)
     return rows.findIndex((one) => keyOf(one) === key)
   })
-
   const shown = $derived(
     windowFor({
       count: rows.length,
@@ -42,7 +38,6 @@
       pinned: carried === -1 ? [] : [carried],
     }),
   )
-
   const drawn = $derived.by(() => {
     const out: { row: Row; index: number; away: boolean }[] = []
     for (let index = shown.first; index <= shown.last; index++) {
@@ -55,7 +50,6 @@
     }
     return out.sort((one, other) => one.index - other.index)
   })
-
   export function reveal(index: number) {
     const box = scroller
     if (!box) return
@@ -64,7 +58,6 @@
     else if (top + height > box.scrollTop + box.clientHeight) box.scrollTop = top + height - box.clientHeight
     win.refresh()
   }
-
   let scroller = $state<HTMLElement>()
 </script>
 
@@ -97,16 +90,13 @@
     overscroll-behavior: contain;
     padding: 0 var(--space-2);
   }
-
   .cards {
     position: relative;
     min-height: var(--row-height);
   }
-
   .slot {
     height: var(--card);
   }
-
   .away {
     position: absolute;
     left: 0;

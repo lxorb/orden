@@ -10,9 +10,7 @@ use serde_json::Value;
 use tauri::{AppHandle, Manager as _};
 
 const KEPT_DAYS: u64 = 30;
-
 const MOST_SAID: usize = 1_000;
-
 #[derive(Serialize)]
 pub struct Line<'a> {
     pub at: u64,
@@ -26,17 +24,13 @@ pub struct Line<'a> {
     pub code: Option<Value>,
     pub ms: u64,
 }
-
 thread_local! {
     static SENSITIVE: Cell<bool> = const { Cell::new(false) };
 }
-
 static SWEPT: Mutex<Option<String>> = Mutex::new(None);
-
 pub fn sensitive() {
     SENSITIVE.set(true);
 }
-
 pub fn write(app: &AppHandle, mut line: Line<'_>) {
     if SENSITIVE.replace(false) {
         line.args = redacted(line.args);
@@ -63,38 +57,32 @@ pub fn write(app: &AppHandle, mut line: Line<'_>) {
         let _ = writeln!(file, "{text}");
     }
 }
-
 fn day_path(app: &AppHandle, day: &str) -> Option<PathBuf> {
     is_day(day)
         .then(|| folder(app).ok())
         .flatten()
         .map(|folder| folder.join(format!("{day}.jsonl")))
 }
-
 pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
     day_path(app, day)
         .map(|path| lines_of(&fs::read_to_string(path).unwrap_or_default()))
         .unwrap_or_default()
 }
-
 fn lines_of(text: &str) -> Vec<Value> {
     text.lines()
         .filter_map(|line| serde_json::from_str(line).ok())
         .map(shortened)
         .collect()
 }
-
 #[derive(Debug, Serialize)]
 pub struct After {
     lines: Vec<Value>,
     to: u64,
     fresh: bool,
 }
-
 pub fn read_after(app: &AppHandle, day: &str, from: u64) -> After {
     day_path(app, day).map_or_else(|| nothing(0, true), |path| after_in(&path, from))
 }
-
 fn nothing(to: u64, fresh: bool) -> After {
     After {
         lines: Vec::new(),
@@ -102,7 +90,6 @@ fn nothing(to: u64, fresh: bool) -> After {
         fresh,
     }
 }
-
 fn after_in(path: &Path, from: u64) -> After {
     let Ok(mut file) = fs::File::open(path) else {
         return nothing(0, true);
@@ -126,7 +113,6 @@ fn after_in(path: &Path, from: u64) -> After {
         fresh,
     }
 }
-
 fn shortened(value: Value) -> Value {
     match value {
         Value::String(said) => match said.char_indices().nth(MOST_SAID) {
@@ -145,13 +131,11 @@ fn shortened(value: Value) -> Value {
         other => other,
     }
 }
-
 pub fn days(app: &AppHandle) -> Vec<String> {
     folder(app)
         .map(|folder| days_in(&folder))
         .unwrap_or_default()
 }
-
 fn days_in(folder: &Path) -> Vec<String> {
     let mut days: Vec<String> = fs::read_dir(folder)
         .into_iter()
@@ -167,11 +151,9 @@ fn days_in(folder: &Path) -> Vec<String> {
     days.sort_unstable_by(|one, other| other.cmp(one));
     days
 }
-
 pub fn clear(app: &AppHandle, agent: Option<&str>) -> Result<(), String> {
     clear_in(&folder(app)?, agent)
 }
-
 fn clear_in(folder: &Path, agent: Option<&str>) -> Result<(), String> {
     for day in days_in(folder) {
         let path = folder.join(format!("{day}.jsonl"));
@@ -194,18 +176,15 @@ fn clear_in(folder: &Path, agent: Option<&str>) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn written_by(line: &str, agent: &str) -> bool {
     serde_json::from_str::<Value>(line)
         .ok()
         .and_then(|value| value.get("agent")?.as_str().map(|one| one == agent))
         .unwrap_or(false)
 }
-
 fn is_day(day: &str) -> bool {
     day.len() == 10 && day.bytes().all(|one| one.is_ascii_digit() || one == b'-')
 }
-
 fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -216,7 +195,6 @@ fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     orden_base::paths::made(&dir)?;
     Ok(dir)
 }
-
 fn redacted(mut args: Value) -> Value {
     if let Some(text) = args.get_mut("text") {
         let count = text.as_str().map_or(0, |one| one.chars().count());
@@ -231,7 +209,6 @@ fn redacted(mut args: Value) -> Value {
     }
     args
 }
-
 fn sweep(folder: &Path, now: u64) {
     let oldest = date(now.saturating_sub(KEPT_DAYS * 24 * 60 * 60 * 1000));
     let Ok(entries) = fs::read_dir(folder) else {
@@ -246,7 +223,6 @@ fn sweep(folder: &Path, now: u64) {
         }
     }
 }
-
 pub fn date(ms: u64) -> String {
     let days = i64::try_from(ms / 86_400_000).unwrap_or(0);
     let z = days + 719_468;
@@ -260,7 +236,6 @@ pub fn date(ms: u64) -> String {
     let year = yoe + era * 400 + i64::from(month <= 2);
     format!("{year:04}-{month:02}-{day:02}")
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -282,37 +257,30 @@ mod tests {
         assert_eq!(kept["count"], 3);
         assert_eq!(shortened(json!("short")), json!("short"));
     }
-
     #[test]
     fn a_day_is_read_on_from_where_the_last_read_stopped() {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("2026-11-07.jsonl");
         fs::write(&path, "{\"n\":1}\n{\"n\":2}\n{\"n\":3").expect("written");
-
         let first = after_in(&path, 0);
         assert_eq!(first.lines, [json!({ "n": 1 }), json!({ "n": 2 })]);
         assert_eq!((first.to, first.fresh), (16, false));
-
         let none = after_in(&path, first.to);
         assert!(none.lines.is_empty() && !none.fresh);
         assert_eq!(none.to, first.to);
-
         let mut file = OpenOptions::new().append(true).open(&path).expect("open");
         writeln!(file, "}}").expect("appended");
         writeln!(file, "{{\"n\":4}}").expect("appended");
         let more = after_in(&path, first.to);
         assert_eq!(more.lines, [json!({ "n": 3 }), json!({ "n": 4 })]);
         assert!(!more.fresh);
-
         fs::write(&path, "{\"n\":5}\n").expect("cleared");
         let again = after_in(&path, more.to);
         assert!(again.fresh);
         assert_eq!(again.lines, [json!({ "n": 5 })]);
-
         let gone = after_in(&dir.path().join("2026-11-08.jsonl"), 9);
         assert!(gone.fresh && gone.lines.is_empty() && gone.to == 0);
     }
-
     #[test]
     fn a_day_is_its_utc_date() {
         assert_eq!(date(0), "1970-01-01");
@@ -321,7 +289,6 @@ mod tests {
         assert_eq!(date(1_790_812_799_999), "2026-09-30");
         assert_eq!(date(1_790_812_800_000), "2026-10-01");
     }
-
     #[test]
     fn typed_words_in_a_sensitive_field_are_counted_not_kept() {
         let args = redacted(json!({ "tab": "a1", "ref": "e4", "text": "4242424242424242" }));
@@ -330,7 +297,6 @@ mod tests {
         let form = redacted(json!({ "fields": [{ "ref": "e1", "value": "123" }] }));
         assert_eq!(form["fields"][0]["value"], "(not kept)");
     }
-
     #[test]
     fn the_days_are_the_files_newest_first() {
         let folder = tempfile::tempdir().expect("folder");
@@ -345,7 +311,6 @@ mod tests {
         assert_eq!(days_in(folder.path()), ["2026-09-30", "2026-09-29"]);
         assert!(days_in(&folder.path().join("missing")).is_empty());
     }
-
     #[test]
     fn clearing_one_agent_keeps_everybody_else() {
         let folder = tempfile::tempdir().expect("folder");
@@ -360,18 +325,15 @@ mod tests {
             "{\"agent\":\"a\",\"verb\":\"browser_open\"}\n",
         )
         .expect("write");
-
         clear_in(folder.path(), Some("a")).expect("clear");
         assert_eq!(
             fs::read_to_string(day("2026-09-29")).expect("read"),
             "{\"agent\":\"b\",\"verb\":\"read_note\"}\nnot json\n"
         );
         assert!(!day("2026-09-30").exists());
-
         clear_in(folder.path(), None).expect("clear all");
         assert!(days_in(folder.path()).is_empty());
     }
-
     #[test]
     fn thirty_days_are_kept_and_nothing_older() {
         let folder = tempfile::tempdir().expect("folder");

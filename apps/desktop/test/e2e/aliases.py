@@ -1,15 +1,11 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PLAN = "---\naliases:\n  - Roadmap\n  - The plan\n---\n\n# Plan\n\nWhat we are doing.\n"
 OTHER = "# Other\n\nSee [[Roadmap]] and [[The plan]] and [[Nothing]].\n"
-
 SEED = """
 async ([plan, other]) => {
   const ws = window.ordenApp.workspace
@@ -20,7 +16,6 @@ async ([plan, other]) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -32,34 +27,28 @@ def open_note(page: Page, starts: str) -> None:
     )
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
-
 LINKS = """
 () => [...document.querySelectorAll('.cm-content .orden-link')].map((one) => ({
   words: one.textContent,
   missing: one.classList.contains('orden-link-missing'),
 }))
 """
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820}, color_scheme="light")
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, [PLAN, OTHER])}")
     page.wait_for_timeout(400)
-
     open_note(page, "Other")
     shot(page, "01-links")
-
     drawn = page.evaluate(LINKS)
     say(f"[drawn] {json.dumps(drawn)}")
     by_words = {one["words"]: one["missing"] for one in drawn}
-
     if by_words.get("Roadmap") is not False:
         wrong("a link by an alias is drawn as a name nothing answers to")
     if by_words.get("The plan") is not False:
         wrong("a link by the second alias is drawn as unresolved")
     if by_words.get("Nothing") is not True:
         wrong("a name nothing answers to is no longer drawn as one")
-
     open_note(page, "Plan")
     page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     page.wait_for_timeout(900)
@@ -70,7 +59,6 @@ def drive(browser: Browser) -> None:
     say(f"[panel] {json.dumps(panel)}")
     if "Other" not in panel:
         wrong(f"the note linking by an alias is not among the backlinks: {panel}")
-
     open_note(page, "Other")
     page.evaluate(
         """() => {
@@ -86,7 +74,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.type("[[Road", delay=25)
     page.wait_for_timeout(800)
     shot(page, "03-completion")
-
     rows = page.evaluate(
         """() => [...document.querySelectorAll('.cm-tooltip-autocomplete li')].map((one) => ({
           label: one.querySelector('.cm-completionLabel')?.textContent ?? one.textContent,
@@ -99,14 +86,11 @@ def drive(browser: Browser) -> None:
         wrong("the completion does not offer the alias")
     elif alias["detail"] != "Plan":
         wrong(f"the alias row does not say which note it is: {alias}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(500)
     written = page.evaluate("() => window.orden.state.doc.toString()")
     if "[[Roadmap]]" not in written:
         wrong(f"choosing the alias did not write it: {json.dumps(written[-40:])}")
     shot(page, "04-written")
-
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "a note answers to the names it gave itself"))

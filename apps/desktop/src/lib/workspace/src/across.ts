@@ -18,7 +18,6 @@ interface Joined {
   text(): string
   put(to: string): void
 }
-
 export interface Desk {
   readonly documents: readonly NoteDoc[]
   tell(op: FileOp): Promise<unknown>
@@ -36,33 +35,24 @@ export interface Desk {
   keepVersion(path: string, text: string): Promise<unknown>
   pause(): Promise<unknown>
 }
-
 export interface Written {
   words: string
   revision: number
 }
-
 const GONE = Symbol('gone')
-
 const RENAME_NEWS = 500
-
 const asText = (note: NoteDoc) => note.kind === 'note'
-
 const holdingBack = (note: NoteDoc) => note.live.holdingBack
-
 export class Across {
   private hearing: Promise<unknown> = Promise.resolve()
-
   private listing = false
   private readonly listAgain = afterQuiet(() => {
     this.listing = true
     void this.desk.loadTree().finally(() => (this.listing = false))
   }, 100)
-
   listed() {
     if (!this.listing && !this.windows.alone) this.windows.say('list-again')
   }
-
   constructor(
     private readonly desk: Desk,
     private readonly windows: Windows = theWindows,
@@ -79,7 +69,6 @@ export class Across {
     )
     this.inTurn(() => this.caughtUp())
   }
-
   private async caughtUp() {
     for (const note of [...this.desk.documents]) {
       const path = note.path
@@ -89,28 +78,23 @@ export class Across {
       })
     }
   }
-
   private inTurn(run: () => Promise<unknown>) {
     this.hearing = this.hearing.then(run).catch((error: unknown) => {
       log('error', `across: ${String(error)}`)
     })
   }
-
   owe(note: NoteDoc) {
     this.desk.owed(note)
   }
-
   wroteHere(path: string) {
     this.inTurn(async () => {
       const note = this.desk.documents.find((one) => samePath(one.path, path))
       if (note) await this.fromDisk(note, path)
     })
   }
-
   heardSoFar(): Promise<unknown> {
     return this.hearing
   }
-
   async writing(note: NoteDoc, path: string, write: (words: string) => Promise<unknown>): Promise<Written | null> {
     const first = await oneWriteAt(path, () => this.attempt(note, path, write))
     if (first !== GONE) return first
@@ -122,7 +106,6 @@ export class Across {
     this.desk.draftOf(note)
     return null
   }
-
   private async attempt(
     note: NoteDoc,
     path: string,
@@ -143,20 +126,17 @@ export class Across {
     this.windows.say('words', { path, text: words })
     return { words, revision }
   }
-
   private elsewhere(note: NoteDoc, path: string): boolean {
     if (samePath(note.path, path)) return false
     if (note.path !== null) this.desk.owed(note)
     return true
   }
-
   private letGo(note: NoteDoc, path: string): boolean {
     if (this.elsewhere(note, path)) return true
     if (!holdingBack(note)) return false
     this.desk.owed(note)
     return true
   }
-
   private async onTheDisk(path: string): Promise<string | null> {
     const read = await this.desk.read(path)
     if (read !== null) return unixLines(read)
@@ -165,7 +145,6 @@ export class Across {
     }
     return null
   }
-
   private async takeIn(note: NoteDoc, path: string, disk: string) {
     const base = note.onDisk
     if (base === null || !asText(note)) {
@@ -185,7 +164,6 @@ export class Across {
     }
     note.onDisk = disk
   }
-
   private into(note: NoteDoc, mine: string, words: string) {
     try {
       note.took(fold(mine, words), words)
@@ -194,7 +172,6 @@ export class Across {
       note.tookWhole(words)
     }
   }
-
   private async heardWords(path: string, text: string, from: string) {
     this.desk.noteSaved(path, text, true)
     const note = this.desk.documents.find((one) => samePath(one.path, path))
@@ -205,7 +182,6 @@ export class Across {
     }
     await this.fromDisk(note, path)
   }
-
   private async fromDisk(note: NoteDoc, path: string) {
     await oneWriteAt(path, async () => {
       if (!samePath(note.path, path)) return
@@ -230,7 +206,6 @@ export class Across {
       if (note.dirty) this.desk.owed(note)
     })
   }
-
   private async heardOp(op: FileOp) {
     if (op.op === 'removed') {
       for (const note of this.desk.documents) {
@@ -244,7 +219,6 @@ export class Across {
     this.listAgain()
   }
 }
-
 export async function startAcross(): Promise<Across> {
   const { workspace } = await import('./workspace.svelte')
   const { links } = await import('../../link-index/src/api')

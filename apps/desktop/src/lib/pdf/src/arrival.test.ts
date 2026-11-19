@@ -4,7 +4,6 @@ import { arrivalOf } from './arrival'
 const work = { id: 'work', root: 'C:\\Users\\me\\Documents\\Orden\\Work' }
 const home = { id: 'home', root: 'C:\\Users\\me\\Documents\\Orden\\Home' }
 const spaces = [work, home]
-
 test('a PDF in a space opens where it is, in that space', () => {
   expect(arrivalOf('C:\\Users\\me\\Documents\\Orden\\Home\\Papers\\a.pdf', spaces, 'work')).toEqual({
     kind: 'open',
@@ -12,7 +11,6 @@ test('a PDF in a space opens where it is, in that space', () => {
     path: 'C:\\Users\\me\\Documents\\Orden\\Home\\Papers\\a.pdf',
   })
 })
-
 test('one from anywhere else is brought into the space that is open', () => {
   expect(arrivalOf('C:\\Users\\me\\Downloads\\a.pdf', spaces, 'home')).toEqual({
     kind: 'bring',
@@ -20,7 +18,6 @@ test('one from anywhere else is brought into the space that is open', () => {
     root: home.root,
   })
 })
-
 test('a folder beside a space whose name begins the same is not in it', () => {
   expect(arrivalOf('C:\\Users\\me\\Documents\\Orden\\Workshop\\a.pdf', spaces, 'home')).toEqual({
     kind: 'bring',
@@ -28,11 +25,9 @@ test('a folder beside a space whose name begins the same is not in it', () => {
     root: home.root,
   })
 })
-
 test('a path that climbs out of a space is not in it', () => {
   expect(arrivalOf('C:\\Users\\me\\Documents\\Orden\\Work\\..\\..\\a.pdf', spaces, 'work')?.kind).toBe('bring')
 })
-
 test('with no space open the first takes it, and with none at all nothing does', () => {
   expect(arrivalOf('/tmp/a.pdf', spaces, null)).toEqual({
     kind: 'bring',
@@ -41,7 +36,6 @@ test('with no space open the first takes it, and with none at all nothing does',
   })
   expect(arrivalOf('/tmp/a.pdf', [], null)).toBeNull()
 })
-
 test('a space shared to be read takes nothing: the first that may be written in does', () => {
   const mine = (root: string) => root !== work.root
   expect(arrivalOf('/tmp/a.pdf', spaces, 'work', mine)).toEqual({

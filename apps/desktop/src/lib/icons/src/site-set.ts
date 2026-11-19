@@ -23,13 +23,11 @@ function siteSetOf(held: SiteIconsHeld): LoadedSet {
     },
   }
 }
-
 export async function loadSites(): Promise<LoadedSet> {
   const sites = portOf('web.siteIcons')
   if (!sites.ok) throw new Error(sites.error.message)
   return siteSetOf(await sites.value.held())
 }
-
 export function refreshSites(): void {
   const sites = portOf('web.siteIcons')
   if (sites.ok) void sites.value.held().then((held) => held.refresh())

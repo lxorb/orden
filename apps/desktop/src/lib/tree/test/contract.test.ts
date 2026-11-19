@@ -5,7 +5,6 @@ import { describe, expect, test } from 'vitest'
 import { entryAt, flatRows, folderNote, orderedTree, rowIds, withEntry, withMove, withoutEntry } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
-
 const file = (path: string, modified = 0): Entry => ({
   name: path.split('/').at(-1) ?? path,
   path,
@@ -14,20 +13,17 @@ const file = (path: string, modified = 0): Entry => ({
   created: modified,
   children: [],
 })
-
 const folder = (path: string, children: Entry[]): Entry => ({
   ...file(path),
   is_dir: true,
   children,
 })
-
 const space = (): Entry =>
   folder('/s', [
     file('/s/b.md', 2),
     folder('/s/Trip', [file('/s/Trip/Trip.md'), file('/s/Trip/plan.md')]),
     file('/s/a.md', 1),
   ])
-
 test('the module stands on its own reaches no app module but the platform, the file ops and what a space keeps', () => {
   const reached = readdirSync(SRC)
     .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
@@ -40,7 +36,6 @@ test('the module stands on its own reaches no app module but the platform, the f
     '../../space-kept/src/api',
   ])
 })
-
 describe('the tree of a space', () => {
   test('is ordered by name with folders first, and kept as it was when nothing moves', () => {
     const tree = space()
@@ -48,7 +43,6 @@ describe('the tree of a space', () => {
     expect(ordered.children.map((one) => one.name)).toEqual(['Trip', 'a.md', 'b.md'])
     expect(orderedTree(ordered, 'name', () => [])).toBe(ordered)
   })
-
   test('takes a new entry, a move and a removal without changing the tree it was given', () => {
     const tree = space()
     const added = withEntry(tree, file('/s/Trip/map.md'))
@@ -59,7 +53,6 @@ describe('the tree of a space', () => {
     expect(entryAt(moved, '/s/a.md')).toBeNull()
     expect(entryAt(withoutEntry(moved, '/s/Trip'), '/s/Trip/plan.md')).toBeNull()
   })
-
   test('shows a folder note as its folder, and lists the rest when the folder is open', () => {
     const tree = orderedTree(space(), 'name', () => [])
     const trip = entryAt(tree, '/s/Trip')
@@ -67,7 +60,6 @@ describe('the tree of a space', () => {
     const rows = flatRows(tree, (path) => path === '/s/Trip').map((row) => row.entry.path)
     expect(rows).toEqual(['/s/Trip', '/s/Trip/plan.md', '/s/a.md', '/s/b.md'])
   })
-
   test('gives every row an id that follows it through a move', () => {
     const id = rowIds.idOf('/s/Trip/plan.md')
     expect(rowIds.idOf('/s/Trip/plan.md')).toBe(id)

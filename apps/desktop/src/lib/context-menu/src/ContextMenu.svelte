@@ -22,18 +22,14 @@
   let element = $state<HTMLDivElement>()
   let position = $state({ x: 0, y: 0 })
   let above = $state(false)
-
   const sheet = $derived(viewport.touch && !menu.near)
   const callout = $derived(viewport.touch && menu.near)
-
   const entries = $derived.by((): MenuEntry[] => {
     if (!viewport.touch) return menu.items
-
     const danger = menu.items.filter((item) => item?.danger)
     const rest = menu.items.filter((item) => !item?.danger)
     return trim([...rest, DIVIDER, ...danger])
   })
-
   function insets(node: HTMLElement) {
     const style = getComputedStyle(node)
     const px = (name: string) => parseFloat(style.getPropertyValue(name)) || 0
@@ -44,7 +40,6 @@
       left: px('--inset-left'),
     }
   }
-
   $effect(() =>
     menu.open
       ? overlays.show(
@@ -54,12 +49,9 @@
         )
       : undefined,
   )
-
   $effect(() => {
     if (!menu.open || !element || sheet) return
-
     const { width, height } = element.getBoundingClientRect()
-
     if (!callout) {
       above = false
       const y = menu.up ? menu.y - element.offsetHeight : menu.y
@@ -69,7 +61,6 @@
       }
       return
     }
-
     const { offsetWidth: full, offsetHeight: tall } = element
     const seen = window.visualViewport
     const inset = insets(element)
@@ -77,7 +68,6 @@
     const right = (seen ? seen.offsetLeft + seen.width : window.innerWidth) - inset.right - 8
     const top = (seen?.offsetTop ?? 0) + inset.top + 8
     const bottom = (seen ? seen.offsetTop + seen.height : window.innerHeight) - inset.bottom - 8
-
     const clear = 16
     above = menu.y - clear - tall >= top
     position = {
@@ -85,85 +75,67 @@
       y: above ? menu.y - clear - tall : Math.min(menu.y + clear, bottom - tall),
     }
   })
-
   $effect(() => {
     const seen = window.visualViewport
     if (!menu.open || !viewport.touch || !seen) return
-
     const hide = () => menu.hide()
     seen.addEventListener('resize', hide)
     seen.addEventListener('scroll', hide)
-
     return () => {
       seen.removeEventListener('resize', hide)
       seen.removeEventListener('scroll', hide)
     }
   })
-
   function arrive(node: Element) {
     if (sheet) return fly(node, { y: 40, duration: dur(220), easing: cubicOut })
     return scale(node, { duration: dur(120), start: 0.96, easing: cubicOut })
   }
-
   function showMore(item: MenuItem, row: Element) {
     const more = item.more
     if (!more) return
-
     const box = row.getBoundingClientRect()
     void more().then((rows) => {
       const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.top })
       menu.show(at, rows, { title: item.label })
     })
   }
-
   function choose(item: MenuItem, event: MouseEvent) {
     if (item.more && event.target instanceof Element && event.target.closest('[data-more]')) {
       event.stopPropagation()
       showMore(item, event.currentTarget as Element)
       return
     }
-
     if (item.keep) event.stopPropagation()
     else menu.hide()
     ran(item.command, 'menu')
     item.run()
   }
-
   function onPress(event: PointerEvent) {
     if ((event.buttons & (event.buttons - 1)) === 0) menu.heldAt = null
   }
-
   function onRelease(event: PointerEvent) {
     const from = menu.heldAt
     menu.heldAt = null
     if (!from || !menu.open || !element || event.pointerType !== 'mouse') return
-
     const there = document.elementFromPoint(event.clientX, event.clientY)
     const row = there?.closest<HTMLButtonElement>('[role="menuitem"]')
     const on = row && element.contains(row) && !row.disabled ? row : null
     const under = on ? 'row' : there && element.contains(there) ? 'menu' : 'outside'
     const said = released(from, { x: event.clientX, y: event.clientY }, under)
     if (said === 'stay') return
-
     if (said === 'choose') on?.click()
     else menu.hide()
     spendClick(event, true)
   }
-
   let spelling: Spelling = { typed: '', typedAt: 0 }
-
   $effect(() => {
     if (menu.open) spelling = { typed: '', typedAt: 0 }
   })
-
   const rows = () => [...(element?.querySelectorAll<HTMLElement>('.orden-row:not(:disabled)') ?? [])]
-
   function onKey(event: KeyboardEvent) {
     const list = rows()
     if (!list.length) return
-
     const at = list.findIndex((row) => row === document.activeElement)
-
     const standing = list[at]
     const item = entries[Number(standing?.dataset.at)]
     if (standing && item?.more && event.key === 'ArrowRight') {
@@ -171,27 +143,22 @@
       showMore(item, standing)
       return
     }
-
     const moved = stepped(event.key, at < 0 ? null : at, list.length, true)
     const landed = moved === null ? undefined : list[moved]
-
     if (landed) {
       event.preventDefault()
       landed.focus()
       return
     }
-
     if (event.key === ' ' && at >= 0) {
       event.preventDefault()
       list[at]?.click()
       return
     }
-
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       const names = list.map((row) => row.textContent)
       const { typed, typedAt, found } = spelled(spelling, event.key, event.timeStamp, names)
       spelling = { typed, typedAt }
-
       if (found >= 0) {
         event.preventDefault()
         list[found]?.focus()
@@ -294,32 +261,26 @@
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
-
   .menu:not(.sheet) > .rows {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-
   button {
     color: var(--text);
     white-space: nowrap;
   }
-
   button.danger:hover:not(:disabled) {
     background: var(--danger-soft);
     color: var(--danger);
   }
-
   button:disabled {
     color: var(--muted);
   }
-
   button.lit {
     background: var(--surface-hover);
     color: var(--item-hover-text-color);
   }
-
   kbd {
     flex: none;
     margin-inline-start: var(--space-3);
@@ -327,7 +288,6 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .more {
     flex: none;
     display: grid;
@@ -341,12 +301,10 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .more:hover {
     background: var(--surface-press);
     color: var(--text);
   }
-
   .more svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -356,7 +314,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .mark {
     flex: none;
     width: var(--icon-md);
@@ -369,53 +326,43 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .tick {
     flex: none;
     margin-inline-start: var(--space-3);
     font-size: var(--text-sm);
     color: var(--accent);
   }
-
   hr {
     margin: var(--space-1);
     border: none;
     border-top: 1px solid var(--line);
   }
-
   .scrim {
     --scrim-z: var(--z-menu);
     --scrim-ink: 55%;
     --scrim-blur: 2px;
     touch-action: none;
   }
-
   .touch {
     z-index: var(--z-menu);
   }
-
   .touch button.danger:not(:disabled) {
     color: var(--danger);
   }
-
   .touch button.danger:active:not(:disabled) {
     background: var(--danger-soft);
   }
-
   .touch hr {
     margin: var(--space-1) var(--space-3);
   }
-
   .touch:not(.sheet) {
     min-width: 12rem;
     max-width: calc(100vw - 16px);
     transform-origin: top center;
   }
-
   .touch.above {
     transform-origin: bottom center;
   }
-
   .sheet {
     top: auto;
     left: 0;
@@ -430,7 +377,6 @@
     border-top: 1px solid var(--line-strong);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
-
   .grip {
     flex: none;
     width: 36px;
@@ -439,7 +385,6 @@
     border-radius: 2px;
     background: var(--line-strong);
   }
-
   .title {
     flex: none;
     margin: 0;
@@ -452,7 +397,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .sheet .rows {
     flex: 1;
     min-height: 0;
