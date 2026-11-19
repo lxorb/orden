@@ -79,10 +79,9 @@ async function running(one: Session): Promise<number> {
   await until(() => one.pid !== undefined)
   return one.pid ?? 0
 }
-function watcher(frames: OrdendFrame[], from = 0) {
-  const term = terminal(COLS, ROWS)
+function watcher(frames: OrdendFrame[], from = 0, start = 0, term = terminal(COLS, ROWS)) {
   let read = from
-  let next = 0
+  let next = start
   return {
     term,
     get next() {
@@ -100,20 +99,42 @@ function watcher(frames: OrdendFrame[], from = 0) {
     },
   }
 }
-async function settled(frames: OrdendFrame[], quiet = 600): Promise<void> {
-  let seen = -1
-  let since = Date.now()
-  await until(() => {
-    if (frames.length !== seen) {
-      seen = frames.length
-      since = Date.now()
-    }
-    return Date.now() - since > quiet
+type Watcher = ReturnType<typeof watcher>
+async function shows(seen: Watcher, what: (term: Watcher['term']) => boolean): Promise<void> {
+  await until(async () => {
+    await seen.caught()
+    return what(seen.term)
   }, 60_000)
 }
-async function typed(one: Session, frames: OrdendFrame[], keys: string): Promise<void> {
+async function typed(
+  one: Session,
+  seen: Watcher,
+  keys: string,
+  what: (term: Watcher['term']) => boolean,
+): Promise<void> {
   one.input(bytes(keys))
-  await settled(frames)
+  await shows(seen, what)
+}
+async function even(one: Watcher, other: Watcher): Promise<void> {
+  await until(async () => {
+    await one.caught()
+    await other.caught()
+    return one.next === other.next
+  })
+}
+function answered(frames: OrdendFrame[], asked: number, since: number): OrdendFrame | undefined {
+  return frames.slice(asked).find((frame) => frame.t === 'screen' || (frame.t === 'out' && frame.seq === since))
+}
+const second = (term: Watcher['term']) => term.buffer.active.type === 'alternate'
+const wrote = (word: string) => (term: Watcher['term']) =>
+  second(term) && text(term).includes(word) && !text(term).includes('-- INSERT --')
+function gone(pid: number): boolean {
+  try {
+    const stat = readFileSync(`/proc/${String(pid)}/stat`, 'utf8')
+    return stat.slice(stat.lastIndexOf(')') + 2).startsWith('Z')
+  } catch {
+    return true
+  }
 }
 describe.runIf(linux)('a session', () => {
   test('echoes what is typed', async () => {
@@ -130,65 +151,48 @@ describe.runIf(linux)('a session', () => {
     const on = machine()
     const one = session(on)
     const seen = watcher(on.frames)
-    await typed(one, on.frames, 'seq 1 200000; echo counted-$((1+1))\r')
-    await until(async () => {
-      await seen.caught()
-      return text(seen.term).includes('counted-2')
-    }, 60_000)
+    await typed(one, seen, 'seq 1 200000; echo counted-$((1+1))\r', (term) => text(term).includes('counted-2'))
     expect(seen.next).toBeGreaterThan(KEPT)
     await typed(
       one,
-      on.frames,
+      seen,
       "printf '\\e[1;31mred \\e[38;5;200mpink \\e[38;2;1;2;3;48;5;22mtrue\\e[0m plain \\e[4mline\\n'\r",
+      (term) => text(term).includes('plain line'),
     )
-    await typed(one, on.frames, 'vim -u NONE -N -i NONE notes.txt\r')
-    await typed(one, on.frames, 'ihello from vim\x1b')
-    await typed(one, on.frames, ':set number\r')
-    await seen.caught()
-    const asked = on.frames.length
-    await one.want(0)
-    const answer = on.frames[asked]
-    expect(answer?.t).toBe('screen')
-    if (answer?.t !== 'screen') return
-    const joiner = terminal(answer.cols, answer.rows)
-    await written(joiner, answer.data)
-    let next = answer.seq
-    await typed(one, on.frames, 'ojoined\x1b')
-    await seen.caught()
-    for (const frame of on.frames.slice(asked + 1)) {
-      if (frame.t !== 'out') continue
-      expect(frame.seq).toBe(next)
-      next += frame.data.length
-      await written(joiner, frame.data)
-    }
-    expect(joiner.buffer.active.type).toBe('alternate')
-    expect(text(joiner)).toContain('joined')
-    expect(cells(joiner)).toEqual(cells(seen.term))
-    await typed(one, on.frames, ':q!\r')
+    await typed(one, seen, 'vim -u NONE -N -i NONE notes.txt\r', second)
+    await typed(one, seen, 'ihello from vim\x1b', wrote('hello from vim'))
+    await typed(one, seen, ':set number\r', (term) => /^ +1 hello from vim/m.test(text(term)))
+    const { answer, drawn, at } = await screenOf(one, on.frames)
+    const joiner = watcher(on.frames, at + 1, answer.seq, drawn)
+    await typed(one, seen, 'ojoined\x1b', wrote('joined'))
+    await even(seen, joiner)
+    expect(drawn.buffer.active.type).toBe('alternate')
+    expect(text(drawn)).toContain('joined')
+    expect(cells(drawn)).toEqual(cells(seen.term))
+    one.input(bytes(':q!\r'))
   })
   test('a reconnect inside the kept megabyte is sent the bytes it missed, outside it the screen', async () => {
     const on = machine()
     const one = session(on)
     const seen = watcher(on.frames)
-    await typed(one, on.frames, 'echo first\r')
-    await seen.caught()
+    await typed(one, seen, 'echo first\r', (term) => /^first$/m.test(text(term)))
     const drew = seen.next
-    const behind = terminal(COLS, ROWS)
-    await written(behind, collected(on.frames, 0, drew))
-    await typed(one, on.frames, 'printf "\\e[32msecond\\e[0m\\n"\r')
-    await seen.caught()
+    const drawn = terminal(COLS, ROWS)
+    await written(drawn, collected(on.frames, 0, drew))
+    await typed(one, seen, 'printf "\\e[32msecond\\e[0m\\n"\r', (term) => /^second$/m.test(text(term)))
     const asked = on.frames.length
     await one.want(drew)
-    const answer = on.frames[asked]
+    const answer = answered(on.frames, asked, drew)
     expect(answer).toMatchObject({ t: 'out', seq: drew })
     if (answer?.t !== 'out') return
-    await written(behind, answer.data)
-    expect(cells(behind)).toEqual(cells(seen.term))
-    await typed(one, on.frames, 'head -c 1300000 /dev/zero | tr "\\0" x; echo\r')
-    await seen.caught()
+    await written(drawn, answer.data)
+    const behind = watcher(on.frames, on.frames.indexOf(answer) + 1, drew + answer.data.length, drawn)
+    await even(seen, behind)
+    expect(cells(drawn)).toEqual(cells(seen.term))
+    await typed(one, seen, 'head -c 1300000 /dev/zero | tr "\\0" x; echo\r', () => seen.next - drew > KEPT)
     const again = on.frames.length
     await one.want(drew)
-    expect(on.frames[again]?.t).toBe('screen')
+    expect(answered(on.frames, again, drew)?.t).toBe('screen')
   })
   test('says the program in front, and the shell again after it', async () => {
     const on = machine()
@@ -273,7 +277,7 @@ async function screenOf(one: Session, frames: OrdendFrame[]) {
   if (answer?.t !== 'screen') throw new Error('no screen')
   const drawn = terminal(answer.cols, answer.rows)
   await written(drawn, answer.data)
-  return { answer, drawn }
+  return { answer, drawn, at: frames.indexOf(answer) }
 }
 describe.runIf(linux)('through a restart of ordend', () => {
   test('a program goes on, and a device is sent exactly what it missed', async () => {
@@ -307,10 +311,9 @@ describe.runIf(linux)('through a restart of ordend', () => {
   test('a full-screen program comes back whole, on its second screen, and takes keys', async () => {
     const before = machine()
     const first = new Session('s_vim', COLS, ROWS, before)
-    first.input(bytes('vim -u NONE -N -i NONE notes.txt\r'))
-    await settled(before.frames)
-    first.input(bytes('ihello from vim\x1b'))
-    await settled(before.frames)
+    const seen = watcher(before.frames)
+    await typed(first, seen, 'vim -u NONE -N -i NONE notes.txt\r', second)
+    await typed(first, seen, 'ihello from vim\x1b', wrote('hello from vim'))
     const saved = await first.save(Date.now())
     first.detach()
     const after = machine()
@@ -319,18 +322,16 @@ describe.runIf(linux)('through a restart of ordend', () => {
     expect(back.drawn.buffer.active.type).toBe('alternate')
     expect(text(back.drawn)).toContain('hello from vim')
     again.input(bytes('ojoined\x1b'))
-    await settled(after.frames)
-    const typed = await screenOf(again, after.frames)
-    expect(text(typed.drawn)).toContain('joined')
+    await until(async () => wrote('joined')((await screenOf(again, after.frames)).drawn), 60_000)
     again.input(bytes(':q!\r'))
   })
   test('a shell that ended while ordend was away is said ended when it comes back', async () => {
     const before = machine()
     const first = new Session('s_gone', COLS, ROWS, before)
     first.input(bytes('sleep 1; exit 3\r'))
-    await running(first)
+    const shell = await running(first)
     first.detach()
-    await new Promise((resolve) => setTimeout(resolve, 2500))
+    await until(() => gone(shell))
     const after = machine()
     session(after, 's_gone')
     await until(() => after.frames.some((frame) => frame.t === 'ended'))
