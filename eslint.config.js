@@ -422,6 +422,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/crates/web/src/web_tabs/*.js',
       'apps/desktop/src-tauri/crates/web/src/web_swipe.js',
       'apps/desktop/src-tauri/crates/web/src/web_pointer.js',
+      'apps/desktop/src-tauri/crates/web/src/web_select.js',
       'apps/desktop/src-tauri/crates/web/src/web_painted.js',
       'apps/desktop/src-tauri/crates/web/src/web_media.js',
       'apps/desktop/src-tauri/crates/web/src/web_bars.js',

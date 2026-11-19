@@ -34,6 +34,7 @@ pub mod web_pause;
 pub mod web_permission;
 pub mod web_pointer;
 pub mod web_reload;
+pub mod web_select;
 pub mod web_state;
 pub mod web_steady;
 pub mod web_stores;

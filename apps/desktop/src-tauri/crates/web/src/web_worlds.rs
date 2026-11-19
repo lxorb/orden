@@ -57,12 +57,13 @@ fn attached(event: &str) -> Option<Attached> {
         .unwrap_or(false)
         .then_some(Attached::Held(session))
 }
-fn bindings() -> [(&'static str, Value); 5] {
+fn bindings() -> [(&'static str, Value); 6] {
     [
         crate::web_opens::BINDING,
         crate::web_swipe::BINDING,
         crate::web_pointer::BINDING,
         crate::web_painted::BINDING,
+        crate::web_select::BINDING,
         crate::web_pass::BINDING,
     ]
     .map(|name| ("Runtime.addBinding", json!({ "name": name, "executionContextName": WORLD })))
@@ -142,6 +143,9 @@ mod engine {
                 }
                 Some(crate::web_painted::BINDING) => {
                     crate::web_painted::heard(&app, &window, &tab, payload);
+                }
+                Some(crate::web_select::BINDING) => {
+                    crate::web_select::heard(&page, &app, &window, &tab, payload);
                 }
                 Some(crate::web_pass::BINDING) => {
                     crate::web_pass::binding_called(&page, &app, &window, &tab, session, params);
@@ -302,6 +306,7 @@ mod tests {
                 crate::web_swipe::BINDING,
                 crate::web_pointer::BINDING,
                 crate::web_painted::BINDING,
+                crate::web_select::BINDING,
                 crate::web_pass::BINDING
             ]
         );

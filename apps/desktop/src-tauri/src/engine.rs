@@ -189,6 +189,13 @@ pub(crate) fn permissions(
 pub(crate) fn permission_answer(id: u64, allow: bool) -> bool {
     tauri_runtime_cef::answer_permission(id, allow)
 }
+pub(crate) fn zoom(webview: &tauri::webview::PlatformWebview) -> f64 {
+    use cef::{ImplBrowser as _, ImplBrowserHost as _};
+    webview
+        .downcast_ref::<tauri_runtime_cef::Webview>()
+        .and_then(|view| view.browser().host())
+        .map_or(1.0, |host| tauri_runtime_cef::zoom_factor(host.zoom_level()))
+}
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,
