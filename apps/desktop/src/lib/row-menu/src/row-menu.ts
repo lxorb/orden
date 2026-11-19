@@ -1,8 +1,8 @@
-import { type Entry, portOf, tabKindLoaded } from '@orden/contracts'
+import { type Entry, portOf } from '@orden/contracts'
 import { foreignCopy } from '@orden/sync-core'
 import { isChatTarget } from '@orden/markdown/links'
 import { moveTargets, type MoveTarget, movesInto, folderNote, nestedIn, entryAt } from '../../tree/src/api'
-import { basesOn, hiddenKinds, type KindName } from '../../gates/src/api'
+import { hiddenKinds, type KindName } from '../../gates/src/api'
 import { kindLabel } from '../../new-here/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import { archiveEntry, coverEntries, iconEntries, searchAgainEntry, shareEntry, webDataEntry } from './api'
@@ -211,20 +211,10 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
 export function newFileRows(inside?: string): MenuEntry[] {
   const into = inside ?? workspace.activeSpace?.root
   if (into !== undefined && !canWriteAt(into)) return []
-  return [
-    ...hiddenKinds.shown.flatMap((kind) => {
-      const make = MAKERS[kind]
-      if (!make) return []
-      const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
-      return [{ label: kindLabel(kind), run }]
-    }),
-    ...(__EVEN_PLUGIN__ || inside || !basesOn()
-      ? []
-      : [
-          {
-            label: 'New database',
-            run: () => void tabKindLoaded('view').then((kind) => kind.make?.()),
-          },
-        ]),
-  ]
+  return hiddenKinds.shown.flatMap((kind) => {
+    const make = MAKERS[kind]
+    if (!make) return []
+    const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
+    return [{ label: kindLabel(kind), run }]
+  })
 }

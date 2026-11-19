@@ -5,7 +5,7 @@ import { bookmarkAll, iconEntries, rowMenus, shareEntry, webDataEntry } from '..
 vi.mock('../../gates/src/api', async (actual) => {
   const real = await actual<{ hiddenKinds: object }>()
   Object.defineProperty(real.hiddenKinds, 'shown', { get: () => ['note', 'chat'], configurable: true })
-  return real
+  return { ...real, basesOn: () => true }
 })
 const gone: (() => void)[] = []
 afterEach(() => {
@@ -21,6 +21,11 @@ describe('the row menus', () => {
     const { newFileRows } = await rowMenus()
     expect(newFileRows().map((one) => one?.label)).toEqual(['New note'])
     expect(newFileRows('/s/Projects').map((one) => one?.label)).toEqual(['New note'])
+  })
+  test('never offer to make a database, even where databases are on', async () => {
+    const { newFileRows } = await rowMenus()
+    const labels = [...newFileRows(), ...newFileRows('/s/Projects')].map((one) => one?.label)
+    expect(labels).not.toContain('New database')
   })
   test('offer nothing for no path', () => {
     expect(bookmarkAll([])).toEqual([])
