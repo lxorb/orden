@@ -32,12 +32,42 @@ export interface OverlayScrollbar {
   settle(): void
   stop(): void
 }
-function engineBarRedrawn(scroller: HTMLElement) {
-  const { overflowX, overflowY } = scroller.style
-  scroller.style.overflow = 'hidden'
-  scroller.getBoundingClientRect()
-  scroller.style.overflowX = overflowX
-  scroller.style.overflowY = overflowY
+interface Drawing {
+  measure(): void
+  paint(): void
+}
+interface Fresh {
+  scroller: HTMLElement
+  host: HTMLElement | null
+}
+const freshening = new Map<HTMLElement, Fresh>()
+const drawing = new Set<Drawing>()
+function engineBarsRedrawn(fresh: readonly Fresh[]) {
+  const placed = fresh.map(({ host }) => !host || getComputedStyle(host).position !== 'static')
+  const kept = fresh.map(({ scroller }) => [scroller.style.overflowX, scroller.style.overflowY] as const)
+  fresh.forEach(({ scroller, host }, at) => {
+    if (host && !placed[at]) host.style.position = 'relative'
+    scroller.style.overflow = 'hidden'
+  })
+  fresh[0]?.scroller.getBoundingClientRect()
+  fresh.forEach(({ scroller }, at) => {
+    const [overflowX = '', overflowY = ''] = kept[at] ?? []
+    scroller.style.overflowX = overflowX
+    scroller.style.overflowY = overflowY
+  })
+}
+const frame = onceAFrame(() => {
+  const fresh = [...freshening.values()].filter(({ scroller }) => scroller.isConnected)
+  freshening.clear()
+  engineBarsRedrawn(fresh)
+  const now = [...drawing]
+  drawing.clear()
+  for (const one of now) one.measure()
+  for (const one of now) one.paint()
+})
+function freshen(scroller: HTMLElement, host: HTMLElement | null) {
+  freshening.set(scroller, { scroller, host: host ?? freshening.get(scroller)?.host ?? null })
+  frame()
 }
 export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): OverlayScrollbar {
   const bar = document.createElement('div')
@@ -45,36 +75,55 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
   const thumb = document.createElement('div')
   thumb.className = 'orden-scrollbar-thumb'
   bar.append(thumb)
-  if (getComputedStyle(host).position === 'static') host.style.position = 'relative'
   host.append(bar)
   scroller.classList.add('orden-scrolls')
-  engineBarRedrawn(scroller)
-  const box = { top: -1, height: -1, end: -1 }
+  freshen(scroller, host)
+  const shown = { top: -1, height: -1, end: -1, needed: false, size: -1, offset: -1 }
+  let seen: { top: number; height: number; end: number; thumb: Thumb | null } | null = null
   let held = false
-  const draw = () => {
+  let stopped = false
+  const measure = () => {
     const visible = scroller.clientHeight
-    const top = scroller.offsetTop
-    const end = host.clientWidth - scroller.offsetLeft - scroller.clientWidth
-    const shape = thumbFor({
-      content: scroller.scrollHeight,
-      visible,
-      at: scroller.scrollTop,
-      track: visible,
-      least: LEAST,
-      slack: parseFloat(getComputedStyle(scroller).paddingBottom) || 0,
-    })
-    if (box.top !== top || box.height !== visible || box.end !== end) {
-      Object.assign(box, { top, height: visible, end })
+    seen = {
+      top: scroller.offsetTop,
+      height: visible,
+      end: host.clientWidth - scroller.offsetLeft - scroller.clientWidth,
+      thumb: thumbFor({
+        content: scroller.scrollHeight,
+        visible,
+        at: scroller.scrollTop,
+        track: visible,
+        least: LEAST,
+        slack: parseFloat(getComputedStyle(scroller).paddingBottom) || 0,
+      }),
+    }
+  }
+  const paint = () => {
+    if (!seen || stopped) return
+    const { top, height, end } = seen
+    if (shown.top !== top || shown.height !== height || shown.end !== end) {
+      Object.assign(shown, { top, height, end })
       bar.style.top = `${top}px`
-      bar.style.height = `${visible}px`
+      bar.style.height = `${height}px`
       bar.style.insetInlineEnd = `${end}px`
     }
-    bar.classList.toggle('is-needed', !!shape)
-    if (!shape) return
-    thumb.style.height = `${Math.round(shape.size)}px`
-    thumb.style.transform = `translateY(${Math.round(shape.offset)}px)`
+    const needed = !!seen.thumb
+    if (shown.needed !== needed) {
+      shown.needed = needed
+      bar.classList.toggle('is-needed', needed)
+    }
+    if (!seen.thumb) return
+    const size = Math.round(seen.thumb.size)
+    const offset = Math.round(seen.thumb.offset)
+    if (shown.size !== size) thumb.style.height = `${(shown.size = size)}px`
+    if (shown.offset !== offset) thumb.style.transform = `translateY(${(shown.offset = offset)}px)`
   }
-  const soon = onceAFrame(draw)
+  const drawn: Drawing = { measure, paint }
+  const soon = () => {
+    if (stopped) return
+    drawing.add(drawn)
+    frame()
+  }
   const dimming = afterQuiet(() => bar.classList.remove('is-lit'), IDLE)
   const easing = afterQuiet(
     () => bar.classList.remove('is-settling'),
@@ -135,7 +184,8 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       light()
     },
     stop: () => {
-      soon.cancel()
+      stopped = true
+      drawing.delete(drawn)
       dimming.cancel()
       easing.cancel()
       watching.disconnect()
@@ -143,7 +193,7 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       scroller.removeEventListener('pointerenter', light)
       thumb.removeEventListener('pointerdown', grab)
       scroller.classList.remove('orden-scrolls')
-      engineBarRedrawn(scroller)
+      freshen(scroller, null)
       bar.remove()
     },
   }
