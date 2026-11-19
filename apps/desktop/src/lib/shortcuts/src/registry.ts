@@ -655,6 +655,7 @@ const AI_ENTRIES: Shortcut[] = (
   ] as const
 ).map(([id, label, key]) => panel('view', id, label, key))
 const FIELD_ENTRIES: Shortcut[] = [panel('edit', 'field.dictate', 'Dictate', 'Alt-v')]
+const PALETTE_ENTRIES: Shortcut[] = [panel('view', 'palette.scope', 'Search all spaces or only this one', 'Alt-a')]
 CANVAS_ENTRIES.push(panel('canvas', 'canvas.delete.alt', 'Delete what is picked', 'Backspace', { alias: true }))
 let cycling: typeof import('../../tab-cycle/src/api') | null = null
 function cycleTab(direction: number, mayUseOrder = false, held = false) {
@@ -746,6 +747,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...WEB_ENTRIES,
   ...AI_ENTRIES,
   ...FIELD_ENTRIES,
+  ...PALETTE_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 export const BY_ID = new Map(SHORTCUTS.map((one) => [one.id, one]))
