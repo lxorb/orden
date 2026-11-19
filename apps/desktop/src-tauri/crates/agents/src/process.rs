@@ -762,6 +762,10 @@ mod tests {
             crate::files::under_home("~/a/../b", Some(&home)).expect("home"),
             orden_base::paths::folded(&home.join("b"))
         );
+        for far in [r"\\attacker.example\share\x.exe", "//attacker.example/share/x"] {
+            let said = located(far, Some(&home), std::ffi::OsStr::new("")).expect_err(far);
+            assert!(said.contains("on another computer"), "{said}");
+        }
         assert!(located(
             "no-such-program-anywhere",
             Some(&home),

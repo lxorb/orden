@@ -60,3 +60,10 @@ fn a_question_names_the_thread_whose_call_raised_it_and_its_answer_stays_there()
     assert_eq!(thread_of(&serde_json::json!({ "thread": "../x" })), None);
     assert_eq!(thread_of(&serde_json::json!({ "thread": "x".repeat(81) })), None);
 }
+#[test]
+fn an_agent_path_on_another_computer_is_refused_by_its_words_alone() {
+    for far in [r"\\host\share\a.md", "//host/share/a.md", r"\\?\UNC\host\share", r"\\.\pipe\x"] {
+        assert!(orden_agents::files::under_home(far, None).is_err(), "{far}");
+    }
+    assert!(orden_agents::files::on_this_computer(r"\\?\C:\a.md").is_ok());
+}
