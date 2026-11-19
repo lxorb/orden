@@ -435,6 +435,7 @@
     })
   }
   const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
+  const fabShown = $derived(viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind))
   $effect(() => {
     paneCorners.draw = corners
     return () => {
@@ -529,15 +530,21 @@
     const current = view
     const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.naming, palette]
     if (!current || !reasons.length) return
+    let painted = 0
     const frame = requestAnimationFrame(() => {
-      const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
-        overlaid: overlays.depth > 0,
-        renaming: workspace.naming !== null,
-        touch: viewport.touch,
+      painted = window.setTimeout(() => {
+        const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
+          overlaid: overlays.depth > 0,
+          renaming: workspace.naming !== null,
+          touch: viewport.touch,
+        })
+        if (may && !keyboardStays() && !current.hasFocus) current.focus()
       })
-      if (may && !keyboardStays()) current.focus()
     })
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(painted)
+    }
   })
   function sidebarUndo(event: KeyboardEvent) {
     const own = sidebarKey(event, (id) => shortcuts.pressed(id, event))
@@ -628,6 +635,7 @@
   class:focus={modes.focus}
   class:full={bare}
   class:flush
+  class:fabbed={fabShown && !bare}
   class:tabbed={viewport.device === 'phone' && !!workspace.panel && !bare && !__EVEN_PLUGIN__}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
@@ -762,7 +770,7 @@
     />
   {/if}
 
-  {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
+  {#if fabShown && !bare}
     <button class="fab" aria-label={fabLabel} onclick={writeNew}>
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
     </button>
@@ -1047,7 +1055,7 @@
   main.tabbed .notices:has(> :global(*)) {
     padding-bottom: calc(var(--space-3) + var(--inset-bottom) + var(--touch-row));
   }
-  main:has(:global(.fab)) .notices:has(> :global(*)) {
+  main.fabbed .notices:has(> :global(*)) {
     padding-inline-end: calc(max(var(--space-4), var(--inset-right)) + var(--touch-row) + var(--space-2));
   }
   main.full .panes {
