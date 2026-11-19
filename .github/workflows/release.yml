@@ -163,6 +163,39 @@ jobs:
           retention-days: 90
           path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.pdb
 
+  hover:
+    needs: [build]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-11-arm
+            label: windows-arm64
+          - platform: windows-latest
+            label: windows-x64
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: nib-${{ matrix.label }}
+          path: built
+
+      - name: A hover answers within frames and the app rests when left alone
+        run: |
+          setup=$(find built -name '*-setup.exe' | head -1)
+          home="$(cygpath -w "$RUNNER_TEMP")\\orden"
+          "/c/Program Files/7-Zip/7z.exe" x -y -o"$home" "$(cygpath -w "$setup")" >/dev/null
+          python scripts/hover-drive.py --exe "$home\\orden.exe" --identifier so.orden.Orden
+
   mac:
     needs: [version, settle]
     if: ${{ !cancelled() && needs.version.result == 'success' && needs.settle.outputs.newest != 'false' }}
