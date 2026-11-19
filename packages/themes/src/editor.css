@@ -1218,6 +1218,10 @@
   opacity: 1;
   transition-delay: 0s;
 }
+.cm-content:hover .cm-line:not(:hover) > .orden-block-slot .orden-block-handle,
+.cm-content:hover .cm-line:not(:hover) > .orden-fold .orden-fold-hinge {
+  transition: none;
+}
 .orden-block-handle:hover {
   background: var(--surface-2);
   color: var(--text-strong);
