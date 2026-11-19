@@ -1,0 +1,96 @@
+name: system-scheme
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src/lib/theme/**
+      - apps/desktop/src-tauri/linux/tauri-runtime-cef/**
+      - scripts/system-scheme-drive.py
+      - .github/workflows/system-scheme.yml
+  push:
+    branches: ['tmp/ci-2218*']
+  workflow_dispatch:
+
+concurrency:
+  group: system-scheme-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  follows:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.system-scheme
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          case "$RUNNER_OS" in
+            macOS)
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --bundles app \
+                --ignore-version-mismatches --config "$config"
+              app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
+              echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+              ;;
+            *)
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+                --ignore-version-mismatches --config "$config"
+              bash scripts/cef-beside.sh apps/desktop/src-tauri/target/${{ matrix.target }}/release
+              exe=orden
+              [ "$RUNNER_OS" = Windows ] && exe=orden.exe
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/$exe" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: A screen and a session bus, on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb dbus-x11 python3-gi gir1.2-glib-2.0
+          sandbox="$(dirname "$EXE")/chrome-sandbox"
+          if [ -f "$sandbox" ]; then
+            sudo chown root:root "$sandbox"
+            sudo chmod 4755 "$sandbox"
+          fi
+
+      - name: The app follows the system's light and dark while it runs
+        run: |
+          drive=(scripts/system-scheme-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out system-scheme)
+          case "$RUNNER_OS" in
+            Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- /usr/bin/python3 "${drive[@]}" ;;
+            Windows) python "${drive[@]}" ;;
+            *) python3 "${drive[@]}" ;;
+          esac
+
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: system-scheme-${{ runner.os }}
+          path: system-scheme
+          if-no-files-found: ignore
