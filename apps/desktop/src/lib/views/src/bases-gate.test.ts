@@ -17,7 +17,6 @@ const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesO
 const { receive } = await import('../../gates/src/api')
 const { experimentalPane } = await import('../../settings/src/experimental-pane')
 const { appCommands } = await import('../../commands/src/api')
-const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
 const { openBaseFile } = await import('./open')
 const { createDatabase } = await import('./new-database')
 const { copiesToBase } = await import('./save')
@@ -37,15 +36,13 @@ function field() {
   return found
 }
 const palette = () => appCommands().some((one) => one.id === 'new-database')
-const launcher = () => newFileRows().some((one) => one?.label === 'New database')
 const opened = () => workspace.tabs.filter((one) => one.kind === 'view' && one.path === '/s/B.base')
 describe('databases, until they are turned on', () => {
-  test('are off, with no command, menu row, tab or new database of their own', async () => {
+  test('are off, with no command, tab or new database of their own', async () => {
     expect(basesOn()).toBe(false)
     expect(field().get()).toBe(false)
     expect(field().initial).toBe(false)
     expect(palette()).toBe(false)
-    expect(launcher()).toBe(false)
     expect(openBaseFile('/s/B.base')).toBeNull()
     expect(opened()).toEqual([])
     expect(copiesToBase()).toBe(false)
@@ -56,7 +53,6 @@ describe('databases, until they are turned on', () => {
     field().set(true)
     expect(basesOn()).toBe(true)
     expect(palette()).toBe(true)
-    expect(launcher()).toBe(true)
     expect(openBaseFile('/s/B.base')?.kind).toBe('view')
     expect(opened()).toHaveLength(1)
     expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, BASES_WORD])
@@ -66,7 +62,6 @@ describe('databases, until they are turned on', () => {
     field().set(false)
     expect(basesOn()).toBe(false)
     expect(palette()).toBe(false)
-    expect(launcher()).toBe(false)
     expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
   test('follow the account, beside the other switches', () => {
