@@ -471,6 +471,66 @@ def drive_lone_mark(browser: Browser) -> None:
         page.wait_for_timeout(200)
     page.evaluate("() => { if (window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
     page.context.close()
+SWEEP = """# A note to sweep
+
+The first paragraph on the way down.
+
+## A heading in the middle
+
+- a list item to pass
+- another list item to pass
+
+The second paragraph on the way down.
+
+### A smaller heading
+
+> a quote to pass
+
+The last paragraph of the sweep.
+"""
+MIDDLES = """() => [...document.querySelectorAll('.cm-content .cm-line')].filter((line) => line.textContent.trim()).map((line) => {
+  const range = document.createRange()
+  range.selectNodeContents(line)
+  const box = [...range.getClientRects()].find((one) => one.width > 0) ?? line.getBoundingClientRect()
+  return { text: line.textContent.trim().slice(0, 24), x: box.left + box.width / 2, y: box.top + box.height / 2 }
+})"""
+SHOWING = """([x, y]) => {
+  const line = document.elementFromPoint(x, y)?.closest('.cm-line') ?? null
+  const seen = (selector) => [...document.querySelectorAll(selector)].filter((one) => Number(getComputedStyle(one).opacity) > 0.01)
+  const told = (marks) => ({ count: marks.length, elsewhere: marks.filter((one) => !line || !line.contains(one)).map((one) => one.closest('.cm-line')?.textContent.trim().slice(0, 24) ?? '?') })
+  return { line: line?.textContent.trim().slice(0, 24) ?? null, marks: told(seen('.orden-block-handle')), hinges: told(seen('.orden-fold-hinge[data-folded="false"]')) }
+}"""
+def swept(page: Page, label: str, x: float, y: float, many: list[str]) -> None:
+    seen = page.evaluate(SHOWING, [x, y])
+    for kind in ("marks", "hinges"):
+        told = seen[kind]
+        if told["count"] > 1 or told["elsewhere"]:
+            many.append(f"{label}: {told['count']} {kind} shown under {seen['line']!r}, on {told['elsewhere']}")
+def drive_sweep(browser: Browser) -> None:
+    page = fresh(browser, "sweep", note=SWEEP)
+    lines = page.evaluate(MIDDLES)
+    if len(lines) < 8:
+        wrong(f"[sweep] the note shows only {len(lines)} lines to sweep over")
+    first = lines[0]
+    page.mouse.move(first["x"], first["y"])
+    wait_for(page, f"[...document.querySelectorAll('.orden-block-handle')].some((one) => Number(getComputedStyle(one).opacity) > 0.99)", "[sweep] the first line's mark")
+    many: list[str] = []
+    for line in lines[1:]:
+        page.mouse.move(line["x"], line["y"])
+        swept(page, f"on {line['text']!r}", line["x"], line["y"], many)
+    last = lines[-1]
+    swept(page, "after the quick sweep", last["x"], last["y"], many)
+    page.mouse.move(first["x"], first["y"])
+    for step in range(1, 6):
+        x = first["x"] + (last["x"] - first["x"]) * step / 5
+        y = first["y"] + (last["y"] - first["y"]) * step / 5
+        page.mouse.move(x, y, steps=4)
+        swept(page, f"gliding, step {step * 4} of 20", x, y, many)
+    shot(page, "60-after-a-sweep")
+    say(f"[sweep] {len(lines)} lines passed; more than one mark or hinge shown {len(many)} times")
+    for one in many:
+        wrong(f"[sweep] more than one line's mark is shown {one}")
+    page.context.close()
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the mark ---")
@@ -479,6 +539,8 @@ def main() -> int:
         drive_lone_mark(browser)
         say("--- the gap before a line ---")
         drive_gap(browser)
+        say("--- a quick sweep down the note ---")
+        drive_sweep(browser)
         say("--- a narrow window ---")
         drive_narrow(browser)
         say("--- what it opens ---")
