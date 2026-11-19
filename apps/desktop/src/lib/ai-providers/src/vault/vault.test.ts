@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { added, type Accounts, NONE, resolve, updated } from '../accounts'
+import { added, type Accounts, NONE, removed, resolve, updated } from '../accounts'
 import type { Base, Contents } from './merge'
 import { newNonce } from '../pairing'
 import { deviceKeyIn, newDeviceKey, open, unwrap } from './crypto'
@@ -165,12 +165,18 @@ function device(
   kept: ReadonlyMap<string, string> = new Map(),
 ) {
   const secrets = new Map(kept)
-  const here = { accounts, keys: {} as Record<string, string> }
+  const here = {
+    accounts,
+    keys: {} as Record<string, string>,
+    who: 'u1' as string | null,
+    server: account,
+    served: null as string | null,
+  }
   const bases = new Map<string, Base>()
   const world: VaultWorld = {
-    account: () => 'u1',
+    account: () => here.who,
     call: async <T>(path: string, method?: string, body?: unknown) =>
-      (await account.answer(path, method, body as Record<string, unknown>)) as T,
+      (await here.server.answer(path, method, body as Record<string, unknown>)) as T,
     readSecret: (key) => Promise.resolve(secrets.get(key) ?? null),
     writeSecret: (key, value) => {
       secrets.set(key, value)
@@ -187,6 +193,16 @@ function device(
     keepBase: (id, base) => {
       if (base) bases.set(id, base)
       else bases.delete(id)
+    },
+    served: () => here.served,
+    serve: (id) => {
+      here.served = id
+    },
+    drop: (gone) => {
+      const ids = new Set(gone.map((one) => one.id))
+      here.accounts = gone.reduce((state, one) => removed(state, one.id), here.accounts)
+      here.keys = Object.fromEntries(Object.entries(here.keys).filter(([id]) => !ids.has(id)))
+      return Promise.resolve()
     },
   }
   return { vault: new Vault(world), here, secrets, world }
@@ -532,5 +548,79 @@ describe('a device let go of', () => {
     await laptop.vault.leave()
     expect(account.blob).toBeNull()
     expect(account.devices.size).toBe(0)
+  })
+})
+describe('an Orden account leaving the device', () => {
+  async function read(server: Account, laptop: Device): Promise<string> {
+    const mine = deviceKeyIn(JSON.parse(laptop.secrets.get('ai-vault-device') ?? 'null'))
+    const wrapped = mine ? server.devices.get(mine.id)?.wrapped : null
+    if (!mine || !wrapped) throw new Error('the laptop is let in')
+    return await open(await unwrap(wrapped, mine), server.blob ?? '')
+  }
+  function signIn(laptop: Device, who: string, server = new Account()) {
+    laptop.here.who = who
+    laptop.here.server = server
+    return server
+  }
+  test('takes the AI accounts and keys of its vault off the device, and the next account’s vault never gets them', async () => {
+    const { laptop } = await opened()
+    laptop.vault.seen = { anthropic: 'a@example.com' }
+    laptop.here.who = null
+    await laptop.vault.left()
+    expect(laptop.here.accounts.accounts).toEqual([])
+    expect(laptop.here.keys).toEqual({})
+    expect(laptop.vault.seen).toEqual({})
+    const local = added(NONE, 'openai')
+    laptop.here.accounts = local.state
+    laptop.here.keys = { [local.account.id]: 'sk-only-here' }
+    const other = signIn(laptop, 'u2')
+    await laptop.vault.refresh()
+    expect(laptop.vault.standing).toBe('open')
+    const theirs = await read(other, laptop)
+    expect(theirs).not.toContain('sk-ant-secret')
+    expect(theirs).toContain('sk-only-here')
+    expect(laptop.here.keys).toEqual({ [local.account.id]: 'sk-only-here' })
+  })
+  test('is noticed when another signs in without the first signing out, before the new vault opens', async () => {
+    const { laptop } = await opened()
+    const other = signIn(laptop, 'u2')
+    await laptop.vault.refresh()
+    expect(laptop.vault.standing).toBe('open')
+    expect(laptop.here.keys).toEqual({})
+    expect(await read(other, laptop)).not.toContain('sk-ant-secret')
+  })
+  test('while the vault is being read, brings nothing of it back', async () => {
+    const { account, laptop } = await opened()
+    const call = laptop.world.call.bind(laptop.world)
+    laptop.world.call = async <T>(path: string, method?: string, body?: unknown): Promise<T> => {
+      const said = await call<T>(path, method, body)
+      if (path.startsWith('/v2/ai?') && laptop.here.who) {
+        laptop.here.who = null
+        await laptop.vault.left()
+      }
+      return said
+    }
+    const rev = account.rev
+    await laptop.vault.refresh()
+    expect(laptop.here.keys).toEqual({})
+    expect(laptop.here.accounts.accounts).toEqual([])
+    expect(account.rev).toBe(rev)
+  })
+  test('finds its AI accounts again in its vault when it signs in again', async () => {
+    const { account, laptop } = await opened()
+    laptop.here.who = null
+    await laptop.vault.left()
+    signIn(laptop, 'u1', account)
+    await laptop.vault.refresh()
+    expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
+    expect(await read(account, laptop)).toContain('sk-ant-secret')
+  })
+  test('deleted with its data kept here leaves the AI accounts on the device, no longer of its vault', async () => {
+    const { laptop } = await opened()
+    laptop.here.who = null
+    await laptop.vault.left(true)
+    expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
+    expect(laptop.world.loadBase('u1')).toBeNull()
+    expect(laptop.world.served()).toBeNull()
   })
 })

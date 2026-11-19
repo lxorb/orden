@@ -2,6 +2,7 @@ import { mount, unmount, untrack } from 'svelte'
 import { account, request } from '../../../accounts/src/api'
 import { afterQuiet, deviceName, forget, keep, keepJson, log } from '../../../platform/src/api'
 import { parsed, storedText, isNative, NoWord, wordSaid } from '../../../platform/src/api'
+import { removed } from '../accounts'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
 import { keepMoves } from '../moves'
@@ -16,6 +17,7 @@ const EVERY = 5 * 60_000
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
 const baseKey = (id: string) => `orden:ai-vault-base:${id}`
 const BROWSER_KEY = 'orden:ai-vault-browser'
+const SERVED_KEY = 'orden:ai-vault-account'
 export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
 export async function keepBrowserInVault(on: boolean): Promise<void> {
   browserVault.on = on
@@ -90,8 +92,23 @@ export const world: VaultWorld = {
     if (base) keepJson(baseKey(id), base)
     else forget(baseKey(id))
   },
+  served: () => storedText(SERVED_KEY),
+  serve: (id) => {
+    if (id) keep(SERVED_KEY, id)
+    else forget(SERVED_KEY)
+  },
+  async drop(gone) {
+    ai.adopt(gone.reduce((state, one) => removed(state, one.id), ai.state))
+    for (const one of gone) {
+      if (!keyed(one.kind)) continue
+      await forgetKey(one.id, true).catch((error: unknown) =>
+        log('warn', `ai vault: could not forget the key of ${one.id}: ${String(error)}`),
+      )
+    }
+  },
 }
 export const vault = new Vault(world)
+account.forgetWithSession((kept) => void vault.left(kept))
 let started = false
 export function startVault(): void {
   if (started) return
