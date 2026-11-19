@@ -122,7 +122,7 @@
       >
       <small>{who.owner.email}</small>
     </span>
-    <span class="fixed">Owner</span>
+    <span class="fixed text">Owner</span>
   </div>
 
   {#each who.members as person (whoIs(person))}
