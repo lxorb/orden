@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { linearly } from '../../../../../../scripts/growth'
 import { HOUR, MINUTE } from './days'
-import { bandsOf, bucketsOf, hoursShown, madeOf, stacked, unsaid, within } from './lanes'
+import { bandsOf, bucketsOf, hoursShown, madeOf, stacked, within } from './lanes'
 import type { Minute } from './minutes'
 import type { Span } from './records'
 
@@ -27,10 +27,6 @@ const minutes = (from: number, to: number, change: Partial<Minute> = {}): Minute
       at,
       active: 30,
       samples: 12,
-      cpu: 0.3,
-      memory: 0.5,
-      battery: null,
-      charging: null,
       lid: true,
       locked: false,
       ...change,
@@ -86,10 +82,6 @@ describe('what happened in a stretch', () => {
     ])
     expect(within(spans, day, 2 * HOUR, 3 * HOUR, DAY).locked).toBe(30 * MINUTE)
   })
-  test('shows busy time nobody said anything about, once it lasts a quarter of an hour', () => {
-    expect(unsaid(spans, day, 0, DAY, DAY)).toEqual([{ from: 3 * HOUR, to: 4 * HOUR, active: 60 * 30 * 1000 }])
-    expect(unsaid(spans, minutes(5 * HOUR, 5 * HOUR + 10 * MINUTE), 0, DAY, DAY)).toEqual([])
-  })
   test('says what an activity was really made of', () => {
     expect(madeOf(spans, 'study', 'site', 0, DAY, DAY).map((one) => [one.key, one.ms])).toEqual([
       ['moodle.ethz.ch', 90 * MINUTE],
@@ -97,16 +89,15 @@ describe('what happened in a stretch', () => {
     ])
   })
 })
-test('the minutes, gathered for a lane say how much of each stretch was seen, busy and away, and the machine in it', () => {
+test('the minutes, gathered for a lane say how much of each stretch was seen, busy and away', () => {
   const day = [
-    ...minutes(0, 10 * MINUTE, { active: 60, cpu: 0.2, battery: 0.9 }),
-    ...minutes(10 * MINUTE, 15 * MINUTE, { locked: true, active: 0, cpu: 0.4, battery: 0.8 }),
+    ...minutes(0, 10 * MINUTE, { active: 60 }),
+    ...minutes(10 * MINUTE, 15 * MINUTE, { locked: true, active: 0 }),
   ]
   const [first, second, third] = bucketsOf(day, 0, 30 * MINUTE, 10 * MINUTE)
-  expect(first).toMatchObject({ seen: 1, active: 1, away: 0, battery: 0.9 })
-  expect(first?.cpu).toBeCloseTo(0.2)
-  expect(second).toMatchObject({ seen: 0.5, active: 0, away: 0.5, battery: 0.8 })
-  expect(third).toMatchObject({ seen: 0, active: 0, cpu: null, battery: null })
+  expect(first).toEqual({ from: 0, seen: 1, active: 1, away: 0 })
+  expect(second).toEqual({ from: 10 * MINUTE, seen: 0.5, active: 0, away: 0.5 })
+  expect(third).toEqual({ from: 20 * MINUTE, seen: 0, active: 0, away: 0 })
 })
 test('the hours a day is drawn across are the working day at least, and reach out to whatever happened outside it', () => {
   expect(hoursShown(0, DAY, [])).toEqual([8 * HOUR, 18 * HOUR])

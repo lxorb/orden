@@ -11,10 +11,6 @@ import { TimeStore } from './store.svelte'
 const sample = (at: number, idleMs = 1000): Sample => ({
   at,
   idleMs,
-  cpu: null,
-  memory: null,
-  battery: null,
-  charging: null,
   lid: null,
   locked: false,
 })
@@ -29,10 +25,6 @@ const sensed = (idleMs: number): Sensed => ({
   idleMs,
   front: true,
   app: null,
-  cpu: null,
-  memory: null,
-  battery: null,
-  charging: null,
   lid: null,
   locked: false,
 })
@@ -93,12 +85,12 @@ describe('the active time of each day', () => {
   test('days recorded one after another each read back with their own active time', async () => {
     const kept = await store()
     const first = midnightOf(new Date(2026, 10, 16, 12).getTime())
-    const days = [first, daysAfter(first, 1), daysAfter(first, 2), daysAfter(first, 3)]
+    const days = (count: number) => daysAfter(first, count)
     const fold = new MinuteFold()
     const worked: [number, number][] = [
-      [days[0] + 22 * HOUR, days[1] + 2 * HOUR],
-      [days[1] + 9 * HOUR, days[1] + 12 * HOUR],
-      [days[2] + 23 * HOUR, days[3] + HOUR],
+      [days(0) + 22 * HOUR, days(1) + 2 * HOUR],
+      [days(1) + 9 * HOUR, days(1) + 12 * HOUR],
+      [days(2) + 23 * HOUR, days(3) + HOUR],
     ]
     for (const [from, to] of worked) {
       const minutes: Minute[] = []
@@ -110,10 +102,10 @@ describe('the active time of each day', () => {
     }
     const read = async (day: number) => activeIn(await kept.minutes(day, daysAfter(day, 1)), day, daysAfter(day, 1))
     const near = (ms: number, hours: number) => Math.abs(ms - hours * HOUR) <= 3 * MINUTE
-    expect(near(await read(days[0]), 2)).toBe(true)
-    expect(near(await read(days[1]), 5)).toBe(true)
-    expect(near(await read(days[2]), 1)).toBe(true)
-    expect(near(await read(days[3]), 1)).toBe(true)
+    expect(near(await read(days(0)), 2)).toBe(true)
+    expect(near(await read(days(1)), 5)).toBe(true)
+    expect(near(await read(days(2)), 1)).toBe(true)
+    expect(near(await read(days(3)), 1)).toBe(true)
   })
   test('the minutes kept while signed out come into the account, once', async () => {
     const local = await store(null)

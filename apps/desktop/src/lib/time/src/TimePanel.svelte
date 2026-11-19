@@ -1,11 +1,12 @@
 <script lang="ts">
   import { midnightOf } from '../../platform/src/api'
   import { Facts } from '../../ui-kit/src/api'
-  import { counted, isOwn } from './counted'
-  import { daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
+  import { isOwn } from './counted'
+  import { daysAfter, MINUTE, near, piecesIn } from './days'
   import { activeIn, hoursShown } from './lanes'
   import { length, tintOf } from './look'
   import { openTime } from './open'
+  import { dayTotals } from './schedule'
   import './start.svelte'
   import Strip from './Strip.svelte'
   import { time } from './time.svelte'
@@ -20,7 +21,7 @@
   $effect(() => {
     void time.exchange()
   })
-  const own = $derived(counted(time.spans, time.rules))
+  const own = $derived(time.spans.filter(isOwn))
   const shown = $derived(
     hoursShown(
       today,
@@ -33,13 +34,9 @@
       [9, 17],
     ),
   )
-  const pieces = $derived(piecesIn(own, today, tomorrow, now))
-  const totals = $derived(totalsOf(pieces))
-  const whole = $derived(wholeOf(pieces))
+  const totals = $derived(dayTotals(time.spans, today, now))
   const active = $derived(activeIn(minutes.list, today, tomorrow))
   const recent = $derived(time.latest().slice(0, 5))
-  const empty = $derived(!time.activities.length && !time.spans.some(isOwn))
-  const starters = $derived(['Work', 'Study', 'Reading', 'Break'])
   const inFront = $derived.by(() => {
     const fresh = near(time.spans, now - 2 * MINUTE, Infinity).filter(
       (one) => !isOwn(one) && one.end !== null && now - one.end < 2 * MINUTE,
@@ -47,7 +44,7 @@
     const of = (lane: string) => [...fresh].reverse().find((one) => one.source === lane)?.label ?? null
     return [of('app'), of('site') ?? of('tab')].filter((one) => one !== null)
   })
-  const todayOf = (activity: string) => totals.find((one) => one.activity === activity)?.ms ?? 0
+  const todayOf = (activity: string) => totals.slices.find((one) => one.activity === activity)?.ms ?? 0
   function opened(event: MouseEvent) {
     const target = event.target as Element | null
     if (target?.closest('button, input, a, [role="option"]')) return
@@ -65,14 +62,7 @@
     </p>
   {/if}
 
-  {#if empty}
-    <p class="hello">Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.</p>
-    <div class="starters">
-      {#each starters as name (name)}
-        <button type="button" class="orden-chip" onclick={() => time.startNamed(name)}>{name}</button>
-      {/each}
-    </div>
-  {:else}
+  {#if recent.length}
     <p class="orden-section">Recent</p>
     <ul>
       {#each recent as one (one.id)}
@@ -95,7 +85,7 @@
     </ul>
   {/if}
 
-  <p class="orden-section">Today<span>{length(whole)}</span></p>
+  <p class="orden-section">Today<span>{length(totals.ms)}</span></p>
   <div class="today">
     <Strip from={shown[0]} to={shown[1]} spans={own} minutes={minutes.list} {now} hours />
   </div>
@@ -144,18 +134,6 @@
     height: 6px;
     border-radius: 50%;
     background: var(--success);
-  }
-  .hello {
-    margin: var(--space-2) var(--space-2) 0;
-    color: var(--muted-strong);
-    font-size: var(--text-sm);
-    line-height: 1.45;
-  }
-  .starters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-    padding: 0 var(--space-2);
   }
   .play {
     flex: none;

@@ -62,37 +62,6 @@ export function within(
     places,
   }
 }
-export interface Stretch {
-  from: number
-  to: number
-  active: number
-}
-const LEAST_UNSAID = 15 * MINUTE
-export function unsaid(
-  spans: readonly Span[],
-  minutes: readonly Minute[],
-  from: number,
-  to: number,
-  now: number,
-): Stretch[] {
-  const said = piecesIn(spans, from, to, now, isOwn)
-  const covered = (at: number) => said.some((piece) => piece.from <= at && at < piece.to)
-  const out: Stretch[] = []
-  let open: Stretch | null = null
-  for (const minute of [...minutes].sort((one, other) => one.at - other.at)) {
-    if (minute.at < from || minute.at >= to) continue
-    const loose = minute.active > 0 && minute.locked !== true && !covered(minute.at)
-    if (loose && open && minute.at - open.to <= JOINED) {
-      open.to = minute.at + MINUTE
-      open.active += minute.active * 1000
-    } else if (loose) {
-      if (open) out.push(open)
-      open = { from: minute.at, to: minute.at + MINUTE, active: minute.active * 1000 }
-    }
-  }
-  if (open) out.push(open)
-  return out.filter((one) => one.to - one.from >= LEAST_UNSAID)
-}
 export function madeOf(
   spans: readonly Span[],
   activity: string | null,
@@ -111,13 +80,7 @@ export interface Bucket {
   seen: number
   active: number
   away: number
-  cpu: number | null
-  memory: number | null
-  battery: number | null
-  charging: boolean
 }
-const mean = (values: number[]): number | null =>
-  values.length ? values.reduce((sum, one) => sum + one, 0) / values.length : null
 export function bucketsOf(minutes: readonly Minute[], from: number, to: number, size: number): Bucket[] {
   const count = Math.max(1, Math.ceil((to - from) / size))
   const held: Minute[][] = Array.from({ length: count }, () => [])
@@ -126,23 +89,12 @@ export function bucketsOf(minutes: readonly Minute[], from: number, to: number, 
     held[Math.floor((minute.at - from) / size)]?.push(minute)
   }
   const span = size / MINUTE
-  return held.map((inside, index) => {
-    const known = <T>(read: (one: Minute) => T | null): T[] =>
-      inside.flatMap((one) => {
-        const value = read(one)
-        return value === null ? [] : [value]
-      })
-    return {
-      from: from + index * size,
-      seen: inside.length / span,
-      active: inside.reduce((sum, one) => sum + one.active, 0) / 60 / span,
-      away: inside.filter((one) => one.locked === true || one.lid === false).length / span,
-      cpu: mean(known((one) => one.cpu)),
-      memory: mean(known((one) => one.memory)),
-      battery: known((one) => one.battery).at(-1) ?? null,
-      charging: inside.some((one) => one.charging === true),
-    }
-  })
+  return held.map((inside, index) => ({
+    from: from + index * size,
+    seen: inside.length / span,
+    active: inside.reduce((sum, one) => sum + one.active, 0) / 60 / span,
+    away: inside.filter((one) => one.locked === true || one.lid === false).length / span,
+  }))
 }
 export function hoursShown(
   from: number,

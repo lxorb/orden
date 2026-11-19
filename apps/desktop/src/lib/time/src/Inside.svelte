@@ -2,10 +2,11 @@
   import { midnightOf } from '../../platform/src/api'
   import { Select, TimeField } from '../../ui-controls/src/api'
   import { atClock, clockOf, daysAfter } from './days'
-  import { type Picked, type Stretch, within } from './lanes'
+  import { type Picked, within } from './lanes'
   import { clock, length, nameOf, placeTint, tintOf } from './look'
   import type { Minute } from './minutes'
   import type { Span } from './records'
+  import type { Stretch } from './schedule'
   import { time } from './time.svelte'
 
   const {

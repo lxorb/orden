@@ -7,9 +7,10 @@
   import DayLanes from './DayLanes.svelte'
   import { counts, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
   import Inside from './Inside.svelte'
-  import { hoursShown, type Picked, unsaid } from './lanes'
+  import { hoursShown, type Picked } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
   import Reports from './Reports.svelte'
+  import { unset } from './schedule'
   import { readSpec, type View, writeSpec } from './spec'
   import './start.svelte'
   import { time } from './time.svelte'
@@ -56,7 +57,7 @@
       .filter((one) => one.span.end === null || counts(one.to - one.from))
       .sort((one, other) => other.from - one.from),
   )
-  const loose = $derived(view === 'day' ? unsaid(time.spans, minutes.list, ...range, now) : [])
+  const loose = $derived(view === 'day' ? unset(time.spans, minutes.list, ...range, now) : [])
   const current = $derived(
     view === 'day' ? day === midnightOf(now) : startOf(view === 'week' ? 'week' : period, now) === range[0],
   )

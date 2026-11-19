@@ -1,13 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { MinuteFold, type Sample } from './minutes'
+import { MinuteFold, minuteValue, type Sample } from './minutes'
 
 const sample = (seconds: number, change: Partial<Sample> = {}): Sample => ({
   at: seconds * 1000,
   idleMs: 0,
-  cpu: 0.5,
-  memory: 0.4,
-  battery: 0.8,
-  charging: false,
   lid: true,
   locked: false,
   ...change,
@@ -19,11 +15,10 @@ function fold(samples: Sample[]) {
   return last ? [...done, last] : done
 }
 describe('a minute of what the computer did', () => {
-  test('counts the seconds with input, and averages the processor', () => {
-    const [minute] = fold([sample(0, { cpu: 0.2 }), sample(5, { cpu: 0.4, idleMs: 9000 }), sample(10, { cpu: 0.6 })])
+  test('counts the seconds with input', () => {
+    const [minute] = fold([sample(0), sample(5, { idleMs: 9000 }), sample(10)])
     expect(minute?.active).toBe(10)
     expect(minute?.samples).toBe(3)
-    expect(minute?.cpu).toBeCloseTo(0.4)
   })
   test('closes when the next minute starts, and leaves a gap where the computer slept', () => {
     const minutes = fold([sample(0), sample(55), sample(60), sample(3600)])
@@ -37,15 +32,22 @@ describe('a minute of what the computer did', () => {
     expect(shut?.lid).toBe(false)
   })
   test('is idle with nobody at it, and keeps what the system could not say as unknown', () => {
-    const [minute] = fold([sample(0, { idleMs: 120_000, battery: null, lid: null, cpu: null })])
+    const [minute] = fold([sample(0, { idleMs: 120_000, lid: null })])
     expect(minute?.active).toBe(0)
-    expect(minute?.battery).toBeNull()
     expect(minute?.lid).toBeNull()
-    expect(minute?.cpu).toBeNull()
   })
-  test('holds shares between nothing and all', () => {
-    const [minute] = fold([sample(0, { cpu: 4, memory: -1 })])
-    expect(minute?.cpu).toBe(1)
-    expect(minute?.memory).toBe(0)
+  test('reads what an older version kept, and lets go of the machine readings', () => {
+    const old = {
+      at: 60_000,
+      active: 30,
+      samples: 12,
+      cpu: 0.2,
+      memory: 0.5,
+      battery: 0.9,
+      charging: true,
+      lid: true,
+      locked: false,
+    }
+    expect(minuteValue(old)).toEqual({ at: 60_000, active: 30, samples: 12, lid: true, locked: false })
   })
 })

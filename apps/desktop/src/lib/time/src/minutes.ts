@@ -3,10 +3,6 @@ export const KEEP_MINUTES = 90 * 24 * 60 * 60_000
 export interface Sample {
   at: number
   idleMs: number | null
-  cpu: number | null
-  memory: number | null
-  battery: number | null
-  charging: boolean | null
   lid: boolean | null
   locked: boolean | null
 }
@@ -14,40 +10,24 @@ export interface Minute {
   at: number
   active: number
   samples: number
-  cpu: number | null
-  memory: number | null
-  battery: number | null
-  charging: boolean | null
   lid: boolean | null
   locked: boolean | null
 }
 const minuteOf = (at: number): number => Math.floor(at / 60_000) * 60_000
-const share = (value: number | null): number | null =>
-  value === null || !Number.isFinite(value) ? null : Math.min(1, Math.max(0, value))
 const fresh = (at: number): Minute => ({
   at,
   active: 0,
   samples: 0,
-  cpu: null,
-  memory: null,
-  battery: null,
-  charging: null,
   lid: null,
   locked: null,
 })
 const MINUTE = 60_000
 const LONGEST_GAP = 75_000
 function folded(minute: Minute, sample: Sample): Minute {
-  const cpu = share(sample.cpu)
-  const samples = minute.samples + 1
   return {
     at: minute.at,
     active: minute.active,
-    samples,
-    cpu: cpu === null ? minute.cpu : minute.cpu === null ? cpu : minute.cpu + (cpu - minute.cpu) / samples,
-    memory: share(sample.memory) ?? minute.memory,
-    battery: share(sample.battery) ?? minute.battery,
-    charging: sample.charging ?? minute.charging,
+    samples: minute.samples + 1,
     lid: sample.lid === false || minute.lid === false ? false : (sample.lid ?? minute.lid),
     locked: sample.locked === true || minute.locked === true ? true : (sample.locked ?? minute.locked),
   }
@@ -99,10 +79,6 @@ export function minuteValue(value: unknown): Minute | null {
     at,
     active: Math.min(60, Math.max(0, number('active') ?? 0)),
     samples: number('samples') ?? 0,
-    cpu: share(number('cpu')),
-    memory: share(number('memory')),
-    battery: share(number('battery')),
-    charging: flag('charging'),
     lid: flag('lid'),
     locked: flag('locked'),
   }
