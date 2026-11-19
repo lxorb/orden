@@ -177,6 +177,22 @@ impl AppWebview {
     self.set_z_order_pinned(true);
   }
 
+  pub(crate) fn lower_beneath(&self, above: HWND) {
+    self.set_z_order_pinned(false);
+    let _ = unsafe {
+      SetWindowPos(
+        self.hwnd(),
+        Some(above),
+        0,
+        0,
+        0,
+        0,
+        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+      )
+    };
+    self.set_z_order_pinned(true);
+  }
+
   pub(crate) fn apply_physical_bounds(&self, _scale: f64, x: i32, y: i32, width: i32, height: i32) {
     unsafe {
       let _ = SetWindowPos(

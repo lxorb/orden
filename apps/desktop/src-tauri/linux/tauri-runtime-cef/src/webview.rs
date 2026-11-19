@@ -690,7 +690,17 @@ impl<T: UserEvent> WinitCefApp<T> {
     // and bury an overlay webview under the one that fills the window.
     #[cfg(windows)]
     if child.offscreen.is_none() {
-      child.raise_to_top();
+      let own = appwindow
+        .children
+        .first()
+        .filter(|_| {
+          drag_drop_event_target == browser_client::DragDropEventTarget::Webview && pages_under()
+        })
+        .map(AppWebview::hwnd);
+      match own {
+        Some(own) => child.lower_beneath(own),
+        None => child.raise_to_top(),
+      }
     } else {
       appwindow.background_surface = None;
     }
@@ -741,6 +751,21 @@ impl<T: UserEvent> WinitCefApp<T> {
       pending.webview_attributes.initialization_scripts.push(
         tauri_runtime::webview::InitializationScript {
           script: tauri_runtime::webview::devtools_shortcut_script(),
+          for_main_frame_only: true,
+        },
+      );
+    }
+
+    let clear_ground = clears_ground(
+      drag_drop_event_target == browser_client::DragDropEventTarget::Window,
+      offscreen.is_some(),
+      pages_under(),
+    );
+    if clear_ground {
+      pending.webview_attributes.initialization_scripts.insert(
+        0,
+        tauri_runtime::webview::InitializationScript {
+          script: CLEAR_FIRST_GROUND.to_string(),
           for_main_frame_only: true,
         },
       );
@@ -885,11 +910,6 @@ impl<T: UserEvent> WinitCefApp<T> {
     // the DevTools protocol instead, which overrides both the header and
     // `navigator.userAgent` for this one target.
     let user_agent = pending.webview_attributes.user_agent.clone();
-    let clear_ground = clears_ground(
-      drag_drop_event_target == browser_client::DragDropEventTarget::Window,
-      offscreen.is_some(),
-      pages_under(),
-    );
 
     warn_about_unsupported_attributes(
       &pending.label,
@@ -2366,8 +2386,27 @@ fn pages_under() -> bool {
   *ON.get_or_init(|| std::env::var_os("ORDEN_PAGES_UNDER").is_some_and(|said| said == "1"))
 }
 
+const CLEAR_FIRST_GROUND: &str = r"(() => {
+  if (!('adoptedStyleSheets' in document)) return;
+  const clear = new CSSStyleSheet();
+  clear.replaceSync('html { background: transparent !important }');
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, clear];
+  const done = () => setTimeout(() => {
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((one) => one !== clear);
+  }, 1500);
+  try {
+    new PerformanceObserver((list, seen) => {
+      if (!list.getEntries().some((one) => one.name === 'first-contentful-paint')) return;
+      seen.disconnect();
+      done();
+    }).observe({ type: 'paint', buffered: true });
+  } catch (error) {
+    addEventListener('load', done, { once: true });
+  }
+})();";
+
 fn clears_ground(own_window: bool, offscreen: bool, asked: bool) -> bool {
-  cfg!(target_os = "macos") && own_window && !offscreen && asked
+  cfg!(any(target_os = "macos", windows)) && own_window && !offscreen && asked
 }
 
 fn clear_ground_message(id: i32) -> String {
@@ -2560,8 +2599,8 @@ mod tests {
   use super::*;
 
   #[test]
-  fn only_a_window_s_own_browser_on_a_mac_clears_its_ground_and_only_when_asked() {
-    assert_eq!(clears_ground(true, false, true), cfg!(target_os = "macos"));
+  fn only_a_window_s_own_browser_clears_its_ground_and_only_when_asked() {
+    assert_eq!(clears_ground(true, false, true), cfg!(any(target_os = "macos", windows)));
     assert!(!clears_ground(false, false, true));
     assert!(!clears_ground(true, true, true));
     assert!(!clears_ground(true, false, false));
@@ -2569,6 +2608,8 @@ mod tests {
     assert_eq!(said["id"], 7);
     assert_eq!(said["method"], "Emulation.setDefaultBackgroundColorOverride");
     assert_eq!(said["params"]["color"]["a"], 0);
+    assert!(CLEAR_FIRST_GROUND.contains("html { background: transparent !important }"));
+    assert!(CLEAR_FIRST_GROUND.contains("first-contentful-paint"));
   }
 
   #[test]

@@ -7,6 +7,9 @@ use tauri::Webview;
 
 #[cfg(target_os = "macos")]
 mod under;
+#[cfg(windows)]
+#[path = "web_cut/under_windows.rs"]
+mod under;
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
@@ -180,14 +183,14 @@ fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
     (x - nearest_x).powi(2) + (y - nearest_y).powi(2) <= round * round
 }
 pub fn lay_page_under(window: &tauri::Window, view: &Webview) {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", windows))]
     if pages_under() {
         under::lower(window, view);
     }
     let _ = (window, view);
 }
 pub fn opacity(view: &Webview, opacity: f64) {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", windows))]
     if lowered(view.label()) {
         under::opacity(view, opacity);
     }
@@ -200,7 +203,7 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
 }
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
     let under = lowered(view.label());
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", windows))]
     if under {
         under::cut(view, cut.clone(), f64::from(wide) / scale.max(0.01));
     }
@@ -227,7 +230,7 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
     lay_under(label, false);
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", windows))]
     under::forget(label);
 }
 fn drawn(under: bool, cut: Option<&Cut>) -> Option<&Cut> {

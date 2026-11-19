@@ -105,7 +105,7 @@ pub fn cut(view: &Webview, cut: Option<Cut>, wide: f64) {
     let mut all = PAGES.held();
     let mut host = None;
     for one in all.values_mut().filter(|one| one.label == label) {
-        one.cut = cut.clone();
+        one.cut.clone_from(&cut);
         one.wide = wide;
         host = Some(one.host);
     }
