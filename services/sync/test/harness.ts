@@ -31,6 +31,7 @@ interface SpaceView {
   icon: string | null
   tint: string | null
   role: string
+  admin: boolean
   shared: boolean
   sharedItems: string[]
   onceShared?: boolean
@@ -170,6 +171,7 @@ export interface ShareView {
     guest: string | null
     name: string | null
     role: string
+    admin?: boolean
     pending: boolean
   }[]
   requests: {

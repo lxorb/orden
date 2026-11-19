@@ -32,7 +32,7 @@ import {
   notesAmong,
   onceSharedAmong,
   presentSpace,
-  refusal,
+  ONLY_THOSE_WHO_MANAGE,
   sharedAmong,
   spaceOf,
   withoutSetup,
@@ -46,7 +46,8 @@ const ID_LIMIT = 64
 const MOST_IN_ORDER = 500
 export const spaces = new Hono<{ Bindings: Env; Variables: Variables }>()
 const REACHABLE = `select sp.*,
-    case when sp.user_id = ?1 then 'owner' else m.role end as role
+    case when sp.user_id = ?1 then 'owner' else m.role end as role,
+    coalesce(m.admin, 0) as admin
   from spaces sp
   left join space_members m on m.space_id = sp.id and m.email = ?2 and m.item = ''
  where sp.deleted = ?3 and (sp.user_id = ?1 or m.role is not null)
@@ -60,11 +61,13 @@ const GUEST_REACHABLE = `select sp.*, g.role as role
  limit ?3`
 function reachable(env: Env, who: Whoever, deleted: 0 | 1) {
   if (who.kind === 'guest') {
-    return env.DB.prepare(GUEST_REACHABLE).bind(who.guest.id, deleted, MOST_IN_ORDER).all<Space & { role: Role }>()
+    return env.DB.prepare(GUEST_REACHABLE)
+      .bind(who.guest.id, deleted, MOST_IN_ORDER)
+      .all<Space & { role: Role; admin?: number }>()
   }
   return env.DB.prepare(REACHABLE)
     .bind(who.user.id, who.user.email, deleted, MOST_IN_ORDER)
-    .all<Space & { role: Role }>()
+    .all<Space & { role: Role; admin?: number }>()
 }
 spaces.get('/', async (context) => {
   const who = context.get('who')
@@ -85,7 +88,15 @@ spaces.get('/', async (context) => {
   return context.json({
     spaces: results.map((one) => {
       const view = {
-        ...presentSpace(one, context.env, one.role, shared.has(one.id), held.get(one.id) ?? 0, items.get(one.id) ?? []),
+        ...presentSpace(
+          one,
+          context.env,
+          one.role,
+          shared.has(one.id),
+          held.get(one.id) ?? 0,
+          items.get(one.id) ?? [],
+          one.role !== 'owner' && one.admin === 1,
+        ),
         people: faces.get(one.id) ?? [],
         onceShared: once.spaces.has(one.id),
         onceSharedItems: once.items.get(one.id) ?? [],
@@ -135,8 +146,8 @@ spaces.patch('/:id', atLeast('write'), async (context) => {
   const chosen = body.nullableText('icon', LONGEST_PICTURE_ICON)
   const painted = body.nullableText('tint', ID_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
-  if (name !== undefined && space.role !== 'owner') {
-    return context.json({ error: refusal('owner') }, 403)
+  if (name !== undefined && !space.manages) {
+    return context.json({ error: ONLY_THOSE_WHO_MANAGE }, 403)
   }
   const label = name === undefined ? null : spaceName(name)
   if (label === '') return context.json({ error: 'give the space a name' }, 400)
@@ -156,7 +167,15 @@ spaces.patch('/:id', atLeast('write'), async (context) => {
     .first<{ name: string; icon: string | null; tint: string | null }>()
   const held = written ?? { name: space.name, icon: space.icon, tint: space.tint }
   return context.json({
-    space: presentSpace({ ...space, ...held }, context.env, space.role),
+    space: presentSpace(
+      { ...space, ...held },
+      context.env,
+      space.role,
+      false,
+      0,
+      [],
+      space.manages && space.role !== 'owner',
+    ),
   })
 })
 spaces.delete('/:id', atLeast('owner'), async (context) => {

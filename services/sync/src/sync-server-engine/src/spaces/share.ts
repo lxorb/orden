@@ -21,12 +21,22 @@ import {
   sha256,
   type Space,
   SPACE_IS_FULL,
-  type User,
+  type Reached,
   type Variables,
 } from '../../../sync-server/src/api'
 import { avatarIn } from '../people/avatar'
 import { roomsRevoked } from '../rooms'
-import { atLeast, isGiven, MOST_ITEMS, onceShared, spaceOf, trustAgain, type Given } from './space'
+import {
+  atLeast,
+  isGiven,
+  manages,
+  MOST_ITEMS,
+  ONLY_THOSE_WHO_MANAGE,
+  onceShared,
+  spaceOf,
+  trustAgain,
+  type Given,
+} from './space'
 
 const SAY_WHICH_ROLE = 'say whether they may write or read'
 export const MOST_MEMBERS = 200
@@ -78,6 +88,14 @@ function isMode(value: unknown): value is Mode {
 function givenRole(value: unknown): Given | null {
   return isGiven(value) ? value : null
 }
+interface Granted {
+  role: Given
+  admin: boolean
+}
+function grantedRole(value: unknown, scope: Scope): Granted | null {
+  if (value === 'admin') return scope.id ? null : { role: 'write', admin: true }
+  return isGiven(value) ? { role: value, admin: false } : null
+}
 const WHOLE_SPACE: Scope = { id: '', path: null }
 async function scopeOf(env: Env, spaceId: string, asked: string | undefined): Promise<Scope | null> {
   const id = (asked ?? '').slice(0, ID_LIMIT)
@@ -122,6 +140,7 @@ interface FaceColumns {
 interface MemberRow extends FaceColumns {
   email: string
   role: Given
+  admin: number
   joined_at: number | null
   name: string | null
 }
@@ -170,7 +189,7 @@ async function accountAt(env: Env, email: string): Promise<string | null> {
 }
 async function membersOf(env: Env, spaceId: string, item: string): Promise<MemberRow[]> {
   const { results } = await env.DB.prepare(
-    `select m.email, m.role, m.joined_at, u.name, ${FACE}
+    `select m.email, m.role, m.admin, m.joined_at, u.name, ${FACE}
        from space_members m
        left join users u on u.email = m.email
       where m.space_id = ? and m.item = ?
@@ -216,6 +235,7 @@ function presentMember(member: MemberRow) {
     guest: null,
     name: member.name,
     role: member.role,
+    admin: member.admin === 1,
     pending: member.joined_at === null,
   }
 }
@@ -233,20 +253,25 @@ function presentGuest(guest: GuestRow) {
 function presentLink(env: Env, link: LinkRow) {
   return { url: joinUrl(env, link.token), role: link.role, mode: link.mode }
 }
-async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
-  const [members, requests, guests, link, face, used] = await Promise.all([
+function ownerOf(env: Env, space: Space) {
+  return env.DB.prepare(`select u.email, u.name, ${FACE} from users u where u.id = ?`)
+    .bind(space.user_id)
+    .first<FaceColumns & { email: string; name: string | null }>()
+}
+async function sharing(env: Env, space: Reached, scope: Scope) {
+  const [members, requests, guests, link, owner, used] = await Promise.all([
     membersOf(env, space.id, scope.id),
-    requestsOf(env, space.id, scope.id),
+    space.manages ? requestsOf(env, space.id, scope.id) : [],
     guestsOf(env, space.id, scope.id),
-    linkOf(env, space.id, scope.id),
-    env.DB.prepare(`select ${FACE} from users u where u.id = ?`).bind(owner.id).first<FaceColumns>(),
+    space.manages ? linkOf(env, space.id, scope.id) : null,
+    ownerOf(env, space),
     scope.id ? null : seatsUsed(env, space.id),
   ])
   return {
     owner: {
-      email: owner.email,
-      name: owner.name,
-      ...faceOf(face ?? { user_id: owner.id, avatar: null }),
+      email: owner?.email ?? '',
+      name: owner?.name ?? null,
+      ...faceOf(owner ?? { user_id: space.user_id, avatar: null }),
     },
     item: scope.path === null ? null : { id: scope.id, path: scope.path },
     members: [...members.map(presentMember), ...guests.filter((one) => one.joined_at !== null).map(presentGuest)],
@@ -260,7 +285,7 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
         at: one.created_at,
       })),
       ...guests
-        .filter((one) => one.joined_at === null)
+        .filter((one) => space.manages && one.joined_at === null)
         .map((one) => ({
           id: null,
           avatar: null,
@@ -294,22 +319,27 @@ function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
     await next()
   }
 }
-share.get('/:id/share', atLeast('owner'), about(), async (context) => {
-  return context.json(await sharing(context.env, spaceOf(context), context.get('user'), context.get('scope')))
-})
-share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
+share.get('/:id/share', atLeast('read'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
-  const owner = context.get('user')
+  if (scope.id && !space.manages) return context.json({ error: ONLY_THOSE_WHO_MANAGE }, 403)
+  return context.json(await sharing(context.env, space, scope))
+})
+share.post('/:id/share/invite', manages(), about(), async (context) => {
+  const space = spaceOf(context)
+  const scope = context.get('scope')
+  const caller = context.get('user')
   const body = await readBody(context)
   const given = body.text('email', EMAIL_LIMIT)
   const asked = body.text('role', 16)
   if (body.problem) return context.json({ error: body.problem }, 400)
   const email = await accountAddress(context.env, normaliseEmail(given ?? ''))
-  const role = givenRole(asked)
+  const granted = grantedRole(asked, scope)
   if (!isEmail(email)) return context.json({ error: NOT_AN_EMAIL }, 400)
-  if (!role) return context.json({ error: SAY_WHICH_ROLE }, 400)
-  if (email === owner.email) {
+  if (!granted) return context.json({ error: SAY_WHICH_ROLE }, 400)
+  const { role } = granted
+  const owner = await ownerOf(context.env, space)
+  if (email === caller.email || email === owner?.email) {
     return context.json({ error: scope.id ? 'this note is already yours' : 'this space is already yours' }, 409)
   }
   const held = await membersOf(context.env, space.id, scope.id)
@@ -327,16 +357,28 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const before = held.find((one) => one.email === email)?.role
   const token = randomToken()
   const invited = await context.env.DB.prepare(
-    `insert into space_members (space_id, email, item, role, invite_hash, expires_at, created_at)
-     select ?1, ?2, ?3, ?4, ?5, ?6, ?7
+    `insert into space_members (space_id, email, item, role, admin, invite_hash, expires_at, created_at)
+     select ?1, ?2, ?3, ?4, ?10, ?5, ?6, ?7
       where ${roomForMember('?1', '?2', '?3', '?8')} and ${roomForItem('?1', '?3', '?9')}
         and ${roomForPerson('?1', '?3', '?7', '?2')}
      on conflict(space_id, email, item) do update set
        role = excluded.role,
+       admin = excluded.admin,
        invite_hash = excluded.invite_hash,
        expires_at = excluded.expires_at`,
   )
-    .bind(space.id, email, scope.id, role, await sha256(token), now() + INVITE_TTL, now(), MOST_MEMBERS, MOST_ITEMS)
+    .bind(
+      space.id,
+      email,
+      scope.id,
+      role,
+      await sha256(token),
+      now() + INVITE_TTL,
+      now(),
+      MOST_MEMBERS,
+      MOST_ITEMS,
+      granted.admin ? 1 : 0,
+    )
     .run()
   if (!invited.meta.changes) {
     const error = !(await roomForAnItem(context.env, space.id, scope.id))
@@ -357,7 +399,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
     const message = inviteMessage({
       space: space.name,
       item: scope.path === null ? null : itemName(scope.path),
-      from: personName(owner),
+      from: personName(caller),
       role,
       link: joinUrl(context.env, token),
     })
@@ -365,16 +407,17 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
       await forgetMailed(context.env, email)
     }
   }
-  return context.json(await sharing(context.env, space, owner, scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.patch('/:id/share/members/:email', atLeast('owner'), about(), async (context) => {
+share.patch('/:id/share/members/:email', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const body = await readBody(context)
   const asked = body.text('role', 16)
   if (body.problem) return context.json({ error: body.problem }, 400)
-  const role = givenRole(asked)
-  if (!role) return context.json({ error: SAY_WHICH_ROLE }, 400)
+  const granted = grantedRole(asked, scope)
+  if (!granted) return context.json({ error: SAY_WHICH_ROLE }, 400)
+  const { role } = granted
   const email = normaliseEmail(context.req.param('email'))
   const held = await context.env.DB.prepare(
     'select role from space_members where space_id = ? and email = ? and item = ?',
@@ -382,15 +425,17 @@ share.patch('/:id/share/members/:email', atLeast('owner'), about(), async (conte
     .bind(space.id, email, scope.id)
     .first<{ role: Given }>()
   if (!held) return context.json({ error: 'nobody by that address' }, 404)
-  await context.env.DB.prepare('update space_members set role = ? where space_id = ? and email = ? and item = ?')
-    .bind(role, space.id, email, scope.id)
+  await context.env.DB.prepare(
+    'update space_members set role = ?, admin = ? where space_id = ? and email = ? and item = ?',
+  )
+    .bind(role, granted.admin ? 1 : 0, space.id, email, scope.id)
     .run()
   if (held.role === 'write' && role === 'read') {
     await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
   }
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.delete('/:id/share/members/:email', atLeast('owner'), about(), async (context) => {
+share.delete('/:id/share/members/:email', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
@@ -398,7 +443,7 @@ share.delete('/:id/share/members/:email', atLeast('owner'), about(), async (cont
     .bind(space.id, email, scope.id)
     .run()
   await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'none', scope.id)
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
 share.post('/:id/share/trust', atLeast('owner'), async (context) => {
   await trustAgain(context.env, spaceOf(context).id)
@@ -422,7 +467,7 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
   await roomsRevoked(context.env, space.id, who.user.id, 'none')
   return context.json({ ok: true })
 })
-share.put('/:id/share/link', atLeast('owner'), about(), async (context) => {
+share.put('/:id/share/link', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const body = await readBody(context)
@@ -446,9 +491,9 @@ share.put('/:id/share/link', atLeast('owner'), about(), async (context) => {
     .bind(space.id, scope.id, token, role, mode, now(), MOST_ITEMS)
     .run()
   if (!linked.meta.changes) return context.json({ error: TOO_MANY_ITEMS }, 409)
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
+share.delete('/:id/share/link', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const waiting = await context.env.DB.prepare(
@@ -466,9 +511,9 @@ share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
     ).bind(space.id, scope.id),
   ])
   for (const { guest_id } of waiting.results) await forgetEmptyGuest(context.env, guest_id)
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (context) => {
+share.post('/:id/share/requests/:email', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
@@ -504,21 +549,21 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
   if (before?.role === 'write' && waiting.role === 'read') {
     await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
   }
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.delete('/:id/share/requests/:email', atLeast('owner'), about(), async (context) => {
+share.delete('/:id/share/requests/:email', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
   await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, scope.id)
     .run()
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
 function guestIdOf(context: { req: { param: (name: string) => string | undefined } }): string {
   return (context.req.param('guest') ?? '').slice(0, ID_LIMIT)
 }
-share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
+share.post('/:id/share/guests/:guest', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const guest = guestIdOf(context)
@@ -545,9 +590,9 @@ share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context
     return context.json({ error }, 409)
   }
   await onceShared(context.env, space.id, scope.id)
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.patch('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
+share.patch('/:id/share/guests/:guest', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const guest = guestIdOf(context)
@@ -568,9 +613,9 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), about(), async (contex
   if (held.role === 'write' && role === 'read') {
     await roomsRevoked(context.env, space.id, guest, 'read', scope.id)
   }
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
-share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
+share.delete('/:id/share/guests/:guest', manages(), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const guest = guestIdOf(context)
@@ -597,7 +642,7 @@ share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (conte
     await forgetEmptyGuest(context.env, guest)
     await roomsRevoked(context.env, space.id, guest, 'none', scope.id)
   }
-  return context.json(await sharing(context.env, space, context.get('user'), scope))
+  return context.json(await sharing(context.env, space, scope))
 })
 interface SharedRow {
   id: string

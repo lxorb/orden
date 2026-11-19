@@ -104,7 +104,8 @@ export async function addSpace(
   return added.meta.changes ? space : null
 }
 const REACHED = `select sp.*,
-    case when sp.user_id = ?2 then 'owner' else m.role end as role
+    case when sp.user_id = ?2 then 'owner' else m.role end as role,
+    case when sp.user_id = ?2 then 1 else coalesce(m.admin, 0) end as manages
   from spaces sp
   left join space_members m on m.space_id = sp.id and m.email = ?3 and m.item = ''
  where sp.id = ?1 and sp.deleted = 0`
@@ -125,10 +126,10 @@ export async function reachedSpace(env: Env, who: Whoever, spaceId: string): Pro
     who.kind === 'user'
       ? await env.DB.prepare(REACHED)
           .bind(spaceId, who.user.id, who.user.email)
-          .first<Space & { role: string | null }>()
+          .first<Space & { role: string | null; manages: number }>()
       : await env.DB.prepare(GUEST_REACHED).bind(spaceId, who.guest.id).first<Space & { role: string | null }>()
   if (!row || !isRole(row.role)) return null
-  return { ...row, role: row.role }
+  return { ...row, role: row.role, manages: 'manages' in row && row.manages === 1 }
 }
 export async function reachedItem(
   env: Env,
@@ -144,7 +145,7 @@ export async function reachedItem(
           .bind(note.space_id, who.guest.id, note.id)
           .first<Space & { role: string | null }>()
   if (!row || !isRole(row.role)) return null
-  return { ...row, role: row.role }
+  return { ...row, role: row.role, manages: false }
 }
 export function atLeast(
   needed: Role,
@@ -158,6 +159,19 @@ export function atLeast(
     const space = await reachedSpace(context.env, context.get('who'), asked)
     if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!allows(space.role, needed)) return context.json({ error: refusal(needed) }, 403)
+    context.set('space', space)
+    await next()
+  }
+}
+export const ONLY_THOSE_WHO_MANAGE = 'only the owner or an admin can do that'
+export function manages(): MiddlewareHandler<{
+  Bindings: Env
+  Variables: Variables
+}> {
+  return async (context, next) => {
+    const space = await reachedSpace(context.env, context.get('who'), context.req.param('id') ?? '')
+    if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
+    if (!space.manages) return context.json({ error: ONLY_THOSE_WHO_MANAGE }, 403)
     context.set('space', space)
     await next()
   }
@@ -279,6 +293,7 @@ export function presentSpace(
   shared = false,
   notes = 0,
   sharedItems: readonly string[] = [],
+  admin = false,
 ) {
   return {
     id: space.id,
@@ -288,6 +303,7 @@ export function presentSpace(
     tint: space.tint,
     notes,
     role,
+    admin,
     shared: shared || role !== 'owner',
     sharedItems: [...sharedItems],
     bookmarks: readBookmarks(space.bookmarks),
