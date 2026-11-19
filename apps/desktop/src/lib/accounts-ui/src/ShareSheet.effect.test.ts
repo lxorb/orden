@@ -17,6 +17,8 @@ const store = vi.hoisted(() => ({
   waiting: () => false,
   invite: () => undefined,
   close: () => undefined,
+  setLink: vi.fn(),
+  revoke: vi.fn(),
 }))
 vi.mock('../../sharing/src/api', () => ({
   share: store,
@@ -28,6 +30,7 @@ const member = (email: string) => ({ email, guest: null, name: null, role: 'writ
 let target: HTMLElement
 let close: (() => void) | undefined
 beforeEach(() => {
+  store.setLink.mockClear()
   store.item = null
   store.seats = null
   store.full = false
@@ -53,6 +56,9 @@ function draw() {
 }
 const field = () => target.querySelector<HTMLInputElement>('input[aria-label="Add people by email"]')
 const send = () => target.querySelector<HTMLButtonElement>('button[aria-label="Invite"]')
+const link = (mode: string) => ({ url: 'https://orden.so/join/abc', role: 'read', mode })
+const shown = (who: object) => Object.assign(store.who ?? {}, who)
+const switchOf = (name: string) => target.querySelector<HTMLElement>(`[role="switch"][aria-label="${name}"]`)
 const says = (words: string) => target.textContent.includes(words)
 describe('the places in a shared space', () => {
   test('are counted beside who has access', () => {
@@ -92,5 +98,29 @@ describe('the places in a shared space', () => {
     draw()
     expect(target.querySelector('.seats')).toBeNull()
     expect(field()?.disabled).toBe(false)
+  })
+})
+describe('the link', () => {
+  test('starts without asking first', () => {
+    draw()
+    switchOf('Link')?.click()
+    expect(store.setLink).toHaveBeenCalledOnce()
+    expect(store.setLink).toHaveBeenCalledWith('read', 'open')
+  })
+  test('that lets anybody in says Ask first is off', () => {
+    shown({ link: link('open') })
+    draw()
+    expect(switchOf('Ask first')?.getAttribute('aria-checked')).toBe('false')
+  })
+  test('that already asked first keeps saying so', () => {
+    shown({ link: link('approval') })
+    draw()
+    expect(switchOf('Ask first')?.getAttribute('aria-checked')).toBe('true')
+  })
+  test('has no dot after its name', () => {
+    shown({ link: link('open') })
+    draw()
+    expect(target.querySelector('.card-head .dot')).toBeNull()
+    expect(target.querySelector('.card-head')?.children).toHaveLength(2)
   })
 })

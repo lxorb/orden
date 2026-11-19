@@ -419,8 +419,6 @@ def main() -> int:
         sheet = open_the_share_sheet(owner)
         sheet.get_by_role("switch", name="Link").click()
         owner.wait_for_timeout(300)
-        sheet.get_by_role("switch", name="Ask first").click()
-        owner.wait_for_timeout(300)
         url = sheet.locator("code").inner_text()
         sheet.screenshot(path=str(SHOTS / "share-link.png"))
         say(f"the link is {url}")
