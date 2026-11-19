@@ -1,8 +1,8 @@
 import type { PickedFile, Entry } from '@orden/contracts'
 import { isPdfTarget } from '@orden/markdown/links'
 import { copiesInto, folderNote, isFolderNote } from '../../tree/src/api'
-import { readsWords } from '../../link-index/src/api'
-import { copyName, isMarkdownPath, nameOf, invoke, joinPath } from '../../platform/src/api'
+import { links, readsWords } from '../../link-index/src/api'
+import { copyName, isMarkdownPath, nameOf, invoke, joinPath, parent, samePath } from '../../platform/src/api'
 import type { Protection } from '../../protect/src/api'
 import type { ItemMetaStore } from '../../space-kept/src/api'
 import type { Copied, FileActions } from '../../file-undo/src/api'
@@ -71,7 +71,7 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
     ws.heardGone(path)
     return false
   }
-  await idsLeftBehind(entry, path)
+  await notesCopied(entry, path)
   ws.itemMeta.copied(entry.path, path)
   ws.protection.copied(entry.path, path, ws.rootHolding(entry.path), ws.rootHolding(path))
   const own = ownNoteRenamed(entry, path)
@@ -92,14 +92,17 @@ function notesIn(entry: Entry): Entry[] {
   if (!entry.is_dir) return isMarkdownPath(entry.name) ? [entry] : []
   return entry.children.flatMap(notesIn)
 }
-async function idsLeftBehind(entry: Entry, path: string) {
+async function notesCopied(entry: Entry, path: string) {
   const { numbersAt, withoutIds } = await services().rowsCopied()
-  if (!numbersAt(path)) return
+  const numbered = numbersAt(path)
+  if (!numbered && samePath(parent(entry.path), parent(path))) return
   for (const note of notesIn(entry)) {
     const at = path + note.path.slice(entry.path.length)
     const text = await invoke<string | null>('read_note', { path: at }).catch(() => null)
-    const words = text === null ? null : withoutIds(at, text)
-    if (words !== null) await invoke('write_note', { path: at, content: words }).catch(() => undefined)
+    if (text === null) continue
+    const kept = (numbered ? withoutIds(at, text) : null) ?? text
+    const words = links.rebased(kept, note.path, at, entry.is_dir ? entry.path : undefined) ?? kept
+    if (words !== text) await invoke('write_note', { path: at, content: words }).catch(() => undefined)
   }
 }
 function partsOf(file: PickedFile): string[] {
