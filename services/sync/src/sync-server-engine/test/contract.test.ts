@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { feedPage } from '../src/sync2/feed'
 import { applyOps } from '../src/sync2/ops'
 import { prepareSpace } from '../src/sync2/prepare'
+import { isIcon, readIcons } from '../src/spaces/icons'
 import { type TestEnv, testEnv } from '../../sync-server/test/fakes'
 
 type Op = Parameters<typeof applyOps>[4][number]
@@ -114,5 +115,20 @@ describe('tree operations', () => {
   test('refuses a parent that does not exist instead of inventing it', async () => {
     const { value } = await ops([note('lost', 'lost.md', 'no-such-folder')])
     expect(value).toEqual([{ op: expect.any(String), refused: 'gone' }])
+  })
+})
+describe('icons', () => {
+  const PNG = 'data:image/png;base64,'
+  const picture = (length: number) => `${PNG}${'A'.repeat(length - PNG.length)}`
+  test('a PNG data URL of up to 2048 characters is one, and no other data', () => {
+    expect(isIcon(picture(2048))).toBe(true)
+    expect(isIcon(picture(2049))).toBe(false)
+    expect(isIcon('data:image/svg+xml;base64,PHN2Zz4=')).toBe(false)
+    expect(isIcon('data:text/html;base64,PHNjcmlwdD4=')).toBe(false)
+    expect(isIcon(`${PNG}not base64!`)).toBe(false)
+  })
+  test('a stored map keeps its pictures', () => {
+    const stored = JSON.stringify({ Work: picture(2048), Home: 'Folder', Bad: 'data:text/html;base64,PHA+' })
+    expect(readIcons(stored)).toEqual({ Work: picture(2048), Home: 'Folder' })
   })
 })

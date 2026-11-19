@@ -19,8 +19,11 @@ const LONGEST_MARK = 16
 const NOT_A_MARK = /[A-Za-z0-9\s/\\]|\p{Cc}/u
 const A_PICTURE = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
 const PREFIXED = /^[a-z][a-z\d-]{0,31}:[A-Za-z0-9][A-Za-z0-9-]{0,63}$/
+export const LONGEST_PICTURE_ICON = 2048
+const PICTURE = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
 export function isIcon(value: string): boolean {
   if (NAME.test(value) || PREFIXED.test(value)) return true
+  if (value.length <= LONGEST_PICTURE_ICON && PICTURE.test(value)) return true
   return value.length <= LONGEST_MARK && A_PICTURE.test(value) && !NOT_A_MARK.test(value)
 }
 const TINT = /^[a-z][a-z-]{0,31}$/

@@ -40,9 +40,14 @@ const TOO_MUCH: {
     name: 'icons',
     path: 'icons',
     method: 'PUT',
-    body: () => ({
-      icons: Object.fromEntries(Array.from({ length: 400 }, (_, at) => [`${'p'.repeat(280)}${at}`, '📦'])),
-    }),
+    body: () => {
+      const paths = Array.from({ length: 400 }, (_, at) => `${'p'.repeat(296)}${at}`)
+      const picture = `data:image/png;base64,${'A'.repeat(2026)}`
+      return {
+        icons: Object.fromEntries(paths.map((path) => [path, picture])),
+        tints: Object.fromEntries(paths.map((path) => [path, `a${'b'.repeat(31)}`])),
+      }
+    },
     says: 'that is more folder icons than a space holds',
   },
   {
@@ -114,8 +119,8 @@ describe('what each column may hold', () => {
     expect(MOST_BYTES.bookmarks).toBeLessThan(MOST_BYTES.excluded)
     expect(MOST_BYTES.excluded).toBeLessThan(MOST_BYTES.site)
     expect(MOST_BYTES.site).toBeLessThan(MOST_BYTES.files)
-    expect(MOST_BYTES.files).toBe(MOST_BYTES.icons)
-    expect(MOST_BYTES.arranged).toBe(MOST_BYTES.icons)
+    expect(MOST_BYTES.files).toBe(MOST_BYTES.arranged)
+    expect(MOST_BYTES.archived).toBeLessThan(MOST_BYTES.icons)
   })
   test('and is counted in bytes', () => {
     const emoji = '📦'.repeat(MOST_BYTES.graph / 4 + 1)
