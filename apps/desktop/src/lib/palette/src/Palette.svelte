@@ -35,7 +35,7 @@
   import { lookOf } from './trying'
   import { hiddenKinds } from '../../gates/src/api'
   import { relativeTo, samePath } from '../../platform/src/api'
-  import { TabMark } from '../../marks/src/api'
+  import { SpaceMark, TabMark } from '../../marks/src/api'
   import { theme } from '../../theme/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import { joinPath } from '../../platform/src/api'
@@ -46,6 +46,7 @@
   import { notices, paletteWords, workspace, middleOpens } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { wholeRows } from './whole-rows'
+  import { distinct, keepScope, keptScope, type Scope } from './scope'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */
   let {
@@ -72,14 +73,25 @@
   let forgotten = $state(0)
   const commands = $derived(open ? paletteCommands(view) : [])
   const settingRows = $derived(open ? paletteKind('settings').rows(view) : [])
+  let scope = $state<Scope>('all')
+  $effect(() => {
+    if (open) untrack(() => (scope = keptScope()))
+  })
+  const spaced = $derived(workspace.shownSpaces.length > 1)
+  const onlyHere = $derived(spaced && scope === 'here')
+  const marksSpaces = $derived(spaced && scope === 'all')
+  function flipScope() {
+    scope = scope === 'all' ? 'here' : 'all'
+    keepScope(scope)
+    input?.focus()
+  }
   const tabs = $derived(
-    workspace.shownTabs.map((tab): OpenTab => ({
-      id: tab.id,
-      kind: tab.kind,
-      path: tab.path,
-      shown: tab.shown,
-      url: tab.kind === 'web' ? visitKey(webPages().of(tab.id).url ?? '') : null,
-    })),
+    workspace.shownTabs.flatMap((tab): OpenTab[] => {
+      const space = workspace.spaceOf(tab.note)
+      if (onlyHere && space !== workspace.activeSpaceId) return []
+      const url = tab.kind === 'web' ? visitKey(webPages().of(tab.id).url ?? '') : null
+      return [{ id: tab.id, kind: tab.kind, path: tab.path, shown: tab.shown, url, space }]
+    }),
   )
   const root = $derived(workspace.activeSpace?.root ?? null)
   let hosts = $state.raw<readonly PaletteHost[]>([])
@@ -153,7 +165,7 @@
         )
       : null,
   )
-  const results = $derived.by((): Row[] => {
+  const listed = $derived.by((): Row[] => {
     if (mode === 'commands') return commandRows()
     if (mode === 'hosts') return hostRows()
     if (mode === 'headings') return ranked(term, headingRows, MOST_PLACES)
@@ -166,6 +178,26 @@
     if (!term) return browsed?.rows ?? []
     return withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes)
   })
+  const results = $derived(browsed ? listed : distinct(listed, shownAs))
+  const spaceWith = (id: string | null) => workspace.spaces.find((one) => one.id === id) ?? null
+  const spaceAt = (path: string) => {
+    const root = workspace.rootHolding(path)
+    return root === null ? null : (workspace.spaces.find((one) => samePath(one.root, root)) ?? null)
+  }
+  function fromOf(row: Row) {
+    if (!marksSpaces) return null
+    if (row.kind === 'note') return spaceAt(row.entry.path)
+    if (row.kind === 'tab') return spaceWith(row.tab.space)
+    if (row.kind === 'bookmark') return row.path === null ? null : spaceAt(row.path)
+    if (row.kind !== 'place' || !workspace.active) return null
+    return spaceWith(workspace.spaceOf(workspace.active.note))
+  }
+  function shownAs(row: Row): string {
+    const facts = [row.kind, label(row), whereOf(row) ?? '', fromOf(row)?.id ?? '']
+    if (row.kind === 'tab') facts.push(row.tab.id)
+    if (row.kind === 'note') facts.push(row.entry.path)
+    return facts.join('\n')
+  }
   function label(row: Row): string {
     switch (row.kind) {
       case 'command':
@@ -411,6 +443,11 @@
         aria-activedescendant={results.length ? `orden-palette-${cursor}` : undefined}
         aria-label="Search notes and commands"
       />
+      {#if spaced}
+        <button type="button" class="orden-chip scope" onclick={flipScope}
+          >{scope === 'here' ? 'Only this space' : 'All spaces'}</button
+        >
+      {/if}
       {#if viewport.touch}
         <button type="button" class="give" onclick={dismiss}>Cancel</button>
       {/if}
@@ -427,6 +464,7 @@
       >
         {#each results as row, index (`${row.kind}:${label(row)}:${index}`)}
           {@const where = whereOf(row)}
+          {@const from = fromOf(row)}
           {@const hint = hintOf(row)}
           {@const head = browsed?.heads.get(index)}
           {#if head}<li role="none" class="orden-section">{head}</li>{/if}
@@ -485,6 +523,9 @@
               >
               {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
               {#if where}<span class="where">{where}</span>{/if}
+              {#if from}<span class="where from"
+                  ><span><SpaceMark id={from.id} name={from.name} /></span>{from.name}</span
+                >{/if}
               {#if row.kind === 'setting' && row.setting.switched() !== null}
                 <span class="flip" aria-hidden="true"
                   ><span class="orden-switch" class:on={row.setting.switched()}></span></span
@@ -603,6 +644,14 @@
   }
   .value {
     margin-inline-start: auto;
+  }
+  .scope {
+    margin-inline-end: var(--space-3);
+  }
+  .from {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
   }
   .flip {
     display: flex;

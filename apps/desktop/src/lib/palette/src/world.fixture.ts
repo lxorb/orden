@@ -25,6 +25,7 @@ export const tab = (id: string, shown: string, more: Partial<OpenTab> = {}): Ope
   path: null,
   shown,
   url: null,
+  space: null,
   ...more,
 })
 export const visit = (url: string, title: string, more: Partial<Visit> = {}): Visit => ({
