@@ -112,6 +112,84 @@ if sys.platform == "win32":
                 user32.SetCursorPos(start[0] + (end[0] - start[0]) * step // 20, start[1] + (end[1] - start[1]) * step // 20)
                 time.sleep(0.03)
             user32.mouse_event(LEFTUP, 0, 0, 0, 0)
+elif sys.platform == "darwin":
+    import Quartz
+    def posted(made: Any) -> None:
+        Quartz.CGEventPost(Quartz.kCGHIDEventTap, made)
+    def mouse(kind: int, x: float, y: float) -> None:
+        posted(Quartz.CGEventCreateMouseEvent(None, kind, (x, y), Quartz.kCGMouseButtonLeft))
+    def option(down: bool) -> None:
+        made = Quartz.CGEventCreateKeyboardEvent(None, 58, down)
+        Quartz.CGEventSetType(made, Quartz.kCGEventFlagsChanged)
+        Quartz.CGEventSetFlags(made, Quartz.kCGEventFlagMaskAlternate if down else 0)
+        posted(made)
+    class Desk:  # type: ignore[no-redef]
+        def __init__(self, pid: int) -> None:
+            self.pid, self.app, self.bounds = pid, None, None
+        @staticmethod
+        def config(identifier: str) -> pathlib.Path:
+            return pathlib.Path.home() / "Library" / "Application Support" / identifier
+        @staticmethod
+        def moving() -> None:
+            pass
+        def found(self) -> bool:
+            seen = [
+                dict(one["kCGWindowBounds"])
+                for one in Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID) or []
+                if int(one.get("kCGWindowOwnerPID", 0)) == self.pid and int(one.get("kCGWindowLayer", 0)) == 0
+            ]
+            self.bounds = max(seen, key=lambda one: one["Width"] * one["Height"]) if seen else None
+            return self.bounds is not None
+        def said(self, command: str, value: str) -> None:
+            if self.app is not None:
+                self.app.eval(f"await orden.invoke('plugin:window|{command}', {{ label: 'main'{value} }}); return true")
+        def placed(self) -> None:
+            self.said("set_position", ", value: { Logical: { x: 0, y: 40 } }")
+            self.said("set_size", f", value: {{ Logical: {{ width: {WIDTH}, height: {HEIGHT} }} }}")
+            time.sleep(1)
+        def filled(self) -> None:
+            self.said("maximize", "")
+            time.sleep(1)
+        def box(self) -> Box:
+            self.found()
+            got = self.bounds or {"X": 0, "Y": 0, "Width": 0, "Height": 0}
+            return int(got["X"]), int(got["Y"]), int(got["X"] + got["Width"]), int(got["Y"] + got["Height"])
+        def forward(self) -> None:
+            self.said("set_focus", "")
+        @staticmethod
+        def click(x: int, y: int) -> None:
+            mouse(Quartz.kCGEventMouseMoved, x, y)
+            time.sleep(0.1)
+            mouse(Quartz.kCGEventLeftMouseDown, x, y)
+            time.sleep(0.05)
+            mouse(Quartz.kCGEventLeftMouseUp, x, y)
+            time.sleep(0.3)
+        @staticmethod
+        def alt_alt() -> float:
+            done = 0.0
+            for _ in range(2):
+                option(True)
+                time.sleep(0.03)
+                option(False)
+                done = time.time() * 1000
+                time.sleep(0.06)
+            return done
+        @staticmethod
+        def wheel(x: int, y: int, notches: int) -> None:
+            mouse(Quartz.kCGEventMouseMoved, x, y)
+            made = Quartz.CGEventCreateScrollWheelEvent(None, Quartz.kCGScrollEventUnitLine, 1, notches)
+            Quartz.CGEventSetLocation(made, (x, y))
+            posted(made)
+        @staticmethod
+        def drag(start: tuple[int, int], end: tuple[int, int], pressed: list[tuple[float, str]]) -> None:
+            mouse(Quartz.kCGEventMouseMoved, *start)
+            time.sleep(0.1)
+            pressed.append((time.time() * 1000, "pan"))
+            mouse(Quartz.kCGEventLeftMouseDown, *start)
+            for step in range(1, 21):
+                mouse(Quartz.kCGEventLeftMouseDragged, start[0] + (end[0] - start[0]) * step // 20, start[1] + (end[1] - start[1]) * step // 20)
+                time.sleep(0.03)
+            mouse(Quartz.kCGEventLeftMouseUp, *end)
 else:
     def xdo(*words: str) -> str:
         return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout

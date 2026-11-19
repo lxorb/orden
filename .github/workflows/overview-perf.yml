@@ -1,0 +1,118 @@
+name: overview-perf
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: A release.yml run whose Windows and Mac builds are timed; empty builds a probe
+        required: false
+        default: ''
+
+concurrency:
+  group: overview-perf-${{ github.ref }}-${{ inputs.run }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  time:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            label: windows-arm64
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            label: windows-x64
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            label: macos-arm64
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      actions: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      RUN: ${{ inputs.run }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: ${{ inputs.run != '' }}
+        with:
+          name: orden-${{ matrix.label }}
+          path: built
+          run-id: ${{ inputs.run }}
+          github-token: ${{ github.token }}
+
+      - name: The release build
+        if: ${{ inputs.run != '' }}
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then
+            mkdir -p "$RUNNER_TEMP/orden"
+            tar -xzf "$(find built -name '*.app.tar.gz' | head -1)" -C "$RUNNER_TEMP/orden"
+            app=$(ls -d "$RUNNER_TEMP"/orden/*.app | head -1)
+            echo "EXE=$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+            echo "IDENTIFIER=so.orden.Orden" >>"$GITHUB_ENV"
+            echo "timed: $(basename "$app") from run $RUN"
+            exit 0
+          fi
+          setup=$(find built -name '*-setup.exe' | head -1)
+          home="$(cygpath -w "$RUNNER_TEMP")\\orden"
+          "/c/Program Files/7-Zip/7z.exe" x -y -o"$home" "$(cygpath -w "$setup")" >/dev/null
+          echo "EXE=$home\\orden.exe" >>"$GITHUB_ENV"
+          echo "IDENTIFIER=so.orden.Orden" >>"$GITHUB_ENV"
+          echo "timed: $(basename "$setup") from run $RUN"
+
+      - uses: ./.github/actions/desktop-setup
+        if: ${{ inputs.run == '' }}
+        with:
+          target: ${{ matrix.target }}
+
+      - name: The probe
+        if: ${{ inputs.run == '' }}
+        env:
+          IDENTIFIER: so.orden.Orden.probe.perf
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          release=apps/desktop/src-tauri/target/${{ matrix.target }}/release
+          if [ "$RUNNER_OS" = macOS ]; then
+            bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --bundles app \
+              --ignore-version-mismatches --config "$config"
+            app=$(ls -d $release/bundle/macos/*.app | head -1)
+            echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+          else
+            bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+              --ignore-version-mismatches --config "$config"
+            bash scripts/cef-beside.sh $release
+            echo "EXE=$PWD/$release/orden.exe" >>"$GITHUB_ENV"
+          fi
+          echo "IDENTIFIER=$IDENTIFIER" >>"$GITHUB_ENV"
+
+      - name: The overview, timed
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then
+            python3 -m venv "$RUNNER_TEMP/perf"
+            py="$RUNNER_TEMP/perf/bin/python"
+            "$py" -m pip install --quiet pillow mss numpy pyobjc-framework-Quartz
+          else
+            py=python
+            python -m pip install --quiet pillow mss numpy
+          fi
+          "$py" scripts/overview-perf-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out out \
+            --first-frame-ms 150 --frame-ms 16 --input-frames 1 --report-only
+          cat out/table.md >>"$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: overview-perf-${{ matrix.label }}
+          path: out
+          retention-days: 14
