@@ -110,6 +110,8 @@ const PREFERENCES: &[(&str, bool)] = &[
   ("privacy_sandbox.m1.topics_enabled", false),
   ("privacy_sandbox.m1.fledge_enabled", false),
   ("privacy_sandbox.m1.ad_measurement_enabled", false),
+  ("download_bubble.partial_view_enabled", false),
+  ("download.prompt_for_download", false),
 ];
 
 /// `session.restore_on_startup`, the profile preference Chrome consults when the first
@@ -286,6 +288,13 @@ mod tests {
     // default this module has no business asserting.
     for (name, enabled) in PREFERENCES {
       assert!(!enabled, "{name} is listed as a preference forced off");
+    }
+  }
+
+  #[test]
+  fn chrome_shows_no_download_bubble_or_save_prompt_of_its_own() {
+    for name in ["download_bubble.partial_view_enabled", "download.prompt_for_download"] {
+      assert!(PREFERENCES.contains(&(name, false)), "{name}");
     }
   }
 
