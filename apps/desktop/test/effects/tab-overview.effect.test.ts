@@ -219,7 +219,7 @@ test('each pane is its own window, moved where it is and never copied, and every
   const fronts = new Set(workspace.panes.all.map((one) => one.activeTabId))
   for (const window of windows()) {
     const id = workspace.tabs.find((one) => one.shown === window.getAttribute('aria-label'))?.id
-    if (id && fronts.has(id)) expect(window.querySelector('.face')).toBe(null)
+    if (id && fronts.has(id)) expect(window.querySelector('.face-box.is-live')).not.toBe(null)
   }
   expect(tabOverview.lifted).toEqual([])
   expect([...tabOverview.out].sort()).toEqual(workspace.tabs.map((one) => one.id).sort())
@@ -244,7 +244,7 @@ test('a pane holding a web page moves as its window, its picture in its hole and
   const window = windows().find(
     (one) => one.getAttribute('aria-label') === workspace.tabs.find((tab) => tab.id === page)?.shown,
   )
-  expect(window?.querySelector('.face-box > .face')).toBe(null)
+  expect(window?.querySelector('.face-box.is-live')).not.toBe(null)
   expect(pages.still).toBe(true)
   expect(overlays.escape()).toBe(true)
   flushSync()

@@ -161,6 +161,41 @@ test('the tab worked in is over every other window on every frame, and nothing i
   for (const one of document.querySelectorAll('.window, .rider, .closer'))
     expect(one.parentElement?.classList.contains('canvas')).toBe(true)
 })
+test('a window chosen from behind the pane goes home as that pane in one move, and the tab it shows goes to its strip', async () => {
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 400 && waiting.size; i++) frame()
+  const paneId = workspace.panes.all[0]?.id ?? ''
+  const pane = document.querySelector<HTMLElement>(`[data-pane="${paneId}"]`)
+  const was = workspace.activeTabId
+  const chosen = workspace.tabs.find((one) => one.id !== was)
+  const windowOf = (id: string | null | undefined) =>
+    [...document.querySelectorAll<HTMLElement>('.window')].find(
+      (one) => one.getAttribute('aria-label') === workspace.tabs.find((tab) => tab.id === id)?.shown,
+    )
+  const at = (style: string | undefined) =>
+    (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(style ?? '') ?? []).slice(1).map(Number)
+  const [x, y] = at(windowOf(chosen?.id)?.style.transform)
+  windowOf(chosen?.id)?.click()
+  flushSync()
+  expect(workspace.activeTabId).toBe(chosen?.id)
+  const [px, py] = at(pane?.style.transform)
+  expect(px).toBeCloseTo(x ?? NaN, 0)
+  expect(py).toBeCloseTo((y ?? NaN) - 40, 0)
+  expect(windowOf(chosen?.id)?.querySelector('.face-box')?.classList.contains('is-live')).toBe(true)
+  expect(windowOf(was)?.querySelector('.face-box')?.classList.contains('is-live')).toBe(false)
+  let frames = 0
+  for (let i = 0; i < 400 && tabOverview.out.length; i++) {
+    frame()
+    if (!tabOverview.out.length) break
+    frames++
+    expect(pane?.style.transform).toMatch(/translate\(.*\) scale\(/)
+    expect(tabOverview.lifted).not.toContain(paneId)
+  }
+  expect(frames).toBeGreaterThan(5)
+  expect(pane?.getAttribute('style') ?? '').toBe('')
+})
 test('a picture that comes in while the windows fly is drawn once they are there, its mark till then', async () => {
   tabOverview.open = true
   flushSync()
