@@ -21,7 +21,7 @@ let renamed = 0
 for (const dir of readdirSync(root)) {
   const full = join(root, dir)
   if (!statSync(full).isDirectory()) continue
-  const label = `Nib-${version}-${dir.replace(/^nib-/, '')}`
+  const label = `Nib-${version}-${dir.replace(/^orden-/, '')}`
   for (const path of filesIn(full)) {
     const name = path.split(/[\\/]/).pop()
     const bare = name.endsWith('.sig') ? name.slice(0, -'.sig'.length) : name

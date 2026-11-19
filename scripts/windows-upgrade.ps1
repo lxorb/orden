@@ -100,7 +100,7 @@ function Starts([string]$command) {
   if ($file) { return $file.FullName } else { return $Matches[1] }
 }
 
-Add-Type -Namespace Nib -Name Shell -MemberDefinition @'
+Add-Type -Namespace Orden -Name Shell -MemberDefinition @'
 [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
 public static extern uint AssocQueryString(uint flags, uint what, string assoc, string extra, System.Text.StringBuilder found, ref uint size);
 '@
@@ -108,7 +108,7 @@ public static extern uint AssocQueryString(uint flags, uint what, string assoc, 
 function Handler([string]$scheme, [uint32]$what) {
   $found = New-Object System.Text.StringBuilder 1024
   $size = [uint32]1024
-  [void][Nib.Shell]::AssocQueryString(0x1000, $what, $scheme, $null, $found, [ref]$size)
+  [void][Orden.Shell]::AssocQueryString(0x1000, $what, $scheme, $null, $found, [ref]$size)
   return $found.ToString()
 }
 

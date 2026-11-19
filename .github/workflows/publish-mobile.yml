@@ -93,8 +93,8 @@ jobs:
             alias=${KEY_ALIAS:-nib}
           else
             store=$PWD/edge.jks
-            password=nib-edge
-            alias=nib
+            password=orden-edge
+            alias=orden
             keytool -genkeypair -keystore "$store" -alias "$alias" -keyalg RSA -keysize 2048 \
               -validity 10000 -storepass "$password" -keypass "$password" \
               -dname 'CN=Orden, O=Emil Vinu'
@@ -123,7 +123,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nib-android
+          name: orden-android
           if-no-files-found: error
           path: apps/desktop/src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
 
@@ -194,7 +194,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nib-ios
+          name: orden-ios
           if-no-files-found: error
           path: out/*.zip
 

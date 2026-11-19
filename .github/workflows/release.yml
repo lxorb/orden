@@ -141,7 +141,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nib-${{ matrix.label }}
+          name: orden-${{ matrix.label }}
           if-no-files-found: error
           path: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
@@ -186,7 +186,7 @@ jobs:
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: nib-${{ matrix.label }}
+          name: orden-${{ matrix.label }}
           path: built
 
       - name: A hover answers within frames and the app rests when left alone
@@ -232,7 +232,7 @@ jobs:
             value="${!name}"
             [ -n "$value" ] || continue
             echo "::add-mask::$value"
-            { echo "$name<<__nib_eof__"; echo "$value"; echo "__nib_eof__"; } >> "$GITHUB_ENV"
+            { echo "$name<<__orden_eof__"; echo "$value"; echo "__orden_eof__"; } >> "$GITHUB_ENV"
           done
 
       - name: Build the app
@@ -252,7 +252,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nib-${{ matrix.label }}
+          name: orden-${{ matrix.label }}
           if-no-files-found: error
           path: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
@@ -286,7 +286,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with: { path: artifacts, pattern: 'nib-*' }
+        with: { path: artifacts, pattern: 'orden-*' }
 
       - name: Name the downloads for humans
         run: node scripts/name-assets.mjs artifacts "$VERSION"

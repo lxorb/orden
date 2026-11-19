@@ -302,8 +302,7 @@ the password once through polkit, and then Orden restarts:
 
 `aur/nib-bin/` is the package base as the AUR wants it: `PKGBUILD`, the
 generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. The package
-is `orden-bin`; the folder, the binary, the icon and the desktop entry keep the
-name `nib`. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
+is `orden-bin`; the folder and the desktop entry keep the name `nib`. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
 Rust or Node toolchain.
 
 Neither `orden-bin` nor `orden` is in the AUR (checked 2026-10-12), and neither

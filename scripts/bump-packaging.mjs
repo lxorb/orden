@@ -94,9 +94,9 @@ edit('aur/nib-bin/.SRCINFO', [
   [/^(\tpkgver = ).*$/m, `$1${version}`],
   [/^(\tpkgrel = ).*$/m, (_, key) => `${key}1`],
   [/^(\tprovides = (?:orden|nib)=).*$/m, `$1${version}`, 2],
-  [/^(\tsource_x86_64 = nib\.deb::).*$/m, `$1${download}/${file('linux-x64', '.deb')}`],
+  [/^(\tsource_x86_64 = orden\.deb::).*$/m, `$1${download}/${file('linux-x64', '.deb')}`],
   [/^(\tsha256sums_x86_64 = ).*$/m, `$1${debX64}`],
-  [/^(\tsource_aarch64 = nib\.deb::).*$/m, `$1${download}/${file('linux-arm64', '.deb')}`],
+  [/^(\tsource_aarch64 = orden\.deb::).*$/m, `$1${download}/${file('linux-arm64', '.deb')}`],
   [/^(\tsha256sums_aarch64 = ).*$/m, `$1${debArm64}`],
 ])
 edit('snap/snapcraft.yaml', [

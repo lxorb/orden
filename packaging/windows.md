@@ -1,7 +1,8 @@
 # Windows packaging
 
 Three package managers carry Orden on Windows, and each takes the release's own files
-rather than building anything: winget (`lxorb.Orden`), Scoop (`nib`, in
+rather than building anything: winget (`lxorb.Orden`, its manifest written from the
+release by `publish.yml`, so none is kept here), Scoop (`nib`, in
 `lxorb/scoop-bucket`) and Chocolatey (`nib`). Scoop and Chocolatey are to move to `orden`,
 and wait for it behind a switch; see "The rename: nib to orden" below. Homebrew's cask is
 in `homebrew/` and goes out the same way.
@@ -11,7 +12,6 @@ in `homebrew/` and goes out the same way.
 | `scoop/orden.json` | Scoop (`scoop install lxorb/nib`; `lxorb/orden` after the rename) | the NSIS setup, unpacked rather than run |
 | `chocolatey/orden.nuspec` | Chocolatey (`choco install nib`; `orden` after the rename) | the MSI, for the whole machine |
 | `chocolatey/nib.nuspec` | Chocolatey (`choco upgrade nib`), after the rename | none: the road from the old name |
-| `winget/` | winget | the NSIS setup |
 
 ## How a release gets there
 

@@ -1,7 +1,6 @@
 # Maintainer: Bendik Arbogast <bendik@arbogast.dev>
 
 pkgname=orden-git
-_pkgname=nib
 pkgver=0.15.0.r27.ga15da34
 pkgrel=1
 pkgdesc="Lightweight markdown editor with realtime inline preview (latest main)"
@@ -14,8 +13,8 @@ depends=('gtk4>=4.14' 'nss' 'nspr' 'alsa-lib' 'libcups' 'at-spi2-core' 'libdrm' 
 makedepends=('git' 'cargo' 'nodejs>=24' 'pnpm' 'npm' 'cmake' 'ninja' 'python' 'curl')
 optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
-provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
-conflicts=('orden' "${_pkgname}" 'nib-bin' 'nibeditor')
+provides=("orden=${pkgver}" "nib=${pkgver}")
+conflicts=('orden' 'nib' 'nib-bin' 'nibeditor')
 options=('!lto' '!debug' '!strip' '!emptydirs')
 source=('orden::git+https://github.com/lxorb/orden.git')
 sha256sums=('SKIP')
@@ -44,7 +43,7 @@ package() {
   chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
   install -Dm644 orden/packaging/aur/nib-bin/nib.desktop \
-    "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
+    "${pkgdir}/usr/share/applications/nib.desktop"
   rm -f "${pkgdir}/usr/share/applications/Orden.desktop"
 
   install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/orden.png" \

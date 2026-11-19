@@ -70,12 +70,7 @@ parts:
     override-build: |
       craftctl default
 
-      if [ ! -e "${CRAFT_PART_INSTALL}/usr/bin/orden" ]; then
-        ln -s nib "${CRAFT_PART_INSTALL}/usr/bin/orden"
-      fi
-      rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop" \
-        "${CRAFT_PART_INSTALL}/usr/share/applications/nibeditor.desktop" \
-        "${CRAFT_PART_INSTALL}/usr/share/applications/Orden.desktop" \
+      rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Orden.desktop" \
         "${CRAFT_PART_INSTALL}/usr/share/applications/orden.desktop"
       install -d "${CRAFT_PART_INSTALL}/usr/share/applications"
       cat > "${CRAFT_PART_INSTALL}/usr/share/applications/orden.desktop" <<'DESKTOP'
@@ -95,11 +90,6 @@ parts:
       DESKTOP
 
       icons="${CRAFT_PART_INSTALL}/usr/share/icons/hicolor"
-      for one in "${icons}"/*/apps/nib.png; do
-        if [ -f "$one" ] && [ ! -e "${one%/nib.png}/orden.png" ]; then
-          mv "$one" "${one%/nib.png}/orden.png"
-        fi
-      done
       if [ -f "${icons}/256x256@2/apps/orden.png" ]; then
         install -Dm644 "${icons}/256x256@2/apps/orden.png" "${icons}/256x256/apps/orden.png"
         rm -rf "${icons}/256x256@2"
