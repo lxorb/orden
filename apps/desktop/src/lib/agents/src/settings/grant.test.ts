@@ -46,7 +46,6 @@ describe('the defaults', () => {
       'clipboard',
       'ask',
       'editor',
-      'applications',
       'agents',
     ])
     expect(grant.spaces).toBe('all')
@@ -201,5 +200,11 @@ describe('the questions an agent is asked', () => {
     const read = readGrant({ ...own(), asks, always: { 'shop.example': crate } })
     expect(read?.asks).toEqual(asks)
     expect(read?.always['shop.example']).toEqual(crate)
+  })
+})
+describe('a grant saved before a scope was taken away', () => {
+  it('reads with the scope dropped and the rest kept', () => {
+    const before = { ...own(), scopes: ['applications', ...own().scopes, 'someday'] }
+    expect(readGrant(before)?.scopes).toEqual(own().scopes)
   })
 })

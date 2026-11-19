@@ -54,7 +54,6 @@ const SCOPED: [Scope | null, string][] = [
   ['clipboard', 'system_clipboard'],
   ['ask', 'ask_reader'],
   ['editor', 'note_editor'],
-  ['applications', 'application_tabs'],
   ['files', 'explorer_tabs'],
   ['chats.read', 'list_chats read_chat search_chats'],
   ['chats.write', 'draft_message post_message react'],

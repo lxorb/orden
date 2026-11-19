@@ -77,7 +77,6 @@ const WORDS: Readonly<Record<string, string>> = {
   system_clipboard: 'Clipboard',
   ask_reader: 'Questions',
   note_editor: 'Editor',
-  application_tabs: 'Application',
   explorer_tabs: 'File explorer',
   recently_deleted: WRITING,
   list_chats: READING,

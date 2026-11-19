@@ -21,7 +21,6 @@ export type AgentScope =
   | 'clipboard'
   | 'ask'
   | 'editor'
-  | 'applications'
 export interface AgentWritesPort {
   wrote(agent: string, tabs: readonly string[]): void
 }

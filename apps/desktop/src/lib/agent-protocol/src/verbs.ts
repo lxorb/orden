@@ -79,7 +79,6 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   system_clipboard: 'clipboard',
   ask_reader: 'ask',
   note_editor: 'editor',
-  application_tabs: 'applications',
   explorer_tabs: 'files',
   recently_deleted: 'tree',
   list_chats: 'chats.read',
