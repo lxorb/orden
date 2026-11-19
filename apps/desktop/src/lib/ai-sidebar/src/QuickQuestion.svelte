@@ -7,7 +7,7 @@
   import { answerHtml } from './drawn'
   import type { ContextKind } from './chat-parts'
   import { dollarMaths } from '@orden/markdown/streamed'
-  import { quick as sheet } from './chat-parts'
+  import { chatPaths, followPath, pathMenu, quick as sheet } from './chat-parts'
   import Thinking from './Thinking.svelte'
   import { closeOnBack, Cross, overlays, scrollbar } from '../../ui-kit/src/api'
   import { Copied, longPaste, trap } from '../../ui-controls/src/api'
@@ -67,7 +67,12 @@
     event.preventDefault()
     void quick.ask()
   }
+  const root = $derived(workspace.activeSpace?.root ?? null)
   function follow(event: MouseEvent) {
+    if (followPath(event, root)) {
+      quick.close()
+      return
+    }
     if (!opensLink(event)) return
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
@@ -84,7 +89,7 @@
   const pictures = new SvelteSet<string>()
   function drawn(text: string, live: boolean): string {
     const from = untrack(() => workspace.panelTab?.path ?? null)
-    return answerHtml(text, {
+    const html = answerHtml(text, {
       resolveLink: (link) => {
         const found = link.target ? links.targetOf(from, { kind: 'wikilink', target: link.target }) : null
         return found === null ? null : { href: found }
@@ -94,7 +99,9 @@
       from,
       shown: pictures,
     })
+    return untrack(() => chatPaths(html, root))
   }
+  const pathAt = (event: MouseEvent) => void pathMenu(event, root)
   const show = (src: string) => pictures.add(src)
   const copied = new Copied()
   const MARKS: Record<ContextKind, string> = {
@@ -204,10 +211,11 @@
               text={turn.text}
               draw={(text: string) => drawn(text, true)}
               onfollow={follow}
+              onmenu={pathAt}
               onpicture={show}
             />
           {:else}
-            <Answer html={drawn(turn.text, false)} onfollow={follow} onpicture={show} />
+            <Answer html={drawn(turn.text, false)} onfollow={follow} onmenu={pathAt} onpicture={show} />
           {/if}
         {/if}
       {/each}

@@ -7,9 +7,10 @@
     text: string
     draw: (text: string) => string
     onfollow: (event: MouseEvent) => void
+    onmenu?: (event: MouseEvent) => void
     onpicture: (src: string) => void
   }
-  const { text, draw, onfollow, onpicture }: Props = $props()
+  const { text, draw, onfollow, onmenu, onpicture }: Props = $props()
   let drawnFor = untrack(() => text)
   let html = $state(untrack(() => draw(text)))
   const redraw = atItsCost(() => {
@@ -23,4 +24,4 @@
   onDestroy(() => redraw.cancel())
 </script>
 
-<Answer {html} live {onfollow} {onpicture} />
+<Answer {html} live {onfollow} {onmenu} {onpicture} />

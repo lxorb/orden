@@ -7,7 +7,7 @@
   import Answer from './Answer.svelte'
   import LiveAnswer from './LiveAnswer.svelte'
   import { answerHtml } from './drawn'
-  import { citationLinks, citedIn, linkedAnswer, chat, lasted } from './chat-parts'
+  import { chatPaths, citationLinks, citedIn, followPath, linkedAnswer, chat, lasted, pathMenu } from './chat-parts'
   import type { Part, Turn } from '../../ai-providers/src/api'
   import { Copied, when } from '../../ui-controls/src/api'
   import { region, dur, fly, slide, insideSpace, withinSpace } from '../../platform/src/api'
@@ -45,7 +45,7 @@
   function drawn(text: string, still: boolean): string {
     const source = citationLinks(text, sources.length)
     const from = untrack(() => workspace.panelTab?.path ?? null)
-    return answerHtml(source, {
+    const html = answerHtml(source, {
       resolveLink: (link) => {
         const found = link.target ? links.targetOf(from, { kind: 'wikilink', target: link.target }) : null
         return found === null ? null : { href: found }
@@ -55,6 +55,7 @@
       from,
       shown: pictures,
     })
+    return untrack(() => chatPaths(html, chat.root))
   }
   const cited = $derived.by(() => {
     const out: Source[] = []
@@ -73,6 +74,7 @@
     if (ask !== 'behind') ongoto?.(source.line)
   }
   function follow(event: MouseEvent) {
+    if (followPath(event, chat.root)) return
     if (!opensLink(event)) return
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
@@ -95,6 +97,7 @@
       workspace.panelTab?.path ?? null,
     )
   }
+  const pathAt = (event: MouseEvent) => void pathMenu(event, chat.root)
   const spelled = $derived(dollarMaths(words))
   const asNote = $derived(linkedAnswer(spelled, sources))
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
@@ -163,9 +166,15 @@
   {#if block.kind === 'words'}
     {@const still = live && block.at === blocks.at(-1)?.at}
     {#if still}
-      <LiveAnswer text={block.text} draw={(text: string) => drawn(text, true)} onfollow={follow} onpicture={show} />
+      <LiveAnswer
+        text={block.text}
+        draw={(text: string) => drawn(text, true)}
+        onfollow={follow}
+        onmenu={pathAt}
+        onpicture={show}
+      />
     {:else}
-      <Answer html={drawn(block.text, false)} onfollow={follow} onpicture={show} />
+      <Answer html={drawn(block.text, false)} onfollow={follow} onmenu={pathAt} onpicture={show} />
     {/if}
   {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
     <TaskRows said={block.notice.text} />

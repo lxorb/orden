@@ -13,9 +13,10 @@
     html: string
     live?: boolean
     onfollow?: (event: MouseEvent) => void
+    onmenu?: ((event: MouseEvent) => void) | undefined
     onpicture?: (src: string) => void
   }
-  const { html, live = false, onfollow, onpicture }: Props = $props()
+  const { html, live = false, onfollow, onmenu, onpicture }: Props = $props()
   const waiting = $derived(mathsWaiting(html))
   function copied(event: MouseEvent): boolean {
     const button = (event.target as Element | null)?.closest<HTMLElement>('[data-copy]')
@@ -58,6 +59,7 @@
     class:waiting
     onclick={press}
     onauxclick={(event) => onfollow?.(event)}
+    oncontextmenu={onmenu}
     {@attach (node: HTMLDivElement) => patchHtml(node, html)}
   ></div>
 {:else}
@@ -68,6 +70,7 @@
     class:waiting
     onclick={press}
     onauxclick={(event) => onfollow?.(event)}
+    oncontextmenu={onmenu}
     {@attach (node: HTMLDivElement) => drawInPieces(node, html)}
   ></div>
 {/if}
@@ -94,6 +97,19 @@
   }
   .words:global(:is(#write, .orden-write)) :global(a) {
     cursor: default;
+  }
+  .words :global(.chat-path) {
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-decoration-color: var(--muted);
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--dur-fast) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .words :global(.chat-path:hover) {
+      color: var(--accent);
+      text-decoration-color: currentColor;
+    }
   }
   .words:global(:is(#write, .orden-write)) :global(.task-list-item input[type='checkbox']) {
     margin: 0;
