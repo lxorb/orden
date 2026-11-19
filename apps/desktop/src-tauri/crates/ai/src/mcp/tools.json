@@ -755,7 +755,7 @@
   },
   {
     "name": "add_task",
-    "description": "Add a todo: `title`, and optionally `description`, `labels`, `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).",
+    "description": "Add a todo: `title`, and optionally `description`, `labels`, `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high), and `repeat`, a rule like `every 3 days`, `every month on the 1st` or `every! 10 days` to count from when it is done.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -764,7 +764,8 @@
         "labels": { "type": "array", "items": { "type": "string" } },
         "start": { "type": "string" },
         "deadline": { "type": "string" },
-        "priority": { "type": "integer" }
+        "priority": { "type": "integer" },
+        "repeat": { "type": "string" }
       },
       "required": ["title"]
     },
@@ -772,7 +773,7 @@
   },
   {
     "name": "update_task",
-    "description": "Change one todo by its `id`: `done`, `title`, `description`, `labels`, `start`, `deadline` (`\"\"` takes a day off), `priority` 0 to 3.",
+    "description": "Change one todo by its `id`: `done`, `title`, `description`, `labels`, `start`, `deadline` (`\"\"` takes a day off), `priority` 0 to 3, `repeat` as such a rule (`\"\"` takes it off); done on a repeating todo moves it to its next dates and keeps a done copy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -783,7 +784,8 @@
         "labels": { "type": "array", "items": { "type": "string" } },
         "start": { "type": "string" },
         "deadline": { "type": "string" },
-        "priority": { "type": "integer" }
+        "priority": { "type": "integer" },
+        "repeat": { "type": "string" }
       },
       "required": ["id"]
     },

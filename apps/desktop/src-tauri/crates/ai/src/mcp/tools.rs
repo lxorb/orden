@@ -117,6 +117,11 @@ mod tests {
             assert!(tool.input["properties"].get("space").is_none(), "{name}");
             assert!(!tool.description.contains("space"), "{name}");
         }
+        for name in ["add_task", "update_task"] {
+            let tool = find(name).expect(name);
+            assert_eq!(tool.input["properties"]["repeat"]["type"], "string", "{name}");
+            assert!(tool.description.contains("`repeat`"), "{name}");
+        }
     }
     #[test]
     fn the_table_reads_whole_with_one_row_a_name() {
