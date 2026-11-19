@@ -402,6 +402,14 @@ pub struct Opening {
     thread: Option<String>,
     #[serde(default)]
     without: Vec<String>,
+    #[serde(default)]
+    only: Option<Vec<String>>,
+}
+impl Opening {
+    fn narrowed(mut self) -> Self {
+        self.without = args::kept_out(&self.without, self.only.take().as_deref());
+        self
+    }
 }
 #[tauri::command]
 pub async fn ai_cli_open(
@@ -411,6 +419,7 @@ pub async fn ai_cli_open(
     output: Channel<Value>,
 ) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
+        let opening = opening.narrowed();
         let owner = owner(&webview)?;
         let load = webview.state::<Asks>().load_of(&owner);
         usable(&id)?;
@@ -548,6 +557,7 @@ fn claude_command(
         if let Some(thread) = &opening.thread {
             command.env(args::THREAD_VAR, thread);
         }
+        command.env(args::KEPT_OUT_VAR, args::left_out(opening.mode, &opening.without));
     }
     Ok(command)
 }

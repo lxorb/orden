@@ -7,6 +7,10 @@ use super::server::{defaults, INSTRUCTIONS};
 use super::tools::{self, Tool};
 use orden_agents::grants::Grant;
 
+pub const KEPT_OUT_VAR: &str = "ORDEN_MCP_KEPT_OUT";
+pub fn kept_out_of(said: &str) -> BTreeSet<String> {
+    said.split(',').map(str::trim).filter(|one| !one.is_empty()).map(str::to_owned).collect()
+}
 pub fn instructions() -> &'static str {
     INSTRUCTIONS
 }
