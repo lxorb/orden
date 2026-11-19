@@ -4,6 +4,7 @@
   const {
     verb,
     object = '',
+    server,
     open,
     going = false,
     failed = false,
@@ -13,6 +14,7 @@
   }: {
     verb: string
     object?: string
+    server?: string | undefined
     open: boolean
     going?: boolean
     failed?: boolean
@@ -25,6 +27,7 @@
 <button class="line" class:going class:failed aria-expanded={open} onclick={onpress}>
   <svg class="caret" class:open viewBox="0 0 13 13"><path d="M4.8 3.2l3.3 3.3-3.3 3.3" /></svg>
   <span class="verb">{verb}</span>
+  {#if server}<span class="server" dir="auto">{server}</span>{/if}
   {#if object}<span class="object" class:code dir="auto">{object}</span>{/if}
   {#if change}<Tally added={change.added} removed={change.removed} />{/if}
 </button>
@@ -69,6 +72,19 @@
   }
   .verb {
     flex: none;
+  }
+  .server {
+    flex: none;
+    max-width: 10em;
+    padding: 0 5px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: 1.45;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .object {
     min-width: 0;

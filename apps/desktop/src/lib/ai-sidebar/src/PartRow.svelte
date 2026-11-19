@@ -4,7 +4,7 @@
   import { workspace } from '../../workspace/src/api'
   import type { Part } from '../../ai-providers/src/api'
   import Approval from './review/Approval.svelte'
-  import { chat, seconds } from './chat-parts'
+  import { chat, outsideTool, seconds } from './chat-parts'
   import Spawned from './Spawned.svelte'
   import StepLine from './StepLine.svelte'
   import { bareName, helperOf, objectOf, verbOf } from './verbs'
@@ -13,7 +13,11 @@
   const { part, live = false }: { part: Row; live?: boolean } = $props()
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
-  const verb = $derived(part.kind === 'thinking' ? 'Thought' : (verbOf(part.verb) ?? bareName(part.verb)))
+  const outside = $derived(part.kind === 'tool' ? outsideTool(part.verb) : null)
+  const verb = $derived.by(() => {
+    if (part.kind === 'thinking') return 'Thought'
+    return outside?.tool ?? verbOf(part.verb) ?? bareName(part.verb)
+  })
   const object = $derived(part.kind === 'thinking' ? (part.ms ? seconds(part.ms, region()) : '') : objectOf(part.args))
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))
   const helper = $derived(part.kind === 'tool' ? helperOf(part) : null)
@@ -37,6 +41,7 @@
   <StepLine
     {verb}
     {object}
+    server={outside?.server}
     {open}
     {going}
     failed={part.kind === 'tool' && part.state === 'error'}
