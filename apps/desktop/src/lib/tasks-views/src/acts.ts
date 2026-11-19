@@ -1,15 +1,25 @@
+import type { TypedTodo } from '@orden/bases/language'
 import { todoWithAi } from '../../ai-chat/src/api'
 import { fittedDescription, placedBetween, titledOf, todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import { undoToast } from '../../undo-toast/src/api'
 import type { Shown } from './shown.svelte'
 
+export interface Typing {
+  taken(): TypedTodo | null
+  empty(): boolean
+}
+export function typedPatch(read: TypedTodo): TodoPatch {
+  return {
+    labels: read.labels,
+    ...(read.start === undefined ? {} : { start: read.start }),
+    ...(read.deadline === undefined ? {} : { deadline: read.deadline }),
+    ...(read.priority === undefined ? {} : { priority: read.priority }),
+  }
+}
 export async function addTodo(shown: Shown, title: string, patch: TodoPatch = {}): Promise<Todo | null> {
-  const made = await todos.add({
-    ...titledOf(title),
-    ...(shown.filter.label === null ? {} : { labels: [shown.filter.label] }),
-    ...patch,
-  })
+  const labels = [...new Set([...(shown.filter.label === null ? [] : [shown.filter.label]), ...(patch.labels ?? [])])]
+  const made = await todos.add({ ...titledOf(title), ...patch, labels })
   return made.ok ? made.value : null
 }
 export async function patchTodo(id: string, patch: TodoPatch): Promise<string | null> {

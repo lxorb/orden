@@ -114,6 +114,7 @@ describe('tasks-views contract', () => {
           one.startsWith('./') ||
           one === 'svelte' ||
           one === '@orden/contracts' ||
+          one === '@orden/bases/language' ||
           one === 'svelte/easing' ||
           one === '../../tasks-model/src/api' ||
           one === '../../platform/src/api' ||

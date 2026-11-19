@@ -3,6 +3,7 @@
   "layer": "content",
   "dependsOn": [
     "contracts",
+    "bases",
     "platform",
     "shortcuts",
     "tasks-model",
