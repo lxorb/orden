@@ -77,7 +77,12 @@ unsafe extern "system" fn each(child: HWND, host: LPARAM) -> BOOL {
     }
     BOOL::from(true)
 }
-#[allow(unsafe_code, clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+#[allow(
+    unsafe_code,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 unsafe extern "system" fn passed(
     window: HWND,
     message: u32,
@@ -106,7 +111,7 @@ fn over_a_page(host: isize, x: i32, y: i32) -> bool {
     for (page, cut, wide) in pages {
         let mut rect = RECT::default();
         let shown = unsafe { IsWindowVisible(hwnd(page)).as_bool() };
-        if !shown || unsafe { GetWindowRect(hwnd(page), &mut rect) }.is_err() {
+        if !shown || unsafe { GetWindowRect(hwnd(page), &raw mut rect) }.is_err() {
             continue;
         }
         if x < rect.left || y < rect.top || x >= rect.right || y >= rect.bottom {
