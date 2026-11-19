@@ -48,6 +48,9 @@ pub fn asking(
     crate::engine::menus(
         page,
         Box::new(move |said| {
+            if !crate::web_page_ui::takes(&window, "menu") {
+                return false;
+            }
             let Some(menu) = read(&tab, said) else {
                 return false;
             };

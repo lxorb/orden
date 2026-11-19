@@ -52,6 +52,7 @@ pub fn asking(
     crate::engine::dialogs(
         page,
         Box::new(move |said| match read(&tab, said) {
+            Some(Told::Asked(_)) if !crate::web_page_ui::takes(&window, "dialog") => false,
             Some(Told::Asked(dialog)) => app.emit_to(&window, ASKED, dialog).is_ok(),
             Some(Told::Gone(gone)) => app.emit_to(&window, GONE, gone).is_ok(),
             None => false,

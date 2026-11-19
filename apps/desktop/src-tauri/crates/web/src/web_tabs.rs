@@ -333,7 +333,6 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
         crate::web_swipe::script().to_string(),
         crate::web_pointer::script().to_string(),
         crate::web_painted::script().to_string(),
-        crate::web_select::script().to_string(),
         crate::web_media::script().to_string(),
     ];
     #[cfg(windows)]
@@ -419,7 +418,12 @@ pub async fn web_open(
         return Err("that tab is already opening a page".into());
     };
     tabs.restore(&tab, revived.trail, revived.at);
-    let scripts = crate::page_style::with(opening(revived.place, &url, profile.pass));
+    let mut opened = opening(revived.place, &url, profile.pass);
+    if crate::web_page_ui::takes(webview.window().label(), "select") {
+        opened.push_str(crate::web_select::script());
+        opened.push_str(";\n");
+    }
+    let scripts = crate::page_style::with(opened);
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
@@ -1231,12 +1235,11 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page", true),
             format!(
-                "{};\n{};\n{};\n{};\n{};\n{};\n{}{};\n",
+                "{};\n{};\n{};\n{};\n{};\n{}{};\n",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
                 crate::web_pointer::script(),
                 crate::web_painted::script(),
-                crate::web_select::script(),
                 crate::web_media::script(),
                 if cfg!(windows) { format!("{};\n", super::bars()) } else { String::new() },
                 crate::web_pass::script()

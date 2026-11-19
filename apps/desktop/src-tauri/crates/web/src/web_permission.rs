@@ -49,6 +49,7 @@ pub fn asking(
     crate::engine::permissions(
         page,
         Box::new(move |said| match read(&tab, said) {
+            Some(Told::Asked(_)) if !crate::web_page_ui::takes(&window, "permission") => false,
             Some(Told::Asked(asked)) => app.emit_to(&window, ASKED, asked).is_ok(),
             Some(Told::Gone(gone)) => app.emit_to(&window, GONE, gone).is_ok(),
             None => false,

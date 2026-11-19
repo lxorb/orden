@@ -28,6 +28,7 @@ pub mod web_media;
 pub mod web_menu;
 pub mod web_opens;
 pub mod web_page;
+pub mod web_page_ui;
 pub mod web_painted;
 pub mod web_pass;
 pub mod web_pause;
