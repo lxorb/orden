@@ -754,7 +754,7 @@ class Drive:
             time.sleep(0.6)
             trusted = [one for one in self.heard()["moves"] if one[3]]
             print(f"control {how or 'input'}: the app heard {len(trusted)} moves over its own strip", flush=True)
-            if trusted:
+            if len(trusted) >= 4:
                 return True
         if PLATFORM == "linux":
             shown = subprocess.run(["xdotool", "getmouselocation"], capture_output=True, text=True, check=False).stdout.strip()
@@ -1360,10 +1360,11 @@ def main() -> int:
         reached = drive.control()
         steps: list[tuple[str, Callable[[], None]]] = []
         if reached:
-            steps += [("pointer", drive.pointer), ("drags", lambda: drive.drags(dropper, pdf_of))]
+            steps += [("pointer", drive.pointer)]
         else:
-            drive.unmeasurable(3, "every pointer check", "the OS pointer never reached the app over its own tab strip")
+            drive.unmeasurable(3, "the hover, edge and cursor checks", "the pointer moves this machine posts do not reach the app over its own tab strip (fewer than 4 of 8 heard)")
         steps += [("scrolls", drive.scrolls), ("swipes", drive.swipes), ("pinches", drive.pinches)]
+        steps += [("drags", lambda: drive.drags(dropper, pdf_of))]
         for name, step in steps:
             try:
                 forward(app, process.pid)
