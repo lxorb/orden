@@ -3,7 +3,7 @@
   import { Facts } from '../../ui-kit/src/api'
   import { counted, isOwn } from './counted'
   import { daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
-  import { hoursShown } from './lanes'
+  import { activeIn, hoursShown } from './lanes'
   import { length, tintOf } from './look'
   import { openTime } from './open'
   import './start.svelte'
@@ -36,6 +36,7 @@
   const pieces = $derived(piecesIn(own, today, tomorrow, now))
   const totals = $derived(totalsOf(pieces))
   const whole = $derived(wholeOf(pieces))
+  const active = $derived(activeIn(minutes.list, today, tomorrow))
   const recent = $derived(time.latest().slice(0, 5))
   const empty = $derived(!time.activities.length && !time.spans.some(isOwn))
   const starters = $derived(['Work', 'Study', 'Reading', 'Break'])
@@ -92,12 +93,13 @@
         </li>
       {/each}
     </ul>
-
-    <p class="orden-section">Today<span>{length(whole)}</span></p>
-    <div class="today">
-      <Strip from={shown[0]} to={shown[1]} spans={own} minutes={minutes.list} {now} hours />
-    </div>
   {/if}
+
+  <p class="orden-section">Today<span>{length(whole)}</span></p>
+  <div class="today">
+    <Strip from={shown[0]} to={shown[1]} spans={own} minutes={minutes.list} {now} hours />
+  </div>
+  <p class="active">Active<span>{length(active)}</span></p>
 
   <button type="button" class="orden-button is-quiet open" onclick={() => openTime()}>Open time tracker</button>
 </div>
@@ -169,6 +171,15 @@
   }
   .today {
     padding: 0 var(--space-2);
+  }
+  .active {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0 var(--space-2);
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
   }
   .open {
     align-self: stretch;

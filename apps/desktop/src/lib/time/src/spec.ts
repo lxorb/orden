@@ -4,7 +4,6 @@ export type View = 'day' | 'week' | 'reports'
 const VIEWS: readonly View[] = ['day', 'week', 'reports']
 export interface Spec {
   view: View
-  day: number | null
 }
 export function readSpec(text: string): Spec {
   let value: unknown = null
@@ -13,10 +12,7 @@ export function readSpec(text: string): Spec {
   } catch {
     value = null
   }
-  if (!isRecord(value)) return { view: 'day', day: null }
-  return {
-    view: VIEWS.find((one) => one === value.view) ?? 'day',
-    day: typeof value.day === 'number' && Number.isFinite(value.day) ? value.day : null,
-  }
+  if (!isRecord(value)) return { view: 'day' }
+  return { view: VIEWS.find((one) => one === value.view) ?? 'day' }
 }
 export const writeSpec = (spec: Spec): string => JSON.stringify(spec)

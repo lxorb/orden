@@ -3,6 +3,8 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { time } = await import('./time.svelte')
+const { length } = await import('./look')
+const { localDate, midnightOf } = await import('../../platform/src/api')
 const TimePanel = (await import('./TimePanel.svelte')).default
 const TimeTab = (await import('./TimeTab.svelte')).default
 let target: HTMLElement
@@ -47,7 +49,7 @@ describe('the time tracker beside the notes', () => {
     expect(target.textContent).toContain('Nothing recorded yet')
     expect(target.querySelector('input[placeholder="What are you working on?"]')).not.toBeNull()
     for (const name of ['Work', 'Study', 'Reading', 'Break']) expect(button(name)).toBeTruthy()
-    expect(target.querySelector('.days, .strip')).toBeNull()
+    expect(target.querySelector('.strip')).not.toBeNull()
     button('Study').click()
     flushSync()
     expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Study'])
@@ -99,5 +101,44 @@ describe('the time tracker as a tab', () => {
     button('Week').click()
     flushSync()
     expect(target.querySelectorAll('.week .column')).toHaveLength(7)
+  })
+  test('opens on today though it was left on another day, and moves on to the next day at midnight', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    vi.setSystemTime(new Date(2026, 4, 13, 23, 59))
+    const before = new Date(2026, 4, 10).getTime()
+    shown(TimeTab, { tab: tab(JSON.stringify({ view: 'day', day: before })) })
+    const title = () => target.querySelector('.moving .title')?.textContent ?? ''
+    expect(title()).toBe(localDate(Date.now(), { weekday: 'long', day: 'numeric', month: 'long' }))
+    vi.setSystemTime(new Date(2026, 4, 14, 0, 1))
+    vi.advanceTimersByTime(20_000)
+    flushSync()
+    expect(title()).toBe(localDate(Date.now(), { weekday: 'long', day: 'numeric', month: 'long' }))
+  })
+  test('shows each day’s active time, in the week and beside the notes, with nothing said', async () => {
+    const day = midnightOf(Date.now())
+    const minutes = Array.from({ length: 90 }, (_, index) => ({
+      at: day + 9 * 3_600_000 + index * 60_000,
+      active: 60,
+      samples: 12,
+      cpu: null,
+      memory: null,
+      battery: null,
+      charging: null,
+      lid: null,
+      locked: false,
+    }))
+    const yesterday = minutes.map((one) => ({ ...one, at: one.at - 86_400_000 }))
+    time.keepMinutes([...yesterday, ...minutes])
+    await new Promise((go) => setTimeout(go, 30))
+    shown(TimeTab, { tab: tab('{"view":"week"}') })
+    await new Promise((go) => setTimeout(go, 30))
+    flushSync()
+    const actives = [...target.querySelectorAll('.week .head .active')].map((one) => one.textContent.trim())
+    expect(actives.filter((one) => one === length(90 * 60_000)).length).toBeGreaterThanOrEqual(1)
+    close?.()
+    shown(TimePanel)
+    await new Promise((go) => setTimeout(go, 30))
+    flushSync()
+    expect(target.querySelector('.active')?.textContent).toContain(length(90 * 60_000))
   })
 })

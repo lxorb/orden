@@ -24,8 +24,8 @@ export interface Minute {
 const minuteOf = (at: number): number => Math.floor(at / 60_000) * 60_000
 const share = (value: number | null): number | null =>
   value === null || !Number.isFinite(value) ? null : Math.min(1, Math.max(0, value))
-const fresh = (sample: Sample): Minute => ({
-  at: minuteOf(sample.at),
+const fresh = (at: number): Minute => ({
+  at,
   active: 0,
   samples: 0,
   cpu: null,
@@ -35,13 +35,14 @@ const fresh = (sample: Sample): Minute => ({
   lid: null,
   locked: null,
 })
+const MINUTE = 60_000
+const LONGEST_GAP = 75_000
 function folded(minute: Minute, sample: Sample): Minute {
-  const busy = sample.idleMs !== null && sample.idleMs < SAMPLE_EVERY && sample.locked !== true
   const cpu = share(sample.cpu)
   const samples = minute.samples + 1
   return {
     at: minute.at,
-    active: Math.min(60, minute.active + (busy ? SAMPLE_EVERY / 1000 : 0)),
+    active: minute.active,
     samples,
     cpu: cpu === null ? minute.cpu : minute.cpu === null ? cpu : minute.cpu + (cpu - minute.cpu) / samples,
     memory: share(sample.memory) ?? minute.memory,
@@ -53,22 +54,38 @@ function folded(minute: Minute, sample: Sample): Minute {
 }
 export class MinuteFold {
   private current: Minute | null = null
-  add(sample: Sample): Minute | null {
-    const was = this.current
-    if (was?.at === minuteOf(sample.at)) {
-      this.current = folded(was, sample)
-      return null
+  private last: number | null = null
+  add(sample: Sample): Minute[] {
+    const closed: Minute[] = []
+    const into = (at: number): Minute => {
+      if (this.current?.at === at) return this.current
+      if (this.current) closed.push(this.current)
+      this.current = fresh(at)
+      return this.current
     }
-    this.current = folded(fresh(sample), sample)
-    return was
+    const since = this.last === null ? Infinity : sample.at - this.last
+    this.last = sample.at
+    const gap = since > 0 && since <= LONGEST_GAP ? since : null
+    const busy = sample.idleMs !== null && sample.idleMs < (gap ?? SAMPLE_EVERY) && sample.locked !== true
+    if (busy && gap === null) {
+      const minute = into(minuteOf(sample.at))
+      minute.active = Math.min(60, minute.active + SAMPLE_EVERY / 1000)
+    }
+    for (let start = minuteOf(sample.at - (gap ?? 0)); busy && gap !== null && start < sample.at; start += MINUTE) {
+      if (this.current && start < this.current.at) continue
+      const minute = into(start)
+      const seconds = (Math.min(start + MINUTE, sample.at) - Math.max(start, sample.at - gap)) / 1000
+      minute.active = Math.min(60, minute.active + seconds)
+    }
+    const here = minuteOf(sample.at)
+    if (!this.current || this.current.at <= here) this.current = folded(into(here), sample)
+    return closed
   }
   flush(): Minute | null {
     const was = this.current
     this.current = null
+    this.last = null
     return was
-  }
-  get open(): Minute | null {
-    return this.current
   }
 }
 export function minuteValue(value: unknown): Minute | null {

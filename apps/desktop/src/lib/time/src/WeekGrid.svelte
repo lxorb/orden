@@ -1,7 +1,7 @@
 <script lang="ts">
   import { localDate, midnightOf } from '../../platform/src/api'
   import { daysAfter, HOUR, MINUTE, piecesIn, wholeOf } from './days'
-  import { bucketsOf, hoursShown, stacked } from './lanes'
+  import { activeIn, bucketsOf, hoursShown, stacked } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
   import type { Minute } from './minutes'
   import type { Span } from './records'
@@ -49,6 +49,7 @@
         day,
         pieces,
         whole: wholeOf(piecesIn(said, day, daysAfter(day, 1), now)),
+        active: activeIn(minutes, day, daysAfter(day, 1)),
         buckets: bucketsOf(minutes, shownFrom, shownTo, 15 * MINUTE),
         nowShown: shownFrom <= now && now <= shownTo,
       }
@@ -67,6 +68,7 @@
     >
       <span class="name">{localDate(column.day, { weekday: 'short', day: 'numeric' })}</span>
       <span class="total">{column.whole ? length(column.whole) : ''}</span>
+      <span class="total active" title="Active">{column.active ? length(column.active) : ''}</span>
     </button>
   {/each}
 
@@ -150,6 +152,9 @@
     color: var(--muted);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
+  }
+  .active {
+    color: var(--accent);
   }
   .hours {
     position: relative;

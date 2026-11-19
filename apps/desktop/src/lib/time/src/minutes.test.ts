@@ -14,10 +14,7 @@ const sample = (seconds: number, change: Partial<Sample> = {}): Sample => ({
 })
 function fold(samples: Sample[]) {
   const minutes = new MinuteFold()
-  const done = samples.flatMap((one) => {
-    const closed = minutes.add(one)
-    return closed ? [closed] : []
-  })
+  const done = samples.flatMap((one) => minutes.add(one))
   const last = minutes.flush()
   return last ? [...done, last] : done
 }
