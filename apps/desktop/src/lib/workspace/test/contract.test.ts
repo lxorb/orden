@@ -378,3 +378,44 @@ describe('a tab and its twin', () => {
     expect(workspace.tucked).not.toContain(shell)
   })
 })
+describe('an archived space opened to look at', () => {
+  const KEPT = { id: 'o-kept', name: 'Kept', root: '/open/Kept' }
+  const AWAY = { id: 'o-away', name: 'Away', root: '/open/Away' }
+  const ELSE = { id: 'o-else', name: 'Else', root: '/open/Else' }
+  const shown = () => workspace.shownSpaces.map((one) => one.id)
+  test('is a space like any other while open, stays archived, and is out of sight once left', async () => {
+    const { sets } = await spaceSets()
+    workspace.spaces = [{ ...KEPT }, { ...AWAY }, { ...ELSE }]
+    await workspace.showSpace(AWAY.id)
+    workspace.openBlank('Trip', '')
+    const trip = workspace.activeTabId ?? ''
+    await workspace.showSpace(KEPT.id)
+    workspace.openBlank('Plan', '')
+    const plan = workspace.activeTabId
+    workspace.archivedSpaces.set(AWAY.root, true)
+    try {
+      await workspace.openArchived(AWAY.id)
+      expect([workspace.activeSpaceId, workspace.openedArchived]).toEqual([AWAY.id, AWAY.id])
+      expect(shown()).toContain(AWAY.id)
+      expect(workspace.archivedSpaces.has(AWAY.root)).toBe(true)
+      workspace.archivedSpaces.set(ELSE.root, true)
+      await workspace.leaveArchived()
+      workspace.activate(trip)
+      await sets.reveal(trip)
+      expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([AWAY.id, trip])
+      workspace.archivedSpaces.set(ELSE.root, false)
+      await workspace.showSpace(KEPT.id)
+      expect(workspace.openedArchived).toBeNull()
+      expect(shown()).not.toContain(AWAY.id)
+      workspace.activate(trip)
+      await sets.reveal(trip)
+      expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([KEPT.id, plan])
+      workspace.archivedSpaces.set(KEPT.root, true)
+      await workspace.leaveArchived()
+      expect(workspace.activeSpaceId).toBe(ELSE.id)
+    } finally {
+      workspace.archivedSpaces.set(KEPT.root, false)
+      workspace.archivedSpaces.set(AWAY.root, false)
+    }
+  })
+})

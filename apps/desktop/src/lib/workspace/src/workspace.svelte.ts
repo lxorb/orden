@@ -279,16 +279,36 @@ export function archivedRefused(): void {
 class Workspace {
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
-  activeSpaceId = $state<string | null>(null)
+  private spaceOn = $state<string | null>(null)
+  private peeking = $state<string | null>(null)
+  get activeSpaceId(): string | null {
+    return this.spaceOn
+  }
+  set activeSpaceId(id: string | null) {
+    if (id !== this.peeking) this.peeking = null
+    this.spaceOn = id
+  }
+  get openedArchived(): string | null {
+    const id = this.peeking
+    const open = id !== null && id === this.spaceOn ? this.spaces.find((one) => one.id === id) : undefined
+    return open && this.archivedSpaces.has(open.root) ? open.id : null
+  }
+  async openArchived(id: string): Promise<void> {
+    if (!this.spaces.some((one) => one.id === id)) return
+    this.peeking = id
+    await this.showSpace(id)
+  }
   readonly archivedSpaces = new ArchivedSpaces(() => void this.leaveArchived())
   get shownSpaces(): Space[] {
-    return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
+    const opened = this.openedArchived
+    return this.spaces.filter((one) => one.id === opened || !this.archivedSpaces.has(one.root))
   }
   setOf = $state.raw<(tab: Tab) => string | null>(() => null)
   archivedTab(tab: Tab): boolean {
     if (this.panes.at(tab.paneId)) return false
     const key = this.setOf(tab)
-    return key !== null && this.spaces.some((one) => one.id === key && this.archivedSpaces.has(one.root))
+    if (key === null || key === this.openedArchived) return false
+    return this.spaces.some((one) => one.id === key && this.archivedSpaces.has(one.root))
   }
   spaceOfTab(tab: Tab): string | null {
     const key = this.panes.at(tab.paneId) ? this.activeSpaceId : this.setOf(tab)
@@ -701,7 +721,8 @@ class Workspace {
       this.rightPanel = state.rightPanel ?? null
     }
     this.lastRight ??= state.lastRight ?? null
-    this.activeSpaceId = state.activeSpace ?? this.shownSpaces[0]?.id ?? this.spaces[0]?.id ?? null
+    const put = this.spaces.some((one) => one.id === state.activeSpace && this.archivedSpaces.has(one.root))
+    this.activeSpaceId = (put ? null : state.activeSpace) ?? this.shownSpaces[0]?.id ?? this.spaces[0]?.id ?? null
     await this.loadSpaces()
     this.spacesHeard()
     if (this.activeSpaceId) await this.loadTree()
@@ -1845,7 +1866,7 @@ class Workspace {
   }
   async leaveArchived(): Promise<void> {
     const open = this.activeSpace
-    if (!open || !this.archivedSpaces.has(open.root)) return
+    if (!open || !this.archivedSpaces.has(open.root) || open.id === this.openedArchived) return
     const next = this.shownSpaces[0]
     if (next) await this.showSpace(next.id)
     else this.archivedSpaces.set(open.root, false)
