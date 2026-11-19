@@ -321,6 +321,8 @@ class Spike:
         if proc.poll() is None:
             self.close(proc)
         ev = self.events(log)
+        if not ev:
+            print("probe: no log; exit code", hex(proc.returncode & 0xFFFFFFFF) if proc.returncode is not None else None, flush=True)
         paints = [e for e in ev if e.get("ev") == "paint"]
         found = {
             "flags": flags,
@@ -350,7 +352,7 @@ class Spike:
         start = next((e for e in ev if e.get("ev") == "start"), None)
         if not start:
             self.close(proc)
-            return {"error": "no start"}
+            return {"error": "no start", "exit": proc.returncode}
         cx = start["client"][0] + self.hole[0] + self.hole[2] // 2
         cy = start["client"][1] + self.hole[1] + self.hole[3] // 2
         time.sleep(7.0 if name == "video" else 4.0)
@@ -446,7 +448,7 @@ class Spike:
         start = next((e for e in ev if e.get("ev") == "start"), None)
         if not start:
             self.close(proc)
-            return {"error": "no start"}
+            return {"error": "no start", "exit": proc.returncode}
         refresh = start.get("refresh", 60)
         cx = start["client"][0] + self.hole[0] + self.hole[2] // 2
         cy = start["client"][1] + self.hole[1] + self.hole[3] // 2
