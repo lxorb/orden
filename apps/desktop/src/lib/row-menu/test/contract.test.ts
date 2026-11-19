@@ -1,7 +1,12 @@
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { providePort } from '@orden/contracts'
 import { bookmarkAll, iconEntries, rowMenus, shareEntry, webDataEntry } from '../src/api'
 
+vi.mock('../../gates/src/api', async (actual) => {
+  const real = await actual<{ hiddenKinds: object }>()
+  Object.defineProperty(real.hiddenKinds, 'shown', { get: () => ['note', 'chat'], configurable: true })
+  return real
+})
 const gone: (() => void)[] = []
 afterEach(() => {
   for (const one of gone.splice(0)) one()
@@ -11,6 +16,11 @@ describe('the row menus', () => {
     const menus = await rowMenus()
     expect(typeof menus.rowMenu).toBe('function')
     expect(typeof menus.newFileRows).toBe('function')
+  })
+  test('never offer to make a chat, even where chats are on', async () => {
+    const { newFileRows } = await rowMenus()
+    expect(newFileRows().map((one) => one?.label)).toEqual(['New note'])
+    expect(newFileRows('/s/Projects').map((one) => one?.label)).toEqual(['New note'])
   })
   test('offer nothing for no path', () => {
     expect(bookmarkAll([])).toEqual([])
