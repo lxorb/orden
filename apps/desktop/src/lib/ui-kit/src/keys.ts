@@ -224,6 +224,7 @@ export function replay(one: PressedKey): void {
     ctrlKey: one.ctrl,
     shiftKey: one.shift,
     altKey: one.alt,
+    metaKey: one.meta === true,
     repeat: one.repeat,
     bubbles: true,
     cancelable: true,

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { matchesCombination, replay } from '../../ui-kit/src/api'
-import { barKey, type Bindings, stops } from './bar-keys'
+import { barKey, type Bindings, offeredInline, stops } from './bar-keys'
 
 const DEFAULTS: Record<string, string> = {
   'web.address': 'Mod-l',
@@ -156,5 +156,16 @@ describe('Escape', () => {
   })
   test('is not taken from whatever answered it first', () => {
     expect(stops(press('Escape', { defaultPrevented: true }), true, bindings())).toBe(false)
+  })
+})
+describe('Tab in the address field', () => {
+  test('takes the rest of the address it offered as you typed', () => {
+    expect(offeredInline(4, 11, 11, 4)).toBe(true)
+  })
+  test('and moves on from an address chosen whole, as it is when the field takes the keyboard', () => {
+    expect(offeredInline(0, 24, 24, 24)).toBe(false)
+    expect(offeredInline(24, 24, 24, 24)).toBe(false)
+    expect(offeredInline(0, 0, 0, 0)).toBe(false)
+    expect(offeredInline(2, 11, 11, 4)).toBe(false)
   })
 })

@@ -14,6 +14,7 @@ type CefOsEvent<'a> = Option<&'a mut cef::sys::MSG>;
 wrap_keyboard_handler! {
   pub struct TauriCefKeyboardHandler {
     devtools_enabled: bool,
+    label: Option<String>,
   }
 
   impl KeyboardHandler {
@@ -24,6 +25,14 @@ wrap_keyboard_handler! {
       _os_event: CefOsEvent<'_>,
       _is_keyboard_shortcut: Option<&mut ::std::os::raw::c_int>,
     ) -> ::std::os::raw::c_int {
+      let browser = _browser.as_deref();
+      if let (Some(label), Some(event), Some(browser)) = (self.label.as_deref(), event, browser)
+        && browser.is_popup() == 0
+        && crate::keys::pressed(label, event)
+      {
+        return 1;
+      }
+
       #[cfg(windows)]
       if let (Some(event), Some(sent)) = (event, _os_event.as_deref()) {
         crate::platform::keep_dead_key(sent, event);
@@ -31,7 +40,7 @@ wrap_keyboard_handler! {
 
       #[cfg(windows)]
       if let Some(event) = event
-        && let Some(host) = _browser.and_then(|browser| browser.host())
+        && let Some(host) = browser.and_then(|browser| browser.host())
         && crate::platform::key_pressed(host.window_handle(), event)
       {
         return 1;

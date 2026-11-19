@@ -19,6 +19,7 @@ export interface PressedKey {
   readonly ctrl: boolean
   readonly shift: boolean
   readonly alt: boolean
+  readonly meta?: boolean
   readonly repeat: boolean
   readonly down: boolean
 }

@@ -39,3 +39,6 @@ function plus(event: KeyboardEvent, platform: Platform): boolean {
 export function stops(event: KeyboardEvent, loading: boolean, keys: Bindings): boolean {
   return loading && !event.defaultPrevented && keys.pressed('web.stop', event)
 }
+export function offeredInline(start: number | null, end: number | null, length: number, typed: number): boolean {
+  return start === typed && end === length && typed < length
+}

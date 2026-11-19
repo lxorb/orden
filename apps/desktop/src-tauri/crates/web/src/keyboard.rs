@@ -78,6 +78,11 @@ fn page_took(app: &AppHandle, window: &str, page: &str) {
     let _ = app.emit_to(window, IN_PAGE, ());
     crate::web_tabs::page_chosen(app, window, page);
 }
+pub fn page_pressed(window: &str, page: &str) {
+    if native::holding(window).as_deref() != Some(page) {
+        native::hand_over(page);
+    }
+}
 pub fn built(page: &str) {
     homes(|all| all.placed(page, true, now()));
 }
@@ -109,6 +114,65 @@ pub fn no_hidden_menu<R: tauri::Runtime>(window: &tauri::Window<R>) {
     let _ = window;
 }
 pub const PRESS_SCRIPT: &str = include_str!("keyboard_press.js");
+const INTO_SCRIPT: &str = include_str!("keyboard_into.js");
+const LEFT: &str = "orden://keyboard-left-page";
+static APP: std::sync::OnceLock<AppHandle> = std::sync::OnceLock::new();
+#[derive(Clone, Debug, serde::Serialize)]
+struct Left {
+    tab: String,
+    next: bool,
+}
+fn page_of(label: &str) -> Option<(AppHandle, String, String)> {
+    let app = APP.get()?;
+    let tab = crate::web_tabs::tab_of(label)?;
+    let window = app.get_webview(label)?.window().label().to_string();
+    Some((app.clone(), tab, window))
+}
+pub fn pressed(label: &str, press: crate::web_keys::Press) -> bool {
+    let Some((app, _, window)) = page_of(label) else {
+        return false;
+    };
+    let Some(said) = crate::web_keys::app_key(&window, press) else {
+        return false;
+    };
+    let telling = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        if !said.keeps_page() {
+            if let Some(ours) = telling.get_webview(&window) {
+                orden_placement::placement::keyboard_to(&ours);
+            }
+        }
+        let _ = telling.emit_to(window.as_str(), crate::web_keys::PRESSED, said);
+    });
+    true
+}
+pub fn left(label: &str, next: bool) {
+    let Some((app, tab, window)) = page_of(label) else {
+        return;
+    };
+    let telling = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        homes(|all| all.own_took(&window));
+        if let Some(ours) = telling.get_webview(&window) {
+            orden_placement::placement::keyboard_to(&ours);
+        }
+        let _ = telling.emit_to(window.as_str(), LEFT, Left { tab, next });
+    });
+}
+#[tauri::command]
+pub fn keyboard_into(webview: Webview, tab: String, last: bool) -> bool {
+    let label = crate::web_tabs::label_of(&tab);
+    let window = webview.window().label().to_string();
+    let Some(page) = webview.app_handle().get_webview(&label) else {
+        return false;
+    };
+    if page.window().label() != window || !native::take(webview.app_handle(), &label) {
+        return false;
+    }
+    homes(|all| all.page_took(&window, &label));
+    let _ = page.eval(format!("globalThis.ordenIntoLast = {last};\n{INTO_SCRIPT}"));
+    true
+}
 #[tauri::command]
 pub fn keyboard_pressed(webview: Webview) {
     if webview.label() == webview.window().label() {
@@ -117,6 +181,7 @@ pub fn keyboard_pressed(webview: Webview) {
 }
 #[tauri::command]
 pub fn keyboard_watch(webview: Webview) {
+    let _ = APP.set(webview.app_handle().clone());
     native::watch(&webview);
 }
 #[tauri::command]
@@ -158,7 +223,8 @@ mod native {
     use tauri::{AppHandle, Manager, Webview, Window};
 
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
-    pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
+    pub fn page(app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
+        let _ = super::APP.set(app.clone());
         let Some(x11) = crate::host::x11_page(platform) else {
             return;
         };
@@ -189,6 +255,12 @@ mod native {
             .collect();
         let found = crate::web_keys::focus_in(&pages.keys().copied().collect::<Vec<_>>())?;
         pages.get(&found).cloned()
+    }
+    pub fn hand_over(label: &str) {
+        let found = PAGES.held().iter().find(|(one, _, _)| one == label).map(|(_, _, x11)| *x11);
+        if let Some(x11) = found {
+            crate::web_keys::focus_to(x11);
+        }
     }
     pub fn take(app: &AppHandle, label: &str) -> bool {
         app.get_webview(label).is_some_and(|page| page.set_focus().is_ok())
@@ -299,6 +371,37 @@ mod tests {
         let back = &source[source.find("pub fn window_came_back(").expect("window_came_back")..];
         let back = &back[..back.find("\n}\n").expect("its end")];
         assert!(back.contains("all.home(window)") && back.contains("native::take(app, window)"));
+    }
+    #[test]
+    fn a_page_hands_the_app_its_keys_and_the_keyboard_at_its_ends_through_the_engine() {
+        let runtime = "../../../linux/tauri-runtime-cef/src/cef_impl/client";
+        let keys = include_str!("../../../linux/tauri-runtime-cef/src/cef_impl/client/keyboard.rs");
+        assert!(keys.contains("crate::keys::pressed(label, event)"), "{runtime}/keyboard.rs");
+        let focus = include_str!("../../../linux/tauri-runtime-cef/src/cef_impl/client/focus.rs");
+        assert!(focus.contains("crate::keys::left(label, next != 0)"), "{runtime}/focus.rs");
+        let client = include_str!("../../../linux/tauri-runtime-cef/src/cef_impl/client/mod.rs");
+        assert!(client.contains("fn focus_handler(&self)"));
+        let engine = include_str!("../../../src/engine.rs");
+        assert!(engine.contains("tauri_runtime_cef::hear_keys(pressed, orden_web::keyboard::left)"));
+        assert!(engine.contains("orden_web::keyboard::pressed("));
+        let lib = include_str!("../../../src/lib.rs");
+        assert!(lib.contains("engine::hear_keys();"));
+        assert!(lib.contains("orden_web::web_keys::web_keys_app,"));
+        assert!(lib.contains("orden_web::keyboard::keyboard_into,"));
+    }
+    #[test]
+    fn a_press_in_a_page_hands_it_the_x_server_s_keyboard_too() {
+        let source = include_str!("keyboard.rs");
+        let pressed = &source[source.find("pub fn page_pressed(").expect("page_pressed")..];
+        let pressed = &pressed[..pressed.find("\n}\n").expect("its end")];
+        assert!(pressed.contains("native::holding(window)") && pressed.contains("hand_over(page)"));
+        let keys = include_str!("web_keys.rs");
+        let to = &keys[keys.find("pub fn focus_to(page: u32)").expect("focus_to")..];
+        assert!(to[..to.find("\n    }\n").expect("its end")].contains(".set_input_focus("));
+        let opens = include_str!("web_opens.rs");
+        let heard = &opens[opens.find("if name == PRESSED_IN {").expect("the press")..];
+        let heard = &heard[..heard.find("return;").expect("its end")];
+        assert!(heard.contains("crate::keyboard::page_pressed(window, &page)"));
     }
     #[test]
     fn the_engine_tells_the_app_s_own_page_as_a_page_takes_the_keyboard() {

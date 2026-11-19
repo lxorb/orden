@@ -217,6 +217,143 @@ pub fn web_keys_take(app: tauri::AppHandle, window: tauri::Window, chords: Vec<A
     take(window.label(), chords.iter().filter_map(Chord::of).collect());
     tells_alt(&app)
 }
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize)]
+pub struct AppKey {
+    key: String,
+    code: String,
+    #[serde(flatten)]
+    held: Holds,
+    #[serde(default)]
+    meta: bool,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Deserialize)]
+struct Holds {
+    #[serde(default)]
+    ctrl: bool,
+    #[serde(default)]
+    shift: bool,
+    #[serde(default)]
+    alt: bool,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Press {
+    pub vk: u32,
+    pub held: Held,
+    pub meta: bool,
+    pub altgr: bool,
+    pub repeat: bool,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct Played {
+    key: String,
+    code: String,
+    #[serde(flatten)]
+    held: Held,
+    meta: bool,
+    repeat: bool,
+    down: bool,
+}
+impl Played {
+    pub fn keeps_page(&self) -> bool {
+        self.code == "F11"
+    }
+}
+impl AppKey {
+    fn chorded(&self) -> bool {
+        self.held.ctrl || self.held.alt || self.meta || function_key(&self.code).is_some()
+    }
+    fn heard(&self, vk: u32, press: Press) -> bool {
+        let (asked, held) = (self.held, press.held);
+        let shifted = asked.shift == held.shift || (!asked.shift && self.code.starts_with("Digit"));
+        vk == press.vk
+            && shifted
+            && asked.ctrl == held.ctrl
+            && asked.alt == held.alt
+            && self.meta == press.meta
+    }
+}
+fn function_key(code: &str) -> Option<u32> {
+    let at: u32 = code.strip_prefix('F')?.parse().ok()?;
+    (1..=24).contains(&at).then_some(0x6F + at)
+}
+fn vk_of_code(code: &str) -> Option<u32> {
+    const NAMED: [(&str, u32); 28] = [
+        ("Backspace", 0x08),
+        ("Tab", 0x09),
+        ("Enter", 0x0D),
+        ("Escape", 0x1B),
+        ("Space", 0x20),
+        ("PageUp", 0x21),
+        ("PageDown", 0x22),
+        ("End", 0x23),
+        ("Home", 0x24),
+        ("ArrowLeft", 0x25),
+        ("ArrowUp", 0x26),
+        ("ArrowRight", 0x27),
+        ("ArrowDown", 0x28),
+        ("Insert", 0x2D),
+        ("Delete", 0x2E),
+        ("ContextMenu", 0x5D),
+        ("Semicolon", 0xBA),
+        ("Equal", 0xBB),
+        ("Comma", 0xBC),
+        ("Minus", 0xBD),
+        ("Period", 0xBE),
+        ("Slash", 0xBF),
+        ("Backquote", 0xC0),
+        ("BracketLeft", 0xDB),
+        ("Backslash", 0xDC),
+        ("BracketRight", 0xDD),
+        ("Quote", 0xDE),
+        ("IntlBackslash", 0xE2),
+    ];
+    if let Some(&(_, vk)) = NAMED.iter().find(|(name, _)| *name == code) {
+        return Some(vk);
+    }
+    if let Some(vk) = function_key(code) {
+        return Some(vk);
+    }
+    let (range, rest) = match code.strip_prefix("Key") {
+        Some(letter) => (b'A'..=b'Z', letter),
+        None => (b'0'..=b'9', code.strip_prefix("Digit")?),
+    };
+    match rest.as_bytes() {
+        [one] if range.contains(one) => Some(u32::from(*one)),
+        _ => None,
+    }
+}
+type Keyed = Vec<(u32, AppKey)>;
+static APP_KEYS: std::sync::RwLock<Vec<(String, Keyed)>> = std::sync::RwLock::new(Vec::new());
+fn hand_keys(window: &str, keys: Vec<AppKey>) {
+    let keys = keys
+        .into_iter()
+        .filter(AppKey::chorded)
+        .filter_map(|one| Some((vk_of_code(&one.code)?, one)))
+        .collect();
+    let mut all = APP_KEYS.write().unwrap_or_else(std::sync::PoisonError::into_inner);
+    all.retain(|(one, _)| one != window);
+    all.push((window.to_owned(), keys));
+}
+pub fn app_key(window: &str, press: Press) -> Option<Played> {
+    if press.altgr {
+        return None;
+    }
+    let all = APP_KEYS.read().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let (_, keys) = all.iter().find(|(one, _)| one == window)?;
+    let (_, one) = keys.iter().find(|(vk, one)| one.heard(*vk, press))?;
+    Some(Played {
+        key: one.key.clone(),
+        code: one.code.clone(),
+        held: press.held,
+        meta: press.meta,
+        repeat: press.repeat,
+        down: true,
+    })
+}
+#[tauri::command(async)]
+pub fn web_keys_app(window: tauri::Window, keys: Vec<AppKey>) {
+    hand_keys(window.label(), keys);
+}
 #[cfg(target_os = "linux")]
 fn tells_alt(app: &tauri::AppHandle) -> bool {
     grabbed::retake(app)
@@ -260,11 +397,13 @@ fn page_took_focus(mode: u8, detail: u8) -> bool {
     !matches!(mode, 1 | 2) && !matches!(detail, 5..=7)
 }
 #[cfg(target_os = "linux")]
-pub use grabbed::{focus_in, listen};
+pub use grabbed::{focus_in, focus_to, listen};
 
 #[cfg(not(target_os = "linux"))]
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
+#[cfg(not(target_os = "linux"))]
+pub fn focus_to(_page: u32) {}
 #[cfg(not(target_os = "linux"))]
 pub fn focus_in(_pages: &[u32]) -> Option<u32> {
     None
@@ -281,8 +420,8 @@ mod grabbed {
         self, ConnectionExt as _, Device, KeyEventFlags, RawKeyPressEvent, XIEventMask,
     };
     use x11rb::protocol::xproto::{
-        ChangeWindowAttributesAux, ConnectionExt as _, EventMask, Grab, GrabMode, Keycode, Keysym,
-        ModMask, Window,
+        ChangeWindowAttributesAux, ConnectionExt as _, EventMask, Grab, GrabMode, InputFocus,
+        Keycode, Keysym, ModMask, Window,
     };
     use x11rb::protocol::Event;
     use x11rb::rust_connection::RustConnection;
@@ -559,6 +698,12 @@ mod grabbed {
     pub fn focus_in(pages: &[u32]) -> Option<u32> {
         GRABS.get()?.as_ref()?.focused(pages)
     }
+    pub fn focus_to(page: u32) {
+        if let Some(Some(grabs)) = GRABS.get() {
+            let _ = grabs.x.set_input_focus(InputFocus::PARENT, page, x11rb::CURRENT_TIME);
+            let _ = grabs.x.flush();
+        }
+    }
     pub fn listen(webview: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
         let Some(page) = crate::host::x11_page(webview) else {
             return;
@@ -600,8 +745,8 @@ mod grabbed {
 #[cfg(test)]
 mod tests {
     use super::{
-        app_chords, app_s, every_chord, heard_raw, meaning, page_took_focus, take, told, Asked,
-        Chord, Held,
+        app_chords, app_key, app_s, every_chord, hand_keys, heard_raw, meaning, page_took_focus,
+        take, told, vk_of_code, AppKey, Asked, Chord, Held, Press,
     };
 
     const ALT: Held = Held { ctrl: false, shift: false, alt: true };
@@ -876,6 +1021,90 @@ mod tests {
         assert_eq!(up(0x10), Some("Shift"));
         assert_eq!(up(0x12), Some("Alt"));
         assert_eq!(up(0x54), None);
+    }
+    fn held(ctrl: bool, shift: bool, alt: bool) -> Held {
+        Held { ctrl, shift, alt }
+    }
+    fn app_key_of(key: &str, code: &str, held: Held, meta: bool) -> AppKey {
+        let Held { ctrl, shift, alt } = held;
+        AppKey { key: key.into(), code: code.into(), held: super::Holds { ctrl, shift, alt }, meta }
+    }
+    fn press(vk: u32, held: Held, meta: bool) -> Press {
+        Press { vk, held, meta, altgr: false, repeat: false }
+    }
+    #[test]
+    fn every_key_of_the_app_s_table_is_taken_from_a_page_and_said_as_the_app_names_it() {
+        let none = Held::default();
+        hand_keys(
+            "keys-window",
+            vec![
+                app_key_of("o", "KeyO", CTRL, false),
+                app_key_of("p", "KeyP", held(true, true, false), false),
+                app_key_of("ArrowDown", "ArrowDown", held(true, false, true), false),
+                app_key_of("1", "Digit1", none, true),
+                app_key_of("F11", "F11", SHIFT, false),
+                app_key_of("Tab", "Tab", CTRL, false),
+                app_key_of(",", "Comma", held(true, true, false), false),
+                app_key_of("e", "KeyE", none, false),
+                app_key_of("Shift Shift", "", none, false),
+            ],
+        );
+        let heard = |vk, held, meta| {
+            app_key("keys-window", press(vk, held, meta)).map(|one| (one.key, one.code))
+        };
+        let named = |key: &str, code: &str| Some((key.to_string(), code.to_string()));
+        assert_eq!(heard(0x4F, CTRL, false), named("o", "KeyO"));
+        assert_eq!(heard(0x50, held(true, true, false), false), named("p", "KeyP"));
+        assert_eq!(heard(0x50, CTRL, false), None);
+        assert_eq!(heard(0x28, held(true, false, true), false), named("ArrowDown", "ArrowDown"));
+        assert_eq!(heard(0x31, none, true), named("1", "Digit1"));
+        assert_eq!(heard(0x31, SHIFT, true), named("1", "Digit1"));
+        assert_eq!(heard(0x31, CTRL, false), None);
+        assert_eq!(heard(0x7A, SHIFT, false), named("F11", "F11"));
+        assert_eq!(heard(0x09, CTRL, false), named("Tab", "Tab"));
+        assert_eq!(heard(0xBC, held(true, true, false), false), named(",", "Comma"));
+        assert_eq!(heard(0x45, none, false), None);
+        assert_eq!(heard(0x46, CTRL, false), None);
+        assert_eq!(app_key("another-window", press(0x4F, CTRL, false)), None);
+        let altgr = Press { altgr: true, ..press(0x4F, CTRL, false) };
+        assert_eq!(app_key("keys-window", altgr), None);
+        let again = Press { repeat: true, ..press(0x4F, CTRL, false) };
+        assert!(app_key("keys-window", again).is_some_and(|one| one.repeat && one.down));
+        let full = app_key("keys-window", press(0x7A, SHIFT, false));
+        assert!(full.is_some_and(|one| one.keeps_page() && one.held.shift));
+        let said =
+            serde_json::to_value(app_key("keys-window", press(0x31, none, true))).expect("a key");
+        assert_eq!(said["meta"], true);
+        assert_eq!(said["ctrl"], false);
+        let asked: AppKey =
+            serde_json::from_str(r#"{"key":"o","code":"KeyO","ctrl":true}"#).expect("a key");
+        assert_eq!(asked, app_key_of("o", "KeyO", CTRL, false));
+        hand_keys("keys-window", Vec::new());
+        assert_eq!(heard(0x4F, CTRL, false), None);
+    }
+    #[test]
+    fn a_key_s_code_names_the_key_the_engine_reports() {
+        for (code, vk) in [
+            ("KeyA", Some(0x41)),
+            ("KeyZ", Some(0x5A)),
+            ("Digit0", Some(0x30)),
+            ("Digit9", Some(0x39)),
+            ("F1", Some(0x70)),
+            ("F11", Some(0x7A)),
+            ("F24", Some(0x87)),
+            ("ArrowLeft", Some(0x25)),
+            ("PageDown", Some(0x22)),
+            ("Slash", Some(0xBF)),
+            ("BracketRight", Some(0xDD)),
+            ("F25", None),
+            ("F0", None),
+            ("Keya", None),
+            ("KeyAB", None),
+            ("Digit10", None),
+            ("", None),
+        ] {
+            assert_eq!(vk_of_code(code), vk, "{code}");
+        }
     }
     #[test]
     fn a_key_held_down_says_so() {
