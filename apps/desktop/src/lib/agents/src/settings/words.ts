@@ -59,6 +59,7 @@ export const CATEGORY_WORDS: Record<Category, () => string> = {
   showing: () => 'Showing its tabs',
   takeover: () => 'Handing a tab to you',
   pairing: () => 'Connect',
+  tools: () => 'Tools from MCP servers',
 }
 export const RULE_WORDS: Record<SiteRule, () => string> = {
   allow: () => 'Allowed',

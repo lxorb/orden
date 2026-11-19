@@ -12,6 +12,7 @@ workspace = true
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 orden-agents = { path = "../agents" }
 orden-base = { path = "../base" }
+orden-mcp-client = { path = "../mcp-client" }
 orden-placement = { path = "../placement" }
 orden-store = { path = "../store" }
 orden-system = { path = "../system" }

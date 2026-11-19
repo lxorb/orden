@@ -2,5 +2,5 @@
   "name": "ai",
   "layer": "native",
   "lang": "rust",
-  "dependsOn": ["agents", "base", "placement", "store", "system"]
+  "dependsOn": ["agents", "base", "mcp-client", "placement", "store", "system"]
 }

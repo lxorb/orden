@@ -85,6 +85,7 @@ const CATEGORIES: readonly Category[] = [
   'showing',
   'takeover',
   'pairing',
+  'tools',
 ]
 const RULES: readonly SiteRule[] = ['allow', 'deny', 'agent-store']
 export function readGrant(value: unknown): Grant | null {

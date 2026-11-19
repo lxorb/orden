@@ -84,6 +84,33 @@ mod tests {
         table().iter().map(|tool| tool.name.as_str()).collect()
     }
     #[test]
+    fn orden_mcp_never_offers_a_tool_from_an_outside_server() {
+        let every: BTreeSet<String> = names().into_iter().map(str::to_owned).collect();
+        let full = Grant::own("outside".into(), "Outside").with_full_permissions();
+        for tool in listed(&full, Some(&every)).into_iter().chain(table()) {
+            assert!(!tool.name.starts_with(crate::ai_agent::OUTSIDE), "{}", tool.name);
+        }
+        let sources = [
+            include_str!("app.rs"),
+            include_str!("home.rs"),
+            include_str!("host.rs"),
+            include_str!("link.rs"),
+            include_str!("marks.rs"),
+            include_str!("mod.rs"),
+            include_str!("pairing.rs"),
+            include_str!("program.rs"),
+            include_str!("results.rs"),
+            include_str!("rpc.rs"),
+            include_str!("server.rs"),
+            include_str!("shared.rs"),
+            include_str!("tools.rs"),
+        ];
+        let outside = ["orden_", "mcp_client"].concat();
+        for source in sources {
+            assert!(!source.contains(&outside));
+        }
+    }
+    #[test]
     fn the_table_reads_whole_with_one_row_a_name() {
         let raw: Vec<Value> =
             serde_json::from_str(include_str!("tools.json")).expect("tools.json is JSON");

@@ -79,7 +79,15 @@ impl<'a> Asking<'a> {
     }
 }
 pub fn unless_allowed(app: &AppHandle, asking: Asking<'_>) -> Option<Answer> {
-    (!allowed(asking.agent, &asking.key)).then(|| ask(app, asking))
+    unless_allowed_telling(asking, told(app))
+}
+pub fn unless_allowed_telling(asking: Asking<'_>, tell: impl FnOnce(Event)) -> Option<Answer> {
+    (!allowed(asking.agent, &asking.key)).then(|| ask_telling(asking, tell))
+}
+fn told(app: &AppHandle) -> impl FnOnce(Event) + '_ {
+    move |event| {
+        let _ = app.emit(EVENT, event);
+    }
 }
 pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> Approval {
     let approval = Approval {
@@ -104,6 +112,9 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
     approval
 }
 pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
+    ask_telling(asking, told(app))
+}
+fn ask_telling(asking: Asking<'_>, tell: impl FnOnce(Event)) -> Answer {
     let mut all = held();
     if let Some(one) =
         all.iter().rev().find(|one| one.approval.agent == asking.agent && one.key == asking.key)
@@ -143,13 +154,16 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
         spent: false,
     });
     drop(all);
-    let _ = app.emit(EVENT, Event::Asked { approval: approval.clone() });
+    tell(Event::Asked { approval: approval.clone() });
     Answer::NeedsApproval { approval: approval.id, summary: approval.summary }
 }
 fn verb_of(key: &str) -> &str {
     key.split(':').next().unwrap_or_default()
 }
 pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String> {
+    answer_telling(id, allow, told(app))
+}
+pub fn answer_telling(id: &str, allow: bool, tell: impl FnOnce(Event)) -> Result<Approval, String> {
     let approval = {
         let mut all = held();
         let one =
@@ -165,7 +179,7 @@ pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String
         one.at = Instant::now();
         one.approval.clone()
     };
-    let _ = app.emit(EVENT, Event::Answered { approval: approval.clone() });
+    tell(Event::Answered { approval: approval.clone() });
     Ok(approval)
 }
 pub fn status(agent: &str, id: &str) -> Option<Approval> {
@@ -270,6 +284,36 @@ mod tests {
             on_page("browser_press:a1:Enter", "http://localhost:9/other", "Pay  now")
         );
         assert_eq!(verb_of(&asked), "browser_press");
+    }
+    #[test]
+    fn a_tools_question_is_told_answered_and_spent_once() {
+        let grant = Grant::own("tools-agent".into(), "Tools");
+        let asking = || {
+            Asking::of(
+                &grant,
+                Category::Tools,
+                "Use echo from Fake".into(),
+                "mcp__f__echo:1".into(),
+            )
+        };
+        let mut heard = Vec::new();
+        let first = unless_allowed_telling(asking(), |event| heard.push(event));
+        let Some(Answer::NeedsApproval { approval, .. }) = first else {
+            panic!("asked nothing: {first:?}");
+        };
+        assert!(
+            matches!(&heard[..], [Event::Asked { approval: one }] if one.category == Category::Tools && one.verb == "mcp__f__echo")
+        );
+        assert!(
+            matches!(unless_allowed_telling(asking(), |_| {}), Some(Answer::NeedsApproval { approval: again, .. }) if again == approval)
+        );
+        let said = answer_telling(&approval, true, |event| heard.push(event)).expect("answered");
+        assert_eq!(said.answer, ApprovalAnswer::Allowed);
+        assert!(matches!(heard.last(), Some(Event::Answered { .. })));
+        assert!(unless_allowed_telling(asking(), |_| {}).is_none());
+        assert!(
+            matches!(unless_allowed_telling(asking(), |_| {}), Some(Answer::NeedsApproval { approval: fresh, .. }) if fresh != approval)
+        );
     }
     #[test]
     fn a_key_names_the_verb_the_tab_and_the_element() {
