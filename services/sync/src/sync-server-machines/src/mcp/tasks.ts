@@ -1,4 +1,4 @@
-import type { Context, Row } from '@orden/bases'
+import { type Context, nextRepeat, parseRule, type Row, ruleText } from '@orden/bases'
 import { linkContext } from '@orden/bases/links'
 import { PROTECTED, shutFor, objectIn, type Shut, type Env, type Note } from '../../../sync-server/src/api'
 import { writeInbox, heldInbox, cleanPath, MOVED, blobKey } from '../../../sync-server-engine/src/api'
@@ -40,7 +40,7 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      'Add a todo: `title`, and optionally `description`, `labels`, `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).',
+      'Add a todo: `title`, and optionally `description`, `labels`, `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high), `repeat` as a rule like "every month on the 1st" or "every! 10 days" to count from when it is done.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -50,6 +50,7 @@ export const TASK_TOOLS = [
         start: string,
         deadline: string,
         priority: { type: 'integer' },
+        repeat: string,
       },
       required: ['title'],
     },
@@ -57,7 +58,7 @@ export const TASK_TOOLS = [
   {
     name: 'update_task',
     description:
-      'Change one todo by its `id`: `done`, `title`, `description`, `labels`, `start`, `deadline` (`""` takes a day off), `priority` 0 to 3.',
+      'Change one todo by its `id`: `done`, `title`, `description`, `labels`, `start`, `deadline` (`""` takes a day off), `priority` 0 to 3, `repeat` (`""` stops it repeating). A repeating todo marked done moves to its next dates, and a done copy is kept.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -69,6 +70,7 @@ export const TASK_TOOLS = [
         start: string,
         deadline: string,
         priority: { type: 'integer' },
+        repeat: string,
       },
       required: ['id'],
     },
@@ -253,6 +255,7 @@ interface Todo {
   labels: string[]
   start: string | null
   deadline: string | null
+  repeat: string | null
   priority: number
   done: boolean
   subtasks: unknown[]
@@ -271,6 +274,7 @@ function todoOf(id: string, fields: Fields): Todo | null {
     labels: texts(fields.labels),
     start: typeof fields.start === 'string' && DAY.test(fields.start) ? fields.start : null,
     deadline: typeof fields.deadline === 'string' && DAY.test(fields.deadline) ? fields.deadline : null,
+    repeat: typeof fields.repeat === 'string' && fields.repeat !== '' ? fields.repeat : null,
     priority: typeof priority === 'number' && [0, 1, 2, 3].includes(priority) ? priority : 0,
     done: fields.done === true,
     subtasks: Array.isArray(fields.subtasks) ? fields.subtasks : [],
@@ -318,8 +322,23 @@ function patchOf(args: Args): Fields {
     if (![0, 1, 2, 3].includes(args.priority as number)) throw new Said('priority is 0, 1, 2 or 3.')
     patch.priority = args.priority
   }
+  if (args.repeat !== undefined) patch.repeat = ruleArg(args.repeat)
   if (typeof args.done === 'boolean') patch.done = args.done
   return patch
+}
+function ruleArg(value: unknown): string | null {
+  if (value === null || value === '') return null
+  const rule = typeof value === 'string' ? parseRule(value) : null
+  if (!rule) throw new Said('repeat is a rule like "every 3 days", or "every! 10 days" to count from when it is done.')
+  return ruleText(rule)
+}
+const newTodoId = () => `t${crypto.randomUUID().replace(/-/g, '').slice(0, 15)}`
+function undone(subtasks: unknown[]): unknown[] {
+  return subtasks.map((one) => {
+    if (typeof one !== 'string') return one
+    const held = objectIn(one)
+    return held ? JSON.stringify({ ...held, done: false }) : one
+  })
 }
 const STAMP = /^([0-9a-z]{9})-([0-9a-z]{4})-/
 function stampPast(now: string, held: string | undefined): string {
@@ -375,7 +394,7 @@ async function add(env: Env, token: TokenRow, args: Args): Promise<unknown> {
     const one = todoOf(id, fields)
     if (one && one.order > order) order = one.order
   }
-  const id = `t${crypto.randomUUID().replace(/-/g, '').slice(0, 15)}`
+  const id = newTodoId()
   const fields: Fields = {
     kind: 'todo',
     description: '',
@@ -401,6 +420,23 @@ async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   const before = was ? todoOf(id, was) : null
   if (!was || !before) throw new Said(`There is no todo ${id}.`)
   const patch = patchOf(args)
+  if (patch.done === true && !before.done && before.repeat) {
+    const today = clockOf(new Date(), await zoneOf(env, token.user_id)).today
+    const next = nextRepeat({ repeat: before.repeat, start: before.start, deadline: before.deadline }, today)
+    if (next) {
+      await keep(env, token.user_id, newTodoId(), { ...was, done: true, doneAt: Date.now(), repeat: null })
+      const moved: Fields = {
+        ...patch,
+        start: next.start,
+        deadline: next.deadline,
+        repeat: next.repeat,
+        subtasks: undone(before.subtasks),
+      }
+      delete moved.done
+      await keep(env, token.user_id, id, moved)
+      return todoOf(id, { ...was, ...moved })
+    }
+  }
   if (typeof patch.done === 'boolean' && patch.done !== before.done) {
     patch.doneAt = patch.done ? Date.now() : null
   }
