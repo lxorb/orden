@@ -26,6 +26,7 @@ pub mod web_keys;
 pub mod web_media;
 pub mod web_opens;
 pub mod web_page;
+pub mod web_painted;
 pub mod web_pass;
 pub mod web_pause;
 pub mod web_pointer;
