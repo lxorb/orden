@@ -61,9 +61,6 @@ pub fn is_chat(path: &Path) -> bool {
 pub fn is_term(path: &Path) -> bool {
     ends_in(path, &["term"])
 }
-pub fn is_application(path: &Path) -> bool {
-    ends_in(path, &["application"])
-}
 pub fn is_shortcut(path: &Path) -> bool {
     ends_in(path, &["url", "webloc"])
 }
