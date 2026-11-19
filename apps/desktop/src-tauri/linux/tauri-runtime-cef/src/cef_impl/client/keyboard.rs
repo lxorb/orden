@@ -25,6 +25,11 @@ wrap_keyboard_handler! {
       _is_keyboard_shortcut: Option<&mut ::std::os::raw::c_int>,
     ) -> ::std::os::raw::c_int {
       #[cfg(windows)]
+      if let (Some(event), Some(sent)) = (event, _os_event.as_deref()) {
+        crate::platform::keep_dead_key(sent, event);
+      }
+
+      #[cfg(windows)]
       if let Some(event) = event
         && let Some(host) = _browser.and_then(|browser| browser.host())
         && crate::platform::key_pressed(host.window_handle(), event)
