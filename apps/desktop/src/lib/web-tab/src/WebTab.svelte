@@ -372,6 +372,17 @@
   let showingDownloads = $state(false)
   const extending = isDesktop
   let showingExtensions = $state(false)
+  $effect(() => {
+    if (extensions.shownIn !== tab.id) return
+    untrack(() => {
+      extensions.shownIn = null
+      const anchor = root?.querySelector<HTMLElement>('[data-opens="extensions"]')
+      hangs = anchor ? under(anchor) : 0
+      showingExtensions = true
+      showingSite = false
+      showingDownloads = false
+    })
+  })
   let hangs = $state(0)
   let opener = $state<HTMLElement | null>(null)
   let head = $state<HTMLElement>()
@@ -557,13 +568,8 @@
               showingSite = false
               showingDownloads = false
             },
-            onadd: (anchor: HTMLElement) => {
-              if (!page.url) return
-              void extensions.install(page.url).then(() => {
-                if (!extensions.asking) return
-                hangs = under(anchor)
-                showingExtensions = true
-              })
+            onadd: () => {
+              if (page.url) void extensions.installFrom(tab.id, page.url)
             },
           }
         : null}

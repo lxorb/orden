@@ -19,3 +19,14 @@ test('and it gives the screen back', () => {
   answer('web-1', {} as never, 'escape')
   expect(left.times).toBe(1)
 })
+test('a store page asking to install opens the tab’s extensions, where it is said how that went', async () => {
+  const { extensions } = await import('./extensions.svelte')
+  const installed: string[] = []
+  vi.spyOn(extensions, 'install').mockImplementation((link: string) => {
+    installed.push(link)
+    return Promise.resolve(false)
+  })
+  answer('web-2', { url: 'https://chromewebstore.google.com/detail/x/abc' } as never, 'install')
+  await vi.waitFor(() => expect(installed).toEqual(['https://chromewebstore.google.com/detail/x/abc']))
+  expect(extensions.shownIn).toBe('web-2')
+})

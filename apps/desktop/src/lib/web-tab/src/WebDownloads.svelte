@@ -107,7 +107,7 @@
   .file:disabled {
     opacity: 1;
   }
-  .file > svg {
+  .file > :global(svg) {
     flex: none;
     width: var(--icon-md);
     height: var(--icon-md);
@@ -118,7 +118,7 @@
     stroke-linejoin: round;
     color: var(--muted);
   }
-  .failed .file > svg,
+  .failed .file > :global(svg),
   .said {
     color: var(--danger);
   }

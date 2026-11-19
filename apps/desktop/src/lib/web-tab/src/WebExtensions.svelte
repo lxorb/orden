@@ -9,7 +9,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import ExtensionGaps from './ExtensionGaps.svelte'
-  import { extensions, type Extension } from './extensions.svelte'
+  import { extensions, PENDING_SAID, type Extension } from './extensions.svelte'
 
   const {
     right,
@@ -54,6 +54,9 @@
               <Glyph icon={Puzzle} />
             {/if}
             <span class="words">{one.name}</span>
+            {#if one.pending}
+              <small class="later">{PENDING_SAID}</small>
+            {/if}
           </button>
           {#if one.action && one.enabled}
             <button
@@ -90,6 +93,8 @@
     <p class="said">{extensions.failed}</p>
   {:else if extensions.asking}
     <ExtensionGaps gaps={extensions.asking.gaps} asking />
+  {:else if extensions.said}
+    <p class="said told">{extensions.said}</p>
   {/if}
 
   <button
@@ -140,15 +145,15 @@
     color: var(--muted);
   }
   .name img,
-  .name svg,
-  .manage svg {
+  .name :global(svg),
+  .manage :global(svg) {
     flex: none;
     width: var(--icon-md);
     height: var(--icon-md);
     object-fit: contain;
   }
-  .name svg,
-  .manage svg {
+  .name :global(svg),
+  .manage :global(svg) {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
@@ -175,6 +180,14 @@
     margin: 0;
     padding: 0 var(--space-2);
     color: var(--danger);
+    font-size: var(--text-xs);
+  }
+  .said.told {
+    color: var(--muted);
+  }
+  .later {
+    flex: none;
+    color: var(--muted);
     font-size: var(--text-xs);
   }
   .line {
