@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest'
-import { ClosedTabs, type Draft, panels, readDraft, readSession } from '../src/api'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { ClosedTabs, type Draft, type Layout, Layouts, panels, readDraft, readSession } from '../src/api'
 
 const draft = (path: string | null, dirty = false): Draft => ({
   kind: 'note',
@@ -47,5 +47,47 @@ describe('the tabs that were closed', () => {
     closed.record({ draft: draft('/s/A.md', true), paneId: 'p', at: 1 })
     closed.follow({ op: 'removed', kind: 'file', path: '/s/A.md', root: '/s' })
     expect(closed.take()[0]?.draft).toMatchObject({ path: null, doc: 'words', dirty: true })
+  })
+})
+describe('the layouts kept under a name', () => {
+  const KEY = 'orden:layouts'
+  const layout: Layout = {
+    focused: 'p',
+    panel: null,
+    frame: { kind: 'pane', pane: { id: 'p', tabs: [], active: 0, linked: false } },
+  }
+  const names = (layouts: Layouts) => layouts.all.map((one) => one.name)
+  const savedNames = (): unknown[] =>
+    (JSON.parse(localStorage.getItem(KEY) ?? '[]') as { name: string }[]).map((one) => one.name)
+  function elsewhere(value: unknown) {
+    localStorage.setItem(KEY, JSON.stringify(value))
+    window.dispatchEvent(Object.assign(new Event('storage'), { key: KEY }))
+  }
+  beforeEach(() => {
+    const store = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+    })
+    vi.stubGlobal('window', new EventTarget())
+  })
+  afterEach(() => vi.unstubAllGlobals())
+  test('show a layout another window saved as soon as it is heard', () => {
+    const here = new Layouts()
+    here.save('Mine', layout)
+    elsewhere([...here.all, { name: 'Theirs', layout }])
+    expect(names(here)).toEqual(['Mine', 'Theirs'])
+  })
+  test('saving or removing one here keeps the layouts another window saved', () => {
+    const here = new Layouts()
+    here.save('Mine', layout)
+    here.save('Gone', layout)
+    localStorage.setItem(KEY, JSON.stringify([...here.all, { name: 'Theirs', layout }]))
+    here.save('Also mine', layout)
+    expect(savedNames()).toEqual(['Also mine', 'Gone', 'Mine', 'Theirs'])
+    here.remove('Gone')
+    expect(savedNames()).toEqual(['Also mine', 'Mine', 'Theirs'])
+    expect(names(new Layouts())).toEqual(['Also mine', 'Mine', 'Theirs'])
   })
 })
