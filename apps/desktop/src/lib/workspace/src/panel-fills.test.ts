@@ -32,8 +32,8 @@ describe('the panels a tab fills', () => {
     expect(fills('outline', tab('pages'))).toBe(true)
     expect(fills('outline', tab('pdf'))).toBe(true)
   })
-  test('never beside a terminal, a web page, a canvas or an application', () => {
-    for (const kind of ['terminal', 'web', 'canvas', 'application', 'graph', 'chat'] as const) {
+  test('never beside a terminal, a web page or a canvas', () => {
+    for (const kind of ['terminal', 'web', 'canvas', 'graph', 'chat'] as const) {
       expect(fills('outline', tab(kind, { headings: 5 }))).toBe(false)
     }
   })

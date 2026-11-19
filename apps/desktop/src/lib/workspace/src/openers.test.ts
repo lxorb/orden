@@ -22,6 +22,11 @@ describe('what opens a path in the app', () => {
     expect(opener(path)).toBe(kind)
   })
 })
+describe('an application file', () => {
+  test('opens as nothing at all, in the app and the plugin', () => {
+    expect([opener('Tools/Timer.application'), opener('Tools/Timer.application', PLUGIN)]).toEqual([null, null])
+  })
+})
 describe('a markdown note that is really a website', () => {
   const isSvelte = (path: string) => path === 'Links/Svelte.md'
   test('opens in the browser when the index says it holds a url', () => {

@@ -159,7 +159,6 @@ describe('the name a document is listed under', () => {
       view: 'Bugs.base',
       chat: 'Team.chat',
       term: 'Claude Code.term',
-      application: 'Firefox.application',
     }
     const build = { evenBuild: false, isPlugin: false }
     for (const [kind, name] of Object.entries(one)) {

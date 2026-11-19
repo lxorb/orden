@@ -1,6 +1,6 @@
 import { whenLoaded } from '@orden/contracts'
 import { untrack } from 'svelte'
-import { appsOn, chatsOn, explorerOn, passOn, timeOn } from '../../gates/src/api'
+import { chatsOn, explorerOn, passOn, timeOn } from '../../gates/src/api'
 import type { TabKind } from '../../tab-kinds/src/api'
 import { workspace } from './workspace.svelte'
 
@@ -45,9 +45,7 @@ export function whenPassOn(run: () => void, off: () => void): void {
 export function whenChatsOn(run: () => void): void {
   whenOn({ on: chatsOn, kind: 'channel', name: () => 'Chats' }, run)
 }
-export function whenAppsOn(): void {
-  whenOn({ on: appsOn, kind: 'application', name: () => 'Applications' })
-}
+export const whenAppsOn = (): void => undefined
 export function whenExplorerOn(): void {
   whenOn({ on: explorerOn, kind: 'explorer', name: () => 'File explorer' })
 }

@@ -13,7 +13,7 @@ import {
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account, arriving } from '../../accounts/src/api'
 import { seed } from '../../web-backend/src/api'
-import { appsOn, basesOn, hiddenKinds } from '../../gates/src/api'
+import { basesOn, hiddenKinds } from '../../gates/src/api'
 import { keptAway } from '../../away/src/api'
 import {
   blockIds,
@@ -605,13 +605,9 @@ class Workspace {
   })
   readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
   private readonly unlisted = $derived.by(() => {
-    const apps = appsOn()
     const bases = basesOn()
     return (root: string, path: string) =>
-      isInstructions(root, path) ||
-      isChatTarget(path) ||
-      (!apps && isApplicationTarget(path)) ||
-      (!bases && isBaseTarget(path))
+      isInstructions(root, path) || isChatTarget(path) || isApplicationTarget(path) || (!bases && isBaseTarget(path))
   })
   readonly shownFiles = $derived.by((): Entry[] => {
     const root = this.tree?.path
@@ -1163,7 +1159,7 @@ class Workspace {
     this.openUnsaved('pages', blankPages(modes.pagesPaper))
   }
   openUnsaved(
-    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application' | 'explorer' | 'pass' | 'time' | 'settings',
+    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'explorer' | 'pass' | 'time' | 'settings',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
@@ -1829,9 +1825,6 @@ class Workspace {
         return
       case 'term':
         if (!__EVEN_PLUGIN__) await (await tabKindLoaded('terminal')).open?.(path, options)
-        return
-      case 'application':
-        if (!__EVEN_PLUGIN__) await (await tabKindLoaded('application')).open?.(path, options)
         return
       case 'note':
         await this.open(path, options)
@@ -3145,7 +3138,7 @@ class Workspace {
   private opensOwnKind(path: string): boolean {
     const isUrlNote = (one: string) => links.urlOf(one) !== null
     const opener = openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() })
-    return opener === 'view' || opener === 'chat' || opener === 'term' || opener === 'application'
+    return opener === 'view' || opener === 'chat' || opener === 'term'
   }
   private opensInNoTab(path: string): boolean {
     if (isMarkdownPath(path) || PLAIN_TEXT.test(path)) return false
