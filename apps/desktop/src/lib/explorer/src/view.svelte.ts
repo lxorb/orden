@@ -12,6 +12,7 @@ import { onMoved } from './follow'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
 import { readSpec, type Spec, steppedBack, steppedForward, wentTo, writeSpec } from './spec'
+import { folderIn } from './twin'
 
 export class ExplorerView {
   readonly tab: Tab
@@ -41,6 +42,7 @@ export class ExplorerView {
   #rereading = false
   #again = false
   #alive = false
+  #tuckedWith: string | null | undefined = undefined
   constructor(tab: Tab) {
     this.tab = tab
     this.spec = readSpec(tab.doc)
@@ -51,6 +53,11 @@ export class ExplorerView {
   async appear() {
     this.#alive = true
     void hearChanges()
+    const moved = this.#twinMoved()
+    if (moved) {
+      await this.go(moved)
+      return
+    }
     if (this.listing) {
       await this.reload()
       this.watch(this.listing.path)
@@ -59,6 +66,17 @@ export class ExplorerView {
     const folder = this.folder ?? (await places.home())
     if (folder) await this.show(folder, (listed) => this.spec ?? fresh(listed))
     else this.wrong = message(null, 'could not read this folder')
+  }
+  tuck(twinWords: string) {
+    this.#tuckedWith = folderIn(twinWords)
+  }
+  #twinMoved(): string | null {
+    const left = this.#tuckedWith
+    this.#tuckedWith = undefined
+    if (left === undefined) return null
+    const twin = workspace.twinOf(this.tab.id)
+    const now = twin ? folderIn(twin.doc) : null
+    return now !== null && (left === null || !samePath(now, left)) ? now : null
   }
   async go(folder: string) {
     await this.show(folder, (listed) => (this.spec ? wentTo(this.spec, listed) : fresh(listed)))
