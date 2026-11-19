@@ -70,6 +70,7 @@ export interface SettingsPart {
   readonly section: SettingsSectionId
   readonly title?: string
   readonly card: boolean
+  readonly order?: number
   shown(): boolean
   places?(): readonly SettingPlace[]
   load(): Promise<SettingsPartView>
@@ -212,7 +213,9 @@ export function registerSettingsPart(part: SettingsPart): () => void {
   return () => void parts.delete(part)
 }
 export const settingsPartsIn = (section?: SettingsSectionId): SettingsPart[] =>
-  [...parts].filter((one) => section === undefined || one.section === section)
+  [...parts]
+    .filter((one) => section === undefined || one.section === section)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 export async function registered(): Promise<void> {
   await Promise.all(
     [...features]

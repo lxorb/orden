@@ -451,6 +451,21 @@ describe('registry', () => {
     unregister()
     expect(settingsPartsIn('general')).toEqual([])
   })
+  it('lists the settings parts of a section by their order, and by when they came within one order', () => {
+    const made = (title: string, order?: number) => ({
+      section: 'ai' as const,
+      title,
+      card: false,
+      ...(order === undefined ? {} : { order }),
+      shown: () => true,
+      load: () => Promise.resolve({ show: () => () => undefined }),
+    })
+    const stops = [made('late', 1), made('first'), made('later', 1), made('second', 0)].map((one) =>
+      registerSettingsPart(one),
+    )
+    expect(settingsPartsIn('ai').map((one) => one.title)).toEqual(['first', 'second', 'late', 'later'])
+    for (const stop of stops) stop()
+  })
   it('loads the registered features before what they register, once, and again after a failed load', async () => {
     let tries = 0
     let fails = true

@@ -7,6 +7,7 @@ registerSettingsPart({
   section: 'ai',
   title: 'MCP servers',
   card: false,
+  order: 1,
   shown: () => isDesktop,
   places: () =>
     isDesktop
