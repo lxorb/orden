@@ -625,22 +625,24 @@ return true
             time.sleep(0.5)
         return False
     def control_before(self, side: str) -> str:
+        pane = f".pane[data-pane={json.dumps(self.ids['right'])}]"
         if side == "web":
-            pick = f"document.querySelector('.pane[data-pane={json.dumps(self.ids['right'])}] .webbar input[aria-label=\"Address\"]')"
+            slot = f"document.querySelector('{pane} .hole')"
         else:
-            pick = f"""(() => {{
-  const content = [...document.querySelectorAll('.pane[data-pane={json.dumps(self.ids['right'])}] .cm-content')].find((one) => one.textContent.includes('Lodestar'))
-  if (!content) return null
+            slot = f"[...document.querySelectorAll('{pane} .cm-content')].find((one) => one.textContent.includes('Lodestar'))"
+        return f"""(() => {{
+  const slot = {slot}
+  if (!slot) return null
   let last = null
   for (const one of document.querySelectorAll({json.dumps(TABBABLE)})) {{
     const r = one.getBoundingClientRect()
     if (r.width <= 0 || r.height <= 0 || one.tabIndex < 0 || one.closest('[inert]')) continue
-    if (one === content || content.contains(one)) break
+    if (one === slot || slot.contains(one) || slot.compareDocumentPosition(one) & Node.DOCUMENT_POSITION_FOLLOWING) break
     last = one
   }}
   return last
 }})()"""
-        return pick
+
     def keeps_keyboard(self) -> None:
         said: dict[str, Any] = {}
         for side in ("note", "web"):
@@ -767,7 +769,7 @@ return true
     def tab_out(self) -> None:
         said: dict[str, Any] = {}
         unsure = ""
-        address = self.control_before("web")
+        before = self.control_before("web")
         for side in ("note", "web"):
             if side == "web":
                 if not self.staged("web"):
@@ -780,9 +782,9 @@ return true
                 if not self.focus_note("Firstline"):
                     unsure = "the note beside could not be given the keyboard"
                     break
-                start = self.js(f"(() => {{ const one = {address}; if (!one) return null; one.focus(); return document.activeElement === one && document.hasFocus() ? {DESCRIBE}(one) : null }})()")
+                start = self.js(f"(() => {{ const one = {before}; if (!one) return null; one.focus(); return document.activeElement === one && document.hasFocus() ? {DESCRIBE}(one) : null }})()")
                 if not isinstance(start, str):
-                    unsure = f"the web bar's address field could not be focused: {start}"
+                    unsure = f"the web bar's last control could not be focused: {start}"
                     break
             asked = time.monotonic()
             self.keys.chord("Shift-Tab")
