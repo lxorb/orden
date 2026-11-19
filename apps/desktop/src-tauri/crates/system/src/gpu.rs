@@ -74,6 +74,7 @@ fn software(renderer: &str) -> bool {
         "softpipe",
         "lavapipe",
         "software",
+        "basic render driver",
     ]
     .iter()
     .any(|one| renderer.contains(one))
@@ -153,6 +154,12 @@ mod tests {
         assert!(software("ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"));
         assert!(software(
             "ANGLE (Mesa, llvmpipe (LLVM 19.1.7, 256 bits), OpenGL 4.5)"
+        ));
+        assert!(software(
+            "ANGLE (Microsoft, Microsoft Basic Render Driver (0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        ));
+        assert!(!software(
+            "ANGLE (Qualcomm, Qualcomm(R) Adreno(TM) X1-85 GPU Direct3D11 vs_5_0 ps_5_0, D3D11)"
         ));
         assert!(!software(
             "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)"
