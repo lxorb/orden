@@ -52,15 +52,12 @@ async function open() {
 }
 test('the space section is headed by the space, shows its parts in their order, and the agent instructions after', async () => {
   part('Members', 1)
-  part('General', 0)
   const pane = await open()
   await vi.waitFor(() => {
     flushSync()
     expect(pane?.querySelectorAll('.part')).toHaveLength(2)
-    expect([...(pane?.querySelectorAll('.part') ?? [])].map((one) => one.textContent)).toEqual([
-      'General part',
-      'Members part',
-    ])
+    expect(pane?.querySelector('.part input[aria-label="Space name"]')).not.toBeNull()
+    expect(pane?.querySelectorAll('.part')[1]?.textContent).toBe('Members part')
   })
   expect(pane?.querySelector('h2')?.textContent).toBe('Plans')
   expect([...(pane?.querySelectorAll('h3') ?? [])].map((one) => one.textContent)).toEqual(['General', 'Members'])
@@ -68,8 +65,8 @@ test('the space section is headed by the space, shows its parts in their order, 
   const drawn = pane?.querySelector('.drawn')
   expect(last && drawn && last.compareDocumentPosition(drawn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
-test('with no part registered, the space section still shows the agent instructions', async () => {
+test('with only the General part, the space section still shows the agent instructions', async () => {
   const pane = await open()
   expect(pane?.querySelector('.drawn')).not.toBeNull()
-  expect(pane?.querySelectorAll('.part')).toHaveLength(0)
+  expect(pane?.querySelectorAll('.part')).toHaveLength(1)
 })

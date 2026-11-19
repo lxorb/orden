@@ -7,18 +7,43 @@ import {
   canTrustAgain,
   canWriteAt,
   isShared,
+  managesSpace,
   roleOf,
   share,
   trustAgain,
   protectEntries,
 } from '../../sharing/src/api'
-import { hearSidebarParts, portOf, registerSettingsPart, settingsWindow, sidebarPart } from '@orden/contracts'
+import {
+  hearSidebarParts,
+  portOf,
+  registerSettingsPart,
+  type SettingPlace,
+  settingsWindow,
+  sidebarPart,
+} from '@orden/contracts'
 import { createSubscriber } from 'svelte/reactivity'
 import { type Space, spaceChanges, workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
-import { AGENTS_NAME, joinPath } from '../../platform/src/api'
+import { AGENTS_NAME, joinPath, samePath } from '../../platform/src/api'
 
 export const spaceArchiving = () => import('./space-archive')
+export function settingsSpace(asked: string | null): Space | null {
+  const root = asked ?? workspace.activeSpace?.root ?? null
+  return root === null ? null : (workspace.spaces.find((one) => samePath(one.root, root)) ?? null)
+}
+const generalPlaces = (): readonly SettingPlace[] => [
+  { label: 'Name', text: ['Rename', 'Space name'] },
+  { label: 'Icon', text: ['Choose an icon', 'Space icon'] },
+]
+registerSettingsPart({
+  section: 'space',
+  title: 'General',
+  card: true,
+  order: 0,
+  shown: () => settingsSpace(settingsWindow().space) !== null,
+  places: generalPlaces,
+  load: async () => partView((await import('./SpaceGeneral.svelte')).default, () => ({})),
+})
 registerSettingsPart({
   section: 'archived',
   card: false,
@@ -78,7 +103,7 @@ async function nudgeSpace(space: Space, by: -1 | 1) {
 export function spaceMenu(space: Space): MenuEntry[] {
   const theirs = roleOf(space.root) !== 'owner'
   return trim([
-    ...(theirs ? [] : [{ label: 'Rename', run: () => void renameSpace(space) }]),
+    ...(managesSpace(space.root) ? [{ label: 'Rename', run: () => void renameSpace(space) }] : []),
     ...(canWriteAt(space.root) ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }] : []),
     ...(__EVEN_PLUGIN__ ? [] : [{ label: 'Settings', run: () => settingsWindow().show('space', space.root) }]),
     ...(canShare(space) ? [{ label: 'Share', run: () => void shareSpace(space) }] : []),
