@@ -283,6 +283,7 @@ if [ "${EXPORTPDF:-0}" = 1 ]; then
   endpoint
 fi
 [ "${CLOSING:-0}" = 1 ] && endpoint
+[ "${AUTOTIDY:-0}" = 1 ] && endpoint
 [ "${OPENS:-0}" = 1 ] && endpoint
 [ "${CHOOSING:-0}" = 1 ] && endpoint
 [ "${CORNER:-0}" = 1 ] && endpoint
@@ -474,6 +475,16 @@ if [ "$status" = 0 ] && [ "${CLOSING:-0}" = 1 ]; then
   if python3 "$here/closing-drive.py" "$out" open; then
     sleep 10
     again && python3 "$here/closing-drive.py" "$out" close || status=1
+  else
+    status=1
+  fi
+fi
+
+if [ "$status" = 0 ] && [ "${AUTOTIDY:-0}" = 1 ]; then
+  sleep 3
+  if python3 "$here/auto-tidy-drive.py" "$out" open; then
+    sleep 3
+    again && python3 "$here/auto-tidy-drive.py" "$out" check || status=1
   else
     status=1
   fi
