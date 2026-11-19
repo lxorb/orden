@@ -72,10 +72,11 @@ fn attached(event: &str) -> Option<Attached> {
         .then_some(Attached::Held(session))
 }
 
-fn bindings() -> [(&'static str, Value); 3] {
+fn bindings() -> [(&'static str, Value); 4] {
     [
         crate::web_opens::BINDING,
         crate::web_swipe::BINDING,
+        crate::web_pointer::BINDING,
         crate::web_pass::BINDING,
     ]
     .map(|name| {
@@ -172,6 +173,9 @@ mod engine {
                 }
                 Some(crate::web_swipe::BINDING) => {
                     crate::web_swipe::heard(&app, &window, &tab, payload);
+                }
+                Some(crate::web_pointer::BINDING) => {
+                    crate::web_pointer::heard(&app, &window, &tab, payload);
                 }
                 Some(crate::web_pass::BINDING) => {
                     crate::web_pass::binding_called(&page, &app, &window, &tab, session, params);
@@ -357,6 +361,7 @@ mod tests {
             [
                 crate::web_opens::BINDING,
                 crate::web_swipe::BINDING,
+                crate::web_pointer::BINDING,
                 crate::web_pass::BINDING
             ]
         );

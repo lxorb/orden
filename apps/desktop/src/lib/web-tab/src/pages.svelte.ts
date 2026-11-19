@@ -1045,6 +1045,13 @@ class Pages {
         const page = said && this.held.get(said.tab)
         if (said && page) page.blocked = said.url
       })
+      const { pointerMoved } = await import('./pointed')
+      await listen('orden://web-pointer', (event) => {
+        pointerMoved(event.payload, (tab) => {
+          const page = this.held.get(tab)
+          return page?.shown ? page.pane : null
+        })
+      })
       const { readPressed } = await import('./keys')
       await listen('orden://web-key', (event) => {
         const one = readPressed(event.payload)
