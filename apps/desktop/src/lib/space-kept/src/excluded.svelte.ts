@@ -5,12 +5,11 @@ import {
   samePath,
   within,
   isString,
-  keepJson,
-  filledIn,
   type Folded,
   type Folding,
   meet,
-  readSpaces,
+  spacesOf,
+  Kept,
   without,
 } from '../../platform/src/api'
 import { carried, moving } from '../../file-ops/src/api'
@@ -26,12 +25,12 @@ export function excludedPaths(value: unknown): string[] {
   }
   return out
 }
-interface Kept extends Folded {
+interface Held extends Folded {
   paths: string[]
   sent: boolean
 }
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({
+function read(saved: unknown): Record<string, Held> {
+  return spacesOf(saved, (one) => ({
     paths: excludedPaths(one.paths),
     sent: one.sent !== false,
   }))
@@ -47,11 +46,16 @@ function under(path: string, excluded: string, root?: string): boolean {
   return !!excluded && within(excluded, path, root) !== null
 }
 export class Excluded {
-  private spaces = $state<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read)
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   constructor(private readonly root: () => string | null) {}
   reread(): void {
-    const grown = filledIn(this.spaces, read())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
   of(root: string): string[] {
     return this.spaces[root]?.paths ?? []
@@ -172,6 +176,6 @@ export class Excluded {
     this.write()
   }
   private write() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
   }
 }

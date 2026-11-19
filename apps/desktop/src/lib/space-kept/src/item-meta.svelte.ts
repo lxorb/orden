@@ -6,10 +6,8 @@ import {
   within,
   joinPath,
   isRecord,
-  keepJson,
-  stored,
-  filledIn,
-  readSpaces,
+  spacesOf,
+  Kept,
   without,
   withOrWithout,
 } from '../../platform/src/api'
@@ -22,7 +20,7 @@ export interface Describing {
   describedIn(root: string): Readonly<Record<string, ItemMeta>> | null
   describe(root: string, patches: Readonly<Record<string, MetaPatch>>): Promise<string[] | null>
 }
-interface Kept {
+interface Held {
   items: Record<string, ItemMeta>
   unsent: Record<string, MetaPatch>
   adopted: boolean
@@ -46,8 +44,8 @@ function patchesOf(value: unknown): Record<string, MetaPatch> {
   }
   return out
 }
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({
+function read(saved: unknown): Record<string, Held> {
+  return spacesOf(saved, (one) => ({
     items: itemsOf(one.items),
     unsent: patchesOf(one.unsent),
     adopted: one.adopted === true,
@@ -61,8 +59,7 @@ function merged(one: MetaPatch | undefined, other: MetaPatch): MetaPatch {
   return { ...one, ...other }
 }
 type Buried = Record<string, Record<string, ItemMeta>>
-function readBuried(): Buried {
-  const saved = stored(BURIED_KEY)
+function buriedOf(saved: unknown): Buried {
   if (!isRecord(saved)) return {}
   const out: Buried = {}
   for (const [back, items] of Object.entries(saved)) {
@@ -84,17 +81,23 @@ function itemsUnder(items: Record<string, ItemMeta>, at: string, root: string) {
   }
   return out
 }
-const EMPTY: Kept = { items: {}, unsent: {}, adopted: false, moved: false }
+const EMPTY: Held = { items: {}, unsent: {}, adopted: false, moved: false }
 export class ItemMetaStore {
-  private spaces = $state<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read)
+  private buried = new Kept(BURIED_KEY, buriedOf)
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   private describing: Describing | null = null
   private hearing: ((path: string) => void)[] = []
   constructor(private readonly rootOf: (path: string | null) => string | null) {}
   reread(): void {
-    const grown = filledIn(this.spaces, read())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
-  private kept(root: string): Kept {
+  private kept(root: string): Held {
     return this.spaces[root] ?? EMPTY
   }
   itemsOf(root: string): Record<string, ItemMeta> {
@@ -299,7 +302,8 @@ export class ItemMetaStore {
   }
   cameBack(path: string, root = this.rootOf(path), back?: string) {
     if (root === null || !back) return
-    const buried = readBuried()
+    this.buried.reread()
+    const buried = this.buried.value
     const items = buried[back]
     if (!items) return
     const at = relativeTo(root, path)
@@ -309,13 +313,15 @@ export class ItemMetaStore {
       const landed = rest ? `${at}/${rest}` : at
       if (insideItsSpace(landed) && !this.kept(root).items[landed]) patches[landed] = whole(meta)
     }
-    keepJson(BURIED_KEY, without(buried, back))
+    this.buried.value = without(buried, back)
+    this.buried.write()
     this.setMany(root, patches)
   }
   private bury(back: string, items: Record<string, ItemMeta>) {
     if (!Object.keys(items).length) return
-    const buried = Object.entries({ ...without(readBuried(), back), [back]: items })
-    keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
+    const buried = Object.entries({ ...without(this.buried.value, back), [back]: items })
+    this.buried.value = Object.fromEntries(buried.slice(-MOST_BURIED))
+    this.buried.write()
   }
   spaceMoved(from: string, to: string) {
     const held = this.spaces[from]
@@ -329,6 +335,6 @@ export class ItemMetaStore {
     this.write()
   }
   private write() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
   }
 }

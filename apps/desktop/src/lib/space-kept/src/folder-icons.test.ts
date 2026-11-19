@@ -219,21 +219,22 @@ describe('a map that lands after the store was built', () => {
     icons.reread()
     expect(icons.iconOf('/space/Work')).toBe('briefcase')
   })
-  test('and does not undo what was chosen while it was on its way', () => {
+  test('and joins what was chosen here with what it adds', () => {
     icons.set('/space/Reading', 'book')
     localStorage.setItem(
       'orden:folder-icons',
-      JSON.stringify({ [ROOT]: { icons: { Work: 'briefcase' }, colors: {}, account: null } }),
+      JSON.stringify({ [ROOT]: { icons: { Reading: 'book', Work: 'briefcase' }, colors: {}, account: null } }),
     )
     icons.reread()
     expect(icons.iconOf('/space/Reading')).toBe('book')
+    expect(icons.iconOf('/space/Work')).toBe('briefcase')
   })
   test('and a space this launch knows nothing about comes along whole', () => {
     icons.set('/space/Reading', 'book')
     localStorage.setItem(
       'orden:folder-icons',
       JSON.stringify({
-        [ROOT]: { icons: {}, colors: {}, account: null },
+        [ROOT]: { icons: { Reading: 'book' }, colors: {}, account: null },
         '/other': { icons: { Notes: 'file-text' }, colors: {}, account: null },
       }),
     )
