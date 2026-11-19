@@ -10,7 +10,7 @@ export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
   3: 'High',
 }
 export const priorityTone = (priority: number): string | undefined =>
-  (({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>)[priority]
+  (({ 1: 'var(--callout-note)', 2: 'var(--callout-warning)', 3: 'var(--danger)' }) as Record<number, string>)[priority]
 interface Subtask {
   readonly id: string
   readonly title: string

@@ -314,8 +314,9 @@ describe('tasks-model contract', () => {
   })
 })
 describe('a priority', () => {
-  test('is drawn in its own tone from the first to the third, and plain after', () => {
-    expect([1, 2, 3].map(priorityTone)).toEqual(['var(--canvas-1)', 'var(--canvas-2)', 'var(--canvas-5)'])
+  test('is drawn blue when low, amber when medium, red when high, and plain with none', () => {
+    expect([1, 2, 3].map(priorityTone)).toEqual(['var(--callout-note)', 'var(--callout-warning)', 'var(--danger)'])
+    expect(priorityTone(0)).toBeUndefined()
     expect(priorityTone(4)).toBeUndefined()
   })
   test('said in a quick add, the first is the highest and none is plain', () => {

@@ -101,6 +101,13 @@ describe('tasks-views contract', () => {
       [{ path: 'Work/Roadmap.md', target: 'Roadmap', heading: null, block: null, page: null }, undefined, '/s/home'],
     ])
   })
+  test('a priority takes its tone only from the model, no view keeps its own table of tones', () => {
+    const src = join(import.meta.dirname, '..', 'src')
+    for (const name of readdirSync(src)) {
+      const text = readFileSync(join(src, name), 'utf8')
+      expect(/callout-(note|warning)|canvas-\d|TONES/.test(text), name).toBe(false)
+    }
+  })
   test('the module reads the model, the motion, the shortcuts, the shared controls and the shell parts it borrows only through their apis', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {

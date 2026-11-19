@@ -5,6 +5,7 @@
     isTodoSpace,
     PRIORITIES,
     PRIORITY_NAMES,
+    priorityTone,
     type Priority,
     type Todo,
     type TodoPatch,
@@ -151,7 +152,7 @@
       />
     </div>
     <div class="field">
-      <span class="name">Priority</span>
+      <span class="name">Priority <span class="tone" style:background={priorityTone(todo.priority)}></span></span>
       <Select
         label="Priority"
         value={String(todo.priority)}
@@ -342,6 +343,14 @@
     color: var(--muted-strong);
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
+  }
+  .tone {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-inline-start: var(--space-1);
+    border-radius: 50%;
+    vertical-align: 1px;
   }
   .group > .orden-section {
     margin: 0;
