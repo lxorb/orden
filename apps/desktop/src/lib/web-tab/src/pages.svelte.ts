@@ -36,6 +36,8 @@ const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
 const FRESH_EVERY = 200
+const BLANK_WAITS = 3000
+const AFTER_COMMIT = 400
 const ARRIVES = 3000
 export interface Rect {
   x: number
@@ -188,6 +190,9 @@ export class Page {
   placings = 0
   stowed = false
   stowing: ReturnType<typeof setTimeout> | undefined
+  blank = false
+  afterBlank: Wanted | null = null
+  blanking: ReturnType<typeof setTimeout> | undefined
   shown = false
   path: string | null = null
   at: string | null = null
@@ -341,10 +346,14 @@ class Pages {
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
       const pass = (await import('../../gates/src/api')).passOn()
+      page.blank = true
+      clearTimeout(page.blanking)
+      page.blanking = undefined
       const said = await invoke<boolean | 'under' | 'hollows' | undefined>('web_open', {
         tab: tabId,
         url: page.url,
-        pane,
+        pane: awayFrom(pane).pane,
+        ground: this.groundNow(),
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
         profile: { store, private: page.inPrivate, pass },
       })
@@ -354,7 +363,11 @@ class Pages {
       page.frozen = false
       page.rebuilding = false
       page.store = store
-      page.shown = true
+      page.shown = false
+      if (stillBlank(page)) {
+        page.afterBlank = visible ? { pane, visible, covering: false, over } : null
+        page.blanking ??= setTimeout(() => this.painted(tabId, page), BLANK_WAITS)
+      } else if (visible) page.wanted ??= { pane, visible, covering: false, over }
       void this.bound()
     } catch (error) {
       if (error === NOT_ANSWERING) {
@@ -416,6 +429,10 @@ class Pages {
     if (!page.live && visible) return
     const turn = ++page.placings
     clearTimeout(page.stowing)
+    if (page.blank && page.live) {
+      page.afterBlank = { pane, visible, covering, over }
+      return
+    }
     if (page.layering === 'under' && page.live) {
       const shown = visible || covering
       const cut = !shown ? null : covering ? (over.cut ?? WHOLE) : over.cut
@@ -457,6 +474,49 @@ class Pages {
       cut: null,
       corner: over.corner,
     })
+  }
+  private ground: string | null = null
+  groundNow(): string | null {
+    if (typeof document === 'undefined') return null
+    try {
+      const probe = document.createElement('i')
+      probe.style.background = 'var(--bg)'
+      document.body.append(probe)
+      const said = hexOf(getComputedStyle(probe).backgroundColor)
+      probe.remove()
+      this.ground = said ?? this.ground
+      return said
+    } catch {
+      return null
+    }
+  }
+  private watchGround(): void {
+    if (typeof MutationObserver !== 'function' || typeof document === 'undefined') return
+    let asked = false
+    const looked = () => {
+      asked = false
+      const was = this.ground
+      const now = this.groundNow()
+      if (now && now !== was) void invoke('web_ground', { ground: now }).catch(() => undefined)
+    }
+    const watching = new MutationObserver(() => {
+      if (asked) return
+      asked = true
+      requestAnimationFrame(looked)
+    })
+    for (const one of [document.documentElement, document.body]) watching.observe(one, { attributes: true })
+  }
+  painted(tabId: string, page: Page): void {
+    if (!page.blank) return
+    page.blank = false
+    clearTimeout(page.blanking)
+    page.blanking = undefined
+    if (page.opening) return
+    const after = page.afterBlank
+    page.afterBlank = null
+    if (after && this.held.get(tabId) === page) {
+      void this.place(tabId, after.pane, after.visible, after.covering, after.over)
+    }
   }
   private async keepFresh(tabId: string, page: Page, going: () => boolean): Promise<void> {
     const until = Date.now() + COVER_HIDES
@@ -607,7 +667,7 @@ class Pages {
     const page = this.held.get(tabId)
     if (!page?.live) return
     await this.look(tabId)
-    if (hidden && page.onScreen) return
+    if (this.held.get(tabId)?.live !== true || (hidden && page.onScreen)) return
     page.live = false
     page.frozen = false
     page.loading = false
@@ -880,6 +940,12 @@ class Pages {
         const page = said && this.held.get(said.tab)
         if (said && page) page.blocked = said.url
       })
+      await listen('orden://web-painted', (event) => {
+        const tab = isRecord(event.payload) && isString(event.payload.tab) ? event.payload.tab : null
+        const page = tab === null ? undefined : this.held.get(tab)
+        if (tab !== null && page) this.painted(tab, page)
+      })
+      this.watchGround()
       const { pointerMoved } = await import('./pointed')
       await listen('orden://web-pointer', (event) => {
         pointerMoved(event.payload, (tab) => {
@@ -929,6 +995,10 @@ class Pages {
         if (!said) return
         const page = this.held.get(said.tab)
         if (!page) return
+        if (said.url && page.blank) {
+          clearTimeout(page.blanking)
+          page.blanking = setTimeout(() => this.painted(said.tab, page), AFTER_COMMIT)
+        }
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
         if (moved || (said.loading && !was)) {
@@ -1037,6 +1107,15 @@ providePort('web.pages', {
 })
 export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'
+const stillBlank = (page: Page): boolean => page.blank
+function hexOf(colour: string): string | null {
+  const parts = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour)
+  if (!parts) return null
+  return `#${parts
+    .slice(1, 4)
+    .map((one) => Number(one).toString(16).padStart(2, '0'))
+    .join('')}`
+}
 async function decoded(picture: string): Promise<void> {
   if (typeof Image !== 'function') return
   const one = new Image()

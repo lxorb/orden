@@ -3,19 +3,24 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { elapse } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
+const hears = vi.hoisted(() => new Map<string, (event: { payload: unknown }) => void>())
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, args })
+    if (command === 'web_open') hears.get('orden://web-painted')?.({ payload: { tab: args.tab, url: args.url } })
     return Promise.resolve(undefined)
   },
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
-  hearHere: () => Promise.resolve(() => undefined),
+  hearHere: (name: string, tell: (event: { payload: unknown }) => void) => {
+    hears.set(name, tell)
+    return Promise.resolve(() => undefined)
+  },
 }))
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const rect = this.isConnected ? { x: 0, y: 40, width: 800, height: 560 } : { x: 0, y: 0, width: 0, height: 0 }
