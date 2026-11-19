@@ -16,7 +16,6 @@ export interface Listed {
   total: number
   tasks: {
     at: string
-    space: string
     text: string
     status?: string
     due?: string
