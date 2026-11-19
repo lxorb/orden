@@ -85,6 +85,7 @@ function rig(entries: Entry[]) {
     fileMoved: async (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
     fileCame: async (path: string) => void told.push(`came ${path}`),
     pageNoteForPdf: async () => null,
+    savingSettled: async () => undefined,
   }
 }
 describe('a copied folder note', () => {

@@ -2359,6 +2359,7 @@ class Workspace {
     if (!(await this.writableAt(intoFolder))) return
     const name = note.path === null ? fileNamed(note.name, note.kind) : nameOf(note.path)
     if (!(await this.asksOwnCopy([name]))) return
+    if (note.path !== null) await this.savingSettled()
     const bytes =
       note.path === null
         ? new TextEncoder().encode(note.latest)
@@ -2841,7 +2842,7 @@ class Workspace {
       await this.unnest(folderOf(path))
     })
   }
-  private async savingSettled() {
+  async savingSettled() {
     this.saving.wordsNow()
     await Promise.race([this.saving.settled(), waited(GIVE_UP)])
   }
