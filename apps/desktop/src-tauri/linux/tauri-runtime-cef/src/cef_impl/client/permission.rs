@@ -182,6 +182,8 @@ enum AppDecision {
 wrap_permission_handler! {
   pub struct TauriCefPermissionHandler {
     permission_request_handler: Option<Arc<PermissionRequestHandler>>,
+    window: tauri_runtime::window::WindowId,
+    ask: Option<Arc<crate::PermissionAskHandler>>,
   }
 
   impl PermissionHandler {
@@ -193,6 +195,7 @@ wrap_permission_handler! {
       requested_permissions: u32,
       callback: Option<&mut MediaAccessCallback>,
     ) -> ::std::os::raw::c_int {
+      let browser_id = browser.as_ref().map(|one| one.identifier());
       let host = browser_host(browser);
 
       match self.decide(requested_permissions, media_permission_kind) {
@@ -225,6 +228,21 @@ wrap_permission_handler! {
           1
         }
         AppDecision::NoOpinion => {
+          if !grants_desktop_capture(requested_permissions)
+            && let (Some(ask), Some(browser), Some(callback)) = (&self.ask, browser_id, &callback)
+            && let Some(asks) = asks_of(requested_permissions, media_permission_kind)
+          {
+            let origin = requesting_origin.map(ToString::to_string);
+            let waiting = crate::permission_ask::Waiting::Media(
+              requested_permissions,
+              (*callback).clone(),
+              host.clone(),
+              origin.clone(),
+            );
+            if crate::permission_ask::ask(ask, self.window, browser, origin.unwrap_or_default(), asks, waiting).is_ok() {
+              return 1;
+            }
+          }
           // Chrome style displays the permission request UI and records the outcome as a
           // content setting. That content setting is what keeps `enumerateDevices()` from
           // returning a redacted device list, so let CEF handle the request.
@@ -263,11 +281,12 @@ wrap_permission_handler! {
     fn on_show_permission_prompt(
       &self,
       browser: Option<&mut Browser>,
-      _prompt_id: u64,
-      _requesting_origin: Option<&CefString>,
+      prompt_id: u64,
+      requesting_origin: Option<&CefString>,
       requested_permissions: u32,
       callback: Option<&mut PermissionPromptCallback>,
     ) -> ::std::os::raw::c_int {
+      let browser_id = browser.as_ref().map(|one| one.identifier());
       let host = browser_host(browser);
 
       match self.decide(requested_permissions, permission_kind) {
@@ -293,6 +312,15 @@ wrap_permission_handler! {
           1
         }
         AppDecision::NoOpinion => {
+          if let (Some(ask), Some(browser), Some(callback)) = (&self.ask, browser_id, &callback)
+            && let Some(asks) = asks_of(requested_permissions, permission_kind)
+          {
+            let origin = requesting_origin.map(ToString::to_string).unwrap_or_default();
+            let waiting = crate::permission_ask::Waiting::Prompt(prompt_id, (*callback).clone());
+            if crate::permission_ask::ask(ask, self.window, browser, origin, asks, waiting).is_ok() {
+              return 1;
+            }
+          }
           // Chrome style displays the permission prompt UI.
           if !is_alloy_style(host.as_ref()) {
             return 0;
@@ -312,7 +340,34 @@ wrap_permission_handler! {
         }
       }
     }
+
+    fn on_dismiss_permission_prompt(
+      &self,
+      browser: Option<&mut Browser>,
+      prompt_id: u64,
+      _result: PermissionRequestResult,
+    ) {
+      if let Some(browser) = browser {
+        crate::permission_ask::dismissed(browser.identifier(), prompt_id);
+      }
+    }
   }
+}
+
+fn asks_of(requested: u32, kind: fn(u32) -> PermissionKind) -> Option<Vec<&'static str>> {
+  let mut asks: Vec<&'static str> = Vec::new();
+  for permission in requested_permissions(requested) {
+    let one = crate::permission_ask::ask_of(kind(permission))?;
+    if !asks.contains(&one) {
+      asks.push(one);
+    }
+  }
+  (!asks.is_empty()).then_some(asks)
+}
+
+pub(crate) fn allow_media(host: Option<&BrowserHost>, origin: Option<&str>, requested: u32) {
+  let origin = origin.map(CefString::from);
+  allow_content_settings(host, origin.as_ref(), &media_content_settings(requested));
 }
 
 impl TauriCefPermissionHandler {

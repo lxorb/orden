@@ -240,6 +240,7 @@ wrap_with_args! {
       let Some(browser) = browser else { return; };
       let closing = browser.identifier();
       crate::js_dialog::drop_where(|one, _| one == closing);
+      crate::permission_ask::drop_for_browser(closing);
       if let Some(family) = self.popup_family.upgrade() {
         family.closed(&self.frame_navigation_state, browser.identifier());
       }

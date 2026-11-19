@@ -349,6 +349,7 @@ macro_rules! desktop_commands {
             orden_web::page_style::web_ground,
             orden_web::web_menu::web_menu_pick,
             orden_web::web_dialog::web_dialog_answer,
+            orden_web::web_permission::web_permission_answer,
             orden_web::web_clear::web_clear,
             orden_dictation::dictation::dictation_local,
             orden_dictation::dictation::dictation_local_fetch,
@@ -621,6 +622,8 @@ fn first_of_all(handle: &tauri::AppHandle) {
         menu_pick: engine::menu_pick,
         dialogs: engine::dialogs,
         dialog_answer: engine::dialog_answer,
+        permissions: engine::permissions,
+        permission_answer: engine::permission_answer,
     });
     engine::hear_keys();
     orden_agent_web::engines::hand(orden_agent_web::engines::Pages {
