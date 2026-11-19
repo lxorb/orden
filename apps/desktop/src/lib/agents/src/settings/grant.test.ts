@@ -69,7 +69,7 @@ describe('the defaults', () => {
     )
     expect(crate).toMatch(/Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/)
     expect(crate).toMatch(/Scope::Context\s*\|\s*Scope::BrowserReader/)
-    expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60,\s*memory: 0,/)
+    expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60,\s*memory: 0\b/)
   })
 })
 describe('a switch means what it says', () => {
