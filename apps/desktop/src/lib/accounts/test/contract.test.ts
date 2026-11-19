@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { account, ApiError, called, clearsAt, faceUrl, farApart, fromServer, stands } from '../src/api'
+import { account, ApiError, called, clearsAt, faceUrl, farApart, fromServer, readSeats, stands } from '../src/api'
 import { clampOffset, sourceSquare, zoomed } from '../src/crop'
 import { withoutMetadata } from '../src/encode'
 import { readPerson } from '../src/read'
@@ -99,5 +99,17 @@ describe('a call to the account service', () => {
     expect(fromServer(new ApiError(401, 'no', { error: 'no' }))).toBe(true)
     expect(fromServer(new ApiError(500, 'down'))).toBe(false)
     expect(fromServer(new Error('no'))).toBe(false)
+  })
+})
+describe('the places in a shared space', () => {
+  test('are read as a whole count used out of the most it holds, and nothing else', () => {
+    expect(readSeats({ used: 3, most: 10 })).toEqual({ used: 3, most: 10 })
+    expect(readSeats({ used: 12, most: 10 })).toEqual({ used: 12, most: 10 })
+    expect(readSeats(null)).toBeNull()
+    expect(readSeats(undefined)).toBeNull()
+    expect(readSeats({ used: 3 })).toBeNull()
+    expect(readSeats({ used: -1, most: 10 })).toBeNull()
+    expect(readSeats({ used: 1.5, most: 10 })).toBeNull()
+    expect(readSeats({ used: 0, most: 0 })).toBeNull()
   })
 })

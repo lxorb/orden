@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { joining, protectionOn } from '../src/api'
-import { addressesIn, looksLikeAddress } from '../src/sharing.svelte'
+import { addressesIn, isFull, looksLikeAddress } from '../src/sharing.svelte'
 
 describe('the module stands on its own', () => {
   test('the invitation and the protection switch are there to read', () => {
@@ -19,5 +19,13 @@ describe('inviting', () => {
     expect(looksLikeAddress('bob@example.com')).toBe(true)
     expect(looksLikeAddress('bob@example')).toBe(false)
     expect(looksLikeAddress('bob example.com')).toBe(false)
+  })
+})
+describe('the places in a space', () => {
+  test('are full once every one is taken, or more, and never where nobody counted them', () => {
+    expect(isFull({ used: 9, most: 10 })).toBe(false)
+    expect(isFull({ used: 10, most: 10 })).toBe(true)
+    expect(isFull({ used: 11, most: 10 })).toBe(true)
+    expect(isFull(null)).toBe(false)
   })
 })

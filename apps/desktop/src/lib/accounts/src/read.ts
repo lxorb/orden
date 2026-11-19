@@ -1,5 +1,6 @@
 import { isBoolean, isNumber, isRecord, isString } from '../../platform/src/api'
 import type { Avatar, Presence, Status } from './face'
+import type { Seats } from './routes'
 
 export interface Person {
   id: string
@@ -44,4 +45,10 @@ export function readPerson(value: unknown): Person | null {
     zone: textOrNull(value.zone),
     presence: readPresence(value.presence),
   }
+}
+const count = (value: unknown): value is number => isNumber(value) && Number.isInteger(value) && value >= 0
+export function readSeats(value: unknown): Seats | null {
+  if (!isRecord(value)) return null
+  const { used, most } = value
+  return count(used) && count(most) && most > 0 ? { used, most } : null
 }
