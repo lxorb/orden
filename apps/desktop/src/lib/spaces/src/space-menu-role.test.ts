@@ -65,3 +65,18 @@ describe('choosing a space’s icon', () => {
     expect(labels('theirs')).toContain(ICON)
   })
 })
+describe('renaming a space', () => {
+  const listing = (role: string, admin: boolean) => {
+    account.spaces = [
+      { id: 'remote-theirs', name: 'Theirs', role, admin, shared: true, sharedItems: [] },
+    ] as unknown as typeof account.spaces
+  }
+  test('is offered to its owner and to an admin, and not to somebody who only writes there', () => {
+    listing('write', true)
+    expect(labels('theirs')).toContain('Rename')
+    listing('write', false)
+    expect(labels('theirs')).not.toContain('Rename')
+    listing('owner', false)
+    expect(labels('theirs')).toContain('Rename')
+  })
+})

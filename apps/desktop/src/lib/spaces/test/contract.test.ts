@@ -52,3 +52,11 @@ describe('the unread chats of a space', () => {
     expect(chatsUnreadBesides(spaces, '/s')).toBe(0)
   })
 })
+describe('the General part of a space in Settings', () => {
+  test('comes first in the space section, in a card, and is found by its name and icon', () => {
+    const general = settingsPartsIn('space').find((one) => one.title === 'General')
+    expect(general).toMatchObject({ section: 'space', card: true, order: 0 })
+    const said = general?.places?.().flatMap((one) => [one.label, ...one.text]) ?? []
+    expect(said).toEqual(expect.arrayContaining(['Name', 'Rename', 'Icon']))
+  })
+})
