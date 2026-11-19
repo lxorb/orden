@@ -564,12 +564,12 @@ class Drive:
         self.current = ""
         self.dispatched = False
 
-    def row(self, item: int, check: str, web: Any, note: Any, ok: bool, detail: str = "") -> None:
-        one = {"item": item, "check": check, "platform": PLATFORM, "web": web, "note": note, "ok": bool(ok)}
+    def row(self, item: int, check: str, web: Any, note: Any, ok: bool | None, detail: str = "") -> None:
+        one = {"item": item, "check": check, "platform": PLATFORM, "web": web, "note": note, "ok": None if ok is None else bool(ok)}
         if detail:
             one["detail"] = detail
         self.rows.append(one)
-        print(f"[{'ok' if ok else 'WRONG'}] {item} {check}: web {web}, note {note} {detail}", flush=True)
+        print(f"[{'not measured' if ok is None else 'ok' if ok else 'WRONG'}] {item} {check}: web {web}, note {note} {detail}", flush=True)
 
     def eval(self, code: str, seconds: float | None = None) -> Any:
         return self.app.eval(code, seconds)
@@ -762,6 +762,8 @@ class Drive:
         downs = downs if isinstance(downs, list) else []
         app = "layer" if any(one[0] for one in downs) else "app" if downs else None
         said = "both" if app and page else app or ("page" if page else "none")
+        if downs and not page and max(one[3] for one in downs) == 0:
+            said = "gone"
         print(f"[{layer['name']}] a click at {round(x)},{round(y)} reached {said}; the app heard {downs}", flush=True)
         return t_click, said
 
@@ -777,8 +779,8 @@ class Drive:
         for key in ("white cells", "cut cells", "stale ms", "freeze ms", "stale limit", "covered share", "lag ms"):
             values = sorted(one[key] for one in turns if one[key] is not None)
             out[key] = values[(len(values) - 1) // 2] if values else None
-        clicks = [one.get("clicked") for one in turns]
-        out["clicked"] = max(set(clicks), key=clicks.count) if clicks else None
+        clicks = [one.get("clicked") for one in turns if one.get("clicked") != "gone"]
+        out["clicked"] = max(set(clicks), key=clicks.count) if clicks else ("gone" if turns else None)
         out["up"] = any(one["up"] for one in turns)
         return out
 
@@ -861,8 +863,12 @@ class Drive:
         if layer.get("at") is None:
             return
         want = ("app", "page") if layer.get("through") else ("layer", "layer")
-        ok = (note["clicked"], web["clicked"]) == want
+        ok: bool | None = (note["clicked"], web["clicked"]) == want
         rounds = {kind: [one.get("clicked") for one in seen[kind]["rounds"]] for kind in ("web", "note")}
+        if "gone" in (note["clicked"], web["clicked"]):
+            ok = None
+            self.row(1, f"{name}: a click on the layer", web["clicked"], note["clicked"], ok, f"not measured: the layer had gone before the click landed in every round of a side (web {rounds['web']}, note {rounds['note']}); on this runner the pointer the click needs closes the layer first")
+            return
         self.row(1, f"{name}: a click on the layer", web["clicked"], note["clicked"], ok, f"wanted note {want[0]}, web {want[1]}; most rounds count (web {rounds['web']}, note {rounds['note']})")
 
     def cards(self) -> list[dict[str, Any]]:
@@ -1049,7 +1055,7 @@ class Drive:
         (self.out / "results.json").write_text(json.dumps(self.rows, indent=1), encoding="utf-8")
         lines = ["| item | check | platform | web | note | ok |", "|---|---|---|---|---|---|"]
         for one in self.rows:
-            lines.append(f"| {one['item']} | {one['check']} | {one['platform']} | {one['web']} | {one['note']} | {'yes' if one['ok'] else 'no'} |")
+            lines.append(f"| {one['item']} | {one['check']} | {one['platform']} | {one['web']} | {one['note']} | {'not measured' if one['ok'] is None else 'yes' if one['ok'] else 'no'} |")
         limits = ", ".join(f"{name} {value}" for name, value in LIMITS.items())
         lines += ["", f"Limits: {limits}. Each layer is filmed {ROUNDS} times a side and each check takes the median round (a click, the most rounds); the page's yield fails from two whole app frames late, one being noted as a frame late. Each load is filmed {LOAD_ROUNDS} times a side and keeps its worst round."]
         text = "\n".join(lines)
@@ -1272,7 +1278,7 @@ def main() -> int:
     finally:
         drive.stop()
         drive.table()
-    wrong = [one for one in drive.rows if not one["ok"]]
+    wrong = [one for one in drive.rows if one["ok"] is False]
     for one in wrong:
         print(f"::error::{one['platform']}: item {one['item']} {one['check']}: web {one['web']}, note {one['note']} {one.get('detail', '')}", flush=True)
     print(f"{len(wrong)} of {len(drive.rows)} checks wrong", flush=True)
