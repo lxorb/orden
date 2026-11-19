@@ -29,8 +29,8 @@ import { claimed, waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { away, awayUnder, keepingChange, type LettingGo, trim, used, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
-import { settle, type SpaceState, windowsPath } from './places'
-import { pass, type Passed, pullNow, resting } from './pass'
+import { type SpaceState, windowsPath } from './places'
+import { pass, type Passed, pullNow, resting, settleDisk } from './pass'
 import { project, wrote } from './project'
 import { keepLosers, rejoin } from './rejoin'
 import { againstBytes } from './records'
@@ -552,16 +552,7 @@ export class Engine implements AskedEngine {
     await this.held.refresh()
   }
   private async settle(space: SpaceState) {
-    const forgets: Change[] = []
-    const changed = await settle(space, {
-      disk: this.core.world.disk,
-      join: (folder, path) => this.core.world.join(folder, path),
-      keeps: (id) => this.core.hasPending(id) || this.core.isHeld(id),
-      forget: (id) => forgets.push(...this.core.forgetChanges(id)),
-      busy: (id) => this.core.inHand.has(id),
-    })
-    await this.core.commit([...this.core.entryChanges(changed), ...forgets])
-    if (changed.length) this.core.events.placed?.({ moved: changed.length })
+    await settleDisk(this.core, space, !isLocal(space.id))
   }
   foldWritten(path: string): Promise<void> {
     return this.core.use(async () => {

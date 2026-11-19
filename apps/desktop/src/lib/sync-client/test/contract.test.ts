@@ -3,9 +3,12 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { portProvided, providePort } from '@orden/contracts'
 import {
+  act,
+  apart,
   CALM,
   Clock,
   markersIn,
+  pass,
   ReferenceAccount,
   type Report,
   SEEDED,
@@ -17,7 +20,7 @@ import { firstPass } from '../src/migrate'
 import { madeTwice } from '../src/twins'
 import { SpaceState } from '../src/places'
 import type { EntryRow } from '../src/store'
-import { EngineDevice, freshDevice } from './sim-device'
+import { EngineDevice, type FreshDevice, freshDevice } from './sim-device'
 
 const settle: Step = { t: 'wait', ticks: 40 }
 function road(script: readonly Step[]): Promise<Report> {
@@ -181,6 +184,97 @@ describe('offline, then back', () => {
     expect(report.held).toBe(0)
     expect(markersIn(textOf(report, 'Plan.md'))).toEqual(expect.arrayContaining(['mk101z', 'mk102z']))
     expect(report.account.entries.filter((one) => one.name.includes('from another'))).toEqual([])
+  })
+})
+describe('a delete heard from the account', () => {
+  const gone = (target: number): Step => act(1, { t: 'delete', target })
+  const FOLDER: Step[] = [
+    act(1, { t: 'mkdir', folder: null, name: 'Work' }),
+    act(1, { t: 'create', folder: 0, name: 'Inside.md', words: 'Inside the folder.' }),
+    pass(1),
+    settle,
+    pass(0),
+    settle,
+  ]
+  const WORK = 0
+  const INSIDE = 0
+  const back = (report: Report) => {
+    const work = report.account.entries.find((one) => one.name === 'Work')
+    return { work, inside: report.account.entries.find((one) => one.name === 'Inside.md') }
+  }
+  test('of a note written here meanwhile brings the note back with these words', async () => {
+    const report = await road(
+      apart([act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk901z' })], [gone(PLAN)], pass(1), settle),
+    )
+    expect(report.failures).toEqual([])
+    expect(markersIn(textOf(report, 'Plan.md'))).toEqual(['mk901z'])
+  })
+  test('of a note another program changed here meanwhile brings the note back with that change', async () => {
+    const report = await road(
+      apart([act(0, { t: 'edit-file', note: PLAN, at: 0.2, words: 'mk921z', cut: 0 })], [gone(PLAN)], pass(1), settle),
+    )
+    expect(report.failures).toEqual([])
+    expect(markersIn(textOf(report, 'Plan.md'))).toEqual(['mk921z'])
+  })
+  test('of a folder, with nothing written here, takes the folder and what it held', async () => {
+    const report = await road([...FOLDER, ...apart([], [gone(WORK)], pass(1), settle)])
+    expect(report.failures).toEqual([])
+    expect(report.account.entries.map((one) => one.name).sort()).toEqual(['Ideas.md', 'Plan.md'])
+  })
+  test('of a folder whose note was written here meanwhile brings both back with these words', async () => {
+    const report = await road([
+      ...FOLDER,
+      ...apart([act(0, { t: 'type', note: INSIDE, at: 1, words: 'mk911z' })], [gone(WORK)], pass(1), settle),
+    ])
+    expect(report.failures).toEqual([])
+    const { work, inside } = back(report)
+    expect(work?.kind).toBe('folder')
+    expect(inside?.parent).toBe(work?.id)
+    expect(markersIn(textOf(report, 'Inside.md'))).toEqual(['mk911z'])
+  })
+  test('of a folder a note was made in meanwhile keeps that note and its words', async () => {
+    const report = await road([
+      ...FOLDER,
+      ...apart(
+        [act(0, { t: 'create', folder: 0, name: 'Later.md', words: 'Made later mk912z' })],
+        [gone(WORK)],
+        pass(1),
+        settle,
+      ),
+    ])
+    expect(report.failures).toEqual([])
+    expect(markersIn(textOf(report, 'Later.md'))).toEqual(['mk912z'])
+  })
+  test('of a canvas changed here meanwhile brings the canvas back with that change', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await freshDevice(account, 'there')
+    const here = await freshDevice(account, 'here')
+    for (const one of [there, here]) {
+      expect(await firstPass(one.engine.core, one.space(), null)).toBe(true)
+      await one.engine.pass('sim')
+    }
+    const board = (text: string) =>
+      JSON.stringify({ nodes: [{ id: 'a', type: 'text', text, x: 0, y: 0, width: 100, height: 50 }], edges: [] })
+    const at = (one: FreshDevice) => `${one.space().row.root}/Board.canvas`
+    await there.disk.write(at(there), board('first'))
+    await there.engine.created(at(there), false, board('first'))
+    await there.engine.pass('sim')
+    await here.engine.pass('sim')
+    expect(here.disk.files.get(at(here))).toContain('first')
+    const id = there.engine.entryAt(at(there))?.id ?? ''
+    await here.disk.write(at(here), board('mk941z'))
+    await here.engine.foreign(at(here))
+    await there.engine.removing(at(there), async () => {
+      await there.disk.remove(at(there))
+      return id
+    })
+    await there.engine.pass('sim')
+    expect((await account.view()).entries.map((one) => one.name)).not.toContain('Board.canvas')
+    await here.engine.pass('sim')
+    await there.engine.pass('sim')
+    expect((await account.view()).entries.find((one) => one.id === id)?.name).toBe('Board.canvas')
+    expect(here.disk.files.get(at(here))).toContain('mk941z')
+    expect(there.disk.files.get(at(there))).toContain('mk941z')
   })
 })
 describe('ports', () => {
