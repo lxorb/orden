@@ -11,7 +11,6 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { swiping } from '../../back-swipe/src/api'
   import { findBar, passFill, takeoverBar } from '../../surfaces/src/api'
-  import { takesWords, writes } from '../../ui-controls/src/api'
   import type { Tab } from '../../documents/src/api'
   import { favicon, plainOrigin } from '@orden/scan/web-address'
   import { HISTORY_MARK, isOwnPage } from '@orden/scan/own-pages'
@@ -265,12 +264,7 @@
     else void startup.turn('rooms').then(asking)
     window.addEventListener('resize', follow)
     const unscale = watchScale(follow)
-    const mac = /Mac|iPhone|iPad/.test(navigator.userAgent)
-    const pressed = (event: Event) => {
-      const typed = event instanceof KeyboardEvent && writes(event, mac) && takesWords(event.target)
-      if (page.layering !== 'under' && !typed) void pages.shoot(tab.id)
-      follow()
-    }
+    const pressed = () => follow()
     window.addEventListener('pointerdown', pressed, true)
     window.addEventListener('keydown', pressed, true)
     const unwatch = overlays.watch(follow)
