@@ -18,7 +18,7 @@ import {
 } from '../../workspace/src/api'
 import { modes } from '../../modes/src/api'
 import { commandRows, commandRowsLoaded, searching, runCommand, settingsWindow, showQuickAdd } from '@orden/contracts'
-import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
+import { chatsOn, explorerOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
 import { stepSpace, toggleSpacePicker } from '../../spaces/src/api'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
 import type { Platform } from '../../ui-kit/src/api'
@@ -446,6 +446,10 @@ const APP_ENTRIES: Shortcut[] = [
     },
     { desktop: true },
   ),
+  app('view', 'tab.flip', 'Switch between terminal and file explorer', 'Mod-Alt-u', () => flipTab(), {
+    desktop: true,
+    shown: () => explorerOn(),
+  }),
   ...(__EVEN_PLUGIN__
     ? []
     : [
@@ -667,6 +671,11 @@ function cycleTab(direction: number, mayUseOrder = false, held = false) {
     cycling = one
     one.cycleTab(direction, mayUseOrder, held)
   })
+}
+function flipTab() {
+  const kind = workspace.active?.kind
+  if (kind === 'terminal') void runCommand('terminal.turn')
+  else if (kind === 'explorer') void runCommand('explorer.turn')
 }
 function closeAroundActive(which: Around) {
   const id = workspace.activeTabId
