@@ -313,13 +313,13 @@ class Share {
     this.open = false
   }
   async invite() {
-    if (this.full) return
+    if (isFull(this.seats)) return
     const addresses = addressesIn(this.email)
     if (!addresses.length) return
     this.wrongAddress = addresses.some((one) => !looksLikeAddress(one))
     if (this.wrongAddress) return
     const left = [...addresses]
-    while (left.length && !this.full) {
+    while (left.length && !isFull(this.seats)) {
       const address = left[0] ?? ''
       const role = this.role
       if (
