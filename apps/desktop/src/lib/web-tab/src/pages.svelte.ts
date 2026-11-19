@@ -35,7 +35,8 @@ const LOOK_WAITS = 500
 const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
-const FRESH_EVERY = 200
+const STILL_LOOKS = 100
+const PICTURE_EVERY = 200
 const BLANK_WAITS = 3000
 const AFTER_COMMIT = 400
 const ARRIVES = 3000
@@ -187,6 +188,7 @@ export class Page {
   heldAt = $state.raw<Placement | null>(null)
   shotAt = 0
   shooting: Promise<void> | null = null
+  watching: object | null = null
   placings = 0
   stowed = false
   stowing: ReturnType<typeof setTimeout> | undefined
@@ -519,12 +521,28 @@ class Pages {
     }
   }
   private async keepFresh(tabId: string, page: Page, going: () => boolean): Promise<void> {
+    const watch = {}
+    page.watching = watch
+    const asked = { tab: tabId, on: true, picture: true }
+    await invoke('web_watch_drawing', asked).catch(() => undefined)
     const until = Date.now() + COVER_HIDES
-    while (Date.now() < until) {
-      await new Promise<void>((go) => setTimeout(go, FRESH_EVERY))
-      if (!going() || !page.live || this.held.get(tabId) !== page) return
-      await this.retake(tabId, page)
-    }
+    const watched = () => going() && page.live && this.held.get(tabId) === page && page.watching === watch
+    while (Date.now() < until && watched()) await new Promise<void>((go) => setTimeout(go, STILL_LOOKS))
+    if (page.watching !== watch) return
+    page.watching = null
+    await invoke('web_watch_drawing', { tab: tabId, on: false }).catch(() => undefined)
+  }
+  drew(tabId: string, picture: string | null): void {
+    const page = this.held.get(tabId)
+    const watch = page?.watching
+    if (!page || !watch || picture === null || stirring()) return
+    if (Date.now() - page.shotAt < PICTURE_EVERY) return
+    const { url, shotAt } = page
+    void decoded(picture).then(() => {
+      if (page.watching !== watch || page.url !== url || page.shotAt !== shotAt) return
+      page.shot = picture
+      page.shotAt = Date.now()
+    })
   }
   private async stow(tabId: string, page: Page, pane: Rect, turn: number): Promise<void> {
     if (page.placings !== turn) return
@@ -613,7 +631,6 @@ class Pages {
           ? awayFrom(at.pane)
           : { ...at, visible: false },
     )
-    if (goesAway(page.layering)) void this.keepFresh(tabId, page, () => this.still && page.heldAt === at)
   }
   async letGo(): Promise<void> {
     this.still = false
@@ -940,6 +957,11 @@ class Pages {
         const page = said && this.held.get(said.tab)
         if (said && page) page.blocked = said.url
       })
+      await listen('orden://web-drew', (event) => {
+        const said = event.payload
+        if (!isRecord(said) || !isString(said.tab)) return
+        this.drew(said.tab, isString(said.picture) ? said.picture : null)
+      })
       await listen('orden://web-painted', (event) => {
         const tab = isRecord(event.payload) && isString(event.payload.tab) ? event.payload.tab : null
         const page = tab === null ? undefined : this.held.get(tab)
@@ -1108,6 +1130,10 @@ providePort('web.pages', {
 export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'
 const stillBlank = (page: Page): boolean => page.blank
+function stirring(): boolean {
+  if (typeof document === 'undefined' || typeof document.getAnimations !== 'function') return false
+  return document.getAnimations().some((one) => one.playState === 'running')
+}
 function hexOf(colour: string): string | null {
   const parts = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour)
   if (!parts) return null

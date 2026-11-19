@@ -321,22 +321,68 @@ describe('a page whose engine cuts only what floats over it', () => {
     expect(commands()).toContain('web_shot')
   })
   for (const engine of ['hollows', true] as const) {
-    test(`keeps its picture fresh while a scrim covers it, and stops once it is shown (${String(engine)})`, async () => {
+    test(`takes the picture the page sends each time it draws while a scrim covers it, and stops watching once shown (${String(engine)})`, async () => {
       cuts = engine
       photo = 'data:image/png;base64,AAAA'
       await built()
       await settle()
       calls.length = 0
-      const shots = () => commands().filter((one) => one === 'web_shot').length
       await pages.show('a', SITE, PANE, false, { cut: { all: true, hollows: [] }, frame: null })
-      await vi.waitFor(() => expect(shots()).toBeGreaterThanOrEqual(3), { timeout: 2000 })
-      await pages.show('a', SITE, PANE, true)
       await settle()
-      const then = shots()
-      await new Promise<void>((go) => setTimeout(go, 300))
-      expect(shots()).toBe(then)
+      expect(calls.filter((one) => one.command === 'web_watch_drawing').map((one) => one.args)).toEqual([
+        { tab: 'a', on: true, picture: true },
+      ])
+      const drew = await hearing('orden://web-drew')
+      pages.of('a').shotAt = 0
+      drew({ payload: { tab: 'a', picture: 'data:image/jpeg;base64,drawn' } })
+      await settle()
+      expect(pages.of('a').shot).toBe('data:image/jpeg;base64,drawn')
+      await pages.show('a', SITE, PANE, true)
+      await vi.waitFor(() => expect(last('web_watch_drawing')).toEqual({ tab: 'a', on: false }))
+      pages.of('a').shotAt = 0
+      drew({ payload: { tab: 'a', picture: 'data:image/jpeg;base64,late' } })
+      await settle()
+      expect(pages.of('a').shot).toBe('data:image/jpeg;base64,drawn')
       photo = null
     })
+  }
+})
+test('a covered page that drew is not pictured anew while the app moves', async () => {
+  cuts = 'hollows'
+  photo = 'data:image/png;base64,AAAA'
+  let moving = true
+  Object.assign(globalThis, {
+    document: {
+      getAnimations: () => (moving ? [{ playState: 'running' }] : []),
+      querySelector: () => null,
+      documentElement: {},
+    },
+    getComputedStyle: () => ({ getPropertyValue: () => '0px' }),
+  })
+  try {
+    await built()
+    await settle()
+    await pages.show('a', SITE, PANE, false, { cut: { all: true, hollows: [] }, frame: null })
+    await settle()
+    const before = pages.of('a').shot
+    const drew = await hearing('orden://web-drew')
+    pages.of('a').shotAt = 0
+    drew({ payload: { tab: 'a', picture: 'data:image/jpeg;base64,moving' } })
+    await settle()
+    expect(pages.of('a').shot).toBe(before)
+    moving = false
+    pages.of('a').shotAt = 0
+    drew({ payload: { tab: 'a', picture: 'data:image/jpeg;base64,still' } })
+    await settle()
+    expect(pages.of('a').shot).toBe('data:image/jpeg;base64,still')
+    drew({ payload: { tab: 'a', picture: 'data:image/jpeg;base64,soon' } })
+    await settle()
+    expect(pages.of('a').shot).toBe('data:image/jpeg;base64,still')
+    await pages.show('a', SITE, PANE, true)
+  } finally {
+    Reflect.deleteProperty(globalThis, 'document')
+    Reflect.deleteProperty(globalThis, 'getComputedStyle')
+    photo = null
   }
 })
 describe('a page drawn under the app', () => {
