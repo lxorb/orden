@@ -12,7 +12,7 @@ interface Place {
   laid: Point
 }
 const going = new WeakMap<Element, Animation>()
-function shifted(one: HTMLElement): Point {
+export function shifted(one: HTMLElement): Point {
   const parts = /^matrix\((.+)\)$/.exec(getComputedStyle(one).transform)?.[1]?.split(',').map(Number) ?? []
   return { x: parts[4] ?? 0, y: parts[5] ?? 0 }
 }

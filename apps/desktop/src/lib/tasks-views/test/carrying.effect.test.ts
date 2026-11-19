@@ -5,7 +5,7 @@ import { addTask, type Board, todos } from '../../tasks-model/src/api'
 import { patchTodo } from '../src/acts'
 import { Carrying, columnPreview } from '../src/carrying.svelte'
 import { Shown, type ShownWorld } from '../src/shown.svelte'
-import { previewed } from '../src/todo-drag.svelte'
+import { previewed, slotOf } from '../src/todo-drag.svelte'
 
 providePort('sync.account', {
   token: null,
@@ -54,6 +54,22 @@ async function made(mine: string, title: string, labels: string[] = []) {
 }
 const titles = (list: readonly { title: string }[], mine: string) => list.map((one) => one.title.slice(mine.length + 1))
 describe('a carried todo', () => {
+  test('stays in its place when lifted, and only a pointer past the middle of a card moves its place', async () => {
+    const mine = prefix()
+    await made(mine, 'a')
+    const b = await made(mine, 'b')
+    await made(mine, 'c')
+    const { shown, carrying } = shownOf(mine, 'panel')
+    carrying.started(b, '')
+    expect(carrying.drag.spot).toEqual({ column: '', at: 1 })
+    expect(titles(previewed(shown.todos, '', carrying.drag), mine)).toEqual(['a', 'b', 'c'])
+    carrying.drag.clear()
+    const middles = [20, 60]
+    expect(slotOf(middles, 10)).toBe(0)
+    expect(slotOf(middles, 40)).toBe(1)
+    expect(slotOf(middles, 59)).toBe(1)
+    expect(slotOf(middles, 61)).toBe(2)
+  })
   test('let go keeps its preview until the todos hold the new place, so the list never shows the old one between', async () => {
     const mine = prefix()
     const a = await made(mine, 'a', ['home'])
