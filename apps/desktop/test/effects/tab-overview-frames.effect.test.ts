@@ -292,6 +292,18 @@ test('each tab is copied once, riding its pane while in front, a chip otherwise,
   expect(copies()).toBe(workspace.tabs.length)
   expect(rider()).toEqual([other?.shown])
 })
+test('a pointer moving over the ground asks nothing of the page, and asks where the names are only when pressed', async () => {
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 400 && waiting.size; i++) frame()
+  const floor = document.querySelector<HTMLElement>('.floor')
+  const asked = vi.spyOn(document, 'querySelectorAll')
+  for (let i = 0; i < 10; i++)
+    floor?.dispatchEvent(new PointerEvent('pointermove', { clientX: 100 + i * 10, clientY: 300, bubbles: true }))
+  expect(asked.mock.calls.filter(([one]) => one.includes('data-space-name'))).toEqual([])
+  expect(floor?.style.cursor ?? '').toBe('')
+})
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
