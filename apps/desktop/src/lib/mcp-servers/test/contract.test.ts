@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { portOf, providePort, settingsPartsIn } from '@orden/contracts'
+import { portOf, providePort, registerSettingsPart, settingsPartsIn } from '@orden/contracts'
 import { type Found, loadMcpImport, scanMcp } from '../src/api'
 
 const server = (name: string, orden = false, already = false) => ({
@@ -30,6 +30,19 @@ describe('the MCP servers module', () => {
     expect(part?.card).toBe(false)
     expect(part?.shown()).toBe(false)
     expect(part?.places?.()).toEqual([])
+  })
+  test('come after the other AI parts, Agents among them, whichever loads first', () => {
+    const stop = registerSettingsPart({
+      section: 'ai',
+      card: false,
+      shown: () => true,
+      places: () => [{ label: 'Agents', text: ['orden mcp'] }],
+      load: () => Promise.reject(new Error('not drawn here')),
+    })
+    const titles = settingsPartsIn('ai').map((one) => one.title ?? one.places?.()[0]?.label)
+    stop()
+    expect(titles.at(-1)).toBe('MCP servers')
+    expect(titles).toContain('Agents')
   })
   test('scan other apps without Orden’s own server, and find nothing when nothing is new', async () => {
     const claude = { source: 'claude-code', sourceName: 'Claude Code', path: '/a', servers: [server('orden', true)] }
