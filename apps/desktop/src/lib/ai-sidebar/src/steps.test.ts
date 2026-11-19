@@ -30,6 +30,13 @@ describe('an answer laid out as Codex lays one out', () => {
     expect(blocks[1]?.kind === 'explored' && blocks[1].rows.map((one) => one.id)).toEqual(['a', 'b'])
     expect(blocksOf([read('a', 'Herons.md'), edit]).map((one) => one.kind)).toEqual(['row', 'row'])
   })
+  test('a read by another server is a row of its own, not one of Orden’s reads (#2227)', () => {
+    const theirs: Part = { kind: 'tool', id: 'c', verb: 'mcp__notes__read_note', args: {}, state: 'ok' }
+    const kinds = blocksOf([read('a', 'A.md'), theirs, read('b', 'B.md')]).map((one) => one.kind)
+    expect(kinds).toEqual(['row', 'row', 'row'])
+    const ours: Part = { kind: 'tool', id: 'd', verb: 'mcp__orden__read_note', args: {}, state: 'ok' }
+    expect(blocksOf([read('a', 'A.md'), ours]).map((one) => one.kind)).toEqual(['explored'])
+  })
   test('a read that asks the reader keeps its own row, where its question is', () => {
     const asking: Part = { kind: 'tool', id: 'b', verb: 'read_note', args: {}, state: 'asking' }
     expect(blocksOf([read('a', 'A.md'), asking]).map((one) => one.kind)).toEqual(['row', 'row'])
