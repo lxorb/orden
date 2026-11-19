@@ -1,5 +1,5 @@
 use orden_base::Held as _;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::io::Stdout;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, Weak};
@@ -8,6 +8,7 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 use super::home;
+use super::host;
 use super::link::{Link, Seen, Standing};
 use super::pairing::Client;
 use super::results;
@@ -160,7 +161,7 @@ impl Session {
     }
     fn call(&self, id: &Value, params: &Value) -> Value {
         let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
-        if tools::find(name).is_none() {
+        if !known(name, kept_out()) {
             return rpc::failure(id, rpc::BAD_PARAMS, &format!("Unknown tool: {name}"));
         }
         let link = self.link_for(params);
@@ -227,11 +228,26 @@ impl Calls {
         self.held().remove(id) == Some(false)
     }
 }
+fn kept_out() -> &'static BTreeSet<String> {
+    static KEPT: OnceLock<BTreeSet<String>> = OnceLock::new();
+    KEPT.get_or_init(|| host::kept_out_of(&std::env::var(host::KEPT_OUT_VAR).unwrap_or_default()))
+}
 fn shown(seen: &Seen) -> Vec<&'static tools::Tool> {
     match (&seen.standing, &seen.grant) {
-        (Standing::Paired, Some(grant)) => tools::listed(grant, seen.window.as_ref()),
+        (Standing::Paired, Some(grant)) => {
+            offered(tools::listed(grant, seen.window.as_ref()), kept_out())
+        }
         _ => tools::unpaired(),
     }
+}
+fn offered(
+    listed: Vec<&'static tools::Tool>,
+    kept: &BTreeSet<String>,
+) -> Vec<&'static tools::Tool> {
+    listed.into_iter().filter(|tool| !kept.contains(&tool.name)).collect()
+}
+fn known(name: &str, kept: &BTreeSet<String>) -> bool {
+    tools::find(name).is_some() && !kept.contains(name)
 }
 fn names(seen: &Seen) -> Vec<String> {
     shown(seen).iter().map(|tool| tool.name.clone()).collect()
@@ -265,6 +281,19 @@ mod tests {
         assert!(INSTRUCTIONS.contains("no_such_ref"));
         assert!(!INSTRUCTIONS.contains('\u{2014}'), "no em dashes");
         assert!(INSTRUCTIONS.len() < 2_200, "{} characters", INSTRUCTIONS.len());
+    }
+    #[test]
+    fn a_tool_its_chat_keeps_out_is_neither_listed_nor_called() {
+        let kept = host::kept_out_of(" edit_note,run_agent,,");
+        assert_eq!(kept.len(), 2);
+        let every: Vec<&'static tools::Tool> = tools::table().iter().collect();
+        let left = offered(every.clone(), &kept);
+        assert_eq!(left.len(), every.len() - 2);
+        assert!(left.iter().all(|tool| tool.name != "edit_note" && tool.name != "run_agent"));
+        assert!(!known("edit_note", &kept) && !known("run_agent", &kept));
+        assert!(known("read_note", &kept) && !known("no_such_tool", &kept));
+        assert!(known("edit_note", &BTreeSet::new()));
+        assert_eq!(offered(every.clone(), &host::kept_out_of("")).len(), every.len());
     }
     #[test]
     fn a_page_read_whole_is_cut_where_a_snapshot_is() {

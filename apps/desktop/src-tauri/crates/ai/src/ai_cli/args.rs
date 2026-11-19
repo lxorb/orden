@@ -100,10 +100,25 @@ struct Row {
     #[serde(default)]
     annotations: Value,
 }
+fn table() -> Vec<Row> {
+    serde_json::from_str(include_str!("../mcp/tools.json")).unwrap_or_default()
+}
+pub fn kept_out(without: &[String], only: Option<&[String]>) -> Vec<String> {
+    let mut out = without.to_vec();
+    if let Some(only) = only {
+        for row in table() {
+            if !only.contains(&row.name) && !out.contains(&row.name) {
+                out.push(row.name);
+            }
+        }
+    }
+    out
+}
+pub fn left_out(mode: Option<Mode>, without: &[String]) -> String {
+    mode.map(|mode| tools_of(mode, without).1.join(",")).unwrap_or_default()
+}
 pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
-    let table: Vec<Row> =
-        serde_json::from_str(include_str!("../mcp/tools.json")).unwrap_or_default();
-    let (listed, left): (Vec<Row>, Vec<Row>) = table.into_iter().partition(|row| {
+    let (listed, left): (Vec<Row>, Vec<Row>) = table().into_iter().partition(|row| {
         let reads = row.annotations["readOnlyHint"].as_bool() == Some(true);
         crate::ai_agent::in_mode(mode, &row.name, reads) && !without.contains(&row.name)
     });
@@ -113,8 +128,9 @@ pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
 pub const SERVER: &str = "orden";
 pub const TOKEN_VAR: &str = "ORDEN_MCP_TOKEN";
 pub const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
+pub const KEPT_OUT_VAR: &str = crate::mcp::host::KEPT_OUT_VAR;
 pub fn with_thread(params: &mut Value, thread: &str) {
-    params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
+    params["config"][format!("mcp_servers.{SERVER}.env")][THREAD_VAR] = json!(thread);
 }
 const TOOL_SECONDS: u64 = 600;
 pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] =
@@ -272,6 +288,7 @@ pub fn codex_thread(
         config.insert(key("tool_timeout_sec"), json!(TOOL_SECONDS));
         if !left.is_empty() {
             config.insert(key("enabled_tools"), json!(listed));
+            config.insert(key("env"), json!({ KEPT_OUT_VAR: left.join(",") }));
         }
     }
     let mut params = json!({
@@ -321,6 +338,7 @@ pub fn gemini_settings(mode: Option<Mode>, without: &[String], orden: &Path) -> 
             "env": {
                 TOKEN_VAR: format!("${{{TOKEN_VAR}}}"),
                 THREAD_VAR: format!("${{{THREAD_VAR}}}"),
+                KEPT_OUT_VAR: left.join(","),
             },
             "timeout": TOOL_SECONDS * 1000,
             "trust": true,
@@ -648,5 +666,54 @@ mod tests {
         let words = gemini_settings(None, &[], &program);
         assert!(words.get("mcpServers").is_none());
         assert!(!words.to_string().contains("orden.exe"));
+    }
+    #[test]
+    fn a_thread_that_names_its_only_tools_is_given_no_other() {
+        let names =
+            |listed: Vec<String>| listed.into_iter().collect::<std::collections::BTreeSet<_>>();
+        let only = ["read_note".to_owned(), "edit_note".to_owned(), "update_task".to_owned()];
+        let without = ["update_task".to_owned()];
+        for mode in [Mode::Approve, Mode::Auto, Mode::Full, Mode::Plan] {
+            let (listed, left) = tools_of(mode, &kept_out(&without, Some(&only)));
+            let listed = names(listed);
+            assert!(listed.iter().all(|one| only.contains(one)), "{mode:?}: {listed:?}");
+            assert!(!listed.contains("update_task"), "{mode:?}");
+            assert!(listed.contains("read_note"), "{mode:?}");
+            assert_eq!(listed.contains("edit_note"), mode != Mode::Plan, "{mode:?}");
+            for kept in [
+                "explorer_tabs",
+                "run_command",
+                "run_terminal",
+                "read_terminal",
+                "get_context",
+                "run_agent",
+            ] {
+                assert!(
+                    left.iter().any(|one| one == kept)
+                        || table().iter().all(|row| row.name != kept),
+                    "{kept}"
+                );
+            }
+            assert!(left_out(Some(mode), &kept_out(&without, Some(&only)))
+                .split(',')
+                .any(|one| one == "run_agent"));
+            assert!(tools_of(mode, &kept_out(&[], Some(&[]))).0.is_empty(), "{mode:?}");
+        }
+        assert_eq!(kept_out(&without, None), without);
+        assert_eq!(left_out(None, &without), "");
+        assert_eq!(left_out(Some(Mode::Full), &[]), "");
+        let orden = PathBuf::from("orden");
+        let folder = PathBuf::from("ai");
+        let narrowed = kept_out(&[], Some(&only));
+        let mut thread = codex_thread(Some(Mode::Auto), None, &narrowed, &orden, &folder);
+        with_thread(&mut thread, "orden-thread-1");
+        let env = &thread["config"]["mcp_servers.orden.env"];
+        assert_eq!(env[THREAD_VAR], "orden-thread-1");
+        assert_eq!(env[KEPT_OUT_VAR], left_out(Some(Mode::Auto), &narrowed));
+        let gemini = gemini_settings(Some(Mode::Auto), &narrowed, &orden);
+        assert_eq!(
+            gemini["mcpServers"]["orden"]["env"][KEPT_OUT_VAR],
+            left_out(Some(Mode::Auto), &narrowed)
+        );
     }
 }
