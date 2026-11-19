@@ -1,6 +1,7 @@
 import { protection } from '../../protect/src/api'
 import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
+import { isChatTarget } from '@orden/markdown/links'
 import { searchInternal, searchInWorker } from '../../web-backend/src/api'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
@@ -23,12 +24,10 @@ export async function searchSpace(
 ): Promise<void> {
   const shut = protection.shutIn(root)
   if (shut === null) return
-  if (shut.length) {
-    excluded = [...excluded, ...shut]
-    const told = onFound
-    const open = (one: { path: string }) => !protection.locked(one.path)
-    onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
-  }
+  if (shut.length) excluded = [...excluded, ...shut]
+  const told = onFound
+  const shown = (one: { path: string }) => !isChatTarget(one.path) && (!shut.length || !protection.locked(one.path))
+  onFound = (found) => told({ hits: found.hits.filter(shown), loose: found.loose.filter(shown) })
   const { papersFor, searchPapers } = await (await import('../../pdf/src/api')).papers()
   await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)

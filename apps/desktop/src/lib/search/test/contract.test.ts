@@ -1,11 +1,39 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { SearchPanel } from '@orden/contracts'
-import { search, searchWarmth } from '../src/api'
+import { search, searchSpace, searchWarmth } from '../src/api'
 import { changesFor } from '../src/apply'
 import { selectedWords } from '../src/seed'
 
+type Told = (found: { hits: object[]; loose: object[] }) => void
+const row = (path: string) => ({ path, name: path, line: 1, text: 'tulip', ranges: [], score: 1 })
+const space = ['/space/Plans.md', '/space/Team.chat', '/space/Trip/Crew.CHAT']
+vi.mock('../../platform/src/api', async (actual) => ({
+  ...(await actual<object>()),
+  isNative: false,
+  internal: { routed: false },
+}))
+vi.mock('../../pdf/src/api', async (actual) => ({
+  ...(await actual<object>()),
+  papers: () => Promise.resolve({ papersFor: () => Promise.resolve(), searchPapers: () => [row('/space/Team.chat')] }),
+}))
+vi.mock('../../web-backend/src/api', async (actual) => ({
+  ...(await actual<object>()),
+  searchInternal: () => Promise.resolve(false),
+  searchInWorker: (_root: string, _query: unknown, _terms: string[], _limit: number, told: Told) => {
+    told({ hits: space.map(row), loose: space.map(row) })
+    return Promise.resolve()
+  },
+}))
+vi.mock('../../away/src/api', () => ({
+  keptAway: {
+    search: (_root: string, _query: unknown, _terms: string[], _limit: number, told: Told) => {
+      told({ hits: space.map(row), loose: space.map(row) })
+      return Promise.resolve(true)
+    },
+  },
+}))
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
 test('the module stands on its own loads the selection, the space search and the panel store with it, and the rest through doors', () => {
@@ -54,6 +82,18 @@ describe('a replacement', () => {
   test('changes nothing in a note that is gone', async () => {
     const made = await changesFor(alpha, [hit('/space/One.md', 0)], 'gamma', '/space', () => Promise.resolve(null))
     expect(made).toEqual([])
+  })
+})
+describe('a note search', () => {
+  test('never shows a chat, whatever the notes it reads hand it', async () => {
+    const hits: string[] = []
+    const loose: string[] = []
+    await searchSpace('/space', { kind: 'text', text: 'tulip', fold: true }, ['tulip'], 50, (found) => {
+      hits.push(...found.hits.map((one) => one.path))
+      loose.push(...found.loose.map((one) => one.path))
+    })
+    expect(hits).toEqual(['/space/Plans.md', '/space/Plans.md'])
+    expect(loose).toEqual(['/space/Plans.md', '/space/Plans.md'])
   })
 })
 describe("the search's hold on a space", () => {

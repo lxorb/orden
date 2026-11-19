@@ -100,16 +100,11 @@ describe('new note inside', () => {
   test('offers every kind, each made in the row', async () => {
     const row = rowMenu(plain).find((one) => one?.label === 'New note inside')
     const kinds = (await row?.more?.()) ?? []
-    expect(kinds.map((one) => one?.label).filter((label) => label !== 'New chat')).toEqual([
-      'New note',
-      'New canvas',
-      'New page note',
-      'New web note',
-    ])
+    expect(kinds.map((one) => one?.label)).toEqual(['New note', 'New canvas', 'New page note', 'New web note'])
     const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map((name) =>
       vi.spyOn(workspace, name).mockResolvedValue(undefined),
     )
-    for (const one of kinds) if (one?.label !== 'New chat') one?.run()
+    for (const one of kinds) one?.run()
     await vi.waitFor(() => {
       for (const spy of made) expect(spy).toHaveBeenCalledWith('/s/Projects')
     })
@@ -123,14 +118,6 @@ describe('a note that holds notes', () => {
 describe('a folder nobody has written a note in', () => {
   test('offers exactly what a note offers, less the cover and the side', () => {
     expect(labels(plain)).toEqual(labels(nested).filter((one) => one !== 'Set cover'))
-  })
-})
-describe('a chat', () => {
-  test('can wear an icon, and nothing else a note looks like', () => {
-    const said = labels(note('/s/Team.chat'))
-    expect(said).toContain('Choose an icon')
-    expect(said).not.toContain('Set cover')
-    expect(said).not.toContain('New note inside')
   })
 })
 describe('a paper', () => {

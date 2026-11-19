@@ -1,5 +1,5 @@
 import { type Bookmark, portOf } from '@orden/contracts'
-import { isCanvasTarget, isChatTarget, isPagesTarget, isTermTarget, isWebTarget } from '@orden/markdown/links'
+import { isCanvasTarget, isPagesTarget, isTermTarget, isWebTarget } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { iconChoice } from '../../icon-picker/src/api'
@@ -35,10 +35,9 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
 }
 export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
   if (!path || !canWriteAt(path)) return []
-  const chat = !__EVEN_PLUGIN__ && isChatTarget(path)
   const web = isWebTarget(path) && !/\.webloc$/i.test(path.trim())
   const term = !__EVEN_PLUGIN__ && isTermTarget(path)
-  const kept = chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
+  const kept = web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   const mapped = folder || !kept
   return [
     {

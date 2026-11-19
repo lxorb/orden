@@ -207,7 +207,6 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
   canvas: (folder) => workspace.createCanvas(folder),
   pages: (folder) => workspace.createPages(folder),
   web: (folder) => workspace.createWebsite(folder),
-  ...(__EVEN_PLUGIN__ ? {} : { chat: (folder?: string) => tabKindLoaded('chat').then((kind) => kind.make?.(folder)) }),
 }
 export function newFileRows(inside?: string): MenuEntry[] {
   const into = inside ?? workspace.activeSpace?.root
