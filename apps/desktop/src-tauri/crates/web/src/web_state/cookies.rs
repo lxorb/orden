@@ -51,9 +51,7 @@ fn until(cookie: &Cookie, now: f64) -> f64 {
     cookie.expires.unwrap_or(now + KEPT_FOR)
 }
 pub fn now() -> f64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0.0, |since| since.as_secs_f64())
+    SystemTime::now().duration_since(UNIX_EPOCH).map_or(0.0, |since| since.as_secs_f64())
 }
 pub async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
     engine::all(view).await
@@ -77,9 +75,7 @@ pub mod engine {
             return Ok(());
         }
         let list: Vec<Value> = cookies.iter().map(|one| to_devtools(one, now)).collect();
-        cdp::call(view, "Network.setCookies", &json!({ "cookies": list }))
-            .await
-            .map(|_| ())
+        cdp::call(view, "Network.setCookies", &json!({ "cookies": list })).await.map(|_| ())
     }
     pub fn cookies_in(answered: &Value) -> Vec<Cookie> {
         answered["cookies"]
@@ -96,10 +92,9 @@ pub mod engine {
     pub fn from_devtools(said: &Value) -> Option<Cookie> {
         let text = |key: &str| said[key].as_str().map(str::to_owned);
         let partition = match &said["partitionKey"] {
-            Value::String(site) => Some(Partition {
-                top_level_site: site.clone(),
-                cross_site_ancestor: false,
-            }),
+            Value::String(site) => {
+                Some(Partition { top_level_site: site.clone(), cross_site_ancestor: false })
+            }
             Value::Object(key) => Some(Partition {
                 top_level_site: key.get("topLevelSite")?.as_str()?.to_owned(),
                 cross_site_ancestor: key
@@ -115,11 +110,7 @@ pub mod engine {
             value: text("value").unwrap_or_default(),
             domain: text("domain")?,
             path: text("path").unwrap_or_else(|| "/".to_owned()),
-            expires: if session {
-                None
-            } else {
-                said["expires"].as_f64()
-            },
+            expires: if session { None } else { said["expires"].as_f64() },
             http_only: said["httpOnly"].as_bool().unwrap_or(false),
             secure: said["secure"].as_bool().unwrap_or(false),
             same_site: match said["sameSite"].as_str() {
@@ -147,10 +138,7 @@ pub mod engine {
             out.insert("domain".into(), json!(cookie.domain));
         } else {
             let scheme = if cookie.secure { "https" } else { "http" };
-            out.insert(
-                "url".into(),
-                json!(format!("{scheme}://{}{}", cookie.domain, cookie.path)),
-            );
+            out.insert("url".into(), json!(format!("{scheme}://{}{}", cookie.domain, cookie.path)));
         }
         out.insert("path".into(), json!(cookie.path));
         out.insert("secure".into(), json!(cookie.secure));
@@ -194,10 +182,7 @@ mod tests {
         assert_eq!(cookie.expires, Some(1_900_000_000.25));
         let back = to_devtools(&cookie, 0.0);
         assert_eq!(back["url"], "https://moodle.ethz.ch/");
-        assert!(
-            back.get("domain").is_none(),
-            "a host-only cookie is set by address"
-        );
+        assert!(back.get("domain").is_none(), "a host-only cookie is set by address");
         assert_eq!(back["expires"], 1_900_000_000.25);
         assert_eq!(back["sameSite"], "Strict");
         assert_eq!(back["priority"], "High");
@@ -214,10 +199,7 @@ mod tests {
         let cookie = from_devtools(&said).expect("a cookie");
         assert_eq!(cookie.expires, None);
         assert_eq!(
-            cookie
-                .partition
-                .as_ref()
-                .map(|one| one.top_level_site.as_str()),
+            cookie.partition.as_ref().map(|one| one.top_level_site.as_str()),
             Some("https://ethz.ch")
         );
         let back = to_devtools(&cookie, 1000.0);

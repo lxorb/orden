@@ -107,11 +107,7 @@ pub struct Said {
     pub why: Option<&'static str>,
 }
 impl Said {
-    const RUNNING: Said = Said {
-        state: "running",
-        code: None,
-        why: None,
-    };
+    const RUNNING: Said = Said { state: "running", code: None, why: None };
     fn ended(stopped: bool, code: Option<i32>) -> Said {
         Said {
             state: if stopped { "stopped" } else { "exited" },
@@ -163,16 +159,10 @@ impl Starting {
     fn claim(&self, key: &str) -> Claim<'_> {
         let mut keys = self.keys.held();
         while keys.contains(key) {
-            keys = self
-                .done
-                .wait(keys)
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            keys = self.done.wait(keys).unwrap_or_else(std::sync::PoisonError::into_inner);
         }
         keys.insert(key.to_owned());
-        Claim {
-            starting: self,
-            key: key.to_owned(),
-        }
+        Claim { starting: self, key: key.to_owned() }
     }
 }
 impl Drop for Claim<'_> {
@@ -243,9 +233,7 @@ fn still_running(apps: &HashMap<String, Arc<Running>>, key: &str, running: &Arc<
     apps.get(key).is_some_and(|one| Arc::ptr_eq(one, running))
 }
 fn owner(webview: &Webview) -> Result<(), String> {
-    orden_base::labels::own_window(webview)
-        .map(drop)
-        .map_err(|_| REFUSED.to_owned())
+    orden_base::labels::own_window(webview).map(drop).map_err(|_| REFUSED.to_owned())
 }
 fn found(webview: &Webview, key: &str) -> Result<Option<Arc<Running>>, String> {
     owner(webview)?;
@@ -256,9 +244,7 @@ fn found(webview: &Webview, key: &str) -> Result<Option<Arc<Running>>, String> {
 fn usable(key: &str) -> Result<(), String> {
     let fits = !key.is_empty()
         && key.len() <= 128
-        && key
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && key.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
         Ok(())
     } else {
@@ -305,11 +291,7 @@ pub async fn apps_start(
                 (argv, cwd.clone())
             }
         };
-        if !cfg!(any(
-            target_os = "linux",
-            target_os = "windows",
-            target_os = "macos"
-        )) {
+        if !cfg!(any(target_os = "linux", target_os = "windows", target_os = "macos")) {
             return Err("isolation".to_owned());
         }
         if let Run::Path { path, args, cwd } = &run {
@@ -371,10 +353,7 @@ fn run_on_its_display(
         pid: program.pid(),
         events: Mutex::new(Some(events)),
         stopping: AtomicBool::new(false),
-        screen: Arc::new(Mutex::new(Screen {
-            display: desktop.name(),
-            hz: view.hz,
-        })),
+        screen: Arc::new(Mutex::new(Screen { display: desktop.name(), hz: view.hz })),
         desktop: Mutex::new(Some(desktop)),
     });
     hosting(&app, &key, &running);
@@ -508,10 +487,7 @@ fn run_on_its_display(
         pid: child.id(),
         events: Mutex::new(Some(events)),
         stopping: AtomicBool::new(false),
-        screen: Arc::new(Mutex::new(Screen {
-            display: name,
-            hz: view.hz,
-        })),
+        screen: Arc::new(Mutex::new(Screen { display: name, hz: view.hz })),
         display: Mutex::new(Some(display)),
         sink: Mutex::new(sink),
     });
@@ -535,9 +511,7 @@ pub async fn apps_watch(
 ) -> Result<bool, String> {
     orden_base::lane::off_the_runtime(move || -> Result<bool, String> {
         let running = found(&webview, &key)?;
-        Ok(running
-            .inspect(|running| running.watched_by(events))
-            .is_some())
+        Ok(running.inspect(|running| running.watched_by(events)).is_some())
     })
     .await
 }
@@ -608,8 +582,7 @@ pub async fn apps_signal(
 }
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
-    data.contains("\"offer\"")
-        .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
+    data.contains("\"offer\"").then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
 }
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
@@ -658,11 +631,7 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
 }
 #[cfg(target_os = "linux")]
 fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
-    let clipboard = running
-        .display
-        .held()
-        .as_ref()
-        .and_then(display::Display::clipboard);
+    let clipboard = running.display.held().as_ref().and_then(display::Display::clipboard);
     let sound = running.sink.held().as_ref().map(audio::Sink::monitor);
     (clipboard, sound)
 }
@@ -741,13 +710,7 @@ pub fn end_all(app: &AppHandle) {
     std::thread::spawn(move || drop(all));
 }
 fn allowed_file(app: &AppHandle) -> Option<PathBuf> {
-    Some(
-        app.path()
-            .app_local_data_dir()
-            .ok()?
-            .join("apps")
-            .join("allowed.json"),
-    )
+    Some(app.path().app_local_data_dir().ok()?.join("apps").join("allowed.json"))
 }
 fn allowed_key(path: &str, args: &[String], cwd: Option<&str>) -> String {
     serde_json::json!([path, args, cwd]).to_string()
@@ -822,20 +785,14 @@ fn shown_line(path: &str, args: &[String]) -> String {
 }
 #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
 fn needed(here: bool, what: &str) -> bool {
-    assert!(
-        here || std::env::var_os("CI").is_none(),
-        "CI installs {what} for this test"
-    );
+    assert!(here || std::env::var_os("CI").is_none(), "CI installs {what} for this test");
     here
 }
 #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
 fn in_time(test: impl FnOnce() + Send + 'static) {
     within(std::time::Duration::from_secs(120), test);
 }
-#[cfg(all(
-    test,
-    any(target_os = "linux", target_os = "windows", target_os = "macos")
-))]
+#[cfg(all(test, any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn within(limit: std::time::Duration, test: impl FnOnce() + Send + 'static) {
     let (done, finished) = std::sync::mpsc::channel();
     let running = std::thread::spawn(move || {
@@ -865,9 +822,7 @@ mod tests {
         assert!(hung.is_err());
         assert!(began.elapsed() < std::time::Duration::from_secs(5));
         let failed = std::panic::catch_unwind(|| {
-            within(std::time::Duration::from_secs(5), || {
-                panic!("its own words")
-            });
+            within(std::time::Duration::from_secs(5), || panic!("its own words"));
         })
         .unwrap_err();
         assert_eq!(failed.downcast_ref::<&str>(), Some(&"its own words"));
@@ -891,34 +846,17 @@ mod tests {
     #[test]
     fn remembers_a_program_by_its_path_its_arguments_and_its_folder() {
         let one = allowed_key("/usr/bin/xterm", &["-e".to_owned(), "top".to_owned()], None);
+        assert_ne!(one, allowed_key("/usr/bin/xterm", &["-e".to_owned(), "htop".to_owned()], None));
         assert_ne!(
             one,
-            allowed_key(
-                "/usr/bin/xterm",
-                &["-e".to_owned(), "htop".to_owned()],
-                None
-            )
+            allowed_key("/usr/bin/xterm", &["-e".to_owned(), "top".to_owned()], Some("/tmp"))
         );
-        assert_ne!(
-            one,
-            allowed_key(
-                "/usr/bin/xterm",
-                &["-e".to_owned(), "top".to_owned()],
-                Some("/tmp")
-            )
-        );
-        assert_eq!(
-            one,
-            allowed_key("/usr/bin/xterm", &["-e".to_owned(), "top".to_owned()], None)
-        );
+        assert_eq!(one, allowed_key("/usr/bin/xterm", &["-e".to_owned(), "top".to_owned()], None));
     }
     #[test]
     fn shows_the_line_it_asks_about_as_it_would_be_typed() {
         assert_eq!(
-            shown_line(
-                "/opt/My App/run",
-                &["--x".to_owned(), "say \"hi\"".to_owned()]
-            ),
+            shown_line("/opt/My App/run", &["--x".to_owned(), "say \"hi\"".to_owned()]),
             r#""/opt/My App/run" --x "say \"hi\"""#
         );
     }
@@ -954,10 +892,7 @@ mod tests {
             pid: 0,
             events: Mutex::new(None),
             stopping: AtomicBool::new(false),
-            screen: Arc::new(Mutex::new(Screen {
-                display: String::new(),
-                hz: 60.0,
-            })),
+            screen: Arc::new(Mutex::new(Screen { display: String::new(), hz: 60.0 })),
             #[cfg(target_os = "linux")]
             display: Mutex::new(None),
             #[cfg(target_os = "linux")]

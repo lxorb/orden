@@ -48,11 +48,7 @@ fn table_rows(db: &Connection, query: &str) -> Vec<Value> {
     let Ok(mut statement) = db.prepare(query) else {
         return Vec::new();
     };
-    let names: Vec<String> = statement
-        .column_names()
-        .into_iter()
-        .map(str::to_owned)
-        .collect();
+    let names: Vec<String> = statement.column_names().into_iter().map(str::to_owned).collect();
     let Ok(rows) = statement.query_map([], |row| {
         let mut out = Map::new();
         for (at, name) in names.iter().enumerate() {
@@ -97,10 +93,8 @@ fn files_of(profile: &Path) -> Vec<String> {
         return found;
     }
     if let Some(name) = newest(profile, BACKUPS, BACKUP_PREFIX, BACKUP_SUFFIX) {
-        let at = found
-            .iter()
-            .position(|one| one.starts_with("sessionstore"))
-            .unwrap_or(found.len());
+        let at =
+            found.iter().position(|one| one.starts_with("sessionstore")).unwrap_or(found.len());
         found.insert(at, name);
     }
     found.extend(present(profile, &[PLACES, FAVICONS, SEARCH]));
@@ -131,40 +125,19 @@ mod tests {
                 .map(|one| (one.name, one.path, one.relative, one.default))
                 .collect::<Vec<_>>(),
             vec![
-                (
-                    "Default Profile".into(),
-                    "Profiles/a1.default".into(),
-                    true,
-                    true
-                ),
-                (
-                    "Default (release)".into(),
-                    "Profiles/b2.Default (release)".into(),
-                    true,
-                    false
-                ),
+                ("Default Profile".into(), "Profiles/a1.default".into(), true, true),
+                ("Default (release)".into(), "Profiles/b2.Default (release)".into(), true, false),
                 ("Work".into(), "Profiles/c3.Work".into(), true, false),
             ]
         );
-        assert_eq!(
-            installed_defaults(INI),
-            vec!["Profiles/b2.Default (release)".to_owned()]
-        );
+        assert_eq!(installed_defaults(INI), vec!["Profiles/b2.Default (release)".to_owned()]);
     }
     #[test]
     fn the_profile_zen_opens_comes_first_and_one_without_a_session_not_at_all() {
         let here = tempfile::tempdir().expect("a folder");
         fs::write(here.path().join("profiles.ini"), INI).expect("the list");
-        profile(
-            here.path(),
-            "Profiles/a1.default",
-            &["sessionstore-backups/recovery.jsonlz4"],
-        );
-        profile(
-            here.path(),
-            "Profiles/b2.Default (release)",
-            &["zen-sessions.jsonlz4"],
-        );
+        profile(here.path(), "Profiles/a1.default", &["sessionstore-backups/recovery.jsonlz4"]);
+        profile(here.path(), "Profiles/b2.Default (release)", &["zen-sessions.jsonlz4"]);
         fs::create_dir_all(here.path().join("Profiles/c3.Work")).expect("an empty profile");
         let found = profiles_in(here.path());
         let names: Vec<&str> = found.iter().map(|one| one.name.as_str()).collect();
@@ -212,11 +185,7 @@ mod tests {
     #[test]
     fn the_databases_and_the_engines_come_after_the_sessions_and_only_with_one() {
         let here = tempfile::tempdir().expect("a folder");
-        profile(
-            here.path(),
-            "p",
-            &["zen-sessions.jsonlz4", PLACES, FAVICONS, SEARCH],
-        );
+        profile(here.path(), "p", &["zen-sessions.jsonlz4", PLACES, FAVICONS, SEARCH]);
         profile(here.path(), "q", &[PLACES]);
         assert_eq!(
             files_of(&here.path().join("p")),

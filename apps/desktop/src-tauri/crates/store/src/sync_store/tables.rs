@@ -22,18 +22,10 @@ pub struct Table {
     pub columns: &'static [Column],
 }
 const fn maybe(name: &'static str, kind: Kind) -> Column {
-    Column {
-        name,
-        kind,
-        required: false,
-    }
+    Column { name, kind, required: false }
 }
 const fn always(name: &'static str, kind: Kind) -> Column {
-    Column {
-        name,
-        kind,
-        required: true,
-    }
+    Column { name, kind, required: true }
 }
 pub const TABLES: [Table; 10] = [
     Table {
@@ -171,15 +163,10 @@ impl Table {
             .ok_or_else(|| format!("{} has no column {name}", self.name))
     }
     pub fn keyed(&self) -> Result<&'static str, String> {
-        self.key
-            .ok_or_else(|| format!("{} rows have no key to find one by", self.name))
+        self.key.ok_or_else(|| format!("{} rows have no key to find one by", self.name))
     }
     pub fn listed(&self) -> String {
-        self.columns
-            .iter()
-            .map(|one| one.name)
-            .collect::<Vec<_>>()
-            .join(", ")
+        self.columns.iter().map(|one| one.name).collect::<Vec<_>>().join(", ")
     }
 }
 #[cfg(test)]
@@ -198,12 +185,7 @@ mod tests {
                 .expect("the table's shape");
             let made: Vec<(String, String, bool, bool)> = asked
                 .query_map([], |row| {
-                    Ok((
-                        row.get(1)?,
-                        row.get(2)?,
-                        row.get(3)?,
-                        row.get::<_, i64>(5)? > 0,
-                    ))
+                    Ok((row.get(1)?, row.get(2)?, row.get(3)?, row.get::<_, i64>(5)? > 0))
                 })
                 .expect("its columns")
                 .collect::<Result<_, _>>()
@@ -223,11 +205,9 @@ mod tests {
             }
         }
         let count: i64 = conn
-            .query_row(
-                "select count(*) from sqlite_master where type = 'table'",
-                [],
-                |row| row.get(0),
-            )
+            .query_row("select count(*) from sqlite_master where type = 'table'", [], |row| {
+                row.get(0)
+            })
             .expect("the tables");
         assert_eq!(usize::try_from(count).ok(), Some(TABLES.len()));
     }
@@ -236,9 +216,7 @@ mod tests {
         assert!(table("docs").is_ok());
         assert!(table("sqlite_master").is_err());
         assert!(table("docs; drop table docs").is_err());
-        assert!(table("docs")
-            .and_then(|docs| docs.column("id; --"))
-            .is_err());
+        assert!(table("docs").and_then(|docs| docs.column("id; --")).is_err());
         assert!(table("log").and_then(super::Table::keyed).is_err());
     }
 }

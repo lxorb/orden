@@ -49,10 +49,7 @@ const ASKED_AT: [u64; 4] = [0, 150, 500, 1200];
 const AGAIN_EVERY: u64 = 1000;
 static MEASURING: AtomicU64 = AtomicU64::new(0);
 fn wait_before(ask: usize) -> u64 {
-    match (
-        ask.checked_sub(1).and_then(|at| ASKED_AT.get(at)),
-        ASKED_AT.get(ask),
-    ) {
+    match (ask.checked_sub(1).and_then(|at| ASKED_AT.get(at)), ASKED_AT.get(ask)) {
         (_, None) => AGAIN_EVERY,
         (None, Some(&first)) => first,
         (Some(&before), Some(&at)) => at - before,
@@ -154,10 +151,7 @@ pub async fn extension_popup_open(
         let _ = sending.try_send(made);
     })
     .map_err(|error| error.to_string())?;
-    waiting
-        .recv()
-        .await
-        .unwrap_or_else(|| Err("that popup was never built".into()))
+    waiting.recv().await.unwrap_or_else(|| Err("that popup was never built".into()))
 }
 #[tauri::command]
 pub fn extension_popup_place(app: AppHandle, rect: Rect) {
@@ -165,10 +159,8 @@ pub fn extension_popup_place(app: AppHandle, rect: Rect) {
         let _doing = orden_crashes::stall::doing("extension_popup_place");
         let scale = orden_web::page_scale::of(&view.window()).unwrap_or(1.0);
         let _ = view.set_position(PhysicalPosition::new(rect.x * scale, rect.y * scale));
-        let _ = view.set_size(PhysicalSize::new(
-            rect.width.max(1.0) * scale,
-            rect.height.max(1.0) * scale,
-        ));
+        let _ = view
+            .set_size(PhysicalSize::new(rect.width.max(1.0) * scale, rect.height.max(1.0) * scale));
     }
 }
 #[tauri::command]
@@ -207,9 +199,7 @@ fn went(app: &AppHandle, label: &str) {
     }
 }
 fn blank() -> Result<Url, String> {
-    "about:blank"
-        .parse()
-        .map_err(|_| "no blank page to start from".to_string())
+    "about:blank".parse().map_err(|_| "no blank page to start from".to_string())
 }
 fn sent(app: &AppHandle, view: &Webview, address: &Url) {
     {
@@ -246,13 +236,7 @@ fn measure(app: &AppHandle, view: &Webview) {
         }
         shown = wanted;
         resized(app, view.label(), LogicalSize::new(shown.0, shown.1));
-        let _ = app.emit(
-            SAID,
-            Said::Size {
-                width: shown.0,
-                height: shown.1,
-            },
-        );
+        let _ = app.emit(SAID, Said::Size { width: shown.0, height: shown.1 });
     }
 }
 fn resized(app: &AppHandle, label: &str, size: LogicalSize<u32>) {
@@ -282,10 +266,7 @@ fn evaluated(view: &Webview) -> Option<String> {
         Duration::from_secs(2),
     )
     .ok()?;
-    said.get("result")?
-        .get("value")?
-        .as_str()
-        .map(str::to_owned)
+    said.get("result")?.get("value")?.as_str().map(str::to_owned)
 }
 #[cfg(test)]
 mod tests {
@@ -293,10 +274,7 @@ mod tests {
 
     #[test]
     fn a_popup_is_asked_its_size_for_as_long_as_it_is_open() {
-        assert_eq!(
-            (0..4).map(wait_before).collect::<Vec<_>>(),
-            [0, 150, 350, 700]
-        );
+        assert_eq!((0..4).map(wait_before).collect::<Vec<_>>(), [0, 150, 350, 700]);
         assert!((4..1000).all(|ask| wait_before(ask) == AGAIN_EVERY));
     }
     #[test]
@@ -332,10 +310,7 @@ mod tests {
                 );
             }
         }
-        assert!(
-            checked >= 4,
-            "the scan found the calls it is about ({checked})"
-        );
+        assert!(checked >= 4, "the scan found the calls it is about ({checked})");
     }
     #[test]
     fn a_popup_closed_or_opened_again_before_it_was_built_is_never_built() {

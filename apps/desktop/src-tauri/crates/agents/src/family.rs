@@ -71,10 +71,7 @@ fn quiet(command: &mut Command) -> &mut Command {
         use std::os::windows::process::CommandExt as _;
         command.creation_flags(0x0800_0000);
     }
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+    command.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
 }
 #[cfg(windows)]
 #[allow(unsafe_code)]

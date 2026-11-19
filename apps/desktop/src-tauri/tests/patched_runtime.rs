@@ -18,11 +18,7 @@ fn linux_sources() -> Vec<(PathBuf, String)> {
         .filter(|path| path.extension().is_some_and(|ext| ext == "rs"))
         .map(|path| {
             let text = read(&path);
-            let code = text
-                .split("#[cfg(test)]")
-                .next()
-                .unwrap_or_default()
-                .to_owned();
+            let code = text.split("#[cfg(test)]").next().unwrap_or_default().to_owned();
             (path, code)
         })
         .collect();
@@ -41,10 +37,7 @@ fn no_x_window_asked_for_is_asserted_expected_or_unwrapped() {
                 continue;
             }
             for crash in ["assert", "expect(", "unwrap()", "panic!"] {
-                assert!(
-                    !line.contains(crash),
-                    "{at} crashes on a missing X window: {line}"
-                );
+                assert!(!line.contains(crash), "{at} crashes on a missing X window: {line}");
             }
             if line.contains("window_handle()") {
                 assert!(
@@ -108,15 +101,9 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
     let process = read(&root().join("src/cef_impl/client/process.rs"));
     assert!(process.contains("super::unhosted::client(self.unhosted_tab_handler.clone())"));
     let unhosted = read(&root().join("src/cef_impl/client/unhosted.rs"));
-    let browsing = unhosted
-        .find("fn on_before_browse(")
-        .expect("its first navigation is heard");
-    let handing = unhosted
-        .find("handler(url);")
-        .expect("the address is handed over");
-    let closing = unhosted
-        .find("host.close_browser(1);")
-        .expect("the browser is closed");
+    let browsing = unhosted.find("fn on_before_browse(").expect("its first navigation is heard");
+    let handing = unhosted.find("handler(url);").expect("the address is handed over");
+    let closing = unhosted.find("host.close_browser(1);").expect("the browser is closed");
     assert!(browsing < handing && handing < closing);
     assert!(unhosted.contains("crate::platform::put_out_of_sight(host.window_handle());"));
     assert!(!unhosted.contains("#[cfg("));
@@ -137,9 +124,8 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
 #[test]
 fn the_eval_observer_never_lets_go_of_its_own_registration_from_inside_its_callback() {
     let source = read(&root().join("src/webview.rs"));
-    let start = source
-        .find("struct EvalScriptWithCallbackDevToolsObserver")
-        .expect("the eval observer");
+    let start =
+        source.find("struct EvalScriptWithCallbackDevToolsObserver").expect("the eval observer");
     let body = &source[start..];
     let end = body.find("\n}\n").expect("the observer's end");
     let observer = &body[..end];

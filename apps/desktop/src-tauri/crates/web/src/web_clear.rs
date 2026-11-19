@@ -50,9 +50,8 @@ async fn page_in_store(
     store: Option<&str>,
 ) -> Result<Webview, String> {
     let label = format!("web-clearing-{}", NEXT.fetch_add(1, Ordering::Relaxed));
-    let blank: tauri::Url = "about:blank"
-        .parse()
-        .map_err(|_| "the data could not be reached".to_string())?;
+    let blank: tauri::Url =
+        "about:blank".parse().map_err(|_| "the data could not be reached".to_string())?;
     let builder = WebviewBuilder::new(&label, WebviewUrl::External(blank))
         .focused(false)
         .disable_drag_drop_handler();
@@ -73,12 +72,8 @@ async fn page_in_store(
         let _ = sending.try_send(made);
     })
     .map_err(|error| format!("the data could not be reached: {error}"))?;
-    waiting
-        .recv()
-        .await
-        .unwrap_or_else(|| Err("the data could not be reached".to_string()))?;
-    app.get_webview(&label)
-        .ok_or_else(|| "the data could not be reached".to_string())
+    waiting.recv().await.unwrap_or_else(|| Err("the data could not be reached".to_string()))?;
+    app.get_webview(&label).ok_or_else(|| "the data could not be reached".to_string())
 }
 mod engine {
     use serde_json::{json, Value};
@@ -129,39 +124,17 @@ mod tests {
         let said: Clearing =
             serde_json::from_str(r#"{"since":1700000000000,"site":true,"cache":false}"#)
                 .expect("a clearing");
-        assert_eq!(
-            said,
-            Clearing {
-                since: 1_700_000_000_000.0,
-                site: true,
-                cache: false
-            }
-        );
+        assert_eq!(said, Clearing { since: 1_700_000_000_000.0, site: true, cache: false });
         assert!(!said.always());
     }
     #[test]
     fn chromium_is_asked_site_by_site() {
         let sites = vec!["https://a.example".to_string()];
-        let ranged = Clearing {
-            since: 5.0,
-            site: true,
-            cache: true,
-        };
-        let methods: Vec<&str> = super::engine::asks(ranged, &sites)
-            .into_iter()
-            .map(|(method, _)| method)
-            .collect();
-        assert_eq!(
-            methods,
-            ["Storage.clearDataForOrigin", "Network.clearBrowserCache"]
-        );
-        let always = Clearing {
-            since: 0.0,
-            ..ranged
-        };
-        assert_eq!(
-            super::engine::asks(always, &sites)[0].0,
-            "Network.clearBrowserCookies"
-        );
+        let ranged = Clearing { since: 5.0, site: true, cache: true };
+        let methods: Vec<&str> =
+            super::engine::asks(ranged, &sites).into_iter().map(|(method, _)| method).collect();
+        assert_eq!(methods, ["Storage.clearDataForOrigin", "Network.clearBrowserCache"]);
+        let always = Clearing { since: 0.0, ..ranged };
+        assert_eq!(super::engine::asks(always, &sites)[0].0, "Network.clearBrowserCookies");
     }
 }

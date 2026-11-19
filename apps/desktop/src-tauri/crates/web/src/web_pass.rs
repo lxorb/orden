@@ -21,9 +21,8 @@ const MARK: &str = "orden://pass-mark";
 const SUBMITTED: &str = "orden://pass-submitted";
 const FILL: &str =
     "function (asked) { var pass = globalThis.__ordenPass; return pass ? pass.fill(asked) : false }";
-const KINDS: [&str; 8] = [
-    "login", "username", "password", "totp", "signup", "change", "card", "identity",
-];
+const KINDS: [&str; 8] =
+    ["login", "username", "password", "totp", "signup", "change", "card", "identity"];
 const ROLES: [&str; 25] = [
     "username",
     "email",
@@ -129,13 +128,7 @@ impl Said {
                     })
             }
             Self::Mark { form, field } => script_named(form) && script_named(field),
-            Self::Submitted {
-                form,
-                form_kind,
-                username,
-                password,
-                new_password,
-            } => {
+            Self::Submitted { form, form_kind, username, password, new_password } => {
                 script_named(form)
                     && KINDS.contains(&form_kind.as_str())
                     && short_value(username.as_ref())
@@ -183,13 +176,7 @@ fn event_told(tab: &str, place: &Place, said: &Said) -> (&'static str, Value) {
             }),
         ),
         Said::Mark { form, field } => (MARK, json!({ "form": form, "field": field })),
-        Said::Submitted {
-            form,
-            form_kind,
-            username,
-            password,
-            new_password,
-        } => (
+        Said::Submitted { form, form_kind, username, password, new_password } => (
             SUBMITTED,
             json!({
                 "form": form,
@@ -237,9 +224,7 @@ fn fill_checked(
         return Err("Pass was asked to fill a form it does not know".into());
     }
     if values.len() > MOST_VALUES
-        || values
-            .iter()
-            .any(|(field, value)| !script_named(field) || value.len() > LONGEST_VALUE)
+        || values.iter().any(|(field, value)| !script_named(field) || value.len() > LONGEST_VALUE)
     {
         return Err("Pass was asked to fill fields it does not know".into());
     }
@@ -272,9 +257,7 @@ pub(crate) struct Queues<J: Send + 'static> {
 }
 impl<J: Send + 'static> Queues<J> {
     pub fn new() -> Self {
-        Self {
-            held: Mutex::new(HashMap::new()),
-        }
+        Self { held: Mutex::new(HashMap::new()) }
     }
     pub fn spawn(&self, tab: &str, job: J, run: fn(J)) {
         let mut held = self.held.held();
@@ -315,9 +298,7 @@ fn placed_by(
     now(&learnt()?)
 }
 fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
-    frames_in(tree, main)
-        .into_iter()
-        .find(|one| one.frame == was.frame && one.origin == was.origin)
+    frames_in(tree, main).into_iter().find(|one| one.frame == was.frame && one.origin == was.origin)
 }
 pub use engine::binding_called;
 
@@ -421,14 +402,9 @@ mod engine {
         context: i64,
         was: &Place,
     ) -> Option<Place> {
-        let tree = devtools::call(
-            view,
-            session_asked(session),
-            "Page.getFrameTree",
-            &json!({}),
-            PATIENCE,
-        )
-        .ok()?;
+        let tree =
+            devtools::call(view, session_asked(session), "Page.getFrameTree", &json!({}), PATIENCE)
+                .ok()?;
         let now = super::place_in(tree.get("frameTree"), session.is_empty(), was)?;
         known_frames()
             .contexts
@@ -442,13 +418,9 @@ mod engine {
         json!({ "frameId": frame, "worldName": crate::web_worlds::WORLD })
     }
     fn frames_learned(view: &Webview, tab: &str, session: &str) {
-        let Ok(tree) = devtools::call(
-            view,
-            session_asked(session),
-            "Page.getFrameTree",
-            &json!({}),
-            PATIENCE,
-        ) else {
+        let Ok(tree) =
+            devtools::call(view, session_asked(session), "Page.getFrameTree", &json!({}), PATIENCE)
+        else {
             return;
         };
         for frame in super::frames_in(tree.get("frameTree"), session.is_empty()) {
@@ -468,12 +440,8 @@ mod engine {
             if known.contexts.len() >= MOST_KNOWN {
                 known.contexts.retain(|(owner, _, _), _| owner != tab);
             }
-            known
-                .frames
-                .insert((tab.to_string(), frame.frame.clone()), session.to_string());
-            known
-                .contexts
-                .insert((tab.to_string(), session.to_string(), context), frame);
+            known.frames.insert((tab.to_string(), frame.frame.clone()), session.to_string());
+            known.contexts.insert((tab.to_string(), session.to_string(), context), frame);
         }
     }
     fn frame_filled(
@@ -516,10 +484,7 @@ mod engine {
                 "silent": true,
             }),
         )?;
-        Ok(said
-            .pointer("/result/value")
-            .and_then(Value::as_bool)
-            .unwrap_or(false))
+        Ok(said.pointer("/result/value").and_then(Value::as_bool).unwrap_or(false))
     }
     pub(super) async fn frame_fill(
         view: Webview,
@@ -554,11 +519,7 @@ fn frames_in(tree: Option<&Value>, main: bool) -> Vec<Place> {
         if let Some(frame) = node.get("frame") {
             if let Some(id) = frame.get("id").and_then(Value::as_str) {
                 let text = |key: &str| {
-                    frame
-                        .get(key)
-                        .and_then(Value::as_str)
-                        .unwrap_or_default()
-                        .to_string()
+                    frame.get(key).and_then(Value::as_str).unwrap_or_default().to_string()
                 };
                 found.push(Place {
                     frame: id.to_string(),
@@ -568,12 +529,7 @@ fn frames_in(tree: Option<&Value>, main: bool) -> Vec<Place> {
                 });
             }
         }
-        walking.extend(
-            node.get("childFrames")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten(),
-        );
+        walking.extend(node.get("childFrames").and_then(Value::as_array).into_iter().flatten());
     }
     found
 }
@@ -600,12 +556,8 @@ mod tests {
         };
         let forgotten = std::cell::Cell::new(false);
         let now = |was: &Place| (was.origin == elsewhere.origin).then(|| elsewhere.clone());
-        let placed = placed_by(
-            Some(place()),
-            now,
-            || forgotten.set(true),
-            || Some(elsewhere.clone()),
-        );
+        let placed =
+            placed_by(Some(place()), now, || forgotten.set(true), || Some(elsewhere.clone()));
         assert_eq!(placed, Some(elsewhere.clone()));
         assert!(forgotten.get());
     }
@@ -621,21 +573,13 @@ mod tests {
     }
     #[test]
     fn a_frame_the_engine_does_not_place_says_nothing() {
-        assert_eq!(
-            placed_by(None, |was| Some(was.clone()), || (), || None),
-            None
-        );
+        assert_eq!(placed_by(None, |was| Some(was.clone()), || (), || None), None);
     }
     fn place() -> Place {
         framed("F1", "https://a.example", "https://a.example/login", true)
     }
     fn framed(frame: &str, origin: &str, url: &str, top: bool) -> Place {
-        Place {
-            frame: frame.into(),
-            origin: origin.into(),
-            url: url.into(),
-            top,
-        }
+        Place { frame: frame.into(), origin: origin.into(), url: url.into(), top }
     }
     #[test]
     fn a_page_is_secure_when_it_is_https_or_on_this_machine() {
@@ -748,13 +692,8 @@ mod tests {
         let heard = message_read(r#"{"doc":"<script>","kind":"mark","form":"f1","field":"e1"}"#);
         assert_eq!(heard.expect("mark").doc, None);
         assert_eq!(
-            message_read(r#"{"kind":"mark","form":"f1","field":"e1"}"#)
-                .expect("mark")
-                .said,
-            Said::Mark {
-                form: "f1".into(),
-                field: "e1".into()
-            }
+            message_read(r#"{"kind":"mark","form":"f1","field":"e1"}"#).expect("mark").said,
+            Said::Mark { form: "f1".into(), field: "e1".into() }
         );
     }
     #[test]
@@ -765,10 +704,7 @@ mod tests {
         });
         assert_eq!(
             place_in(Some(&moved), true, &was),
-            Some(Place {
-                url: "https://a.example/account".into(),
-                ..place()
-            })
+            Some(Place { url: "https://a.example/account".into(), ..place() })
         );
         let elsewhere = json!({
             "frame": { "id": "F1", "url": "https://b.example/", "securityOrigin": "https://b.example" },
@@ -840,12 +776,7 @@ mod tests {
         assert_eq!(
             frames,
             vec![
-                framed(
-                    "C",
-                    "https://pay.example",
-                    "https://pay.example/card#x",
-                    false
-                ),
+                framed("C", "https://pay.example", "https://pay.example/card#x", false),
                 framed("M", "https://a.example", "https://a.example/", true),
                 framed("S", "https://a.example", "about:srcdoc", false),
             ]

@@ -31,9 +31,7 @@ pub fn wear_page_styles(app: AppHandle, css: String) {
         *kept = read.map_or_else(|_| NOTHING.to_string(), |pages| pages.to_string());
     }
     let views = app.webviews();
-    let pages = views
-        .values()
-        .filter(|one| one.label().starts_with(crate::web_tabs::LABEL));
+    let pages = views.values().filter(|one| one.label().starts_with(crate::web_tabs::LABEL));
     pages.for_each(worn);
 }
 pub fn with(scripts: String) -> String {

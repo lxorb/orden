@@ -76,11 +76,7 @@ pub fn chord(said: &str) -> Result<Key, String> {
             "control" | "ctrl" | "controlormeta" => CONTROL,
             "meta" | "command" | "cmd" | "win" | "super" => META,
             "shift" => SHIFT,
-            _ => {
-                return Err(format!(
-                    "{one} is not a modifier: Alt, Control, Meta or Shift"
-                ))
-            }
+            _ => return Err(format!("{one} is not a modifier: Alt, Control, Meta or Shift")),
         };
     }
     let mut key = named(last).ok_or_else(|| format!("{last} is not a key name"))?;
@@ -174,25 +170,10 @@ mod tests {
 
     #[test]
     fn what_changes_a_fields_words_is_told_from_what_moves_about() {
-        for words in [
-            "a",
-            "Shift+B",
-            "Enter",
-            "Backspace",
-            "Delete",
-            "Control+V",
-            "Meta+x",
-        ] {
+        for words in ["a", "Shift+B", "Enter", "Backspace", "Delete", "Control+V", "Meta+x"] {
             assert!(chord(words).expect(words).changes_words(), "{words}");
         }
-        for moving in [
-            "Tab",
-            "Shift+Tab",
-            "Escape",
-            "ArrowDown",
-            "Control+A",
-            "Control+C",
-        ] {
+        for moving in ["Tab", "Shift+Tab", "Escape", "ArrowDown", "Control+A", "Control+C"] {
             assert!(!chord(moving).expect(moving).changes_words(), "{moving}");
         }
     }
@@ -219,10 +200,7 @@ mod tests {
         assert_eq!(shifted.modifiers, SHIFT);
         assert_eq!(chord("Shift+a").expect("key").text.as_deref(), Some("A"));
         assert_eq!(chord("Control++").expect("key").name, "+");
-        assert_eq!(
-            chord("Control+Shift+R").expect("key").modifiers,
-            CONTROL | SHIFT
-        );
+        assert_eq!(chord("Control+Shift+R").expect("key").modifiers, CONTROL | SHIFT);
     }
     #[test]
     fn a_name_that_is_not_a_key_is_refused() {
@@ -241,14 +219,7 @@ mod tests {
     }
     #[test]
     fn a_key_that_presses_is_asked_of_the_page_whatever_is_held() {
-        for said in [
-            "Control+Space",
-            "Alt+Space",
-            "Meta+Space",
-            "Space",
-            "Enter",
-            "a",
-        ] {
+        for said in ["Control+Space", "Alt+Space", "Meta+Space", "Space", "Enter", "a"] {
             assert!(chord(said).expect("key").judged_by_the_page(), "{said}");
         }
         for said in ["Tab", "Escape", "ArrowDown"] {
@@ -257,13 +228,7 @@ mod tests {
     }
     #[test]
     fn space_and_enter_press_what_has_the_keyboard() {
-        for said in [
-            "Space",
-            "Enter",
-            "Shift+Enter",
-            "Control+Enter",
-            "Control+Space",
-        ] {
+        for said in ["Space", "Enter", "Shift+Enter", "Control+Enter", "Control+Space"] {
             assert!(chord(said).expect("key").presses(), "{said}");
         }
         for said in ["Tab", "a", "Escape", "ArrowDown"] {

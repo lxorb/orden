@@ -13,12 +13,9 @@ pub fn program() -> Result<PathBuf, String> {
     }
     let path: Vec<PathBuf> = std::env::var_os("PATH")
         .map_or_else(Vec::new, |path| std::env::split_paths(&path).collect());
-    Ok(chosen(
-        &exe,
-        std::env::var_os("APPIMAGE").map(PathBuf::from),
-        &path,
-        |candidate| std::fs::canonicalize(candidate).ok(),
-    ))
+    Ok(chosen(&exe, std::env::var_os("APPIMAGE").map(PathBuf::from), &path, |candidate| {
+        std::fs::canonicalize(candidate).ok()
+    }))
 }
 fn chosen(
     exe: &Path,
@@ -58,15 +55,8 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
     if path == now || command.is_empty() {
         return false;
     }
-    let name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or_default();
-    if FORMER.contains(&name)
-        && path
-            .parent()
-            .is_some_and(|folder| Some(folder) == now.parent())
-    {
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    if FORMER.contains(&name) && path.parent().is_some_and(|folder| Some(folder) == now.parent()) {
         return true;
     }
     if moved_from_former_folder(path, now) {
@@ -75,10 +65,7 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
     let ours =
         |name: &str| NAMES.contains(&name) || name == ".orden-wrapped" || name == ".nib-wrapped";
     if let Some(copy) = store_copy(path) {
-        let package = copy
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default();
+        let package = copy.file_name().and_then(|name| name.to_str()).unwrap_or_default();
         let named = package
             .split_once('-')
             .is_some_and(|(_, rest)| rest.starts_with("orden-") || rest.starts_with("nib-"));
@@ -92,10 +79,7 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
         .filter(|macos| macos.ends_with("Contents/MacOS"))
         .and_then(|macos| macos.parent()?.parent());
     if let Some(bundle) = bundle.filter(|_| ours(name)) {
-        let folder = bundle
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default();
+        let folder = bundle.file_name().and_then(|name| name.to_str()).unwrap_or_default();
         let lent = bundle.parent().and_then(Path::parent) == Some(Path::new("/Volumes"))
             || command.contains("/AppTranslocation/");
         return BUNDLES[1..].contains(&folder) || (lent && folder == BUNDLES[0]);
@@ -109,11 +93,8 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
     })
 }
 fn moved_from_former_folder(path: &Path, now: &Path) -> bool {
-    let name_of = |path: &Path| {
-        path.file_name()
-            .and_then(|name| name.to_str())
-            .map(str::to_ascii_lowercase)
-    };
+    let name_of =
+        |path: &Path| path.file_name().and_then(|name| name.to_str()).map(str::to_ascii_lowercase);
     let (Some(was), Some(is)) = (path.parent(), now.parent()) else {
         return false;
     };
@@ -126,10 +107,7 @@ pub fn command_in(said: &str) -> Option<&str> {
     said.lines().find_map(|line| {
         let line = line.trim();
         let (label, rest) = line.split_once(':')?;
-        label
-            .eq_ignore_ascii_case("command")
-            .then_some(rest.trim())
-            .filter(|rest| !rest.is_empty())
+        label.eq_ignore_ascii_case("command").then_some(rest.trim()).filter(|rest| !rest.is_empty())
     })
 }
 #[tauri::command(async)]
@@ -169,10 +147,7 @@ mod tests {
         let mount = Path::new("/tmp/.mount_OrdenX1/usr/bin/nib");
         let image = PathBuf::from("/home/e/Apps/Orden-0.15.0-linux-x64.AppImage");
         assert_eq!(chosen(mount, Some(image.clone()), &[], links), image);
-        assert_eq!(
-            chosen(mount, Some(PathBuf::from("Orden.AppImage")), &[], links),
-            mount
-        );
+        assert_eq!(chosen(mount, Some(PathBuf::from("Orden.AppImage")), &[], links), mount);
     }
     #[test]
     fn a_nix_copy_is_named_by_the_path_that_leads_to_it() {
@@ -235,21 +210,12 @@ mod tests {
                 "/Applications/Orden.app/Contents/MacOS/nib",
                 "/Applications/Orden.app/Contents/MacOS/orden",
             ),
-            (
-                "/home/e/.local/Orden/nib.exe",
-                "/home/e/.local/Orden/orden.exe",
-            ),
+            ("/home/e/.local/Orden/nib.exe", "/home/e/.local/Orden/orden.exe"),
         ] {
             assert!(older_copy(older, Path::new(now)), "{older}");
         }
-        assert!(!older_copy(
-            "/usr/local/bin/nib",
-            Path::new("/usr/share/Orden/orden")
-        ));
-        assert!(!older_copy(
-            "/usr/share/Orden/nibble",
-            Path::new("/usr/share/Orden/orden")
-        ));
+        assert!(!older_copy("/usr/local/bin/nib", Path::new("/usr/share/Orden/orden")));
+        assert!(!older_copy("/usr/share/Orden/nibble", Path::new("/usr/share/Orden/orden")));
     }
     #[test]
     fn the_program_in_the_folder_of_a_former_name_beside_this_one_is_an_older_copy() {

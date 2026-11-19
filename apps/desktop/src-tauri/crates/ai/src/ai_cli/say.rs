@@ -14,10 +14,7 @@ pub struct Image {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "do", rename_all = "camelCase")]
 pub enum GoalSay {
-    Set {
-        objective: String,
-        budget: Option<u64>,
-    },
+    Set { objective: String, budget: Option<u64> },
     Pause,
     Resume,
     Clear,
@@ -67,9 +64,7 @@ impl Say {
                 return Err(format!("{model:?} is not a model name"))
             }
             Self::Compact { focus } => fits(focus)?,
-            Self::Goal {
-                goal: GoalSay::Set { objective, .. },
-            } => fits(objective)?,
+            Self::Goal { goal: GoalSay::Set { objective, .. } } => fits(objective)?,
             _ => {}
         }
         Ok(self)
@@ -82,10 +77,8 @@ fn fits(text: &str) -> Result<(), String> {
     Ok(())
 }
 fn picture(image: &Image) -> Result<(), String> {
-    let kind = matches!(
-        image.mime.as_str(),
-        "image/png" | "image/jpeg" | "image/gif" | "image/webp"
-    );
+    let kind =
+        matches!(image.mime.as_str(), "image/png" | "image/jpeg" | "image/gif" | "image/webp");
     let base64 = image.data.len() <= LONGEST_IMAGE
         && image
             .data

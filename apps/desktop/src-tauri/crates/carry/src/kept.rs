@@ -90,11 +90,7 @@ pub(crate) fn keep_unless_said(folder: &Path, key: &str, value: String) -> Resul
 }
 #[cfg(test)]
 pub(crate) fn forget_now(folder: &Path, key: &str) -> Result<(), String> {
-    write_down(&Write {
-        folder: folder.to_path_buf(),
-        key: key.to_owned(),
-        said: Said::Gone,
-    })
+    write_down(&Write { folder: folder.to_path_buf(), key: key.to_owned(), said: Said::Gone })
 }
 #[derive(Serialize, Default, Debug, PartialEq, Eq)]
 pub(crate) struct Kept {
@@ -124,9 +120,7 @@ pub(crate) fn read_back(folder: &Path) -> Kept {
     kept
 }
 pub fn read_kept(app: &AppHandle) {
-    let kept = kept_folder(app)
-        .map(|folder| read_back(&folder))
-        .unwrap_or_default();
+    let kept = kept_folder(app).map(|folder| read_back(&folder)).unwrap_or_default();
     *READ.held() = Some(kept);
 }
 pub fn kept_script() -> String {
@@ -148,10 +142,7 @@ mod tests {
         let folder = Path::new("/kept");
         for key in ["orden:session", "orden:font/ui", "ü ✓", ""] {
             let file = kept_file(folder, key);
-            let name = file
-                .file_name()
-                .and_then(|one| one.to_str())
-                .unwrap_or_default();
+            let name = file.file_name().and_then(|one| one.to_str()).unwrap_or_default();
             if key.is_empty() {
                 assert_eq!(kept_key(name), None);
             } else {
@@ -170,12 +161,7 @@ mod tests {
             ("orden:draft", Said::Value("words".into())),
             ("orden:old", Said::Gone),
         ] {
-            write_down(&Write {
-                folder: folder.clone(),
-                key: key.into(),
-                said,
-            })
-            .expect("written");
+            write_down(&Write { folder: folder.clone(), key: key.into(), said }).expect("written");
         }
         write_down(&Write {
             folder: folder.clone(),
@@ -184,14 +170,8 @@ mod tests {
         })
         .expect("written");
         let kept: Kept = read_back(&folder);
-        assert_eq!(
-            kept.values.get("orden:font").map(String::as_str),
-            Some("Lato")
-        );
-        assert_eq!(
-            kept.values.get("orden:draft").map(String::as_str),
-            Some("words")
-        );
+        assert_eq!(kept.values.get("orden:font").map(String::as_str), Some("Lato"));
+        assert_eq!(kept.values.get("orden:draft").map(String::as_str), Some("words"));
         assert_eq!(kept.gone, vec!["orden:old".to_string()]);
         let _ = std::fs::remove_dir_all(&folder);
     }

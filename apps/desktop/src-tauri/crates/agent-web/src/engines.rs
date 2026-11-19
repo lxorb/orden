@@ -40,9 +40,7 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
     if rest.is_empty() {
         return Some(None);
     }
-    rest.strip_prefix('_')
-        .filter(|one| !one.is_empty())
-        .map(Some)
+    rest.strip_prefix('_').filter(|one| !one.is_empty()).map(Some)
 }
 pub type Heard = Box<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
 pub trait Windowless: Send + Sync {
@@ -74,9 +72,7 @@ pub fn hand(pages: Pages) {
     let _ = PAGES.set(pages);
 }
 pub fn pages() -> Result<&'static Pages, String> {
-    PAGES
-        .get()
-        .ok_or_else(|| "the engine has not started".to_owned())
+    PAGES.get().ok_or_else(|| "the engine has not started".to_owned())
 }
 #[derive(Clone)]
 pub enum View {
@@ -117,10 +113,7 @@ pub fn opened(label: &str, tab: &str) {
 pub const NAME: &str = "Chromium";
 const CANNOT: &[(&str, &str)] = &[];
 pub fn cannot(verb: &str) -> Option<&'static str> {
-    CANNOT
-        .iter()
-        .find(|(name, _)| *name == verb)
-        .map(|(_, why)| *why)
+    CANNOT.iter().find(|(name, _)| *name == verb).map(|(_, why)| *why)
 }
 pub fn refused(verb: &str) -> Answer {
     Answer::error(
@@ -196,9 +189,8 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
     let Some((grant, store)) = limits else {
         return Ok(());
     };
-    let placed = at
-        .iter()
-        .any(|one| orden_agents::policy::from_a_site(&orden_agents::policy::made_by(one)));
+    let placed =
+        at.iter().any(|one| orden_agents::policy::from_a_site(&orden_agents::policy::made_by(one)));
     if !placed && limits_sites(limits) {
         return Err("the engine did not say which site that came from".into());
     }
@@ -264,17 +256,11 @@ mod tests {
         let refused = |facts: &Facts| {
             matches!(
                 acts_in(Some(&limits), facts),
-                Err(Answer::Error {
-                    code: Code::SiteDenied,
-                    ..
-                })
+                Err(Answer::Error { code: Code::SiteDenied, .. })
             )
         };
         assert!(refused(&facts(&["https://bank.example/pay"], false)));
-        assert!(refused(&facts(
-            &["about:blank", "https://bank.example"],
-            false
-        )));
+        assert!(refused(&facts(&["about:blank", "https://bank.example"], false)));
         assert!(refused(&facts(&[], true)));
         assert!(acts_in(Some(&limits), &facts(&["https://shop.example/"], false)).is_ok());
         assert!(acts_in(None, &facts(&["https://bank.example/"], false)).is_ok());
@@ -283,35 +269,21 @@ mod tests {
     #[test]
     fn a_frame_of_a_denied_site_is_not_read() {
         let limits = denying();
-        assert!(!frame_readable(
-            Some(&limits),
-            &at(&["https://bank.example/x"])
-        ));
-        assert!(!frame_readable(
-            Some(&limits),
-            &at(&["https://www.bank.example/x"])
-        ));
-        assert!(frame_readable(
-            Some(&limits),
-            &at(&["https://shop.example/"])
-        ));
+        assert!(!frame_readable(Some(&limits), &at(&["https://bank.example/x"])));
+        assert!(!frame_readable(Some(&limits), &at(&["https://www.bank.example/x"])));
+        assert!(frame_readable(Some(&limits), &at(&["https://shop.example/"])));
         assert!(frame_readable(None, &at(&["https://bank.example/"])));
     }
     #[test]
     fn what_a_frame_raised_or_said_is_the_agent_s_only_where_the_engine_placed_it() {
         let limits = denying();
         assert!(from_allowed(Some(&limits), &at(&["https://bank.example/"])).is_err());
-        assert!(from_allowed(
-            Some(&limits),
-            &at(&["about:blank", "https://bank.example/"])
-        )
-        .is_err());
+        assert!(
+            from_allowed(Some(&limits), &at(&["about:blank", "https://bank.example/"])).is_err()
+        );
         assert!(from_allowed(Some(&limits), &at(&["https://shop.example/"])).is_ok());
         for nowhere in [&[][..], &["null"], &[":3"], &["about:blank"]] {
-            assert!(
-                from_allowed(Some(&limits), &at(nowhere)).is_err(),
-                "{nowhere:?}"
-            );
+            assert!(from_allowed(Some(&limits), &at(nowhere)).is_err(), "{nowhere:?}");
         }
         let open = (Grant::own("a".into(), "A"), Store::Reader);
         assert!(from_allowed(Some(&open), &[]).is_ok());
@@ -320,10 +292,7 @@ mod tests {
     #[test]
     fn a_twin_names_the_store_it_carries_and_no_agent_s_store_is_one() {
         assert_eq!(reader_of(Some(&twin_of(None))), Some(None));
-        assert_eq!(
-            reader_of(Some(&twin_of(Some("space_abc")))),
-            Some(Some("space_abc"))
-        );
+        assert_eq!(reader_of(Some(&twin_of(Some("space_abc")))), Some(Some("space_abc")));
         assert_eq!(reader_of(Some("agent_twin")), None);
         assert_eq!(reader_of(Some("agent_claude-code")), None);
         assert_eq!(reader_of(Some("agent__twin_")), None);

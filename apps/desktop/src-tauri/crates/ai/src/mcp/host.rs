@@ -34,10 +34,7 @@ pub fn categorized(
     rendered: &mut Value,
     category_of: impl Fn(&str) -> Option<(orden_agents::verbs::Category, Option<String>)>,
 ) {
-    let Some(said) = rendered
-        .pointer_mut("/_meta")
-        .and_then(|meta| meta.get_mut(META))
-    else {
+    let Some(said) = rendered.pointer_mut("/_meta").and_then(|meta| meta.get_mut(META)) else {
         return;
     };
     if said["status"] != "needs_approval" {
@@ -61,9 +58,7 @@ mod category_tests {
     fn a_question_says_what_it_is_about_to_the_window() {
         let mut asked =
             json!({ "_meta": { META: { "status": "needs_approval", "approval": "a1" } } });
-        categorized(&mut asked, |_| {
-            Some((Category::Writing, Some("shop.example".to_owned())))
-        });
+        categorized(&mut asked, |_| Some((Category::Writing, Some("shop.example".to_owned()))));
         assert_eq!(asked["_meta"][META]["category"], "writing");
         assert_eq!(asked["_meta"][META]["site"], "shop.example");
         let mut done = json!({ "_meta": { META: { "status": "ok" } } });

@@ -20,32 +20,16 @@ pub fn stopped() -> bool {
     STOPPED.load(Ordering::SeqCst)
 }
 pub fn stopped_for(agent: &str) -> bool {
-    stopped()
-        || HALTED
-            .held()
-            .as_ref()
-            .is_some_and(|all| all.contains(agent))
+    stopped() || HALTED.held().as_ref().is_some_and(|all| all.contains(agent))
 }
 pub fn halted() -> Vec<String> {
-    HALTED
-        .held()
-        .as_ref()
-        .map(|all| all.iter().cloned().collect())
-        .unwrap_or_default()
+    HALTED.held().as_ref().map(|all| all.iter().cloned().collect()).unwrap_or_default()
 }
 pub fn halt(app: &AppHandle, agent: &str) {
-    let fresh = HALTED
-        .held()
-        .get_or_insert_with(HashSet::new)
-        .insert(agent.to_string());
+    let fresh = HALTED.held().get_or_insert_with(HashSet::new).insert(agent.to_string());
     crate::process::end_all(Some(agent));
     if fresh {
-        let _ = app.emit(
-            EVENT,
-            Event::Paused {
-                agent: agent.to_string(),
-            },
-        );
+        let _ = app.emit(EVENT, Event::Paused { agent: agent.to_string() });
     }
 }
 pub fn quitting() {
@@ -77,12 +61,7 @@ pub fn resume(app: &AppHandle, agent: Option<&str>) {
             (Some(_), None) => {}
         }
     }
-    let _ = app.emit(
-        EVENT,
-        Event::Resumed {
-            agent: agent.unwrap_or_default().to_string(),
-        },
-    );
+    let _ = app.emit(EVENT, Event::Resumed { agent: agent.unwrap_or_default().to_string() });
 }
 #[cfg(test)]
 mod tests {
@@ -97,10 +76,7 @@ mod tests {
     }
     #[test]
     fn one_agent_stopped_is_that_agent_and_nobody_else() {
-        HALTED
-            .held()
-            .get_or_insert_with(HashSet::new)
-            .insert("halting".into());
+        HALTED.held().get_or_insert_with(HashSet::new).insert("halting".into());
         assert!(stopped_for("halting"));
         assert!(!stopped_for("someone-else"));
         assert!(halted().contains(&"halting".to_string()));

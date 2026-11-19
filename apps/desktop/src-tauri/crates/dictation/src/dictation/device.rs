@@ -79,46 +79,20 @@ mod tests {
     use crate::dictation::catalog::PARAKEET;
 
     fn device(os: &'static str, arch: &'static str, cores: usize, memory: Option<u64>) -> Device {
-        Device {
-            os,
-            arch,
-            cores,
-            memory,
-        }
+        Device { os, arch, cores, memory }
     }
     #[test]
     fn a_laptop_of_today_fits() {
-        assert_eq!(
-            fit(&device("macos", "aarch64", 8, Some(8)), &PARAKEET),
-            Fit::Fits
-        );
-        assert_eq!(
-            fit(&device("windows", "x86_64", 4, Some(16)), &PARAKEET),
-            Fit::Fits
-        );
-        assert_eq!(
-            fit(&device("linux", "x86_64", 12, None), &PARAKEET),
-            Fit::Fits
-        );
+        assert_eq!(fit(&device("macos", "aarch64", 8, Some(8)), &PARAKEET), Fit::Fits);
+        assert_eq!(fit(&device("windows", "x86_64", 4, Some(16)), &PARAKEET), Fit::Fits);
+        assert_eq!(fit(&device("linux", "x86_64", 12, None), &PARAKEET), Fit::Fits);
     }
     #[test]
     fn what_cannot_keep_up_says_why() {
-        assert_eq!(
-            fit(&device("linux", "x86_64", 2, Some(16)), &PARAKEET),
-            Fit::Cores
-        );
-        assert_eq!(
-            fit(&device("windows", "x86_64", 8, Some(3)), &PARAKEET),
-            Fit::Memory
-        );
-        assert_eq!(
-            fit(&device("linux", "riscv64", 8, Some(16)), &PARAKEET),
-            Fit::Platform
-        );
-        assert_eq!(
-            fit(&device("freebsd", "x86_64", 8, Some(16)), &PARAKEET),
-            Fit::Platform
-        );
+        assert_eq!(fit(&device("linux", "x86_64", 2, Some(16)), &PARAKEET), Fit::Cores);
+        assert_eq!(fit(&device("windows", "x86_64", 8, Some(3)), &PARAKEET), Fit::Memory);
+        assert_eq!(fit(&device("linux", "riscv64", 8, Some(16)), &PARAKEET), Fit::Platform);
+        assert_eq!(fit(&device("freebsd", "x86_64", 8, Some(16)), &PARAKEET), Fit::Platform);
     }
     #[test]
     fn a_pass_leaves_the_app_half_the_cores() {

@@ -62,10 +62,7 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
     orden_base::logs::say(
         app,
         "info",
-        &format!(
-            "global keys: the desktop portal, version {}",
-            portal.version
-        ),
+        &format!("global keys: the desktop portal, version {}", portal.version),
     );
     super::reached(app, Reach::Portal, portal.version >= 2);
     portal.hear(app);
@@ -103,23 +100,14 @@ impl Portal {
     fn open() -> zbus::Result<Self> {
         let bus = Connection::session()?;
         register(&bus);
-        let reply = bus.call_method(
-            Some(DESKTOP),
-            PATH,
-            Some(PROPERTIES),
-            "Get",
-            &(SHORTCUTS, "version"),
-        )?;
+        let reply =
+            bus.call_method(Some(DESKTOP), PATH, Some(PROPERTIES), "Get", &(SHORTCUTS, "version"))?;
         let body = reply.body();
         let version = u32::try_from(body.deserialize::<OwnedValue>()?)?;
         let sender = bus.unique_name().map_or_else(String::new, |name| {
             name.as_str().trim_start_matches(':').replace('.', "_")
         });
-        Ok(Self {
-            bus,
-            sender,
-            version,
-        })
+        Ok(Self { bus, sender, version })
     }
     fn rebind(&self, app: &AppHandle, bound: &mut Bound, wanted: BTreeMap<Which, String>) {
         if bound.keys == wanted {
@@ -136,11 +124,8 @@ impl Portal {
         }
         match self.bind(&wanted) {
             Ok((session, held)) => {
-                let refused = wanted
-                    .keys()
-                    .filter(|which| !held.contains_key(which))
-                    .copied()
-                    .collect();
+                let refused =
+                    wanted.keys().filter(|which| !held.contains_key(which)).copied().collect();
                 set_session(Some(session.clone()));
                 bound.session = Some(session);
                 super::bound(app, held, refused);
@@ -184,9 +169,7 @@ impl Portal {
         match answer {
             Ok((0, results)) => Ok((
                 session,
-                results
-                    .get("shortcuts")
-                    .map_or_else(BTreeMap::new, |value| triggers(value)),
+                results.get("shortcuts").map_or_else(BTreeMap::new, |value| triggers(value)),
             )),
             Ok((code, _)) => {
                 self.close(&session);
@@ -215,11 +198,9 @@ impl Portal {
             .path(path.as_str())?
             .build();
         let mut answers = MessageIterator::for_match_rule(rule, &self.bus, Some(4))?;
-        self.bus
-            .call_method(Some(DESKTOP), PATH, Some(SHORTCUTS), method, body)?;
-        let answer = answers
-            .next()
-            .ok_or_else(|| zbus::Error::Failure("the portal went away".into()))??;
+        self.bus.call_method(Some(DESKTOP), PATH, Some(SHORTCUTS), method, body)?;
+        let answer =
+            answers.next().ok_or_else(|| zbus::Error::Failure("the portal went away".into()))??;
         let body = answer.body();
         body.deserialize()
     }
@@ -240,28 +221,21 @@ impl Portal {
         );
     }
     fn close(&self, session: &str) {
-        let _ = self
-            .bus
-            .call_method(Some(DESKTOP), session, Some(SESSION), "Close", &());
+        let _ = self.bus.call_method(Some(DESKTOP), session, Some(SESSION), "Close", &());
     }
     fn hear(&self, app: &AppHandle) {
         let bus = self.bus.clone();
         let app = app.clone();
-        let _ = std::thread::Builder::new()
-            .name("orden-portal-presses".into())
-            .spawn(move || {
-                if let Err(error) = presses(&bus, &app) {
-                    orden_base::logs::say(&app, "info", &format!("global keys: deaf ({error})"));
-                }
-            });
+        let _ = std::thread::Builder::new().name("orden-portal-presses".into()).spawn(move || {
+            if let Err(error) = presses(&bus, &app) {
+                orden_base::logs::say(&app, "info", &format!("global keys: deaf ({error})"));
+            }
+        });
     }
 }
 fn presses(bus: &Connection, app: &AppHandle) -> zbus::Result<()> {
-    let rule = MatchRule::builder()
-        .msg_type(Kind::Signal)
-        .interface(SHORTCUTS)?
-        .path(PATH)?
-        .build();
+    let rule =
+        MatchRule::builder().msg_type(Kind::Signal).interface(SHORTCUTS)?.path(PATH)?.build();
     for message in MessageIterator::for_match_rule(rule, bus, Some(64))? {
         let message = message?;
         let header = message.header();
@@ -278,9 +252,7 @@ fn presses(bus: &Connection, app: &AppHandle) -> zbus::Result<()> {
                 else {
                     continue;
                 };
-                let token = options
-                    .get("activation_token")
-                    .and_then(|value| text(value));
+                let token = options.get("activation_token").and_then(|value| text(value));
                 let pressing = app.clone();
                 let _ = app.run_on_main_thread(move || super::pressed(&pressing, which, token));
             }
@@ -419,19 +391,13 @@ mod tests {
         let said = Value::new(vec![
             (
                 "quick-add".to_owned(),
-                HashMap::from([(
-                    "trigger_description".to_owned(),
-                    Value::new("Ctrl+Alt+Space"),
-                )]),
+                HashMap::from([("trigger_description".to_owned(), Value::new("Ctrl+Alt+Space"))]),
             ),
             ("stop-agents".to_owned(), HashMap::new()),
             ("something-else".to_owned(), HashMap::new()),
         ]);
         let held = triggers(&said);
-        assert_eq!(
-            held.get(&Which::QuickAdd).map(String::as_str),
-            Some("Ctrl+Alt+Space")
-        );
+        assert_eq!(held.get(&Which::QuickAdd).map(String::as_str), Some("Ctrl+Alt+Space"));
         assert_eq!(held.get(&Which::StopAgents).map(String::as_str), Some(""));
         assert_eq!(held.len(), 2);
     }

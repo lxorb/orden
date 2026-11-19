@@ -32,10 +32,7 @@ mod store {
         let Some(secret) = read(super::FORMER_SERVICE, account)? else {
             return Ok(None);
         };
-        if entry(super::SERVICE, account)?
-            .set_password(&secret)
-            .is_ok()
-        {
+        if entry(super::SERVICE, account)?.set_password(&secret).is_ok() {
             let _ = forget(super::FORMER_SERVICE, account);
         }
         Ok(Some(secret))
@@ -70,10 +67,7 @@ mod store {
         let reachable = matches!(kept, Ok(None));
         let found = either(kept, || file::get(app, account))?;
         if let (true, Some(secret)) = (reachable, &found) {
-            if entry(super::SERVICE, account)
-                .and_then(|one| one.set_password(secret))
-                .is_ok()
-            {
+            if entry(super::SERVICE, account).and_then(|one| one.set_password(secret)).is_ok() {
                 let _ = file::delete(app, account);
             }
         }
@@ -89,11 +83,7 @@ mod store {
         if written.is_ok() {
             let _ = forget(super::FORMER_SERVICE, account);
         }
-        wrote(
-            written,
-            || file::delete(app, account),
-            || file::set(app, account, secret),
-        )
+        wrote(written, || file::delete(app, account), || file::set(app, account, secret))
     }
     pub fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
         wrote(
@@ -144,9 +134,7 @@ mod file {
     #[cfg_attr(target_os = "macos", allow(dead_code))]
     pub fn holds_any(app: &AppHandle) -> bool {
         let _held = HELD.held();
-        file(app)
-            .and_then(|path| super::read_file(&path))
-            .is_ok_and(|kept| !kept.is_empty())
+        file(app).and_then(|path| super::read_file(&path)).is_ok_and(|kept| !kept.is_empty())
     }
 }
 const FILE: &str = "secrets.json";
@@ -200,9 +188,7 @@ const FORMER_SERVICE: &str = "nibeditor";
 fn named(name: &str) -> Result<String, String> {
     let ok = !name.is_empty()
         && name.len() <= 64
-        && name
-            .chars()
-            .all(|one| one.is_ascii_alphanumeric() || one == '-' || one == '_');
+        && name.chars().all(|one| one.is_ascii_alphanumeric() || one == '-' || one == '_');
     if ok {
         Ok(name.to_owned())
     } else {
@@ -211,11 +197,7 @@ fn named(name: &str) -> Result<String, String> {
 }
 pub(crate) fn filed(name: &str, identifier: &str) -> Result<String, String> {
     let name = named(name)?;
-    Ok(if identifier == SHIPPED {
-        name
-    } else {
-        format!("{name}@{identifier}")
-    })
+    Ok(if identifier == SHIPPED { name } else { format!("{name}@{identifier}") })
 }
 #[tauri::command(async)]
 pub fn secret_read(app: AppHandle, name: String) -> Result<Option<String>, String> {
@@ -279,10 +261,7 @@ mod tests {
             Ok(Some("kept".to_owned()))
         );
         assert!(either(Err(Error::TooLong("name".into(), 1)), filed).is_err());
-        assert_eq!(
-            wrote(Err(gone()), || Err("kept".to_owned()), || Ok(())),
-            Ok(())
-        );
+        assert_eq!(wrote(Err(gone()), || Err("kept".to_owned()), || Ok(())), Ok(()));
         assert_eq!(wrote(Ok(()), || Ok(()), || Err("filed".to_owned())), Ok(()));
         assert!(wrote(Err(Error::TooLong("name".into(), 1)), || Ok(()), || Ok(())).is_err());
     }

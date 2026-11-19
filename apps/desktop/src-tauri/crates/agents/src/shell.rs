@@ -82,13 +82,9 @@ pub fn heard(app: &AppHandle, agent: &str, session: &str) {
     }
 }
 fn heard_in(shell: &mut Shell, agent: &str, session: &str, now: Instant) -> bool {
-    shell
-        .last
-        .retain(|_, at| now.saturating_duration_since(*at) < CONNECTED_FOR);
+    shell.last.retain(|_, at| now.saturating_duration_since(*at) < CONNECTED_FOR);
     let before = connected_in(shell, now);
-    shell
-        .last
-        .insert((agent.to_owned(), session.to_owned()), now);
+    shell.last.insert((agent.to_owned(), session.to_owned()), now);
     connected_in(shell, now) != before
 }
 pub fn bye(app: &AppHandle, agent: &str, session: &str) -> bool {
@@ -225,23 +221,19 @@ fn news(app: &AppHandle, event: Event) {
     let words = with(|shell| shell.words.clone());
     let question = matches!(event, Event::Asked { .. });
     let (title, body) = match event {
-        Event::Asked { approval } if approval.category == Category::Pairing => (
-            words.pairing.replace("{client}", &approval.summary),
-            String::new(),
-        ),
+        Event::Asked { approval } if approval.category == Category::Pairing => {
+            (words.pairing.replace("{client}", &approval.summary), String::new())
+        }
         Event::Asked { approval } => (approval.name, approval.summary),
-        Event::Stopped { closed } => (
-            if closed { words.closed } else { words.stopped },
-            String::new(),
-        ),
+        Event::Stopped { closed } => {
+            (if closed { words.closed } else { words.stopped }, String::new())
+        }
         _ => return,
     };
     let app = app.clone();
     std::thread::spawn(move || {
         let windows = orden_base::labels::document_windows(&app);
-        let in_front = windows
-            .iter()
-            .any(|window| window.is_focused().unwrap_or(false));
+        let in_front = windows.iter().any(|window| window.is_focused().unwrap_or(false));
         let answerable = windows
             .iter()
             .any(|window| crate::host().is_some_and(|host| (host.page_up)(&app, window.label())));
@@ -347,11 +339,7 @@ fn menu_bar_mark() -> Option<tauri::image::Image<'static>> {
         return None;
     }
     pixels.truncate(info.line_size * rows);
-    Some(tauri::image::Image::new_owned(
-        pixels,
-        info.width,
-        info.height,
-    ))
+    Some(tauri::image::Image::new_owned(pixels, info.width, info.height))
 }
 #[cfg(any(windows, target_os = "macos"))]
 fn rows<R: tauri::Runtime>(
@@ -394,10 +382,7 @@ mod tests {
         let (pixels, _) = mark.rgba().as_chunks::<4>();
         assert!(pixels.iter().all(|one| one[..3] == [0, 0, 0]));
         let drawn = pixels.iter().filter(|one| one[3] > 128).count();
-        assert!(
-            drawn > 36 * 36 / 4 && drawn < 36 * 36 * 3 / 4,
-            "{drawn} pixels drawn"
-        );
+        assert!(drawn > 36 * 36 / 4 && drawn < 36 * 36 * 3 / 4, "{drawn} pixels drawn");
     }
     #[test]
     fn the_app_is_kept_in_a_tray_only_where_there_is_one() {
@@ -434,10 +419,7 @@ mod tests {
     #[test]
     fn the_words_are_english_until_the_window_says() {
         let words = Words::default();
-        assert_eq!(
-            words.pairing.replace("{client}", "Codex"),
-            "Codex wants to connect"
-        );
+        assert_eq!(words.pairing.replace("{client}", "Codex"), "Codex wants to connect");
         let said: Words = serde_json::from_value(serde_json::json!({
             "show": "Öffnen", "stop": "Agenten anhalten", "quit": "Beenden",
             "stopped": "Agenten angehalten", "closed": "Agenten-Tabs geschlossen",

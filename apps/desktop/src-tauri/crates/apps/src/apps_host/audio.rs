@@ -48,10 +48,7 @@ pub fn environment(sink: Option<&Sink>) -> Vec<(&'static str, String)> {
     match sink {
         Some(sink) => vec![("PULSE_SINK", sink.name.clone())],
         None => vec![
-            (
-                "PULSE_SERVER",
-                "unix:/nonexistent/orden-no-sound".to_owned(),
-            ),
+            ("PULSE_SERVER", "unix:/nonexistent/orden-no-sound".to_owned()),
             ("PIPEWIRE_REMOTE", "orden-no-sound".to_owned()),
         ],
     }
@@ -102,13 +99,7 @@ impl Sound {
             }
             return None;
         };
-        Some(Sound {
-            reader,
-            encoder,
-            packets,
-            pages: Pages::default(),
-            read: 0,
-        })
+        Some(Sound { reader, encoder, packets, pages: Pages::default(), read: 0 })
     }
     pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
         loop {
@@ -169,10 +160,7 @@ impl Pages {
                 self.ready.push_back(std::mem::take(&mut self.partial));
             }
             if self.partial.len() > LARGEST_PAGE * 4 {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "packet too large",
-                ));
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "packet too large"));
             }
         }
         Ok(())
@@ -207,9 +195,7 @@ mod tests {
     }
     #[test]
     fn reads_the_packets_off_oggs_pages_one_spanning_two() {
-        let long: Vec<u8> = (0..300_u32)
-            .map(|one| u8::try_from(one % 251).unwrap())
-            .collect();
+        let long: Vec<u8> = (0..300_u32).map(|one| u8::try_from(one % 251).unwrap()).collect();
         let mut stream = page(&[3, 255], &[[1, 2, 3].as_slice(), &long[..255]].concat());
         stream.extend(page(&[45, 2], &[&long[255..], [9, 9].as_slice()].concat()));
         let mut pages = Pages::default();
@@ -229,14 +215,8 @@ mod tests {
     }
     #[test]
     fn gives_an_application_its_sink_or_no_sound_at_all() {
-        let sink = Sink {
-            module: u32::MAX,
-            name: "orden_application_7".to_owned(),
-        };
-        assert_eq!(
-            environment(Some(&sink)),
-            [("PULSE_SINK", "orden_application_7".to_owned())]
-        );
+        let sink = Sink { module: u32::MAX, name: "orden_application_7".to_owned() };
+        assert_eq!(environment(Some(&sink)), [("PULSE_SINK", "orden_application_7".to_owned())]);
         assert_eq!(sink.monitor(), "orden_application_7.monitor");
         std::mem::forget(sink);
         assert!(environment(None)

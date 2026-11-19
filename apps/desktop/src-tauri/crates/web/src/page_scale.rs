@@ -20,19 +20,11 @@ pub fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     let big = *data.first()? == b'B';
     let word = |at: usize| -> Option<u32> {
         let bytes: [u8; 4] = data.get(at..at + 4)?.try_into().ok()?;
-        Some(if big {
-            u32::from_be_bytes(bytes)
-        } else {
-            u32::from_le_bytes(bytes)
-        })
+        Some(if big { u32::from_be_bytes(bytes) } else { u32::from_le_bytes(bytes) })
     };
     let half = |at: usize| -> Option<u16> {
         let bytes: [u8; 2] = data.get(at..at + 2)?.try_into().ok()?;
-        Some(if big {
-            u16::from_be_bytes(bytes)
-        } else {
-            u16::from_le_bytes(bytes)
-        })
+        Some(if big { u16::from_be_bytes(bytes) } else { u16::from_le_bytes(bytes) })
     };
     let padded = |length: usize| length.div_ceil(4) * 4;
     let count = word(8)?;
@@ -236,10 +228,7 @@ mod tests {
     fn the_rungs_are_the_ones_settings_offers() {
         let modes = include_str!("../../../../src/lib/modes/src/modes.svelte.ts");
         let listed = RUNGS.map(|one| one.to_string()).join(", ");
-        assert!(
-            modes.contains(&format!("INTERFACE_ZOOMS = [{listed}]")),
-            "{listed}"
-        );
+        assert!(modes.contains(&format!("INTERFACE_ZOOMS = [{listed}]")), "{listed}");
     }
     fn settings(dpi: i32) -> Vec<u8> {
         let mut data = vec![b'l', 0, 0, 0];

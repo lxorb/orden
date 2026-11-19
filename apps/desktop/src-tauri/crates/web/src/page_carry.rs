@@ -41,15 +41,12 @@ fn is_address(said: &str) -> bool {
     tauri::Url::parse(said).is_ok_and(|url| matches!(url.scheme(), "http" | "https"))
 }
 fn is_note(path: &Path) -> bool {
-    path.extension()
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("md"))
+    path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("md"))
 }
 fn free_name(taken: &mut HashSet<OsString>, name: &Path) -> OsString {
     let stem = name.file_stem().unwrap_or_default().to_string_lossy();
-    let extension = name
-        .extension()
-        .map(|one| format!(".{}", one.to_string_lossy()))
-        .unwrap_or_default();
+    let extension =
+        name.extension().map(|one| format!(".{}", one.to_string_lossy())).unwrap_or_default();
     let mut tried = name.as_os_str().to_os_string();
     let mut number = 2;
     while !taken.insert(tried.to_ascii_lowercase()) {
@@ -83,10 +80,7 @@ fn made_in(
     if sources.is_empty() && addresses.is_empty() {
         return Ok(None);
     }
-    let stamp = now
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
+    let stamp = now.duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
     let folder = root.join(stamp.to_string());
     std::fs::create_dir_all(&folder)
         .map_err(|error| format!("there is no folder to carry files in: {error}"))?;
@@ -117,12 +111,7 @@ fn made_in(
     }))
 }
 fn drop_untaken(carried: Option<Carried>) {
-    if let Some(Carried {
-        folder: Some(folder),
-        taken: false,
-        ..
-    }) = carried
-    {
+    if let Some(Carried { folder: Some(folder), taken: false, .. }) = carried {
         let _ = std::fs::remove_dir_all(folder);
     }
 }
@@ -140,10 +129,7 @@ pub async fn page_carry(
                 .or_else(|_| orden_explorer::explorer::shown(&app, path))
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let addresses: Vec<String> = addresses
-        .into_iter()
-        .filter(|one| is_address(one))
-        .collect();
+    let addresses: Vec<String> = addresses.into_iter().filter(|one| is_address(one)).collect();
     tauri::async_runtime::spawn_blocking(move || {
         let made = made_in(&root, &sources, addresses, SystemTime::now())?;
         drop_untaken(std::mem::replace(&mut *CARRYING.held(), made));
@@ -185,11 +171,8 @@ mod shown {
                 json!({ "mimeType": "text/uri-list", "data": carried.addresses.join("\r\n") }),
             );
         }
-        let files: Vec<String> = carried
-            .files
-            .iter()
-            .map(|one| one.to_string_lossy().into_owned())
-            .collect();
+        let files: Vec<String> =
+            carried.files.iter().map(|one| one.to_string_lossy().into_owned()).collect();
         json!({ "items": items, "files": files, "dragOperationsMask": 1 })
     }
     pub(super) fn steps(was: Option<&str>, tab: &str, phase: &str) -> Vec<&'static str> {
@@ -280,10 +263,7 @@ mod tests {
             .collect();
         assert_eq!(names, ["Idea.md", "Paper.pdf"]);
         assert!(carried.files.iter().all(|one| one.starts_with(&root)));
-        assert_eq!(
-            std::fs::read_to_string(&carried.files[0]).unwrap(),
-            "# Idea\n\nwords"
-        );
+        assert_eq!(std::fs::read_to_string(&carried.files[0]).unwrap(), "# Idea\n\nwords");
         assert_eq!(carried.text.as_deref(), Some("# Idea\n\nwords"));
         assert!(note.is_file());
     }
@@ -322,14 +302,9 @@ mod tests {
     #[test]
     fn a_web_note_is_carried_as_its_address_and_no_file() {
         let root = carry_room("web");
-        let carried = made_in(
-            &root,
-            &[],
-            vec!["https://example.com/".into()],
-            SystemTime::now(),
-        )
-        .unwrap()
-        .unwrap();
+        let carried = made_in(&root, &[], vec!["https://example.com/".into()], SystemTime::now())
+            .unwrap()
+            .unwrap();
         assert!(carried.files.is_empty());
         assert_eq!(carried.text.as_deref(), Some("https://example.com/"));
         assert_eq!(carried.addresses, ["https://example.com/"]);
@@ -339,13 +314,7 @@ mod tests {
         let root = carry_room("none");
         let space = carry_room("none-space");
         assert_eq!(
-            made_in(
-                &root,
-                std::slice::from_ref(&space),
-                Vec::new(),
-                SystemTime::now()
-            )
-            .unwrap(),
+            made_in(&root, std::slice::from_ref(&space), Vec::new(), SystemTime::now()).unwrap(),
             None
         );
     }
@@ -362,25 +331,15 @@ mod tests {
         let space = carry_room("end");
         let root = carry_room("end-root");
         std::fs::write(space.join("Idea.md"), "x").unwrap();
-        let left = made_in(
-            &root,
-            &[space.join("Idea.md")],
-            Vec::new(),
-            SystemTime::now(),
-        )
-        .unwrap()
-        .unwrap();
+        let left = made_in(&root, &[space.join("Idea.md")], Vec::new(), SystemTime::now())
+            .unwrap()
+            .unwrap();
         let folder_left = left.files[0].parent().unwrap().to_path_buf();
         drop_untaken(Some(left));
         assert!(!folder_left.exists());
-        let mut dropped = made_in(
-            &root,
-            &[space.join("Idea.md")],
-            Vec::new(),
-            SystemTime::now(),
-        )
-        .unwrap()
-        .unwrap();
+        let mut dropped = made_in(&root, &[space.join("Idea.md")], Vec::new(), SystemTime::now())
+            .unwrap()
+            .unwrap();
         dropped.taken = true;
         let folder_dropped = dropped.files[0].parent().unwrap().to_path_buf();
         drop_untaken(Some(dropped));

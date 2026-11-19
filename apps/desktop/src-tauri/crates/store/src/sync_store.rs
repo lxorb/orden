@@ -25,14 +25,8 @@ struct Held {
 impl Held {
     fn opened_for(&mut self, lead: bool) -> Result<Opened, String> {
         if lead && self.led {
-            let was_clean = self
-                .store
-                .mark_clean(false)
-                .map_err(|failed| failed.to_string())?;
-            return Ok(Opened {
-                was_clean,
-                ..self.store.opened.clone()
-            });
+            let was_clean = self.store.mark_clean(false).map_err(|failed| failed.to_string())?;
+            return Ok(Opened { was_clean, ..self.store.opened.clone() });
         }
         self.led |= lead;
         Ok(self.store.opened.clone())
@@ -48,16 +42,12 @@ fn store_path(app: &AppHandle, account: &str) -> Result<PathBuf, String> {
         .path()
         .app_local_data_dir()
         .map_err(|error| format!("could not find the app's data folder: {error}"))?;
-    Ok(folder
-        .join("sync")
-        .join(format!("{}.db", account_name(account)?)))
+    Ok(folder.join("sync").join(format!("{}.db", account_name(account)?)))
 }
 fn account_name(account: &str) -> Result<&str, String> {
     let fits = !account.is_empty()
         && account.len() <= 64
-        && account
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && account.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
         Ok(account)
     } else {
@@ -86,12 +76,7 @@ pub fn sync_store_open(
     let store = Store::open_as(&path, device.as_deref()).map_err(|refused| refused.said())?;
     orden_base::trace::mark("sync store opened");
     let opened = store.opened.clone();
-    *held = Some(Held {
-        account,
-        path,
-        store,
-        led: lead,
-    });
+    *held = Some(Held { account, path, store, led: lead });
     Ok(opened)
 }
 #[tauri::command(async)]
@@ -167,10 +152,7 @@ fn with_store<T>(
                 let _ = open.store.close();
                 set_aside(&open.path).map_err(|refused| refused.said())?;
             }
-            Err(format!(
-                "{}; it has been set aside, open it again",
-                failed.said
-            ))
+            Err(format!("{}; it has been set aside, open it again", failed.said))
         }
         Err(failed) => Err(failed.said),
     }
@@ -182,12 +164,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("sync.db");
         let store = Store::open(&path).expect("a store");
-        let mut held = Held {
-            account: "a".to_string(),
-            path,
-            store,
-            led: false,
-        };
+        let mut held = Held { account: "a".to_string(), path, store, led: false };
         assert!(held.opened_for(false).expect("a look").was_clean);
         assert!(held.opened_for(true).expect("the first").was_clean);
         assert!(!held.opened_for(true).expect("after a crash").was_clean);
@@ -205,15 +182,7 @@ mod tests {
     #[test]
     fn only_an_account_id_names_a_store() {
         assert!(account_name("5f0c1d7e-2b8a-4c1e-9d3f-0a1b2c3d4e5f").is_ok());
-        for odd in [
-            "",
-            "../escape",
-            "a/b",
-            "a\\b",
-            "C:",
-            "name.db",
-            &"x".repeat(65),
-        ] {
+        for odd in ["", "../escape", "a/b", "a\\b", "C:", "name.db", &"x".repeat(65)] {
             assert!(account_name(odd).is_err(), "{odd}");
         }
     }

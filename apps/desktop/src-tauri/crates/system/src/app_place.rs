@@ -6,9 +6,7 @@ fn bundle_of(exe: &Path) -> Option<PathBuf> {
     let contents = macos.parent()?;
     let bundle = contents.parent()?;
     let named = |path: &Path, name: &str| path.file_name().is_some_and(|own| own == name);
-    let app = bundle
-        .extension()
-        .is_some_and(|extension| extension == "app");
+    let app = bundle.extension().is_some_and(|extension| extension == "app");
     (named(macos, "MacOS") && named(contents, "Contents") && app).then(|| bundle.to_path_buf())
 }
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
@@ -76,9 +74,7 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
 
         let from = stuck_bundle().ok_or("this copy can update where it is")?;
         let name = from.file_name().ok_or("the app has no name")?;
-        let to = applications()
-            .ok_or("there is no Applications folder to move to")?
-            .join(name);
+        let to = applications().ok_or("there is no Applications folder to move to")?.join(name);
         if !to.exists() {
             let copied = Command::new("/usr/bin/ditto")
                 .arg(&from)
@@ -151,10 +147,7 @@ mod tests {
     #[test]
     fn a_copy_in_applications_is_not() {
         assert!(!stuck_at(Path::new("/Applications/Orden.app"), false));
-        assert!(!stuck_at(
-            Path::new("/Users/a/Applications/Orden.app"),
-            false
-        ));
+        assert!(!stuck_at(Path::new("/Users/a/Applications/Orden.app"), false));
     }
     #[test]
     fn the_moved_copy_starts_as_a_new_instance_once_this_one_has_gone() {

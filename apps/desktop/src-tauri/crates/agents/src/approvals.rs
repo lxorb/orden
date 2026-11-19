@@ -23,11 +23,7 @@ fn held() -> std::sync::MutexGuard<'static, Vec<Held>> {
     HELD.held()
 }
 pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
-    format!(
-        "{verb}:{}:{}",
-        tab.unwrap_or_default(),
-        element.unwrap_or_default()
-    )
+    format!("{verb}:{}:{}", tab.unwrap_or_default(), element.unwrap_or_default())
 }
 pub fn on_page(key: &str, url: &str, element: &str) -> String {
     let host = crate::policy::host_of(url).unwrap_or_default();
@@ -104,20 +100,13 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
         at: Instant::now(),
         spent: true,
     });
-    let _ = app.emit(
-        EVENT,
-        Event::Answered {
-            approval: approval.clone(),
-        },
-    );
+    let _ = app.emit(EVENT, Event::Answered { approval: approval.clone() });
     approval
 }
 pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
     let mut all = held();
-    if let Some(one) = all
-        .iter()
-        .rev()
-        .find(|one| one.approval.agent == asking.agent && one.key == asking.key)
+    if let Some(one) =
+        all.iter().rev().find(|one| one.approval.agent == asking.agent && one.key == asking.key)
     {
         match one.approval.answer {
             ApprovalAnswer::Pending => {
@@ -154,16 +143,8 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
         spent: false,
     });
     drop(all);
-    let _ = app.emit(
-        EVENT,
-        Event::Asked {
-            approval: approval.clone(),
-        },
-    );
-    Answer::NeedsApproval {
-        approval: approval.id,
-        summary: approval.summary,
-    }
+    let _ = app.emit(EVENT, Event::Asked { approval: approval.clone() });
+    Answer::NeedsApproval { approval: approval.id, summary: approval.summary }
 }
 fn verb_of(key: &str) -> &str {
     key.split(':').next().unwrap_or_default()
@@ -171,10 +152,8 @@ fn verb_of(key: &str) -> &str {
 pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String> {
     let approval = {
         let mut all = held();
-        let one = all
-            .iter_mut()
-            .find(|one| one.approval.id == id)
-            .ok_or("there is no such question")?;
+        let one =
+            all.iter_mut().find(|one| one.approval.id == id).ok_or("there is no such question")?;
         if one.approval.answer != ApprovalAnswer::Pending {
             return Ok(one.approval.clone());
         }
@@ -186,12 +165,7 @@ pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String
         one.at = Instant::now();
         one.approval.clone()
     };
-    let _ = app.emit(
-        EVENT,
-        Event::Answered {
-            approval: approval.clone(),
-        },
-    );
+    let _ = app.emit(EVENT, Event::Answered { approval: approval.clone() });
     Ok(approval)
 }
 pub fn status(agent: &str, id: &str) -> Option<Approval> {
@@ -201,10 +175,7 @@ pub fn status(agent: &str, id: &str) -> Option<Approval> {
         .map(|one| one.approval.clone())
 }
 pub fn any(id: &str) -> Option<Approval> {
-    held()
-        .iter()
-        .find(|one| one.approval.id == id)
-        .map(|one| one.approval.clone())
+    held().iter().find(|one| one.approval.id == id).map(|one| one.approval.clone())
 }
 pub fn pending(agent: Option<&str>) -> Vec<Approval> {
     held()
@@ -288,43 +259,21 @@ mod tests {
     }
     #[test]
     fn an_allowance_is_for_the_site_and_the_element_it_was_asked_about() {
-        let asked = on_page(
-            "browser_press:a1:Enter",
-            "http://localhost:9/pay",
-            "Pay now",
-        );
+        let asked = on_page("browser_press:a1:Enter", "http://localhost:9/pay", "Pay now");
+        assert_ne!(asked, on_page("browser_press:a1:Enter", "http://127.0.0.1:9/pay", "Pay now"));
         assert_ne!(
             asked,
-            on_page(
-                "browser_press:a1:Enter",
-                "http://127.0.0.1:9/pay",
-                "Pay now"
-            )
-        );
-        assert_ne!(
-            asked,
-            on_page(
-                "browser_press:a1:Enter",
-                "http://localhost:9/pay",
-                "Delete account"
-            )
+            on_page("browser_press:a1:Enter", "http://localhost:9/pay", "Delete account")
         );
         assert_eq!(
             asked,
-            on_page(
-                "browser_press:a1:Enter",
-                "http://localhost:9/other",
-                "Pay  now"
-            )
+            on_page("browser_press:a1:Enter", "http://localhost:9/other", "Pay  now")
         );
         assert_eq!(verb_of(&asked), "browser_press");
     }
     #[test]
     fn a_key_names_the_verb_the_tab_and_the_element() {
-        assert_eq!(
-            key("browser_click", Some("a1"), Some("e7")),
-            "browser_click:a1:e7"
-        );
+        assert_eq!(key("browser_click", Some("a1"), Some("e7")), "browser_click:a1:e7");
         assert_eq!(key("browser_show", Some("a1"), None), "browser_show:a1:");
     }
 }

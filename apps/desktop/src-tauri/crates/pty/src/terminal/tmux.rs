@@ -34,9 +34,7 @@ pub fn parsed(listed: &str) -> Vec<Found> {
             fits(name).then(|| Found {
                 name: name.to_owned(),
                 attached: attached.parse::<u32>().is_ok_and(|count| count > 0),
-                last: last
-                    .parse::<u64>()
-                    .map_or(0, |seconds| seconds.saturating_mul(1000)),
+                last: last.parse::<u64>().map_or(0, |seconds| seconds.saturating_mul(1000)),
                 program: said(program),
                 folder: said(folder),
             })
@@ -61,11 +59,7 @@ pub fn launch(name: &str, home: Option<PathBuf>) -> Result<Launch, String> {
     let program = program().ok_or_else(|| "there is no tmux here".to_owned())?;
     Ok(Launch {
         program,
-        args: vec![
-            "attach-session".to_owned(),
-            "-t".to_owned(),
-            format!("={name}"),
-        ],
+        args: vec!["attach-session".to_owned(), "-t".to_owned(), format!("={name}")],
         folder: home,
         env: vec![
             ("TERM".to_owned(), "xterm-256color".to_owned()),
@@ -137,36 +131,14 @@ mod tests {
         assert!(made.status.success());
         let listed = tmux_here(&["list-sessions", "-F", FORMAT]);
         let found = parsed(&String::from_utf8_lossy(&listed.stdout));
-        assert_eq!(
-            found
-                .iter()
-                .map(|one| one.name.as_str())
-                .collect::<Vec<_>>(),
-            ["mine"]
-        );
+        assert_eq!(found.iter().map(|one| one.name.as_str()).collect::<Vec<_>>(), ["mine"]);
         assert!(!found[0].attached);
-        tmux_here(&[
-            "send-keys",
-            "-t",
-            "=mine:",
-            "echo orden-\"\"adopted",
-            "Enter",
-        ]);
-        let place = Place {
-            folder: dir.path().join("held"),
-            starter: hold::tests::starter(),
-        };
+        tmux_here(&["send-keys", "-t", "=mine:", "echo orden-\"\"adopted", "Enter"]);
+        let place = Place { folder: dir.path().join("held"), starter: hold::tests::starter() };
         let (session, started) = Session::open(&place, "adopt", 80, 24, || {
             let mut launch = launch("mine", None)?;
-            launch.env.push((
-                "TMUX_TMPDIR".to_owned(),
-                sockets.to_string_lossy().into_owned(),
-            ));
-            Ok(Fresh {
-                launch,
-                farewell: Vec::new(),
-                label: hold::Label::default(),
-            })
+            launch.env.push(("TMUX_TMPDIR".to_owned(), sockets.to_string_lossy().into_owned()));
+            Ok(Fresh { launch, farewell: Vec::new(), label: hold::Label::default() })
         })
         .expect("adopted");
         let (tell, heard) = std::sync::mpsc::channel();
@@ -193,10 +165,7 @@ mod tests {
         session.end();
         std::thread::sleep(std::time::Duration::from_millis(500));
         let still = tmux_here(&["has-session", "-t", "=mine"]);
-        assert!(
-            still.status.success(),
-            "closing the tab ended the session it adopted"
-        );
+        assert!(still.status.success(), "closing the tab ended the session it adopted");
         tmux_here(&["kill-server"]);
     }
 }

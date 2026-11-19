@@ -27,9 +27,7 @@ pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     else {
         return Vec::new();
     };
-    let all = asked(&page, LIST)
-        .and_then(|all| all.as_array().cloned())
-        .unwrap_or_default();
+    let all = asked(&page, LIST).and_then(|all| all.as_array().cloned()).unwrap_or_default();
     entries(&all, &profile)
 }
 fn entries(all: &[Value], profile: &Path) -> Vec<(Kept, PathBuf)> {
@@ -69,15 +67,9 @@ fn unpacked(home: &Path, version: &str) -> Option<PathBuf> {
 }
 pub fn enable(app: &AppHandle, id: &str, on: bool) -> Result<(), String> {
     let page = control(app).ok_or("the engine's extensions could not be reached")?;
-    asked(
-        &page,
-        &format!(
-            "chrome.management.setEnabled({}, {on}).then(() => true)",
-            json!(id)
-        ),
-    )
-    .map(|_| ())
-    .ok_or_else(|| "the engine did not change it".to_string())
+    asked(&page, &format!("chrome.management.setEnabled({}, {on}).then(() => true)", json!(id)))
+        .map(|_| ())
+        .ok_or_else(|| "the engine did not change it".to_string())
 }
 pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
     if id.len() != 32 || !id.bytes().all(|byte| (b'a'..=b'p').contains(&byte)) {
@@ -99,10 +91,7 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
     let address = format!("chrome-extension://{id}/manifest.json");
     if let Some(own) = hidden(app, LEAVING, &address) {
         for _ in 0..50 {
-            let ready = asked(
-                &own,
-                "typeof chrome.management?.uninstallSelf === 'function'",
-            );
+            let ready = asked(&own, "typeof chrome.management?.uninstallSelf === 'function'");
             if ready == Some(Value::Bool(true)) {
                 let _ = asked(&own, "(chrome.management.uninstallSelf(), true)");
                 break;

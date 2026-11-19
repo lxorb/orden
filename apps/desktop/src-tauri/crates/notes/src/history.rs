@@ -31,12 +31,7 @@ pub fn snapshot_note(
     if content.trim().is_empty() {
         return Ok(());
     }
-    keep_in(
-        &history_root(&app, &path)?,
-        &path,
-        &content,
-        source.as_deref(),
-    )
+    keep_in(&history_root(&app, &path)?, &path, &content, source.as_deref())
 }
 fn keep_in(dir: &Path, path: &str, content: &str, source: Option<&str>) -> Result<(), String> {
     let mut existing = snapshot_files(dir);
@@ -191,17 +186,12 @@ fn joined(note: &Path, there: &Path) -> bool {
         let _ = orden_base::carry::rename_new(&version, &there.join(name));
     }
     let left = fs::read_dir(note).map_or(0, |entries| {
-        entries
-            .flatten()
-            .filter(|entry| entry.file_name() != OsStr::new(ORIGIN))
-            .count()
+        entries.flatten().filter(|entry| entry.file_name() != OsStr::new(ORIGIN)).count()
     });
     left == 0 && fs::remove_dir_all(note).is_ok()
 }
 fn moment(file: &Path) -> Option<u64> {
-    file.file_stem()
-        .and_then(OsStr::to_str)
-        .and_then(|stem| stem.parse::<u64>().ok())
+    file.file_stem().and_then(OsStr::to_str).and_then(|stem| stem.parse::<u64>().ok())
 }
 #[tauri::command(async)]
 pub fn read_snapshot(app: AppHandle, path: String) -> Result<String, String> {
@@ -254,10 +244,7 @@ mod tests {
         let now = format!("{NEW}/Notes/Read me.md");
         let after = root.path().join(folder_key(&now));
         assert!(!before.exists());
-        assert_eq!(
-            fs::read_to_string(after.join(ORIGIN)).expect("the origin"),
-            now
-        );
+        assert_eq!(fs::read_to_string(after.join(ORIGIN)).expect("the origin"), now);
         assert!(after.join("1773500400000.md").exists());
     }
     #[test]
@@ -270,11 +257,7 @@ mod tests {
         assert_eq!(rehome_in(root.path(), &was, &now), 1);
         assert!(!before.exists());
         assert!(beside.exists());
-        assert!(root
-            .path()
-            .join(folder_key(&now))
-            .join("1773500400000.md")
-            .exists());
+        assert!(root.path().join(folder_key(&now)).join("1773500400000.md").exists());
     }
     #[test]
     fn a_history_outside_the_old_folder_stays_where_it_is() {
@@ -316,11 +299,7 @@ mod tests {
     const NOW: u64 = 1_773_500_400_000;
     fn kept(taken: &[u64], days: u64) -> Vec<u64> {
         let dropped = stale(taken, NOW, days);
-        taken
-            .iter()
-            .copied()
-            .filter(|at| !dropped.contains(at))
-            .collect()
+        taken.iter().copied().filter(|at| !dropped.contains(at)).collect()
     }
     #[test]
     fn the_sweep_keeps_the_last_day_and_an_hour_apart_until_the_retention() {

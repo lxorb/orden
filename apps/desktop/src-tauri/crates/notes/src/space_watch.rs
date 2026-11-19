@@ -96,26 +96,17 @@ fn change(root: &Path, seen: Seen) -> Change {
     match seen {
         Seen::Created(one) => Change::Created(listed(root, one)),
         Seen::Modified(one) => Change::Modified(listed(root, one)),
-        Seen::Removed { rel, dir, id } => Change::Removed {
-            path: spelled(root, &rel),
-            dir,
-            id,
-        },
-        Seen::Renamed { from, to } => Change::Renamed {
-            from: spelled(root, &from),
-            to: listed(root, to),
-        },
+        Seen::Removed { rel, dir, id } => Change::Removed { path: spelled(root, &rel), dir, id },
+        Seen::Renamed { from, to } => {
+            Change::Renamed { from: spelled(root, &from), to: listed(root, to) }
+        }
     }
 }
 fn news(roots: &[Root], heard: Heard) -> News {
     let root = &roots[heard.root].given;
     News {
         root: root.to_string_lossy().into_owned(),
-        changes: heard
-            .seen
-            .into_iter()
-            .map(|one| change(root, one))
-            .collect(),
+        changes: heard.seen.into_iter().map(|one| change(root, one)).collect(),
         scan: heard.scan,
         gone: heard.gone,
         unwatched: heard.unwatched,
@@ -127,13 +118,10 @@ fn judged_root(app: &AppHandle, root: &str) -> Result<Root, String> {
 fn working_copy(spaces: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
     let home = spaces.join(KEPT).join(WORKING);
-    let directly_inside = target
-        .parent()
-        .is_some_and(|parent| inside(&home, parent) && inside(parent, &home));
-    let hidden = target
-        .file_name()
-        .and_then(OsStr::to_str)
-        .is_none_or(|name| name.starts_with('.'));
+    let directly_inside =
+        target.parent().is_some_and(|parent| inside(&home, parent) && inside(parent, &home));
+    let hidden =
+        target.file_name().and_then(OsStr::to_str).is_none_or(|name| name.starts_with('.'));
     if !directly_inside || hidden {
         return Err(format!("{path} is not a space's working folder"));
     }
@@ -151,10 +139,7 @@ fn rooted(given: PathBuf, root: &str) -> Result<Root, String> {
 }
 #[tauri::command(async)]
 pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> Result<(), String> {
-    let judged = roots
-        .iter()
-        .map(|root| judged_root(&app, root))
-        .collect::<Result<Vec<_>, _>>()?;
+    let judged = roots.iter().map(|root| judged_root(&app, root)).collect::<Result<Vec<_>, _>>()?;
     let watching = app.state::<Watching>();
     let mut running = watching.lock();
     if judged.is_empty() {
@@ -164,9 +149,7 @@ pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> R
     let spelled = judged.clone();
     let made = armed(judged)?
         .replacing(&mut running)
-        .start(Box::new(move |heard| {
-            news.send(self::news(&spelled, heard)).is_ok()
-        }))?;
+        .start(Box::new(move |heard| news.send(self::news(&spelled, heard)).is_ok()))?;
     *running = Some(made);
     Ok(())
 }
@@ -211,19 +194,11 @@ fn scanned(root: &Root, listing: &Channel<Listing>) -> Result<(), String> {
         chunk.push(listed(&root.given, one));
         if chunk.len() == MOST_CHANGES && sent.is_ok() {
             let full = std::mem::replace(&mut chunk, Vec::with_capacity(MOST_CHANGES));
-            sent = listing.send(Listing {
-                listed: full,
-                done: false,
-            });
+            sent = listing.send(Listing { listed: full, done: false });
         }
     })?;
     sent.map_err(|error| error.to_string())?;
-    listing
-        .send(Listing {
-            listed: chunk,
-            done: true,
-        })
-        .map_err(|error| error.to_string())
+    listing.send(Listing { listed: chunk, done: true }).map_err(|error| error.to_string())
 }
 #[tauri::command(async)]
 pub fn file_identity(app: AppHandle, path: String) -> Result<Option<String>, String> {
@@ -255,11 +230,7 @@ mod tests {
             home.join("..").join("Notes"),
             PathBuf::from("/elsewhere/.orden/.work/Notes"),
         ] {
-            assert!(
-                working_copy(spaces, &path.to_string_lossy()).is_err(),
-                "{}",
-                path.display()
-            );
+            assert!(working_copy(spaces, &path.to_string_lossy()).is_err(), "{}", path.display());
         }
     }
     #[test]
@@ -274,27 +245,16 @@ mod tests {
             unlisted: false,
             id: Some("2a:1f".into()),
         };
-        let renamed = change(
-            root,
-            Seen::Renamed {
-                from: PathBuf::from("Old.md"),
-                to: found("New.md"),
-            },
-        );
+        let renamed =
+            change(root, Seen::Renamed { from: PathBuf::from("Old.md"), to: found("New.md") });
         let spelled = |rel: &str| root.join(rel).to_string_lossy().into_owned();
         assert_eq!(
             serde_json::to_value(&renamed).expect("json"),
             json!({ "kind": "renamed", "from": spelled("Old.md"), "path": spelled("New.md"),
                     "dir": false, "size": 5, "mtime": 1_700_000_000_000_u64, "id": "2a:1f" })
         );
-        let removed = change(
-            root,
-            Seen::Removed {
-                rel: PathBuf::from("Gone"),
-                dir: true,
-                id: None,
-            },
-        );
+        let removed =
+            change(root, Seen::Removed { rel: PathBuf::from("Gone"), dir: true, id: None });
         assert_eq!(
             serde_json::to_value(&removed).expect("json"),
             json!({ "kind": "removed", "path": spelled("Gone"), "dir": true, "id": null })
@@ -307,9 +267,6 @@ mod tests {
             id: None,
             unlisted: false,
         });
-        assert_eq!(
-            serde_json::to_value(&created).expect("json")["kind"],
-            "created"
-        );
+        assert_eq!(serde_json::to_value(&created).expect("json")["kind"], "created");
     }
 }

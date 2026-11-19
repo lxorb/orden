@@ -69,10 +69,7 @@ pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
         .unwrap_or_default()
 }
 fn lines_of(text: &str) -> Vec<Value> {
-    text.lines()
-        .filter_map(|line| serde_json::from_str(line).ok())
-        .map(shortened)
-        .collect()
+    text.lines().filter_map(|line| serde_json::from_str(line).ok()).map(shortened).collect()
 }
 #[derive(Debug, Serialize)]
 pub struct After {
@@ -84,11 +81,7 @@ pub fn read_after(app: &AppHandle, day: &str, from: u64) -> After {
     day_path(app, day).map_or_else(|| nothing(0, true), |path| after_in(&path, from))
 }
 fn nothing(to: u64, fresh: bool) -> After {
-    After {
-        lines: Vec::new(),
-        to,
-        fresh,
-    }
+    After { lines: Vec::new(), to, fresh }
 }
 fn after_in(path: &Path, from: u64) -> After {
     let Ok(mut file) = fs::File::open(path) else {
@@ -103,10 +96,7 @@ fn after_in(path: &Path, from: u64) -> After {
     {
         return nothing(start, fresh);
     }
-    let whole = bytes
-        .iter()
-        .rposition(|byte| *byte == b'\n')
-        .map_or(0, |at| at + 1);
+    let whole = bytes.iter().rposition(|byte| *byte == b'\n').map_or(0, |at| at + 1);
     After {
         lines: lines_of(&String::from_utf8_lossy(&bytes[..whole])),
         to: start + whole as u64,
@@ -123,18 +113,14 @@ fn shortened(value: Value) -> Value {
             None => Value::String(said),
         },
         Value::Array(all) => Value::Array(all.into_iter().map(shortened).collect()),
-        Value::Object(all) => Value::Object(
-            all.into_iter()
-                .map(|(key, one)| (key, shortened(one)))
-                .collect(),
-        ),
+        Value::Object(all) => {
+            Value::Object(all.into_iter().map(|(key, one)| (key, shortened(one))).collect())
+        }
         other => other,
     }
 }
 pub fn days(app: &AppHandle) -> Vec<String> {
-    folder(app)
-        .map(|folder| days_in(&folder))
-        .unwrap_or_default()
+    folder(app).map(|folder| days_in(&folder)).unwrap_or_default()
 }
 fn days_in(folder: &Path) -> Vec<String> {
     let mut days: Vec<String> = fs::read_dir(folder)
@@ -143,9 +129,7 @@ fn days_in(folder: &Path) -> Vec<String> {
         .flatten()
         .filter_map(|entry| {
             let name = entry.file_name().to_string_lossy().into_owned();
-            name.strip_suffix(".jsonl")
-                .filter(|day| is_day(day))
-                .map(str::to_string)
+            name.strip_suffix(".jsonl").filter(|day| is_day(day)).map(str::to_string)
         })
         .collect();
     days.sort_unstable_by(|one, other| other.cmp(one));
@@ -163,9 +147,7 @@ fn clear_in(folder: &Path, agent: Option<&str>) -> Result<(), String> {
             String::new()
         };
         let kept: Vec<&str> = agent.map_or_else(Vec::new, |agent| {
-            text.lines()
-                .filter(|line| !written_by(line, agent))
-                .collect()
+            text.lines().filter(|line| !written_by(line, agent)).collect()
         });
         let done = if kept.is_empty() {
             fs::remove_file(&path)
@@ -300,12 +282,7 @@ mod tests {
     #[test]
     fn the_days_are_the_files_newest_first() {
         let folder = tempfile::tempdir().expect("folder");
-        for name in [
-            "2026-09-29.jsonl",
-            "2026-09-30.jsonl",
-            "notes.txt",
-            "x.jsonl",
-        ] {
+        for name in ["2026-09-29.jsonl", "2026-09-30.jsonl", "notes.txt", "x.jsonl"] {
             fs::write(folder.path().join(name), "{}\n").expect("write");
         }
         assert_eq!(days_in(folder.path()), ["2026-09-30", "2026-09-29"]);
@@ -320,11 +297,8 @@ mod tests {
             "{\"agent\":\"a\",\"verb\":\"read_note\"}\n{\"agent\":\"b\",\"verb\":\"read_note\"}\nnot json\n",
         )
         .expect("write");
-        fs::write(
-            day("2026-09-30"),
-            "{\"agent\":\"a\",\"verb\":\"browser_open\"}\n",
-        )
-        .expect("write");
+        fs::write(day("2026-09-30"), "{\"agent\":\"a\",\"verb\":\"browser_open\"}\n")
+            .expect("write");
         clear_in(folder.path(), Some("a")).expect("clear");
         assert_eq!(
             fs::read_to_string(day("2026-09-29")).expect("read"),
@@ -349,14 +323,6 @@ mod tests {
             .map(|one| one.file_name().to_string_lossy().into_owned())
             .collect();
         left.sort();
-        assert_eq!(
-            left,
-            [
-                "2026-08-31.jsonl",
-                "2026-09-29.jsonl",
-                "2026-09-30.jsonl",
-                "notes.txt"
-            ]
-        );
+        assert_eq!(left, ["2026-08-31.jsonl", "2026-09-29.jsonl", "2026-09-30.jsonl", "notes.txt"]);
     }
 }

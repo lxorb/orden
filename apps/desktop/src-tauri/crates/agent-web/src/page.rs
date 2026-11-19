@@ -253,15 +253,11 @@ static ROUND_IT: LazyLock<String> = LazyLock::new(|| {
 const MOST_LISTENED_ROUND: usize = 6;
 const PRESS_EVENTS: [&str; 5] = ["click", "mousedown", "mouseup", "pointerdown", "pointerup"];
 fn hears_a_press(said: &Value) -> bool {
-    said.get("listeners")
-        .and_then(Value::as_array)
-        .is_some_and(|all| {
-            all.iter().any(|one| {
-                one.get("type")
-                    .and_then(Value::as_str)
-                    .is_some_and(|kind| PRESS_EVENTS.contains(&kind))
-            })
+    said.get("listeners").and_then(Value::as_array).is_some_and(|all| {
+        all.iter().any(|one| {
+            one.get("type").and_then(Value::as_str).is_some_and(|kind| PRESS_EVENTS.contains(&kind))
         })
+    })
 }
 const SECRETS: &str = "orden-agent-secrets";
 static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
@@ -421,10 +417,7 @@ fn whole_hiding(hidden: &[usize]) -> String {
 fn clipped_hiding(hidden: &[usize]) -> String {
     orden_web::web_tabs::reader(false).replace(
         "/* __HIDE__ */",
-        &format!(
-            "{{ const copy = body; const hidden = {}; {MASKED_CLONE} }}",
-            json!(hidden)
-        ),
+        &format!("{{ const copy = body; const hidden = {}; {MASKED_CLONE} }}", json!(hidden)),
     )
 }
 pub struct Aim {
@@ -439,11 +432,7 @@ struct FrameMap {
 }
 impl FrameMap {
     fn same() -> Self {
-        Self {
-            origin: (0.0, 0.0),
-            across: (1.0, 0.0),
-            down: (0.0, 1.0),
-        }
+        Self { origin: (0.0, 0.0), across: (1.0, 0.0), down: (0.0, 1.0) }
     }
     fn of(quad: &[f64], width: f64, height: f64) -> Option<Self> {
         if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
@@ -470,10 +459,7 @@ impl FrameMap {
     }
     fn within(self, outer: Self) -> Self {
         let step = |(x, y): (f64, f64)| {
-            (
-                outer.across.0 * x + outer.down.0 * y,
-                outer.across.1 * x + outer.down.1 * y,
-            )
+            (outer.across.0 * x + outer.down.0 * y, outer.across.1 * x + outer.down.1 * y)
         };
         Self {
             origin: outer.to_page(self.origin),
@@ -520,13 +506,9 @@ impl Page<'_> {
         .map_err(|why| Answer::error(Code::Failed, why))
     }
     fn call_on(&self, element: &Element, method: &str, params: &Value) -> Result<Value, Answer> {
-        cdp::call_until(
-            self.view,
-            element.session.as_deref(),
-            method,
-            params,
-            || crate::quiet::dialog_of(&self.label).is_some(),
-        )
+        cdp::call_until(self.view, element.session.as_deref(), method, params, || {
+            crate::quiet::dialog_of(&self.label).is_some()
+        })
         .map(Option::unwrap_or_default)
         .map_err(|why| stale(&why))
     }
@@ -544,19 +526,11 @@ impl Page<'_> {
             ));
         };
         let Some(number) = frame else {
-            return Ok(Element {
-                session: None,
-                frame: None,
-                backend,
-            });
+            return Ok(Element { session: None, frame: None, backend });
         };
         let found = self.heard().held().frame(number);
         found
-            .map(|one| Element {
-                session: Some(one.session),
-                frame: Some(one.id),
-                backend,
-            })
+            .map(|one| Element { session: Some(one.session), frame: Some(one.id), backend })
             .ok_or_else(|| {
                 Answer::error(
                     Code::NoSuchRef,
@@ -609,13 +583,8 @@ impl Page<'_> {
         if let Some(known) = self.frame_lists.held().get(&key) {
             return known.clone();
         }
-        let tree = cdp::call_in(
-            self.view,
-            session,
-            "Page.getFrameTree",
-            &json!({}),
-            patience_in(session),
-        );
+        let tree =
+            cdp::call_in(self.view, session, "Page.getFrameTree", &json!({}), patience_in(session));
         let mut frames = Vec::new();
         if let Ok(tree) = tree {
             frames_under(tree.get("frameTree").unwrap_or(&Value::Null), &mut frames);
@@ -624,11 +593,7 @@ impl Page<'_> {
         frames
     }
     fn frame_read(&self, session: Option<&str>, frame: &str) {
-        if let Some(known) = self
-            .frame_lists
-            .held()
-            .get_mut(&session.map(str::to_string))
-        {
+        if let Some(known) = self.frame_lists.held().get_mut(&session.map(str::to_string)) {
             if let Some(at) = known.iter().position(|one| one == frame) {
                 known[..=at].rotate_right(1);
             }
@@ -649,18 +614,14 @@ impl Page<'_> {
     fn world_in(&self, session: Option<&str>) -> Result<i64, Answer> {
         let frame = match session {
             None => self.main_frame()?,
-            Some(_) => cdp::call_in(
-                self.view,
-                session,
-                "Page.getFrameTree",
-                &json!({}),
-                FRAME_PATIENCE,
-            )
-            .map_err(|why| stale(&why))?
-            .pointer("/frameTree/frame/id")
-            .and_then(Value::as_str)
-            .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for Orden"))?
-            .to_string(),
+            Some(_) => {
+                cdp::call_in(self.view, session, "Page.getFrameTree", &json!({}), FRAME_PATIENCE)
+                    .map_err(|why| stale(&why))?
+                    .pointer("/frameTree/frame/id")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for Orden"))?
+                    .to_string()
+            }
         };
         self.world_of_frame(session, &frame)
     }
@@ -685,9 +646,7 @@ impl Page<'_> {
         Ok(world)
     }
     fn forget_worlds(&self, session: Option<&str>) {
-        self.worlds
-            .held()
-            .retain(|(of, _), _| of.as_deref() != session);
+        self.worlds.held().retain(|(of, _), _| of.as_deref() != session);
         self.frame_lists.held().remove(&session.map(str::to_string));
     }
     fn run_on(
@@ -713,10 +672,7 @@ impl Page<'_> {
         function: &str,
         arguments: &[Value],
     ) -> Result<Value, Answer> {
-        let arguments: Vec<Value> = arguments
-            .iter()
-            .map(|one| json!({ "value": one }))
-            .collect();
+        let arguments: Vec<Value> = arguments.iter().map(|one| json!({ "value": one })).collect();
         let answered = self.call_on(
             element,
             "Runtime.callFunctionOn",
@@ -729,10 +685,7 @@ impl Page<'_> {
             }),
         )?;
         thrown(&answered)?;
-        Ok(answered
-            .pointer("/result/value")
-            .cloned()
-            .unwrap_or_default())
+        Ok(answered.pointer("/result/value").cloned().unwrap_or_default())
     }
     pub(crate) fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
@@ -767,15 +720,11 @@ impl Page<'_> {
             }),
         )?;
         thrown(&answered)?;
-        let said = answered
-            .pointer("/result/value")
-            .cloned()
-            .unwrap_or_default();
+        let said = answered.pointer("/result/value").cloned().unwrap_or_default();
         Ok(named(self.facts_from(element, &said)))
     }
     fn link_listens(&self, element: &Element) -> bool {
-        self.control_of(element)
-            .is_some_and(|object| self.hears(element, &object))
+        self.control_of(element).is_some_and(|object| self.hears(element, &object))
     }
     fn control_of(&self, element: &Element) -> Option<String> {
         self.through(element, &self.object(element).ok()?, &PRESSED)
@@ -788,16 +737,12 @@ impl Page<'_> {
                 &json!({ "objectId": object, "functionDeclaration": function }),
             )
             .ok()?;
-        found
-            .pointer("/result/objectId")?
-            .as_str()
-            .map(str::to_string)
+        found.pointer("/result/objectId")?.as_str().map(str::to_string)
     }
     fn hears(&self, element: &Element, object: &str) -> bool {
         let page_side = (|| {
-            let node = self
-                .call_on(element, "DOM.describeNode", &json!({ "objectId": object }))
-                .ok()?;
+            let node =
+                self.call_on(element, "DOM.describeNode", &json!({ "objectId": object })).ok()?;
             let backend = node.pointer("/node/backendNodeId")?.as_u64()?;
             let handle = self
                 .call_on(
@@ -806,18 +751,11 @@ impl Page<'_> {
                     &json!({ "backendNodeId": backend, "objectGroup": WORLD }),
                 )
                 .ok()?;
-            handle
-                .pointer("/object/objectId")?
-                .as_str()
-                .map(str::to_string)
+            handle.pointer("/object/objectId")?.as_str().map(str::to_string)
         })();
         page_side.is_some_and(|handle| {
-            self.call_on(
-                element,
-                "DOMDebugger.getEventListeners",
-                &json!({ "objectId": handle }),
-            )
-            .is_ok_and(|said| hears_a_press(&said))
+            self.call_on(element, "DOMDebugger.getEventListeners", &json!({ "objectId": handle }))
+                .is_ok_and(|said| hears_a_press(&said))
         })
     }
     fn engine_control_round(&self, element: &Element) -> Option<String> {
@@ -864,9 +802,7 @@ impl Page<'_> {
                 &json!({ "objectId": control, "fetchRelatives": false }),
             )
             .ok()?;
-        tree.pointer("/nodes/0/name/value")?
-            .as_str()
-            .map(str::to_string)
+        tree.pointer("/nodes/0/name/value")?.as_str().map(str::to_string)
     }
     fn may_read_frame(&self, at: &[String]) -> bool {
         engines::frame_readable(self.limits.as_ref(), at)
@@ -954,13 +890,10 @@ impl Page<'_> {
         .and_then(|said| said.get("node").and_then(frame_of_holder))
     }
     fn frame_world(&self, frame: &str) -> Option<u64> {
-        self.call(
-            "Page.createIsolatedWorld",
-            &json!({ "frameId": frame, "worldName": WORLD }),
-        )
-        .ok()?
-        .get("executionContextId")?
-        .as_u64()
+        self.call("Page.createIsolatedWorld", &json!({ "frameId": frame, "worldName": WORLD }))
+            .ok()?
+            .get("executionContextId")?
+            .as_u64()
     }
     fn active_in_a_frame(&self) -> Option<Facts> {
         let frames = self.heard().held().frames();
@@ -1043,10 +976,7 @@ impl Page<'_> {
             run(self.world()?)
         })?;
         thrown(&answered)?;
-        Ok(answered
-            .pointer("/result/value")
-            .cloned()
-            .unwrap_or_default())
+        Ok(answered.pointer("/result/value").cloned().unwrap_or_default())
     }
     fn world(&self) -> Result<i64, Answer> {
         self.world_in(None)
@@ -1092,11 +1022,7 @@ impl Page<'_> {
         let Ok(context) = self.world() else {
             return;
         };
-        let expression = format!(
-            "({SETTLED})({}, {})",
-            STILL.as_millis(),
-            SETTLES.as_millis()
-        );
+        let expression = format!("({SETTLED})({}, {})", STILL.as_millis(), SETTLES.as_millis());
         let _ = cdp::call_in(
             self.view,
             None,
@@ -1141,10 +1067,7 @@ impl Page<'_> {
                 )
             })?;
         let map = self.frame_map(element)?;
-        Ok(pressable(&quad)
-            .into_iter()
-            .map(|point| map.to_page(point))
-            .collect())
+        Ok(pressable(&quad).into_iter().map(|point| map.to_page(point)).collect())
     }
     fn landing(&self, element: &Element) -> Result<(f64, f64), Answer> {
         let points = self.points(element)?;
@@ -1158,10 +1081,7 @@ impl Page<'_> {
             }
         }
         Err(first.unwrap_or_else(|| {
-            Answer::error(
-                Code::Failed,
-                "the element is not visible: nothing of it is on the page",
-            )
+            Answer::error(Code::Failed, "the element is not visible: nothing of it is on the page")
         }))
     }
     pub fn aim(&self, element: &Element) -> Result<Aim, Answer> {
@@ -1185,10 +1105,7 @@ impl Page<'_> {
             return (0.0, 0.0);
         };
         let get = |path: &str| number(&metrics, path);
-        (
-            get("/cssLayoutViewport/pageX"),
-            get("/cssLayoutViewport/pageY"),
-        )
+        (get("/cssLayoutViewport/pageX"), get("/cssLayoutViewport/pageY"))
     }
     fn node_at(&self, (x, y): (f64, f64)) -> Option<u64> {
         let (left, top) = self.scrolled();
@@ -1233,11 +1150,7 @@ impl Page<'_> {
         let backend = self
             .node_at(point)
             .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))?;
-        let element = Element {
-            session: None,
-            frame: None,
-            backend,
-        };
+        let element = Element { session: None, frame: None, backend };
         let described = self.call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
         let node = described.get("node").cloned().unwrap_or_default();
         let Some(frame) = frame_of_holder(&node) else {
@@ -1255,11 +1168,8 @@ impl Page<'_> {
     }
     fn element_in_frame(&self, frame: &str, (x, y): (f64, f64)) -> Option<Element> {
         let session = self.frame_session(frame)?;
-        let inner = Element {
-            session: Some(session.clone()),
-            frame: Some(frame.to_string()),
-            backend: 0,
-        };
+        let inner =
+            Element { session: Some(session.clone()), frame: Some(frame.to_string()), backend: 0 };
         let (x, y) = self.frame_map(&inner).ok()?.to_frame((x, y))?;
         let call = |method: &str, params: &Value| self.asked_in(Some(&session), method, params);
         let metrics = call("Page.getLayoutMetrics", &json!({}))?;
@@ -1276,10 +1186,7 @@ impl Page<'_> {
         let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
         let backend = self.originating(Some(&session), backend);
         let held = call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
-        held.get("node")
-            .and_then(frame_of_holder)
-            .is_none()
-            .then_some(Element { backend, ..inner })
+        held.get("node").and_then(frame_of_holder).is_none().then_some(Element { backend, ..inner })
     }
     fn frame_map(&self, element: &Element) -> Result<FrameMap, Answer> {
         let Some(frame) = &element.frame else {
@@ -1359,21 +1266,14 @@ impl Page<'_> {
             let Some(hit) = self.node_at(point) else {
                 return Ok(());
             };
-            Element {
-                session: None,
-                frame: None,
-                backend: hit,
-            }
+            Element { session: None, frame: None, backend: hit }
         };
         let hit = covered.backend;
         if hit == element.backend {
             return Ok(());
         }
         let target = self.object(element)?;
-        if self
-            .frame_held(element.session.as_deref(), &target)
-            .is_some()
-        {
+        if self.frame_held(element.session.as_deref(), &target).is_some() {
             return Ok(());
         }
         if self.inside(element, &self.object(&covered)?, &target) {
@@ -1502,9 +1402,7 @@ impl Page<'_> {
                 self.refuse_picker(&now)?;
                 last = now.clone();
             }
-            if let Some(over) = self
-                .pointer_over(&now)
-                .filter(|over| !self.same_press(over, &now))
+            if let Some(over) = self.pointer_over(&now).filter(|over| !self.same_press(over, &now))
             {
                 gate(&over)?;
                 self.refuse_picker(&over)?;
@@ -1528,10 +1426,7 @@ impl Page<'_> {
         )?;
         let object = said.pointer("/result/objectId")?.as_str()?;
         let node = call("DOM.describeNode", &json!({ "objectId": object }))?;
-        Some(Element {
-            backend: node.pointer("/node/backendNodeId")?.as_u64()?,
-            ..element.clone()
-        })
+        Some(Element { backend: node.pointer("/node/backendNodeId")?.as_u64()?, ..element.clone() })
     }
     fn same_press(&self, one: &Element, other: &Element) -> bool {
         if one == other {
@@ -1571,16 +1466,10 @@ impl Page<'_> {
             orden_agents::log::sensitive();
         }
         if facts.tag == "select" {
-            return Err(Answer::error(
-                Code::BadArguments,
-                "that is a list: use browser_select",
-            ));
+            return Err(Answer::error(Code::BadArguments, "that is a list: use browser_select"));
         }
         if facts.kind == "file" {
-            return Err(Answer::error(
-                Code::BadArguments,
-                "that takes files: use browser_upload",
-            ));
+            return Err(Answer::error(Code::BadArguments, "that takes files: use browser_upload"));
         }
         if facts.picker() {
             return self.set_value(element, text);
@@ -1602,11 +1491,7 @@ impl Page<'_> {
                 return Ok(());
             }
         }
-        self.call_on(
-            element,
-            "DOM.focus",
-            &json!({ "backendNodeId": element.backend }),
-        )?;
+        self.call_on(element, "DOM.focus", &json!({ "backendNodeId": element.backend }))?;
         self.run_in_page(element, placing, &[])?;
         if text.is_empty() {
             if replace {
@@ -1616,8 +1501,7 @@ impl Page<'_> {
             }
             return Ok(());
         }
-        self.call("Input.insertText", &json!({ "text": text }))
-            .map(|_| ())
+        self.call("Input.insertText", &json!({ "text": text })).map(|_| ())
     }
     fn set_value(&self, element: &Element, text: &str) -> Result<(), Answer> {
         let said = self.run_in_page(
@@ -1662,12 +1546,7 @@ impl Page<'_> {
         Ok(said
             .get("chosen")
             .and_then(Value::as_array)
-            .map(|all| {
-                all.iter()
-                    .filter_map(Value::as_str)
-                    .map(str::to_string)
-                    .collect()
-            })
+            .map(|all| all.iter().filter_map(Value::as_str).map(str::to_string).collect())
             .unwrap_or_default())
     }
     pub(crate) fn fill(
@@ -1719,10 +1598,7 @@ impl Page<'_> {
             &json!({ "expression": format!("{ACTIVE} || document.body"), "returnByValue": false }),
         )?;
         let Some(object) = found.pointer("/result/objectId").and_then(Value::as_str) else {
-            return Err(Answer::error(
-                Code::Failed,
-                "the page has nothing to press a key in",
-            ));
+            return Err(Answer::error(Code::Failed, "the page has nothing to press a key in"));
         };
         let before = self.navigations();
         let said = self.call(
@@ -1734,10 +1610,7 @@ impl Page<'_> {
                 "returnByValue": true,
             }),
         )?;
-        let went = said
-            .pointer("/result/value")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
+        let went = said.pointer("/result/value").and_then(Value::as_str).unwrap_or_default();
         if went == "type" {
             if let Some(text) = key.text.as_deref() {
                 let text = if text == "\r" { "\n" } else { text };
@@ -1765,9 +1638,7 @@ impl Page<'_> {
         let (width, height, x, y) = self.viewport()?;
         let middle = (width / 2.0, height / 2.0);
         let under = if self.limits_sites() {
-            self.element_at(middle)
-                .ok()
-                .and_then(|one| self.facts(&one).ok())
+            self.element_at(middle).ok().and_then(|one| self.facts(&one).ok())
         } else {
             None
         };
@@ -1813,10 +1684,7 @@ impl Page<'_> {
             self.mouse("mousePressed", start, "left", 1, 0)?;
             for step in 1..=8u8 {
                 let at = f64::from(step) / 8.0;
-                let point = (
-                    start.0 + (end.0 - start.0) * at,
-                    start.1 + (end.1 - start.1) * at,
-                );
+                let point = (start.0 + (end.0 - start.0) * at, start.1 + (end.1 - start.1) * at);
                 self.call(
                     "Input.dispatchMouseEvent",
                     &json!({ "type": "mouseMoved", "x": point.0, "y": point.1, "button": "left", "buttons": 1 }),
@@ -1869,11 +1737,7 @@ impl Page<'_> {
                     "pressing it opened no file chooser: pass the file input's ref",
                 ));
             };
-            Element {
-                session: element.session.clone(),
-                frame: element.frame.clone(),
-                backend,
-            }
+            Element { session: element.session.clone(), frame: element.frame.clone(), backend }
         };
         self.call_on(
             &input,
@@ -1897,9 +1761,7 @@ impl Page<'_> {
             .ok()
             .and_then(|metrics| {
                 let device = metrics.pointer("/layoutViewport/clientWidth")?.as_f64()?;
-                let css = metrics
-                    .pointer("/cssLayoutViewport/clientWidth")?
-                    .as_f64()?;
+                let css = metrics.pointer("/cssLayoutViewport/clientWidth")?.as_f64()?;
                 (css > 0.0).then_some(device / css)
             })
             .filter(|ratio| *ratio > 0.0)
@@ -1945,10 +1807,7 @@ impl Page<'_> {
             (None, false) => (x, y, width, height),
         };
         if clip.2 < 1.0 || clip.3 < 1.0 {
-            return Err(Answer::error(
-                Code::Failed,
-                "nothing of it is on the page to photograph",
-            ));
+            return Err(Answer::error(Code::Failed, "nothing of it is on the page to photograph"));
         }
         let wanted = scale.unwrap_or(1.0).clamp(0.1, 4.0);
         for _ in 0..2 {
@@ -1966,11 +1825,7 @@ impl Page<'_> {
                 continue;
             }
             rects.extend(later);
-            let png = shot
-                .get("data")
-                .and_then(Value::as_str)
-                .unwrap_or_default()
-                .to_string();
+            let png = shot.get("data").and_then(Value::as_str).unwrap_or_default().to_string();
             let (width, height) = png_size(&png).unwrap_or_default();
             let png = painted_over(png, clip, (width, height), &rects)?;
             return Ok(Picture { png, width, height });
@@ -1981,28 +1836,20 @@ impl Page<'_> {
         ))
     }
     fn page_rect(&self, element: &Element) -> Result<[f64; 4], Answer> {
-        let model = self.call_on(
-            element,
-            "DOM.getBoxModel",
-            &json!({ "backendNodeId": element.backend }),
-        )?;
+        let model =
+            self.call_on(element, "DOM.getBoxModel", &json!({ "backendNodeId": element.backend }))?;
         let border: Vec<f64> = model
             .pointer("/model/border")
             .and_then(Value::as_array)
             .map(|all| all.iter().filter_map(Value::as_f64).collect())
             .unwrap_or_default();
         if border.len() != 8 {
-            return Err(Answer::error(
-                Code::Failed,
-                "the element is not on the page",
-            ));
+            return Err(Answer::error(Code::Failed, "the element is not on the page"));
         }
         let map = self.frame_map(element)?;
         let (_, _, x, y) = self.viewport()?;
-        let corners: Vec<(f64, f64)> = border
-            .chunks(2)
-            .map(|one| map.to_page((one[0], one[1])))
-            .collect();
+        let corners: Vec<(f64, f64)> =
+            border.chunks(2).map(|one| map.to_page((one[0], one[1]))).collect();
         let xs: Vec<f64> = corners.iter().map(|one| one.0).collect();
         let ys: Vec<f64> = corners.iter().map(|one| one.1).collect();
         let (left, right) = (
@@ -2016,11 +1863,8 @@ impl Page<'_> {
         Ok([left + x, top + y, right + x, bottom + y])
     }
     fn hidden_rects(&self) -> Result<Hidden, Answer> {
-        let secrets: Vec<Secret> = self
-            .secrets(self.every_part()?)
-            .into_iter()
-            .filter(|one| one.filled)
-            .collect();
+        let secrets: Vec<Secret> =
+            self.secrets(self.every_part()?).into_iter().filter(|one| one.filled).collect();
         if secrets.iter().any(|one| one.backend == UNREAD) {
             return Err(Answer::error(
                 Code::Failed,
@@ -2034,10 +1878,7 @@ impl Page<'_> {
             ));
         }
         let mut drawn = Vec::with_capacity(secrets.len());
-        let which = secrets
-            .iter()
-            .map(|one| (one.prefix.clone(), one.backend))
-            .collect();
+        let which = secrets.iter().map(|one| (one.prefix.clone(), one.backend)).collect();
         for one in secrets {
             let Ok(element) = self.element(&format!("{}e{}", one.prefix, one.backend)) else {
                 continue;
@@ -2063,11 +1904,7 @@ impl Page<'_> {
         self.nested_followed()?;
         let mut prefixes = vec![String::new()];
         prefixes.extend(
-            self.heard()
-                .held()
-                .frames()
-                .into_iter()
-                .map(|(number, _)| format!("f{number}")),
+            self.heard().held().frames().into_iter().map(|(number, _)| format!("f{number}")),
         );
         Ok(prefixes)
     }
@@ -2075,24 +1912,14 @@ impl Page<'_> {
         let started = Instant::now();
         let _ = self.nested_followed();
         let own = self.call("Accessibility.getFullAXTree", &json!({}))?;
-        let mut parts = vec![Part {
-            prefix: String::new(),
-            nodes: nodes_of(&own),
-            owner: None,
-        }];
+        let mut parts = vec![Part { prefix: String::new(), nodes: nodes_of(&own), owner: None }];
         let away: Vec<(usize, cdp::Frame)> = self.heard().held().frames();
         let away_ids: HashSet<String> = away.iter().map(|(_, frame)| frame.id.clone()).collect();
         let mut whole = away.iter().all(|(_, frame)| frame.parent.is_empty());
-        let away = away
-            .into_iter()
-            .filter(|(_, frame)| frame.parent.is_empty());
+        let away = away.into_iter().filter(|(_, frame)| frame.parent.is_empty());
         let tree = self.call("Page.getFrameTree", &json!({}))?;
         let mut same = Vec::new();
-        collect_frames(
-            tree.get("frameTree").unwrap_or(&Value::Null),
-            true,
-            &mut same,
-        );
+        collect_frames(tree.get("frameTree").unwrap_or(&Value::Null), true, &mut same);
         let places = places_in(&tree);
         for frame in same.into_iter().filter(|one| !away_ids.contains(one)) {
             if !places.get(&frame).is_none_or(|at| self.may_read_frame(at)) {
@@ -2113,11 +1940,7 @@ impl Page<'_> {
                 continue;
             };
             let owner = self.owner_in(&parts, &frame);
-            parts.push(Part {
-                prefix: String::new(),
-                nodes: nodes_of(&nodes),
-                owner,
-            });
+            parts.push(Part { prefix: String::new(), nodes: nodes_of(&nodes), owner });
         }
         for (number, frame) in away {
             if started.elapsed() > MOST_ON_FRAMES {
@@ -2139,11 +1962,7 @@ impl Page<'_> {
                 continue;
             };
             let owner = self.owner_in(&parts, &frame.id);
-            parts.push(Part {
-                prefix: format!("f{number}"),
-                nodes: nodes_of(&nodes),
-                owner,
-            });
+            parts.push(Part { prefix: format!("f{number}"), nodes: nodes_of(&nodes), owner });
         }
         let mut secret = self.secret_fields(&parts);
         if secret.contains(&(String::new(), UNREAD)) {
@@ -2184,11 +2003,7 @@ impl Page<'_> {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| stale("the frame has no owner"))?;
             let (session, frame) = holder.map_or((None, None), |one| (one.session, one.frame));
-            match self.page_rect(&Element {
-                session,
-                frame,
-                backend,
-            }) {
+            match self.page_rect(&Element { session, frame, backend }) {
                 Ok(rect) => rects.push(rect),
                 Err(Answer::Error { message, .. }) if undrawn(&message) => {}
                 Err(refused) => return Err(refused),
@@ -2213,9 +2028,7 @@ impl Page<'_> {
         .unwrap_or_else(|| vec![frame.url.clone()])
     }
     fn owner_in(&self, parts: &[Part], frame: &str) -> Option<(usize, u64)> {
-        let owner = self
-            .call("DOM.getFrameOwner", &json!({ "frameId": frame }))
-            .ok()?;
+        let owner = self.call("DOM.getFrameOwner", &json!({ "frameId": frame })).ok()?;
         let backend = owner.get("backendNodeId")?.as_u64()?;
         let part = parts.iter().position(|part| {
             part.prefix.is_empty()
@@ -2268,17 +2081,11 @@ impl Page<'_> {
                 self.capture(session.as_deref())
             };
             let Some(capture) = capture else {
-                found.push(Secret {
-                    prefix: prefix.clone(),
-                    backend: UNREAD,
-                    filled: true,
-                });
+                found.push(Secret { prefix: prefix.clone(), backend: UNREAD, filled: true });
                 continue;
             };
             seen.extend(
-                nodes_in_capture(&capture)
-                    .into_iter()
-                    .map(|backend| (prefix.clone(), backend)),
+                nodes_in_capture(&capture).into_iter().map(|backend| (prefix.clone(), backend)),
             );
             let fields = fields_in_capture(&capture, None);
             for (at, backend) in fields.into_iter().enumerate() {
@@ -2295,11 +2102,7 @@ impl Page<'_> {
                     .and_then(|value| value.pointer("/result/value").cloned())
                     .filter(Value::is_object);
                 let Some(said) = said else {
-                    found.push(Secret {
-                        prefix: prefix.clone(),
-                        backend,
-                        filled: true,
-                    });
+                    found.push(Secret { prefix: prefix.clone(), backend, filled: true });
                     continue;
                 };
                 if serde_json::from_value::<Field>(said.clone())
@@ -2312,10 +2115,7 @@ impl Page<'_> {
                     });
                 }
             }
-            let _ = call(
-                "Runtime.releaseObjectGroup",
-                &json!({ "objectGroup": SECRETS }),
-            );
+            let _ = call("Runtime.releaseObjectGroup", &json!({ "objectGroup": SECRETS }));
         }
         (found, seen)
     }
@@ -2372,11 +2172,7 @@ impl Page<'_> {
     }
     pub fn clip(&self) -> Result<(String, String, String), Answer> {
         let said = self.read_hiding(clipped_hiding)?;
-        Ok((
-            text(&said, "url"),
-            text(&said, "title"),
-            text(&said, "html"),
-        ))
+        Ok((text(&said, "url"), text(&said, "title"), text(&said, "html")))
     }
     pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
         if !self.denied_frames()?.is_empty() {
@@ -2386,19 +2182,15 @@ impl Page<'_> {
             ));
         }
         if !self.may_touch_credentials()
-            && self
-                .secrets(self.every_part()?)
-                .iter()
-                .any(|one| one.filled)
+            && self.secrets(self.every_part()?).iter().any(|one| one.filled)
         {
             return Err(Answer::error(
                 Code::PasswordField,
                 "a filled secret field is on the page, and it would print as bullets that say how long it is: capture a screenshot, which paints it over",
             ));
         }
-        let printed = self
-            .call("Page.printToPDF", &printing(paper))
-            .map_err(|refused| match refused {
+        let printed =
+            self.call("Page.printToPDF", &printing(paper)).map_err(|refused| match refused {
                 Answer::Error { message, .. } if unprintable(&message) => Answer::error(
                     Code::UnsupportedOnThisEngine,
                     format!("this engine does not print a page to a PDF: {message}"),
@@ -2441,10 +2233,7 @@ impl Page<'_> {
                     )
                     .ok()
                     .and_then(|quads| {
-                        quads
-                            .get("quads")
-                            .and_then(Value::as_array)
-                            .map(|all| !all.is_empty())
+                        quads.get("quads").and_then(Value::as_array).map(|all| !all.is_empty())
                     }) == Some(true)
                 }),
                 Until::Url { url } => self.url().contains(url.as_str()),
@@ -2488,18 +2277,13 @@ impl Page<'_> {
             &json!({ "expression": expression, "returnByValue": true, "awaitPromise": true }),
         )?;
         thrown(&answered)?;
-        Ok(answered
-            .pointer("/result/value")
-            .cloned()
-            .unwrap_or_default())
+        Ok(answered.pointer("/result/value").cloned().unwrap_or_default())
     }
     pub(crate) fn navigate(&self, url: &str) -> Result<(), Answer> {
         let loads = self.heard().held().loads;
         let went = self.call("Page.navigate", &json!({ "url": url }))?;
-        if let Some(error) = went
-            .get("errorText")
-            .and_then(Value::as_str)
-            .filter(|one| !one.is_empty())
+        if let Some(error) =
+            went.get("errorText").and_then(Value::as_str).filter(|one| !one.is_empty())
         {
             return Err(Answer::error(
                 Code::Failed,
@@ -2515,11 +2299,7 @@ impl Page<'_> {
             self.call("Page.reload", &json!({}))?;
         } else {
             let history = self.call("Page.getNavigationHistory", &json!({}))?;
-            let at = history
-                .get("currentIndex")
-                .and_then(Value::as_i64)
-                .unwrap_or_default()
-                + by;
+            let at = history.get("currentIndex").and_then(Value::as_i64).unwrap_or_default() + by;
             let found = history
                 .get("entries")
                 .and_then(Value::as_array)
@@ -2561,18 +2341,9 @@ impl Page<'_> {
                 value: text(one, "value"),
                 domain: Some(text(one, "domain")),
                 path: Some(text(one, "path")),
-                expires: one
-                    .get("expires")
-                    .and_then(Value::as_f64)
-                    .filter(|at| *at > 0.0),
-                http_only: one
-                    .get("httpOnly")
-                    .and_then(Value::as_bool)
-                    .unwrap_or_default(),
-                secure: one
-                    .get("secure")
-                    .and_then(Value::as_bool)
-                    .unwrap_or_default(),
+                expires: one.get("expires").and_then(Value::as_f64).filter(|at| *at > 0.0),
+                http_only: one.get("httpOnly").and_then(Value::as_bool).unwrap_or_default(),
+                secure: one.get("secure").and_then(Value::as_bool).unwrap_or_default(),
             })
             .collect())
     }
@@ -2598,10 +2369,7 @@ impl Page<'_> {
         }
         let said = self.call("Network.setCookie", &params)?;
         if said.get("success").and_then(Value::as_bool) == Some(false) {
-            return Err(Answer::error(
-                Code::Failed,
-                "the engine refused that cookie",
-            ));
+            return Err(Answer::error(Code::Failed, "the engine refused that cookie"));
         }
         Ok(())
     }
@@ -2646,10 +2414,8 @@ impl Page<'_> {
         let heard = self.heard();
         let held = heard.held();
         let (requests, _) = held.requests(None, None);
-        let mut hosts: HashSet<String> = requests
-            .iter()
-            .filter_map(|(one, _)| policy::host_of(&one.url))
-            .collect();
+        let mut hosts: HashSet<String> =
+            requests.iter().filter_map(|(one, _)| policy::host_of(&one.url)).collect();
         for (_, frame) in held.frames() {
             if let Some(host) = policy::host_of(&frame.url) {
                 hosts.insert(host);
@@ -2720,10 +2486,7 @@ fn stale(why: &str) -> Answer {
         || why.contains("No object")
         || why.contains("The parameter is incorrect");
     if gone {
-        Answer::error(
-            Code::NoSuchRef,
-            "that element is gone: take a snapshot again",
-        )
+        Answer::error(Code::NoSuchRef, "that element is gone: take a snapshot again")
     } else {
         Answer::error(Code::Failed, why.to_string())
     }
@@ -2737,10 +2500,7 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
         .and_then(Value::as_str)
         .or_else(|| details.get("text").and_then(Value::as_str))
         .unwrap_or("the script threw");
-    Err(Answer::error(
-        Code::Failed,
-        cdp::cut(said.to_string(), 2_000),
-    ))
+    Err(Answer::error(Code::Failed, cdp::cut(said.to_string(), 2_000)))
 }
 fn frame_of_holder(node: &Value) -> Option<String> {
     let name = node.get("nodeName").and_then(Value::as_str)?;
@@ -2753,21 +2513,13 @@ fn frame_of_holder(node: &Value) -> Option<String> {
     .map(str::to_string)
 }
 fn control_in_tree(nodes: &[Value]) -> Option<String> {
-    let by_id: HashMap<&str, &Value> = nodes
-        .iter()
-        .filter_map(|node| Some((node.get("nodeId")?.as_str()?, node)))
-        .collect();
+    let by_id: HashMap<&str, &Value> =
+        nodes.iter().filter_map(|node| Some((node.get("nodeId")?.as_str()?, node))).collect();
     let mut at = nodes.first();
     let mut steps = 0;
     while let Some(node) = at {
-        let role = node
-            .pointer("/role/value")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        let name = node
-            .pointer("/name/value")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
+        let role = node.pointer("/role/value").and_then(Value::as_str).unwrap_or_default();
+        let name = node.pointer("/name/value").and_then(Value::as_str).unwrap_or_default();
         if matches!(role, "button" | "link" | "menuitem") && !name.trim().is_empty() {
             return Some(name.to_string());
         }
@@ -2817,12 +2569,7 @@ fn frames_under(tree: &Value, out: &mut Vec<String>) {
     if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
         out.push(id.to_string());
     }
-    for child in tree
-        .get("childFrames")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-    {
+    for child in tree.get("childFrames").and_then(Value::as_array).into_iter().flatten() {
         frames_under(child, out);
     }
 }
@@ -2835,24 +2582,14 @@ fn facts_read(said: &Value) -> Facts {
             }
             facts
         }
-        _ => Facts {
-            opaque: true,
-            ..Facts::default()
-        },
+        _ => Facts { opaque: true, ..Facts::default() },
     }
 }
 fn text(value: &Value, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string()
+    value.get(key).and_then(Value::as_str).unwrap_or_default().to_string()
 }
 fn nodes_of(tree: &Value) -> Vec<Value> {
-    tree.get("nodes")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default()
+    tree.get("nodes").and_then(Value::as_array).cloned().unwrap_or_default()
 }
 fn joined_name(read: &str, engine: &str) -> String {
     let (read, engine) = (read.trim(), engine.trim());
@@ -2865,10 +2602,7 @@ fn joined_name(read: &str, engine: &str) -> String {
     }
 }
 fn cookie_fits(domain: &str, host: &str) -> bool {
-    let domain = domain
-        .trim_start_matches('.')
-        .trim_end_matches('.')
-        .to_lowercase();
+    let domain = domain.trim_start_matches('.').trim_end_matches('.').to_lowercase();
     let host = host.to_lowercase();
     let site = policy::site_of(&host);
     (domain == host || host.ends_with(&format!(".{domain}")))
@@ -2876,11 +2610,7 @@ fn cookie_fits(domain: &str, host: &str) -> bool {
 }
 fn places_in(tree: &Value) -> HashMap<String, Vec<String>> {
     let mut places = HashMap::new();
-    frame_places(
-        tree.get("frameTree").unwrap_or(&Value::Null),
-        &[],
-        &mut places,
-    );
+    frame_places(tree.get("frameTree").unwrap_or(&Value::Null), &[], &mut places);
     places
 }
 fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<String>>) {
@@ -2892,12 +2622,7 @@ fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<S
     if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
         out.insert(id.to_string(), at.clone());
     }
-    for child in tree
-        .get("childFrames")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-    {
+    for child in tree.get("childFrames").and_then(Value::as_array).into_iter().flatten() {
         frame_places(child, &at, out);
     }
 }
@@ -2941,11 +2666,7 @@ fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
     let strings: Vec<&str> = capture
         .get("strings")
         .and_then(Value::as_array)
-        .map(|all| {
-            all.iter()
-                .map(|one| one.as_str().unwrap_or_default())
-                .collect()
-        })
+        .map(|all| all.iter().map(|one| one.as_str().unwrap_or_default()).collect())
         .unwrap_or_default();
     let string = |at: Option<&Value>| {
         at.and_then(Value::as_u64)
@@ -2953,12 +2674,7 @@ fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
             .unwrap_or_default()
     };
     let mut out = Vec::new();
-    for document in capture
-        .get("documents")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-    {
+    for document in capture.get("documents").and_then(Value::as_array).into_iter().flatten() {
         let Some(nodes) = document.get("nodes") else {
             continue;
         };
@@ -3032,11 +2748,8 @@ fn takes_words(attributes: &[&str]) -> bool {
         .copied()
         .unwrap_or_default()
         .to_ascii_lowercase();
-    ![
-        "hidden", "submit", "button", "image", "reset", "checkbox", "radio", "file", "range",
-        "color",
-    ]
-    .contains(&kind.as_str())
+    !["hidden", "submit", "button", "image", "reset", "checkbox", "radio", "file", "range", "color"]
+        .contains(&kind.as_str())
 }
 fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
     if !top {
@@ -3044,40 +2757,26 @@ fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
             out.push(id.to_string());
         }
     }
-    for child in tree
-        .get("childFrames")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-    {
+    for child in tree.get("childFrames").and_then(Value::as_array).into_iter().flatten() {
         collect_frames(child, false, out);
     }
 }
 fn pressable(quad: &[f64]) -> Vec<(f64, f64)> {
-    let corners: Vec<(f64, f64)> = quad
-        .as_chunks::<2>()
-        .0
-        .iter()
-        .map(|&[x, y]| (x, y))
-        .collect();
+    let corners: Vec<(f64, f64)> = quad.as_chunks::<2>().0.iter().map(|&[x, y]| (x, y)).collect();
     let middle = (
         corners.iter().map(|one| one.0).sum::<f64>() / 4.0,
         corners.iter().map(|one| one.1).sum::<f64>() / 4.0,
     );
     std::iter::once(middle)
-        .chain(corners.iter().map(|corner| {
-            (
-                f64::midpoint(middle.0, corner.0),
-                f64::midpoint(middle.1, corner.1),
-            )
-        }))
+        .chain(
+            corners.iter().map(|corner| {
+                (f64::midpoint(middle.0, corner.0), f64::midpoint(middle.1, corner.1))
+            }),
+        )
         .collect()
 }
 fn number(value: &Value, path: &str) -> f64 {
-    value
-        .pointer(path)
-        .and_then(Value::as_f64)
-        .unwrap_or_default()
+    value.pointer(path).and_then(Value::as_f64).unwrap_or_default()
 }
 fn area(at: &[f64]) -> f64 {
     let mut twice = 0.0;
@@ -3155,62 +2854,34 @@ mod tests {
         let bank = frame(&["https://bank.example"]);
         let shop = frame(&["https://shop.example"]);
         for source in [Some("https://cdn.example/app.js:3"), Some(":1"), None] {
-            assert!(
-                !line_readable(Some(&limits), &line(source), &bank),
-                "{source:?}"
-            );
-            assert!(
-                !line_readable(Some(&limits), &line(source), &frame(&[])),
-                "{source:?}"
-            );
-            assert!(
-                line_readable(Some(&limits), &line(source), &shop),
-                "{source:?}"
-            );
+            assert!(!line_readable(Some(&limits), &line(source), &bank), "{source:?}");
+            assert!(!line_readable(Some(&limits), &line(source), &frame(&[])), "{source:?}");
+            assert!(line_readable(Some(&limits), &line(source), &shop), "{source:?}");
         }
         let theirs = line(Some("https://bank.example/widget.js:9"));
         assert!(!line_readable(Some(&limits), &theirs, &shop));
-        assert!(line_readable(
-            Some(&limits),
-            &line(Some("orden")),
-            &Whence::Orden
-        ));
+        assert!(line_readable(Some(&limits), &line(Some("orden")), &Whence::Orden));
         assert!(line_readable(None, &line(None), &bank));
     }
     #[test]
     fn a_denied_frame_s_request_is_not_read_whatever_its_host() {
         let limits = denying();
-        let row = |url: &str| Request {
-            status: Some(200),
-            ..request(url)
-        };
+        let row = |url: &str| Request { status: Some(200), ..request(url) };
         let api = row("https://api.backend.example/accounts");
-        assert!(!request_readable(
-            Some(&limits),
-            &api,
-            &frame(&["https://bank.example/app"])
-        ));
+        assert!(!request_readable(Some(&limits), &api, &frame(&["https://bank.example/app"])));
         assert!(!request_readable(
             Some(&limits),
             &api,
             &frame(&["about:blank", "https://bank.example/app"])
         ));
         assert!(!request_readable(Some(&limits), &api, &frame(&[])));
-        assert!(request_readable(
-            Some(&limits),
-            &api,
-            &frame(&["https://shop.example/"])
-        ));
+        assert!(request_readable(Some(&limits), &api, &frame(&["https://shop.example/"])));
         assert!(!request_readable(
             Some(&limits),
             &row("https://bank.example/pixel"),
             &frame(&["https://shop.example/"])
         ));
-        assert!(request_readable(
-            None,
-            &api,
-            &frame(&["https://bank.example/"])
-        ));
+        assert!(request_readable(None, &api, &frame(&["https://bank.example/"])));
     }
     #[test]
     fn a_scroll_by_no_ref_does_not_wheel_a_denied_frame() {
@@ -3219,14 +2890,8 @@ mod tests {
             at: at.iter().map(|one| (*one).to_string()).collect(),
             ..Facts::default()
         };
-        assert!(!wheels(
-            Some(&limits),
-            Some(&facts(&["https://bank.example/"]))
-        ));
-        assert!(wheels(
-            Some(&limits),
-            Some(&facts(&["https://shop.example/"]))
-        ));
+        assert!(!wheels(Some(&limits), Some(&facts(&["https://bank.example/"]))));
+        assert!(wheels(Some(&limits), Some(&facts(&["https://shop.example/"]))));
         assert!(!wheels(Some(&limits), None));
         let open = (Grant::own("a".into(), "A"), Store::Reader);
         assert!(wheels(Some(&open), None));
@@ -3237,33 +2902,21 @@ mod tests {
         let limits = denying();
         let row = request;
         let rows = vec![
-            (
-                row("https://bank.example/stream?session=abc"),
-                frame(&["https://shop.example/"]),
-            ),
+            (row("https://bank.example/stream?session=abc"), frame(&["https://shop.example/"])),
             (
                 row("https://api.backend.example/accounts?acct=123"),
                 frame(&["https://bank.example/app"]),
             ),
-            (
-                row("https://shop.example/poll"),
-                frame(&["https://shop.example/"]),
-            ),
+            (row("https://shop.example/poll"), frame(&["https://shop.example/"])),
         ];
-        assert_eq!(
-            still_in_flight(Some(&limits), rows.clone()),
-            ["https://shop.example/poll"]
-        );
+        assert_eq!(still_in_flight(Some(&limits), rows.clone()), ["https://shop.example/poll"]);
         assert_eq!(still_in_flight(None, rows).len(), 3);
     }
     #[test]
     fn a_frame_inside_a_frame_maps_through_both() {
-        let outer = FrameMap::of(
-            &[10.0, 20.0, 210.0, 20.0, 210.0, 120.0, 10.0, 120.0],
-            100.0,
-            50.0,
-        )
-        .expect("drawn");
+        let outer =
+            FrameMap::of(&[10.0, 20.0, 210.0, 20.0, 210.0, 120.0, 10.0, 120.0], 100.0, 50.0)
+                .expect("drawn");
         let inner =
             FrameMap::of(&[5.0, 5.0, 25.0, 5.0, 25.0, 15.0, 5.0, 15.0], 20.0, 10.0).expect("drawn");
         let map = inner.within(outer);
@@ -3300,24 +2953,12 @@ mod tests {
                 ],
                 owner: None,
             },
-            Part {
-                prefix: "f1".into(),
-                nodes: vec![field(2, "gone in this part")],
-                owner: None,
-            },
+            Part { prefix: "f1".into(), nodes: vec![field(2, "gone in this part")], owner: None },
         ];
-        let seen: HashSet<(String, u64)> = [(String::new(), 2), (String::new(), 6)]
-            .into_iter()
-            .collect();
+        let seen: HashSet<(String, u64)> =
+            [(String::new(), 2), (String::new(), 6)].into_iter().collect();
         let gone = gone_fields(&parts, &seen);
-        assert_eq!(
-            gone,
-            [
-                (String::new(), 1),
-                (String::new(), 5),
-                ("f1".to_string(), 2),
-            ]
-        );
+        assert_eq!(gone, [(String::new(), 1), (String::new(), 5), ("f1".to_string(), 2),]);
     }
     #[test]
     fn a_slider_gone_by_the_scan_is_no_secret() {
@@ -3343,13 +2984,7 @@ mod tests {
         let points = pressable(&[0.0, 0.0, 100.0, 0.0, 100.0, 40.0, 0.0, 40.0]);
         assert_eq!(
             points,
-            vec![
-                (50.0, 20.0),
-                (25.0, 10.0),
-                (75.0, 10.0),
-                (75.0, 30.0),
-                (25.0, 30.0)
-            ]
+            vec![(50.0, 20.0), (25.0, 10.0), (75.0, 10.0), (75.0, 30.0), (25.0, 30.0)]
         );
     }
     #[test]
@@ -3359,12 +2994,7 @@ mod tests {
     }
     #[test]
     fn a_print_is_on_the_readers_paper_with_no_line_of_the_browsers() {
-        let a4 = PdfPage {
-            width: 8.27,
-            height: 11.69,
-            margin: 0.787,
-            landscape: false,
-        };
+        let a4 = PdfPage { width: 8.27, height: 11.69, margin: 0.787, landscape: false };
         let asked = printing(&a4);
         assert_eq!(asked["paperWidth"], 8.27);
         assert_eq!(asked["paperHeight"], 11.69);
@@ -3373,11 +3003,7 @@ mod tests {
         assert_eq!(asked["printBackground"], true);
         assert_eq!(asked["displayHeaderFooter"], false);
         assert_eq!(asked["transferMode"], "ReturnAsBase64");
-        let turned = printing(&PdfPage {
-            margin: -1.0,
-            landscape: true,
-            ..a4
-        });
+        let turned = printing(&PdfPage { margin: -1.0, landscape: true, ..a4 });
         assert_eq!(turned["paperWidth"], 8.27);
         assert_eq!(turned["landscape"], true);
         assert_eq!(turned["marginTop"], 0.0);
@@ -3422,12 +3048,8 @@ mod tests {
     }
     #[test]
     fn a_frames_size_with_its_bars_lands_where_the_quad_says() {
-        let map = FrameMap::of(
-            &[0.0, 0.0, 300.0, 0.0, 300.0, 200.0, 0.0, 200.0],
-            300.0,
-            200.0,
-        )
-        .expect("a straight quad");
+        let map = FrameMap::of(&[0.0, 0.0, 300.0, 0.0, 300.0, 200.0, 0.0, 200.0], 300.0, 200.0)
+            .expect("a straight quad");
         assert_eq!(map.to_page((200.0, 20.0)), (200.0, 20.0));
         assert_eq!(map.to_frame((200.0, 20.0)), Some((200.0, 20.0)));
     }
@@ -3444,35 +3066,20 @@ mod tests {
     }
     #[test]
     fn a_frame_under_a_transform_is_mapped_by_its_quad() {
-        let half = FrameMap::of(
-            &[0.0, 0.0, 100.0, 0.0, 100.0, 50.0, 0.0, 50.0],
-            200.0,
-            100.0,
-        )
-        .expect("a straight quad");
+        let half = FrameMap::of(&[0.0, 0.0, 100.0, 0.0, 100.0, 50.0, 0.0, 50.0], 200.0, 100.0)
+            .expect("a straight quad");
         assert_eq!(half.to_frame((75.0, 25.0)), Some((150.0, 50.0)));
         assert_eq!(half.to_page((150.0, 50.0)), (75.0, 25.0));
-        let moved = FrameMap::of(
-            &[50.0, 0.0, 150.0, 0.0, 150.0, 50.0, 50.0, 50.0],
-            200.0,
-            100.0,
-        )
-        .expect("a straight quad");
+        let moved = FrameMap::of(&[50.0, 0.0, 150.0, 0.0, 150.0, 50.0, 50.0, 50.0], 200.0, 100.0)
+            .expect("a straight quad");
         assert_eq!(moved.to_frame((75.0, 25.0)), Some((50.0, 50.0)));
-        let turned = FrameMap::of(
-            &[100.0, 0.0, 100.0, 200.0, 0.0, 200.0, 0.0, 0.0],
-            200.0,
-            100.0,
-        )
-        .expect("a straight quad");
+        let turned = FrameMap::of(&[100.0, 0.0, 100.0, 200.0, 0.0, 200.0, 0.0, 0.0], 200.0, 100.0)
+            .expect("a straight quad");
         assert_eq!(turned.to_page((10.0, 20.0)), (80.0, 10.0));
         assert_eq!(turned.to_frame((80.0, 10.0)), Some((10.0, 20.0)));
-        assert!(FrameMap::of(
-            &[0.0, 0.0, 100.0, 10.0, 90.0, 50.0, 10.0, 40.0],
-            200.0,
-            100.0
-        )
-        .is_none());
+        assert!(
+            FrameMap::of(&[0.0, 0.0, 100.0, 10.0, 90.0, 50.0, 10.0, 40.0], 200.0, 100.0).is_none()
+        );
         assert!(FrameMap::of(&[0.0; 8], 200.0, 100.0).is_none());
         assert!(FrameMap::of(&[], 200.0, 100.0).is_none());
         assert_eq!(FrameMap::same().to_page((3.0, 4.0)), (3.0, 4.0));
@@ -3493,12 +3100,8 @@ mod tests {
         assert!(hears_a_press(
             &json!({ "listeners": [{ "type": "scroll" }, { "type": "click" }] })
         ));
-        assert!(hears_a_press(
-            &json!({ "listeners": [{ "type": "pointerdown" }] })
-        ));
-        assert!(!hears_a_press(
-            &json!({ "listeners": [{ "type": "mousemove" }] })
-        ));
+        assert!(hears_a_press(&json!({ "listeners": [{ "type": "pointerdown" }] })));
+        assert!(!hears_a_press(&json!({ "listeners": [{ "type": "mousemove" }] })));
         assert!(!hears_a_press(&json!({ "listeners": [] })));
         assert!(!hears_a_press(&json!({})));
     }
@@ -3554,20 +3157,15 @@ mod tests {
     fn captured(nodes: &[(i64, &str, u64, &[&str])], roots: &[(u64, &str)]) -> Value {
         let mut strings: Vec<String> = Vec::new();
         let mut index = |word: &str| {
-            let at = strings
-                .iter()
-                .position(|one| one == word)
-                .unwrap_or_else(|| {
-                    strings.push(word.to_string());
-                    strings.len() - 1
-                });
+            let at = strings.iter().position(|one| one == word).unwrap_or_else(|| {
+                strings.push(word.to_string());
+                strings.len() - 1
+            });
             json!(at)
         };
         let names: Vec<Value> = nodes.iter().map(|one| index(one.1)).collect();
-        let attributes: Vec<Vec<Value>> = nodes
-            .iter()
-            .map(|one| one.3.iter().map(|word| index(word)).collect())
-            .collect();
+        let attributes: Vec<Vec<Value>> =
+            nodes.iter().map(|one| one.3.iter().map(|word| index(word)).collect()).collect();
         let kinds: Vec<Value> = roots.iter().map(|one| index(one.1)).collect();
         json!({
             "strings": strings,
@@ -3611,12 +3209,7 @@ mod tests {
     fn a_field_a_thousand_levels_down_is_found() {
         let mut nodes: Vec<(i64, &str, u64, &[&str])> = vec![(-1, "#document", 5000, &[])];
         for level in 0..1000u64 {
-            nodes.push((
-                i64::try_from(level).expect("small"),
-                "DIV",
-                6000 + level,
-                &[],
-            ));
+            nodes.push((i64::try_from(level).expect("small"), "DIV", 6000 + level, &[]));
         }
         nodes.push((1000, "INPUT", 7, &["autocomplete", "cc-number"]));
         let capture = captured(&nodes, &[]);
@@ -3635,11 +3228,7 @@ mod tests {
         let places = places_in(&json!({ "frameTree": tree }));
         assert_eq!(
             places["blank"],
-            [
-                "about:blank",
-                "https://denied.example/",
-                "https://a.example/"
-            ]
+            ["about:blank", "https://denied.example/", "https://a.example/"]
         );
     }
     #[test]

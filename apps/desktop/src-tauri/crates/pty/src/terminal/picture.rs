@@ -7,12 +7,8 @@ use std::time::{Duration, SystemTime};
 
 use tauri::{Manager as _, Webview};
 
-const KINDS: [(&str, &str); 4] = [
-    ("png", "png"),
-    ("jpeg", "jpg"),
-    ("gif", "gif"),
-    ("webp", "webp"),
-];
+const KINDS: [(&str, &str); 4] =
+    [("png", "png"), ("jpeg", "jpg"), ("gif", "gif"), ("webp", "webp")];
 const MOST_BYTES: usize = 16 * 1024 * 1024;
 const CARRYING: Duration = Duration::from_secs(60);
 const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
@@ -34,10 +30,7 @@ const OPTIONS: [&str; 9] = [
     "ServerAliveCountMax=3",
 ];
 fn end_of(kind: &str) -> Option<&'static str> {
-    KINDS
-        .iter()
-        .find(|(one, _)| *one == kind)
-        .map(|(_, end)| *end)
+    KINDS.iter().find(|(one, _)| *one == kind).map(|(_, end)| *end)
 }
 fn fresh_name(end: &str) -> Result<String, String> {
     use std::fmt::Write as _;
@@ -58,16 +51,10 @@ fn script(name: &str) -> String {
 }
 fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, String> {
     let mut command = Command::new(program);
-    command
-        .args(args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    command.args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
     command.creation_flags(0x0800_0000);
-    let mut child = command
-        .spawn()
-        .map_err(|error| format!("could not start ssh: {error}"))?;
+    let mut child = command.spawn().map_err(|error| format!("could not start ssh: {error}"))?;
     if let Some(mut input) = child.stdin.take() {
         std::thread::spawn(move || {
             let _ = input.write_all(&bytes);
@@ -80,10 +67,7 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
         Ok(path)
     } else {
         let said = String::from_utf8_lossy(&output.stderr);
-        Err(format!(
-            "the host did not take the picture: {}",
-            said.trim()
-        ))
+        Err(format!("the host did not take the picture: {}", said.trim()))
     }
 }
 fn said_shell(out: &str) -> Option<&'static str> {
@@ -107,11 +91,7 @@ fn said_shell(out: &str) -> Option<&'static str> {
 }
 fn shell_of(program: &Path, args: &[String]) -> Option<&'static str> {
     let mut command = Command::new(program);
-    command
-        .args(args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null());
+    command.args(args).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null());
     #[cfg(windows)]
     command.creation_flags(0x0800_0000);
     let output = orden_base::printed::wait_output(command.spawn().ok()?, ASKING).ok()?;
@@ -177,8 +157,7 @@ fn kept(folder: &Path, name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
         .create_new(true)
         .open(&path)
         .map_err(|error| format!("the picture could not be kept: {error}"))?;
-    file.write_all(bytes)
-        .map_err(|error| format!("the picture could not be kept: {error}"))?;
+    file.write_all(bytes).map_err(|error| format!("the picture could not be kept: {error}"))?;
     Ok(path)
 }
 #[tauri::command(async)]
@@ -282,10 +261,7 @@ mod tests {
     #[test]
     fn a_hosts_shell_is_read_off_what_it_echoed_and_anything_else_is_unknown() {
         assert_eq!(said_shell("orden-shell /bin/bash %COMSPEC%\n"), Some("sh"));
-        assert_eq!(
-            said_shell("motd\norden-shell /usr/bin/fish %COMSPEC%"),
-            Some("sh")
-        );
+        assert_eq!(said_shell("motd\norden-shell /usr/bin/fish %COMSPEC%"), Some("sh"));
         assert_eq!(said_shell("orden-shell /bin/tcsh %COMSPEC%"), Some("tcsh"));
         assert_eq!(said_shell("orden-shell\r\n%COMSPEC%\r\n"), Some("pwsh"));
         assert_eq!(
@@ -327,11 +303,7 @@ mod tests {
                 command.env("SHELL", &program);
             }
             let output = command.output().expect("the shell ran");
-            assert_eq!(
-                said_shell(&String::from_utf8_lossy(&output.stdout)),
-                said,
-                "{name}"
-            );
+            assert_eq!(said_shell(&String::from_utf8_lossy(&output.stdout)), said, "{name}");
         }
     }
     #[cfg(unix)]

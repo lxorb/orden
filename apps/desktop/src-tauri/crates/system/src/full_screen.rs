@@ -18,9 +18,7 @@ pub fn window_fullscreen(window: tauri::Window, on: bool) -> Result<(), String> 
     if !noted(window.label(), on, away()) {
         return Ok(());
     }
-    window
-        .set_fullscreen(on)
-        .map_err(|error| format!("could not change full screen: {error}"))
+    window.set_fullscreen(on).map_err(|error| format!("could not change full screen: {error}"))
 }
 #[tauri::command(async)]
 pub fn window_is_fullscreen(window: tauri::Window) -> bool {
@@ -47,9 +45,7 @@ mod tests {
     fn a_window_on_the_screen_is_asked_and_remembered_once() {
         assert!(noted("main-test", true, false));
         assert!(noted("main-test", true, false));
-        let held = FULL
-            .lock()
-            .map(|full| full.iter().filter(|one| *one == "main-test").count());
+        let held = FULL.lock().map(|full| full.iter().filter(|one| *one == "main-test").count());
         assert_eq!(held.ok(), Some(1));
         assert!(noted("other-test", true, false));
         assert!(noted("main-test", false, false));

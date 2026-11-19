@@ -70,9 +70,7 @@ impl Feed {
             return Err(Unfed::Unread(unread));
         }
         self.unread.fetch_add(words.len(), Ordering::SeqCst);
-        self.words
-            .send(words.as_bytes().to_vec())
-            .map_err(|_| Unfed::Closed)
+        self.words.send(words.as_bytes().to_vec()).map_err(|_| Unfed::Closed)
     }
 }
 enum Unfed {
@@ -114,18 +112,11 @@ impl Stream {
         let cut = rest.len() > MOST_OUTPUT;
         let end = whole_to(rest, rest.len().min(MOST_OUTPUT));
         let next = self.dropped + u64::try_from(from + end).unwrap_or(u64::MAX);
-        (
-            String::from_utf8_lossy(&rest[..end]).into_owned(),
-            next,
-            skipped || cut,
-        )
+        (String::from_utf8_lossy(&rest[..end]).into_owned(), next, skipped || cut)
     }
     fn end(&self) -> (String, bool) {
         let from = whole_from(&self.bytes, self.bytes.len().saturating_sub(MOST_OUTPUT));
-        (
-            String::from_utf8_lossy(&self.bytes[from..]).into_owned(),
-            from > 0 || self.dropped > 0,
-        )
+        (String::from_utf8_lossy(&self.bytes[from..]).into_owned(), from > 0 || self.dropped > 0)
     }
 }
 fn whole_from(bytes: &[u8], at: usize) -> usize {
@@ -224,10 +215,7 @@ pub fn answer(
 }
 fn own(caller: &Caller, asked: &Process) -> Result<Arc<Started>, Answer> {
     let Some(id) = asked.id.as_deref() else {
-        return Err(Answer::error(
-            Code::BadArguments,
-            "say which: the id start answered",
-        ));
+        return Err(Answer::error(Code::BadArguments, "say which: the id start answered"));
     };
     started()
         .iter()
@@ -251,20 +239,12 @@ fn state(one: &Started) -> ProcessDone {
     }
 }
 fn begin(app: &AppHandle, caller: &Caller, session: &str, asked: &Process, since: u64) -> Answer {
-    let Some(program) = asked
-        .program
-        .as_deref()
-        .map(str::trim)
-        .filter(|one| !one.is_empty())
+    let Some(program) = asked.program.as_deref().map(str::trim).filter(|one| !one.is_empty())
     else {
         return Answer::error(Code::BadArguments, "say which program");
     };
     let home = app.path().home_dir().ok();
-    let found = match located(
-        program,
-        home.as_deref(),
-        &orden_base::program::search_path(),
-    ) {
+    let found = match located(program, home.as_deref(), &orden_base::program::search_path()) {
         Ok(found) => found,
         Err(why) => return Answer::error(Code::BadArguments, why),
     };
@@ -291,10 +271,8 @@ fn begin(app: &AppHandle, caller: &Caller, session: &str, asked: &Process, since
             return question;
         }
     }
-    let running = started()
-        .iter()
-        .filter(|one| one.agent == caller.id() && !one.said().ended)
-        .count();
+    let running =
+        started().iter().filter(|one| one.agent == caller.id() && !one.said().ended).count();
     if running >= MOST_RUNNING {
         return Answer::error(
             Code::Limit,
@@ -341,9 +319,7 @@ fn ran(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
 fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     let cursor = asked.since.unwrap_or(0);
     let patience = Duration::from_millis(asked.wait_ms.unwrap_or(0).min(MOST_READ_WAIT));
-    if one.wait(patience, Some(since), |said| {
-        said.out.total() > cursor || said.ended
-    }) {
+    if one.wait(patience, Some(since), |said| said.out.total() > cursor || said.ended) {
         return Answer::error(Code::Stopped, "the reader pressed the stop");
     }
     let mut done = state(one);
@@ -413,17 +389,11 @@ fn question(
         "process",
         None,
         Some(
-            &serde_json::to_string(&Process {
-                timeout_ms: None,
-                ..asked.clone()
-            })
-            .unwrap_or_default(),
+            &serde_json::to_string(&Process { timeout_ms: None, ..asked.clone() })
+                .unwrap_or_default(),
         ),
     );
-    approvals::unless_allowed(
-        app,
-        Asking::of(grant, category, summary(program, asked), key),
-    )
+    approvals::unless_allowed(app, Asking::of(grant, category, summary(program, asked), key))
 }
 fn runs_in_reach(app: &AppHandle, grant: &Grant, cwd: &Path) -> bool {
     let Ok(root) = orden_base::paths::spaces_dir(app) else {
@@ -543,11 +513,7 @@ fn spawned(
         .current_dir(cwd)
         .env("PATH", orden_base::program::search_path())
         .envs(&asked.env)
-        .stdin(if kept || asked.stdin.is_some() {
-            Stdio::piped()
-        } else {
-            Stdio::null()
-        })
+        .stdin(if kept || asked.stdin.is_some() { Stdio::piped() } else { Stdio::null() })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     let (mut child, family) = family::spawn(&mut command)
@@ -657,11 +623,7 @@ fn reap(one: &Started) {
         if left.is_zero() {
             break;
         }
-        said = one
-            .heard
-            .wait_timeout(said, left)
-            .unwrap_or_else(PoisonError::into_inner)
-            .0;
+        said = one.heard.wait_timeout(said, left).unwrap_or_else(PoisonError::into_inner).0;
     }
     said.ended = true;
     said.code = code;
@@ -731,11 +693,7 @@ mod tests {
         let work = Spaces::Named(vec!["Work".into()]);
         assert!(in_reach(root, Path::new("/data/Spaces/Work/site"), &work));
         assert!(in_reach(root, Path::new("/data/Spaces/Work"), &work));
-        assert!(!in_reach(
-            root,
-            Path::new("/data/Spaces/Private/site"),
-            &work
-        ));
+        assert!(!in_reach(root, Path::new("/data/Spaces/Private/site"), &work));
         assert!(!in_reach(root, Path::new("/data/Spaces/Work/.git"), &work));
         assert!(!in_reach(root, Path::new("/data/Spaces"), &work));
         assert!(!in_reach(root, Path::new("/home/me"), &work));
@@ -762,20 +720,13 @@ mod tests {
         for windows in [true, false] {
             assert!(listed(&programs, "git", &run("git"), windows));
             assert!(!listed(&programs, "npm", &run("npm"), windows));
-            for path in [
-                "/tmp/x/git",
-                "./git",
-                "bin/git",
-                "~/bin/git",
-                "C:\\Tools\\git.exe",
-                "..\\git",
-            ] {
+            for path in
+                ["/tmp/x/git", "./git", "bin/git", "~/bin/git", "C:\\Tools\\git.exe", "..\\git"]
+            {
                 assert!(!listed(&programs, path, &run(path), windows), "{path}");
             }
             let mut hooked = run("git");
-            hooked
-                .env
-                .insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
+            hooked.env.insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
             assert!(!listed(&programs, "git", &hooked, windows));
             let mut pathed = run("git");
             pathed.env.insert("PATH".into(), "/tmp/x".into());
@@ -786,17 +737,13 @@ mod tests {
     fn an_ending_is_the_bare_name_only_where_windows_runs_it_so() {
         let programs = vec!["git".to_owned(), "Node.exe".to_owned()];
         let run = |program: &str| process(ProcessOp::Run, program);
-        for name in [
-            "GIT.EXE", "git.exe", "git.com", "Git.Bat", "git.cmd", "node", "NODE.exe",
-        ] {
+        for name in ["GIT.EXE", "git.exe", "git.com", "Git.Bat", "git.cmd", "node", "NODE.exe"] {
             assert!(listed(&programs, name, &run(name), true), "{name}");
         }
         for name in ["git.sh", "git.ps1", "GIT.PS1"] {
             assert!(!listed(&programs, name, &run(name), true), "{name}");
         }
-        for name in [
-            "git.exe", "GIT", "git.cmd", "git.sh", "git.ps1", "node", "node.exe",
-        ] {
+        for name in ["git.exe", "GIT", "git.cmd", "git.sh", "git.ps1", "node", "node.exe"] {
             assert!(!listed(&programs, name, &run(name), false), "{name}");
         }
         assert!(listed(&programs, "Node.exe", &run("Node.exe"), false));
@@ -809,10 +756,7 @@ mod tests {
                 located(relative, Some(&home), std::ffi::OsStr::new("")).is_err(),
                 "{relative}"
             );
-            assert!(
-                crate::files::under_home(relative, Some(&home)).is_err(),
-                "{relative}"
-            );
+            assert!(crate::files::under_home(relative, Some(&home)).is_err(), "{relative}");
         }
         assert_eq!(
             crate::files::under_home("~/a/../b", Some(&home)).expect("home"),
@@ -870,9 +814,7 @@ mod tests {
         let mut asked = process(ProcessOp::Run, "git");
         asked.args = vec!["x".repeat(400)];
         asked.cwd = Some("/tmp/a b".into());
-        asked
-            .env
-            .insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
+        asked.env.insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
         asked.stdin = Some("yes".into());
         let said = summary("git", &asked);
         assert!(said.contains(&"x".repeat(400)));
@@ -884,10 +826,7 @@ mod tests {
         let cwd = std::env::temp_dir();
         let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
         let mut run = process(ProcessOp::Run, "sh");
-        run.args = vec![
-            "-c".into(),
-            "read x; echo out $x; echo err >&2; exit 3".into(),
-        ];
+        run.args = vec!["-c".into(), "read x; echo out $x; echo err >&2; exit 3".into()];
         run.stdin = Some("hi\n".into());
         let one = spawned("tester", "s1", &found, &run, &cwd, false).expect("ran");
         assert!(!one.wait(Duration::from_secs(10), None, |said| said.ended));

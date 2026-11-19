@@ -11,9 +11,7 @@ fn registering(source: &str) -> String {
 }
 fn frame_of(tree: &str) -> Option<String> {
     let said: Value = serde_json::from_str(tree).ok()?;
-    said.pointer("/frameTree/frame/id")?
-        .as_str()
-        .map(str::to_string)
+    said.pointer("/frameTree/frame/id")?.as_str().map(str::to_string)
 }
 fn world_in(frame: &str) -> String {
     json!({ "frameId": frame, "worldName": WORLD }).to_string()
@@ -66,12 +64,7 @@ fn bindings() -> [(&'static str, Value); 4] {
         crate::web_pointer::BINDING,
         crate::web_pass::BINDING,
     ]
-    .map(|name| {
-        (
-            "Runtime.addBinding",
-            json!({ "name": name, "executionContextName": WORLD }),
-        )
-    })
+    .map(|name| ("Runtime.addBinding", json!({ "name": name, "executionContextName": WORLD })))
 }
 fn let_go() -> (&'static str, String) {
     ("Runtime.runIfWaitingForDebugger", "{}".to_string())
@@ -79,10 +72,7 @@ fn let_go() -> (&'static str, String) {
 fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
     [
         ("Page.enable", "{}".to_string()),
-        (
-            "Page.addScriptToEvaluateOnNewDocument",
-            registering(scripts),
-        ),
+        ("Page.addScriptToEvaluateOnNewDocument", registering(scripts)),
         ("Target.setAutoAttach", attaching(IN_A_FRAME)),
         let_go(),
     ]
@@ -101,16 +91,8 @@ impl Cleared {
             (true, Some(count)) => format!("{count} of the runtime's scripts taken back"),
             (true, None) => "the runtime's scripts taken back".to_string(),
         };
-        let ours = if self.ours {
-            "in Orden's world"
-        } else {
-            "missing"
-        };
-        let frames = if self.frames {
-            ""
-        } else {
-            ", not in other sites' frames"
-        };
+        let ours = if self.ours { "in Orden's world" } else { "missing" };
+        let frames = if self.frames { "" } else { ", not in other sites' frames" };
         format!("{swept}, Orden's own {ours}{frames}")
     }
 }
@@ -195,12 +177,8 @@ mod engine {
         }
         let ours = scripts.is_empty()
             || (enabled
-                && called(
-                    view,
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    &registering(scripts),
-                )
-                .is_some());
+                && called(view, "Page.addScriptToEvaluateOnNewDocument", &registering(scripts))
+                    .is_some());
         let frames = scripts.is_empty() || following(view, scripts);
         if !scripts.is_empty() {
             let _ = called(
@@ -210,12 +188,7 @@ mod engine {
             );
         }
         let _ = view.navigate(url.clone());
-        Cleared {
-            swept: taken.is_some(),
-            counted: taken,
-            ours,
-            frames,
-        }
+        Cleared { swept: taken.is_some(), counted: taken, ours, frames }
     }
     fn following(view: &Webview, scripts: &str) -> bool {
         let telling = view.clone();
@@ -266,12 +239,7 @@ mod tests {
 
     #[test]
     fn the_trace_says_what_was_taken_back_and_what_was_put_in() {
-        let all = Cleared {
-            swept: true,
-            counted: Some(14),
-            ours: true,
-            frames: true,
-        };
+        let all = Cleared { swept: true, counted: Some(14), ours: true, frames: true };
         assert_eq!(
             all.said(),
             "14 of the runtime's scripts taken back, Orden's own in Orden's world"

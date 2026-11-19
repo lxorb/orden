@@ -44,12 +44,7 @@ impl Capture {
         let stop = Arc::new(AtomicBool::new(false));
         let (drawn, stopped) = (shot.clone(), stop.clone());
         let thread = std::thread::spawn(move || draw(&desk, &drawn, &stopped, &seen));
-        Ok(Capture {
-            shot,
-            stop,
-            local: Vec::new(),
-            thread: Some(thread),
-        })
+        Ok(Capture { shot, stop, local: Vec::new(), thread: Some(thread) })
     }
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let (lock, came) = &*self.shot;
@@ -107,10 +102,7 @@ fn draw(
                 last.extend_from_slice(pixels);
                 last_size = size;
                 let (lock, came) = shot;
-                *lock.held() = Some(Shot {
-                    pixels: last.clone(),
-                    size,
-                });
+                *lock.held() = Some(Shot { pixels: last.clone(), size });
                 came.notify_all();
                 if seen.send(news).is_err() {
                     break;
@@ -160,13 +152,7 @@ impl Surface {
                 return None;
             };
             let old = SelectObject(dc, bitmap);
-            Some(Surface {
-                dc,
-                bitmap,
-                old,
-                bits: bits.cast(),
-                size: (width, height),
-            })
+            Some(Surface { dc, bitmap, old, bits: bits.cast(), size: (width, height) })
         }
     }
     #[allow(unsafe_code)]
@@ -199,11 +185,7 @@ impl Canvas {
     #[allow(unsafe_code)]
     fn draw(&mut self, size: (u16, u16)) -> Option<&[u8]> {
         let (width, height) = (i32::from(size.0), i32::from(size.1));
-        if self
-            .view
-            .as_ref()
-            .is_none_or(|one| one.size != (width, height))
-        {
+        if self.view.as_ref().is_none_or(|one| one.size != (width, height)) {
             self.view = Some(Surface::new(width, height)?);
         }
         let view = self.view.as_ref()?;
@@ -219,10 +201,7 @@ impl Canvas {
             if at.left >= width || at.top >= height || w > 16384 || h > 16384 {
                 continue;
             }
-            let fits = self
-                .scratch
-                .as_ref()
-                .is_some_and(|one| one.size.0 >= w && one.size.1 >= h);
+            let fits = self.scratch.as_ref().is_some_and(|one| one.size.0 >= w && one.size.1 >= h);
             if !fits {
                 let grown = self.scratch.as_ref().map_or((0, 0), |one| one.size);
                 self.scratch = Surface::new(grown.0.max(w), grown.1.max(h));

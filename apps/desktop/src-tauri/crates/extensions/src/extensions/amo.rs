@@ -12,10 +12,7 @@ pub struct Listing {
     pub size: u64,
 }
 pub fn address(slug: &str) -> String {
-    let slug = slug
-        .replace('{', "%7B")
-        .replace('}', "%7D")
-        .replace('@', "%40");
+    let slug = slug.replace('{', "%7B").replace('}', "%7D").replace('@', "%40");
     format!("{API}/{slug}/?app=firefox&lang=en-US")
 }
 pub fn listing_of(said: &Value) -> Result<Listing, String> {
@@ -37,10 +34,7 @@ pub fn listing_of(said: &Value) -> Result<Listing, String> {
     let url = text(&file["url"])
         .filter(|url| url.starts_with("https://"))
         .ok_or("addons.mozilla.org did not say where the file is")?;
-    if file["status"]
-        .as_str()
-        .is_some_and(|status| status != "public")
-    {
+    if file["status"].as_str().is_some_and(|status| status != "public") {
         return Err("that add-on's file is not public".into());
     }
     Ok(Listing {
@@ -53,11 +47,8 @@ pub fn listing_of(said: &Value) -> Result<Listing, String> {
     })
 }
 pub async fn listing(slug: &str) -> Result<Listing, String> {
-    let response = super::fetch::client()?
-        .get(address(slug))
-        .send()
-        .await
-        .map_err(super::fetch::offline)?;
+    let response =
+        super::fetch::client()?.get(address(slug)).send().await.map_err(super::fetch::offline)?;
     if response.status() == reqwest::StatusCode::NOT_FOUND {
         return Err("addons.mozilla.org has no add-on by that name".into());
     }

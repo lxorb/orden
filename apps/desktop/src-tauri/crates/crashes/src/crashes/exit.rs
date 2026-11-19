@@ -36,9 +36,7 @@ pub struct Before {
 pub fn after_last_run(dir: &Path, before: &Before) -> Vec<Report> {
     let mut found = Vec::new();
     let stub = native::stub_path(dir);
-    let crashed = std::fs::read_to_string(&stub)
-        .ok()
-        .and_then(|text| native::read_stub(&text));
+    let crashed = std::fs::read_to_string(&stub).ok().and_then(|text| native::read_stub(&text));
     let _ = std::fs::remove_file(&stub);
     if let Some(crash) = crashed {
         let mut report = crash.report;
@@ -164,12 +162,8 @@ pub fn booted() -> Option<u64> {
 #[cfg(target_os = "linux")]
 pub fn booted() -> Option<u64> {
     let stat = std::fs::read_to_string("/proc/stat").ok()?;
-    let seconds: u64 = stat
-        .lines()
-        .find_map(|line| line.strip_prefix("btime "))?
-        .trim()
-        .parse()
-        .ok()?;
+    let seconds: u64 =
+        stat.lines().find_map(|line| line.strip_prefix("btime "))?.trim().parse().ok()?;
     Some(seconds * 1000)
 }
 #[cfg(target_os = "macos")]
@@ -197,20 +191,10 @@ mod tests {
     use crate::crashes::report::{keep_in, Report};
 
     fn last(alive: u64) -> Running {
-        Running {
-            version: "1.0.0".to_owned(),
-            pid: 7,
-            started: 1000,
-            alive,
-            ..Running::default()
-        }
+        Running { version: "1.0.0".to_owned(), pid: 7, started: 1000, alive, ..Running::default() }
     }
     fn before(last: Option<Running>, booted: u64) -> Before {
-        Before {
-            last,
-            booted: Some(booted),
-            version: "1.0.0".to_owned(),
-        }
+        Before { last, booted: Some(booted), version: "1.0.0".to_owned() }
     }
     const RACING: &str = "ORDEN_EXIT_RACE_DIR";
     #[test]
@@ -256,10 +240,7 @@ mod tests {
         let found = after_last_run(dir.path(), &before(Some(last(90_000)), 10));
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].kind, "exit");
-        assert_eq!(
-            found[0].summary,
-            "Orden ended without quitting, 89 s after it started"
-        );
+        assert_eq!(found[0].summary, "Orden ended without quitting, 89 s after it started");
         assert_eq!(found[0].at, 90_000);
     }
     #[test]

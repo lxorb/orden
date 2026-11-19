@@ -26,10 +26,7 @@ pub fn remember_ground(
     paint: Option<String>,
 ) -> Result<(), String> {
     let paint = paint.unwrap_or_default();
-    if [&colour, &paint]
-        .iter()
-        .any(|one| one.len() > MOST || one.contains('\n'))
-    {
+    if [&colour, &paint].iter().any(|one| one.len() > MOST || one.contains('\n')) {
         return Err("that is not a colour".into());
     }
     let path = file(&app)?;
@@ -53,10 +50,8 @@ fn painted(said: &str) -> Option<Color> {
     colour_of(ground).or_else(|| colour_of(lines.next().unwrap_or_default()))
 }
 fn colour_of(said: &str) -> Option<Color> {
-    let inside = said
-        .strip_prefix("rgba(")
-        .or_else(|| said.strip_prefix("rgb("))?
-        .strip_suffix(')')?;
+    let inside =
+        said.strip_prefix("rgba(").or_else(|| said.strip_prefix("rgb("))?.strip_suffix(')')?;
     let mut parts = inside.split(',').map(str::trim);
     let red = parts.next()?.parse::<u8>().ok()?;
     let green = parts.next()?.parse::<u8>().ok()?;
@@ -79,14 +74,8 @@ mod tests {
     #[test]
     fn a_resolved_colour_is_the_colour_it_says() {
         assert_eq!(colour_of("rgb(14, 16, 19)"), Some(Color(14, 16, 19, 255)));
-        assert_eq!(
-            colour_of("rgb(251,252,253)"),
-            Some(Color(251, 252, 253, 255))
-        );
-        assert_eq!(
-            colour_of("rgba(14, 16, 19, 1)"),
-            Some(Color(14, 16, 19, 255))
-        );
+        assert_eq!(colour_of("rgb(251,252,253)"), Some(Color(251, 252, 253, 255)));
+        assert_eq!(colour_of("rgba(14, 16, 19, 1)"), Some(Color(14, 16, 19, 255)));
     }
     #[test]
     fn a_ground_somebody_can_see_through_is_no_ground_to_paint() {
@@ -97,14 +86,8 @@ mod tests {
     #[test]
     fn a_window_is_painted_its_ground_or_the_colour_beneath_a_ground_seen_through() {
         assert_eq!(painted("rgb(14, 16, 19)"), Some(Color(14, 16, 19, 255)));
-        assert_eq!(
-            painted("rgb(14, 16, 19)\nrgb(1, 2, 3)"),
-            Some(Color(14, 16, 19, 255))
-        );
-        assert_eq!(
-            painted("rgba(0, 0, 0, 0)\nrgb(35, 41, 50)"),
-            Some(Color(35, 41, 50, 255))
-        );
+        assert_eq!(painted("rgb(14, 16, 19)\nrgb(1, 2, 3)"), Some(Color(14, 16, 19, 255)));
+        assert_eq!(painted("rgba(0, 0, 0, 0)\nrgb(35, 41, 50)"), Some(Color(35, 41, 50, 255)));
         assert_eq!(painted("rgba(0, 0, 0, 0)\n"), None);
         assert_eq!(painted(""), None);
     }

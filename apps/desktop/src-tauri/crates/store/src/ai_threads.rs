@@ -16,9 +16,7 @@ const LIST: &str = "index";
 fn named(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 64
-        && id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
         Ok(id)
     } else {
@@ -171,22 +169,10 @@ mod tests {
     #[test]
     fn a_thread_written_reads_back_with_its_line_in_the_list() {
         let root = folder("round");
-        write(
-            &root,
-            "space-1",
-            "t-1",
-            json!({"id": "t-1", "title": "Herons"}),
-            "{\"id\":\"t-1\"}",
-        )
-        .expect("written");
-        write(
-            &root,
-            "space-1",
-            "t-2",
-            json!({"id": "t-2", "title": "Egrets"}),
-            "{\"id\":\"t-2\"}",
-        )
-        .expect("written");
+        write(&root, "space-1", "t-1", json!({"id": "t-1", "title": "Herons"}), "{\"id\":\"t-1\"}")
+            .expect("written");
+        write(&root, "space-1", "t-2", json!({"id": "t-2", "title": "Egrets"}), "{\"id\":\"t-2\"}")
+            .expect("written");
         assert_eq!(
             read(&root, "space-1", "t-1").expect("read").as_deref(),
             Some("{\"id\":\"t-1\"}")
@@ -235,14 +221,8 @@ mod tests {
     fn an_id_that_could_name_another_file_is_refused() {
         let root = folder("names");
         for bad in ["", "..", "../x", "a/b", "a\\b", "c:", &"x".repeat(65)] {
-            assert!(
-                write(&root, bad, "t", json!({}), "x").is_err(),
-                "space {bad:?}"
-            );
-            assert!(
-                write(&root, "s", bad, json!({}), "x").is_err(),
-                "thread {bad:?}"
-            );
+            assert!(write(&root, bad, "t", json!({}), "x").is_err(), "space {bad:?}");
+            assert!(write(&root, "s", bad, json!({}), "x").is_err(), "thread {bad:?}");
             assert!(read(&root, "s", bad).is_err(), "read {bad:?}");
         }
         assert!(!root.exists());

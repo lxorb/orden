@@ -33,10 +33,7 @@ struct Held {
     ticks: Option<Ticks>,
     power: Option<(Instant, Power)>,
 }
-static HELD: Mutex<Held> = Mutex::new(Held {
-    ticks: None,
-    power: None,
-});
+static HELD: Mutex<Held> = Mutex::new(Held { ticks: None, power: None });
 const POWER_EVERY: Duration = Duration::from_secs(30);
 const LONGEST_APP: usize = 80;
 #[tauri::command]
@@ -105,20 +102,14 @@ fn app_name(path: &str) -> Option<String> {
 #[cfg(any(target_os = "linux", test))]
 fn linux_ticks(stat: &str) -> Option<Ticks> {
     let line = stat.lines().find(|one| one.starts_with("cpu "))?;
-    let numbers: Vec<u64> = line
-        .split_whitespace()
-        .skip(1)
-        .filter_map(|one| one.parse().ok())
-        .collect();
+    let numbers: Vec<u64> =
+        line.split_whitespace().skip(1).filter_map(|one| one.parse().ok()).collect();
     if numbers.len() < 4 {
         return None;
     }
     let total: u64 = numbers.iter().take(8).sum();
     let idle = numbers[3] + numbers.get(4).copied().unwrap_or(0);
-    Some(Ticks {
-        busy: total.saturating_sub(idle),
-        total,
-    })
+    Some(Ticks { busy: total.saturating_sub(idle), total })
 }
 #[cfg(any(target_os = "linux", test))]
 fn linux_memory(info: &str) -> Option<f32> {
@@ -151,9 +142,7 @@ mod platform {
         linux_memory(&std::fs::read_to_string("/proc/meminfo").ok()?)
     }
     fn read(path: &Path) -> Option<String> {
-        std::fs::read_to_string(path)
-            .ok()
-            .map(|one| one.trim().to_owned())
+        std::fs::read_to_string(path).ok().map(|one| one.trim().to_owned())
     }
     fn battery() -> (Option<f32>, Option<bool>) {
         let Ok(supplies) = std::fs::read_dir("/sys/class/power_supply") else {
@@ -191,21 +180,13 @@ mod platform {
         method: &str,
         body: &(impl serde::Serialize + zbus::zvariant::DynamicType),
     ) -> Option<zbus::message::Message> {
-        bus.call_method(Some(name), path, Some(interface), method, body)
-            .ok()
+        bus.call_method(Some(name), path, Some(interface), method, body).ok()
     }
     fn property(bus: &Connection, path: &str, interface: &str, name: &str) -> Option<OwnedValue> {
-        ask(
-            bus,
-            LOGIND,
-            path,
-            "org.freedesktop.DBus.Properties",
-            "Get",
-            &(interface, name),
-        )?
-        .body()
-        .deserialize()
-        .ok()
+        ask(bus, LOGIND, path, "org.freedesktop.DBus.Properties", "Get", &(interface, name))?
+            .body()
+            .deserialize()
+            .ok()
     }
     fn own_session(bus: &Connection) -> Option<String> {
         let id = std::env::var("XDG_SESSION_ID").ok()?;
@@ -233,31 +214,20 @@ mod platform {
         (path.as_str() != "/").then(|| path.as_str().to_owned())
     }
     fn locked_hint(bus: &Connection, path: &str) -> Option<bool> {
-        bool::try_from(property(
-            bus,
-            path,
-            "org.freedesktop.login1.Session",
-            "LockedHint",
-        )?)
-        .ok()
+        bool::try_from(property(bus, path, "org.freedesktop.login1.Session", "LockedHint")?).ok()
     }
     fn logind_locked() -> Option<bool> {
         let bus = Connection::system().ok()?;
         [own_session(&bus), display_session(&bus)]
             .into_iter()
             .flatten()
-            .chain(std::iter::once(
-                "/org/freedesktop/login1/session/auto".to_owned(),
-            ))
+            .chain(std::iter::once("/org/freedesktop/login1/session/auto".to_owned()))
             .find_map(|path| locked_hint(&bus, &path))
     }
     fn screensaver_locked() -> Option<bool> {
         let bus = Connection::session().ok()?;
         [
-            (
-                "org.freedesktop.ScreenSaver",
-                "/org/freedesktop/ScreenSaver",
-            ),
+            ("org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver"),
             ("org.gnome.ScreenSaver", "/org/gnome/ScreenSaver"),
             ("org.cinnamon.ScreenSaver", "/org/cinnamon/ScreenSaver"),
             ("org.mate.ScreenSaver", "/org/mate/ScreenSaver"),
@@ -276,10 +246,7 @@ mod platform {
             .unwrap_or(false)
         })
         .find_map(|(name, path)| {
-            ask(&bus, name, path, name, "GetActive", &())?
-                .body()
-                .deserialize::<bool>()
-                .ok()
+            ask(&bus, name, path, name, "GetActive", &())?.body().deserialize::<bool>().ok()
         })
     }
     fn locked() -> Option<bool> {
@@ -290,12 +257,7 @@ mod platform {
     }
     pub fn power() -> Power {
         let (battery, charging) = battery();
-        Power {
-            battery,
-            charging,
-            lid: lid(),
-            locked: locked(),
-        }
+        Power { battery, charging, lid: lid(), locked: locked() }
     }
     pub fn front_app() -> Option<String> {
         crate::front_x::front_class()
@@ -329,18 +291,10 @@ mod platform {
         let mut user = FILETIME::default();
         #[allow(unsafe_code)]
         unsafe {
-            GetSystemTimes(
-                Some(&raw mut idle),
-                Some(&raw mut kernel),
-                Some(&raw mut user),
-            )
-            .ok()?;
+            GetSystemTimes(Some(&raw mut idle), Some(&raw mut kernel), Some(&raw mut user)).ok()?;
         }
         let total = ticks_of(kernel) + ticks_of(user);
-        Some(Ticks {
-            busy: total.saturating_sub(ticks_of(idle)),
-            total,
-        })
+        Some(Ticks { busy: total.saturating_sub(ticks_of(idle)), total })
     }
     pub fn memory() -> Option<f32> {
         let mut status = MEMORYSTATUSEX {
@@ -435,10 +389,7 @@ mod platform {
         }
         let [user, system, idle, nice] = info.cpu_ticks.map(u64::from);
         let total = user + system + idle + nice;
-        Some(Ticks {
-            busy: total.saturating_sub(idle),
-            total,
-        })
+        Some(Ticks { busy: total.saturating_sub(idle), total })
     }
     fn sysctl(name: &str) -> Option<u64> {
         let name = std::ffi::CString::new(name).ok()?;
@@ -488,9 +439,7 @@ mod platform {
     }
     fn said(program: &str, args: &[&str]) -> Option<String> {
         let out = Command::new(program).args(args).output().ok()?;
-        out.status
-            .success()
-            .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+        out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
     }
     pub fn power() -> Power {
         let battery = said("pmset", &["-g", "batt"]);
@@ -504,28 +453,16 @@ mod platform {
                 .into_iter()
                 .rev()
                 .collect();
-            digits
-                .parse::<f32>()
-                .ok()
-                .map(|one| (one / 100.0).clamp(0.0, 1.0))
+            digits.parse::<f32>().ok().map(|one| (one / 100.0).clamp(0.0, 1.0))
         });
-        let charging = level
-            .and(battery.as_deref())
-            .map(|text| text.contains("AC Power"));
+        let charging = level.and(battery.as_deref()).map(|text| text.contains("AC Power"));
         let lid = said("ioreg", &["-r", "-k", "AppleClamshellState", "-d", "1"]).and_then(|text| {
-            let line = text
-                .lines()
-                .find(|one| one.contains("\"AppleClamshellState\""))?;
+            let line = text.lines().find(|one| one.contains("\"AppleClamshellState\""))?;
             Some(!line.contains("Yes"))
         });
         let locked = said("ioreg", &["-n", "Root", "-d", "1"])
             .map(|text| text.contains("\"CGSSessionScreenIsLocked\"=Yes"));
-        Power {
-            battery: level,
-            charging,
-            lid,
-            locked,
-        }
+        Power { battery: level, charging, lid, locked }
     }
     pub fn front_app() -> Option<String> {
         let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
@@ -566,33 +503,15 @@ mod tests {
     }
     #[test]
     fn the_processor_is_as_busy_as_its_ticks_since_the_last_look() {
-        let was = Ticks {
-            busy: 100,
-            total: 1000,
-        };
-        assert_eq!(
-            busy_share(
-                was,
-                Ticks {
-                    busy: 150,
-                    total: 1100
-                }
-            ),
-            Some(0.5)
-        );
+        let was = Ticks { busy: 100, total: 1000 };
+        assert_eq!(busy_share(was, Ticks { busy: 150, total: 1100 }), Some(0.5));
         assert_eq!(busy_share(was, was), None);
         assert_eq!(busy_share(was, Ticks { busy: 0, total: 10 }), None);
     }
     #[test]
     fn linux_says_its_processor_and_memory_in_its_own_files() {
         let stat = "cpu  100 0 100 700 100 0 0 0 0 0\ncpu0 1 2 3 4\n";
-        assert_eq!(
-            linux_ticks(stat),
-            Some(Ticks {
-                busy: 200,
-                total: 1000
-            })
-        );
+        assert_eq!(linux_ticks(stat), Some(Ticks { busy: 200, total: 1000 }));
         assert_eq!(linux_ticks("intr 1 2"), None);
         let info = "MemTotal:       16000 kB\nMemFree: 1 kB\nMemAvailable:    4000 kB\n";
         assert_eq!(linux_memory(info), Some(0.75));

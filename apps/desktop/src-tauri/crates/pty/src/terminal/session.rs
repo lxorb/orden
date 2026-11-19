@@ -67,9 +67,7 @@ impl Stream {
         self.flow.held()
     }
     fn wait<'a>(&self, flow: MutexGuard<'a, Flow>) -> MutexGuard<'a, Flow> {
-        self.changed
-            .wait(flow)
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.changed.wait(flow).unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }
 struct Greeted {
@@ -78,15 +76,11 @@ struct Greeted {
     screen: Vec<u8>,
 }
 fn hello(port: u16, token: &str, flags: u8) -> Result<(TcpStream, wire::Hi), String> {
-    let mut socket = TcpStream::connect_timeout(
-        &SocketAddr::from((Ipv4Addr::LOCALHOST, port)),
-        REACHED_WITHIN,
-    )
-    .map_err(|error| error.to_string())?;
+    let mut socket =
+        TcpStream::connect_timeout(&SocketAddr::from((Ipv4Addr::LOCALHOST, port)), REACHED_WITHIN)
+            .map_err(|error| error.to_string())?;
     let _ = socket.set_nodelay(true);
-    socket
-        .set_read_timeout(Some(GREETED_WITHIN))
-        .map_err(|error| error.to_string())?;
+    socket.set_read_timeout(Some(GREETED_WITHIN)).map_err(|error| error.to_string())?;
     let mut hello = vec![flags];
     hello.extend_from_slice(token.as_bytes());
     wire::send(&mut socket, wire::HELLO, &hello).map_err(|error| error.to_string())?;
@@ -101,9 +95,7 @@ fn greet(port: u16, token: &str) -> Result<Greeted, String> {
     let Ok((wire::SCREEN, screen)) = wire::heard(&mut socket) else {
         return Err("the session did not answer".to_owned());
     };
-    socket
-        .set_read_timeout(None)
-        .map_err(|error| error.to_string())?;
+    socket.set_read_timeout(None).map_err(|error| error.to_string())?;
     Ok(Greeted { socket, hi, screen })
 }
 fn found(file: &Path) -> Option<Greeted> {
@@ -187,11 +179,7 @@ impl Session {
         let (greeted, fresh) = if let Some(greeted) = found(&file) {
             (greeted, false)
         } else {
-            let Fresh {
-                launch,
-                farewell,
-                label,
-            } = fresh()?;
+            let Fresh { launch, farewell, label } = fresh()?;
             let token = hold::token()?;
             let spec = hold::Spec {
                 program: launch.program,
@@ -224,12 +212,7 @@ impl Session {
             fresh,
             stream: Arc::clone(&stream),
         };
-        let started = Started {
-            reader,
-            writer,
-            queue,
-            stream,
-        };
+        let started = Started { reader, writer, queue, stream };
         Ok((session, started))
     }
     pub fn pid(&self) -> Option<u32> {
@@ -245,9 +228,7 @@ impl Session {
         let _ = self.input.send(wire::frame(wire::INPUT, &bytes));
     }
     pub fn resize(&self, cols: u16, rows: u16) {
-        let _ = self
-            .input
-            .send(wire::frame(wire::SIZE, &wire::size(cols, rows)));
+        let _ = self.input.send(wire::frame(wire::SIZE, &wire::size(cols, rows)));
     }
     pub fn take(&self) {
         let _ = self.input.send(wire::frame(wire::TAKE, &[]));
@@ -289,12 +270,7 @@ impl Session {
 }
 impl Started {
     pub fn run(self, sink: Sink, ended: impl FnOnce(&dyn Fn(&Session) -> bool) + Send + 'static) {
-        let Self {
-            reader,
-            writer,
-            queue,
-            stream,
-        } = self;
+        let Self { reader, writer, queue, stream } = self;
         let sending = Arc::clone(&stream);
         thread::spawn(move || send(&sending, &sink));
         thread::spawn(move || write(writer, &queue));
@@ -393,11 +369,7 @@ fn send(stream: &Stream, sink: &Sink) {
 }
 fn write(mut writer: TcpStream, queue: &Receiver<Vec<u8>>) {
     for frame in queue {
-        if writer
-            .write_all(&frame)
-            .and_then(|()| writer.flush())
-            .is_err()
-        {
+        if writer.write_all(&frame).and_then(|()| writer.flush()).is_err() {
             break;
         }
     }
@@ -410,10 +382,7 @@ mod tests {
     fn shell() -> Launch {
         let (program, args): (PathBuf, Vec<String>) = if cfg!(windows) {
             let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
-            (
-                PathBuf::from(root).join(r"System32\cmd.exe"),
-                vec!["/q".to_owned()],
-            )
+            (PathBuf::from(root).join(r"System32\cmd.exe"), vec!["/q".to_owned()])
         } else {
             (PathBuf::from("/bin/sh"), Vec::new())
         };
@@ -424,11 +393,8 @@ mod tests {
             env: vec![("TERM".to_owned(), "xterm-256color".to_owned())],
         }
     }
-    const SAYS_OK: &str = if cfg!(windows) {
-        "echo orden-%COMSPEC:~0,0%ok"
-    } else {
-        r#"echo orden-""ok"#
-    };
+    const SAYS_OK: &str =
+        if cfg!(windows) { "echo orden-%COMSPEC:~0,0%ok" } else { r#"echo orden-""ok"# };
     fn says(word: &str) -> String {
         if cfg!(windows) {
             format!("echo orden-%COMSPEC:~0,0%{word}")
@@ -439,19 +405,12 @@ mod tests {
     const ENTER: &str = if cfg!(windows) { "\r" } else { "\n" };
     fn place() -> (tempfile::TempDir, Place) {
         let folder = tempfile::tempdir().expect("a folder");
-        let place = Place {
-            folder: folder.path().join("held"),
-            starter: hold::tests::starter(),
-        };
+        let place = Place { folder: folder.path().join("held"), starter: hold::tests::starter() };
         (folder, place)
     }
     fn opened(place: &Place, key: &str, cols: u16, rows: u16) -> (Held, Receiver<Out>) {
         let (session, parts) = Session::open(place, key, cols, rows, || {
-            Ok(Fresh {
-                launch: shell(),
-                farewell: Vec::new(),
-                label: hold::Label::default(),
-            })
+            Ok(Fresh { launch: shell(), farewell: Vec::new(), label: hold::Label::default() })
         })
         .expect("a shell");
         let held = Arc::new(Mutex::new(Some(session)));
@@ -515,11 +474,7 @@ mod tests {
         line(&held, SAYS_OK);
         let (said, _) = printed_until(&held, &heard, "orden-ok");
         assert!(said.contains("orden-ok"), "the shell printed: {said:?}");
-        held.lock()
-            .expect("the session")
-            .as_ref()
-            .expect("still running")
-            .resize(120, 40);
+        held.lock().expect("the session").as_ref().expect("still running").resize(120, 40);
         line(&held, "exit 3");
         let (_, code) = printed_until(&held, &heard, "\u{0}never");
         assert_eq!(code, Some(3));
@@ -527,10 +482,7 @@ mod tests {
         while held.lock().expect("the session").is_some() && Instant::now() < until {
             thread::sleep(Duration::from_millis(20));
         }
-        assert!(
-            held.lock().expect("the session").is_none(),
-            "the session outlived its shell"
-        );
+        assert!(held.lock().expect("the session").is_none(), "the session outlived its shell");
     }
     #[test]
     fn a_session_let_go_of_is_found_again_as_it_was() {
@@ -569,14 +521,8 @@ mod tests {
         {
             thread::sleep(Duration::from_millis(50));
         }
-        assert!(
-            !orden_base::stat::running(pid),
-            "the shell {pid} outlived its end"
-        );
-        assert!(
-            !super::held(&place, "kept"),
-            "the ended session is still listed"
-        );
+        assert!(!orden_base::stat::running(pid), "the shell {pid} outlived its end");
+        assert!(!super::held(&place, "kept"), "the ended session is still listed");
     }
     fn writer_said(heard: &Receiver<Out>) -> Option<bool> {
         let until = Instant::now() + Duration::from_secs(10);
@@ -613,10 +559,7 @@ mod tests {
         {
             thread::sleep(Duration::from_millis(50));
         }
-        assert!(
-            !orden_base::stat::running(pid),
-            "the shell outlived its end"
-        );
+        assert!(!orden_base::stat::running(pid), "the shell outlived its end");
         assert!(listed(&place).is_empty());
     }
     #[test]
@@ -626,26 +569,14 @@ mod tests {
         line(&first, SAYS_OK);
         let _ = printed_until(&first, &first_heard, "orden-ok");
         let (second, second_heard) = opened(&place, "shared", 80, 24);
-        assert_eq!(
-            writer_said(&first_heard),
-            Some(false),
-            "the first still typed"
-        );
+        assert_eq!(writer_said(&first_heard), Some(false), "the first still typed");
         assert_eq!(listed(&place)[0].clients, 2);
         line(&first, &says("lost"));
         line(&second, &says("second"));
         let (said, _) = printed_until(&first, &first_heard, "orden-second");
-        assert!(
-            said.contains("orden-second"),
-            "the writer's line did not reach both"
-        );
+        assert!(said.contains("orden-second"), "the writer's line did not reach both");
         assert!(!said.contains("orden-lost"), "one that only watches typed");
-        first
-            .lock()
-            .expect("the session")
-            .as_ref()
-            .expect("running")
-            .take();
+        first.lock().expect("the session").as_ref().expect("running").take();
         assert_eq!(writer_said(&first_heard), Some(true));
         assert_eq!(writer_said(&second_heard), Some(false));
         taken(&first).end();
@@ -706,38 +637,24 @@ mod tests {
         while let Ok(out) =
             heard.recv_timeout(quiet_until.saturating_duration_since(Instant::now()))
         {
-            assert!(
-                !matches!(out, Out::Exit(_)),
-                "an ended session said its shell exited"
-            );
+            assert!(!matches!(out, Out::Exit(_)), "an ended session said its shell exited");
         }
         let until = Instant::now() + Duration::from_secs(10);
         while orden_base::stat::running(pid) && Instant::now() < until {
             thread::sleep(Duration::from_millis(50));
         }
-        assert!(
-            !orden_base::stat::running(pid),
-            "the shell {pid} outlived its tab"
-        );
+        assert!(!orden_base::stat::running(pid), "the shell {pid} outlived its tab");
     }
     #[test]
     fn ctrl_c_interrupts_what_is_running() {
         let (held, heard, _folder) = started(80, 24);
         line(&held, SAYS_OK);
         let _ = printed_until(&held, &heard, "orden-ok");
-        let long = if cfg!(windows) {
-            "ping -n 30 127.0.0.1"
-        } else {
-            "sleep 30"
-        };
+        let long = if cfg!(windows) { "ping -n 30 127.0.0.1" } else { "sleep 30" };
         line(&held, long);
         thread::sleep(Duration::from_millis(1500));
-        let busy = |held: &Held| {
-            held.lock()
-                .expect("the session")
-                .as_ref()
-                .is_some_and(Session::busy)
-        };
+        let busy =
+            |held: &Held| held.lock().expect("the session").as_ref().is_some_and(Session::busy);
         assert!(busy(&held), "{long} was not running");
         typed(&held, "\u{3}");
         let until = Instant::now() + Duration::from_secs(10);
@@ -752,18 +669,10 @@ mod tests {
         let (held, heard, _folder) = started(80, 24);
         line(&held, SAYS_OK);
         let _ = printed_until(&held, &heard, "orden-ok");
-        let short = if cfg!(windows) {
-            "ping -n 4 127.0.0.1 > NUL"
-        } else {
-            "sleep 3"
-        };
+        let short = if cfg!(windows) { "ping -n 4 127.0.0.1 > NUL" } else { "sleep 3" };
         line(&held, short);
-        let busy = |held: &Held| {
-            held.lock()
-                .expect("the session")
-                .as_ref()
-                .is_some_and(Session::busy)
-        };
+        let busy =
+            |held: &Held| held.lock().expect("the session").as_ref().is_some_and(Session::busy);
         let until = Instant::now() + Duration::from_secs(3);
         while !busy(&held) && Instant::now() < until {
             let _ = heard.recv_timeout(Duration::from_millis(50));

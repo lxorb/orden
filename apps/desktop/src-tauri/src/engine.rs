@@ -13,10 +13,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     };
     let debugging = debug_port(from_run("ORDEN_CEF_DEBUG_PORT").as_deref()).map_or(
         RemoteDebugging::Disabled,
-        |port| RemoteDebugging::Port {
-            port,
-            allowed_origins: Vec::new(),
-        },
+        |port| RemoteDebugging::Port { port, allowed_origins: Vec::new() },
     );
     let mut asked = switches(&from_run("ORDEN_CEF_ARGS").unwrap_or_default());
     let firefox = cef_root()
@@ -43,16 +40,10 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         engine = engine.disable_features([LOAD_EXTENSION_OFF]);
     }
     if let Some(root) = cef_root() {
-        if root
-            .parent()
-            .is_some_and(crate::engine::windowless::windowless_wanted)
-        {
+        if root.parent().is_some_and(crate::engine::windowless::windowless_wanted) {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
         }
-        if root
-            .parent()
-            .is_some_and(|config| !orden_system::gpu::accelerated(config))
-        {
+        if root.parent().is_some_and(|config| !orden_system::gpu::accelerated(config)) {
             engine = engine
                 .command_line_args(orden_system::gpu::OFF.map(|switch| (switch, None::<&str>)));
         }
@@ -70,11 +61,7 @@ fn cef_root() -> Option<PathBuf> {
         .and_then(|said| serde_json::from_str::<serde_json::Value>(said).ok())
         .and_then(|said| said.get("identifier")?.as_str().map(str::to_owned))
         .or_else(|| config.get("identifier")?.as_str().map(str::to_owned))?;
-    Some(
-        dirs::config_dir()?
-            .join(identifier)
-            .join(orden_web_engine::ROOT),
-    )
+    Some(dirs::config_dir()?.join(identifier).join(orden_web_engine::ROOT))
 }
 pub(crate) fn take_ui_window(
     context: &mut tauri::Context,
@@ -203,11 +190,7 @@ mod tests {
             crate::app_dir().join("linux/tauri-runtime-cef/src/cef_impl/request_context.rs");
         let mut open = Vec::new();
         let mut checked = 0;
-        for path in crate::sources()
-            .into_iter()
-            .map(|(_, path)| path)
-            .chain([runtime])
-        {
+        for path in crate::sources().into_iter().map(|(_, path)| path).chain([runtime]) {
             let text = std::fs::read_to_string(&path).unwrap_or_default();
             let text = text.split("#[cfg(test)]").next().unwrap_or_default();
             let made = text.matches("= request_context_create_context(").count()
@@ -218,10 +201,7 @@ mod tests {
             }
         }
         assert!(checked >= 2, "no profile is opened where it was looked for");
-        assert!(
-            open.is_empty(),
-            "a profile that closes with its last page: {open:?}"
-        );
+        assert!(open.is_empty(), "a profile that closes with its last page: {open:?}");
     }
     #[test]
     fn nothing_pumps_inside_with_webview() {
@@ -271,14 +251,8 @@ mod tests {
                 }
             }
         }
-        assert!(
-            checked >= 3,
-            "the scan found the pages it is about ({checked})"
-        );
-        assert!(
-            seen.is_empty(),
-            "a page of the app's own left in sight: {seen:?}"
-        );
+        assert!(checked >= 3, "the scan found the pages it is about ({checked})");
+        assert!(seen.is_empty(), "a page of the app's own left in sight: {seen:?}");
     }
     #[test]
     fn every_window_of_an_app_page_is_in_the_interface_s_profile() {
@@ -294,10 +268,7 @@ mod tests {
                 past.push(path.display().to_string());
             }
         }
-        assert!(
-            past.is_empty(),
-            "an app page outside the interface's profile: {past:?}"
-        );
+        assert!(past.is_empty(), "an app page outside the interface's profile: {past:?}");
     }
     #[test]
     fn the_engine_is_the_manifest_s() {

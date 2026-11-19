@@ -48,15 +48,7 @@ pub fn trash_item(
     }
     let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
-    trashed(
-        &dir,
-        &source,
-        from,
-        name,
-        kind,
-        alone == Some(true),
-        arrived == Some(true),
-    )
+    trashed(&dir, &source, from, name, kind, alone == Some(true), arrived == Some(true))
 }
 fn trashed(
     dir: &Path,
@@ -80,15 +72,8 @@ fn trashed(
     } else {
         move_held(source, &held);
     }
-    let entry = TrashEntry {
-        id,
-        kind,
-        name,
-        from,
-        trashed_at: clock::now(),
-        apart: alone,
-        arrived,
-    };
+    let entry =
+        TrashEntry { id, kind, name, from, trashed_at: clock::now(), apart: alone, arrived };
     recorded(dir, entry, || {
         if move_whole(&held, source, "restore").is_ok() {
             restore_held(&held, source);
@@ -208,10 +193,7 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
 }
 fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     let mut entries = read_manifest(dir);
-    let position = entries
-        .iter()
-        .position(|entry| entry.id == id)
-        .ok_or("nothing to restore")?;
+    let position = entries.iter().position(|entry| entry.id == id).ok_or("nothing to restore")?;
     let entry = entries[position].clone();
     if !is_slot(&entry.id) {
         return Err("that is not something in the trash".into());
@@ -237,11 +219,8 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
         }
         Some(left) => {
             let folder = entry.from.rsplit_once('/').map_or("", |(folder, _)| folder);
-            entries[position].from = if folder.is_empty() {
-                left.clone()
-            } else {
-                format!("{folder}/{left}")
-            };
+            entries[position].from =
+                if folder.is_empty() { left.clone() } else { format!("{folder}/{left}") };
             entries[position].name = left;
             entries[position].kind = "note".into();
         }
@@ -292,11 +271,7 @@ fn trash_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 fn new_id() -> String {
-    format!(
-        "{}-{}",
-        clock::now(),
-        COUNTER.fetch_add(1, Ordering::Relaxed)
-    )
+    format!("{}-{}", clock::now(), COUNTER.fetch_add(1, Ordering::Relaxed))
 }
 fn is_slot(id: &str) -> bool {
     id.split_once('-').is_some_and(|(moment, counter)| {
@@ -408,10 +383,7 @@ mod tests {
         )
         .expect("trashed by the reader");
         let arrived = |id: &str| {
-            read_manifest(&trash)
-                .into_iter()
-                .find(|one| one.id == id)
-                .map(|one| one.arrived)
+            read_manifest(&trash).into_iter().find(|one| one.id == id).map(|one| one.arrived)
         };
         assert_eq!(arrived(&by_sync.id), Some(true));
         assert_eq!(arrived(&by_reader.id), Some(false));
@@ -441,10 +413,7 @@ mod tests {
         )
         .expect("written");
         follows(dir.path(), "Work", "Job").expect("followed");
-        let from: Vec<String> = read_manifest(dir.path())
-            .into_iter()
-            .map(|one| one.from)
-            .collect();
+        let from: Vec<String> = read_manifest(dir.path()).into_iter().map(|one| one.from).collect();
         assert_eq!(from, ["Job/a.md", "Job/deep/b.md", "Workshop/c.md"]);
     }
     #[test]
@@ -465,10 +434,7 @@ mod tests {
         )
         .expect("written");
         follows(dir.path(), "Work", "Job").expect("followed");
-        let from: Vec<String> = read_manifest(dir.path())
-            .into_iter()
-            .map(|one| one.from)
-            .collect();
+        let from: Vec<String> = read_manifest(dir.path()).into_iter().map(|one| one.from).collect();
         assert_eq!(from, ["Work/old.md", "Work", "Job/new.md"]);
     }
     #[test]
@@ -496,10 +462,7 @@ mod tests {
         for id in ["../Notes", "..", r"..\Notes"] {
             purge(&trash, &mut entries, id);
         }
-        assert!(
-            elsewhere.join("Idea.md").exists(),
-            "the note is still there"
-        );
+        assert!(elsewhere.join("Idea.md").exists(), "the note is still there");
         assert!(elsewhere.exists(), "and so is the space");
     }
     #[test]
@@ -647,11 +610,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp folder");
         let written = vec![
             entry("1-0", "Idea.md", "Work/Idea.md"),
-            entry(
-                "1-1",
-                "Notizen über Bücher.md",
-                "Privat/Notizen über Bücher.md",
-            ),
+            entry("1-1", "Notizen über Bücher.md", "Privat/Notizen über Bücher.md"),
         ];
         write_manifest(dir.path(), &written).expect("the manifest");
         let read = read_manifest(dir.path());
@@ -747,11 +706,7 @@ mod tests {
         let dir = a_space();
         trash(dir.path(), "X.pdf", false);
         trash(dir.path(), "L.pages", false);
-        for name in [
-            "X.pdf.highlights.json",
-            "L.pages.pdf",
-            "L.pages.pdf.highlights.json",
-        ] {
+        for name in ["X.pdf.highlights.json", "L.pages.pdf", "L.pages.pdf.highlights.json"] {
             assert!(!dir.path().join(name).exists(), "{name}");
         }
     }

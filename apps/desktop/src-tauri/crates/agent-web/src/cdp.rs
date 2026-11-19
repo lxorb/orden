@@ -63,12 +63,8 @@ fn asked(
     match view {
         View::Webview(view) => {
             let (answered, answer) = sync_channel(1);
-            let (view, session, method, params) = (
-                view.clone(),
-                session.map(str::to_string),
-                method.to_string(),
-                params.clone(),
-            );
+            let (view, session, method, params) =
+                (view.clone(), session.map(str::to_string), method.to_string(), params.clone());
             std::thread::spawn(move || {
                 let said = orden_web::engine::devtools::call(
                     &view,
@@ -156,10 +152,7 @@ impl Heard {
         (rows, self.requests_next)
     }
     pub fn request_id(&self, seq: u64) -> Option<(String, String)> {
-        self.started
-            .iter()
-            .find(|(_, (one, _))| *one == seq)
-            .map(|(key, _)| key.clone())
+        self.started.iter().find(|(_, (one, _))| *one == seq).map(|(key, _)| key.clone())
     }
     pub fn idle_for(&self, quiet: Duration) -> bool {
         self.in_flight.is_empty() && self.network_moved.is_none_or(|at| at.elapsed() >= quiet)
@@ -170,11 +163,7 @@ impl Heard {
             .iter()
             .filter_map(|key| self.started.get(key).map(|(seq, _)| *seq))
             .collect();
-        self.requests
-            .iter()
-            .filter(|(one, _)| seqs.contains(&one.seq))
-            .cloned()
-            .collect()
+        self.requests.iter().filter(|(one, _)| seqs.contains(&one.seq)).cloned().collect()
     }
     pub fn frames(&self) -> Vec<(usize, Frame)> {
         self.frames
@@ -306,10 +295,8 @@ impl Heard {
         None
     }
     fn session_place(&self, session: &str) -> Option<String> {
-        let shared = self
-            .origins
-            .iter()
-            .any(|((owner, _), one)| owner == session && one.parent.is_some());
+        let shared =
+            self.origins.iter().any(|((owner, _), one)| owner == session && one.parent.is_some());
         if shared {
             None
         } else if session.is_empty() {
@@ -319,13 +306,8 @@ impl Heard {
         }
     }
     fn sent_from(&self, session: &str, request: &str) -> Option<Whence> {
-        let (seq, _) = self
-            .started
-            .get(&(session.to_string(), request.to_string()))?;
-        self.requests
-            .iter()
-            .find(|(one, _)| one.seq == *seq)
-            .map(|(_, from)| from.clone())
+        let (seq, _) = self.started.get(&(session.to_string(), request.to_string()))?;
+        self.requests.iter().find(|(one, _)| one.seq == *seq).map(|(_, from)| from.clone())
     }
     fn navigated(&mut self, session: &str, frame: &Value) {
         let Some(id) = frame.get("id").and_then(Value::as_str) else {
@@ -341,22 +323,13 @@ impl Heard {
             self.origins.retain(|(owner, _), _| !owner.is_empty());
             self.page_origin = Some(origin.clone());
         }
-        if let Some(held) = self
-            .frames
-            .iter_mut()
-            .flatten()
-            .find(|one| one.session == session && one.id == id)
+        if let Some(held) =
+            self.frames.iter_mut().flatten().find(|one| one.session == session && one.id == id)
         {
             held.url.clone_from(&url);
         }
-        let parent = frame
-            .get("parentId")
-            .and_then(Value::as_str)
-            .map(str::to_string);
-        self.origins.insert(
-            (session.to_string(), id.to_string()),
-            Placed { origin, parent },
-        );
+        let parent = frame.get("parentId").and_then(Value::as_str).map(str::to_string);
+        self.origins.insert((session.to_string(), id.to_string()), Placed { origin, parent });
     }
     fn frame_attached(&mut self, session: &str, event: &Value) {
         let (Some(id), Some(parent)) = (
@@ -367,10 +340,7 @@ impl Heard {
         };
         self.origins
             .entry((session.to_string(), id.to_string()))
-            .or_insert_with(|| Placed {
-                origin: String::new(),
-                parent: Some(parent.to_string()),
-            });
+            .or_insert_with(|| Placed { origin: String::new(), parent: Some(parent.to_string()) });
     }
     fn logged(&mut self, session: &str, event: &Value) {
         let entry = event.get("entry").cloned().unwrap_or_default();
@@ -382,18 +352,14 @@ impl Heard {
         };
         let source = entry.get("url").and_then(Value::as_str).map(str::to_string);
         let whence = match entry.get("networkRequestId").and_then(Value::as_str) {
-            Some(request) => self
-                .sent_from(session, request)
-                .unwrap_or(Whence::Frame(Vec::new())),
+            Some(request) => self.sent_from(session, request).unwrap_or(Whence::Frame(Vec::new())),
             None => Whence::Frame(self.session_place(session).into_iter().collect()),
         };
         self.line(level, text_at(&entry, "text"), source, whence);
     }
     fn target_changed(&mut self, event: &Value) {
         let (Some(id), Some(url)) = (
-            event
-                .pointer("/targetInfo/targetId")
-                .and_then(Value::as_str),
+            event.pointer("/targetInfo/targetId").and_then(Value::as_str),
             event.pointer("/targetInfo/url").and_then(Value::as_str),
         ) else {
             return;
@@ -406,12 +372,7 @@ impl Heard {
         if let Some(frame) = tree.get("frame") {
             self.navigated(session, frame);
         }
-        for child in tree
-            .get("childFrames")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-        {
+        for child in tree.get("childFrames").and_then(Value::as_array).into_iter().flatten() {
             self.frame_tree(session, child);
         }
     }
@@ -429,15 +390,12 @@ impl Heard {
             return;
         };
         if let Some(id) = context.get("id").and_then(Value::as_i64) {
-            self.contexts
-                .insert((session.to_string(), id), text_at(context, "origin"));
+            self.contexts.insert((session.to_string(), id), text_at(context, "origin"));
         }
     }
     fn seq_of(&self, session: &str, event: &Value) -> Option<u64> {
         let id = event.get("requestId")?.as_str()?;
-        self.started
-            .get(&(session.to_string(), id.to_string()))
-            .map(|(seq, _)| *seq)
+        self.started.get(&(session.to_string(), id.to_string())).map(|(seq, _)| *seq)
     }
     fn attached(&mut self, parent: &str, event: &Value) {
         if event.pointer("/targetInfo/type").and_then(Value::as_str) != Some("iframe") {
@@ -445,9 +403,7 @@ impl Heard {
         }
         let (Some(session), Some(frame)) = (
             event.get("sessionId").and_then(Value::as_str),
-            event
-                .pointer("/targetInfo/targetId")
-                .and_then(Value::as_str),
+            event.pointer("/targetInfo/targetId").and_then(Value::as_str),
         ) else {
             return;
         };
@@ -494,11 +450,7 @@ impl Heard {
 static HEARD: Mutex<Option<HashMap<String, Arc<Mutex<Heard>>>>> = Mutex::new(None);
 pub fn heard(label: &str) -> Arc<Mutex<Heard>> {
     let mut all = HEARD.held();
-    Arc::clone(
-        all.get_or_insert_with(HashMap::new)
-            .entry(label.to_string())
-            .or_default(),
-    )
+    Arc::clone(all.get_or_insert_with(HashMap::new).entry(label.to_string()).or_default())
 }
 pub fn forget(label: &str) {
     let mut all = HEARD.held();
@@ -507,11 +459,7 @@ pub fn forget(label: &str) {
     }
 }
 pub fn labels() -> Vec<String> {
-    HEARD
-        .held()
-        .as_ref()
-        .map(|all| all.keys().cloned().collect())
-        .unwrap_or_default()
+    HEARD.held().as_ref().map(|all| all.keys().cloned().collect()).unwrap_or_default()
 }
 const EVENTS: &str = concat!(
     "Network.requestWillBeSent|Network.responseReceived|Network.loadingFinished",
@@ -531,12 +479,7 @@ pub fn follow_view(view: &View, label: &str) {
         let hearing = move |method: &str, session: Option<&str>, params: &Value| {
             if EVENTS.split('|').any(|one| one == method) {
                 let mut held = page.held();
-                heard_event(
-                    &mut held,
-                    method,
-                    session.unwrap_or_default(),
-                    params.clone(),
-                );
+                heard_event(&mut held, method, session.unwrap_or_default(), params.clone());
             }
         };
         match view {
@@ -564,10 +507,8 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
                 Some("debug") => "debug",
                 _ => "log",
             };
-            let whence = held.printed_in(
-                session,
-                event.get("executionContextId").and_then(Value::as_i64),
-            );
+            let whence =
+                held.printed_in(session, event.get("executionContextId").and_then(Value::as_i64));
             held.line(level, spoken(&event), frame_source(&event), whence);
         }
         "Runtime.exceptionThrown" => {
@@ -579,16 +520,10 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
             let source = Some(format!(
                 "{}:{}",
                 text_at(&details, "url"),
-                details
-                    .get("lineNumber")
-                    .and_then(Value::as_u64)
-                    .unwrap_or_default()
-                    + 1
+                details.get("lineNumber").and_then(Value::as_u64).unwrap_or_default() + 1
             ));
-            let whence = held.printed_in(
-                session,
-                details.get("executionContextId").and_then(Value::as_i64),
-            );
+            let whence =
+                held.printed_in(session, details.get("executionContextId").and_then(Value::as_i64));
             held.line("error", text, source, whence);
         }
         "Runtime.executionContextCreated" => held.context_created(session, &event),
@@ -674,18 +609,10 @@ fn spoken(event: &Value) -> String {
 }
 fn frame_source(event: &Value) -> Option<String> {
     let top = event.pointer("/stackTrace/callFrames/0")?;
-    Some(format!(
-        "{}:{}",
-        top.get("url")?.as_str()?,
-        top.get("lineNumber")?.as_u64()? + 1
-    ))
+    Some(format!("{}:{}", top.get("url")?.as_str()?, top.get("lineNumber")?.as_u64()? + 1))
 }
 fn text_at(value: &Value, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string()
+    value.get(key).and_then(Value::as_str).unwrap_or_default().to_string()
 }
 pub use crate::engines::cut;
 
@@ -749,13 +676,8 @@ pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(),
             return Ok(());
         }
         for session in sessions {
-            let asked = call_in(
-                view,
-                Some(&session),
-                "Target.setAutoAttach",
-                &auto_attach(),
-                patience,
-            );
+            let asked =
+                call_in(view, Some(&session), "Target.setAutoAttach", &auto_attach(), patience);
             let mut held = page.held();
             match asked {
                 Ok(_) => {
@@ -778,32 +700,20 @@ fn attach_existing(view: &View) {
         if let Some(id) = node.pointer("/frame/id").and_then(Value::as_str) {
             frames.insert(id.to_string());
         }
-        walking.extend(
-            node.get("childFrames")
-                .and_then(Value::as_array)
-                .cloned()
-                .unwrap_or_default(),
-        );
+        walking
+            .extend(node.get("childFrames").and_then(Value::as_array).cloned().unwrap_or_default());
     }
     let Ok(targets) = call(view, "Target.getTargets", &json!({})) else {
         return;
     };
-    for info in targets
-        .get("targetInfos")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-    {
+    for info in targets.get("targetInfos").and_then(Value::as_array).into_iter().flatten() {
         let is_frame = info.get("type").and_then(Value::as_str) == Some("iframe");
         let Some(id) = info.get("targetId").and_then(Value::as_str) else {
             continue;
         };
         if is_frame && frames.contains(id) {
-            let _ = call(
-                view,
-                "Target.attachToTarget",
-                &json!({ "targetId": id, "flatten": true }),
-            );
+            let _ =
+                call(view, "Target.attachToTarget", &json!({ "targetId": id, "flatten": true }));
         }
     }
 }
@@ -811,13 +721,7 @@ pub fn listen_to_console(view: &View, label: &str) {
     let page = heard(label);
     let first = !std::mem::replace(&mut page.held().console_on, true);
     if first {
-        let _ = call_in(
-            view,
-            None,
-            "Runtime.enable",
-            &json!({}),
-            Duration::from_secs(3),
-        );
+        let _ = call_in(view, None, "Runtime.enable", &json!({}), Duration::from_secs(3));
     }
 }
 pub fn sleep_idle(app: &tauri::AppHandle) {
@@ -887,10 +791,7 @@ mod tests {
         heard.request_started("", &sent);
         heard.request_started("", &sent);
         assert!(!heard.idle_for(Duration::ZERO));
-        heard.responded(
-            "",
-            &json!({ "requestId": "1", "response": { "status": 302 } }),
-        );
+        heard.responded("", &json!({ "requestId": "1", "response": { "status": 302 } }));
         heard.request_ended("", &json!({ "requestId": "1" }), None);
         assert!(heard.idle_for(Duration::ZERO));
         let (rows, next) = heard.requests(None, Some("a.example"));
@@ -946,16 +847,8 @@ mod tests {
                 &Whence::Orden,
             ]
         );
-        assert_eq!(
-            lines[0].0.source.as_deref(),
-            Some("https://cdn.example/app.js:1")
-        );
-        heard_event(
-            &mut heard,
-            "Runtime.executionContextsCleared",
-            "",
-            json!({}),
-        );
+        assert_eq!(lines[0].0.source.as_deref(), Some("https://cdn.example/app.js:1"));
+        heard_event(&mut heard, "Runtime.executionContextsCleared", "", json!({}));
         heard_event(&mut heard, "Runtime.consoleAPICalled", "", printed(7, ""));
         assert_eq!(heard.console(None, None).0[4].1, Whence::Frame(vec![]));
         heard.request_started(
@@ -967,22 +860,11 @@ mod tests {
             &json!({ "requestId": "2", "type": "Fetch", "documentURL": "https://shop.example/", "request": { "method": "GET", "url": "https://api.backend.example/cart" } }),
         );
         let (rows, _) = heard.requests(None, None);
-        assert_eq!(
-            rows[0].1,
-            Whence::Frame(vec!["https://bank.example/app".into()])
-        );
-        assert_eq!(
-            rows[1].1,
-            Whence::Frame(vec!["https://shop.example/".into()])
-        );
+        assert_eq!(rows[0].1, Whence::Frame(vec!["https://bank.example/app".into()]));
+        assert_eq!(rows[1].1, Whence::Frame(vec!["https://shop.example/".into()]));
     }
     fn went(heard: &mut Heard, session: &str, frame: Value) {
-        heard_event(
-            heard,
-            "Page.frameNavigated",
-            session,
-            json!({ "frame": frame }),
-        );
+        heard_event(heard, "Page.frameNavigated", session, json!({ "frame": frame }));
     }
     fn sent(heard: &mut Heard, session: &str, id: &str, frame: &str, document: &str, url: &str) {
         heard.request_started(
@@ -1005,28 +887,15 @@ mod tests {
         }
         for (id, frame, document, url) in [
             ("1", "B", "about:blank", "https://shop.example/api/x"),
-            (
-                "2",
-                "Q",
-                "blob:https://shop.example/u",
-                "https://shop.example/api/y",
-            ),
-            (
-                "3",
-                "P",
-                "https://pay.example.com/",
-                "https://api.example.com/accounts",
-            ),
+            ("2", "Q", "blob:https://shop.example/u", "https://shop.example/api/y"),
+            ("3", "P", "https://pay.example.com/", "https://api.example.com/accounts"),
         ] {
             sent(&mut heard, "", id, frame, document, url);
         }
         let (rows, _) = heard.requests(None, None);
         assert_eq!(rows[0].1, at(&["about:blank", "https://shop.example"]));
         assert_eq!(rows[1].1, at(&["https://shop.example/u"]));
-        assert_eq!(
-            rows[2].1,
-            at(&["https://pay.example.com/", "https://pay.example.com"])
-        );
+        assert_eq!(rows[2].1, at(&["https://pay.example.com/", "https://pay.example.com"]));
         heard_event(
             &mut heard,
             "Log.entryAdded",
@@ -1060,34 +929,18 @@ mod tests {
             json!({ "frameId": "U", "parentFrameId": "P" }),
         );
         for (id, frame, document, url) in [
-            (
-                "1",
-                "D",
-                "data:text/html,x",
-                "https://api.example.com/accounts",
-            ),
+            ("1", "D", "data:text/html,x", "https://api.example.com/accounts"),
             ("2", "U", "about:blank", "https://api.example.com/accounts"),
             ("3", "Z", "about:blank", "https://api.example.com/accounts"),
-            (
-                "4",
-                "M",
-                "https://www.example.com/",
-                "https://api.example.com/cart",
-            ),
+            ("4", "M", "https://www.example.com/", "https://api.example.com/cart"),
         ] {
             sent(&mut heard, "", id, frame, document, url);
         }
         let (rows, _) = heard.requests(None, None);
-        assert_eq!(
-            rows[0].1,
-            at(&["data:text/html,x", "https://pay.example.com"])
-        );
+        assert_eq!(rows[0].1, at(&["data:text/html,x", "https://pay.example.com"]));
         assert_eq!(rows[1].1, at(&["about:blank", "https://pay.example.com"]));
         assert_eq!(rows[2].1, at(&["about:blank"]));
-        assert_eq!(
-            rows[3].1,
-            at(&["https://www.example.com/", "https://www.example.com"])
-        );
+        assert_eq!(rows[3].1, at(&["https://www.example.com/", "https://www.example.com"]));
     }
     #[test]
     fn a_log_line_of_a_request_never_heard_is_placed_nowhere_and_a_removed_frame_is_forgotten() {
@@ -1104,10 +957,7 @@ mod tests {
             &mut heard,
             json!({ "level": "error", "text": "Failed", "url": "https://api.example.com/a", "networkRequestId": "99" }),
         );
-        logged(
-            &mut heard,
-            json!({ "level": "warning", "text": "an intervention" }),
-        );
+        logged(&mut heard, json!({ "level": "warning", "text": "an intervention" }));
         let (lines, _) = heard.console(None, None);
         assert_eq!(lines[0].1, at(&[]));
         assert_eq!(lines[1].1, at(&["https://shop.example"]));
@@ -1122,14 +972,7 @@ mod tests {
             "",
             json!({ "frameId": "B", "reason": "remove" }),
         );
-        sent(
-            &mut heard,
-            "",
-            "1",
-            "B",
-            "about:blank",
-            "https://shop.example/x",
-        );
+        sent(&mut heard, "", "1", "B", "about:blank", "https://shop.example/x");
         assert_eq!(heard.requests(None, None).0[0].1, at(&["about:blank"]));
     }
     #[test]
@@ -1158,10 +1001,7 @@ mod tests {
             "",
             json!({ "targetInfo": { "targetId": "F", "type": "iframe", "url": "https://b.example/" } }),
         );
-        assert_eq!(
-            heard.session_address("s1").as_deref(),
-            Some("https://b.example/")
-        );
+        assert_eq!(heard.session_address("s1").as_deref(), Some("https://b.example/"));
         for frame in [
             json!({ "id": "M", "url": "https://shop.example/", "securityOrigin": "https://shop.example" }),
             json!({ "id": "B", "parentId": "M", "url": "about:blank", "securityOrigin": "https://shop.example" }),
@@ -1169,14 +1009,7 @@ mod tests {
         ] {
             went(&mut heard, "", frame);
         }
-        sent(
-            &mut heard,
-            "",
-            "5",
-            "B",
-            "about:blank",
-            "https://other.example/q",
-        );
+        sent(&mut heard, "", "5", "B", "about:blank", "https://other.example/q");
         assert_eq!(heard.requests(None, None).0[1].1, at(&["about:blank"]));
     }
     #[test]

@@ -22,10 +22,7 @@ pub fn link(act: Act, id: &str, nonce: &str) -> String {
 fn host_end(url: &str) -> Option<usize> {
     [HOST, OLD_HOST]
         .into_iter()
-        .find(|host| {
-            url.get(..host.len())
-                .is_some_and(|start| start.eq_ignore_ascii_case(host))
-        })
+        .find(|host| url.get(..host.len()).is_some_and(|start| start.eq_ignore_ascii_case(host)))
         .map(str::len)
 }
 pub fn is_reminder(url: &str) -> bool {
@@ -65,22 +62,12 @@ mod tests {
     #[test]
     fn a_link_reads_back_as_what_it_said() {
         let made = link(Act::Done, "00ff00ff00ff00ff", "abcdef0123456789");
-        assert_eq!(
-            made,
-            "orden://reminder?act=done&id=00ff00ff00ff00ff&n=abcdef0123456789"
-        );
+        assert_eq!(made, "orden://reminder?act=done&id=00ff00ff00ff00ff&n=abcdef0123456789");
         assert_eq!(
             parsed(&made),
-            Some((
-                Act::Done,
-                "00ff00ff00ff00ff".to_string(),
-                "abcdef0123456789".to_string()
-            ))
+            Some((Act::Done, "00ff00ff00ff00ff".to_string(), "abcdef0123456789".to_string()))
         );
-        assert_eq!(
-            parsed(&link(Act::Open, "aa", "bb")).map(|(act, _, _)| act),
-            Some(Act::Open)
-        );
+        assert_eq!(parsed(&link(Act::Open, "aa", "bb")).map(|(act, _, _)| act), Some(Act::Open));
     }
     #[test]
     fn a_link_a_notice_was_given_before_the_rename_still_reads() {

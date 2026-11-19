@@ -58,17 +58,15 @@ pub fn start(app: &AppHandle) -> bool {
         *reading = Reading::Busy;
     }
     let app = app.clone();
-    let spawned = std::thread::Builder::new()
-        .name("launch ahead".into())
-        .spawn(move || {
-            let answer = read(&app, plan);
-            if let Ok(mut reading) = READING.lock() {
-                if matches!(*reading, Reading::Busy) {
-                    *reading = Reading::Ready(Box::new(answer));
-                }
+    let spawned = std::thread::Builder::new().name("launch ahead".into()).spawn(move || {
+        let answer = read(&app, plan);
+        if let Ok(mut reading) = READING.lock() {
+            if matches!(*reading, Reading::Busy) {
+                *reading = Reading::Ready(Box::new(answer));
             }
-            READ.notify_all();
-        });
+        }
+        READ.notify_all();
+    });
     if spawned.is_err() {
         if let Ok(mut reading) = READING.lock() {
             *reading = Reading::Idle;
@@ -86,12 +84,7 @@ fn read(app: &AppHandle, plan: Plan) -> Answer {
     orden_base::trace::mark("read ahead: tree");
     let notes = notes_of(app, &plan.notes);
     orden_base::trace::mark(&format!("read ahead: {} notes", notes.len()));
-    Answer {
-        plan,
-        spaces,
-        tree,
-        notes,
-    }
+    Answer { plan, spaces, tree, notes }
 }
 fn notes_of(app: &AppHandle, paths: &[String]) -> BTreeMap<String, String> {
     let mut notes = BTreeMap::new();
@@ -124,9 +117,8 @@ pub async fn launch_ahead(app: AppHandle) -> Option<Answer> {
 }
 fn taken() -> Option<Answer> {
     let reading = READING.lock().ok()?;
-    let (mut reading, _) = READ
-        .wait_timeout_while(reading, PATIENCE, |now| matches!(now, Reading::Busy))
-        .ok()?;
+    let (mut reading, _) =
+        READ.wait_timeout_while(reading, PATIENCE, |now| matches!(now, Reading::Busy)).ok()?;
     match std::mem::replace(&mut *reading, Reading::Taken) {
         Reading::Ready(answer) => Some(*answer),
         _ => None,

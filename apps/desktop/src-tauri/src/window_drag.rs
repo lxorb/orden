@@ -57,9 +57,7 @@ pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
             return Err("the window has no native window to frame".to_owned());
         };
         orden_web::page_hide::no_ground_in(id);
-        orden_web::host::system()
-            .frame(id, scale)
-            .map_err(|error| error.to_string())
+        orden_web::host::system().frame(id, scale).map_err(|error| error.to_string())
     }
 }
 #[derive(Clone, Copy, Debug, serde::Deserialize)]
@@ -87,9 +85,7 @@ fn by_the_runtime(
         Edge::SouthWest => ResizeDirection::SouthWest,
         Edge::West => ResizeDirection::West,
     };
-    window
-        .start_resize_dragging(direction)
-        .map_err(|error| error.to_string())?;
+    window.start_resize_dragging(direction).map_err(|error| error.to_string())?;
     Ok(format!("a resize at {edge:?} the runtime began"))
 }
 #[cfg(test)]

@@ -23,10 +23,7 @@ pub fn browser_profiles() -> Vec<Browser> {
     ["safari", "firefox"]
         .into_iter()
         .chain(chromium_profiles::BROWSERS)
-        .map(|id| Browser {
-            id,
-            profiles: profiles_of(id),
-        })
+        .map(|id| Browser { id, profiles: profiles_of(id) })
         .filter(|one| !one.profiles.is_empty())
         .collect()
 }
@@ -36,9 +33,7 @@ pub fn read_browser_file(browser: String, profile: String, file: String) -> Resu
 }
 const DATABASES: [&str; 2] = ["History", "Favicons"];
 fn is_database(file: &str) -> bool {
-    Path::new(file)
-        .extension()
-        .is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
+    Path::new(file).extension().is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
         || DATABASES.contains(&file)
 }
 pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
@@ -61,9 +56,7 @@ pub(crate) fn read_listed(
         return Err(format!("{file} is a database"));
     }
     let path = known(browser, profile, file, listed)?;
-    let size = fs::metadata(&path)
-        .map_err(|error| format!("{file}: {error}"))?
-        .len();
+    let size = fs::metadata(&path).map_err(|error| format!("{file}: {error}"))?.len();
     if size > MOST_BYTES {
         return Err(format!("{file} is larger than any session"));
     }
@@ -109,11 +102,8 @@ pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>)
     let mut found: Vec<(u8, Profile)> = Vec::new();
     let opened = installed_defaults(&text);
     for entry in entries_in(&text) {
-        let folder = if entry.relative {
-            home.join(&entry.path)
-        } else {
-            PathBuf::from(&entry.path)
-        };
+        let folder =
+            if entry.relative { home.join(&entry.path) } else { PathBuf::from(&entry.path) };
         let files = files_of(&folder);
         if files.is_empty() {
             continue;
@@ -127,11 +117,7 @@ pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>)
         };
         found.push((
             rank,
-            Profile {
-                name: entry.name,
-                path: folder.to_string_lossy().into_owned(),
-                files,
-            },
+            Profile { name: entry.name, path: folder.to_string_lossy().into_owned(), files },
         ));
     }
     found.sort_by_key(|(rank, _)| *rank);
@@ -151,19 +137,12 @@ fn rows(text: &str) -> Vec<(String, String, String)> {
         if line.is_empty() || line.starts_with(';') || line.starts_with('#') {
             continue;
         }
-        if let Some(name) = line
-            .strip_prefix('[')
-            .and_then(|rest| rest.strip_suffix(']'))
-        {
+        if let Some(name) = line.strip_prefix('[').and_then(|rest| rest.strip_suffix(']')) {
             name.trim().clone_into(&mut section);
             continue;
         }
         if let Some((key, value)) = line.split_once('=') {
-            found.push((
-                section.clone(),
-                key.trim().to_ascii_lowercase(),
-                value.trim().to_owned(),
-            ));
+            found.push((section.clone(), key.trim().to_ascii_lowercase(), value.trim().to_owned()));
         }
     }
     found
@@ -188,9 +167,7 @@ pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
             };
             let path = value("path").filter(|one| !one.is_empty())?;
             Some(Entry {
-                name: value("name")
-                    .filter(|one| !one.is_empty())
-                    .unwrap_or_else(|| path.clone()),
+                name: value("name").filter(|one| !one.is_empty()).unwrap_or_else(|| path.clone()),
                 relative: value("isrelative").as_deref() != Some("0"),
                 default: value("default").as_deref() == Some("1"),
                 path,

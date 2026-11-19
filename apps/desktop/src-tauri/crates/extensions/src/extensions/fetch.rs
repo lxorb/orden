@@ -19,10 +19,7 @@ async fn capped(url: &str, most: usize) -> Result<Vec<u8>, String> {
         .await
         .and_then(reqwest::Response::error_for_status)
         .map_err(offline)?;
-    if response
-        .content_length()
-        .is_some_and(|length| length > most as u64)
-    {
+    if response.content_length().is_some_and(|length| length > most as u64) {
         return Err("that extension is too large".into());
     }
     let mut bytes = Vec::new();

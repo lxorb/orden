@@ -8,10 +8,7 @@ pub struct Program {
 }
 pub fn endings(command: &str) -> Vec<String> {
     if cfg!(windows) && Path::new(command).extension().is_none() {
-        [".exe", ".cmd", ".bat", ".com"]
-            .iter()
-            .map(|ending| format!("{command}{ending}"))
-            .collect()
+        [".exe", ".cmd", ".bat", ".com"].iter().map(|ending| format!("{command}{ending}")).collect()
     } else {
         vec![command.to_owned()]
     }
@@ -96,9 +93,7 @@ fn on(command: &str, path: &OsStr) -> Option<PathBuf> {
     first_in(&folders, &endings(command), runnable)
 }
 fn named_outright(name: &str) -> Option<PathBuf> {
-    std::env::var_os(name)
-        .map(PathBuf::from)
-        .filter(|path| path.is_file())
+    std::env::var_os(name).map(PathBuf::from).filter(|path| path.is_file())
 }
 pub fn search_path() -> OsString {
     let own = std::env::var_os("PATH").unwrap_or_default();
@@ -130,10 +125,7 @@ fn marked_path(printed: &str) -> Option<&str> {
 #[cfg(unix)]
 fn ask_login_shell() -> Option<OsString> {
     let shell = std::env::var_os("SHELL")?;
-    path_from_shell(
-        std::process::Command::new(shell),
-        std::time::Duration::from_secs(5),
-    )
+    path_from_shell(std::process::Command::new(shell), std::time::Duration::from_secs(5))
 }
 #[cfg(unix)]
 fn path_from_shell(
@@ -198,10 +190,8 @@ mod tests {
         .expect("a shell");
         std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).expect("runnable");
         let started = std::time::Instant::now();
-        let found = path_from_shell(
-            std::process::Command::new(&shell),
-            std::time::Duration::from_secs(20),
-        );
+        let found =
+            path_from_shell(std::process::Command::new(&shell), std::time::Duration::from_secs(20));
         assert_eq!(found.as_deref(), Some(OsStr::new("/from/the/shell")));
         assert!(started.elapsed() < std::time::Duration::from_secs(5));
         let _ = std::fs::remove_dir_all(&dir);
@@ -223,16 +213,10 @@ mod tests {
         let folders = [PathBuf::from("a"), PathBuf::from("b")];
         let names = endings("claude");
         let held = |path: &Path| path.starts_with("b");
-        assert_eq!(
-            first_in(&folders, &names, held),
-            Some(PathBuf::from("b").join(&names[0]))
-        );
+        assert_eq!(first_in(&folders, &names, held), Some(PathBuf::from("b").join(&names[0])));
         assert_eq!(first_in(&folders, &names, |_| false), None);
         if cfg!(windows) {
-            assert_eq!(
-                names,
-                ["claude.exe", "claude.cmd", "claude.bat", "claude.com"]
-            );
+            assert_eq!(names, ["claude.exe", "claude.cmd", "claude.bat", "claude.com"]);
             assert_eq!(endings("claude.cmd"), ["claude.cmd"]);
         }
     }
@@ -241,14 +225,7 @@ mod tests {
         let path = std::env::join_paths([PathBuf::from("x"), PathBuf::from("y")]).expect("joined");
         let joined = with_first(Some(Path::new("here")), &path);
         let folders: Vec<PathBuf> = std::env::split_paths(&joined).collect();
-        assert_eq!(
-            folders,
-            [
-                PathBuf::from("here"),
-                PathBuf::from("x"),
-                PathBuf::from("y")
-            ]
-        );
+        assert_eq!(folders, [PathBuf::from("here"), PathBuf::from("x"), PathBuf::from("y")]);
     }
     #[test]
     fn the_login_shell_s_path_is_the_marked_line() {
@@ -269,18 +246,12 @@ mod tests {
     }
     #[cfg(unix)]
     fn login_shells() -> Vec<&'static str> {
-        ["/bin/zsh", "/bin/bash"]
-            .into_iter()
-            .filter(|shell| Path::new(shell).exists())
-            .collect()
+        ["/bin/zsh", "/bin/bash"].into_iter().filter(|shell| Path::new(shell).exists()).collect()
     }
     #[cfg(unix)]
     fn asked(shell: &str, home: &Path, patience: std::time::Duration) -> Option<OsString> {
         let mut command = std::process::Command::new(shell);
-        command
-            .env("HOME", home)
-            .env_remove("ZDOTDIR")
-            .env_remove("BASH_ENV");
+        command.env("HOME", home).env_remove("ZDOTDIR").env_remove("BASH_ENV");
         path_from_shell(command, patience)
     }
     #[cfg(unix)]
@@ -311,20 +282,14 @@ mod tests {
             let started = std::time::Instant::now();
             let found = asked(shell, &home, std::time::Duration::from_secs(1));
             assert_eq!(found, None, "{shell}");
-            assert!(
-                started.elapsed() < std::time::Duration::from_secs(5),
-                "{shell}"
-            );
+            assert!(started.elapsed() < std::time::Duration::from_secs(5), "{shell}");
         }
         let _ = std::fs::remove_dir_all(&home);
     }
     #[test]
     fn a_command_is_looked_for_with_every_ending_windows_runs() {
         if cfg!(windows) {
-            assert_eq!(
-                endings("pandoc"),
-                ["pandoc.exe", "pandoc.cmd", "pandoc.bat", "pandoc.com"]
-            );
+            assert_eq!(endings("pandoc"), ["pandoc.exe", "pandoc.cmd", "pandoc.bat", "pandoc.com"]);
             assert_eq!(endings("pandoc.exe"), ["pandoc.exe"]);
         } else {
             assert_eq!(endings("pandoc"), ["pandoc"]);
@@ -335,11 +300,8 @@ mod tests {
         let home = Path::new("/home/e");
         let found = installed_in(Some(home), None);
         if !cfg!(windows) {
-            for one in [
-                "/opt/homebrew/bin",
-                "/opt/local/bin",
-                "/nix/var/nix/profiles/default/bin",
-            ] {
+            for one in ["/opt/homebrew/bin", "/opt/local/bin", "/nix/var/nix/profiles/default/bin"]
+            {
                 assert!(found.contains(&PathBuf::from(one)), "{one}");
             }
             for inside in [".cabal/bin", ".ghcup/bin", ".nix-profile/bin", ".bun/bin"] {

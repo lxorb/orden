@@ -133,12 +133,7 @@ impl Input {
     pub fn open(display: &str) -> Result<Input, String> {
         let connected = x11rb::connect(Some(display));
         let (connection, screen) = connected.map_err(|error| error.to_string())?;
-        let root = connection
-            .setup()
-            .roots
-            .get(screen)
-            .ok_or("the display has no screen")?
-            .root;
+        let root = connection.setup().roots.get(screen).ok_or("the display has no screen")?.root;
         let first = connection.setup().min_keycode;
         let count = connection.setup().max_keycode - first + 1;
         let mapping = connection
@@ -169,11 +164,7 @@ impl Input {
                 if down {
                     self.held_buttons.push(button);
                 }
-                let kind = if down {
-                    BUTTON_PRESS_EVENT
-                } else {
-                    BUTTON_RELEASE_EVENT
-                };
+                let kind = if down { BUTTON_PRESS_EVENT } else { BUTTON_RELEASE_EVENT };
                 self.fake(kind, button, 0, 0);
             }
             InputEvent::Wheel { x, y } => {
@@ -212,16 +203,11 @@ impl Input {
         self.fake(KEY_PRESS_EVENT, keycode, 0, 0);
     }
     fn key_giving(&mut self, sym: Keysym) -> Option<Keycode> {
-        let shifted = self
-            .held_keys
-            .keys()
-            .any(|held| held == "ShiftLeft" || held == "ShiftRight");
+        let shifted = self.held_keys.keys().any(|held| held == "ShiftLeft" || held == "ShiftRight");
         let (keycode, lent) = self.keymap.key_for(sym, shifted)?;
         if lent {
             let syms = vec![sym; usize::from(self.per_key.max(1))];
-            let _ = self
-                .connection
-                .change_keyboard_mapping(1, keycode, self.per_key.max(1), &syms);
+            let _ = self.connection.change_keyboard_mapping(1, keycode, self.per_key.max(1), &syms);
         }
         Some(keycode)
     }
@@ -248,9 +234,7 @@ impl Input {
         let _ = self.connection.flush();
     }
     fn fake(&self, kind: u8, detail: u8, x: i16, y: i16) {
-        let _ = self
-            .connection
-            .xtest_fake_input(kind, detail, 0, self.root, x, y, 0);
+        let _ = self.connection.xtest_fake_input(kind, detail, 0, self.root, x, y, 0);
     }
 }
 impl Drop for Input {
@@ -279,23 +263,15 @@ mod tests {
         );
         assert_eq!(
             read(r#"{"t":"key","key":"a","code":"KeyA","down":true}"#),
-            Some(InputEvent::Key {
-                key: "a".to_owned(),
-                code: "KeyA".to_owned(),
-                down: true,
-            })
+            Some(InputEvent::Key { key: "a".to_owned(), code: "KeyA".to_owned(), down: true })
         );
         assert_eq!(
             read(r#"{"t":"text","text":"日本"}"#),
-            Some(InputEvent::Text {
-                text: "日本".to_owned()
-            })
+            Some(InputEvent::Text { text: "日本".to_owned() })
         );
         assert_eq!(
             read(r#"{"t":"clipboard","text":"x"}"#),
-            Some(InputEvent::Clipboard {
-                text: "x".to_owned()
-            })
+            Some(InputEvent::Clipboard { text: "x".to_owned() })
         );
         assert_eq!(
             read(r#"{"t":"share","clipboard":false}"#),

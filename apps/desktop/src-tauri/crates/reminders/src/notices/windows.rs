@@ -15,21 +15,13 @@ fn failed(error: &windows::core::Error) -> String {
 }
 pub fn show(app: &AppHandle, notice: &Notice, quietly: bool) -> Result<(), String> {
     let document = XmlDocument::new().map_err(|error| failed(&error))?;
-    document
-        .LoadXml(&HSTRING::from(toast::xml(notice)))
-        .map_err(|error| failed(&error))?;
+    document.LoadXml(&HSTRING::from(toast::xml(notice))).map_err(|error| failed(&error))?;
     let shown =
         ToastNotification::CreateToastNotification(&document).map_err(|error| failed(&error))?;
-    shown
-        .SetTag(&HSTRING::from(notice.tag.as_str()))
-        .map_err(|error| failed(&error))?;
-    shown
-        .SetGroup(&HSTRING::from(GROUP))
-        .map_err(|error| failed(&error))?;
+    shown.SetTag(&HSTRING::from(notice.tag.as_str())).map_err(|error| failed(&error))?;
+    shown.SetGroup(&HSTRING::from(GROUP)).map_err(|error| failed(&error))?;
     if quietly {
-        shown
-            .SetSuppressPopup(true)
-            .map_err(|error| failed(&error))?;
+        shown.SetSuppressPopup(true).map_err(|error| failed(&error))?;
     }
     let app_for_press = app.clone();
     let id = notice.id.clone();
@@ -50,9 +42,7 @@ fn pressed(args: Option<&windows::core::IInspectable>) -> (Act, Option<String>) 
     let Some(args) = args.and_then(|args| args.cast::<ToastActivatedEventArgs>().ok()) else {
         return (Act::Open, None);
     };
-    let reply = args
-        .Arguments()
-        .is_ok_and(|arguments| arguments == REPLY_ARGUMENT);
+    let reply = args.Arguments().is_ok_and(|arguments| arguments == REPLY_ARGUMENT);
     if !reply {
         return (Act::Open, None);
     }

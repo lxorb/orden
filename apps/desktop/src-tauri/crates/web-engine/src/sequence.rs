@@ -66,11 +66,7 @@ pub struct Outbox<M> {
 }
 impl<M> Default for Outbox<M> {
     fn default() -> Self {
-        Self {
-            next: 1,
-            ready: false,
-            waiting: Vec::new(),
-        }
+        Self { next: 1, ready: false, waiting: Vec::new() }
     }
 }
 #[derive(Debug, PartialEq, Eq)]
@@ -83,10 +79,7 @@ impl<M> Outbox<M> {
         let id = self.next;
         self.next += 1;
         if self.ready {
-            Sending {
-                id,
-                now: Some(message),
-            }
+            Sending { id, now: Some(message) }
         } else {
             self.waiting.push((id, message));
             Sending { id, now: None }

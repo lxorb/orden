@@ -198,10 +198,7 @@ mod tests {
         assert_eq!(roots, vec!["menu________", "toolbar_____"]);
         let toolbar = &tree["children"][1]["children"];
         assert_eq!(toolbar[0]["title"], "Work");
-        assert_eq!(
-            toolbar[0]["children"][0]["uri"],
-            "https://docs.example.com/"
-        );
+        assert_eq!(toolbar[0]["children"][0]["uri"], "https://docs.example.com/");
         assert_eq!(toolbar[1]["uri"], "https://news.example.com/");
         assert_eq!(toolbar[1]["dateAdded"], 1_700_000_000_000_000_i64);
         assert_eq!(tree["children"][0]["children"][0]["typeCode"], 3);
@@ -210,8 +207,7 @@ mod tests {
     fn a_database_firefox_has_open_is_read_from_a_copy() {
         let here = tempfile::tempdir().expect("a folder");
         let db = places(&here.path().join(PLACES));
-        db.pragma_update(None, "journal_mode", "wal")
-            .expect("a log");
+        db.pragma_update(None, "journal_mode", "wal").expect("a log");
         let copy = copied(here.path(), PLACES).expect("a copy");
         let read = Connection::open(copy.path().join(PLACES)).expect("the copy");
         assert!(tree_of(&read).expect("a tree")["children"].is_array());
@@ -225,19 +221,7 @@ mod tests {
             files: vec![PLACES.into()],
         }];
         assert!(known("Firefox", "/home/me/.mozilla/firefox/x1", PLACES, &listed).is_ok());
-        assert!(known(
-            "Firefox",
-            "/home/me/.mozilla/firefox/x1/..",
-            PLACES,
-            &listed
-        )
-        .is_err());
-        assert!(known(
-            "Firefox",
-            "/home/me/.mozilla/firefox/x1",
-            "logins.json",
-            &listed
-        )
-        .is_err());
+        assert!(known("Firefox", "/home/me/.mozilla/firefox/x1/..", PLACES, &listed).is_err());
+        assert!(known("Firefox", "/home/me/.mozilla/firefox/x1", "logins.json", &listed).is_err());
     }
 }

@@ -111,13 +111,7 @@ fn front_group(shell: u32) -> Option<u32> {
     let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_bsdinfo>()).ok()?;
     let mut info = std::mem::MaybeUninit::<libc::proc_bsdinfo>::zeroed();
     let written = unsafe {
-        libc::proc_pidinfo(
-            pid,
-            libc::PROC_PIDTBSDINFO,
-            0,
-            info.as_mut_ptr().cast(),
-            size,
-        )
+        libc::proc_pidinfo(pid, libc::PROC_PIDTBSDINFO, 0, info.as_mut_ptr().cast(), size)
     };
     if written != size {
         return None;
@@ -287,10 +281,7 @@ fn name_of(pid: u32) -> Option<String> {
     let written = unsafe { libc::proc_pidpath(pid, buffer.as_mut_ptr().cast(), size) };
     let written = usize::try_from(written).ok().filter(|&length| length > 0)?;
     let path = String::from_utf8_lossy(&buffer[..written.min(buffer.len())]).into_owned();
-    path.rsplit('/')
-        .next()
-        .filter(|name| !name.is_empty())
-        .map(str::to_owned)
+    path.rsplit('/').next().filter(|name| !name.is_empty()).map(str::to_owned)
 }
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
 fn name_of(_pid: u32) -> Option<String> {
@@ -311,17 +302,11 @@ pub fn processes() -> Vec<Process> {
         let Ok(snapshot) = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) else {
             return found;
         };
-        let mut entry = PROCESSENTRY32W {
-            dwSize: size,
-            ..Default::default()
-        };
+        let mut entry = PROCESSENTRY32W { dwSize: size, ..Default::default() };
         let mut more = Process32FirstW(snapshot, &raw mut entry).is_ok();
         while more {
-            let end = entry
-                .szExeFile
-                .iter()
-                .position(|unit| *unit == 0)
-                .unwrap_or(entry.szExeFile.len());
+            let end =
+                entry.szExeFile.iter().position(|unit| *unit == 0).unwrap_or(entry.szExeFile.len());
             found.push(Process {
                 id: entry.th32ProcessID,
                 parent: entry.th32ParentProcessID,
@@ -378,13 +363,7 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_vnodepathinfo>()).ok()?;
     let mut info = std::mem::MaybeUninit::<libc::proc_vnodepathinfo>::zeroed();
     let written = unsafe {
-        libc::proc_pidinfo(
-            pid,
-            libc::PROC_PIDVNODEPATHINFO,
-            0,
-            info.as_mut_ptr().cast(),
-            size,
-        )
+        libc::proc_pidinfo(pid, libc::PROC_PIDVNODEPATHINFO, 0, info.as_mut_ptr().cast(), size)
     };
     if written != size {
         return None;
@@ -443,12 +422,7 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
             offset_of!(RTL_USER_PROCESS_PARAMETERS, Reserved2) + 5 * size_of::<*mut c_void>();
         let path: UNICODE_STRING = read(handle, parameters + dos_path)?;
         let mut units = vec![0_u16; usize::from(path.Length / 2)];
-        read_into(
-            handle,
-            path.Buffer.0 as usize,
-            units.as_mut_ptr().cast(),
-            units.len() * 2,
-        )?;
+        read_into(handle, path.Buffer.0 as usize, units.as_mut_ptr().cast(), units.len() * 2)?;
         let path = String::from_utf16_lossy(&units);
         let path = match path.strip_suffix('\\') {
             Some(cut) if !cut.ends_with(':') => cut.to_owned(),
@@ -475,18 +449,11 @@ mod tests {
     fn a_process_s_folder_is_where_it_works() {
         let here = std::env::current_dir().unwrap();
         let found = folder(Some(std::process::id())).unwrap();
-        assert_eq!(
-            std::fs::canonicalize(found).unwrap(),
-            std::fs::canonicalize(here).unwrap()
-        );
+        assert_eq!(std::fs::canonicalize(found).unwrap(), std::fs::canonicalize(here).unwrap());
     }
     const UNKNOWN: fn(u32) -> Option<u64> = |_| None;
     fn process(id: u32, parent: u32, name: &str) -> Process {
-        Process {
-            id,
-            parent,
-            name: name.to_owned(),
-        }
+        Process { id, parent, name: name.to_owned() }
     }
     #[test]
     fn a_shell_at_its_prompt_is_not_busy() {
@@ -499,22 +466,16 @@ mod tests {
     }
     #[test]
     fn shells_inside_shells_are_still_a_prompt() {
-        let listed = [
-            process(20, 10, "bash.exe"),
-            process(21, 20, "bash.exe"),
-            process(30, 5, "node.exe"),
-        ];
+        let listed =
+            [process(20, 10, "bash.exe"), process(21, 20, "bash.exe"), process(30, 5, "node.exe")];
         assert!(!busy_below(20, &listed, &UNKNOWN));
         let nested = [process(20, 10, "pwsh.exe"), process(22, 20, "CMD.EXE")];
         assert!(!busy_below(20, &nested, &UNKNOWN));
     }
     #[test]
     fn anything_else_below_it_is_something_running() {
-        let listed = [
-            process(20, 10, "pwsh.exe"),
-            process(22, 20, "cmd.exe"),
-            process(23, 22, "node.exe"),
-        ];
+        let listed =
+            [process(20, 10, "pwsh.exe"), process(22, 20, "cmd.exe"), process(23, 22, "node.exe")];
         assert!(busy_below(20, &listed, &UNKNOWN));
     }
     #[test]
@@ -526,10 +487,7 @@ mod tests {
             process(23, 22, "node.exe"),
             process(24, 23, "esbuild.exe"),
         ];
-        assert_eq!(
-            front_below(20, &listed, &UNKNOWN).map(|one| one.id),
-            Some(23)
-        );
+        assert_eq!(front_below(20, &listed, &UNKNOWN).map(|one| one.id), Some(23));
         assert_eq!(front_below(20, &listed[..3], &UNKNOWN), None);
     }
     #[test]
@@ -540,20 +498,14 @@ mod tests {
             process(31, 30, "codex.exe"),
             process(32, 31, "git.exe"),
         ];
-        assert_eq!(
-            front_below(20, &codex, &UNKNOWN).map(|one| one.id),
-            Some(31)
-        );
+        assert_eq!(front_below(20, &codex, &UNKNOWN).map(|one| one.id), Some(31));
         let claude = [
             process(20, 10, "pwsh.exe"),
             process(40, 20, "cmd.exe"),
             process(41, 40, "claude.exe"),
             process(42, 41, "node.exe"),
         ];
-        assert_eq!(
-            front_below(20, &claude, &UNKNOWN).map(|one| one.id),
-            Some(41)
-        );
+        assert_eq!(front_below(20, &claude, &UNKNOWN).map(|one| one.id), Some(41));
     }
     #[test]
     fn a_program_is_named_without_its_ending() {
@@ -565,18 +517,12 @@ mod tests {
     }
     #[test]
     fn a_process_that_is_its_own_parent_ends_the_walk() {
-        let listed = [
-            process(0, 0, "System Idle Process"),
-            process(20, 0, "pwsh.exe"),
-        ];
+        let listed = [process(0, 0, "System Idle Process"), process(20, 0, "pwsh.exe")];
         assert!(!busy_below(20, &listed, &UNKNOWN));
     }
     #[test]
     fn a_command_line_is_split_at_its_nuls() {
-        assert_eq!(
-            split_arguments(b"ssh\0-p\x002222\0pi\0", 1),
-            ["-p", "2222", "pi"]
-        );
+        assert_eq!(split_arguments(b"ssh\0-p\x002222\0pi\0", 1), ["-p", "2222", "pi"]);
         assert_eq!(split_arguments(b"ssh\0\0pi", 1), ["", "pi"]);
         assert!(split_arguments(b"ssh", 1).is_empty());
     }
@@ -584,10 +530,7 @@ mod tests {
     fn a_macs_process_arguments_are_after_its_path() {
         let mut buffer = 3_i32.to_ne_bytes().to_vec();
         buffer.extend_from_slice(b"/usr/bin/ssh\0\0\0ssh\0-A\0pi\0TERM=xterm\0");
-        assert_eq!(
-            procargs(&buffer),
-            Some(vec!["-A".to_owned(), "pi".to_owned()])
-        );
+        assert_eq!(procargs(&buffer), Some(vec!["-A".to_owned(), "pi".to_owned()]));
         assert_eq!(procargs(&buffer[..6]), None);
     }
     #[cfg(any(target_os = "linux", target_os = "macos", windows))]
@@ -637,10 +580,7 @@ mod tests {
         #[cfg(unix)]
         let (mut child, wanted) = {
             let args = vec!["-c".to_owned(), "sleep 6; true".to_owned(), long];
-            let child = std::process::Command::new("sh")
-                .args(&args)
-                .spawn()
-                .unwrap();
+            let child = std::process::Command::new("sh").args(&args).spawn().unwrap();
             (child, args)
         };
         let mut found = None;
@@ -660,11 +600,8 @@ mod tests {
     #[test]
     fn the_kernel_says_where_a_process_is() {
         let dir = tempfile::tempdir().unwrap();
-        let mut child = std::process::Command::new("sleep")
-            .arg("5")
-            .current_dir(dir.path())
-            .spawn()
-            .unwrap();
+        let mut child =
+            std::process::Command::new("sleep").arg("5").current_dir(dir.path()).spawn().unwrap();
         let found = folder(Some(child.id()));
         let _ = child.kill();
         let _ = child.wait();
@@ -691,9 +628,6 @@ mod tests {
             "the one started after it"
         );
         assert!(!busy_below(20, &listed[..2], &born), "only the stale one");
-        assert!(
-            busy_below(20, &listed[..2], &UNKNOWN),
-            "believed where nothing is known"
-        );
+        assert!(busy_below(20, &listed[..2], &UNKNOWN), "believed where nothing is known");
     }
 }

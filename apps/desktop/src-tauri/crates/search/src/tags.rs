@@ -17,10 +17,7 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
     }
     let mut at = body.find('\n').map_or(front, |one| one + 1);
     while at < front {
-        let end = body[at..]
-            .find('\n')
-            .map_or(front, |one| at + one)
-            .min(front);
+        let end = body[at..].find('\n').map_or(front, |one| at + one).min(front);
         let line = &body[at..end];
         if let Some(rest) = key_value(line) {
             let value = at + line.len() - rest.len();
@@ -42,12 +39,10 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
     }
 }
 fn without_comment(line: &str) -> &str {
-    let opens = line.match_indices("# ").map(|(at, _)| at).find(|&at| {
-        line[..at]
-            .chars()
-            .next_back()
-            .is_none_or(char::is_whitespace)
-    });
+    let opens = line
+        .match_indices("# ")
+        .map(|(at, _)| at)
+        .find(|&at| line[..at].chars().next_back().is_none_or(char::is_whitespace));
     opens.map_or(line, |at| &line[..at])
 }
 fn key_value(line: &str) -> Option<&str> {
@@ -62,10 +57,7 @@ fn key_value(line: &str) -> Option<&str> {
 fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) -> usize {
     let mut at = from;
     while at < front {
-        let end = body[at..]
-            .find('\n')
-            .map_or(front, |one| at + one)
-            .min(front);
+        let end = body[at..].find('\n').map_or(front, |one| at + one).min(front);
         let line = &body[at..end];
         if line.trim().is_empty() || line.trim_start().starts_with('#') {
             if end >= front {
@@ -124,8 +116,7 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
                 opens_tag(before) && !code.iter().any(|&(from, to)| (from..to).contains(&start));
             let rest = &block[start + 1..];
             let name = closed_by(
-                rest.find(|one: char| !name_char(one))
-                    .map_or(rest, |end| &rest[..end]),
+                rest.find(|one: char| !name_char(one)).map_or(rest, |end| &rest[..end]),
                 before.len() - before.trim_end_matches('_').len(),
             );
             if opens && named(name) {
@@ -267,10 +258,7 @@ mod tests {
         assert_eq!(tags_in("a#b"), Vec::<String>::new());
         assert_eq!(tags_in("(#nested)"), vec!["#nested"]);
         assert_eq!(tags_in("issue #42"), Vec::<String>::new());
-        assert_eq!(
-            tags_in("#work/2026 #a-b #c_d"),
-            vec!["#work/2026", "#a-b", "#c_d"]
-        );
+        assert_eq!(tags_in("#work/2026 #a-b #c_d"), vec!["#work/2026", "#a-b", "#c_d"]);
         assert_eq!(
             tags_in("#हिन्दी #cafe\u{301} #tag👍 #2024-review #2024"),
             vec!["#हिन्दी", "#cafe\u{301}", "#tag👍", "#2024-review"]
@@ -300,10 +288,7 @@ mod tests {
         );
         assert_eq!(tags_in("> ```\n> #no\n\n#yes"), vec!["#yes"]);
         assert_eq!(tags_in("- item\n\n  ```\n  #no\n  ```\n#yes"), vec!["#yes"]);
-        assert_eq!(
-            tags_in("Notes\n\n    #include <stdio.h>\n\n#yes"),
-            vec!["#yes"]
-        );
+        assert_eq!(tags_in("Notes\n\n    #include <stdio.h>\n\n#yes"), vec!["#yes"]);
         assert_eq!(tags_in("- item\n\n      #define X\n#yes"), vec!["#yes"]);
         assert_eq!(tags_in("> words\n>\n>     #no"), Vec::<String>::new());
         assert_eq!(tags_in("words\n    #yes"), vec!["#yes"]);
@@ -329,53 +314,26 @@ mod tests {
             tags_in("---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n"),
             vec!["#work/orden", "#other"]
         );
-        assert_eq!(
-            tags_in("---\ntags:\n  - a\n\n  - b\n---\n"),
-            vec!["#a", "#b"]
-        );
-        assert_eq!(
-            tags_in("---\ntags:\n  - a\n  # c\n  - b\nother: x\n---\n"),
-            vec!["#a", "#b"]
-        );
-        assert_eq!(
-            tags_in("---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n"),
-            vec!["#a", "#b"]
-        );
+        assert_eq!(tags_in("---\ntags:\n  - a\n\n  - b\n---\n"), vec!["#a", "#b"]);
+        assert_eq!(tags_in("---\ntags:\n  - a\n  # c\n  - b\nother: x\n---\n"), vec!["#a", "#b"]);
+        assert_eq!(tags_in("---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n"), vec!["#a", "#b"]);
         let note = "---\ntags: [\n  work, # mine\n  # a comment\n  \"b\",\n]\nz: 1\n---\nrest\n";
         assert_eq!(tags_in(note), vec!["#work", "#b"]);
         assert_eq!(tags_in("---\ntags: [a\nz: b\n---\n"), vec!["#a"]);
         assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#b"]);
         assert_eq!(tags_in("---\ntags: [a, b]\nz: 1\n---\n"), vec!["#a", "#b"]);
-        assert_eq!(
-            tags_in("---\ntags: [#work/orden]\n---\n\nwords\n"),
-            vec!["#work/orden"]
-        );
-        assert_eq!(
-            tags_in("---\ntag: work/orden\n---\n\nwords\n"),
-            vec!["#work/orden"]
-        );
+        assert_eq!(tags_in("---\ntags: [#work/orden]\n---\n\nwords\n"), vec!["#work/orden"]);
+        assert_eq!(tags_in("---\ntag: work/orden\n---\n\nwords\n"), vec!["#work/orden"]);
         assert_eq!(
             tags_in("---\nstatus: done\nproject: Orden\n---\n\nwords\n"),
             Vec::<String>::new()
         );
-        assert_eq!(
-            tags_in("---\nstatus: done # not a tag\n---\n\nwords\n"),
-            Vec::<String>::new()
-        );
-        assert_eq!(
-            tags_in("---\ntags:\n  - project # active\n---\n\nwords\n"),
-            vec!["#project"]
-        );
+        assert_eq!(tags_in("---\nstatus: done # not a tag\n---\n\nwords\n"), Vec::<String>::new());
+        assert_eq!(tags_in("---\ntags:\n  - project # active\n---\n\nwords\n"), vec!["#project"]);
         assert_eq!(tags_in("---\ntags: [a] # old\n---\n\nwords\n"), vec!["#a"]);
         assert_eq!(tags_in("---\ntags: a # old\n---\n"), vec!["#a"]);
-        assert_eq!(
-            tags_in("---\ntags: [work]\n---\n\nwords #orden\n"),
-            vec!["#work", "#orden"]
-        );
-        assert_eq!(
-            tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"),
-            vec!["#work"]
-        );
+        assert_eq!(tags_in("---\ntags: [work]\n---\n\nwords #orden\n"), vec!["#work", "#orden"]);
+        assert_eq!(tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"), vec!["#work"]);
         assert_eq!(
             tags_in("---\r\ntags:\r\n  - work\r\n---\r\nx #orden\r\n"),
             vec!["#work", "#orden"]
@@ -387,10 +345,7 @@ mod tests {
             tags_in("## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n"),
             vec!["#setup"]
         );
-        assert_eq!(
-            tags_in("**#a** *#b* ~~#d~~ ==#e== call\n"),
-            vec!["#a", "#b", "#d", "#e"]
-        );
+        assert_eq!(tags_in("**#a** *#b* ~~#d~~ ==#e== call\n"), vec!["#a", "#b", "#d", "#e"]);
         assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
     }
     #[test]
@@ -405,10 +360,7 @@ mod tests {
             ("[[Note|#alias]]", &[]),
             ("[s](#setup) ![i](#img) and [s](#open", &[]),
             ("**#a** ~~#d~~ ==#e== x **#f**", &["#a", "#d", "#e", "#f"]),
-            (
-                "_#u_ and __#todo__ and _#snake_case_",
-                &["#u", "#todo", "#snake_case"],
-            ),
+            ("_#u_ and __#todo__ and _#snake_case_", &["#u", "#todo", "#snake_case"]),
             ("| x | y |\n| - | - |\n|#f|#g|", &["#f", "#g"]),
         ];
         for (source, tags) in rows {

@@ -31,9 +31,7 @@ pub fn note_words(app: &AppHandle, path: &str) -> Result<String, String> {
 }
 pub fn words_of(target: &Path) -> Result<String, String> {
     let bytes = at_most(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
-    String::from_utf8(bytes)
-        .map(unmarked)
-        .map_err(|error| cannot("read", target, &error))
+    String::from_utf8(bytes).map(unmarked).map_err(|error| cannot("read", target, &error))
 }
 const MARK: char = '\u{feff}';
 fn unmarked(words: String) -> String {
@@ -125,9 +123,7 @@ fn bytes_written(target: &Path, shown: &str, base64: &str) -> Result<(), String>
     write_file(target, shown, &bytes)
 }
 fn write_file(target: &Path, shown: &str, bytes: &[u8]) -> Result<(), String> {
-    let parent = target
-        .parent()
-        .ok_or_else(|| format!("{shown} has no folder to write into"))?;
+    let parent = target.parent().ok_or_else(|| format!("{shown} has no folder to write into"))?;
     made(parent)?;
     write_in_place(target, bytes)
 }
@@ -149,13 +145,7 @@ pub fn rename_note(
 ) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    renamed_as(
-        &source,
-        &target,
-        hold == Some(true),
-        alone == Some(true),
-        may_arrive(arrived),
-    )
+    renamed_as(&source, &target, hold == Some(true), alone == Some(true), may_arrive(arrived))
 }
 #[cfg(test)]
 fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
@@ -308,10 +298,7 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
     if !data.is_file() {
         return None;
     }
-    Some(Stamp {
-        modified: clock::of(data.modified().ok()),
-        len: data.len(),
-    })
+    Some(Stamp { modified: clock::of(data.modified().ok()), len: data.len() })
 }
 #[cfg(test)]
 mod tests {
@@ -391,10 +378,7 @@ mod tests {
         let source = dir.path().join("picture.png");
         fs::write(&source, PNG).expect("the picture");
         copied(&source, &dir.path().join("Copies/picture.png")).expect("the copy");
-        assert_eq!(
-            fs::read(dir.path().join("Copies/picture.png")).expect("the copy back"),
-            PNG
-        );
+        assert_eq!(fs::read(dir.path().join("Copies/picture.png")).expect("the copy back"), PNG);
         assert_eq!(fs::read(&source).expect("the original"), PNG);
     }
     #[test]
@@ -407,18 +391,9 @@ mod tests {
         fs::write(source.join(".hidden"), "kept").expect("the dotted file");
         let target = dir.path().join("Trip copy");
         copied(&source, &target).expect("the copy");
-        assert_eq!(
-            fs::read_to_string(target.join("Trip.md")).expect("note"),
-            "# Trip"
-        );
-        assert_eq!(
-            fs::read(target.join("assets/map.png")).expect("picture"),
-            PNG
-        );
-        assert_eq!(
-            fs::read_to_string(target.join(".hidden")).expect("dotted"),
-            "kept"
-        );
+        assert_eq!(fs::read_to_string(target.join("Trip.md")).expect("note"), "# Trip");
+        assert_eq!(fs::read(target.join("assets/map.png")).expect("picture"), PNG);
+        assert_eq!(fs::read_to_string(target.join(".hidden")).expect("dotted"), "kept");
     }
     #[test]
     fn copies_a_papers_highlights_with_it() {
@@ -499,10 +474,7 @@ mod tests {
         let target = dir.path().join("Trip copy");
         assert!(copied(&source, &target).is_err());
         assert!(!target.exists(), "half a folder was left behind");
-        assert_eq!(
-            fs::read(source.join("assets/map.png")).expect("the original"),
-            PNG
-        );
+        assert_eq!(fs::read(source.join("assets/map.png")).expect("the original"), PNG);
     }
     #[test]
     fn writes_bytes_untouched_into_the_folders_it_needs() {
@@ -522,10 +494,7 @@ mod tests {
         let error = write_bytes(target.clone(), "not base64!!".to_string())
             .expect_err("nonsense to be refused");
         assert!(error.contains("not base64"), "{error}");
-        assert!(
-            !std::path::Path::new(&target).exists(),
-            "nothing was written"
-        );
+        assert!(!std::path::Path::new(&target).exists(), "nothing was written");
     }
     #[test]
     fn leaves_no_temp_file_behind() {
@@ -580,10 +549,7 @@ mod tests {
         let target = path(&dir, "windows.md");
         fs::write(&target, b"one\r\ntwo\r\n").expect("the file to start out with CRLF");
         write_note(target.clone(), "one\ntwo!\n".to_string()).expect("the write to land");
-        assert_eq!(
-            fs::read(&target).expect("the file back"),
-            b"one\r\ntwo!\r\n"
-        );
+        assert_eq!(fs::read(&target).expect("the file back"), b"one\r\ntwo!\r\n");
     }
     #[test]
     fn reads_a_note_past_its_mark_and_writes_the_mark_back() {
@@ -593,16 +559,11 @@ mod tests {
         let read = super::words_of(std::path::Path::new(&target)).expect("the words");
         assert_eq!(read, "# Title\r\nwords\r\n");
         assert_eq!(
-            super::words_stamped(std::path::Path::new(&target))
-                .expect("the words")
-                .0,
+            super::words_stamped(std::path::Path::new(&target)).expect("the words").0,
             "# Title\r\nwords\r\n"
         );
         write_note(target.clone(), "# Title\nwords!\n".to_string()).expect("the write to land");
-        assert_eq!(
-            fs::read(&target).expect("the file back"),
-            b"\xEF\xBB\xBF# Title\r\nwords!\r\n"
-        );
+        assert_eq!(fs::read(&target).expect("the file back"), b"\xEF\xBB\xBF# Title\r\nwords!\r\n");
     }
     #[test]
     fn gives_a_file_with_no_mark_none() {
@@ -687,10 +648,7 @@ mod tests {
         fs::create_dir(&from).expect("the folder");
         fs::write(from.join("plan.md"), "plan").expect("a note inside");
         move_entry(&from, &to, true).expect("the respelling");
-        assert_eq!(
-            fs::read_to_string(to.join("plan.md")).expect("the note"),
-            "plan"
-        );
+        assert_eq!(fs::read_to_string(to.join("plan.md")).expect("the note"), "plan");
     }
     #[test]
     fn refuses_to_move_onto_another_note() {
@@ -725,13 +683,7 @@ mod tests {
     fn names(dir: &Path) -> Vec<String> {
         let mut names: Vec<String> = fs::read_dir(dir)
             .expect("the folder")
-            .map(|entry| {
-                entry
-                    .expect("an entry")
-                    .file_name()
-                    .to_string_lossy()
-                    .into_owned()
-            })
+            .map(|entry| entry.expect("an entry").file_name().to_string_lossy().into_owned())
             .collect();
         names.sort();
         names
@@ -767,10 +719,7 @@ mod tests {
         assert!(respelled(&from, &to, same_entry));
         move_entry(&from, &to, true).expect("the rename");
         assert_eq!(names(dir.path()), ["Work"]);
-        assert_eq!(
-            fs::read_to_string(to.join("plan.md")).expect("the note"),
-            "plan"
-        );
+        assert_eq!(fs::read_to_string(to.join("plan.md")).expect("the note"), "plan");
     }
     #[cfg(unix)]
     #[test]
@@ -820,10 +769,7 @@ mod tests {
         assert!(!dir.path().join("B.pdf.highlights.json").exists());
         assert!(!dir.path().join("Lecture.pages.pdf").exists());
         assert!(dir.path().join("Week.pages.pdf").exists());
-        assert!(dir
-            .path()
-            .join("Lecture.pages.pdf.highlights.json")
-            .exists());
+        assert!(dir.path().join("Lecture.pages.pdf.highlights.json").exists());
         assert!(!dir.path().join("Week.pages.pdf.highlights.json").exists());
     }
     #[test]
@@ -853,10 +799,7 @@ mod tests {
         let note = dir.path().join("Plan.md");
         std::fs::write(&note, "words").expect("a note");
         for name in ["nul.md", "CON .md", "COM¹.md", "conin$.md"] {
-            assert!(
-                renamed(&note, &dir.path().join(name), false, false).is_err(),
-                "{name}"
-            );
+            assert!(renamed(&note, &dir.path().join(name), false, false).is_err(), "{name}");
             assert!(copied(&note, &dir.path().join(name)).is_err(), "{name}");
         }
         assert!(note.exists(), "left where it was");
@@ -866,9 +809,6 @@ mod tests {
         let arrived = dir.path().join("aux.md");
         std::fs::write(&arrived, "kept").expect("a note from elsewhere");
         renamed(&arrived, &dir.path().join("Work/aux.md"), false, false).expect("moved");
-        assert_eq!(
-            std::fs::read_to_string(dir.path().join("Work/aux.md")).expect("there"),
-            "kept"
-        );
+        assert_eq!(std::fs::read_to_string(dir.path().join("Work/aux.md")).expect("there"), "kept");
     }
 }

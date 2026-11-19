@@ -40,10 +40,7 @@ mod tests {
 
     #[test]
     fn the_folder_is_named_after_the_identifier() {
-        name(Named {
-            identifier: "so.orden.Test",
-            version: "1.0.0",
-        });
+        name(Named { identifier: "so.orden.Test", version: "1.0.0" });
         assert_eq!(version(), "1.0.0");
         if let Some(dir) = config_dir() {
             assert!(dir.ends_with("so.orden.Test"));
@@ -63,15 +60,9 @@ mod tests {
             "USERPROFILE" => Some(OsString::from(r"C:\Users\b")),
             _ => None,
         };
-        assert_eq!(
-            base(said),
-            Some(PathBuf::from(r"C:\Users\a\AppData\Roaming"))
-        );
+        assert_eq!(base(said), Some(PathBuf::from(r"C:\Users\a\AppData\Roaming")));
         let without = |name: &str| (name == "USERPROFILE").then(|| OsString::from(r"C:\Users\b"));
-        assert_eq!(
-            base(without),
-            Some(PathBuf::from(r"C:\Users\b\AppData\Roaming"))
-        );
+        assert_eq!(base(without), Some(PathBuf::from(r"C:\Users\b\AppData\Roaming")));
     }
     #[cfg(all(unix, not(target_os = "macos")))]
     #[test]

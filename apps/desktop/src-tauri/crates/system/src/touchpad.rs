@@ -60,11 +60,7 @@ impl Pair {
             self.last = None;
             return None;
         };
-        let now = if one.id <= other.id {
-            [*one, *other]
-        } else {
-            [*other, *one]
-        };
+        let now = if one.id <= other.id { [*one, *other] } else { [*other, *one] };
         let was = self.last.replace(now)?;
         if was[0].id != now[0].id || was[1].id != now[1].id {
             return None;
@@ -158,9 +154,7 @@ mod raw {
         if APP.set(app.clone()).is_err() {
             return;
         }
-        let _ = std::thread::Builder::new()
-            .name("touchpad".into())
-            .spawn(listen);
+        let _ = std::thread::Builder::new().name("touchpad".into()).spawn(listen);
     }
     fn listen() {
         unsafe {
@@ -251,10 +245,7 @@ mod raw {
         let count = hid.dwCount as usize;
         let start = std::mem::offset_of!(RAWINPUT, data)
             + std::mem::offset_of!(windows::Win32::UI::Input::RAWHID, bRawData);
-        let Some(end) = each
-            .checked_mul(count)
-            .and_then(|all| all.checked_add(start))
-        else {
+        let Some(end) = each.checked_mul(count).and_then(|all| all.checked_add(start)) else {
             return;
         };
         if each == 0 || end > bytes {
@@ -265,11 +256,8 @@ mod raw {
         };
         let device = raw.header.hDevice;
         let said = KEPT.with_borrow_mut(|kept| {
-            let pad = kept
-                .pads
-                .entry(device.0 as isize)
-                .or_insert_with(|| shape_of(device))
-                .as_mut()?;
+            let pad =
+                kept.pads.entry(device.0 as isize).or_insert_with(|| shape_of(device)).as_mut()?;
             let mut fingers = None;
             let mut pans = Vec::new();
             let front = in_front();
@@ -341,14 +329,7 @@ mod raw {
         let first = *fingers.first()?;
         let across = physical(parsed, first, ACROSS);
         let down = physical(parsed, first, DOWN);
-        Some(Pad {
-            shape,
-            fingers,
-            frames: Frames::default(),
-            pair: Pair::default(),
-            across,
-            down,
-        })
+        Some(Pad { shape, fingers, frames: Frames::default(), pair: Pair::default(), across, down })
     }
     fn physical(parsed: PHIDP_PREPARSED_DATA, link: u16, usage: u16) -> f64 {
         let mut caps = vec![HIDP_VALUE_CAPS::default(); 1];
@@ -393,15 +374,7 @@ mod raw {
         let value = |page: u16, link: u16, usage: u16| {
             let mut value = 0u32;
             let status = unsafe {
-                HidP_GetUsageValue(
-                    HidP_Input,
-                    page,
-                    link,
-                    usage,
-                    &raw mut value,
-                    parsed,
-                    report,
-                )
+                HidP_GetUsageValue(HidP_Input, page, link, usage, &raw mut value, parsed, report)
             };
             (status == HIDP_STATUS_SUCCESS).then_some(value)
         };
@@ -462,14 +435,8 @@ mod tests {
     #[test]
     fn a_frame_in_one_report_is_its_fingers_touching() {
         let mut frames = Frames::default();
-        assert_eq!(
-            count(frames.report(2, &tips(&[true, true, false, false, false]))),
-            Some(2)
-        );
-        assert_eq!(
-            count(frames.report(2, &tips(&[false, false, false, false, false]))),
-            Some(0)
-        );
+        assert_eq!(count(frames.report(2, &tips(&[true, true, false, false, false]))), Some(2));
+        assert_eq!(count(frames.report(2, &tips(&[false, false, false, false, false]))), Some(0));
     }
     #[test]
     fn a_frame_over_several_reports_is_whole_only_at_its_last() {
@@ -487,15 +454,8 @@ mod tests {
     #[test]
     fn a_frame_keeps_where_each_finger_touching_is() {
         let mut frames = Frames::default();
-        let seen = [
-            (true, at(7, 1.0, 2.0)),
-            (false, at(8, 9.0, 9.0)),
-            (true, at(9, 3.0, 4.0)),
-        ];
-        assert_eq!(
-            frames.report(3, &seen),
-            Some(vec![at(7, 1.0, 2.0), at(9, 3.0, 4.0)])
-        );
+        let seen = [(true, at(7, 1.0, 2.0)), (false, at(8, 9.0, 9.0)), (true, at(9, 3.0, 4.0))];
+        assert_eq!(frames.report(3, &seen), Some(vec![at(7, 1.0, 2.0), at(9, 3.0, 4.0)]));
     }
     #[test]
     fn two_fingers_moving_together_pan_by_their_middle_in_any_direction() {
@@ -517,10 +477,7 @@ mod tests {
         assert_eq!(pair.frame(&[at(1, 5.0, 5.0)]), None);
         assert_eq!(pair.frame(&[at(1, 5.0, 5.0), at(2, 5.0, 5.0)]), None);
         assert_eq!(pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0)]), None);
-        assert_eq!(
-            pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0), at(4, 0.0, 0.0)]),
-            None
-        );
+        assert_eq!(pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0), at(4, 0.0, 0.0)]), None);
         assert_eq!(pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0)]), None);
         assert_eq!(pair.frame(&[at(1, 9.0, 9.0), at(3, 9.0, 9.0)]), None);
     }

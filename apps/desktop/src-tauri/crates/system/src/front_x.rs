@@ -21,13 +21,7 @@ fn opened() -> Option<X> {
     let atom = |name: &[u8]| Some(connection.intern_atom(false, name).ok()?.reply().ok()?.atom);
     let active = atom(b"_NET_ACTIVE_WINDOW")?;
     let pid = atom(b"_NET_WM_PID")?;
-    Some(X {
-        connection,
-        root,
-        active,
-        class: AtomEnum::WM_CLASS.into(),
-        pid,
-    })
+    Some(X { connection, root, active, class: AtomEnum::WM_CLASS.into(), pid })
 }
 fn asked<T>(ask: impl Fn(&X) -> Option<T>) -> Option<T> {
     let mut held = X.held();
@@ -68,13 +62,8 @@ pub struct Input {
 }
 pub fn input() -> Option<Input> {
     asked(|x| {
-        let idle_ms = x
-            .connection
-            .screensaver_query_info(x.root)
-            .ok()?
-            .reply()
-            .ok()?
-            .ms_since_user_input;
+        let idle_ms =
+            x.connection.screensaver_query_info(x.root).ok()?.reply().ok()?.ms_since_user_input;
         let front = active(x).and_then(|window| {
             x.connection
                 .get_property(false, window, x.pid, AtomEnum::CARDINAL, 0, 1)
@@ -84,9 +73,6 @@ pub fn input() -> Option<Input> {
                 .value32()?
                 .next()
         }) == Some(std::process::id());
-        Some(Input {
-            idle_ms: u64::from(idle_ms),
-            front,
-        })
+        Some(Input { idle_ms: u64::from(idle_ms), front })
     })
 }

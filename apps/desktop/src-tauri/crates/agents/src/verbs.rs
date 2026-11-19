@@ -694,11 +694,7 @@ impl Answer {
         }
     }
     pub fn error(code: Code, message: impl Into<String>) -> Self {
-        Answer::Error {
-            code,
-            message: message.into(),
-            dialog: None,
-        }
+        Answer::Error { code, message: message.into(), dialog: None }
     }
     #[must_use]
     pub fn with_dialog(mut self, held: Option<Dialog>) -> Self {
@@ -949,39 +945,15 @@ pub struct Paired {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Event {
-    Acting {
-        agent: String,
-        tab: TabId,
-        verb: String,
-    },
-    Paused {
-        agent: String,
-    },
-    Resumed {
-        agent: String,
-    },
-    Asked {
-        approval: Approval,
-    },
-    Answered {
-        approval: Approval,
-    },
-    Tab {
-        agent: String,
-        id: TabId,
-        url: String,
-        title: String,
-    },
-    Closed {
-        agent: String,
-        id: TabId,
-    },
-    Stopped {
-        closed: bool,
-    },
-    Connected {
-        agents: Vec<String>,
-    },
+    Acting { agent: String, tab: TabId, verb: String },
+    Paused { agent: String },
+    Resumed { agent: String },
+    Asked { approval: Approval },
+    Answered { approval: Approval },
+    Tab { agent: String, id: TabId, url: String, title: String },
+    Closed { agent: String, id: TabId },
+    Stopped { closed: bool },
+    Connected { agents: Vec<String> },
 }
 pub mod window {
     use serde::{Deserialize, Serialize};
@@ -1089,18 +1061,12 @@ mod tests {
     #[test]
     fn a_window_answer_is_read_by_its_status() {
         let read = Answer::from_window;
-        assert_eq!(
-            read(r#"{"ok":true,"status":"ok","result":{"path":"a.md"}}"#).status(),
-            "ok"
-        );
+        assert_eq!(read(r#"{"ok":true,"status":"ok","result":{"path":"a.md"}}"#).status(), "ok");
         assert_eq!(
             read(
                 r#"{"ok":true,"status":"needs_approval","approval":"a17","summary":"Publish Notes"}"#
             ),
-            Answer::NeedsApproval {
-                approval: "a17".into(),
-                summary: "Publish Notes".into(),
-            }
+            Answer::NeedsApproval { approval: "a17".into(), summary: "Publish Notes".into() }
         );
         assert!(matches!(
             read(r#"{"ok":false,"status":"error","code":"not_granted","message":"no","error":"no"}"#),
@@ -1137,10 +1103,7 @@ mod tests {
     }
     #[test]
     fn a_verb_that_takes_nothing_may_be_sent_nothing() {
-        assert_eq!(
-            Verb::read("browser_tabs", Value::Null),
-            Some(Ok(Verb::Tabs(Nothing {})))
-        );
+        assert_eq!(Verb::read("browser_tabs", Value::Null), Some(Ok(Verb::Tabs(Nothing {}))));
     }
     #[test]
     fn arguments_it_does_not_take_are_refused() {
@@ -1174,28 +1137,10 @@ mod tests {
                 other => panic!("{other:?}"),
             };
         assert_eq!(read(json!("load")), Until::Moment(Moment::Load));
-        assert_eq!(
-            read(json!("network_idle")),
-            Until::Moment(Moment::NetworkIdle)
-        );
-        assert_eq!(
-            read(json!({ "text": "Saved" })),
-            Until::Text {
-                text: "Saved".into()
-            }
-        );
-        assert_eq!(
-            read(json!({ "ref": "e4" })),
-            Until::Element {
-                element: "e4".into()
-            }
-        );
-        assert_eq!(
-            read(json!({ "url": "/done" })),
-            Until::Url {
-                url: "/done".into()
-            }
-        );
+        assert_eq!(read(json!("network_idle")), Until::Moment(Moment::NetworkIdle));
+        assert_eq!(read(json!({ "text": "Saved" })), Until::Text { text: "Saved".into() });
+        assert_eq!(read(json!({ "ref": "e4" })), Until::Element { element: "e4".into() });
+        assert_eq!(read(json!({ "url": "/done" })), Until::Url { url: "/done".into() });
     }
     #[test]
     fn a_field_is_ticked_or_words_or_options() {
@@ -1207,10 +1152,7 @@ mod tests {
         .expect("fields");
         assert_eq!(fields[0].value, FieldValue::Ticked(true));
         assert_eq!(fields[1].value, FieldValue::Words("Ada".into()));
-        assert_eq!(
-            fields[2].value,
-            FieldValue::Options(vec!["a".into(), "b".into()])
-        );
+        assert_eq!(fields[2].value, FieldValue::Options(vec!["a".into(), "b".into()]));
     }
     #[test]
     fn a_question_answers_at_once_in_the_documents_shape() {
@@ -1246,9 +1188,7 @@ mod tests {
     }
     #[test]
     fn an_event_says_its_kind() {
-        let event = Event::Paused {
-            agent: "claude-code".into(),
-        };
+        let event = Event::Paused { agent: "claude-code".into() };
         assert_eq!(
             serde_json::to_value(&event).expect("json"),
             json!({ "kind": "paused", "agent": "claude-code" })

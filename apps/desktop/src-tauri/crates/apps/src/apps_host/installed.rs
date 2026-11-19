@@ -31,12 +31,7 @@ pub struct Entry {
 impl Entry {
     #[cfg(any(target_os = "linux", target_os = "macos", test))]
     fn program(listed: Listed, argv: Vec<String>) -> Entry {
-        Entry {
-            listed,
-            argv,
-            cwd: None,
-            packaged: false,
-        }
+        Entry { listed, argv, cwd: None, packaged: false }
     }
 }
 pub fn installed() -> Vec<Listed> {
@@ -69,9 +64,7 @@ pub fn program_of(path: &str) -> Option<String> {
     #[cfg(target_os = "macos")]
     {
         let named = Path::new(path);
-        let bundle = named
-            .extension()
-            .is_some_and(|one| one.eq_ignore_ascii_case("app"));
+        let bundle = named.extension().is_some_and(|one| one.eq_ignore_ascii_case("app"));
         if bundle && named.is_dir() {
             return macos::program(named);
         }
@@ -91,9 +84,7 @@ pub fn which(program: &str) -> Option<std::path::PathBuf> {
         all
     };
     if named.components().count() > 1 || named.is_absolute() {
-        return candidates(named.to_path_buf())
-            .into_iter()
-            .find(|one| one.is_file());
+        return candidates(named.to_path_buf()).into_iter().find(|one| one.is_file());
     }
     orden_base::program::which(program)
 }
@@ -115,10 +106,7 @@ pub(crate) mod desktop {
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }
-            if let Some(name) = line
-                .strip_prefix('[')
-                .and_then(|rest| rest.strip_suffix(']'))
-            {
+            if let Some(name) = line.strip_prefix('[').and_then(|rest| rest.strip_suffix(']')) {
                 groups.push((name.to_owned(), HashMap::new()));
                 continue;
             }
@@ -126,8 +114,7 @@ pub(crate) mod desktop {
                 continue;
             };
             if let Some((key, value)) = line.split_once('=') {
-                keys.entry(key.trim().to_owned())
-                    .or_insert_with(|| unescape(value.trim()));
+                keys.entry(key.trim().to_owned()).or_insert_with(|| unescape(value.trim()));
             }
         }
         groups
@@ -266,12 +253,7 @@ pub(crate) mod linux {
             .ok()
             .filter(|one| !one.is_empty())
             .unwrap_or_else(|| "/usr/local/share:/usr/share".to_owned());
-        folders.extend(
-            system
-                .split(':')
-                .filter(|one| !one.is_empty())
-                .map(PathBuf::from),
-        );
+        folders.extend(system.split(':').filter(|one| !one.is_empty()).map(PathBuf::from));
         let mut exports = vec![
             PathBuf::from("/var/lib/flatpak/exports/share"),
             PathBuf::from("/var/lib/snapd/desktop"),
@@ -333,13 +315,7 @@ pub(crate) mod linux {
                 .and_then(|(_, keys)| keys.get(key).cloned())
                 .filter(|one| !one.is_empty())
         };
-        let kde = || {
-            read(
-                config.as_ref().map(|one| one.join("kdeglobals")),
-                "Icons",
-                "Theme",
-            )
-        };
+        let kde = || read(config.as_ref().map(|one| one.join("kdeglobals")), "Icons", "Theme");
         let gnome = || {
             let out = orden_base::printed::output(
                 std::process::Command::new("gsettings").args([
@@ -407,12 +383,7 @@ pub(crate) mod linux {
             Icons::within(folders, &[theme], Context::Apps, icons::SIDE)
         }
         pub fn kinds(folders: &[PathBuf], theme: &str) -> Icons {
-            Icons::within(
-                folders,
-                &[theme, "Adwaita"],
-                Context::Kinds,
-                icons::KIND_SIDE,
-            )
+            Icons::within(folders, &[theme, "Adwaita"], Context::Kinds, icons::KIND_SIDE)
         }
         fn within(folders: &[PathBuf], named: &[&str], context: Context, side: u32) -> Icons {
             let mut bases: Vec<PathBuf> = Vec::new();
@@ -452,12 +423,7 @@ pub(crate) mod linux {
                 );
                 themes.push(("hicolor".to_owned(), dirs));
             }
-            Icons {
-                bases,
-                themes,
-                pixmaps,
-                side,
-            }
+            Icons { bases, themes, pixmaps, side }
         }
         pub fn find(&self, icon: &str) -> Option<String> {
             let named = Path::new(icon);
@@ -471,11 +437,8 @@ pub(crate) mod linux {
                 .unwrap_or(icon);
             for (theme, dirs) in &self.themes {
                 for dir in dirs {
-                    let extensions: &[&str] = if dir.scalable {
-                        &["svg", "png"]
-                    } else {
-                        &["png", "svg"]
-                    };
+                    let extensions: &[&str] =
+                        if dir.scalable { &["svg", "png"] } else { &["png", "svg"] };
                     for base in &self.bases {
                         let folder = base.join(theme).join(&dir.path);
                         for extension in extensions {
@@ -508,11 +471,7 @@ pub(crate) mod linux {
                 scalable: false,
             })
             .collect();
-        dirs.push(ThemeDir {
-            path: format!("scalable/{folder}"),
-            size: 0,
-            scalable: true,
-        });
+        dirs.push(ThemeDir { path: format!("scalable/{folder}"), size: 0, scalable: true });
         sort_dirs(&mut dirs, side);
         dirs
     }
@@ -530,35 +489,20 @@ pub(crate) mod linux {
             .map(|one| one.trim().to_owned())
             .filter(|one| !one.is_empty())
             .collect();
-        let of: HashMap<&str, &HashMap<String, String>> = groups
-            .iter()
-            .map(|(name, keys)| (name.as_str(), keys))
-            .collect();
+        let of: HashMap<&str, &HashMap<String, String>> =
+            groups.iter().map(|(name, keys)| (name.as_str(), keys)).collect();
         let read = |path: &String| {
             let keys = of.get(path.as_str())?;
             let size: u32 = keys.get("Size")?.parse().ok()?;
-            let scale: u32 = keys
-                .get("Scale")
-                .and_then(|one| one.parse().ok())
-                .unwrap_or(1);
+            let scale: u32 = keys.get("Scale").and_then(|one| one.parse().ok()).unwrap_or(1);
             let scalable = keys.get("Type").is_some_and(|one| one == "Scalable");
             let named = keys.get("Context").map(String::as_str).unwrap_or_default();
             let apps = context.holds(named, path);
-            Some((
-                ThemeDir {
-                    path: path.clone(),
-                    size: size * scale,
-                    scalable,
-                },
-                apps,
-            ))
+            Some((ThemeDir { path: path.clone(), size: size * scale, scalable }, apps))
         };
         let all: Vec<(ThemeDir, bool)> = listed.iter().filter_map(read).collect();
         let mut dirs: Vec<ThemeDir> = if all.iter().any(|(_, apps)| *apps) {
-            all.into_iter()
-                .filter(|(_, apps)| *apps)
-                .map(|(one, _)| one)
-                .collect()
+            all.into_iter().filter(|(_, apps)| *apps).map(|(one, _)| one).collect()
         } else {
             all.into_iter().map(|(one, _)| one).collect()
         };
@@ -644,10 +588,7 @@ pub(crate) mod linux {
         let names = |key: &str| -> Vec<String> {
             keys.get(key)
                 .map(|one| {
-                    one.split(';')
-                        .filter(|name| !name.is_empty())
-                        .map(str::to_owned)
-                        .collect()
+                    one.split(';').filter(|name| !name.is_empty()).map(str::to_owned).collect()
                 })
                 .unwrap_or_default()
         };
@@ -682,24 +623,12 @@ pub(crate) mod linux {
             .as_ref()
             .zip(keys.get("Icon").filter(|one| !one.is_empty()))
             .and_then(|(icons, icon)| icons.find(icon));
-        Some(Entry::program(
-            Listed {
-                id: id.to_owned(),
-                name: name.clone(),
-                icon,
-            },
-            argv,
-        ))
+        Some(Entry::program(Listed { id: id.to_owned(), name: name.clone(), icon }, argv))
     }
     #[cfg(test)]
     pub(super) fn dirs_of(index: &str) -> (Vec<(String, u32, bool)>, Vec<String>) {
         let (dirs, inherits) = theme_dirs(index, Context::Apps, icons::SIDE);
-        (
-            dirs.into_iter()
-                .map(|one| (one.path, one.size, one.scalable))
-                .collect(),
-            inherits,
-        )
+        (dirs.into_iter().map(|one| (one.path, one.size, one.scalable)).collect(), inherits)
     }
 }
 #[cfg(test)]
@@ -734,11 +663,7 @@ mod tests {
         );
         assert_eq!(
             argv(r#"sh -c "echo \"hi\" \$HOME""#),
-            Some(vec![
-                "sh".to_owned(),
-                "-c".to_owned(),
-                r#"echo "hi" $HOME"#.to_owned()
-            ])
+            Some(vec!["sh".to_owned(), "-c".to_owned(), r#"echo "hi" $HOME"#.to_owned()])
         );
         assert_eq!(argv(r#"broken "quote"#), None);
         assert_eq!(argv("%f"), None);
@@ -806,10 +731,7 @@ mod tests {
         let picture = super::icons::data_url("image/png", &png);
         assert_eq!(icons.find("both"), Some(svg));
         assert_eq!(icons.find("small").as_deref(), Some(picture.as_str()));
-        assert_eq!(
-            icons.find("inherited.png").as_deref(),
-            Some(picture.as_str())
-        );
+        assert_eq!(icons.find("inherited.png").as_deref(), Some(picture.as_str()));
         assert_eq!(icons.find("plain").as_deref(), Some(picture.as_str()));
         assert_eq!(icons.find("text"), None);
         assert_eq!(icons.find("nothing"), None);
@@ -835,11 +757,7 @@ mod tests {
             format!("[Desktop Entry]\nType=Application\nName={name}\nExec={name} %f\n{extra}")
         };
         for (file, name, extra) in [
-            (
-                "gimp.desktop",
-                "gimp",
-                "Icon=gimp\nName[de]=GIMP-Bildbearbeitung\n",
-            ),
+            ("gimp.desktop", "gimp", "Icon=gimp\nName[de]=GIMP-Bildbearbeitung\n"),
             ("kcalc.desktop", "kcalc", "OnlyShowIn=KDE;\n"),
             ("gedit.desktop", "gedit", "NotShowIn=KDE;GNOME;\n"),
             ("files.desktop", "files", "OnlyShowIn=X-Cinnamon;GNOME;\n"),
@@ -850,11 +768,7 @@ mod tests {
         ] {
             write(&system, file, &app(name, extra));
         }
-        write(
-            &system,
-            "link.desktop",
-            "[Desktop Entry]\nType=Link\nName=Docs\nURL=x\n",
-        );
+        write(&system, "link.desktop", "[Desktop Entry]\nType=Link\nName=Docs\nURL=x\n");
         write(&mine, "okular.desktop", &app("mine", ""));
         write(&mine, "kde-okular.desktop", &app("okular", "Hidden=true\n"));
         std::fs::create_dir_all(system.join("icons/hicolor/48x48/apps")).unwrap();

@@ -48,9 +48,7 @@ fn in_cef(address: *const c_void) -> bool {
         if libc::dladdr(address, &raw mut info) == 0 || info.dli_fname.is_null() {
             return false;
         }
-        CStr::from_ptr(info.dli_fname)
-            .to_string_lossy()
-            .ends_with("libcef.so")
+        CStr::from_ptr(info.dli_fname).to_string_lossy().ends_with("libcef.so")
     }
 }
 #[allow(unsafe_code)]
@@ -62,10 +60,9 @@ fn glib(name: &CStr) -> Option<*mut c_void> {
 fn quiet() -> usize {
     type Default = unsafe extern "C" fn() -> *mut c_void;
     type Find = unsafe extern "C" fn(*mut c_void, c_uint) -> *mut Source;
-    let (Some(default), Some(find)) = (
-        glib(c"g_main_context_default"),
-        glib(c"g_main_context_find_source_by_id"),
-    ) else {
+    let (Some(default), Some(find)) =
+        (glib(c"g_main_context_default"), glib(c"g_main_context_find_source_by_id"))
+    else {
         return 0;
     };
     let (default, find) = unsafe {
@@ -95,10 +92,8 @@ fn quiet() -> usize {
             if CHROMIUM.set(own).is_err() {
                 continue;
             }
-            let quiet: &'static SourceFuncs = Box::leak(Box::new(SourceFuncs {
-                prepare: Some(prepare),
-                ..*funcs
-            }));
+            let quiet: &'static SourceFuncs =
+                Box::leak(Box::new(SourceFuncs { prepare: Some(prepare), ..*funcs }));
             (*source).funcs = quiet;
             quieted += 1;
         }
@@ -106,9 +101,5 @@ fn quiet() -> usize {
     quieted
 }
 pub fn start(app: &tauri::AppHandle) {
-    orden_base::logs::say(
-        app,
-        "info",
-        &format!("pump: {} of Chromium's sources quieted", quiet()),
-    );
+    orden_base::logs::say(app, "info", &format!("pump: {} of Chromium's sources quieted", quiet()));
 }

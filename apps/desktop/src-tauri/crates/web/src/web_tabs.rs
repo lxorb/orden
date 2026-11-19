@@ -35,10 +35,9 @@ pub fn label_of(tab: &str) -> String {
         .unwrap_or_else(|| format!("{LABEL}{tab}"))
 }
 fn adopted_label(label: &str) -> bool {
-    ADOPTED.lock().is_ok_and(|held| {
-        held.as_ref()
-            .is_some_and(|all| all.values().any(|one| one == label))
-    })
+    ADOPTED
+        .lock()
+        .is_ok_and(|held| held.as_ref().is_some_and(|all| all.values().any(|one| one == label)))
 }
 const CHOSEN: &str = "orden://web-chosen";
 pub fn page_chosen(app: &AppHandle, window: &str, page: &str) {
@@ -48,10 +47,7 @@ pub fn page_chosen(app: &AppHandle, window: &str, page: &str) {
 }
 pub fn tab_of(label: &str) -> Option<String> {
     let adopted = ADOPTED.lock().ok().and_then(|held| {
-        held.as_ref()?
-            .iter()
-            .find(|(_, page)| page.as_str() == label)
-            .map(|(tab, _)| tab.clone())
+        held.as_ref()?.iter().find(|(_, page)| page.as_str() == label).map(|(tab, _)| tab.clone())
     });
     adopted.or_else(|| label.strip_prefix(LABEL).map(str::to_string))
 }
@@ -112,28 +108,16 @@ struct Trail {
 }
 impl Default for Trail {
     fn default() -> Self {
-        Self {
-            urls: Vec::new(),
-            at: 0,
-            engine: true,
-            asked: false,
-        }
+        Self { urls: Vec::new(), at: 0, engine: true, asked: false }
     }
 }
 impl Trail {
     fn restored(urls: Vec<String>, at: usize) -> Self {
         let at = at.min(urls.len().saturating_sub(1));
-        Self {
-            engine: urls.len() < 2,
-            urls,
-            at,
-            asked: false,
-        }
+        Self { engine: urls.len() < 2, urls, at, asked: false }
     }
     fn step_to(&self, by: isize) -> Option<&String> {
-        self.at
-            .checked_add_signed(by)
-            .and_then(|there| self.urls.get(there))
+        self.at.checked_add_signed(by).and_then(|there| self.urls.get(there))
     }
     fn visited(&mut self, url: &str) {
         if self.urls.get(self.at).is_some_and(|here| here == url) {
@@ -173,9 +157,7 @@ impl Trail {
 }
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     let builder = builder.on_window_event(crate::web_cookies::leaving);
-    builder
-        .on_window_event(crate::web_follow::heard)
-        .manage(WebTabs::default())
+    builder.on_window_event(crate::web_follow::heard).manage(WebTabs::default())
 }
 #[derive(Default)]
 pub struct WebTabs {
@@ -193,9 +175,7 @@ impl Drop for Claim<'_> {
 }
 impl WebTabs {
     fn claim(&self, tab: &str) -> bool {
-        self.opening
-            .lock()
-            .is_ok_and(|mut busy| busy.insert(tab.to_string()))
+        self.opening.lock().is_ok_and(|mut busy| busy.insert(tab.to_string()))
     }
     fn claimed<'a>(&'a self, tab: &'a str) -> Option<Claim<'a>> {
         self.claim(tab).then_some(Claim { tabs: self, tab })
@@ -306,22 +286,14 @@ pub fn tab_may_open(url: &Url) -> bool {
     orden_web_engine::tab_may_open(url, &crate::extension_ids::ours)
 }
 pub fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
-    let payload = Opening {
-        tab: tab.to_string(),
-        url: url.to_string(),
-        behind: false,
-    };
+    let payload = Opening { tab: tab.to_string(), url: url.to_string(), behind: false };
     let _ = app.emit_to(window, OPENED, payload);
 }
 pub fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
     };
-    let payload = Opening {
-        tab: tab.to_string(),
-        url: address,
-        behind,
-    };
+    let payload = Opening { tab: tab.to_string(), url: address, behind };
     let _ = app.emit_to(window, OPENED, payload);
 }
 fn handed_over(url: &Url) -> Option<String> {
@@ -336,11 +308,7 @@ pub fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
     };
-    let payload = Opening {
-        tab: tab.to_string(),
-        url: address,
-        behind: false,
-    };
+    let payload = Opening { tab: tab.to_string(), url: address, behind: false };
     let _ = app.emit_to(window, BLOCKED, payload);
 }
 fn address(url: &str) -> Result<Url, String> {
@@ -374,10 +342,7 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     if let Some(one) = want {
         scripts.push(PLACE.replace("__PLACE__", &one));
     }
-    scripts
-        .iter()
-        .flat_map(|one| [one.as_str(), ";\n"])
-        .collect()
+    scripts.iter().flat_map(|one| [one.as_str(), ";\n"]).collect()
 }
 fn page_built(
     window: &tauri::Window,
@@ -492,10 +457,9 @@ pub async fn web_open(
     });
     let made = match posted {
         Err(error) => Err(format!("that page could not be opened: {error}")),
-        Ok(()) => waiting
-            .recv()
-            .await
-            .unwrap_or_else(|| Err("that page was never built".to_string())),
+        Ok(()) => {
+            waiting.recv().await.unwrap_or_else(|| Err("that page was never built".to_string()))
+        }
     };
     drop(claim);
     made?;
@@ -519,20 +483,13 @@ fn windows_asked(
         let sized = features.size().is_some() || features.position().is_some();
         let address = match becomes(&url, sized) {
             Becomes::Nothing => {
-                eprintln!(
-                    "web tab: a {} window it asked for was refused",
-                    url.scheme()
-                );
+                eprintln!("web tab: a {} window it asked for was refused", url.scheme());
                 return NewWindowResponse::Deny;
             }
             Becomes::Tab(address) => address,
             Becomes::Window => return NewWindowResponse::Allow,
         };
-        let payload = Opening {
-            tab: asking.clone(),
-            url: address,
-            behind: false,
-        };
+        let payload = Opening { tab: asking.clone(), url: address, behind: false };
         let _ = opening.emit_to(&holder, OPENED, payload);
         NewWindowResponse::Deny
     })
@@ -552,14 +509,7 @@ fn reporting(
         if let Ok(mut last) = noting.lock() {
             payload.url().as_str().clone_into(&mut last);
         }
-        say(
-            &sending,
-            &view,
-            &moved,
-            payload.url().as_str(),
-            None,
-            loading,
-        );
+        say(&sending, &view, &moved, payload.url().as_str(), None, loading);
         if loading {
             return;
         }
@@ -602,11 +552,8 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     };
     if let Some((address, scripts)) = onward.clone() {
         let clearing = view.clone();
-        let (hearing, named, holder) = (
-            app.clone(),
-            tab.to_string(),
-            view.window().label().to_string(),
-        );
+        let (hearing, named, holder) =
+            (app.clone(), tab.to_string(), view.window().label().to_string());
         std::thread::spawn(move || {
             crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
             crate::downloads::follow(&clearing, &hearing, &holder);
@@ -704,8 +651,7 @@ pub fn web_place(
     if !visible {
         let _doing = orden_crashes::stall::doing("web_place: hidden");
         crate::page_hide::out_of_sight(&view);
-        view.hide()
-            .map_err(|error| format!("that page could not be hidden: {error}"))?;
+        view.hide().map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
     {
         let _doing = orden_crashes::stall::doing("web_place: bounds");
@@ -727,8 +673,7 @@ pub fn web_place(
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: shown");
         crate::page_hide::no_ground(&view);
-        view.show()
-            .map_err(|error| format!("that page could not be shown: {error}"))?;
+        view.show().map_err(|error| format!("that page could not be shown: {error}"))?;
     }
     let _doing = orden_crashes::stall::doing("web_place: keyboard");
     if visible && cut.is_some() {
@@ -739,20 +684,14 @@ pub fn web_place(
 }
 impl From<&Pane> for crate::web_follow::Bounds {
     fn from(pane: &Pane) -> Self {
-        Self {
-            x: pane.x,
-            y: pane.y,
-            width: pane.width,
-            height: pane.height,
-        }
+        Self { x: pane.x, y: pane.y, width: pane.width, height: pane.height }
     }
 }
 #[tauri::command]
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
     let view = found(&app, &tab)?;
-    view.navigate(at)
-        .map_err(|error| format!("that address could not be opened: {error}"))
+    view.navigate(at).map_err(|error| format!("that address could not be opened: {error}"))
 }
 #[tauri::command]
 pub fn web_step(
@@ -796,21 +735,11 @@ pub async fn web_look(
         let _ = sending.try_send(answer);
     })
     .map_err(|error| format!("that page could not be read: {error}"))?;
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = waiting.recv().await.ok_or_else(|| "that page said nothing".to_string())?;
     let said = serde_json::from_str::<Looked>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))?;
     let (trail, at) = tabs.walk(&tab);
-    Ok(Look {
-        url: said.url,
-        x: said.x,
-        y: said.y,
-        trail,
-        at,
-        edited: said.edited,
-    })
+    Ok(Look { url: said.url, x: said.x, y: said.y, trail, at, edited: said.edited })
 }
 #[tauri::command]
 pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), String> {
@@ -828,8 +757,7 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 #[allow(clippy::unused_async)]
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
-    view.eval("window.print()")
-        .map_err(|error| format!("that page could not be printed: {error}"))
+    view.eval("window.print()").map_err(|error| format!("that page could not be printed: {error}"))
 }
 #[tauri::command]
 pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
@@ -860,10 +788,7 @@ async fn in_the_page(view: &Webview, script: String) -> Result<Clipped, String> 
         let _ = sending.try_send(answer);
     })
     .map_err(|error| format!("that page could not be read: {error}"))?;
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = waiting.recv().await.ok_or_else(|| "that page said nothing".to_string())?;
     serde_json::from_str::<Clipped>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))
 }
@@ -931,9 +856,7 @@ async fn photographed(view: Webview) -> Result<Option<String>, String> {
     .await
     .map_err(|error| error.to_string())?;
     Ok(match taken {
-        Ok(shot) => shot["data"]
-            .as_str()
-            .map(|data| format!("data:image/png;base64,{data}")),
+        Ok(shot) => shot["data"].as_str().map(|data| format!("data:image/png;base64,{data}")),
         Err(error) => {
             eprintln!("web_shot: {error}");
             None
@@ -953,8 +876,7 @@ fn let_go(label: &str) {
     crate::engine::devtools::let_go_of(label);
 }
 pub fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
-    app.get_webview(&label_of(tab))
-        .ok_or_else(|| "that tab has no page open".to_string())
+    app.get_webview(&label_of(tab)).ok_or_else(|| "that tab has no page open".to_string())
 }
 pub fn on_the_page(
     app: &AppHandle,
@@ -984,19 +906,15 @@ mod tests {
             .nth(1)
             .and_then(|rest| rest.split("\n}\n").next())
             .unwrap_or_default();
-        let (before, after) = listening
-            .split_once("on_the_page(")
-            .expect("`listening` reaches the page directly");
+        let (before, after) =
+            listening.split_once("on_the_page(").expect("`listening` reaches the page directly");
         assert!(!before.contains("with_webview("), "asked before going over");
         assert!(after.contains("with_platform!("));
         for (file, source) in [
             ("web_certificate.rs", include_str!("web_certificate.rs")),
             ("web_pause.rs", include_str!("web_pause.rs")),
         ] {
-            assert!(
-                source.contains("on_the_page("),
-                "{file} reaches the page directly"
-            );
+            assert!(source.contains("on_the_page("), "{file} reaches the page directly");
         }
     }
     #[test]
@@ -1015,11 +933,7 @@ mod tests {
             "https://blog.example/author/jane",
             "https://example.com/authors",
         ] {
-            assert_eq!(
-                becomes(&at(opens_a_tab), false),
-                web(opens_a_tab),
-                "{opens_a_tab}"
-            );
+            assert_eq!(becomes(&at(opens_a_tab), false), web(opens_a_tab), "{opens_a_tab}");
         }
         for signs_in in [
             "https://accounts.google.com/o/oauth2/v2/auth?client_id=1",
@@ -1033,11 +947,7 @@ mod tests {
         ] {
             assert_eq!(becomes(&at(signs_in), false), Becomes::Window, "{signs_in}");
         }
-        for refused in [
-            "orden://open?x",
-            "file:///etc/passwd",
-            "javascript:alert(1)",
-        ] {
+        for refused in ["orden://open?x", "file:///etc/passwd", "javascript:alert(1)"] {
             assert_eq!(becomes(&at(refused), false), Becomes::Nothing, "{refused}");
         }
     }
@@ -1092,10 +1002,7 @@ mod tests {
             read(r#"{"store":"space_s1"}"#).checked(),
             Ok((Some("space_s1".to_string()), false))
         );
-        assert_eq!(
-            read(r#"{"store":"space_s1","private":true}"#).checked(),
-            Ok((None, true))
-        );
+        assert_eq!(read(r#"{"store":"space_s1","private":true}"#).checked(), Ok((None, true)));
         assert!(read(r#"{"store":"../web"}"#).checked().is_err());
     }
     #[test]
@@ -1155,11 +1062,7 @@ mod tests {
             }
             assert_eq!(trail.urls, urls, "{visits:?}");
             assert_eq!(trail.at, at, "{visits:?}");
-            assert_eq!(
-                (trail.back(), trail.forward()),
-                (back, forward),
-                "{visits:?}"
-            );
+            assert_eq!((trail.back(), trail.forward()), (back, forward), "{visits:?}");
         }
     }
     #[test]
@@ -1223,26 +1126,16 @@ mod tests {
             ],
             2,
         );
-        assert_eq!(
-            tabs.stepping("t", -2),
-            Some("https://a.example/".to_string())
-        );
+        assert_eq!(tabs.stepping("t", -2), Some("https://a.example/".to_string()));
         tabs.walked("t", "https://a.example/");
         assert_eq!(tabs.walk("t").0.len(), 3);
-        assert_eq!(
-            tabs.stepping("t", 1),
-            Some("https://b.example/".to_string())
-        );
+        assert_eq!(tabs.stepping("t", 1), Some("https://b.example/".to_string()));
     }
     #[test]
     fn orden_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
             opening(None, "https://a.example/page", true),
-            opening(
-                Some(Place { x: 0.0, y: 940.0 }),
-                "https://a.example/page",
-                true,
-            ),
+            opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page", true),
         ] {
             for script in scripts.split(";\n").filter(|one| !one.is_empty()) {
                 assert!(script.starts_with("(function () {"), "{script}");
@@ -1273,11 +1166,7 @@ mod tests {
                 crate::web_swipe::script(),
                 crate::web_pointer::script(),
                 crate::web_media::script(),
-                if cfg!(windows) {
-                    format!("{};\n", super::bars())
-                } else {
-                    String::new()
-                },
+                if cfg!(windows) { format!("{};\n", super::bars()) } else { String::new() },
                 crate::web_pass::script()
             )
         );
@@ -1289,10 +1178,7 @@ mod tests {
         assert!(script.contains("html::-webkit-scrollbar-track:horizontal{margin:0 18px}"));
         assert!(script.contains("html::-webkit-scrollbar-track:vertical{margin:0 0 18px}"));
         assert!(script.contains("html::-webkit-scrollbar-corner{background:transparent}"));
-        assert_eq!(
-            opening(None, "https://a.example/page", false).contains(script),
-            cfg!(windows)
-        );
+        assert_eq!(opening(None, "https://a.example/page", false).contains(script), cfg!(windows));
     }
     #[test]
     fn a_page_opened_while_pass_is_off_is_handed_none_of_pass_s_script() {
@@ -1311,11 +1197,7 @@ mod tests {
         let opened = opening(None, "https://a.example/page", true);
         assert!(!opened.contains("__PLACE__"));
         assert!(!opened.contains("scrollTo"));
-        let revived = opening(
-            Some(Place { x: 0.0, y: 940.0 }),
-            "https://a.example/page",
-            true,
-        );
+        let revived = opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page", true);
         assert!(revived.contains("window.scrollTo"));
         assert!(revived.contains("\"url\":\"https://a.example/page\""));
         assert!(revived.contains("940"));

@@ -12,21 +12,9 @@ const LONGEST: f64 = 10_000.0;
 #[serde(tag = "k")]
 enum Said {
     #[serde(rename = "w")]
-    Wheel {
-        dx: f64,
-        dy: f64,
-        t: f64,
-        l: bool,
-        r: bool,
-    },
+    Wheel { dx: f64, dy: f64, t: f64, l: bool, r: bool },
     #[serde(rename = "t")]
-    Touch {
-        dx: f64,
-        dy: f64,
-        t: f64,
-        l: bool,
-        r: bool,
-    },
+    Touch { dx: f64, dy: f64, t: f64, l: bool, r: bool },
     #[serde(rename = "e")]
     End { t: f64 },
 }
@@ -72,23 +60,12 @@ mod tests {
     use super::{read, Swiped, BINDING, SCRIPT};
 
     fn swiped(kind: &'static str, dx: f64, dy: f64, at: f64, left: bool, right: bool) -> Swiped {
-        Swiped {
-            tab: "t1".into(),
-            kind,
-            dx,
-            dy,
-            at,
-            left,
-            right,
-        }
+        Swiped { tab: "t1".into(), kind, dx, dy, at, left, right }
     }
     #[test]
     fn a_frame_of_scroll_is_read_as_numbers_for_the_tab_it_came_from() {
         assert_eq!(
-            read(
-                "t1",
-                r#"{"k":"w","dx":-12.5,"dy":0.5,"t":1234.5,"l":false,"r":true}"#
-            ),
+            read("t1", r#"{"k":"w","dx":-12.5,"dy":0.5,"t":1234.5,"l":false,"r":true}"#),
             Some(swiped("wheel", -12.5, 0.5, 1234.5, false, true))
         );
         assert_eq!(

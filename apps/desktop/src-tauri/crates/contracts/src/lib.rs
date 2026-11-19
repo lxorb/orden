@@ -118,11 +118,7 @@ pub struct Failure {
 impl Failure {
     #[must_use]
     pub fn new(module: &'static str, kind: FailureKind, message: impl Into<String>) -> Self {
-        Self {
-            kind,
-            module,
-            message: message.into(),
-        }
+        Self { kind, module, message: message.into() }
     }
 }
 impl fmt::Display for Failure {

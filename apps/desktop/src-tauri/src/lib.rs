@@ -380,10 +380,7 @@ macro_rules! desktop_commands {
     };
 }
 #[cfg(mobile)]
-#[allow(
-    missing_docs,
-    reason = "the entry point is written by a macro, which cannot document it"
-)]
+#[allow(missing_docs, reason = "the entry point is written by a macro, which cannot document it")]
 mod entry {
     #[tauri::mobile_entry_point]
     fn start() {
@@ -431,10 +428,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     }
     #[cfg_attr(
         not(desktop),
-        allow(
-            unused_mut,
-            reason = "a phone has no window in the config to take out of it"
-        )
+        allow(unused_mut, reason = "a phone has no window in the config to take out of it")
     )]
     let mut context = tauri::generate_context!();
     #[cfg(desktop)]
@@ -448,9 +442,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_single_instance::init(
-            launch::second_launch_heard,
-        ))
+        .plugin(tauri_plugin_single_instance::init(launch::second_launch_heard))
         .manage(launch::Pending::default())
         .manage(launch::restart_env());
     #[cfg(desktop)]
@@ -476,9 +468,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .manage(orden_explorer::explorer::reach::Explored::default())
         .manage(orden_explorer::explorer::watch::Watching::default());
     #[cfg(desktop)]
-    let builder = builder.manage(std::sync::Arc::new(
-        orden_dictation::dictation::Loaded::default(),
-    ));
+    let builder =
+        builder.manage(std::sync::Arc::new(orden_dictation::dictation::Loaded::default()));
     #[cfg(desktop)]
     let builder = builder
         .manage(orden_ai::ai_cli::Asks::default())
@@ -541,11 +532,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
         }
     });
     builder
-        .plugin(
-            tauri_plugin_opener::Builder::new()
-                .open_js_links_on_click(false)
-                .build(),
-        )
+        .plugin(tauri_plugin_opener::Builder::new().open_js_links_on_click(false).build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_deep_link::init())
         .manage(Picked::default())
@@ -752,11 +739,7 @@ fn watched(handle: &tauri::AppHandle) {
     logs::say(
         handle,
         "info",
-        &format!(
-            "started Orden {} (pid {})",
-            handle.package_info().version,
-            std::process::id()
-        ),
+        &format!("started Orden {} (pid {})", handle.package_info().version, std::process::id()),
     );
     handover::said(handle);
     orden_crashes::stall::start(handle);
@@ -769,10 +752,7 @@ pub(crate) fn app_dir() -> std::path::PathBuf {
 pub(crate) fn sources() -> Vec<(String, std::path::PathBuf)> {
     let app = app_dir();
     let mut roots = vec![(String::new(), app.join("src"))];
-    for one in std::fs::read_dir(app.join("crates"))
-        .expect("the crates")
-        .flatten()
-    {
+    for one in std::fs::read_dir(app.join("crates")).expect("the crates").flatten() {
         let name = one.file_name().to_string_lossy().into_owned();
         roots.push((format!("crates/{name}/src/"), one.path().join("src")));
     }
@@ -886,11 +866,8 @@ mod tests {
         ".read_dir()",
         "blocking::",
     ];
-    const TARGETS: [calls::Target; 3] = [
-        calls::Target::WINDOWS,
-        calls::Target::MACOS,
-        calls::Target::LINUX,
-    ];
+    const TARGETS: [calls::Target; 3] =
+        [calls::Target::WINDOWS, calls::Target::MACOS, calls::Target::LINUX];
     const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 6] = [
         "orden_crashes::crashes::exit::ended_well",
         "orden_placement::placement::keep",
@@ -912,9 +889,7 @@ mod tests {
         TARGETS
             .into_iter()
             .flat_map(|target| {
-                found(&own_on(target))
-                    .into_iter()
-                    .map(move |one| format!("{target:?} {one}"))
+                found(&own_on(target)).into_iter().map(move |one| format!("{target:?} {one}"))
             })
             .collect()
     }
@@ -933,11 +908,7 @@ mod tests {
     }
     fn own_on(target: calls::Target) -> calls::Crate {
         let own = calls::read(&crate::app_dir().join("src").join("lib.rs"), target);
-        assert!(
-            own.modules() > 20,
-            "only {} modules were read",
-            own.modules()
-        );
+        assert!(own.modules() > 20, "only {} modules were read", own.modules());
         own
     }
     #[test]
@@ -953,10 +924,7 @@ mod tests {
                 .filter(|path| waits.contains(path) && !EXCEPTED.contains(&path.as_str()))
                 .map(|path| own.chain(path, &WAITS, &waits).join(" -> "))
                 .collect();
-            assert!(
-                late.is_empty(),
-                "on {target:?} {late:#?} wait without saying async"
-            );
+            assert!(late.is_empty(), "on {target:?} {late:#?} wait without saying async");
         }
         for excepted in EXCEPTED {
             assert!(
@@ -1003,11 +971,7 @@ mod tests {
     fn nothing_a_command_runs_on_the_runtime_blocks_on_it() {
         let late = on_every_target(|own| {
             let workers = own.workers();
-            assert!(
-                workers.len() > 100,
-                "only {} commands on the runtime",
-                workers.len()
-            );
+            assert!(workers.len() > 100, "only {} commands on the runtime", workers.len());
             waiting_in(own, workers, (&BLOCKS_THE_RUNTIME, &[]), &[])
         });
         assert!(late.is_empty(), "blocks the runtime it runs on: {late:#?}");
@@ -1044,18 +1008,13 @@ mod tests {
         );
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&HOLDS_A_WORKER, &[]);
-        let mut held: Vec<&String> = own
-            .workers()
-            .iter()
-            .filter(|path| waits.contains(path))
-            .collect();
+        let mut held: Vec<&String> =
+            own.workers().iter().filter(|path| waits.contains(path)).collect();
         held.sort();
         assert_eq!(held, ["crate::held", "crate::slept"]);
     }
-    const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] = [
-        "orden_documents::pdf::print_pdf",
-        "orden_system::updates::check_update",
-    ];
+    const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] =
+        ["orden_documents::pdf::print_pdf", "orden_system::updates::check_update"];
     #[test]
     fn no_command_on_the_runtime_waits_on_one_of_its_workers() {
         let late = on_every_target(|own| {
@@ -1111,9 +1070,7 @@ mod tests {
     fn asks_the_window_s_thread(said: &str) -> bool {
         let says = |word: &str| said.contains(&calls::spaced(word));
         says("run_on_main_thread(")
-            && [".recv(", ".recv_timeout(", ".blocking_recv("]
-                .iter()
-                .any(|word| says(word))
+            && [".recv(", ".recv_timeout(", ".blocking_recv("].iter().any(|word| says(word))
             || ASKS_THE_WINDOW_S_THREAD.iter().any(|word| says(word))
     }
     #[test]
@@ -1127,9 +1084,7 @@ mod tests {
         );
         let own = calls::of(&[("crate", source)]);
         let asking = own.saying(asks_the_window_s_thread);
-        let found = own
-            .taking_held(asks_the_window_s_thread, &asking, &[])
-            .join("\n");
+        let found = own.taking_held(asks_the_window_s_thread, &asking, &[]).join("\n");
         assert!(found.contains("crate::HELD"), "{found}");
         assert!(found.contains("crate::SENT"), "{found}");
         assert!(!found.contains("crate::FREE"), "{found}");
@@ -1138,16 +1093,9 @@ mod tests {
     fn the_window_s_thread_takes_no_lock_held_while_asking_it() {
         let late = on_every_target(|own| {
             let asking = own.saying(asks_the_window_s_thread);
-            own.taking_held(
-                asks_the_window_s_thread,
-                &asking,
-                &SMALL_ON_THE_WINDOW_S_THREAD,
-            )
+            own.taking_held(asks_the_window_s_thread, &asking, &SMALL_ON_THE_WINDOW_S_THREAD)
         });
-        assert!(
-            late.is_empty(),
-            "the window's thread could wait for itself in {late:#?}"
-        );
+        assert!(late.is_empty(), "the window's thread could wait for itself in {late:#?}");
     }
     #[test]
     fn a_lock_taken_again_under_itself_or_in_the_other_order_is_found() {
@@ -1182,10 +1130,7 @@ mod tests {
     #[test]
     fn no_lock_is_taken_again_or_in_the_other_order_under_another() {
         let found = on_every_target(|own| own.lock_orders(&[]));
-        assert!(
-            found.is_empty(),
-            "locks that wait on each other: {found:#?}"
-        );
+        assert!(found.is_empty(), "locks that wait on each other: {found:#?}");
     }
     #[test]
     fn a_lock_held_across_a_wait_is_a_wait_for_whoever_takes_it() {
@@ -1203,10 +1148,7 @@ mod tests {
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&WAITS, &[]);
         assert!(waits.contains("crate::quick") && waits.contains("crate::closing"));
-        assert!(
-            waits.contains("crate::free"),
-            "a guard a helper hands out is held as well"
-        );
+        assert!(waits.contains("crate::free"), "a guard a helper hands out is held as well");
         let quiet = concat!(
             "static FREE: Mutex<u8> = Mutex::new(0);\n\n",
             "#[tauri::command(async)]\npub fn let_go() {\n    let held = FREE.lock().unwrap();\n    drop(held);\n    fs::write(one, two);\n}\n\n",
@@ -1261,14 +1203,8 @@ mod tests {
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&WAITS, &[]);
         assert!(waits.contains("crate::same"));
-        assert!(
-            waits.contains("crate::written"),
-            "a read lock is held as a lock is"
-        );
-        assert!(
-            waits.contains("crate::inside"),
-            "a type's own lock is the lock it hands out"
-        );
+        assert!(waits.contains("crate::written"), "a read lock is held as a lock is");
+        assert!(waits.contains("crate::inside"), "a type's own lock is the lock it hands out");
         assert!(
             !waits.contains("crate::other"),
             "another type's lock of the same name was taken for it"
@@ -1309,10 +1245,7 @@ mod tests {
         ] {
             assert!(waits.contains(loud), "{loud} was not followed");
         }
-        assert!(
-            !waits.contains("crate::calm"),
-            "another type's method was taken for a type's own"
-        );
+        assert!(!waits.contains("crate::calm"), "another type's method was taken for a type's own");
     }
     #[test]
     fn a_closure_kept_in_a_field_is_followed_to_where_it_is_called() {
@@ -1330,12 +1263,7 @@ mod tests {
         );
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&WAITS, &[]);
-        for loud in [
-            "crate::fired",
-            "crate::taken",
-            "crate::each",
-            "crate::first",
-        ] {
+        for loud in ["crate::fired", "crate::taken", "crate::each", "crate::first"] {
             assert!(waits.contains(loud), "{loud} was not followed");
         }
         assert!(!waits.contains("crate::calm"));
@@ -1389,10 +1317,7 @@ mod tests {
             "crate::consumed",
             "crate::finished",
         ] {
-            assert!(
-                waits.contains(loud),
-                "{loud} was not followed into its drop"
-            );
+            assert!(waits.contains(loud), "{loud} was not followed into its drop");
         }
         for quiet in [
             "crate::handed_back",
@@ -1429,18 +1354,10 @@ mod tests {
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&WAITS, &[]);
         assert!(!waits.contains("crate::away"));
-        let waiting: Vec<&String> = own
-            .mains()
-            .iter()
-            .filter(|one| waits.contains(one))
-            .collect();
+        let waiting: Vec<&String> = own.mains().iter().filter(|one| waits.contains(one)).collect();
         assert_eq!(
             waiting,
-            [
-                "crate::later::main#0",
-                "crate::handed::passed#0",
-                "crate::pumped::main#0"
-            ]
+            ["crate::later::main#0", "crate::handed::passed#0", "crate::pumped::main#0"]
         );
     }
     #[test]
@@ -1448,15 +1365,9 @@ mod tests {
         let own = own();
         let builds = own.reaching(&BUILDS, &BUILT_OFF_THE_CALLBACK);
         assert!(builds.contains("crate::launch::open_window"));
-        let late: Vec<&String> = own
-            .commands()
-            .iter()
-            .filter(|path| builds.contains(*path))
-            .collect();
-        assert!(
-            late.is_empty(),
-            "{late:?} build a webview without saying async"
-        );
+        let late: Vec<&String> =
+            own.commands().iter().filter(|path| builds.contains(*path)).collect();
+        assert!(late.is_empty(), "{late:?} build a webview without saying async");
     }
     #[test]
     fn building_a_webview_is_followed_to_the_command() {
@@ -1527,12 +1438,7 @@ mod tests {
         let waits = own.reaching(&WAITS, &[]);
         assert_eq!(
             own.commands(),
-            [
-                "crate::kept",
-                "crate::taken",
-                "crate::shelved",
-                "crate::counted"
-            ]
+            ["crate::kept", "crate::taken", "crate::shelved", "crate::counted"]
         );
         assert!(waits.contains("crate::taken") && waits.contains("crate::shelved"));
         assert!(waits.contains("crate::loud::Shelf::held"));
@@ -1544,10 +1450,7 @@ mod tests {
             "crate::quiet::prefs",
             "crate::quiet::Shelf::held",
         ] {
-            assert!(
-                !waits.contains(quiet),
-                "{quiet} was taken for one that waits"
-            );
+            assert!(!waits.contains(quiet), "{quiet} was taken for one that waits");
         }
     }
 }

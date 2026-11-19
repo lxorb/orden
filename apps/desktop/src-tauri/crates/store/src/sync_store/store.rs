@@ -62,18 +62,12 @@ pub struct Failed {
 }
 impl From<rusqlite::Error> for Failed {
     fn from(error: rusqlite::Error) -> Self {
-        Self {
-            damaged: damaged(&error),
-            said: format!("the sync store failed: {error}"),
-        }
+        Self { damaged: damaged(&error), said: format!("the sync store failed: {error}") }
     }
 }
 impl From<String> for Failed {
     fn from(said: String) -> Self {
-        Self {
-            said,
-            damaged: false,
-        }
+        Self { said, damaged: false }
     }
 }
 pub struct Store {
@@ -111,23 +105,13 @@ impl Store {
         let schema = migrated_with(&conn, &MIGRATIONS)?;
         let device = device(&conn, preferred)?;
         let was_clean = mark_clean(&conn, false)?;
-        Ok(Self {
-            conn,
-            opened: Opened {
-                device,
-                was_clean,
-                schema,
-                recovered,
-            },
-        })
+        Ok(Self { conn, opened: Opened { device, was_clean, schema, recovered } })
     }
     pub fn mark_clean(&self, clean: bool) -> Result<bool, rusqlite::Error> {
         mark_clean(&self.conn, clean)
     }
     pub fn read(&mut self, queries: &[Query]) -> Result<(Json, Vec<Vec<u8>>), Failed> {
-        let snapshot = self
-            .conn
-            .transaction_with_behavior(TransactionBehavior::Deferred)?;
+        let snapshot = self.conn.transaction_with_behavior(TransactionBehavior::Deferred)?;
         let mut parts = Parts::default();
         let mut answers = Vec::with_capacity(queries.len());
         for query in queries {
@@ -140,23 +124,17 @@ impl Store {
                         table.name,
                         table.keyed()?
                     );
-                    let mut rows = rows(
-                        &snapshot,
-                        table,
-                        &sql,
-                        &[Sql::Text(key.clone())],
-                        &mut parts,
-                    )?;
+                    let mut rows =
+                        rows(&snapshot, table, &sql, &[Sql::Text(key.clone())], &mut parts)?;
                     rows.pop().unwrap_or(Json::Null)
                 }
                 Query::Scan { table: name, space } => {
                     let table = table(name)?;
                     let (filter, values) = match (space, table.space) {
                         (None, _) => (String::new(), Vec::new()),
-                        (Some(space), Some(column)) => (
-                            format!(" where {column} = ?1"),
-                            vec![Sql::Text(space.clone())],
-                        ),
+                        (Some(space), Some(column)) => {
+                            (format!(" where {column} = ?1"), vec![Sql::Text(space.clone())])
+                        }
                         (Some(_), None) => {
                             return Err(format!("{} rows belong to no space", table.name).into())
                         }
@@ -181,9 +159,7 @@ impl Store {
         Ok((Json::Array(answers), parts.into_parts()))
     }
     pub fn write(&mut self, changes: &[Change], parts: &[&[u8]]) -> Result<Vec<usize>, Failed> {
-        let batch = self
-            .conn
-            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let batch = self.conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let mut counts = Vec::with_capacity(changes.len());
         let mut logged = false;
         for change in changes {
@@ -193,11 +169,9 @@ impl Store {
                     logged |= table.key.is_none();
                     put(&batch, table, row, parts)?
                 }
-                Change::Patch {
-                    table: name,
-                    key,
-                    set,
-                } => patch(&batch, table(name)?, key, set, parts)?,
+                Change::Patch { table: name, key, set } => {
+                    patch(&batch, table(name)?, key, set, parts)?
+                }
                 Change::Delete { table: name, key } => {
                     let table = table(name)?;
                     let sql = format!("delete from {} where {} = ?1", table.name, table.keyed()?);
@@ -224,9 +198,7 @@ impl Store {
         Ok(counts)
     }
     pub fn close(self) -> Result<(), String> {
-        self.conn
-            .close()
-            .map_err(|(_, error)| format!("the sync store would not close: {error}"))
+        self.conn.close().map_err(|(_, error)| format!("the sync store would not close: {error}"))
     }
 }
 fn rows(
@@ -250,9 +222,7 @@ fn rows(
     Ok(out)
 }
 fn run(conn: &Connection, sql: &str, values: Vec<Sql>) -> Result<usize, Failed> {
-    Ok(conn
-        .prepare_cached(sql)?
-        .execute(params_from_iter(values))?)
+    Ok(conn.prepare_cached(sql)?.execute(params_from_iter(values))?)
 }
 fn put(
     conn: &Connection,
@@ -269,16 +239,8 @@ fn put(
         values.push(to_sql(table, column, value, parts)?);
     }
     let slots = vec!["?"; values.len()].join(", ");
-    let verb = if table.key.is_some() {
-        "insert or replace"
-    } else {
-        "insert"
-    };
-    let sql = format!(
-        "{verb} into {} ({}) values ({slots})",
-        table.name,
-        table.listed()
-    );
+    let verb = if table.key.is_some() { "insert or replace" } else { "insert" };
+    let sql = format!("{verb} into {} ({}) values ({slots})", table.name, table.listed());
     run(conn, &sql, values)
 }
 fn patch(
@@ -303,11 +265,7 @@ fn patch(
         values.push(to_sql(table, column, value, parts)?);
     }
     values.push(Sql::Text(key.to_owned()));
-    let sql = format!(
-        "update {} set {} where {keyed} = ?",
-        table.name,
-        assignments.join(", ")
-    );
+    let sql = format!("update {} set {} where {keyed} = ?", table.name, assignments.join(", "));
     run(conn, &sql, values)
 }
 pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Refused> {
@@ -318,9 +276,7 @@ pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Re
     )?;
     let at: usize = if has_meta {
         let said: Option<i64> = conn
-            .query_row("select value from meta where key = 'schema'", [], |row| {
-                row.get(0)
-            })
+            .query_row("select value from meta where key = 'schema'", [], |row| row.get(0))
             .optional()?;
         said.and_then(|one| usize::try_from(one).ok()).unwrap_or(0)
     } else {
@@ -354,18 +310,14 @@ pub fn device_of(path: &Path) -> Option<String> {
     )
     .ok()?;
     conn.busy_timeout(PATIENCE).ok()?;
-    conn.query_row("select value from meta where key = 'device'", [], |row| {
-        row.get(0)
-    })
-    .optional()
-    .ok()
-    .flatten()
+    conn.query_row("select value from meta where key = 'device'", [], |row| row.get(0))
+        .optional()
+        .ok()
+        .flatten()
 }
 fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused> {
     let kept: Option<String> = conn
-        .query_row("select value from meta where key = 'device'", [], |row| {
-            row.get(0)
-        })
+        .query_row("select value from meta where key = 'device'", [], |row| row.get(0))
         .optional()?;
     if let Some(kept) = kept {
         return Ok(kept);
@@ -374,17 +326,12 @@ fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused>
         Some(one) => one.to_owned(),
         None => new_id()?,
     };
-    conn.execute(
-        "insert into meta (key, value) values ('device', ?1)",
-        [&made],
-    )?;
+    conn.execute("insert into meta (key, value) values ('device', ?1)", [&made])?;
     Ok(made)
 }
 fn is_device_id(word: &str) -> bool {
     (8..=64).contains(&word.len())
-        && word
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+        && word.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
 }
 fn new_id() -> Result<String, Refused> {
     let mut bytes = [0_u8; 16];
@@ -392,28 +339,15 @@ fn new_id() -> Result<String, Refused> {
         .map_err(|error| Refused::Other(format!("no randomness for a device id: {error}")))?;
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    let hex = bytes
-        .iter()
-        .fold(String::with_capacity(32), |mut hex, byte| {
-            let _ = write!(hex, "{byte:02x}");
-            hex
-        });
-    Ok(format!(
-        "{}-{}-{}-{}-{}",
-        &hex[..8],
-        &hex[8..12],
-        &hex[12..16],
-        &hex[16..20],
-        &hex[20..]
-    ))
+    let hex = bytes.iter().fold(String::with_capacity(32), |mut hex, byte| {
+        let _ = write!(hex, "{byte:02x}");
+        hex
+    });
+    Ok(format!("{}-{}-{}-{}-{}", &hex[..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..]))
 }
 fn mark_clean(conn: &Connection, clean: bool) -> Result<bool, rusqlite::Error> {
     let before: Option<i64> = conn
-        .query_row(
-            "select value from meta where key = 'clean_exit'",
-            [],
-            |row| row.get(0),
-        )
+        .query_row("select value from meta where key = 'clean_exit'", [], |row| row.get(0))
         .optional()?;
     conn.execute(
         "insert or replace into meta (key, value) values ('clean_exit', ?1)",
@@ -539,21 +473,14 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("a.db");
         let mut store = opened(&path);
-        store
-            .write(&changes(json!([file("h")])), &[])
-            .expect("a row");
+        store.write(&changes(json!([file("h")])), &[]).expect("a row");
         store.close().expect("closed");
         let conn = Connection::open(&path).expect("the file");
         let second = [MIGRATIONS[0], "alter table files add column size integer;"];
         assert!(matches!(migrated_with(&conn, &second), Ok(2)));
-        assert!(
-            matches!(migrated_with(&conn, &second), Ok(2)),
-            "and not twice"
-        );
+        assert!(matches!(migrated_with(&conn, &second), Ok(2)), "and not twice");
         let kept: String = conn
-            .query_row("select state from files where hash = 'h'", [], |row| {
-                row.get(0)
-            })
+            .query_row("select state from files where hash = 'h'", [], |row| row.get(0))
             .expect("the row survived");
         assert_eq!(kept, "here");
         drop(conn);
@@ -563,11 +490,7 @@ mod tests {
         assert!(matches!(refused, Refused::Newer(2)), "{}", refused.said());
         let conn = Connection::open(&path).expect("the file");
         let columns: i64 = conn
-            .query_row(
-                "select count(*) from pragma_table_info('files')",
-                [],
-                |row| row.get(0),
-            )
+            .query_row("select count(*) from pragma_table_info('files')", [], |row| row.get(0))
             .expect("its shape");
         assert_eq!(columns, 3, "left as the newer Orden made it");
     }
@@ -602,10 +525,7 @@ mod tests {
             ])),
             &[],
         );
-        assert!(unknown
-            .expect_err("a key changed")
-            .said
-            .contains("cannot change"));
+        assert!(unknown.expect_err("a key changed").said.contains("cannot change"));
         let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "files" }]));
         assert_eq!(answer, json!([[]]));
         assert_eq!(store.write(&changes(json!([file("a")])), &[]), Ok(vec![1]));
@@ -665,9 +585,7 @@ mod tests {
         let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "entries" }]));
         assert_eq!(answer[0].as_array().map(Vec::len), Some(1));
         assert!(store
-            .read(&queries(
-                json!([{ "t": "scan", "table": "files", "space": "one" }])
-            ))
+            .read(&queries(json!([{ "t": "scan", "table": "files", "space": "one" }])))
             .is_err());
     }
     #[test]
@@ -690,10 +608,8 @@ mod tests {
         let (value, tail) = unframe(&sent).expect("the envelope");
         let batch: Vec<Change> = serde_json::from_value(value).expect("changes");
         store.write(&batch, &tail).expect("written");
-        let (answer, parts) = read(
-            &mut store,
-            json!([{ "t": "get", "table": "docs", "key": "n" }]),
-        );
+        let (answer, parts) =
+            read(&mut store, json!([{ "t": "get", "table": "docs", "key": "n" }]));
         let slice = |value: &Json| {
             let at = usize::try_from(value["$part"].as_u64().expect("a part")).expect("fits");
             parts[at].clone()
@@ -717,17 +633,13 @@ mod tests {
                 } })
             })
             .collect();
-        store
-            .write(&changes(Json::Array(rows)), &slices(&parts.into_parts()))
-            .expect("written");
+        store.write(&changes(Json::Array(rows)), &slices(&parts.into_parts())).expect("written");
         let refused = store
             .read(&queries(json!([{ "t": "scan", "table": "docs" }])))
             .expect_err("too many parts");
         assert!(refused.said.contains("ask in batches"), "{}", refused.said);
-        let (half, _) = read(
-            &mut store,
-            json!([{ "t": "get", "table": "docs", "key": "doc-00001" }]),
-        );
+        let (half, _) =
+            read(&mut store, json!([{ "t": "get", "table": "docs", "key": "doc-00001" }]));
         assert_eq!(half[0]["client_id"], 1);
     }
     #[test]
@@ -743,10 +655,7 @@ mod tests {
                 &[],
             )
             .expect("written");
-        let (answer, _) = read(
-            &mut store,
-            json!([{ "t": "get", "table": "written", "key": "n" }]),
-        );
+        let (answer, _) = read(&mut store, json!([{ "t": "get", "table": "written", "key": "n" }]));
         assert_eq!(answer[0]["text"], text);
     }
     #[test]
@@ -756,13 +665,8 @@ mod tests {
         let rows: Vec<Json> = (0..1200)
             .map(|at| json!({ "t": "put", "table": "log", "row": { "at": at, "space": "s", "pulled": 1 } }))
             .collect();
-        store
-            .write(&changes(Json::Array(rows)), &[])
-            .expect("logged");
-        let (answer, _) = read(
-            &mut store,
-            json!([{ "t": "scan", "table": "log", "space": "s" }]),
-        );
+        store.write(&changes(Json::Array(rows)), &[]).expect("logged");
+        let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "log", "space": "s" }]));
         let kept = answer[0].as_array().expect("rows");
         assert_eq!(kept.len(), 1000);
         assert_eq!(kept[0]["at"], 200, "the oldest went first");
@@ -777,14 +681,9 @@ mod tests {
             return;
         };
         let mut store = opened(Path::new(&path));
-        store
-            .conn
-            .pragma_update(None, "wal_autocheckpoint", 0)
-            .expect("no checkpoint");
+        store.conn.pragma_update(None, "wal_autocheckpoint", 0).expect("no checkpoint");
         let rows: Vec<Json> = (0..50).map(|at| file(&format!("h{at}"))).collect();
-        store
-            .write(&changes(Json::Array(rows)), &[])
-            .expect("written");
+        store.write(&changes(Json::Array(rows)), &[]).expect("written");
         println!("written");
         std::thread::sleep(std::time::Duration::from_secs(60));
     }
@@ -793,13 +692,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let path = dir.path().join("a.db");
         let mut child = Command::new(std::env::current_exe().expect("this test binary"))
-            .args([
-                CHILD,
-                "--exact",
-                "--ignored",
-                "--nocapture",
-                "--test-threads=1",
-            ])
+            .args([CHILD, "--exact", "--ignored", "--nocapture", "--test-threads=1"])
             .env(CHILD_STORE, &path)
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -814,10 +707,7 @@ mod tests {
         let _ = child.wait();
         assert!(said, "the child never wrote");
         let log = std::fs::metadata(&files_of(&path)[1]).map(|meta| meta.len());
-        assert!(
-            log.is_ok_and(|size| size > 0),
-            "the rows were only in the log"
-        );
+        assert!(log.is_ok_and(|size| size > 0), "the rows were only in the log");
         let mut store = opened(&path);
         assert!(!store.opened.was_clean, "a kill is not a clean exit");
         let (answer, _) = read(&mut store, json!([{ "t": "scan", "table": "files" }]));
@@ -840,12 +730,9 @@ mod tests {
         let mut store = opened(&path);
         for thousand in 0..10 {
             let mut parts = Parts::default();
-            let rows: Vec<Json> = (0..1000)
-                .map(|at| doc(thousand * 1000 + at, &mut parts))
-                .collect();
-            store
-                .write(&changes(Json::Array(rows)), &slices(&parts.into_parts()))
-                .expect("rows");
+            let rows: Vec<Json> =
+                (0..1000).map(|at| doc(thousand * 1000 + at, &mut parts)).collect();
+            store.write(&changes(Json::Array(rows)), &slices(&parts.into_parts())).expect("rows");
         }
         store.mark_clean(true).expect("clean");
         store.close().expect("closed");
@@ -860,14 +747,9 @@ mod tests {
         let started = Instant::now();
         store.write(&batch, &slices(&tail)).expect("500 rows");
         let write = started.elapsed();
-        let bytes: Vec<u8> = (0..500 * (4096 + 24_u32))
-            .map(|at| (at % 251) as u8)
-            .collect();
+        let bytes: Vec<u8> = (0..500 * (4096 + 24_u32)).map(|at| (at % 251) as u8).collect();
         let started = Instant::now();
-        let framed = frame(
-            &json!({ "one": { "$part": 0 } }),
-            std::slice::from_ref(&bytes),
-        );
+        let framed = frame(&json!({ "one": { "$part": 0 } }), std::slice::from_ref(&bytes));
         let (_, tail) = unframe(&framed).expect("an envelope");
         let raw = started.elapsed();
         assert_eq!(tail[0].len(), bytes.len());

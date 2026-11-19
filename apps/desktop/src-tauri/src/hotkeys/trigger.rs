@@ -66,37 +66,22 @@ mod tests {
 
     #[test]
     fn modifiers_go_by_their_capitals_and_the_key_by_its_xkb_name() {
-        assert_eq!(
-            preferred("Control+Alt+Space").as_deref(),
-            Some("CTRL+ALT+space")
-        );
+        assert_eq!(preferred("Control+Alt+Space").as_deref(), Some("CTRL+ALT+space"));
         assert_eq!(
             preferred("Control+Super+Alt+Shift+K").as_deref(),
             Some("CTRL+LOGO+ALT+SHIFT+k")
         );
         assert_eq!(preferred("Alt+Digit1").as_deref(), Some("ALT+1"));
         assert_eq!(preferred("F5").as_deref(), Some("F5"));
-        assert_eq!(
-            preferred("Control+PageDown").as_deref(),
-            Some("CTRL+Page_Down")
-        );
-        assert_eq!(
-            preferred("Control+Quote").as_deref(),
-            Some("CTRL+apostrophe")
-        );
+        assert_eq!(preferred("Control+PageDown").as_deref(), Some("CTRL+Page_Down"));
+        assert_eq!(preferred("Control+Quote").as_deref(), Some("CTRL+apostrophe"));
     }
     #[test]
     fn the_keys_above_the_arrows_go_by_their_xkb_names() {
         assert_eq!(preferred("Control+Insert").as_deref(), Some("CTRL+Insert"));
         assert_eq!(preferred("Alt+Pause").as_deref(), Some("ALT+Pause"));
-        assert_eq!(
-            preferred("Alt+ScrollLock").as_deref(),
-            Some("ALT+Scroll_Lock")
-        );
-        assert_eq!(
-            preferred("Control+PrintScreen").as_deref(),
-            Some("CTRL+Print")
-        );
+        assert_eq!(preferred("Alt+ScrollLock").as_deref(), Some("ALT+Scroll_Lock"));
+        assert_eq!(preferred("Control+PrintScreen").as_deref(), Some("CTRL+Print"));
     }
     #[test]
     fn a_key_it_has_no_name_for_is_no_preference() {

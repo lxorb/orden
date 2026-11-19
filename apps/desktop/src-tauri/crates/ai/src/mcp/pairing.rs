@@ -27,23 +27,13 @@ impl Client {
         };
         let own = said("name");
         let key = own.as_deref().map(file_name).unwrap_or_default();
-        let key = if key.is_empty() {
-            "agent".to_owned()
-        } else {
-            key
-        };
+        let key = if key.is_empty() { "agent".to_owned() } else { key };
         let known = KNOWN
             .iter()
             .find(|(name, _)| own.as_deref() == Some(*name))
             .map(|(_, called)| (*called).to_owned());
-        let name = said("title")
-            .or(known)
-            .or(own)
-            .unwrap_or_else(|| "An agent".to_owned());
-        Client {
-            key,
-            name: name.chars().take(LONGEST_NAME).collect(),
-        }
+        let name = said("title").or(known).or(own).unwrap_or_else(|| "An agent".to_owned());
+        Client { key, name: name.chars().take(LONGEST_NAME).collect() }
     }
 }
 fn file_name(name: &str) -> String {
@@ -120,19 +110,11 @@ mod tests {
         let claude = Client::from_info(&json!({ "name": "claude-code" }));
         let codex = Client::from_info(&json!({ "name": "codex-mcp-client" }));
         assert_eq!(kept(dir.path(), &claude), None);
-        let token = Kept {
-            agent: "claude-code".into(),
-            token: "t".repeat(64),
-        };
+        let token = Kept { agent: "claude-code".into(), token: "t".repeat(64) };
         keep(dir.path(), &claude, &token).expect("kept");
         assert_eq!(kept(dir.path(), &claude), Some(token));
         assert_eq!(kept(dir.path(), &codex), None);
-        assert!(dir
-            .path()
-            .join("agents")
-            .join("clients")
-            .join("claude-code")
-            .is_file());
+        assert!(dir.path().join("agents").join("clients").join("claude-code").is_file());
         forget(dir.path(), &claude);
         assert_eq!(kept(dir.path(), &claude), None);
     }

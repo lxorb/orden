@@ -28,13 +28,7 @@ pub fn watch(app: &AppHandle) {
         #[cfg(mobile)]
         let _ = opened.emit_to("main", OPENED, urls);
     });
-    let launched = said(
-        app.deep_link()
-            .get_current()
-            .ok()
-            .flatten()
-            .unwrap_or_default(),
-    );
+    let launched = said(app.deep_link().get_current().ok().flatten().unwrap_or_default());
     #[cfg(desktop)]
     let launched: Vec<String> = launched
         .into_iter()
@@ -86,14 +80,7 @@ fn link_window(windows: &[LinkWindow]) -> Option<String> {
     windows
         .iter()
         .filter(|one| one.listening)
-        .min_by_key(|one| {
-            (
-                !one.focused,
-                !one.visible,
-                one.label != "main",
-                one.label.clone(),
-            )
-        })
+        .min_by_key(|one| (!one.focused, !one.visible, one.label != "main", one.label.clone()))
         .map(|one| one.label.clone())
 }
 #[cfg(desktop)]
@@ -101,13 +88,7 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
     if crate::launch::in_background(&std::env::args_os().collect::<Vec<_>>()) {
         return true;
     }
-    let launched = said(
-        app.deep_link()
-            .get_current()
-            .ok()
-            .flatten()
-            .unwrap_or_default(),
-    );
+    let launched = said(app.deep_link().get_current().ok().flatten().unwrap_or_default());
     let quiet = orden_reminders::reminders::quiet_launch(&launched);
     if quiet {
         orden_reminders::reminders::came_up_quietly();
@@ -123,15 +104,11 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
 }
 const SCHEME: &str = "orden:";
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
-    urls.iter()
-        .map(ToString::to_string)
-        .filter(|one| is_ours(one))
-        .collect()
+    urls.iter().map(ToString::to_string).filter(|one| is_ours(one)).collect()
 }
 fn is_ours(url: &str) -> bool {
     let url = url.trim_start();
-    url.get(..SCHEME.len())
-        .is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
+    url.get(..SCHEME.len()).is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
 }
 #[cfg(test)]
 mod tests {
@@ -141,35 +118,18 @@ mod tests {
 
     #[cfg(desktop)]
     fn window(label: &str, focused: bool, visible: bool, listening: bool) -> LinkWindow {
-        LinkWindow {
-            label: label.to_owned(),
-            focused,
-            visible,
-            listening,
-        }
+        LinkWindow { label: label.to_owned(), focused, visible, listening }
     }
     #[cfg(desktop)]
     #[test]
     fn a_link_goes_to_the_window_in_front_and_never_to_one_hidden_while_another_shows() {
-        let windows = [
-            window("main", false, false, true),
-            window("orden-2", false, true, true),
-        ];
+        let windows = [window("main", false, false, true), window("orden-2", false, true, true)];
         assert_eq!(link_window(&windows).as_deref(), Some("orden-2"));
-        let windows = [
-            window("main", false, true, true),
-            window("orden-2", true, true, true),
-        ];
+        let windows = [window("main", false, true, true), window("orden-2", true, true, true)];
         assert_eq!(link_window(&windows).as_deref(), Some("orden-2"));
-        let windows = [
-            window("orden-3", false, true, true),
-            window("main", false, true, true),
-        ];
+        let windows = [window("orden-3", false, true, true), window("main", false, true, true)];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
-        let windows = [
-            window("orden-2", false, false, true),
-            window("main", false, false, true),
-        ];
+        let windows = [window("orden-2", false, false, true), window("main", false, false, true)];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
     }
     #[cfg(desktop)]
@@ -178,24 +138,15 @@ mod tests {
         assert_eq!(link_window(&[]), None);
         let windows = [window("main", true, true, false)];
         assert_eq!(link_window(&windows), None);
-        let windows = [
-            window("orden-3", true, true, false),
-            window("main", false, true, true),
-        ];
+        let windows = [window("orden-3", true, true, false), window("main", false, true, true)];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
     }
     #[test]
     fn says_every_link_it_is_given() {
-        let urls = vec![
-            "orden://open?path=Idea.md".to_string(),
-            "orden://search".to_string(),
-        ];
+        let urls = vec!["orden://open?path=Idea.md".to_string(), "orden://search".to_string()];
         assert_eq!(
             said(urls),
-            vec![
-                "orden://open?path=Idea.md".to_string(),
-                "orden://search".to_string()
-            ]
+            vec!["orden://open?path=Idea.md".to_string(), "orden://search".to_string()]
         );
     }
     #[test]

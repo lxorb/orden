@@ -94,11 +94,7 @@ impl Link {
             let Some(left) = patience.checked_sub(started.elapsed()) else {
                 break;
             };
-            held = self
-                .changed
-                .wait_timeout(held, left)
-                .unwrap_or_else(PoisonError::into_inner)
-                .0;
+            held = self.changed.wait_timeout(held, left).unwrap_or_else(PoisonError::into_inner).0;
         }
         drop(held);
         self.seen_now()
@@ -208,10 +204,7 @@ impl Link {
         match grant_of(endpoint, &token, &self.session) {
             Ok(grant) => {
                 self.change(|held| {
-                    held.kept = Some(Kept {
-                        agent: grant.id.clone(),
-                        token,
-                    });
+                    held.kept = Some(Kept { agent: grant.id.clone(), token });
                     held.grant = Some(grant);
                 });
                 true
@@ -224,13 +217,8 @@ impl Link {
         let started = Instant::now();
         loop {
             let asked = json!({ "verb": "verbs", "args": {}, "rest": [] });
-            let said = app::post(
-                endpoint,
-                Some(&endpoint.secret),
-                &asked,
-                Duration::from_secs(2),
-            )
-            .map(|said| Outcome::from_endpoint(said.status, &said.body));
+            let said = app::post(endpoint, Some(&endpoint.secret), &asked, Duration::from_secs(2))
+                .map(|said| Outcome::from_endpoint(said.status, &said.body));
             if let Ok(Outcome::Done { result, .. }) = said {
                 let verbs: BTreeSet<String> = result
                     .get("verbs")
@@ -365,11 +353,8 @@ impl Link {
         let said = match app::post(&endpoint, Some(&kept.token), &asked, patience) {
             Ok(said) => said,
             Err(first) => {
-                let again = self
-                    .dir
-                    .as_deref()
-                    .and_then(app::running)
-                    .filter(|now| *now != endpoint);
+                let again =
+                    self.dir.as_deref().and_then(app::running).filter(|now| *now != endpoint);
                 let Some(now) = again else {
                     return Outcome::failed("unavailable", unreachable(&first));
                 };
@@ -433,9 +418,7 @@ fn thread_handed() -> Option<String> {
     std::env::var(THREAD_VAR).ok().filter(|thread| {
         !thread.is_empty()
             && thread.len() <= 80
-            && thread
-                .bytes()
-                .all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
+            && thread.bytes().all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
     })
 }
 const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
@@ -483,10 +466,7 @@ mod tests {
             ("read_terminal", json!({ "tab": "t1" })),
         ] {
             let window = orden_agents::endpoint::window_patience(verb, &args);
-            assert!(
-                patience_for(verb, &args) >= window + Duration::from_secs(60),
-                "{verb}"
-            );
+            assert!(patience_for(verb, &args) >= window + Duration::from_secs(60), "{verb}");
         }
     }
 }

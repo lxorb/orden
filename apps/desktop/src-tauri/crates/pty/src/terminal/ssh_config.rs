@@ -24,12 +24,7 @@ pub trait Files {
     fn list(&self, folder: &Path) -> Vec<String>;
 }
 pub fn hosts(config: &Path, home: &Path, files: &impl Files) -> Vec<ConfigHost> {
-    let mut reading = Reading {
-        home,
-        files,
-        seen: HashSet::new(),
-        found: Vec::new(),
-    };
+    let mut reading = Reading { home, files, seen: HashSet::new(), found: Vec::new() };
     reading.file(config, None, 0);
     reading.found
 }
@@ -113,10 +108,7 @@ impl<F: Files> Reading<'_, F> {
         } else {
             self.home.join(".ssh").join(pattern)
         };
-        let Some(name) = path
-            .file_name()
-            .map(|one| one.to_string_lossy().into_owned())
-        else {
+        let Some(name) = path.file_name().map(|one| one.to_string_lossy().into_owned()) else {
             return Vec::new();
         };
         if !name.contains(['*', '?']) {
@@ -125,12 +117,8 @@ impl<F: Files> Reading<'_, F> {
         let Some(folder) = path.parent() else {
             return Vec::new();
         };
-        let mut matched: Vec<String> = self
-            .files
-            .list(folder)
-            .into_iter()
-            .filter(|one| matches(&name, one))
-            .collect();
+        let mut matched: Vec<String> =
+            self.files.list(folder).into_iter().filter(|one| matches(&name, one)).collect();
         matched.sort();
         matched.into_iter().map(|one| folder.join(one)).collect()
     }
@@ -377,10 +365,7 @@ mod tests {
                 "Include config.d/*\nInclude ~/.ssh/extra\nInclude /etc/ssh/missing\n\nHost last\n",
             )
             .with("/h/.ssh/config.d/b-work", "Host office\n")
-            .with(
-                "/h/.ssh/config.d/a-home",
-                "Host pi\nInclude ~/.ssh/config\n",
-            )
+            .with("/h/.ssh/config.d/a-home", "Host pi\nInclude ~/.ssh/config\n")
             .with("/h/.ssh/config.d/.hidden", "Host secret\n")
             .with("/h/.ssh/extra", "# Lab\nHost lab1\n");
         let found = read(&fake);
@@ -399,18 +384,12 @@ mod tests {
         let found = read(&fake);
         assert_eq!(ids(&found), vec!["loose", "office", "build", "pi", "nas"]);
         let groups: Vec<Option<&str>> = found.iter().map(|one| one.group.as_deref()).collect();
-        assert_eq!(
-            groups,
-            vec![None, Some("Work"), Some("Work"), Some("Home"), Some("Home")]
-        );
+        assert_eq!(groups, vec![None, Some("Work"), Some("Work"), Some("Home"), Some("Home")]);
     }
     #[test]
     fn an_included_file_is_its_own_group_under_any_heading() {
         let fake = Fake::default()
-            .with(
-                "/h/.ssh/config",
-                "# Work\nHost office\n\nInclude lab.conf\n",
-            )
+            .with("/h/.ssh/config", "# Work\nHost office\n\nInclude lab.conf\n")
             .with("/h/.ssh/lab.conf", "Host bench\n");
         let found = read(&fake);
         assert_eq!(ids(&found), vec!["office", "bench"]);

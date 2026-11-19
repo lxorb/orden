@@ -82,11 +82,7 @@ pub async fn agents_capture(
             &app,
             &caller,
             &tab,
-            capture::Asked {
-                shape,
-                full_page: full_page.unwrap_or(false),
-                paper: page,
-            },
+            capture::Asked { shape, full_page: full_page.unwrap_or(false), paper: page },
         )
     })
     .await

@@ -133,10 +133,7 @@ fn copied(buffer: &CMSampleBuffer) -> Option<Frame> {
                 bytes.extend_from_slice(&line[..row]);
             }
             match (u16::try_from(width), u16::try_from(height)) {
-                (Ok(w), Ok(h)) => Some(Frame {
-                    bytes,
-                    size: (w, h),
-                }),
+                (Ok(w), Ok(h)) => Some(Frame { bytes, size: (w, h) }),
                 _ => None,
             }
         };
@@ -190,8 +187,7 @@ impl Capture {
             unsafe {
                 self.configuration.setWidth(now.0);
                 self.configuration.setHeight(now.1);
-                self.stream
-                    .updateConfiguration_completionHandler(&self.configuration, None);
+                self.stream.updateConfiguration_completionHandler(&self.configuration, None);
             }
         }
         let mut last = lock(&self.frames.last);
@@ -222,9 +218,7 @@ impl Drop for Capture {
         *lock(&self.frames.seen) = None;
         unsafe {
             let output = ProtocolObject::from_ref(&*self.output);
-            let _ = self
-                .stream
-                .removeStreamOutput_type_error(output, SCStreamOutputType::Screen);
+            let _ = self.stream.removeStreamOutput_type_error(output, SCStreamOutputType::Screen);
             self.stream.stopCaptureWithCompletionHandler(None);
         }
     }
@@ -270,14 +264,10 @@ fn filter(display: CGDirectDisplayID, pid: i32) -> Result<Retained<SCContentFilt
     loop {
         let content = shareable()?;
         unsafe {
-            let screen: Option<Retained<SCDisplay>> = content
-                .displays()
-                .iter()
-                .find(|one| one.displayID() == display);
-            let app: Option<Retained<SCRunningApplication>> = content
-                .applications()
-                .iter()
-                .find(|one| one.processID() == pid);
+            let screen: Option<Retained<SCDisplay>> =
+                content.displays().iter().find(|one| one.displayID() == display);
+            let app: Option<Retained<SCRunningApplication>> =
+                content.applications().iter().find(|one| one.processID() == pid);
             if let Some(screen) = screen {
                 let none = NSArray::<SCWindow>::new();
                 if let Some(app) = app {

@@ -25,10 +25,7 @@ pub(crate) fn offered(channel: &str, version: &str, download: &str) -> Result<()
         .find_map(|releases| download.strip_prefix(releases))
         .and_then(|rest| rest.rsplit('/').next())
     else {
-        return Err(format!(
-            "that version is not served from {}",
-            RELEASES.join(" or ")
-        ));
+        return Err(format!("that version is not served from {}", RELEASES.join(" or ")));
     };
     if version.is_empty() || !names(file, version) {
         return Err(format!("{file} is not version {version}"));
@@ -74,9 +71,8 @@ pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Fo
             .endpoints(endpoints)
             .map_err(|error| format!("could not follow the {channel} channel: {error}"))?;
     }
-    let updater = builder
-        .build()
-        .map_err(|error| format!("could not ask for a new version: {error}"))?;
+    let updater =
+        builder.build().map_err(|error| format!("could not ask for a new version: {error}"))?;
     let Some(update) = updater
         .check()
         .await
@@ -98,10 +94,7 @@ mod tests {
     use tauri::Url;
 
     fn bundle(version: &str) -> String {
-        format!(
-            "{}v{version}/Nib-{version}-windows-x64-setup.exe",
-            RELEASES[0]
-        )
+        format!("{}v{version}/Nib-{version}-windows-x64-setup.exe", RELEASES[0])
     }
     #[test]
     fn a_release_that_says_what_it_serves_is_installed() {
@@ -189,10 +182,7 @@ mod tests {
     #[test]
     fn the_unstable_channel_follows_the_rolling_build_of_main() {
         let looked = endpoints(UNSTABLE).expect("the unstable channel has an endpoint of its own");
-        assert_eq!(
-            looked,
-            vec![Url::parse(EDGE).expect("the manifest url parses")]
-        );
+        assert_eq!(looked, vec![Url::parse(EDGE).expect("the manifest url parses")]);
     }
     #[test]
     fn the_stable_channel_follows_the_endpoint_the_app_is_configured_with() {
@@ -201,10 +191,7 @@ mod tests {
     #[test]
     fn anything_nobody_wrote_is_stable() {
         for channel in ["", "STABLE", "Unstable", "beta", "main"] {
-            assert!(
-                endpoints(channel).is_none(),
-                "{channel} should follow the releases"
-            );
+            assert!(endpoints(channel).is_none(), "{channel} should follow the releases");
         }
     }
     #[test]

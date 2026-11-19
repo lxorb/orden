@@ -44,18 +44,8 @@ const LEFT: &str =
 fn looked(term: &str, look: Look) -> String {
     let term = serde_json::to_string(term).unwrap_or_else(|_| "''".to_string());
     LOOKED
-        .replace(
-            "__BACK__",
-            if look == Look::Previous {
-                "true"
-            } else {
-                "false"
-            },
-        )
-        .replace(
-            "__FRESH__",
-            if look == Look::Fresh { "true" } else { "false" },
-        )
+        .replace("__BACK__", if look == Look::Previous { "true" } else { "false" })
+        .replace("__FRESH__", if look == Look::Fresh { "true" } else { "false" })
         .replace("__TERM__", &term)
 }
 #[tauri::command]

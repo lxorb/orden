@@ -28,9 +28,8 @@ const SAID_AGAIN: Duration = Duration::from_millis(500);
 const LINGER: Duration = Duration::from_millis(500);
 const UNSEEN: Duration = Duration::from_secs(24 * 60 * 60);
 const SCREENS: [u16; 3] = [47, 1047, 1049];
-const TRACKED: [u16; 15] = [
-    1, 7, 25, 47, 66, 1000, 1002, 1003, 1004, 1005, 1006, 1015, 1047, 1049, 2004,
-];
+const TRACKED: [u16; 15] =
+    [1, 7, 25, 47, 66, 1000, 1002, 1003, 1004, 1005, 1006, 1015, 1047, 1049, 2004];
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Spec {
     pub program: PathBuf,
@@ -233,9 +232,7 @@ impl Holder {
         self.state.held()
     }
     fn wait<'a>(&self, state: MutexGuard<'a, State>) -> MutexGuard<'a, State> {
-        self.changed
-            .wait(state)
-            .unwrap_or_else(PoisonError::into_inner)
+        self.changed.wait(state).unwrap_or_else(PoisonError::into_inner)
     }
     fn resize(&self, cols: u16, rows: u16) {
         if let Some(master) = self.master.held().as_deref() {
@@ -256,9 +253,8 @@ fn size(cols: u16, rows: u16) -> PtySize {
     }
 }
 pub fn serve() -> i32 {
-    let Some(spec) = std::env::var(SPEC)
-        .ok()
-        .and_then(|one| serde_json::from_str::<Spec>(&one).ok())
+    let Some(spec) =
+        std::env::var(SPEC).ok().and_then(|one| serde_json::from_str::<Spec>(&one).ok())
     else {
         return 2;
     };
@@ -291,10 +287,7 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
             return Err(error);
         }
     };
-    let port = listener
-        .local_addr()
-        .map_err(|error| error.to_string())?
-        .port();
+    let port = listener.local_addr().map_err(|error| error.to_string())?.port();
     let record = Record {
         v: wire::VERSION,
         port,
@@ -345,12 +338,7 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
     forget_record(&spec.file, &spec.token);
     Ok(())
 }
-type Opened = (
-    Arc<Holder>,
-    Box<dyn Read + Send>,
-    Box<dyn Child + Send + Sync>,
-    TcpListener,
-);
+type Opened = (Arc<Holder>, Box<dyn Read + Send>, Box<dyn Child + Send + Sync>, TcpListener);
 fn open(spec: &Spec) -> Result<Opened, String> {
     let pair = native_pty_system()
         .openpty(size(spec.cols, spec.rows))
@@ -369,21 +357,12 @@ fn open(spec: &Spec) -> Result<Opened, String> {
         .spawn_command(command)
         .map_err(|error| format!("could not start {}: {error}", spec.program.display()))?;
     drop(pair.slave);
-    let reader = pair
-        .master
-        .try_clone_reader()
-        .map_err(|error| error.to_string())?;
-    let input = pair
-        .master
-        .take_writer()
-        .map_err(|error| error.to_string())?;
+    let reader = pair.master.try_clone_reader().map_err(|error| error.to_string())?;
+    let input = pair.master.take_writer().map_err(|error| error.to_string())?;
     let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, 0)))
         .map_err(|error| error.to_string())?;
     let holder = Arc::new(Holder {
-        state: Mutex::new(State {
-            size: (spec.cols, spec.rows),
-            ..State::default()
-        }),
+        state: Mutex::new(State { size: (spec.cols, spec.rows), ..State::default() }),
         changed: Condvar::new(),
         killer: Mutex::new(child.clone_killer()),
         shell: child.process_id(),
@@ -430,9 +409,7 @@ fn read(holder: &Holder, mut reader: Box<dyn Read + Send>) {
     holder.changed.notify_all();
 }
 fn wait(holder: &Holder, mut child: Box<dyn Child + Send + Sync>) {
-    let code = child
-        .wait()
-        .map_or(-1, |status| i64::from(status.exit_code()));
+    let code = child.wait().map_or(-1, |status| i64::from(status.exit_code()));
     let until = Instant::now() + LINGER;
     let mut state = holder.lock();
     state.exit = Some(code);
@@ -518,12 +495,7 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
             }
         }
         let at = state.ring.end();
-        state.clients.push(Client {
-            id,
-            at,
-            writer,
-            told: writer,
-        });
+        state.clients.push(Client { id, at, writer, told: writer });
         let hi = wire::Hi {
             v: wire::VERSION,
             holder: std::process::id(),
@@ -695,9 +667,7 @@ fn send(
     }
 }
 fn write_record(file: &Path, record: &Record) -> Result<(), String> {
-    let parent = file
-        .parent()
-        .ok_or_else(|| "a session has a folder".to_owned())?;
+    let parent = file.parent().ok_or_else(|| "a session has a folder".to_owned())?;
     std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
     let bytes = serde_json::to_vec(record).map_err(|error| error.to_string())?;
     let part = file.with_extension(format!("{}.part", std::process::id()));
@@ -715,9 +685,7 @@ fn write_record(file: &Path, record: &Record) -> Result<(), String> {
         })
 }
 pub fn read_record(file: &Path) -> Option<Record> {
-    let bytes = std::fs::read(file)
-        .ok()
-        .filter(|bytes| bytes.len() <= 4096)?;
+    let bytes = std::fs::read(file).ok().filter(|bytes| bytes.len() <= 4096)?;
     serde_json::from_slice(&bytes).ok()
 }
 pub fn forget_record(file: &Path, token: &str) {
@@ -735,10 +703,7 @@ pub fn start(how: &Starter, spec: &Spec) -> Result<u16, String> {
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
     let mut child = spawned(&mut command).map_err(|error| error.to_string())?;
-    let out = child
-        .stdout
-        .take()
-        .ok_or_else(|| "the session said nothing".to_owned())?;
+    let out = child.stdout.take().ok_or_else(|| "the session said nothing".to_owned())?;
     thread::spawn(move || {
         let _ = child.wait();
     });
@@ -747,11 +712,7 @@ pub fn start(how: &Starter, spec: &Spec) -> Result<u16, String> {
         for line in BufReader::new(out).lines() {
             let Ok(line) = line else { break };
             if let Some(port) = line.strip_prefix(SAID) {
-                let _ = tell.send(
-                    port.trim()
-                        .parse::<u16>()
-                        .map_err(|error| error.to_string()),
-                );
+                let _ = tell.send(port.trim().parse::<u16>().map_err(|error| error.to_string()));
                 return;
             }
             if let Some(why) = line.strip_prefix(REFUSED) {
@@ -799,10 +760,7 @@ fn signal(pid: i32, signal: i32) {
 }
 #[cfg(unix)]
 fn end_tree(shell: Option<u32>) {
-    let Some(session) = shell
-        .and_then(|one| i32::try_from(one).ok())
-        .filter(|one| *one > 1)
-    else {
+    let Some(session) = shell.and_then(|one| i32::try_from(one).ok()).filter(|one| *one > 1) else {
         return;
     };
     signal(-session, libc::SIGHUP);
@@ -862,13 +820,7 @@ fn zombie(pid: i32) -> bool {
     };
     let mut info = std::mem::MaybeUninit::<libc::proc_bsdinfo>::zeroed();
     let written = unsafe {
-        libc::proc_pidinfo(
-            pid,
-            libc::PROC_PIDTBSDINFO,
-            0,
-            info.as_mut_ptr().cast(),
-            size,
-        )
+        libc::proc_pidinfo(pid, libc::PROC_PIDTBSDINFO, 0, info.as_mut_ptr().cast(), size)
     };
     written != size || unsafe { info.assume_init() }.pbi_status == ZOMBIE
 }

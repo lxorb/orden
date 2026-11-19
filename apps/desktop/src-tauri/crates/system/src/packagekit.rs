@@ -36,9 +36,7 @@ pub struct PackageKit {
 }
 impl PackageKit {
     pub fn system() -> Result<Self, Failure> {
-        Connection::system()
-            .map(Self::on)
-            .map_err(|_| Failure::Absent)
+        Connection::system().map(Self::on).map_err(|_| Failure::Absent)
     }
     pub fn on(bus: Connection) -> Self {
         Self { bus }
@@ -55,10 +53,7 @@ impl PackageKit {
             _ => {}
         }
         let offered = self.run("GetUpdates", &(NO_FILTER,))?;
-        let Some(id) = offered
-            .iter()
-            .find(|id| offers(id, package, version, format))
-        else {
+        let Some(id) = offered.iter().find(|id| offers(id, package, version, format)) else {
             return Ok(false);
         };
         self.run("UpdatePackages", &(ONLY_TRUSTED, vec![id.as_str()]))?;
@@ -99,13 +94,7 @@ impl PackageKit {
             "SetHints",
             &(vec!["interactive=true"],),
         )?;
-        self.bus.call_method(
-            Some(SERVICE),
-            path.as_str(),
-            Some(TRANSACTION),
-            method,
-            body,
-        )?;
+        self.bus.call_method(Some(SERVICE), path.as_str(), Some(TRANSACTION), method, body)?;
         let mut packages = Vec::new();
         let mut said: Option<(u32, String)> = None;
         for message in heard {
@@ -139,10 +128,7 @@ fn ended(exit: u32, said: Option<(u32, String)>) -> Result<(), Failure> {
 }
 fn offers(id: &str, package: &str, version: &str, format: Format) -> bool {
     let mut parts = id.split(';');
-    parts.next() == Some(package)
-        && parts
-            .next()
-            .is_some_and(|its| plain(its, format) == version)
+    parts.next() == Some(package) && parts.next().is_some_and(|its| plain(its, format) == version)
 }
 fn plain(version: &str, format: Format) -> String {
     let version = version
@@ -151,10 +137,9 @@ fn plain(version: &str, format: Format) -> String {
         .map_or(version, |(_, rest)| rest);
     match format {
         Format::Deb => version.to_owned(),
-        Format::Rpm => version
-            .rsplit_once('-')
-            .map_or(version, |(upstream, _)| upstream)
-            .replace('~', "-"),
+        Format::Rpm => {
+            version.rsplit_once('-').map_or(version, |(upstream, _)| upstream).replace('~', "-")
+        }
     }
 }
 #[cfg(test)]
@@ -175,11 +160,7 @@ mod tests {
         error: Option<(u32, &'static str)>,
         exit: u32,
     }
-    const FINE: Ends = Ends {
-        packages: Vec::new(),
-        error: None,
-        exit: 1,
-    };
+    const FINE: Ends = Ends { packages: Vec::new(), error: None, exit: 1 };
     type Asked = Arc<Mutex<Vec<String>>>;
     fn mock(ends: impl Fn(&str) -> Ends + Send + 'static) -> (PackageKit, Asked) {
         let (ours, theirs) = UnixStream::pair().expect("a socket pair");
@@ -193,10 +174,7 @@ mod tests {
                 .build()
                 .expect("the mock's end")
         });
-        let client = Builder::async_io_unix_stream(ours)
-            .p2p()
-            .build()
-            .expect("the client's end");
+        let client = Builder::async_io_unix_stream(ours).p2p().build().expect("the client's end");
         let server: Connection = server.join().expect("the mock started");
         let calls = MessageIterator::from(&server);
         std::thread::spawn(move || serve(&server, calls, &log, &ends));
@@ -222,9 +200,7 @@ mod tests {
                 }
                 _ => String::new(),
             };
-            log.lock()
-                .expect("the log")
-                .push(format!("{member}({args})"));
+            log.lock().expect("the log").push(format!("{member}({args})"));
             if member == "CreateTransaction" {
                 made += 1;
                 let tid = ObjectPath::try_from(format!("/{made}")).expect("a path");
@@ -251,36 +227,24 @@ mod tests {
         name: &str,
         body: &B,
     ) {
-        bus.emit_signal(None::<&str>, path, super::TRANSACTION, name, body)
-            .expect("a signal");
+        bus.emit_signal(None::<&str>, path, super::TRANSACTION, name, body).expect("a signal");
     }
     fn asked(log: &Asked) -> Vec<String> {
         log.lock().expect("the log").clone()
     }
     fn offering(ids: &'static [&'static str]) -> impl Fn(&str) -> Ends {
         move |method| match method {
-            "GetUpdates" => Ends {
-                packages: ids.to_vec(),
-                ..FINE
-            },
+            "GetUpdates" => Ends { packages: ids.to_vec(), ..FINE },
             _ => FINE,
         }
     }
     #[test]
     fn a_repository_that_offers_the_version_is_what_updates_it() {
-        let (kit, log) = mock(offering(&[
-            "glibc;2.41-1;x86_64;fedora",
-            "orden;0.20.0-1;x86_64;orden",
-        ]));
-        assert_eq!(
-            kit.update_from_repository("orden", "0.20.0", Format::Rpm),
-            Ok(true)
-        );
+        let (kit, log) =
+            mock(offering(&["glibc;2.41-1;x86_64;fedora", "orden;0.20.0-1;x86_64;orden"]));
+        assert_eq!(kit.update_from_repository("orden", "0.20.0", Format::Rpm), Ok(true));
         let asked = asked(&log);
-        assert!(
-            asked.contains(&r#"SetHints(Ok(["interactive=true"]))"#.to_owned()),
-            "{asked:?}"
-        );
+        assert!(asked.contains(&r#"SetHints(Ok(["interactive=true"]))"#.to_owned()), "{asked:?}");
         assert_eq!(
             asked
                 .iter()
@@ -300,53 +264,29 @@ mod tests {
     #[test]
     fn a_repository_with_another_version_is_left_alone() {
         let (kit, log) = mock(offering(&["orden;0.19.1~1101-1;x86_64;orden-unstable"]));
-        assert_eq!(
-            kit.update_from_repository("orden", "0.20.0", Format::Rpm),
-            Ok(false)
-        );
-        assert!(!asked(&log)
-            .iter()
-            .any(|call| call.starts_with("UpdatePackages")));
+        assert_eq!(kit.update_from_repository("orden", "0.20.0", Format::Rpm), Ok(false));
+        assert!(!asked(&log).iter().any(|call| call.starts_with("UpdatePackages")));
     }
     #[test]
     fn a_build_of_main_is_found_as_rpm_and_apt_write_it() {
         let (kit, _) = mock(offering(&["orden;0.19.1~1101-1;aarch64;orden-unstable"]));
-        assert_eq!(
-            kit.update_from_repository("orden", "0.19.1-1101", Format::Rpm),
-            Ok(true)
-        );
+        assert_eq!(kit.update_from_repository("orden", "0.19.1-1101", Format::Rpm), Ok(true));
         let (kit, _) = mock(offering(&["orden;0.19.1-1101;amd64;apt.orden.so"]));
-        assert_eq!(
-            kit.update_from_repository("orden", "0.19.1-1101", Format::Deb),
-            Ok(true)
-        );
+        assert_eq!(kit.update_from_repository("orden", "0.19.1-1101", Format::Deb), Ok(true));
     }
     #[test]
     fn a_refresh_that_fails_still_reads_the_index() {
         let (kit, _) = mock(|method| match method {
-            "RefreshCache" => Ends {
-                error: Some((2, "no network")),
-                exit: 2,
-                ..FINE
-            },
-            "GetUpdates" => Ends {
-                packages: vec!["orden;0.20.0-1;x86_64;orden"],
-                ..FINE
-            },
+            "RefreshCache" => Ends { error: Some((2, "no network")), exit: 2, ..FINE },
+            "GetUpdates" => Ends { packages: vec!["orden;0.20.0-1;x86_64;orden"], ..FINE },
             _ => FINE,
         });
-        assert_eq!(
-            kit.update_from_repository("orden", "0.20.0", Format::Rpm),
-            Ok(true)
-        );
+        assert_eq!(kit.update_from_repository("orden", "0.20.0", Format::Rpm), Ok(true));
     }
     #[test]
     fn a_file_is_installed_as_one_packagekit_cannot_vouch_for() {
         let (kit, log) = mock(|_| FINE);
-        assert_eq!(
-            kit.install_file(Path::new("/home/a/.cache/orden-0.20.0.rpm")),
-            Ok(())
-        );
+        assert_eq!(kit.install_file(Path::new("/home/a/.cache/orden-0.20.0.rpm")), Ok(()));
         assert!(asked(&log).contains(&format!(
             r#"InstallFiles(Ok(({UNTRUSTED}, ["/home/a/.cache/orden-0.20.0.rpm"])))"#
         )));
@@ -366,9 +306,7 @@ mod tests {
         });
         assert_eq!(
             kit.install_file(Path::new("/x.rpm")),
-            Err(Failure::Failed(
-                "nothing provides libgtk-4.so.1()(64bit) (13)".into()
-            ))
+            Err(Failure::Failed("nothing provides libgtk-4.so.1()(64bit) (13)".into()))
         );
     }
     #[test]

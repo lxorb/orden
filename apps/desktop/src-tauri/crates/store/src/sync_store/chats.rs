@@ -23,12 +23,7 @@ impl ChatStores {
     }
 }
 #[derive(Deserialize, Debug)]
-#[serde(
-    tag = "t",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
+#[serde(tag = "t", rename_all = "camelCase", rename_all_fields = "camelCase", deny_unknown_fields)]
 pub enum Ask {
     Chats,
     Window {
@@ -69,12 +64,7 @@ pub enum Ask {
     Drafts,
 }
 #[derive(Deserialize, Debug)]
-#[serde(
-    tag = "t",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
+#[serde(tag = "t", rename_all = "camelCase", rename_all_fields = "camelCase", deny_unknown_fields)]
 pub enum Change {
     Chat {
         id: String,
@@ -136,10 +126,7 @@ struct Failed {
 }
 impl From<rusqlite::Error> for Failed {
     fn from(error: rusqlite::Error) -> Self {
-        Self {
-            damaged: damaged(&error),
-            said: format!("the chats' store failed: {error}"),
-        }
+        Self { damaged: damaged(&error), said: format!("the chats' store failed: {error}") }
     }
 }
 fn damaged(error: &rusqlite::Error) -> bool {
@@ -190,9 +177,7 @@ impl ChatStore {
         Ok(Self { conn })
     }
     fn read(&mut self, asks: &[Ask]) -> Result<Vec<Json>, Failed> {
-        let snapshot = self
-            .conn
-            .transaction_with_behavior(TransactionBehavior::Deferred)?;
+        let snapshot = self.conn.transaction_with_behavior(TransactionBehavior::Deferred)?;
         let mut answers = Vec::with_capacity(asks.len());
         for ask in asks {
             answers.push(answer(&snapshot, ask)?);
@@ -200,9 +185,7 @@ impl ChatStore {
         Ok(answers)
     }
     fn write(&mut self, changes: &[Change]) -> Result<(), Failed> {
-        let batch = self
-            .conn
-            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let batch = self.conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
         for change in changes {
             apply(&batch, change)?;
         }
@@ -210,18 +193,13 @@ impl ChatStore {
         Ok(())
     }
     fn close(self) -> Result<(), String> {
-        self.conn
-            .close()
-            .map_err(|(_, error)| format!("the chats' store would not close: {error}"))
+        self.conn.close().map_err(|(_, error)| format!("the chats' store would not close: {error}"))
     }
 }
 fn rows(conn: &Connection, sql: &str, values: &[Sql]) -> Result<Vec<Json>, Failed> {
     let mut statement = conn.prepare_cached(sql)?;
-    let names: Vec<String> = statement
-        .column_names()
-        .iter()
-        .map(|name| (*name).to_owned())
-        .collect();
+    let names: Vec<String> =
+        statement.column_names().iter().map(|name| (*name).to_owned()).collect();
     let mut found = statement.query(params_from_iter(values))?;
     let mut out = Vec::new();
     while let Some(row) = found.next()? {
@@ -248,22 +226,9 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
             "select id, space, seq, read_seq, oldest, complete, row from chats order by id",
             &[],
         )?),
-        Ask::Window {
-            chat,
-            parent,
-            before,
-            after,
-            around,
-            limit,
-        } => Json::Array(window(
-            conn,
-            chat,
-            parent.as_deref(),
-            *before,
-            *after,
-            *around,
-            *limit,
-        )?),
+        Ask::Window { chat, parent, before, after, around, limit } => {
+            Json::Array(window(conn, chat, parent.as_deref(), *before, *after, *around, *limit)?)
+        }
         Ask::Messages { chat, ids } => {
             if ids.is_empty() {
                 return Ok(Json::Array(Vec::new()));
@@ -295,17 +260,7 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     })
 }
 fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
-    let Ask::Search {
-        chats,
-        words,
-        phrases,
-        has,
-        authors,
-        reply,
-        since,
-        until,
-        limit,
-    } = ask
+    let Ask::Search { chats, words, phrases, has, authors, reply, since, until, limit } = ask
     else {
         return Ok(Json::Null);
     };
@@ -315,12 +270,7 @@ fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
         .iter()
         .filter(|one| !one.trim().is_empty())
         .map(|one| quoted(one, true))
-        .chain(
-            phrases
-                .iter()
-                .filter(|one| !one.trim().is_empty())
-                .map(|one| quoted(one, false)),
-        )
+        .chain(phrases.iter().filter(|one| !one.trim().is_empty()).map(|one| quoted(one, false)))
         .collect();
     if !matched.is_empty() {
         filters.push("rowid in (select rowid from words where words match ?)".to_owned());
@@ -376,11 +326,7 @@ fn window(
             "select {MESSAGE} from messages where chat = ?1 and {which} and seq < ?3
               order by seq desc limit ?4"
         );
-        let mut found = rows(
-            conn,
-            &sql,
-            &[text(chat), key.clone(), whole(from), whole(many)],
-        )?;
+        let mut found = rows(conn, &sql, &[text(chat), key.clone(), whole(from), whole(many)])?;
         found.reverse();
         Ok(found)
     };
@@ -389,11 +335,7 @@ fn window(
             "select {MESSAGE} from messages where chat = ?1 and {which} and seq > ?3
               order by seq limit ?4"
         );
-        rows(
-            conn,
-            &sql,
-            &[text(chat), key.clone(), whole(from), whole(many)],
-        )
+        rows(conn, &sql, &[text(chat), key.clone(), whole(from), whole(many)])
     };
     if let Some(around) = around {
         let half = limit / 2;
@@ -407,21 +349,12 @@ fn window(
     older(before.unwrap_or(i64::MAX), limit)
 }
 fn run(conn: &Connection, sql: &str, values: &[Sql]) -> Result<(), Failed> {
-    conn.prepare_cached(sql)?
-        .execute(params_from_iter(values))?;
+    conn.prepare_cached(sql)?.execute(params_from_iter(values))?;
     Ok(())
 }
 fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
     match change {
-        Change::Chat {
-            id,
-            space,
-            seq,
-            read_seq,
-            oldest,
-            complete,
-            row,
-        } => run(
+        Change::Chat { id, space, seq, read_seq, oldest, complete, row } => run(
             conn,
             "insert or replace into chats (id, space, seq, read_seq, oldest, complete, row)
              values (?, ?, ?, ?, ?, ?, ?)",
@@ -436,19 +369,10 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
             ],
         ),
         Change::Message { .. } => message(conn, change),
-        Change::Unmessage { chat, id } => run(
-            conn,
-            "delete from messages where chat = ? and id = ?",
-            &[text(chat), text(id)],
-        ),
-        Change::Queue {
-            id,
-            chat,
-            event,
-            made_at,
-            tries,
-            refused,
-        } => run(
+        Change::Unmessage { chat, id } => {
+            run(conn, "delete from messages where chat = ? and id = ?", &[text(chat), text(id)])
+        }
+        Change::Queue { id, chat, event, made_at, tries, refused } => run(
             conn,
             "insert or replace into outbox (id, chat, event, made_at, tries, refused)
              values (?, ?, ?, ?, ?, ?)",
@@ -462,11 +386,7 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
             ],
         ),
         Change::Unqueue { id } => run(conn, "delete from outbox where id = ?", &[text(id)]),
-        Change::Draft {
-            chat,
-            text: words,
-            at,
-        } => run(
+        Change::Draft { chat, text: words, at } => run(
             conn,
             "insert or replace into drafts (chat, text, at) values (?, ?, ?)",
             &[text(chat), text(words), whole(*at)],
@@ -635,30 +555,17 @@ mod tests {
         let mut store = opened(&dir.path().join("a.chats.db"));
         let all: Vec<Json> = (1..=20).map(|seq| message("c", seq, "hello")).collect();
         write(&mut store, Json::Array(all));
-        let newest = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "limit": 3 }),
-        );
+        let newest = ask(&mut store, json!({ "t": "window", "chat": "c", "limit": 3 }));
         assert_eq!(seqs(&newest), [18, 19, 20]);
-        let before = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "before": 5, "limit": 3 }),
-        );
+        let before =
+            ask(&mut store, json!({ "t": "window", "chat": "c", "before": 5, "limit": 3 }));
         assert_eq!(seqs(&before), [2, 3, 4]);
-        let after = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "after": 18, "limit": 9 }),
-        );
+        let after = ask(&mut store, json!({ "t": "window", "chat": "c", "after": 18, "limit": 9 }));
         assert_eq!(seqs(&after), [19, 20]);
-        let around = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "around": 10, "limit": 4 }),
-        );
+        let around =
+            ask(&mut store, json!({ "t": "window", "chat": "c", "around": 10, "limit": 4 }));
         assert_eq!(seqs(&around), [8, 9, 10, 11]);
-        let other = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "d", "limit": 3 }),
-        );
+        let other = ask(&mut store, json!({ "t": "window", "chat": "d", "limit": 3 }));
         assert_eq!(seqs(&other), Vec::<i64>::new());
     }
     #[test]
@@ -668,19 +575,11 @@ mod tests {
         let mut reply = message("c", 2, "a reply");
         reply["parent"] = json!("m1");
         reply["main"] = json!(false);
-        write(
-            &mut store,
-            json!([message("c", 1, "a question"), reply, message("c", 3, "on")]),
-        );
-        let chat = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "limit": 10 }),
-        );
+        write(&mut store, json!([message("c", 1, "a question"), reply, message("c", 3, "on")]));
+        let chat = ask(&mut store, json!({ "t": "window", "chat": "c", "limit": 10 }));
         assert_eq!(seqs(&chat), [1, 3]);
-        let replies = ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "parent": "m1", "limit": 10 }),
-        );
+        let replies =
+            ask(&mut store, json!({ "t": "window", "chat": "c", "parent": "m1", "limit": 10 }));
         assert_eq!(seqs(&replies), [2]);
     }
     #[test]
@@ -695,30 +594,19 @@ mod tests {
                 message("d", 3, "café in another chat"),
             ]),
         );
-        let found = ask(
-            &mut store,
-            json!({ "t": "search", "words": ["cafe"], "limit": 10 }),
-        );
+        let found = ask(&mut store, json!({ "t": "search", "words": ["cafe"], "limit": 10 }));
         assert_eq!(seqs(&found), [3, 1], "newest first, across chats");
         let one = ask(
             &mut store,
             json!({ "t": "search", "words": ["caf"], "chats": ["c"], "limit": 10 }),
         );
         assert_eq!(seqs(&one), [1]);
-        let phrase = ask(
-            &mut store,
-            json!({ "t": "search", "phrases": ["at the cafe"], "limit": 10 }),
-        );
+        let phrase =
+            ask(&mut store, json!({ "t": "search", "phrases": ["at the cafe"], "limit": 10 }));
         assert_eq!(seqs(&phrase), [1]);
-        let links = ask(
-            &mut store,
-            json!({ "t": "search", "has": ["link"], "limit": 10 }),
-        );
+        let links = ask(&mut store, json!({ "t": "search", "has": ["link"], "limit": 10 }));
         assert_eq!(seqs(&links), [2]);
-        let odd = ask(
-            &mut store,
-            json!({ "t": "search", "words": ["\"NEAR(("], "limit": 10 }),
-        );
+        let odd = ask(&mut store, json!({ "t": "search", "words": ["\"NEAR(("], "limit": 10 }));
         assert_eq!(seqs(&odd), Vec::<i64>::new(), "typed syntax is only words");
         write(&mut store, json!([message("c", 1, "Meet at the bar")]));
         let gone = ask(
@@ -726,19 +614,10 @@ mod tests {
             json!({ "t": "search", "words": ["cafe"], "chats": ["c"], "limit": 10 }),
         );
         assert_eq!(seqs(&gone), Vec::<i64>::new());
-        let now = ask(
-            &mut store,
-            json!({ "t": "search", "words": ["bar"], "limit": 10 }),
-        );
+        let now = ask(&mut store, json!({ "t": "search", "words": ["bar"], "limit": 10 }));
         assert_eq!(seqs(&now), [1]);
-        write(
-            &mut store,
-            json!([{ "t": "unmessage", "chat": "c", "id": "m1" }]),
-        );
-        let none = ask(
-            &mut store,
-            json!({ "t": "search", "words": ["bar"], "limit": 10 }),
-        );
+        write(&mut store, json!([{ "t": "unmessage", "chat": "c", "id": "m1" }]));
+        let none = ask(&mut store, json!({ "t": "search", "words": ["bar"], "limit": 10 }));
         assert_eq!(seqs(&none), Vec::<i64>::new());
     }
     #[test]
@@ -747,10 +626,8 @@ mod tests {
         let mut store = opened(&dir.path().join("a.chats.db"));
         let all: Vec<Json> = (1..=10).map(|seq| message("c", seq, "x")).collect();
         write(&mut store, Json::Array(all));
-        let unread = ask(
-            &mut store,
-            json!({ "t": "unread", "chat": "c", "after": 4, "me": "user:a" }),
-        );
+        let unread =
+            ask(&mut store, json!({ "t": "unread", "chat": "c", "after": 4, "me": "user:a" }));
         assert_eq!(unread, json!(3), "5, 7 and 9 are user:b's");
     }
     #[test]
@@ -777,20 +654,9 @@ mod tests {
             .collect();
         assert_eq!(ids, ["e1", "e2"]);
         assert_eq!(outbox[0]["refused"], json!("rate"));
-        assert_eq!(
-            ask(&mut again, json!({ "t": "drafts" }))[0]["text"],
-            json!("half a thought")
-        );
-        write(
-            &mut again,
-            json!([{ "t": "unqueue", "id": "e1" }, { "t": "forget", "chat": "c" }]),
-        );
-        assert_eq!(
-            ask(&mut again, json!({ "t": "outbox" }))
-                .as_array()
-                .map(Vec::len),
-            Some(1)
-        );
+        assert_eq!(ask(&mut again, json!({ "t": "drafts" }))[0]["text"], json!("half a thought"));
+        write(&mut again, json!([{ "t": "unqueue", "id": "e1" }, { "t": "forget", "chat": "c" }]));
+        assert_eq!(ask(&mut again, json!({ "t": "outbox" })).as_array().map(Vec::len), Some(1));
         assert_eq!(ask(&mut again, json!({ "t": "drafts" })), json!([]));
     }
     #[test]

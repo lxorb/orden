@@ -21,9 +21,8 @@ impl Hidden {
         let app = window.app_handle().clone();
         let label = format!("web-state-{}", MADE.fetch_add(1, Ordering::Relaxed));
         let (loaded, loads) = channel(16);
-        let blank: Url = "about:blank"
-            .parse()
-            .map_err(|_| "no blank page to start from".to_owned())?;
+        let blank: Url =
+            "about:blank".parse().map_err(|_| "no blank page to start from".to_owned())?;
         let builder = WebviewBuilder::new(label, WebviewUrl::External(blank))
             .focused(false)
             .disable_drag_drop_handler()
@@ -118,9 +117,7 @@ mod engine {
         .map(|_| ())
     }
     pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {
-        let url: Url = address
-            .parse()
-            .map_err(|_| format!("{address} is not an address"))?;
+        let url: Url = address.parse().map_err(|_| format!("{address} is not an address"))?;
         view.navigate(url).map_err(|error| error.to_string())
     }
 }

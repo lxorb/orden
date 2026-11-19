@@ -107,11 +107,8 @@ impl Desktop {
     #[allow(unsafe_code)]
     pub fn start(width: u32, height: u32) -> Result<Desktop, String> {
         static MADE: AtomicU32 = AtomicU32::new(0);
-        let name = format!(
-            "orden-app-{}-{}",
-            std::process::id(),
-            MADE.fetch_add(1, Ordering::SeqCst)
-        );
+        let name =
+            format!("orden-app-{}-{}", std::process::id(), MADE.fetch_add(1, Ordering::SeqCst));
         let named = wide(&name);
         let handle = unsafe {
             CreateDesktopW(
@@ -134,11 +131,7 @@ impl Desktop {
         desks().insert(name.clone(), desk.clone());
         let kept = desk.clone();
         let keeper = std::thread::spawn(move || keep(&kept));
-        Ok(Desktop {
-            name,
-            desk,
-            keeper: Some(keeper),
-        })
+        Ok(Desktop { name, desk, keeper: Some(keeper) })
     }
     pub fn name(&self) -> String {
         self.name.clone()
@@ -154,7 +147,7 @@ impl Desktop {
         let said = |error: windows::core::Error| error.to_string();
         if !spoken_to_cmd(argv) {
             return Err(
-                "a batch file's words cannot carry quotes, percent signs or line breaks".to_owned(),
+                "a batch file's words cannot carry quotes, percent signs or line breaks".to_owned()
             );
         }
         let mut line = wide(&command_line(argv));
@@ -293,13 +286,7 @@ pub fn kill(pid: u32) {
 pub fn command_line(argv: &[String]) -> String {
     let batch = argv.first().is_some_and(|program| is_batch(program));
     argv.iter()
-        .map(|word| {
-            if batch {
-                format!("\"{word}\"")
-            } else {
-                quoted(word)
-            }
-        })
+        .map(|word| if batch { format!("\"{word}\"") } else { quoted(word) })
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -310,9 +297,7 @@ fn is_batch(program: &str) -> bool {
 }
 pub fn spoken_to_cmd(argv: &[String]) -> bool {
     !argv.first().is_some_and(|program| is_batch(program))
-        || argv
-            .iter()
-            .all(|word| !word.contains(['"', '%', '\r', '\n', '\0']))
+        || argv.iter().all(|word| !word.contains(['"', '%', '\r', '\n', '\0']))
 }
 fn quoted(word: &str) -> String {
     if !word.is_empty() && !word.contains([' ', '\t', '\n', '\u{b}', '"']) {
@@ -381,10 +366,7 @@ pub fn kind_of(style: u32, extended: u32, owned: bool) -> Kind {
     }
 }
 pub fn centred(size: (i32, i32), view: (i32, i32)) -> (i32, i32) {
-    (
-        ((view.0 - size.0) / 2).max(0),
-        ((view.1 - size.1) / 2).max(0),
-    )
+    (((view.0 - size.0) / 2).max(0), ((view.1 - size.1) / 2).max(0))
 }
 #[allow(unsafe_code)]
 fn keep(desk: &Desk) {
@@ -397,10 +379,8 @@ fn keep(desk: &Desk) {
         let size = desk.size();
         let refit = size != fitted;
         fitted = size;
-        let view = (
-            i32::try_from(size.0).unwrap_or(i32::MAX),
-            i32::try_from(size.1).unwrap_or(i32::MAX),
-        );
+        let view =
+            (i32::try_from(size.0).unwrap_or(i32::MAX), i32::try_from(size.1).unwrap_or(i32::MAX));
         let windows = shown();
         if !windows.is_empty() {
             desk.shown.store(true, Ordering::SeqCst);
@@ -467,12 +447,8 @@ pub fn notepad_on(width: u32, height: u32) -> Option<(Desktop, Program)> {
         return None;
     }
     let desktop = Desktop::start(width, height).unwrap();
-    let program = desktop
-        .run(
-            &[notepad.to_string_lossy().into_owned()],
-            &std::env::temp_dir(),
-        )
-        .unwrap();
+    let program =
+        desktop.run(&[notepad.to_string_lossy().into_owned()], &std::env::temp_dir()).unwrap();
     Some((desktop, program))
 }
 #[cfg(test)]
@@ -482,12 +458,7 @@ mod tests {
     #[test]
     fn writes_a_command_line_windows_splits_back_into_its_words() {
         let line = |words: &[&str]| {
-            command_line(
-                &words
-                    .iter()
-                    .map(|one| (*one).to_owned())
-                    .collect::<Vec<_>>(),
-            )
+            command_line(&words.iter().map(|one| (*one).to_owned()).collect::<Vec<_>>())
         };
         assert_eq!(line(&["C:\\x\\app.exe", "--a"]), "C:\\x\\app.exe --a");
         assert_eq!(
@@ -496,21 +467,10 @@ mod tests {
         );
         assert_eq!(line(&["say \"hi\""]), "\"say \\\"hi\\\"\"");
         assert_eq!(line(&["C:\\a b\\"]), "\"C:\\a b\\\\\"");
-        let words = [
-            "C:\\Program Files\\x.exe",
-            "a \"b\" c",
-            "end\\",
-            "two words\\",
-        ];
+        let words = ["C:\\Program Files\\x.exe", "a \"b\" c", "end\\", "two words\\"];
         let joined = line(&words);
         let back = super::super::installed::arguments(&joined);
-        assert_eq!(
-            back,
-            words
-                .iter()
-                .map(|one| (*one).to_owned())
-                .collect::<Vec<_>>()
-        );
+        assert_eq!(back, words.iter().map(|one| (*one).to_owned()).collect::<Vec<_>>());
     }
     #[test]
     fn a_batch_file_hears_every_word_quoted_so_cmd_runs_none_of_them() {
@@ -535,10 +495,7 @@ mod tests {
         let script = folder.path().join("said.bat");
         std::fs::write(&script, "@echo %1> \"%~dp0said.txt\"\r\n").expect("the script");
         let desktop = Desktop::start(640, 480).expect("a desktop");
-        let argv = vec![
-            script.to_string_lossy().into_owned(),
-            "x&echo.>pwned.txt".to_owned(),
-        ];
+        let argv = vec![script.to_string_lossy().into_owned(), "x&echo.>pwned.txt".to_owned()];
         let program = desktop.run(&argv, folder.path()).expect("it ran");
         program.wait();
         assert!(!folder.path().join("pwned.txt").exists());
@@ -548,16 +505,10 @@ mod tests {
     #[test]
     fn places_a_main_window_a_dialog_and_leaves_a_menu() {
         let popup = 0x8000_0000;
-        assert_eq!(
-            kind_of(WS_CAPTION.0 | WS_THICKFRAME.0, 0, false),
-            Kind::Main
-        );
+        assert_eq!(kind_of(WS_CAPTION.0 | WS_THICKFRAME.0, 0, false), Kind::Main);
         assert_eq!(kind_of(WS_CAPTION.0, 0, true), Kind::Dialog);
         assert_eq!(kind_of(popup, 0, false), Kind::Other);
-        assert_eq!(
-            kind_of(WS_CAPTION.0, WS_EX_TOOLWINDOW.0, false),
-            Kind::Other
-        );
+        assert_eq!(kind_of(WS_CAPTION.0, WS_EX_TOOLWINDOW.0, false), Kind::Other);
         assert_eq!(centred((400, 300), (1200, 800)), (400, 250));
         assert_eq!(centred((1600, 900), (1200, 800)), (0, 0));
     }
@@ -600,9 +551,7 @@ mod tests {
         assert!(desk.shown.load(Ordering::SeqCst), "no window came");
         assert!(filled, "the window did not fill the view");
         assert!(
-            shown()
-                .into_iter()
-                .all(|one| process_of(one) != program.pid()),
+            shown().into_iter().all(|one| process_of(one) != program.pid()),
             "its window is on the reader's desktop"
         );
         assert!(alive(program.pid()));

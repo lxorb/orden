@@ -124,17 +124,12 @@ mod tests {
         ] }));
         let asks = super::asks(&all, 1000.0);
         assert_eq!(asks.len(), 2, "{asks:?}");
-        assert!(asks
-            .iter()
-            .all(|(method, _)| *method == "Network.setCookie"));
+        assert!(asks.iter().all(|(method, _)| *method == "Network.setCookie"));
         assert_eq!(asks[0].1["name"], "sid");
         assert!(
             (asks[0].1["expires"].as_f64().expect("an expiry") - (1000.0 + KEPT_FOR)).abs() < 1.0
         );
         assert_eq!(asks[1].1["name"], "part");
-        assert_eq!(
-            asks[1].1["partitionKey"]["topLevelSite"],
-            "https://news.example"
-        );
+        assert_eq!(asks[1].1["partitionKey"]["topLevelSite"], "https://news.example");
     }
 }

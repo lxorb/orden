@@ -33,10 +33,7 @@ pub struct Said {
 }
 impl Said {
     pub fn only(accept: bool) -> Self {
-        Said {
-            accept,
-            ..Said::default()
-        }
+        Said { accept, ..Said::default() }
     }
     pub fn chosen<'a>(&self, offered: impl IntoIterator<Item = &'a str>) -> Option<usize> {
         if !self.accept {
@@ -51,10 +48,7 @@ impl Said {
         let mut first = None;
         for (at, words) in offered.into_iter().enumerate() {
             first.get_or_insert(at);
-            if wanted
-                .as_deref()
-                .is_some_and(|wanted| words.to_lowercase().contains(wanted))
-            {
+            if wanted.as_deref().is_some_and(|wanted| words.to_lowercase().contains(wanted)) {
                 return Some(at);
             }
         }
@@ -85,13 +79,10 @@ pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), Str
     (crate::engines::pages()?.answer_dialog)(app, label, said)
 }
 pub fn hold(label: &str, dialog: Dialog) {
-    DIALOGS.held().get_or_insert_with(HashMap::new).insert(
-        label.to_string(),
-        Held {
-            dialog,
-            since: Instant::now(),
-        },
-    );
+    DIALOGS
+        .held()
+        .get_or_insert_with(HashMap::new)
+        .insert(label.to_string(), Held { dialog, since: Instant::now() });
 }
 pub fn release(label: &str) {
     if let Some(all) = DIALOGS.held().as_mut() {
@@ -102,10 +93,7 @@ pub fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<Path
     let name = std::path::Path::new(suggested)
         .file_name()
         .map_or_else(|| std::ffi::OsString::from("download"), ToOwned::to_owned);
-    let folder = orden_web::downloads::folder(app)
-        .ok()?
-        .join("Orden agents")
-        .join(agent);
+    let folder = orden_web::downloads::folder(app).ok()?.join("Orden agents").join(agent);
     orden_base::paths::made(&folder).ok()?;
     let name = orden_web::downloads::clean_name(&name);
     let taken: Vec<String> = DOWNLOADS
@@ -128,10 +116,8 @@ pub fn noted(agent: &str, download: Download) {
 }
 pub fn moved(agent: &str, path: &str, state: DownloadState) {
     let mut all = DOWNLOADS.held();
-    if let Some((_, one)) = all
-        .iter_mut()
-        .rev()
-        .find(|(owner, one)| owner == agent && one.path == path)
+    if let Some((_, one)) =
+        all.iter_mut().rev().find(|(owner, one)| owner == agent && one.path == path)
     {
         if one.state == DownloadState::Going {
             one.state = state;
@@ -183,15 +169,9 @@ mod tests {
         let offered = ["CN=Ada Lovelace, O=Example", "CN=Build bot, O=Example"];
         let yes = Said::only(true);
         assert_eq!(yes.chosen(offered), Some(0));
-        let named = Said {
-            text: Some("build BOT".into()),
-            ..Said::only(true)
-        };
+        let named = Said { text: Some("build BOT".into()), ..Said::only(true) };
         assert_eq!(named.chosen(offered), Some(1));
-        let missing = Said {
-            text: Some("nobody".into()),
-            ..Said::only(true)
-        };
+        let missing = Said { text: Some("nobody".into()), ..Said::only(true) };
         assert_eq!(missing.chosen(offered), None);
         assert_eq!(Said::only(false).chosen(offered), None);
         assert_eq!(yes.chosen(std::iter::empty()), None);
@@ -211,14 +191,8 @@ mod tests {
         .expect("an answer");
         assert_eq!(answer.username.as_deref(), Some("ada"));
         assert_eq!(answer.password.as_deref(), Some("secret"));
-        assert_eq!(
-            serde_json::to_value(DialogKind::SignIn).expect("json"),
-            "sign_in"
-        );
-        assert_eq!(
-            serde_json::to_value(DialogKind::Certificate).expect("json"),
-            "certificate"
-        );
+        assert_eq!(serde_json::to_value(DialogKind::SignIn).expect("json"), "sign_in");
+        assert_eq!(serde_json::to_value(DialogKind::Certificate).expect("json"), "certificate");
         assert!(DialogKind::SignIn.signs_in() && DialogKind::Certificate.signs_in());
         assert!(!DialogKind::Prompt.signs_in());
     }

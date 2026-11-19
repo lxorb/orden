@@ -8,10 +8,7 @@ fn main() {
         let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests.manifest");
         println!("cargo:rerun-if-changed={}", manifest.display());
         println!("cargo:rustc-link-arg-tests=/MANIFEST:EMBED");
-        println!(
-            "cargo:rustc-link-arg-tests=/MANIFESTINPUT:{}",
-            manifest.display()
-        );
+        println!("cargo:rustc-link-arg-tests=/MANIFESTINPUT:{}", manifest.display());
     }
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
         app_intents::build();
@@ -42,11 +39,8 @@ mod app_intents {
         println!("cargo:rerun-if-env-changed=SDKROOT");
         let sdk =
             env::var("SDKROOT").unwrap_or_else(|_| xcrun(&["--sdk", "macosx", "--show-sdk-path"]));
-        let toolchain = PathBuf::from(xcrun(&["--find", "swiftc"]))
-            .ancestors()
-            .nth(3)
-            .unwrap()
-            .to_path_buf();
+        let toolchain =
+            PathBuf::from(xcrun(&["--find", "swiftc"])).ancestors().nth(3).unwrap().to_path_buf();
         let protocols = out.join("protocols.json");
         std::fs::write(&protocols, PROTOCOLS).unwrap();
         let object = out.join(format!("{MODULE}.o"));
@@ -79,12 +73,7 @@ mod app_intents {
             .arg(&toolchain)
             .args(["--module-name", MODULE, "--sdk-root", &sdk])
             .args(["--xcode-version", &xcode_build()])
-            .args([
-                "--platform-family",
-                "macOS",
-                "--deployment-target",
-                &deployment,
-            ])
+            .args(["--platform-family", "macOS", "--deployment-target", &deployment])
             .args(["--target-triple", &triple])
             .arg("--source-file-list")
             .arg(&source_list)
@@ -103,9 +92,7 @@ mod app_intents {
         println!("cargo:rustc-link-arg-bins=-Wl,-rpath,/usr/lib/swift");
     }
     fn lines(paths: &[PathBuf]) -> String {
-        paths.iter().fold(String::new(), |all, one| {
-            all + &one.display().to_string() + "\n"
-        })
+        paths.iter().fold(String::new(), |all, one| all + &one.display().to_string() + "\n")
     }
     fn xcrun(args: &[&str]) -> String {
         let out = Command::new("xcrun").args(args).output().expect("xcrun");
@@ -113,10 +100,7 @@ mod app_intents {
         String::from_utf8(out.stdout).unwrap().trim().to_owned()
     }
     fn xcode_build() -> String {
-        let out = Command::new("xcodebuild")
-            .arg("-version")
-            .output()
-            .expect("xcodebuild");
+        let out = Command::new("xcodebuild").arg("-version").output().expect("xcodebuild");
         String::from_utf8_lossy(&out.stdout)
             .lines()
             .find_map(|line| line.strip_prefix("Build version "))

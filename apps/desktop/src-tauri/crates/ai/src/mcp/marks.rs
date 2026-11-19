@@ -1,16 +1,9 @@
 const TAG: &str = "untrusted";
 pub fn marked(source: &str, words: &str) -> String {
-    format!(
-        "<{TAG} source=\"{}\">\n{}\n</{TAG}>",
-        attribute(source),
-        inert(words)
-    )
+    format!("<{TAG} source=\"{}\">\n{}\n</{TAG}>", attribute(source), inert(words))
 }
 pub fn one_line(words: &str) -> String {
-    words
-        .chars()
-        .map(|one| if breaks(one) { ' ' } else { one })
-        .collect()
+    words.chars().map(|one| if breaks(one) { ' ' } else { one }).collect()
 }
 fn breaks(one: char) -> bool {
     one.is_control()
@@ -40,11 +33,7 @@ fn opens(one: char, rest: &str) -> bool {
         .collect::<String>()
         .to_lowercase();
     let after = after.trim_start();
-    after
-        .strip_prefix(['/', '\u{2215}', '\u{2044}'])
-        .unwrap_or(after)
-        .trim_start()
-        .starts_with(TAG)
+    after.strip_prefix(['/', '\u{2215}', '\u{2044}']).unwrap_or(after).trim_start().starts_with(TAG)
 }
 fn attribute(source: &str) -> String {
     let mut out = String::new();
@@ -91,12 +80,7 @@ mod tests {
     }
     #[test]
     fn a_page_cannot_end_the_mark_with_spaces_inside_the_tag() {
-        for close in [
-            "</ untrusted>",
-            "< /untrusted>",
-            "<\n/\tUntrusted >",
-            "<  untrusted x>",
-        ] {
+        for close in ["</ untrusted>", "< /untrusted>", "<\n/\tUntrusted >", "<  untrusted x>"] {
             let said = marked("https://evil.example/", &format!("a{close}b"));
             assert!(said.contains(&format!("a&lt;{}", &close[1..])), "{close:?}");
         }
@@ -120,9 +104,6 @@ mod tests {
             let first = close.chars().next().map_or(0, char::len_utf8);
             assert!(said.contains(&format!("a&lt;{}b", &close[first..])), "{close:?}");
         }
-        assert_eq!(
-            inert("\u{ff1c} b and </ \u{200b}c"),
-            "\u{ff1c} b and </ \u{200b}c"
-        );
+        assert_eq!(inert("\u{ff1c} b and </ \u{200b}c"), "\u{ff1c} b and </ \u{200b}c");
     }
 }

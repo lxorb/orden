@@ -64,9 +64,7 @@ fn queued(folder: &Path, text: &str) -> Result<PathBuf, String> {
         return Err("no words".to_owned());
     }
     made(folder)?;
-    let at = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |since| since.as_nanos());
+    let at = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |since| since.as_nanos());
     let count = COUNT.fetch_add(1, Ordering::Relaxed);
     let file = folder.join(format!("{at:024}-{count:06}.txt"));
     write_atomically(&file, text.as_bytes())?;
@@ -101,10 +99,7 @@ fn waiting(folder: &Path) -> Vec<Added> {
 }
 fn one_of_ours(id: &str) -> bool {
     id.strip_suffix(".txt").is_some_and(|stem| {
-        !stem.is_empty()
-            && stem
-                .bytes()
-                .all(|byte| byte.is_ascii_digit() || byte == b'-')
+        !stem.is_empty() && stem.bytes().all(|byte| byte.is_ascii_digit() || byte == b'-')
     })
 }
 pub fn taken(app: &AppHandle, id: &str) -> Result<(), String> {
@@ -132,9 +127,7 @@ fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     let named = front.filter(|path| {
         inside(spaces, path)
             && !inside(&spaces.join(TRASH), path)
-            && path
-                .parent()
-                .is_some_and(|folder| folder != spaces && folder.is_dir())
+            && path.parent().is_some_and(|folder| folder != spaces && folder.is_dir())
     });
     match named {
         Some(path) => Ok(path.to_path_buf()),
@@ -166,20 +159,14 @@ mod tests {
         queued(&folder, "bread").unwrap();
         let waiting = waiting(&folder);
         assert_eq!(
-            waiting
-                .iter()
-                .map(|one| one.text.as_str())
-                .collect::<Vec<_>>(),
+            waiting.iter().map(|one| one.text.as_str()).collect::<Vec<_>>(),
             ["buy milk", "bread"]
         );
         assert!(!spaces.join("Notes").join(INBOX).exists());
         gone(&folder, &waiting[0].id).unwrap();
         gone(&folder, &waiting[0].id).unwrap();
         assert_eq!(
-            super::waiting(&folder)
-                .into_iter()
-                .map(|one| one.text)
-                .collect::<Vec<_>>(),
+            super::waiting(&folder).into_iter().map(|one| one.text).collect::<Vec<_>>(),
             ["bread"]
         );
     }

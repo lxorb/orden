@@ -55,11 +55,7 @@ struct Seen {
 }
 impl Seen {
     fn first(&mut self, program: &str, args: &str, name: &str) -> bool {
-        let program = format!(
-            "{}\u{0}{}",
-            program.to_lowercase(),
-            args.trim().to_lowercase()
-        );
+        let program = format!("{}\u{0}{}", program.to_lowercase(), args.trim().to_lowercase());
         let name = name.to_lowercase();
         if self.programs.contains(&program) || self.names.contains(&name) {
             return false;
@@ -115,10 +111,7 @@ fn shortcuts(folder: &Path, depth: usize, found: &mut Vec<PathBuf>) {
             if depth < 4 {
                 shortcuts(&path, depth + 1, found);
             }
-        } else if path
-            .extension()
-            .is_some_and(|extension| extension.eq_ignore_ascii_case("lnk"))
-        {
+        } else if path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("lnk")) {
             found.push(path);
         }
     }
@@ -146,8 +139,7 @@ pub fn not_an_application(name: &str, program: &str) -> bool {
         || STARTS.iter().any(|one| file.starts_with(one))
 }
 fn is_program(path: &Path) -> bool {
-    path.extension()
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("exe"))
+    path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("exe"))
         && path.is_file()
 }
 #[allow(unsafe_code)]
@@ -160,10 +152,7 @@ fn taken(text: PWSTR) -> Option<String> {
     read.filter(|one| !one.is_empty())
 }
 fn written(buffer: &[u16]) -> String {
-    let end = buffer
-        .iter()
-        .position(|&one| one == 0)
-        .unwrap_or(buffer.len());
+    let end = buffer.iter().position(|&one| one == 0).unwrap_or(buffer.len());
     String::from_utf16_lossy(&buffer[..end])
 }
 #[allow(unsafe_code)]
@@ -186,10 +175,8 @@ fn shortcut(link: &Path, with_icons: bool) -> Option<Entry> {
         return None;
     }
     let item = shell_item(link)?;
-    let name = display_name(&item).or_else(|| {
-        link.file_stem()
-            .map(|stem| stem.to_string_lossy().into_owned())
-    })?;
+    let name = display_name(&item)
+        .or_else(|| link.file_stem().map(|stem| stem.to_string_lossy().into_owned()))?;
     if not_an_application(&name, &program) {
         return None;
     }
@@ -222,9 +209,7 @@ pub fn arguments(line: &str) -> Vec<String> {
         return Vec::new();
     }
     let count = usize::try_from(count).unwrap_or(0);
-    let words = (1..count)
-        .filter_map(|at| unsafe { (*list.add(at)).to_string() }.ok())
-        .collect();
+    let words = (1..count).filter_map(|at| unsafe { (*list.add(at)).to_string() }.ok()).collect();
     unsafe {
         let _ = LocalFree(HLOCAL(list.cast()));
     }
@@ -244,10 +229,7 @@ fn icon(item: &IShellItem) -> Option<String> {
     let factory: IShellItemImageFactory = item.cast().ok()?;
     let side = i32::try_from(icons::SIDE).ok()?;
     let bitmap = unsafe {
-        factory.GetImage(
-            SIZE { cx: side, cy: side },
-            SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK,
-        )
+        factory.GetImage(SIZE { cx: side, cy: side }, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK)
     }
     .ok()?;
     let read = bitmap_rgba(bitmap);
@@ -255,10 +237,7 @@ fn icon(item: &IShellItem) -> Option<String> {
         let _ = DeleteObject(bitmap);
     }
     let (rgba, width, height) = read?;
-    Some(icons::data_url(
-        "image/png",
-        &icons::rgba_png(&rgba, width, height)?,
-    ))
+    Some(icons::data_url("image/png", &icons::rgba_png(&rgba, width, height)?))
 }
 #[allow(unsafe_code)]
 pub(super) fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
@@ -302,19 +281,13 @@ pub(super) fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
     if lines == 0 {
         return None;
     }
-    Some((
-        straight(&bgra),
-        u32::try_from(width).ok()?,
-        u32::try_from(height).ok()?,
-    ))
+    Some((straight(&bgra), u32::try_from(width).ok()?, u32::try_from(height).ok()?))
 }
 pub fn straight(bgra: &[u8]) -> Vec<u8> {
     let pixels = bgra.as_chunks::<4>().0;
     let no_alpha = pixels.iter().all(|one| one[3] == 0);
-    let premultiplied = !no_alpha
-        && pixels
-            .iter()
-            .all(|one| one[0].max(one[1]).max(one[2]) <= one[3]);
+    let premultiplied =
+        !no_alpha && pixels.iter().all(|one| one[0].max(one[1]).max(one[2]) <= one[3]);
     let mut out = Vec::with_capacity(bgra.len());
     for &[blue, green, red, alpha] in pixels {
         if no_alpha {
@@ -382,14 +355,9 @@ pub fn is_package_id(id: &str) -> bool {
 }
 fn app_paths(with_icons: bool) -> Vec<Entry> {
     const KEY: &str = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
-    let system = std::env::var("SystemRoot")
-        .ok()
-        .map(|one| one.to_lowercase());
+    let system = std::env::var("SystemRoot").ok().map(|one| one.to_lowercase());
     let mut found = Vec::new();
-    for root in [
-        windows_registry::LOCAL_MACHINE,
-        windows_registry::CURRENT_USER,
-    ] {
+    for root in [windows_registry::LOCAL_MACHINE, windows_registry::CURRENT_USER] {
         let Ok(paths) = root.open(KEY) else {
             continue;
         };
@@ -438,8 +406,7 @@ pub fn inside(path: &str, folder: &str) -> bool {
     let path = path.to_lowercase().replace('/', "\\");
     let folder = folder.to_lowercase().replace('/', "\\");
     let folder = folder.trim_end_matches('\\');
-    path.strip_prefix(folder)
-        .is_some_and(|rest| rest.starts_with('\\'))
+    path.strip_prefix(folder).is_some_and(|rest| rest.starts_with('\\'))
 }
 #[allow(unsafe_code)]
 fn description(item: &IShellItem) -> Option<String> {
@@ -476,21 +443,12 @@ mod tests {
 
     #[test]
     fn leaves_out_uninstallers_setups_and_help() {
-        assert!(not_an_application(
-            "Uninstall GIMP",
-            "C:\\GIMP\\unins000.exe"
-        ));
+        assert!(not_an_application("Uninstall GIMP", "C:\\GIMP\\unins000.exe"));
         assert!(not_an_application("GIMP", "C:\\GIMP\\uninst.exe"));
         assert!(not_an_application("Deinstallieren", "C:\\x\\app.exe"));
         assert!(not_an_application("Setup", "C:\\x\\setup.exe"));
-        assert!(!not_an_application(
-            "GIMP 2.10",
-            "C:\\GIMP\\bin\\gimp-2.10.exe"
-        ));
-        assert!(!not_an_application(
-            "Installer Helper",
-            "C:\\x\\installer.exe"
-        ));
+        assert!(!not_an_application("GIMP 2.10", "C:\\GIMP\\bin\\gimp-2.10.exe"));
+        assert!(!not_an_application("Installer Helper", "C:\\x\\installer.exe"));
     }
     #[test]
     fn knows_a_path_inside_a_folder_whatever_its_case() {
@@ -501,13 +459,9 @@ mod tests {
     }
     #[test]
     fn knows_a_package_id_from_a_desktop_programs() {
-        assert!(is_package_id(
-            "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"
-        ));
+        assert!(is_package_id("Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"));
         assert!(!is_package_id("Microsoft.Windows.Explorer"));
-        assert!(!is_package_id(
-            "{6D809377-6AF0-444B-8957-A3773F02200E}\\GIMP\\gimp.exe"
-        ));
+        assert!(!is_package_id("{6D809377-6AF0-444B-8957-A3773F02200E}\\GIMP\\gimp.exe"));
         assert!(!is_package_id("Chrome"));
     }
     #[test]
@@ -521,10 +475,7 @@ mod tests {
     #[test]
     fn expands_the_environment_in_a_path() {
         let root = std::env::var("SystemRoot").unwrap();
-        assert_eq!(
-            expanded("%SystemRoot%\\notepad.exe"),
-            format!("{root}\\notepad.exe")
-        );
+        assert_eq!(expanded("%SystemRoot%\\notepad.exe"), format!("{root}\\notepad.exe"));
         assert_eq!(expanded("%NOT_SET_HERE_1063%\\x"), "%NOT_SET_HERE_1063%\\x");
         assert_eq!(expanded("100% sure"), "100% sure");
     }
@@ -532,10 +483,7 @@ mod tests {
     fn reads_the_shells_pixels_straight() {
         assert_eq!(straight(&[128, 128, 128, 128]), vec![255, 255, 255, 128]);
         assert_eq!(straight(&[1, 2, 3, 0]), vec![3, 2, 1, 255]);
-        assert_eq!(
-            straight(&[200, 0, 0, 100, 0, 0, 0, 255]),
-            vec![0, 0, 200, 100, 0, 0, 0, 255]
-        );
+        assert_eq!(straight(&[200, 0, 0, 100, 0, 0, 0, 255]), vec![0, 0, 200, 100, 0, 0, 0, 255]);
     }
     #[test]
     fn lists_this_computers_applications_once_each_with_icons() {
@@ -545,29 +493,17 @@ mod tests {
         assert!(!found.is_empty(), "no application found");
         let mut ids = HashSet::new();
         for one in &found {
-            assert!(
-                ids.insert(one.listed.id.clone()),
-                "listed twice: {}",
-                one.listed.id
-            );
+            assert!(ids.insert(one.listed.id.clone()), "listed twice: {}", one.listed.id);
             assert!(!not_an_application(
                 &one.listed.name,
                 one.argv.first().map_or("", String::as_str)
             ));
             if !one.packaged {
-                assert!(
-                    is_program(Path::new(&one.argv[0])),
-                    "not a program: {:?}",
-                    one.argv
-                );
+                assert!(is_program(Path::new(&one.argv[0])), "not a program: {:?}", one.argv);
             }
         }
         let with = found.iter().filter(|one| one.listed.icon.is_some()).count();
-        assert!(
-            with * 2 >= found.len(),
-            "only {with} of {} have icons",
-            found.len()
-        );
+        assert!(with * 2 >= found.len(), "only {with} of {} have icons", found.len());
         assert!(entries(false).iter().all(|one| one.listed.icon.is_none()));
     }
 }

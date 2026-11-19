@@ -8,10 +8,7 @@ use super::{Entry, Listed};
 
 #[cfg(target_os = "macos")]
 fn roots() -> Vec<PathBuf> {
-    let mut roots = vec![
-        PathBuf::from("/Applications"),
-        PathBuf::from("/System/Applications"),
-    ];
+    let mut roots = vec![PathBuf::from("/Applications"), PathBuf::from("/System/Applications")];
     if let Some(home) = dirs::home_dir() {
         roots.insert(0, home.join("Applications"));
     }
@@ -54,9 +51,7 @@ pub fn program(bundle: &Path) -> Option<String> {
         .map(str::trim)
         .filter(|one| !one.is_empty() && !one.contains('/'))?;
     let program = contents.join("MacOS").join(executable);
-    program
-        .is_file()
-        .then(|| program.to_string_lossy().into_owned())
+    program.is_file().then(|| program.to_string_lossy().into_owned())
 }
 pub fn bundles(root: &Path) -> Vec<PathBuf> {
     let mut found = Vec::new();
@@ -226,19 +221,13 @@ mod tests {
         );
         bundle("Plain.app", "");
         let found = bundles(&root);
-        let names: Vec<String> = found
-            .iter()
-            .filter_map(|path| read(path, true))
-            .map(|one| one.name)
-            .collect();
+        let names: Vec<String> =
+            found.iter().filter_map(|path| read(path, true)).map(|one| one.name).collect();
         assert_eq!(names, vec!["Plain", "Terminal"]);
         let terminal = read(&root.join("Utilities/Terminal.app"), true).unwrap();
         assert_eq!(terminal.key, "com.apple.Terminal");
         assert_eq!(terminal.icon, Some(icons::data_url("image/png", &png(32))));
-        assert!(read(&root.join("Utilities/Terminal.app"), false)
-            .unwrap()
-            .icon
-            .is_none());
+        assert!(read(&root.join("Utilities/Terminal.app"), false).unwrap().icon.is_none());
         let terminal = root.join("Utilities/Terminal.app");
         assert_eq!(program(&terminal), None);
         std::fs::create_dir_all(terminal.join("Contents/MacOS")).unwrap();

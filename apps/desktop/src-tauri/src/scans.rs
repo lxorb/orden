@@ -15,10 +15,7 @@ fn every_window_is_built_where_the_run_sends_them() {
             unplaced.push(name);
         }
     }
-    assert!(
-        unplaced.is_empty(),
-        "built past `placement::built`: {unplaced:?}"
-    );
+    assert!(unplaced.is_empty(), "built past `placement::built`: {unplaced:?}");
 }
 #[test]
 fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
@@ -44,8 +41,7 @@ fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
         let text = std::fs::read_to_string(&path).unwrap_or_default();
         if name == "crates/web/src/keyboard.rs" {
             assert_eq!(
-                text.matches("orden_placement::placement::away().is_some()")
-                    .count(),
+                text.matches("orden_placement::placement::away().is_some()").count(),
                 2,
                 "keyboard.rs hands the keyboard over past the guard"
             );
@@ -89,19 +85,11 @@ fn nothing_moves_a_window_but_moved_as_it_is() {
             }
         }
     }
-    let inside_moved = found
-        .iter()
-        .filter(|at| at.starts_with("crates/placement/src/placement.rs:"))
-        .count();
+    let inside_moved =
+        found.iter().filter(|at| at.starts_with("crates/placement/src/placement.rs:")).count();
     found.retain(|at| !at.starts_with("crates/placement/src/placement.rs:"));
-    assert_eq!(
-        inside_moved, 1,
-        "placement.rs moves a window past `moved_as_it_is`"
-    );
-    assert!(
-        found.is_empty(),
-        "a window moved past `moved_as_it_is`: {found:?}"
-    );
+    assert_eq!(inside_moved, 1, "placement.rs moves a window past `moved_as_it_is`");
+    assert!(found.is_empty(), "a window moved past `moved_as_it_is`: {found:?}");
 }
 #[test]
 fn no_window_is_built_to_show_the_desk_where_nothing_is_drawn() {

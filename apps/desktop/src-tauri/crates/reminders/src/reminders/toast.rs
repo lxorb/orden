@@ -10,11 +10,7 @@ pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
     let mut choices = String::new();
     let mut add = |minutes: u32, label: &str| {
         if !choices.contains(&format!("id=\"{minutes}\"")) {
-            let _ = write!(
-                choices,
-                "<selection id=\"{minutes}\" content=\"{}\"/>",
-                escaped(label)
-            );
+            let _ = write!(choices, "<selection id=\"{minutes}\" content=\"{}\"/>", escaped(label));
         }
     };
     add(SNOOZES[0], &words.minutes);

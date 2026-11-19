@@ -51,11 +51,8 @@ impl Gemini {
         let files = launch.folder.join("gemini").join(id);
         orden_base::paths::made(&files)?;
         let mode = launch.mode.filter(|_| orden.is_some());
-        let settings = args::gemini_settings(
-            mode,
-            &launch.without,
-            orden.unwrap_or_else(|| Path::new("")),
-        );
+        let settings =
+            args::gemini_settings(mode, &launch.without, orden.unwrap_or_else(|| Path::new("")));
         std::fs::write(files.join("settings.json"), settings.to_string())
             .map_err(|error| error.to_string())?;
         std::fs::write(files.join("system.md"), args::session_system(launch.mode))
@@ -202,10 +199,7 @@ fn said_in(line: &str) -> Option<Said> {
     let session = (event["type"] == "init")
         .then(|| event["session_id"].as_str().map(str::to_owned))
         .flatten();
-    Some(Said {
-        session,
-        ended: event["type"] == "result",
-    })
+    Some(Said { session, ended: event["type"] == "result" })
 }
 pub fn standing(home: Option<&Home>) -> Value {
     let root = home
@@ -229,16 +223,12 @@ pub fn standing_in(dir: &Path, outside_key: bool) -> Value {
     let chosen = read("settings.json")
         .and_then(|one| {
             let picked = &one["security"]["auth"]["selectedType"];
-            picked
-                .as_str()
-                .or_else(|| one["selectedAuthType"].as_str())
-                .map(str::to_owned)
+            picked.as_str().or_else(|| one["selectedAuthType"].as_str()).map(str::to_owned)
         })
         .unwrap_or_default();
     let keyed = outside_key
         || std::fs::read_to_string(dir.join(".env")).is_ok_and(|text| {
-            text.lines()
-                .any(|line| line.trim_start().starts_with("GEMINI_API_KEY="))
+            text.lines().any(|line| line.trim_start().starts_with("GEMINI_API_KEY="))
         });
     let google = dir.join("oauth_creds.json").is_file() || chosen == "oauth-personal";
     let method = if chosen == "vertex-ai" {
@@ -327,10 +317,7 @@ mod tests {
         let gemini = Gemini::start(launch, "one", None, Duration::from_secs(30), None, output)
             .expect("started");
         gemini.stop();
-        let said = gemini.say(Say::Turn {
-            text: "hello".into(),
-            images: Vec::new(),
-        });
+        let said = gemini.say(Say::Turn { text: "hello".into(), images: Vec::new() });
         assert!(said.is_err_and(|why| why.contains("closed")));
         assert!(gemini.held.running.held().is_none());
         std::thread::sleep(Duration::from_millis(200));
@@ -364,20 +351,12 @@ mod tests {
         );
         let turning = Arc::clone(&gemini);
         let turn = std::thread::spawn(move || {
-            turning.say(Say::Turn {
-                text: "hello".into(),
-                images: Vec::new(),
-            })
+            turning.say(Say::Turn { text: "hello".into(), images: Vec::new() })
         });
-        starting
-            .recv_timeout(Duration::from_secs(5))
-            .expect("the turn starts");
+        starting.recv_timeout(Duration::from_secs(5)).expect("the turn starts");
         let asked = std::time::Instant::now();
         gemini.stop();
-        assert!(
-            asked.elapsed() < Duration::from_secs(2),
-            "stopping waited for the turn to start"
-        );
+        assert!(asked.elapsed() < Duration::from_secs(2), "stopping waited for the turn to start");
         go.send(()).expect("the turn goes on");
         let said = turn.join().expect("the turn");
         assert!(said.is_err_and(|why| why.contains("closed")));

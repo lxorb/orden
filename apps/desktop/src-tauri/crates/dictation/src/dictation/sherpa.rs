@@ -206,10 +206,7 @@ fn load(path: &Path) -> Result<Library, String> {
 #[allow(unsafe_code)]
 fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
     unsafe { library.get::<T>(name).map(|found| *found) }.map_err(|error| {
-        format!(
-            "the speech runtime has no {}: {error}",
-            String::from_utf8_lossy(name)
-        )
+        format!("the speech runtime has no {}: {error}", String::from_utf8_lossy(name))
     })
 }
 impl Engine {
@@ -218,9 +215,7 @@ impl Engine {
         let onnxruntime = load(&runtime.join(onnx))?;
         let library = load(&runtime.join(api))?;
         let version: Version = symbol(&library, b"SherpaOnnxGetVersionStr\0")?;
-        let said = unsafe { CStr::from_ptr(version()) }
-            .to_string_lossy()
-            .into_owned();
+        let said = unsafe { CStr::from_ptr(version()) }.to_string_lossy().into_owned();
         if said != RUNTIME_VERSION {
             return Err(format!(
                 "the speech runtime is {said}, and this version of Orden reads {RUNTIME_VERSION}"
@@ -245,10 +240,7 @@ impl Engine {
             pointer
         };
         let mut config: RecognizerConfig = unsafe { std::mem::zeroed() };
-        config.feat_config = FeatureConfig {
-            sample_rate: 16_000,
-            feature_dim: 80,
-        };
+        config.feat_config = FeatureConfig { sample_rate: 16_000, feature_dim: 80 };
         config.model_config.num_threads = opening.threads;
         config.model_config.provider = keep(text(opening.provider)?);
         config.model_config.transducer = Transducer {
@@ -268,11 +260,7 @@ impl Engine {
         if recognizer.is_null() {
             return Err("the speech model could not be opened".to_owned());
         }
-        Ok(Self {
-            recognizer,
-            calls,
-            _libraries: [library, onnxruntime],
-        })
+        Ok(Self { recognizer, calls, _libraries: [library, onnxruntime] })
     }
     pub fn hear(&self, samples: &[f32], names: &str) -> Result<String, String> {
         let names: Vec<String> = names
@@ -289,11 +277,7 @@ impl Engine {
         }
         let plain = self.pass(samples, None)?;
         let count = |text: &str| text.split_whitespace().count();
-        Ok(if count(&biased) <= count(&plain) + 1 {
-            biased
-        } else {
-            plain
-        })
+        Ok(if count(&biased) <= count(&plain) + 1 { biased } else { plain })
     }
     #[allow(unsafe_code)]
     fn pass(&self, samples: &[f32], hotwords: Option<&str>) -> Result<String, String> {
@@ -314,10 +298,7 @@ impl Engine {
             let words = if result.is_null() || (*result).text.is_null() {
                 String::new()
             } else {
-                CStr::from_ptr((*result).text)
-                    .to_string_lossy()
-                    .trim()
-                    .to_owned()
+                CStr::from_ptr((*result).text).to_string_lossy().trim().to_owned()
             };
             if !result.is_null() {
                 (c.drop_result)(result);

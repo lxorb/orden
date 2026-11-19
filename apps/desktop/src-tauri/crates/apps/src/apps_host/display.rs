@@ -140,12 +140,7 @@ impl Display {
             }
             std::thread::sleep(Duration::from_millis(25));
         }
-        let mut display = Display {
-            number,
-            server,
-            room: largest,
-            desk: None,
-        };
+        let mut display = Display { number, server, room: largest, desk: None };
         display.desk = Some(Desk::open(&display.name(), dpr).map_err(Starting::Failed)?);
         display.fit(width, height, dpr).map_err(Starting::Failed)?;
         Ok(display)
@@ -157,10 +152,7 @@ impl Display {
         self.desk.as_ref().map(|desk| desk.clipboard().clone())
     }
     pub fn fit(&self, width: u32, height: u32, dpr: f64) -> Result<(), String> {
-        let desk = self
-            .desk
-            .as_ref()
-            .ok_or("the display has no window manager")?;
+        let desk = self.desk.as_ref().ok_or("the display has no window manager")?;
         let (width, height) = within((width, height), self.room);
         resize(desk, width, height, dpr).map_err(|error| format!("RandR: {error}"))?;
         desk.scale(dpr);
@@ -191,8 +183,7 @@ fn resize(
     let x = desk.connection();
     let root = desk.root();
     let (wide, high) = (u16::try_from(width)?, u16::try_from(height)?);
-    x.extension_information(randr::X11_EXTENSION_NAME)?
-        .ok_or("the display has no RandR")?;
+    x.extension_information(randr::X11_EXTENSION_NAME)?.ok_or("the display has no RandR")?;
     let resources = x.randr_get_screen_resources_current(root)?.reply()?;
     let (&crtc, &output) = resources
         .crtcs
@@ -216,9 +207,7 @@ fn resize(
             name_len: u16::try_from(name.len())?,
             ..randr::ModeInfo::default()
         };
-        x.randr_create_mode(root, info, name.as_bytes())?
-            .reply()?
-            .mode
+        x.randr_create_mode(root, info, name.as_bytes())?.reply()?.mode
     };
     let _ = checked(x, x.randr_add_output_mode(output, mode)?);
     let now = x.get_geometry(root)?.reply()?;
@@ -247,10 +236,7 @@ fn resize(
         &[output],
     )?
     .reply()?;
-    checked(
-        x,
-        x.randr_set_screen_size(root, wide, high, millis_wide, millis_high)?,
-    )?;
+    checked(x, x.randr_set_screen_size(root, wide, high, millis_wide, millis_high)?)?;
     let made_at = x
         .setup()
         .roots
@@ -334,13 +320,10 @@ mod tests {
             if !crate::apps_host::needed(available(), "xvfb") {
                 return;
             }
-            let starting: Vec<_> = (0..16)
-                .map(|_| std::thread::spawn(|| Display::start(320, 240, 1.0)))
-                .collect();
-            let displays: Vec<Display> = starting
-                .into_iter()
-                .map(|one| one.join().unwrap().unwrap())
-                .collect();
+            let starting: Vec<_> =
+                (0..16).map(|_| std::thread::spawn(|| Display::start(320, 240, 1.0))).collect();
+            let displays: Vec<Display> =
+                starting.into_iter().map(|one| one.join().unwrap().unwrap()).collect();
             let mut numbers: Vec<u32> = displays.iter().map(|one| one.number).collect();
             numbers.sort_unstable();
             numbers.dedup();
@@ -409,22 +392,10 @@ mod tests {
             assert_eq!(size(), (800, 600));
             display.fit(9000, 600, 1.0).unwrap();
             assert_eq!(size(), (4096, 600));
-            let resources = x
-                .randr_get_screen_resources_current(root)
-                .unwrap()
-                .reply()
-                .unwrap();
-            let crtc = x
-                .randr_get_crtc_info(resources.crtcs[0], 0)
-                .unwrap()
-                .reply()
-                .unwrap();
+            let resources = x.randr_get_screen_resources_current(root).unwrap().reply().unwrap();
+            let crtc = x.randr_get_crtc_info(resources.crtcs[0], 0).unwrap().reply().unwrap();
             assert_eq!((crtc.width, crtc.height), (4096, 600));
-            assert!(
-                resources.modes.len() <= 2,
-                "{} modes",
-                resources.modes.len()
-            );
+            assert!(resources.modes.len() <= 2, "{} modes", resources.modes.len());
         });
     }
 }

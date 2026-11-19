@@ -48,14 +48,8 @@ pub fn read_tree(
     let space = space_root(&spaces, &path).unwrap_or_else(|| path.clone());
     let space = fs::canonicalize(&space).map_err(|error| cannot("resolve", &space, &error))?;
     let mut left = MAX_ENTRIES;
-    let tree = walk(
-        &space,
-        &path,
-        &options.unwrap_or_default(),
-        0,
-        &mut Seen::default(),
-        &mut left,
-    );
+    let tree =
+        walk(&space, &path, &options.unwrap_or_default(), 0, &mut Seen::default(), &mut left);
     orden_base::trace::mark(&format!("tree walked: {} entries", MAX_ENTRIES - left));
     tree
 }
@@ -96,10 +90,7 @@ fn walk(
                     children.push(if in_the_space(space, &child) {
                         walk(space, &child, options, depth + 1, seen, left)?
                     } else {
-                        Entry {
-                            unlisted: true,
-                            ..folder(&child, name)
-                        }
+                        Entry { unlisted: true, ..folder(&child, name) }
                     });
                 } else if options.every
                     || ((is_markdown(&child)
@@ -270,13 +261,7 @@ mod tests {
         let top = read(here, &options());
         assert_eq!(names(&top.children), ["Lecture.pages", "Orphan.pages.pdf"]);
         assert!(top.children[0].paper);
-        let every = read(
-            here,
-            &TreeOptions {
-                papers: true,
-                ..options()
-            },
-        );
+        let every = read(here, &TreeOptions { papers: true, ..options() });
         assert_eq!(
             names(&every.children),
             ["Lecture.pages", "Lecture.pages.pdf", "Orphan.pages.pdf"]
@@ -290,17 +275,8 @@ mod tests {
         std::fs::write(here.join("shot.png"), "").expect("a picture");
         std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("highlights");
         assert_eq!(names(&read(here, &options()).children), ["Idea.md"]);
-        let every = read(
-            here,
-            &TreeOptions {
-                every: true,
-                ..options()
-            },
-        );
-        assert_eq!(
-            names(&every.children),
-            ["Idea.md", "paper.pdf.highlights.json", "shot.png"]
-        );
+        let every = read(here, &TreeOptions { every: true, ..options() });
+        assert_eq!(names(&every.children), ["Idea.md", "paper.pdf.highlights.json", "shot.png"]);
     }
     #[test]
     fn a_folder_already_read_is_read_as_empty() {

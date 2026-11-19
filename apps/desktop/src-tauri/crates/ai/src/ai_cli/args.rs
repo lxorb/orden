@@ -117,10 +117,8 @@ pub fn with_thread(params: &mut Value, thread: &str) {
     params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
 }
 const TOOL_SECONDS: u64 = 600;
-pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] = [
-    ("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "1"),
-    ("MCP_TOOL_TIMEOUT", "600000"),
-];
+pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] =
+    [("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "1"), ("MCP_TOOL_TIMEOUT", "600000")];
 pub fn mcp_config(orden: &Path) -> Value {
     json!({
         "mcpServers": {
@@ -165,9 +163,7 @@ impl Caps {
         Self { flags }
     }
     fn has(&self, flag: &str) -> bool {
-        self.flags
-            .binary_search_by(|one| one.as_str().cmp(flag))
-            .is_ok()
+        self.flags.binary_search_by(|one| one.as_str().cmp(flag)).is_ok()
     }
 }
 fn claude_base(input: bool, partial: bool) -> Vec<String> {
@@ -175,27 +171,15 @@ fn claude_base(input: bool, partial: bool) -> Vec<String> {
     if input {
         args.extend(["--input-format".to_owned(), "stream-json".to_owned()]);
     }
-    args.extend(
-        ["--output-format", "stream-json", "--verbose"]
-            .map(str::to_owned)
-            .to_vec(),
-    );
+    args.extend(["--output-format", "stream-json", "--verbose"].map(str::to_owned).to_vec());
     if partial {
         args.push("--include-partial-messages".to_owned());
     }
-    args.extend(
-        ["--tools", "", "--strict-mcp-config"]
-            .map(str::to_owned)
-            .to_vec(),
-    );
+    args.extend(["--tools", "", "--strict-mcp-config"].map(str::to_owned).to_vec());
     args
 }
 fn present(caps: &Caps, flags: &[&str]) -> Vec<String> {
-    flags
-        .iter()
-        .filter(|flag| caps.has(flag))
-        .map(|flag| (*flag).to_owned())
-        .collect()
+    flags.iter().filter(|flag| caps.has(flag)).map(|flag| (*flag).to_owned()).collect()
 }
 pub fn ask(model: Option<&str>, caps: &Caps) -> Result<Vec<String>, String> {
     let model = checked_model(model)?;
@@ -215,29 +199,18 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
         return Err("out of date".to_owned());
     }
     let model = checked_model(shape.model)?;
-    let effort = shape
-        .effort
-        .map(|one| one.word(Tool::ClaudeCode))
-        .transpose()?;
+    let effort = shape.effort.map(|one| one.word(Tool::ClaudeCode)).transpose()?;
     let mut args = claude_base(true, true);
     if let Some(mode) = shape.mode {
         let (listed, left) = tools_of(mode, shape.without);
         let named = |names: &[String]| {
-            names
-                .iter()
-                .map(|name| format!("mcp__{SERVER}__{name}"))
-                .collect::<Vec<_>>()
-                .join(",")
+            names.iter().map(|name| format!("mcp__{SERVER}__{name}")).collect::<Vec<_>>().join(",")
         };
         args.extend([
             "--mcp-config".to_owned(),
             config.to_string_lossy().into_owned(),
             "--allowedTools".to_owned(),
-            if left.is_empty() {
-                format!("mcp__{SERVER}")
-            } else {
-                named(&listed)
-            },
+            if left.is_empty() { format!("mcp__{SERVER}") } else { named(&listed) },
         ]);
         if !left.is_empty() {
             args.extend(["--disallowedTools".to_owned(), named(&left)]);
@@ -249,10 +222,7 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
     if caps.has("--permission-prompts") {
         args.extend(["--permission-prompts".to_owned(), "none".to_owned()]);
     }
-    args.extend([
-        "--system-prompt".to_owned(),
-        session_system(shape.mode).to_owned(),
-    ]);
+    args.extend(["--system-prompt".to_owned(), session_system(shape.mode).to_owned()]);
     args.extend(present(caps, &["--no-session-persistence", "--restricted"]));
     if let Some(model) = model {
         args.extend(["--model".to_owned(), model.to_owned()]);
@@ -371,14 +341,10 @@ pub fn gemini_turn(
         return Err("out of date".to_owned());
     }
     let model = checked_model(model)?;
-    let mut args: Vec<String> = [
-        "--output-format",
-        "stream-json",
-        "--allowed-mcp-server-names",
-        SERVER,
-    ]
-    .map(str::to_owned)
-    .to_vec();
+    let mut args: Vec<String> =
+        ["--output-format", "stream-json", "--allowed-mcp-server-names", SERVER]
+            .map(str::to_owned)
+            .to_vec();
     args.extend(present(caps, &["--skip-trust"]));
     if let Some(model) = model {
         args.extend(["--model".to_owned(), model.to_owned()]);
@@ -395,9 +361,7 @@ fn session_ok(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 80
         && !id.starts_with('-')
-        && id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
 }
 pub fn status(tool: Tool) -> &'static [&'static str] {
     match tool {
@@ -446,26 +410,15 @@ mod tests {
         let mut all = ask(None, &caps).expect("args");
         all.extend(codex_server());
         all.extend(claude_listing(&caps));
-        for mode in [
-            None,
-            Some(Mode::Approve),
-            Some(Mode::Plan),
-            Some(Mode::Auto),
-            Some(Mode::Full),
-        ] {
-            let shape = Shape {
-                mode,
-                model: Some("opus[1m]"),
-                effort: Some(Effort::Xhigh),
-                without: &[],
-            };
+        for mode in
+            [None, Some(Mode::Approve), Some(Mode::Plan), Some(Mode::Auto), Some(Mode::Full)]
+        {
+            let shape =
+                Shape { mode, model: Some("opus[1m]"), effort: Some(Effort::Xhigh), without: &[] };
             all.extend(claude_session(shape, &caps, &config()).expect("session"));
         }
         for arg in all {
-            assert!(
-                !arg.contains(['"', '%', '\n', '\r', '^', '&', '|', '<', '>']),
-                "{arg}"
-            );
+            assert!(!arg.contains(['"', '%', '\n', '\r', '^', '&', '|', '<', '>']), "{arg}");
         }
     }
     #[test]
@@ -481,23 +434,15 @@ mod tests {
     #[test]
     fn a_session_lists_only_orden_and_only_its_mode_s_tools() {
         let caps = Caps::from_help(CLAUDE_HELP);
-        let shape = |mode| Shape {
-            mode: Some(mode),
-            ..Shape::default()
-        };
+        let shape = |mode| Shape { mode: Some(mode), ..Shape::default() };
         let plan = claude_session(shape(Mode::Plan), &caps, &config()).expect("plan");
         assert_eq!(value_of(&plan, "--tools"), Some(""));
-        assert_eq!(
-            value_of(&plan, "--mcp-config"),
-            Some(config().to_string_lossy().as_ref())
-        );
+        assert_eq!(value_of(&plan, "--mcp-config"), Some(config().to_string_lossy().as_ref()));
         let allowed = value_of(&plan, "--allowedTools").expect("allowed");
         assert!(allowed.contains("mcp__orden__read_note"));
         assert!(allowed.contains("mcp__orden__create_note"));
         assert!(!allowed.contains("edit_note") && !allowed.contains("write_note"));
-        assert!(allowed
-            .split(',')
-            .all(|one| one.starts_with("mcp__orden__")));
+        assert!(allowed.split(',').all(|one| one.starts_with("mcp__orden__")));
         let denied = value_of(&plan, "--disallowedTools").expect("denied");
         assert!(denied.contains("mcp__orden__edit_note"));
         assert!(denied.contains("mcp__orden__run_terminal"));
@@ -523,11 +468,7 @@ mod tests {
     fn a_thread_s_tools_left_out_are_never_shown() {
         let caps = Caps::from_help(CLAUDE_HELP);
         let without = ["browser_navigate".to_owned(), "write_note".to_owned()];
-        let auto = Shape {
-            mode: Some(Mode::Auto),
-            without: &without,
-            ..Shape::default()
-        };
+        let auto = Shape { mode: Some(Mode::Auto), without: &without, ..Shape::default() };
         let args = claude_session(auto, &caps, &config()).expect("auto");
         let allowed = value_of(&args, "--allowedTools").expect("allowed");
         assert!(allowed.contains("mcp__orden__update_task"));
@@ -561,10 +502,7 @@ mod tests {
         let args = claude_session(shape, &caps, &config()).expect("args");
         assert_eq!(value_of(&args, "--model"), Some("sonnet[1m]"));
         assert_eq!(value_of(&args, "--effort"), Some("max"));
-        let off = Shape {
-            effort: Some(Effort::Off),
-            ..shape
-        };
+        let off = Shape { effort: Some(Effort::Off), ..shape };
         assert!(claude_session(off, &caps, &config()).is_err());
         let older = Caps::from_help("--input-format");
         let args = claude_session(shape, &older, &config()).expect("args");
@@ -589,13 +527,7 @@ mod tests {
     fn a_codex_thread_adds_orden_alone_with_its_mode_s_tools() {
         let orden = PathBuf::from("orden.exe");
         let folder = PathBuf::from("ai");
-        let plan = codex_thread(
-            Some(Mode::Plan),
-            Some("gpt-5.1-codex"),
-            &[],
-            &orden,
-            &folder,
-        );
+        let plan = codex_thread(Some(Mode::Plan), Some("gpt-5.1-codex"), &[], &orden, &folder);
         assert_eq!(plan["sandbox"], "read-only");
         assert_eq!(plan["approvalPolicy"], "never");
         assert_eq!(plan["ephemeral"], true);
@@ -603,9 +535,7 @@ mod tests {
         let config = &plan["config"];
         assert_eq!(config["mcp_servers.orden.args"], json!(["mcp"]));
         assert_eq!(config["mcp_servers.orden.env_vars"], json!([TOKEN_VAR]));
-        let enabled = config["mcp_servers.orden.enabled_tools"]
-            .as_array()
-            .expect("enabled");
+        let enabled = config["mcp_servers.orden.enabled_tools"].as_array().expect("enabled");
         assert!(enabled.contains(&json!("read_note")));
         assert!(!enabled.contains(&json!("edit_note")));
         assert!(config
@@ -643,13 +573,7 @@ mod tests {
     }
     #[test]
     fn a_model_is_a_value_and_never_a_flag() {
-        for good in [
-            "opus",
-            "claude-opus-4-5",
-            "sonnet[1m]",
-            "gpt-5.1-codex",
-            "o3:high",
-        ] {
+        for good in ["opus", "claude-opus-4-5", "sonnet[1m]", "gpt-5.1-codex", "o3:high"] {
             assert!(model_ok(good), "{good} was refused");
         }
         for bad in [
@@ -663,10 +587,7 @@ mod tests {
         ] {
             assert!(!model_ok(bad), "{bad:?} was taken");
             assert!(ask(Some(bad), &Caps::default()).is_err());
-            let shape = Shape {
-                model: Some(bad),
-                ..Shape::default()
-            };
+            let shape = Shape { model: Some(bad), ..Shape::default() };
             assert!(claude_session(shape, &Caps::from_help(CLAUDE_HELP), &config()).is_err());
         }
     }
@@ -700,9 +621,7 @@ mod tests {
         assert!(!line.contains("yolo"), "{line}");
         let older = Caps::from_help("--output-format");
         let first = gemini_turn(None, None, &older).expect("args");
-        assert!(!first
-            .iter()
-            .any(|one| one == "--skip-trust" || one == "--resume"));
+        assert!(!first.iter().any(|one| one == "--skip-trust" || one == "--resume"));
         assert!(gemini_turn(None, None, &Caps::default()).is_err());
         assert!(gemini_turn(Some("--yolo"), None, &caps).is_err());
         assert!(gemini_turn(None, Some("--yolo"), &caps).is_err());

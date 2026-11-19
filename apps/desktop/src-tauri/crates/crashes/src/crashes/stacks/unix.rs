@@ -74,15 +74,14 @@ pub fn walking() -> Walking {
     if me == 0 || is_walking(me) {
         return Walking(None);
     }
-    Walking(WALKING.iter().position(|slot| {
-        slot.compare_exchange(0, me, Ordering::AcqRel, Ordering::Relaxed)
-            .is_ok()
-    }))
+    Walking(
+        WALKING.iter().position(|slot| {
+            slot.compare_exchange(0, me, Ordering::AcqRel, Ordering::Relaxed).is_ok()
+        }),
+    )
 }
 fn is_walking(me: usize) -> bool {
-    WALKING
-        .iter()
-        .any(|slot| slot.load(Ordering::Acquire) == me)
+    WALKING.iter().any(|slot| slot.load(Ordering::Acquire) == me)
 }
 #[cfg(target_os = "linux")]
 fn unwinding() -> bool {
@@ -110,11 +109,7 @@ extern "C" fn answer(_signal: c_int) {
         return;
     }
     let mut ips = [0usize; MOST_FRAMES];
-    let len = if is_walking(me) || unwinding() {
-        0
-    } else {
-        trace(&mut ips)
-    };
+    let len = if is_walking(me) || unwinding() { 0 } else { trace(&mut ips) };
     for (at, ip) in ips[..len].iter().enumerate() {
         ANSWER[at].store(*ip, Ordering::Relaxed);
     }
@@ -150,12 +145,7 @@ fn asked_of(target: usize, within: Duration, send: impl FnOnce(c_int) -> bool) -
         std::thread::sleep(Duration::from_millis(1));
     }
     let len = ANSWER_LEN.load(Ordering::Relaxed).min(MOST_FRAMES);
-    Asked::Answered(
-        ANSWER[..len]
-            .iter()
-            .map(|one| one.load(Ordering::Relaxed))
-            .collect(),
-    )
+    Asked::Answered(ANSWER[..len].iter().map(|one| one.load(Ordering::Relaxed)).collect())
 }
 fn asking(
     target: usize,
@@ -206,17 +196,10 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
             break;
         };
         let target = usize::try_from(tid).unwrap_or(0);
-        let ips = asking(
-            target,
-            &mut silent,
-            left.min(Duration::from_secs(1)),
-            |signal| unsafe { libc::tgkill(process, tid, signal) == 0 },
-        );
-        found.push(Raw {
-            name,
-            main: i64::from(tid) == i64::from(pid),
-            ips,
+        let ips = asking(target, &mut silent, left.min(Duration::from_secs(1)), |signal| unsafe {
+            libc::tgkill(process, tid, signal) == 0
         });
+        found.push(Raw { name, main: i64::from(tid) == i64::from(pid), ips });
     }
     found
 }
@@ -237,9 +220,8 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     if unsafe { libc::task_threads(task, &raw mut list, &raw mut count) } != 0 || list.is_null() {
         return Vec::new();
     }
-    let ports: Vec<libc::thread_act_t> = (0..count as usize)
-        .map(|at| unsafe { *list.add(at) })
-        .collect();
+    let ports: Vec<libc::thread_act_t> =
+        (0..count as usize).map(|at| unsafe { *list.add(at) }).collect();
     let mut found = Vec::new();
     let mut silent = 0;
     for port in &ports {
@@ -262,12 +244,9 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
                 String::new()
             };
         let main = Some(thread) == main_thread();
-        let ips = asking(
-            thread,
-            &mut silent,
-            left.min(Duration::from_secs(1)),
-            |signal| unsafe { libc::pthread_kill(thread, signal) == 0 },
-        );
+        let ips = asking(thread, &mut silent, left.min(Duration::from_secs(1)), |signal| unsafe {
+            libc::pthread_kill(thread, signal) == 0
+        });
         found.push(Raw { name, main, ips });
     }
     for port in ports {
@@ -378,10 +357,8 @@ mod tests {
             let threads = super::every_thread(Duration::from_secs(10));
             told.send(()).expect("told");
             waiter.join().expect("joined");
-            let found = threads
-                .iter()
-                .find(|one| one.name.contains("orden small"))
-                .expect("the thread");
+            let found =
+                threads.iter().find(|one| one.name.contains("orden small")).expect("the thread");
             assert!(found.ips.len() >= 3, "only {} frames", found.ips.len());
             return;
         }

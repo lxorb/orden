@@ -67,12 +67,7 @@ pub fn size_of(body: &[u8]) -> Option<(u16, u16)> {
     Some((u16::from_le_bytes([a, b]), u16::from_le_bytes([c, d])))
 }
 pub fn same(one: &[u8], other: &[u8]) -> bool {
-    one.len() == other.len()
-        && one
-            .iter()
-            .zip(other)
-            .fold(0u8, |seen, (a, b)| seen | (a ^ b))
-            == 0
+    one.len() == other.len() && one.iter().zip(other).fold(0u8, |seen, (a, b)| seen | (a ^ b)) == 0
 }
 #[cfg(test)]
 mod tests {
@@ -84,10 +79,7 @@ mod tests {
         send(&mut line, OUT, b"hello").expect("sent");
         send(&mut line, SIZE, &size(120, 40)).expect("sent");
         let mut reading = line.as_slice();
-        assert_eq!(
-            heard(&mut reading).expect("a frame"),
-            (OUT, b"hello".to_vec())
-        );
+        assert_eq!(heard(&mut reading).expect("a frame"), (OUT, b"hello".to_vec()));
         let (kind, body) = heard(&mut reading).expect("a frame");
         assert_eq!(kind, SIZE);
         assert_eq!(size_of(&body), Some((120, 40)));

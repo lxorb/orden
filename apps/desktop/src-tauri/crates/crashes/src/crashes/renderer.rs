@@ -49,9 +49,8 @@ impl Pages {
         Some(Seen::Answered(report))
     }
     pub fn look(&mut self, at: Instant, window_answers: bool) -> Vec<Seen> {
-        let late = self
-            .looked
-            .is_some_and(|before| at.saturating_duration_since(before) > LATE_TICK);
+        let late =
+            self.looked.is_some_and(|before| at.saturating_duration_since(before) > LATE_TICK);
         self.looked = Some(at);
         let mut seen = Vec::new();
         for page in self.pages.values_mut() {
@@ -158,10 +157,7 @@ mod tests {
         let mut at = start;
         for _ in 0..40 {
             at += Duration::from_millis(500);
-            assert!(pages
-                .look(at, false)
-                .iter()
-                .all(|seen| !matches!(seen, Seen::Hung(_))));
+            assert!(pages.look(at, false).iter().all(|seen| !matches!(seen, Seen::Hung(_))));
         }
         pages.heard("hidden", "A document window’s", false, at);
         at += Duration::from_secs(60);

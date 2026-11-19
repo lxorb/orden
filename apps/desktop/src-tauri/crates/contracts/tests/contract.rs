@@ -18,18 +18,11 @@ impl NoteStore for Memory {
             .ok_or_else(|| Failure::new("fake", FailureKind::Missing, "no such note"))
     }
     fn write(&self, path: &NotePath, words: &str) -> Outcome<()> {
-        self.0
-            .lock()
-            .expect("the fake's lock")
-            .insert(path.as_str().to_owned(), words.to_owned());
+        self.0.lock().expect("the fake's lock").insert(path.as_str().to_owned(), words.to_owned());
         Ok(())
     }
     fn write_bytes(&self, _path: &NotePath, _bytes: &[u8]) -> Outcome<()> {
-        Err(Failure::new(
-            "fake",
-            FailureKind::Unsupported,
-            "the fake holds words only",
-        ))
+        Err(Failure::new("fake", FailureKind::Unsupported, "the fake holds words only"))
     }
     fn tree(&self, space: &SpaceId) -> Outcome<Entry> {
         Ok(Entry {

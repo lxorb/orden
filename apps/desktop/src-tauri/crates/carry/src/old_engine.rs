@@ -45,9 +45,7 @@ fn carry_databases(config: &Path, homes: &[Home]) {
     if config.join(DATABASES_CARRIED).exists() {
         return;
     }
-    let profile = config
-        .join(orden_web_engine::ROOT)
-        .join(orden_web_engine::APP_PROFILE);
+    let profile = config.join(orden_web_engine::ROOT).join(orden_web_engine::APP_PROFILE);
     for home in homes {
         if let Some(old) = home.databases.as_deref().filter(|dir| dir.is_dir()) {
             if databases::carry_chromium(old, &profile).is_ok() {
@@ -123,8 +121,7 @@ impl Latest {
         if self.0.get(key).is_some_and(|(at, _)| *at >= sequence) {
             return;
         }
-        self.0
-            .insert(key.to_vec(), (sequence, value.map(<[u8]>::to_vec)));
+        self.0.insert(key.to_vec(), (sequence, value.map(<[u8]>::to_vec)));
     }
 }
 fn chromium(dir: &Path) -> Values {
@@ -148,10 +145,7 @@ fn chromium(dir: &Path) -> Values {
         .0
         .into_iter()
         .filter_map(|(key, (_, value))| {
-            Some((
-                chromium_text(&key[CHROMIUM_ORIGIN.len()..])?,
-                chromium_text(&value?)?,
-            ))
+            Some((chromium_text(&key[CHROMIUM_ORIGIN.len()..])?, chromium_text(&value?)?))
         })
         .collect()
 }
@@ -167,12 +161,8 @@ fn utf16(bytes: &[u8]) -> Option<String> {
     if !bytes.len().is_multiple_of(2) {
         return None;
     }
-    let units: Vec<u16> = bytes
-        .as_chunks::<2>()
-        .0
-        .iter()
-        .map(|pair| u16::from_le_bytes(*pair))
-        .collect();
+    let units: Vec<u16> =
+        bytes.as_chunks::<2>().0.iter().map(|pair| u16::from_le_bytes(*pair)).collect();
     String::from_utf16(&units).ok()
 }
 fn varint(bytes: &[u8], mut at: usize) -> Option<(usize, usize)> {
@@ -256,11 +246,7 @@ fn table(bytes: &[u8], latest: &mut Latest) -> Option<()> {
         for (key, value) in entries(&block(bytes, offset, size)?)? {
             let split = key.len().checked_sub(8)?;
             let tag = u64::from_le_bytes(key[split..].try_into().ok()?);
-            latest.heard(
-                &key[..split],
-                tag >> 8,
-                (tag & 0xff == 1).then_some(&value[..]),
-            );
+            latest.heard(&key[..split], tag >> 8, (tag & 0xff == 1).then_some(&value[..]));
         }
     }
     Some(())
@@ -276,10 +262,8 @@ fn block(bytes: &[u8], offset: usize, size: usize) -> Option<Vec<u8>> {
 }
 fn entries(block: &[u8]) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
     let count = u32::from_le_bytes(block.get(block.len().checked_sub(4)?..)?.try_into().ok()?);
-    let end = block
-        .len()
-        .checked_sub(4)?
-        .checked_sub(usize::try_from(count).ok()?.checked_mul(4)?)?;
+    let end =
+        block.len().checked_sub(4)?.checked_sub(usize::try_from(count).ok()?.checked_mul(4)?)?;
     let mut out = Vec::new();
     let mut key: Vec<u8> = Vec::new();
     let mut at = 0;
@@ -293,10 +277,7 @@ fn entries(block: &[u8]) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
         key.truncate(shared);
         key.extend_from_slice(block.get(next..next.checked_add(own)?)?);
         let value_at = next + own;
-        out.push((
-            key.clone(),
-            block.get(value_at..value_at.checked_add(size)?)?.to_vec(),
-        ));
+        out.push((key.clone(), block.get(value_at..value_at.checked_add(size)?)?.to_vec()));
         at = value_at + size;
     }
     Some(out)
@@ -325,10 +306,7 @@ fn unsnappy(input: &[u8]) -> Option<Vec<u8>> {
             1 => {
                 let low = usize::from(*input.get(at)?);
                 at += 1;
-                (
-                    4 + usize::from((tag >> 2) & 7),
-                    (usize::from(tag & 0xe0) << 3) | low,
-                )
+                (4 + usize::from((tag >> 2) & 7), (usize::from(tag & 0xe0) << 3) | low)
             }
             2 => {
                 let said = u16::from_le_bytes(input.get(at..at + 2)?.try_into().ok()?);
@@ -354,10 +332,7 @@ fn webkit(dir: &Path) -> Values {
     let mut found = Vec::new();
     webkit_stores(dir, 0, &mut found);
     found.sort_by_key(|path| fs::metadata(path).and_then(|meta| meta.modified()).ok());
-    found
-        .last()
-        .and_then(|path| webkit_values(path).ok())
-        .unwrap_or_default()
+    found.last().and_then(|path| webkit_values(path).ok()).unwrap_or_default()
 }
 fn webkit_stores(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
     if depth > 8 {
@@ -372,10 +347,7 @@ fn webkit_stores(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
         let name = entry.file_name();
         if name == WEBKIT_LEGACY
             || (name == WEBKIT_STORE
-                && path
-                    .parent()
-                    .and_then(Path::parent)
-                    .is_some_and(webkit_app_origin))
+                && path.parent().and_then(Path::parent).is_some_and(webkit_app_origin))
         {
             found.push(path);
         }
@@ -430,11 +402,8 @@ mod tests {
             .unwrap();
         for (key, value) in rows {
             let bytes: Vec<u8> = value.encode_utf16().flat_map(u16::to_le_bytes).collect();
-            db.execute(
-                "INSERT INTO ItemTable VALUES (?1, ?2)",
-                rusqlite::params![key, bytes],
-            )
-            .unwrap();
+            db.execute("INSERT INTO ItemTable VALUES (?1, ?2)", rusqlite::params![key, bytes])
+                .unwrap();
         }
     }
     #[test]
@@ -454,18 +423,10 @@ mod tests {
     #[test]
     fn chromium_storage_is_read_as_the_page_last_left_it() {
         let values = chromium(&fixture());
-        assert_eq!(
-            values.get("orden:session").map(String::as_str),
-            Some("the-token")
-        );
-        assert_eq!(
-            values.get("orden:device").map(String::as_str),
-            Some("dev-1")
-        );
+        assert_eq!(values.get("orden:session").map(String::as_str), Some("the-token"));
+        assert_eq!(values.get("orden:device").map(String::as_str), Some("dev-1"));
         assert_eq!(values.get("orden:font").map(String::as_str), Some("Lato"));
-        assert!(values
-            .get("orden:words")
-            .is_some_and(|words| words.starts_with("Grüße ✓ notes ")));
+        assert!(values.get("orden:words").is_some_and(|words| words.starts_with("Grüße ✓ notes ")));
         assert!(!values.contains_key("orden:gone-later"));
         assert!(!values.contains_key("orden:filler-0"));
         assert!(values.values().all(|value| value != "someone-else"));
@@ -473,17 +434,10 @@ mod tests {
     #[test]
     fn an_update_from_the_old_engine_keeps_the_session() {
         let config = scratch("update");
-        let homes = [Home {
-            chromium: Some(fixture()),
-            databases: None,
-            webkit: None,
-        }];
+        let homes = [Home { chromium: Some(fixture()), databases: None, webkit: None }];
         carry(&config, &homes);
         let kept = crate::kept::read_back(&config.join(crate::kept::FOLDER));
-        assert_eq!(
-            kept.values.get("orden:session").map(String::as_str),
-            Some("the-token")
-        );
+        assert_eq!(kept.values.get("orden:session").map(String::as_str), Some("the-token"));
         assert!(crate::kept::kept_script_of(kept).contains("the-token"));
         assert!(config.join(CARRIED).is_file());
         let _ = fs::remove_dir_all(&config);
@@ -494,27 +448,15 @@ mod tests {
         let folder = config.join(crate::kept::FOLDER);
         crate::kept::keep_unless_said(&folder, "orden:font", "Mono".into()).unwrap();
         crate::kept::forget_now(&folder, "orden:device").unwrap();
-        let homes = [Home {
-            chromium: Some(fixture()),
-            databases: None,
-            webkit: None,
-        }];
+        let homes = [Home { chromium: Some(fixture()), databases: None, webkit: None }];
         carry(&config, &homes);
         let kept = crate::kept::read_back(&folder);
-        assert_eq!(
-            kept.values.get("orden:font").map(String::as_str),
-            Some("Mono")
-        );
+        assert_eq!(kept.values.get("orden:font").map(String::as_str), Some("Mono"));
         assert!(!kept.values.contains_key("orden:device"));
-        assert_eq!(
-            kept.values.get("orden:session").map(String::as_str),
-            Some("the-token")
-        );
+        assert_eq!(kept.values.get("orden:session").map(String::as_str), Some("the-token"));
         crate::kept::forget_now(&folder, "orden:session").unwrap();
         carry(&config, &homes);
-        assert!(!crate::kept::read_back(&folder)
-            .values
-            .contains_key("orden:session"));
+        assert!(!crate::kept::read_back(&folder).values.contains_key("orden:session"));
         let _ = fs::remove_dir_all(&config);
     }
     #[test]
@@ -527,23 +469,12 @@ mod tests {
             &[("orden:session", "older")],
         );
         let homes = [
-            Home {
-                chromium: Some(missing.clone()),
-                databases: None,
-                webkit: Some(missing),
-            },
-            Home {
-                chromium: None,
-                databases: None,
-                webkit: Some(former.clone()),
-            },
+            Home { chromium: Some(missing.clone()), databases: None, webkit: Some(missing) },
+            Home { chromium: None, databases: None, webkit: Some(former.clone()) },
         ];
         carry(&config, &homes);
         let kept = crate::kept::read_back(&config.join(crate::kept::FOLDER));
-        assert_eq!(
-            kept.values.get("orden:session").map(String::as_str),
-            Some("older")
-        );
+        assert_eq!(kept.values.get("orden:session").map(String::as_str), Some("older"));
         let _ = fs::remove_dir_all(&config);
         let _ = fs::remove_dir_all(&former);
     }
@@ -555,11 +486,7 @@ mod tests {
             &app.join("LocalStorage/localstorage.sqlite3"),
             &[("orden:session", "mac-token"), ("orden:words", "Grüße ✓")],
         );
-        fs::write(
-            app.join("origin"),
-            b"\x05\0\0\0\x01tauri\x09\0\0\0\x01localhost",
-        )
-        .unwrap();
+        fs::write(app.join("origin"), b"\x05\0\0\0\x01tauri\x09\0\0\0\x01localhost").unwrap();
         let frame = dir.join("WebsiteData/Default/A1/B2");
         webkit_store(
             &frame.join("LocalStorage/localstorage.sqlite3"),
@@ -567,14 +494,8 @@ mod tests {
         );
         fs::write(frame.join("origin"), b"tauri localhost example.com").unwrap();
         let values = webkit(&dir);
-        assert_eq!(
-            values.get("orden:session").map(String::as_str),
-            Some("mac-token")
-        );
-        assert_eq!(
-            values.get("orden:words").map(String::as_str),
-            Some("Grüße ✓")
-        );
+        assert_eq!(values.get("orden:session").map(String::as_str), Some("mac-token"));
+        assert_eq!(values.get("orden:words").map(String::as_str), Some("Grüße ✓"));
         let _ = fs::remove_dir_all(&dir);
     }
 }

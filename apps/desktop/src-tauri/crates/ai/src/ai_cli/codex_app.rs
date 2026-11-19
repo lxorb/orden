@@ -83,13 +83,7 @@ impl Host {
             }
         })?;
         *writer.held() = Some(running.clone());
-        let host = Self {
-            running,
-            state,
-            ended,
-            orden,
-            folder,
-        };
+        let host = Self { running, state, ended, orden, folder };
         let introduce = {
             let mut state = locked(&host.state);
             state.waiting.insert(0, Waiter::Init);
@@ -157,20 +151,11 @@ impl Host {
                 queued: Vec::new(),
             },
         );
-        send(
-            &mut state,
-            &self.running,
-            method,
-            &params,
-            Waiter::Started(id.to_owned()),
-        )
+        send(&mut state, &self.running, method, &params, Waiter::Started(id.to_owned()))
     }
     pub fn say(&self, id: &str, say: Say) -> Result<(), String> {
         let mut state = locked(&self.state);
-        let route = state
-            .routes
-            .get_mut(id)
-            .ok_or_else(|| format!("{id} is not open"))?;
+        let route = state.routes.get_mut(id).ok_or_else(|| format!("{id} is not open"))?;
         if route.thread.is_none() {
             route.queued.push(say);
             return Ok(());
@@ -193,10 +178,7 @@ impl Host {
             );
         }
         drop(state);
-        (route.output)(Message::End(Ended {
-            stopped: true,
-            ..Ended::default()
-        }));
+        (route.output)(Message::End(Ended { stopped: true, ..Ended::default() }));
     }
     pub fn models(&self, patience: Duration) -> Result<Value, String> {
         self.ask("model/list", &json!({ "includeHidden": false }), patience)
@@ -208,17 +190,9 @@ impl Host {
         let (sent, answer) = mpsc::channel();
         {
             let mut state = locked(&self.state);
-            send(
-                &mut state,
-                &self.running,
-                method,
-                params,
-                Waiter::Crate(sent),
-            )?;
+            send(&mut state, &self.running, method, params, Waiter::Crate(sent))?;
         }
-        answer
-            .recv_timeout(patience)
-            .map_err(|_| "Codex did not answer".to_owned())?
+        answer.recv_timeout(patience).map_err(|_| "Codex did not answer".to_owned())?
     }
 }
 fn request_line(id: u64, method: &str, params: &Value) -> String {
@@ -255,10 +229,7 @@ fn input(text: &str, images: &[Image]) -> Value {
     Value::Array(items)
 }
 fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(), String> {
-    let route = state
-        .routes
-        .get_mut(id)
-        .ok_or_else(|| format!("{id} is not open"))?;
+    let route = state.routes.get_mut(id).ok_or_else(|| format!("{id} is not open"))?;
     let thread = route.thread.clone().unwrap_or_default();
     let reply = |to| Waiter::Reply(id.to_owned(), to);
     let (method, params, waiter) = match say {
@@ -307,11 +278,9 @@ fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(
             route.fast = on;
             return Ok(());
         }
-        Say::Compact { .. } => (
-            "thread/compact/start",
-            json!({ "threadId": thread }),
-            reply("compact"),
-        ),
+        Say::Compact { .. } => {
+            ("thread/compact/start", json!({ "threadId": thread }), reply("compact"))
+        }
         Say::Context => return Err("Codex says how full its window is after each turn".into()),
         Say::Goal { goal } => {
             let (method, params) = match goal {
@@ -324,14 +293,12 @@ fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(
                         "tokenBudget": budget,
                     }),
                 ),
-                GoalSay::Pause => (
-                    "thread/goal/set",
-                    json!({ "threadId": thread, "status": "paused" }),
-                ),
-                GoalSay::Resume => (
-                    "thread/goal/set",
-                    json!({ "threadId": thread, "status": "active" }),
-                ),
+                GoalSay::Pause => {
+                    ("thread/goal/set", json!({ "threadId": thread, "status": "paused" }))
+                }
+                GoalSay::Resume => {
+                    ("thread/goal/set", json!({ "threadId": thread, "status": "active" }))
+                }
                 GoalSay::Clear => ("thread/goal/clear", json!({ "threadId": thread })),
                 GoalSay::Get => ("thread/goal/get", json!({ "threadId": thread })),
             };
@@ -345,9 +312,7 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
         return;
     };
     let method = message["method"].as_str();
-    let id = message["id"]
-        .as_u64()
-        .or_else(|| message["id"].is_string().then_some(u64::MAX));
+    let id = message["id"].as_u64().or_else(|| message["id"].is_string().then_some(u64::MAX));
     let mut state = locked(state);
     match (method, id) {
         (Some(method), Some(_)) => {
@@ -378,9 +343,7 @@ fn orden_of(state: &State, params: &Value) -> Option<String> {
     state.threads.get(thread).cloned()
 }
 fn route_line(state: &State, params: &Value, line: &str) {
-    let message = || Message::Line {
-        line: line.to_owned(),
-    };
+    let message = || Message::Line { line: line.to_owned() };
     if params["threadId"].is_string() {
         if let Some(route) = orden_of(state, params).and_then(|orden| state.routes.get(&orden)) {
             (route.output)(message());
@@ -395,12 +358,9 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     let Some(waiter) = state.waiting.remove(&id) else {
         return;
     };
-    let error = message.get("error").map(|error| {
-        error["message"]
-            .as_str()
-            .unwrap_or("Codex refused")
-            .to_owned()
-    });
+    let error = message
+        .get("error")
+        .map(|error| error["message"].as_str().unwrap_or("Codex refused").to_owned());
     let result = message.get("result").cloned().unwrap_or(Value::Null);
     match waiter {
         Waiter::Init => {
@@ -416,11 +376,7 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
                 if to == "turn" && error.is_none() {
                     route.turn = result["turn"]["id"].as_str().map(str::to_owned);
                 }
-                (route.output)(Message::Reply {
-                    to: to.to_owned(),
-                    result,
-                    error,
-                });
+                (route.output)(Message::Reply { to: to.to_owned(), result, error });
             }
         }
         Waiter::Crate(sent) => {
@@ -452,11 +408,7 @@ fn started(
     };
     route.thread = Some(thread);
     let queued = std::mem::take(&mut route.queued);
-    (route.output)(Message::Reply {
-        to: "thread".to_owned(),
-        result,
-        error: None,
-    });
+    (route.output)(Message::Reply { to: "thread".to_owned(), result, error: None });
     for say in queued {
         if let Err(error) = say_now(state, running, orden, say) {
             if let Some(route) = state.routes.get(orden) {
@@ -509,11 +461,7 @@ mod tests {
     fn every_request_of_the_server_s_is_answered_no() {
         let id = json!(7);
         for (method, field, no) in [
-            (
-                "item/commandExecution/requestApproval",
-                "decision",
-                "decline",
-            ),
+            ("item/commandExecution/requestApproval", "decision", "decline"),
             ("item/fileChange/requestApproval", "decision", "decline"),
             ("execCommandApproval", "decision", "denied"),
             ("mcpServer/elicitation/request", "action", "decline"),
@@ -522,11 +470,9 @@ mod tests {
             assert_eq!(answer["id"], 7);
             assert_eq!(answer["result"][field], no, "{method}");
         }
-        for method in [
-            "account/chatgptAuthTokens/refresh",
-            "item/tool/call",
-            "attestation/generate",
-        ] {
+        for method in
+            ["account/chatgptAuthTokens/refresh", "item/tool/call", "attestation/generate"]
+        {
             let answer: Value = serde_json::from_str(&refusal(&id, method)).expect("JSON");
             assert!(answer["error"]["message"].is_string(), "{method}");
             assert!(answer.get("result").is_none());
@@ -534,13 +480,7 @@ mod tests {
     }
     #[test]
     fn a_message_is_text_after_its_pictures() {
-        let items = input(
-            "look",
-            &[Image {
-                mime: "image/png".into(),
-                data: "iVBO".into(),
-            }],
-        );
+        let items = input("look", &[Image { mime: "image/png".into(), data: "iVBO".into() }]);
         assert_eq!(items[0]["url"], "data:image/png;base64,iVBO");
         assert_eq!(items[1]["type"], "text");
         assert_eq!(items[1]["text"], "look");

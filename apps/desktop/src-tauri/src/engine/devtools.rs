@@ -97,9 +97,7 @@ pub fn call(
         .send_dev_tools_message(asking(id, method, params, session).to_string().as_bytes())
         .map_err(|error| format!("the page's agent could not be reached: {error}"));
     let outcome = sent.and_then(|()| {
-        waiting
-            .recv_timeout(patience)
-            .map_err(|_| format!("the page did not answer {method}"))?
+        waiting.recv_timeout(patience).map_err(|_| format!("the page did not answer {method}"))?
     });
     page.waiting.held().remove(&id);
     outcome
@@ -163,10 +161,7 @@ mod tests {
         let answered = closing.recv_timeout(Duration::from_secs(5));
         window.send(()).unwrap();
         builder.join().unwrap().unwrap();
-        assert!(
-            answered.is_ok(),
-            "closing a page waited for another being registered"
-        );
+        assert!(answered.is_ok(), "closing a page waited for another being registered");
     }
     #[test]
     fn a_page_is_observed_once_and_after_a_failure_again() {
@@ -219,10 +214,7 @@ mod tests {
         let noting = seen.clone();
         page.hearing.lock().unwrap().push(std::sync::Arc::new(
             move |method: &str, session: Option<&str>, _: &serde_json::Value| {
-                noting
-                    .lock()
-                    .unwrap()
-                    .push((method.to_string(), session.map(str::to_string)));
+                noting.lock().unwrap().push((method.to_string(), session.map(str::to_string)));
             },
         ));
         read(
@@ -232,10 +224,7 @@ mod tests {
         read(&page, &json!({ "id": 99, "result": {} }));
         assert_eq!(
             *seen.lock().unwrap(),
-            vec![(
-                "Target.attachedToTarget".to_string(),
-                Some("S9".to_string())
-            )]
+            vec![("Target.attachedToTarget".to_string(), Some("S9".to_string()))]
         );
     }
 }

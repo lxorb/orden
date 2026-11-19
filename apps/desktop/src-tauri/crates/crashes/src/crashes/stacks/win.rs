@@ -53,11 +53,9 @@ pub fn trace(ips: &mut [usize]) -> usize {
 pub fn every_thread(within: Duration) -> Vec<Raw> {
     let _one_at_a_time = ASKING.held();
     let (told, heard) = mpsc::channel();
-    let walker = std::thread::Builder::new()
-        .name("orden stack walk".to_owned())
-        .spawn(move || {
-            let _ = told.send(walk_all());
-        });
+    let walker = std::thread::Builder::new().name("orden stack walk".to_owned()).spawn(move || {
+        let _ = told.send(walk_all());
+    });
     if walker.is_err() {
         return Vec::new();
     }
@@ -134,11 +132,7 @@ fn walk_one(tid: u32, main: bool) -> Option<Raw> {
     unsafe {
         let _ = CloseHandle(thread);
     }
-    Some(Raw {
-        name,
-        main,
-        ips: ips[..len].to_vec(),
-    })
+    Some(Raw { name, main, ips: ips[..len].to_vec() })
 }
 fn described(thread: HANDLE) -> String {
     let Ok(said) = (unsafe { GetThreadDescription(thread) }) else {
@@ -164,17 +158,11 @@ pub fn blank() -> CONTEXT {
 }
 #[cfg(target_arch = "x86_64")]
 fn registers(context: &CONTEXT) -> (usize, usize) {
-    (
-        usize::try_from(context.Rip).unwrap_or(0),
-        usize::try_from(context.Rsp).unwrap_or(0),
-    )
+    (usize::try_from(context.Rip).unwrap_or(0), usize::try_from(context.Rsp).unwrap_or(0))
 }
 #[cfg(target_arch = "aarch64")]
 fn registers(context: &CONTEXT) -> (usize, usize) {
-    (
-        usize::try_from(context.Pc).unwrap_or(0),
-        usize::try_from(context.Sp).unwrap_or(0),
-    )
+    (usize::try_from(context.Pc).unwrap_or(0), usize::try_from(context.Sp).unwrap_or(0))
 }
 #[cfg(target_arch = "x86_64")]
 fn step_leaf(context: &mut CONTEXT, bounds: Option<(usize, usize)>) -> bool {

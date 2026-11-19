@@ -1,13 +1,7 @@
 use serde_json::Value;
 
-pub const SHARED: [&str; 6] = [
-    "list_spaces",
-    "list_notes",
-    "read_note",
-    "search_notes",
-    "list_backlinks",
-    "write_note",
-];
+pub const SHARED: [&str; 6] =
+    ["list_spaces", "list_notes", "read_note", "search_notes", "list_backlinks", "write_note"];
 pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
     if !SHARED.contains(&tool) {
         return None;
@@ -45,20 +39,15 @@ pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
             &format!("Nothing links to {}.", path()),
         ),
         "write_note" => {
-            let saved = result
-                .get("path")
-                .and_then(Value::as_str)
-                .map_or_else(path, str::to_owned);
+            let saved = result.get("path").and_then(Value::as_str).map_or_else(path, str::to_owned);
             format!("Saved {saved}.")
         }
         _ => return None,
     })
 }
 fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> String {
-    let rows: Vec<String> = result
-        .as_array()
-        .map(|all| all.iter().filter_map(row).collect())
-        .unwrap_or_default();
+    let rows: Vec<String> =
+        result.as_array().map(|all| all.iter().filter_map(row).collect()).unwrap_or_default();
     if rows.is_empty() {
         none.to_owned()
     } else {
@@ -66,16 +55,10 @@ fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> 
     }
 }
 fn field(row: &Value, key: &str) -> Option<String> {
-    row.as_str()
-        .or_else(|| row.get(key).and_then(Value::as_str))
-        .map(str::to_owned)
+    row.as_str().or_else(|| row.get(key).and_then(Value::as_str)).map(str::to_owned)
 }
 fn words(value: &Value, key: &str) -> String {
-    value
-        .get(key)
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_owned()
+    value.get(key).and_then(Value::as_str).unwrap_or_default().to_owned()
 }
 #[cfg(test)]
 mod tests {
@@ -85,18 +68,10 @@ mod tests {
     #[test]
     fn the_six_answer_in_the_connectors_words() {
         assert_eq!(
-            text(
-                "list_spaces",
-                &json!({}),
-                &json!([{ "name": "Work" }, "Home"])
-            )
-            .as_deref(),
+            text("list_spaces", &json!({}), &json!([{ "name": "Work" }, "Home"])).as_deref(),
             Some("Work\nHome")
         );
-        assert_eq!(
-            text("list_spaces", &json!({}), &json!([])).as_deref(),
-            Some("No spaces yet.")
-        );
+        assert_eq!(text("list_spaces", &json!({}), &json!([])).as_deref(), Some("No spaces yet."));
         assert_eq!(
             text(
                 "list_notes",
@@ -106,10 +81,7 @@ mod tests {
             .as_deref(),
             Some("plan.md\na/b.md")
         );
-        assert_eq!(
-            text("list_notes", &json!({}), &json!([])).as_deref(),
-            Some("No notes yet.")
-        );
+        assert_eq!(text("list_notes", &json!({}), &json!([])).as_deref(), Some("No notes yet."));
         assert_eq!(
             text(
                 "read_note",

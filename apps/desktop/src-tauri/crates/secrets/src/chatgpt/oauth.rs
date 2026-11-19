@@ -96,10 +96,7 @@ pub fn decoded(text: &str) -> String {
 }
 #[derive(Debug, PartialEq, Eq)]
 pub enum Callback {
-    Code {
-        code: String,
-        client: Option<String>,
-    },
+    Code { code: String, client: Option<String> },
     Refused(String),
     Other,
 }
@@ -136,10 +133,9 @@ pub fn callback(request_line: &str, state: &str) -> Callback {
         return Callback::Refused(description.unwrap_or(error));
     }
     match code {
-        Some(code) if !code.is_empty() => Callback::Code {
-            code,
-            client: client.filter(|one| !one.is_empty()),
-        },
+        Some(code) if !code.is_empty() => {
+            Callback::Code { code, client: client.filter(|one| !one.is_empty()) }
+        }
         _ => Callback::Refused("no code came back".to_owned()),
     }
 }
@@ -156,9 +152,7 @@ pub struct Tokens {
 pub fn token_error(body: &[u8]) -> Option<String> {
     let value: serde_json::Value = serde_json::from_slice(body).ok()?;
     let error = value.get("error")?;
-    let code = error
-        .as_str()
-        .or_else(|| error.get("code").and_then(serde_json::Value::as_str))?;
+    let code = error.as_str().or_else(|| error.get("code").and_then(serde_json::Value::as_str))?;
     Some(code.to_owned())
 }
 pub fn grant_gone(code: &str) -> bool {
@@ -176,10 +170,7 @@ pub fn email_in(id_token: &str) -> Option<String> {
     let payload = id_token.split('.').nth(1)?;
     let bytes = URL_SAFE_NO_PAD.decode(payload.trim_end_matches('=')).ok()?;
     let claims: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
-    claims
-        .get("email")
-        .and_then(serde_json::Value::as_str)
-        .map(str::to_owned)
+    claims.get("email").and_then(serde_json::Value::as_str).map(str::to_owned)
 }
 pub fn host_id(random: &[u8; 16]) -> String {
     let mut bytes = *random;
@@ -235,10 +226,7 @@ mod tests {
             state: String::new(),
             nonce: String::new(),
         };
-        assert_eq!(
-            example.challenge(),
-            "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-        );
+        assert_eq!(example.challenge(), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
         assert!(attempt().verifier.len() >= 43);
     }
     #[test]
@@ -248,19 +236,13 @@ mod tests {
             format!("GET /auth/callback?code=abc%2Fd&state={state}&client_id=oaiapp_9 HTTP/1.1");
         assert_eq!(
             callback(&line, &state),
-            Callback::Code {
-                code: "abc/d".to_owned(),
-                client: Some("oaiapp_9".to_owned())
-            }
+            Callback::Code { code: "abc/d".to_owned(), client: Some("oaiapp_9".to_owned()) }
         );
         assert_eq!(
             callback("GET /auth/callback?code=abc&state=other HTTP/1.1", &state),
             Callback::Other
         );
-        assert_eq!(
-            callback("GET /favicon.ico HTTP/1.1", &state),
-            Callback::Other
-        );
+        assert_eq!(callback("GET /favicon.ico HTTP/1.1", &state), Callback::Other);
         assert_eq!(
             callback(
                 &format!("GET /auth/callback?error=access_denied&error_description=You+said+no&state={state} HTTP/1.1"),
@@ -278,18 +260,12 @@ mod tests {
     #[test]
     fn an_id_token_names_whose_plan_it_is() {
         let payload = URL_SAFE_NO_PAD.encode(br#"{"email":"reader@example.com","sub":"x"}"#);
-        assert_eq!(
-            email_in(&format!("h.{payload}.s")),
-            Some("reader@example.com".to_owned())
-        );
+        assert_eq!(email_in(&format!("h.{payload}.s")), Some("reader@example.com".to_owned()));
         assert_eq!(email_in("not a token"), None);
     }
     #[test]
     fn a_refresh_that_is_gone_is_told_from_one_that_failed() {
-        assert_eq!(
-            token_error(br#"{"error":"invalid_grant"}"#).as_deref(),
-            Some("invalid_grant")
-        );
+        assert_eq!(token_error(br#"{"error":"invalid_grant"}"#).as_deref(), Some("invalid_grant"));
         assert_eq!(
             token_error(br#"{"error":{"code":"token_expired","message":"x"}}"#).as_deref(),
             Some("token_expired")

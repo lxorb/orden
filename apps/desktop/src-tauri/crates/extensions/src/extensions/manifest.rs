@@ -25,10 +25,7 @@ pub fn read(folder: &Path) -> Result<About, String> {
 }
 fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     let words = |field: &str| {
-        let said = manifest
-            .get(field)
-            .and_then(Value::as_str)
-            .unwrap_or_default();
+        let said = manifest.get(field).and_then(Value::as_str).unwrap_or_default();
         said.strip_prefix("__MSG_")
             .and_then(|rest| rest.strip_suffix("__"))
             .and_then(&lookup)
@@ -38,10 +35,8 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
         .get("action")
         .or_else(|| manifest.get("browser_action"))
         .or_else(|| manifest.get("page_action"));
-    let popup = action
-        .and_then(|one| one.get("default_popup"))
-        .and_then(Value::as_str)
-        .and_then(inside);
+    let popup =
+        action.and_then(|one| one.get("default_popup")).and_then(Value::as_str).and_then(inside);
     let options = manifest
         .get("options_ui")
         .and_then(|one| one.get("page"))
@@ -68,20 +63,14 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     let mut seen = std::collections::HashSet::new();
     permissions.retain(|one| seen.insert(one.clone()));
     let icon = largest(manifest.get("icons")).or_else(|| {
-        action
-            .and_then(|one| one.get("default_icon"))
-            .and_then(|icon| match icon {
-                Value::String(path) => inside(path),
-                other => largest(Some(other)),
-            })
+        action.and_then(|one| one.get("default_icon")).and_then(|icon| match icon {
+            Value::String(path) => inside(path),
+            other => largest(Some(other)),
+        })
     });
     About {
         name: words("name"),
-        version: manifest
-            .get("version")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .to_owned(),
+        version: manifest.get("version").and_then(Value::as_str).unwrap_or_default().to_owned(),
         icon,
         popup,
         options,
@@ -140,19 +129,14 @@ mod tests {
             "host_permissions": ["<all_urls>"],
             "content_scripts": [{ "matches": ["<all_urls>", "https://*.example.com/*"] }]
         });
-        let said = about(&manifest, |key| {
-            (key == "extName").then(|| "uBlock".to_owned())
-        });
+        let said = about(&manifest, |key| (key == "extName").then(|| "uBlock".to_owned()));
         assert_eq!(said.name, "uBlock");
         assert_eq!(said.version, "2025.1.1");
         assert_eq!(said.icon.as_deref(), Some("img/128.png"));
         assert_eq!(said.popup.as_deref(), Some("popup.html"));
         assert_eq!(said.options.as_deref(), Some("options.html#general"));
         assert!(said.action);
-        assert_eq!(
-            said.permissions,
-            ["storage", "tabs", "<all_urls>", "https://*.example.com/*"]
-        );
+        assert_eq!(said.permissions, ["storage", "tabs", "<all_urls>", "https://*.example.com/*"]);
     }
     #[test]
     fn a_manifest_v2_button_and_a_plain_name_are_read_too() {
@@ -171,13 +155,7 @@ mod tests {
     }
     #[test]
     fn a_page_outside_the_extension_is_nobody_s() {
-        for bad in [
-            "../x.html",
-            "https://evil.example/",
-            "a/../../b.html",
-            "a\\b.html",
-            "",
-        ] {
+        for bad in ["../x.html", "https://evil.example/", "a/../../b.html", "a\\b.html", ""] {
             assert_eq!(inside(bad), None, "{bad}");
         }
     }

@@ -25,14 +25,10 @@ impl Handed {
             let over = held.len().saturating_sub(MOST_KEPT);
             held.drain(..over);
         }
-        pdfs.iter()
-            .map(|one| one.to_string_lossy().into_owned())
-            .collect()
+        pdfs.iter().map(|one| one.to_string_lossy().into_owned()).collect()
     }
     fn holds(&self, path: &Path) -> bool {
-        self.0
-            .lock()
-            .is_ok_and(|held| held.iter().any(|one| same_handed(one, path)))
+        self.0.lock().is_ok_and(|held| held.iter().any(|one| same_handed(one, path)))
     }
     fn listed(&self) -> Vec<PathBuf> {
         self.0.lock().map(|held| held.clone()).unwrap_or_default()
@@ -60,10 +56,7 @@ fn same_handed(one: &Path, other: &Path) -> bool {
     inside(one, other) && inside(other, one)
 }
 fn handed_list_at(app: &AppHandle) -> Option<PathBuf> {
-    app.path()
-        .app_local_data_dir()
-        .ok()
-        .map(|dir| dir.join(KEPT))
+    app.path().app_local_data_dir().ok().map(|dir| dir.join(KEPT))
 }
 fn read_handed_list(at: &Path) -> Vec<PathBuf> {
     fs::read_to_string(at)
@@ -91,11 +84,7 @@ fn handed_set(app: &AppHandle) -> tauri::State<'_, Handed> {
 }
 fn loaded_set(app: &AppHandle) -> tauri::State<'_, Handed> {
     let handed = handed_set(app);
-    handed.load(|| {
-        handed_list_at(app)
-            .map(|at| read_handed_list(&at))
-            .unwrap_or_default()
-    });
+    handed.load(|| handed_list_at(app).map(|at| read_handed_list(&at)).unwrap_or_default());
     handed
 }
 pub fn admit_handed(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
@@ -143,9 +132,7 @@ pub fn pdfs_among(urls: &[Url]) -> Vec<PathBuf> {
 fn handed_kind(path: &Path) -> bool {
     is_pdf(path)
         || is_markdown(path)
-        || path
-            .extension()
-            .is_some_and(|extension| extension.eq_ignore_ascii_case("txt"))
+        || path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("txt"))
 }
 fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
     if said.is_empty() || said.as_encoded_bytes().starts_with(b"-") || said.len() > LONGEST {
@@ -155,11 +142,7 @@ fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
         Some(Ok(url)) if url.scheme() == "file" => url.to_file_path().ok()?,
         _ => PathBuf::from(said),
     };
-    let path = folded(&if path.is_absolute() {
-        path
-    } else {
-        cwd.join(path)
-    });
+    let path = folded(&if path.is_absolute() { path } else { cwd.join(path) });
     (handed_kind(&path) && path.is_file()).then_some(path)
 }
 #[tauri::command(async)]
@@ -179,16 +162,12 @@ fn same_in(root: &Path, pdf: &Path) -> Option<PathBuf> {
 }
 fn same_bytes(one: &Path, other: &Path) -> Result<bool, String> {
     let open = |path: &Path| {
-        File::open(path)
-            .map(BufReader::new)
-            .map_err(|error| cannot("read", path, &error))
+        File::open(path).map(BufReader::new).map_err(|error| cannot("read", path, &error))
     };
     let (mut one_read, mut other_read) = (open(one)?, open(other)?);
     let (mut ours, mut theirs) = ([0u8; 8 * 1024], [0u8; 8 * 1024]);
     loop {
-        let got = one_read
-            .read(&mut ours)
-            .map_err(|error| cannot("read", one, &error))?;
+        let got = one_read.read(&mut ours).map_err(|error| cannot("read", one, &error))?;
         if got == 0 {
             let mut rest = [0u8; 1];
             return Ok(other_read.read(&mut rest).is_ok_and(|more| more == 0));
@@ -208,10 +187,7 @@ mod tests {
     use tauri::Url;
 
     fn line(args: &[&str]) -> Vec<String> {
-        std::iter::once("orden.exe")
-            .chain(args.iter().copied())
-            .map(str::to_owned)
-            .collect()
+        std::iter::once("orden.exe").chain(args.iter().copied()).map(str::to_owned).collect()
     }
     fn file(at: &Path, bytes: &[u8]) -> String {
         if let Some(folder) = at.parent() {
@@ -289,28 +265,15 @@ mod tests {
     fn nothing_but_a_pdf_that_is_there() {
         let dir = tempfile::tempdir().expect("a temp folder");
         file(&dir.path().join("folder.pdf").join("inside.txt"), b"");
-        for refused in [
-            "gone.pdf",
-            "folder.pdf",
-            "-flag.pdf",
-            "",
-            "javascript:alert(1)",
-        ] {
-            assert!(
-                pdfs_in(&line(&[refused]), dir.path()).is_empty(),
-                "{refused} was taken"
-            );
+        for refused in ["gone.pdf", "folder.pdf", "-flag.pdf", "", "javascript:alert(1)"] {
+            assert!(pdfs_in(&line(&[refused]), dir.path()).is_empty(), "{refused} was taken");
         }
     }
     #[test]
     fn a_links_command_line_hands_over_no_pdf() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let paper = file(&dir.path().join("a.pdf"), b"%PDF");
-        let args = line(&[
-            orden_base::handed::LINK_FLAG,
-            "https://example.com/",
-            &paper,
-        ]);
+        let args = line(&[orden_base::handed::LINK_FLAG, "https://example.com/", &paper]);
         assert!(pdfs_in(&args, dir.path()).is_empty());
     }
     #[cfg(target_os = "linux")]
@@ -352,10 +315,7 @@ mod tests {
         handed.admit(vec![paper("new.pdf"), paper("both.pdf")]);
         handed.load(|| vec![paper("old.pdf"), paper("both.pdf")]);
         handed.load(|| vec![paper("never.pdf")]);
-        assert_eq!(
-            handed.listed(),
-            vec![paper("old.pdf"), paper("new.pdf"), paper("both.pdf")]
-        );
+        assert_eq!(handed.listed(), vec![paper("old.pdf"), paper("new.pdf"), paper("both.pdf")]);
     }
     #[test]
     fn the_latest_handed_over_are_kept_and_no_more() {
@@ -379,27 +339,19 @@ mod tests {
         file(&space.join("Papers").join("Read.pdf"), b"%PDF the paper");
         let from = dir.path().join("Downloads").join("Paper.pdf");
         file(&from, b"%PDF the paper");
-        assert_eq!(
-            same_in(&space, &from),
-            Some(space.join("Papers").join("Read.pdf"))
-        );
+        assert_eq!(same_in(&space, &from), Some(space.join("Papers").join("Read.pdf")));
         file(&from, b"%PDF changed");
         assert_eq!(same_in(&space, &from), None);
     }
     fn source(relative: &str) -> String {
-        fs::read_to_string(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../..")
-                .join(relative),
-        )
-        .expect("a file beside the crate")
+        fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").join(relative))
+            .expect("a file beside the crate")
     }
     #[test]
     fn windows_offers_orden_for_a_pdf_and_claims_nothing() {
         let script = source("installer.nsh");
-        let (install, uninstall) = script
-            .split_once("!macro ORDEN_PDF_FORGET")
-            .expect("a macro that forgets");
+        let (install, uninstall) =
+            script.split_once("!macro ORDEN_PDF_FORGET").expect("a macro that forgets");
         for line in [
             r#"WriteRegStr SHCTX "Software\Classes\NibPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'"#,
             r#"WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" """#,
@@ -410,18 +362,11 @@ mod tests {
             r#"DeleteRegKey SHCTX "Software\Classes\NibPDF""#,
             r#"DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF""#,
         ] {
-            assert!(
-                uninstall.contains(line),
-                "installer.nsh does not say: {line}"
-            );
+            assert!(uninstall.contains(line), "installer.nsh does not say: {line}");
         }
-        let hooks = script
-            .split_once("!macro NSIS_HOOK_POSTINSTALL")
-            .expect("an install hook")
-            .1;
-        let (installing, uninstalling) = hooks
-            .split_once("!macro NSIS_HOOK_POSTUNINSTALL")
-            .expect("an uninstall hook");
+        let hooks = script.split_once("!macro NSIS_HOOK_POSTINSTALL").expect("an install hook").1;
+        let (installing, uninstalling) =
+            hooks.split_once("!macro NSIS_HOOK_POSTUNINSTALL").expect("an uninstall hook");
         assert!(installing.contains("!insertmacro ORDEN_PDF_OPEN_WITH"));
         assert!(uninstalling.contains("!insertmacro ORDEN_PDF_FORGET"));
         assert!(!script.contains(r#"WriteRegStr SHCTX "Software\Classes\.pdf" """#));

@@ -14,18 +14,14 @@ pub struct Ticket {
 fn now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |since| {
-            i64::try_from(since.as_secs()).unwrap_or(i64::MAX)
-        })
+        .map_or(0, |since| i64::try_from(since.as_secs()).unwrap_or(i64::MAX))
 }
 static GIVEN: Mutex<Option<HashSet<Ticket>>> = Mutex::new(None);
 fn given() -> MutexGuard<'static, Option<HashSet<Ticket>>> {
     GIVEN.held()
 }
 fn hand_out(ticket: Ticket) -> Ticket {
-    given()
-        .get_or_insert_with(HashSet::new)
-        .insert(ticket.clone());
+    given().get_or_insert_with(HashSet::new).insert(ticket.clone());
     ticket
 }
 fn take_back(ticket: &Ticket) -> bool {
@@ -54,17 +50,8 @@ fn trashed(path: &Path) -> Result<Ticket, String> {
     let back = went
         .and_then(|url| url.path())
         .map(|one| one.to_string())
-        .ok_or_else(|| {
-            format!(
-                "{} went to the trash, which did not say where",
-                path.display()
-            )
-        })?;
-    Ok(Ticket {
-        path: path.display().to_string(),
-        back,
-        at: now(),
-    })
+        .ok_or_else(|| format!("{} went to the trash, which did not say where", path.display()))?;
+    Ok(Ticket { path: path.display().to_string(), back, at: now() })
 }
 #[cfg(target_os = "macos")]
 fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
@@ -86,11 +73,7 @@ fn trashed(path: &Path) -> Result<Ticket, String> {
     };
     let at = now();
     trash::delete(path).map_err(|why| format!("{}: {why}", path.display()))?;
-    Ok(Ticket {
-        path: path.display().to_string(),
-        back: back.display().to_string(),
-        at,
-    })
+    Ok(Ticket { path: path.display().to_string(), back: back.display().to_string(), at })
 }
 #[cfg(any(target_os = "linux", windows))]
 fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
@@ -115,17 +98,11 @@ fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
 }
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 fn trashed(path: &Path) -> Result<Ticket, String> {
-    Err(format!(
-        "{}: this system has no trash Orden reaches",
-        path.display()
-    ))
+    Err(format!("{}: this system has no trash Orden reaches", path.display()))
 }
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
-    Err(format!(
-        "{}: this system has no trash Orden reaches",
-        ticket.path
-    ))
+    Err(format!("{}: this system has no trash Orden reaches", ticket.path))
 }
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 fn newest_from<T>(
@@ -183,10 +160,7 @@ mod tests {
             ]
             .into_iter()
         };
-        assert_eq!(
-            newest_from(held(), Path::new("/a/plan.txt"), 200),
-            Some("ours")
-        );
+        assert_eq!(newest_from(held(), Path::new("/a/plan.txt"), 200), Some("ours"));
         assert_eq!(newest_from(held(), Path::new("/a/plan.txt"), 300), None);
         assert_eq!(newest_from(held(), Path::new("/b/plan.txt"), 0), None);
     }

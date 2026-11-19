@@ -49,10 +49,7 @@ fn handed(app: AppHandle, url: Url) {
             orden_base::logs::say(
                 &app,
                 "info",
-                &format!(
-                    "extensions: a tab at a {}: address was not opened",
-                    url.scheme()
-                ),
+                &format!("extensions: a tab at a {}: address was not opened", url.scheme()),
             );
         }
     });

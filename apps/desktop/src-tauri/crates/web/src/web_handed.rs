@@ -28,10 +28,7 @@ mod tests {
     use tauri::Url;
 
     fn line(args: &[&str]) -> Vec<String> {
-        std::iter::once("orden.exe")
-            .chain(args.iter().copied())
-            .map(str::to_owned)
-            .collect()
+        std::iter::once("orden.exe").chain(args.iter().copied()).map(str::to_owned).collect()
     }
     #[test]
     fn a_link_windows_hands_over_is_one_page() {
@@ -42,10 +39,7 @@ mod tests {
     #[test]
     fn a_terminal_may_name_several_in_order() {
         let args = line(&["https://one.example", "--verbose", "http://two.example/x"]);
-        assert_eq!(
-            pages_in(&args),
-            vec!["https://one.example/", "http://two.example/x"]
-        );
+        assert_eq!(pages_in(&args), vec!["https://one.example/", "http://two.example/x"]);
         assert!(!for_a_link(&args));
     }
     #[test]
@@ -69,10 +63,7 @@ mod tests {
             "example.com",
             "",
         ] {
-            assert!(
-                pages_in(&line(&[refused])).is_empty(),
-                "{refused} was taken"
-            );
+            assert!(pages_in(&line(&[refused])).is_empty(), "{refused} was taken");
             assert!(
                 pages_in(&line(&[LINK_FLAG, refused])).is_empty(),
                 "{refused} was taken after the flag"
@@ -118,9 +109,6 @@ mod tests {
             Url::parse("orden://search").expect("an address"),
             Url::parse("http://example.org/x").expect("an address"),
         ];
-        assert_eq!(
-            pages_among(&urls),
-            vec!["https://example.com/", "http://example.org/x"]
-        );
+        assert_eq!(pages_among(&urls), vec!["https://example.com/", "http://example.org/x"]);
     }
 }

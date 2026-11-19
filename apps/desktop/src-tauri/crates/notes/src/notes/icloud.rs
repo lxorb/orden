@@ -21,9 +21,7 @@ fn arrived(target: &Path) -> bool {
     std::fs::symlink_metadata(target).is_ok_and(|meta| !is_dataless(&meta))
 }
 pub fn evicted_name(name: &str) -> Option<&str> {
-    name.strip_prefix('.')?
-        .strip_suffix(SUFFIX)
-        .filter(|real| !real.is_empty())
+    name.strip_prefix('.')?.strip_suffix(SUFFIX).filter(|real| !real.is_empty())
 }
 pub fn placeholder_of(target: &Path) -> Option<PathBuf> {
     let name = target.file_name()?.to_str()?;
@@ -40,10 +38,9 @@ pub fn evicted(target: &Path) -> bool {
     if std::fs::symlink_metadata(target).is_ok() {
         return false;
     }
-    let (Some(placeholder), Some(name)) = (
-        placeholder_of(target),
-        target.file_name().and_then(|one| one.to_str()),
-    ) else {
+    let (Some(placeholder), Some(name)) =
+        (placeholder_of(target), target.file_name().and_then(|one| one.to_str()))
+    else {
         return false;
     };
     std::fs::File::open(placeholder).is_ok_and(|file| {
@@ -103,15 +100,15 @@ fn download(target: &Path) -> Result<(), String> {
     use objc2_foundation::{NSFileManager, NSString, NSURL};
 
     let url = NSURL::fileURLWithPath(&NSString::from_str(&target.to_string_lossy()));
-    NSFileManager::defaultManager()
-        .startDownloadingUbiquitousItemAtURL_error(&url)
-        .map_err(|error| {
+    NSFileManager::defaultManager().startDownloadingUbiquitousItemAtURL_error(&url).map_err(
+        |error| {
             format!(
                 "iCloud would not download {}: {}",
                 target.display(),
                 error.localizedDescription()
             )
-        })
+        },
+    )
 }
 #[cfg(test)]
 mod tests {
@@ -121,18 +118,9 @@ mod tests {
 
     #[test]
     fn a_placeholder_is_a_property_list_with_the_name_in_it() {
-        assert!(stands_for(
-            b"bplist00\xd4NSURLNameKey_\x10\x07Plan.md",
-            "Plan.md"
-        ));
-        let wide: Vec<u8> = "Pl\u{e4}n.md"
-            .encode_utf16()
-            .flat_map(u16::to_be_bytes)
-            .collect();
-        assert!(stands_for(
-            &[b"bplist00".as_slice(), &wide].concat(),
-            "Pl\u{e4}n.md"
-        ));
+        assert!(stands_for(b"bplist00\xd4NSURLNameKey_\x10\x07Plan.md", "Plan.md"));
+        let wide: Vec<u8> = "Pl\u{e4}n.md".encode_utf16().flat_map(u16::to_be_bytes).collect();
+        assert!(stands_for(&[b"bplist00".as_slice(), &wide].concat(), "Pl\u{e4}n.md"));
         assert!(!stands_for(b"bplist00Other.md", "Plan.md"));
         assert!(!stands_for(b"Plan.md", "Plan.md"));
     }
@@ -168,10 +156,7 @@ mod tests {
     #[test]
     fn a_placeholder_stands_for_the_name_inside_it_and_sits_where_it_would() {
         assert_eq!(evicted_name(".Plan.md.icloud"), Some("Plan.md"));
-        assert_eq!(
-            evicted_name(".Über sicht.pdf.icloud"),
-            Some("Über sicht.pdf")
-        );
+        assert_eq!(evicted_name(".Über sicht.pdf.icloud"), Some("Über sicht.pdf"));
         assert_eq!(evicted_name("..hidden.md.icloud"), Some(".hidden.md"));
         assert_eq!(evicted_name("Plan.md"), None);
         assert_eq!(evicted_name(".DS_Store"), None);

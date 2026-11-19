@@ -41,11 +41,7 @@ pub fn is_markdown(path: &Path) -> bool {
 fn ends_in(path: &Path, extensions: &[&str]) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
-        .is_some_and(|extension| {
-            extensions
-                .iter()
-                .any(|one| extension.eq_ignore_ascii_case(one))
-        })
+        .is_some_and(|extension| extensions.iter().any(|one| extension.eq_ignore_ascii_case(one)))
 }
 pub fn is_pdf(path: &Path) -> bool {
     ends_in(path, &["pdf"])
@@ -223,10 +219,7 @@ pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
 }
 #[cfg(desktop)]
 fn default_spaces(_app: &AppHandle) -> Result<PathBuf, String> {
-    SPACES_CHOSEN
-        .get()
-        .cloned()
-        .ok_or_else(|| "the spaces folder is not decided yet".to_string())
+    SPACES_CHOSEN.get().cloned().ok_or_else(|| "the spaces folder is not decided yet".to_string())
 }
 #[cfg(desktop)]
 pub fn decide_spaces(app: &AppHandle) {
@@ -354,10 +347,7 @@ pub fn stays_in_space(spaces: &Path, target: &Path) -> Result<(), String> {
     }
 }
 pub fn really_under(space: &Path, folder: &Path) -> Result<(), String> {
-    let Some(there) = folder
-        .ancestors()
-        .find(|one| one.symlink_metadata().is_ok())
-    else {
+    let Some(there) = folder.ancestors().find(|one| one.symlink_metadata().is_ok()) else {
         return Ok(());
     };
     if there == space || !inside(space, there) {
@@ -520,13 +510,10 @@ pub fn a_space(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 }
 fn judged_space(root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
-    let directly_inside = target
-        .parent()
-        .is_some_and(|parent| inside(root, parent) && inside(parent, root));
-    let hidden = target
-        .file_name()
-        .and_then(OsStr::to_str)
-        .is_some_and(|name| name.starts_with('.'));
+    let directly_inside =
+        target.parent().is_some_and(|parent| inside(root, parent) && inside(parent, root));
+    let hidden =
+        target.file_name().and_then(OsStr::to_str).is_some_and(|name| name.starts_with('.'));
     if !directly_inside || hidden {
         return Err(format!("{path} is not a space"));
     }
@@ -538,9 +525,7 @@ pub fn openable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 pub fn chosen(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     past_spaces(app, path, |target| {
         is_own_file(app, target)
-            || app
-                .try_state::<Picked>()
-                .is_some_and(|picked| picked.reach(target))
+            || app.try_state::<Picked>().is_some_and(|picked| picked.reach(target))
     })
 }
 fn past_spaces(
@@ -592,9 +577,7 @@ impl Picked {
         }
     }
     fn reach(&self, target: &Path) -> bool {
-        self.0
-            .lock()
-            .is_ok_and(|picked| picked.iter().any(|one| inside(one, target)))
+        self.0.lock().is_ok_and(|picked| picked.iter().any(|one| inside(one, target)))
     }
 }
 #[cfg(desktop)]
@@ -616,30 +599,20 @@ pub fn hear_picks(app: &AppHandle) {
     });
 }
 fn a_shareable_folder(folder: &Path) -> bool {
-    folder
-        .parent()
-        .is_some_and(|above| !above.as_os_str().is_empty())
+    folder.parent().is_some_and(|above| !above.as_os_str().is_empty())
 }
 #[derive(Default)]
 pub struct Seen(HashSet<PathBuf>);
 impl Seen {
     pub fn first_time(&mut self, dir: &Path) -> bool {
-        self.0
-            .insert(fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf()))
+        self.0.insert(fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf()))
     }
 }
 pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
     let mut notes = Vec::new();
     let mut others = Vec::new();
     let limit = fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
-    gather(
-        dir,
-        &limit,
-        0,
-        &mut Seen::default(),
-        &mut notes,
-        &mut others,
-    );
+    gather(dir, &limit, 0, &mut Seen::default(), &mut notes, &mut others);
     notes.sort();
     others.sort();
     (notes, others)
@@ -679,11 +652,7 @@ pub fn folder_key(path: &str) -> String {
     folder_key_as(NAMING, path)
 }
 fn folder_key_as(naming: Naming, path: &str) -> String {
-    let spelled = if naming == Naming::Exact {
-        path.to_owned()
-    } else {
-        path.to_lowercase()
-    };
+    let spelled = if naming == Naming::Exact { path.to_owned() } else { path.to_lowercase() };
     format!("{:016x}", fnv1a(spelled.as_bytes()))
 }
 pub fn fnv1a(bytes: &[u8]) -> u64 {
@@ -704,10 +673,7 @@ fn kept_folder_named(root: &Path, name: &str, path: &str) -> PathBuf {
 }
 pub const ORIGIN: &str = "origin.txt";
 pub fn relative_to(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
+    path.strip_prefix(root).unwrap_or(path).to_string_lossy().replace('\\', "/")
 }
 pub fn opened_file(path: &Path) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
@@ -732,9 +698,7 @@ pub fn at_most_stamped(
     limit: u64,
 ) -> Result<Option<(Vec<u8>, fs::Metadata)>, String> {
     let file = opened_file(target).map_err(|error| cannot("read", target, &error))?;
-    let meta = file
-        .metadata()
-        .map_err(|error| cannot("read", target, &error))?;
+    let meta = file.metadata().map_err(|error| cannot("read", target, &error))?;
     let size = meta.len();
     if size > limit {
         return Ok(None);
@@ -762,9 +726,7 @@ fn into_place(
     pour: impl FnOnce(&mut fs::File) -> std::io::Result<()>,
 ) -> Result<(), String> {
     let plain = fs::symlink_metadata(target).is_ok_and(|meta| meta.file_type().is_file());
-    let opened = plain
-        .then(|| fs::OpenOptions::new().write(true).open(target).ok())
-        .flatten();
+    let opened = plain.then(|| fs::OpenOptions::new().write(true).open(target).ok()).flatten();
     let Some(mut file) = opened else {
         return write_atomically(target, bytes);
     };
@@ -848,13 +810,9 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
     if private {
         std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
     }
-    let mut file = options
-        .open(temp)
-        .map_err(|error| cannot("write", temp, &error))?;
-    file.write_all(bytes)
-        .map_err(|error| cannot("write", temp, &error))?;
-    file.sync_all()
-        .map_err(|error| cannot("finish writing", temp, &error))
+    let mut file = options.open(temp).map_err(|error| cannot("write", temp, &error))?;
+    file.write_all(bytes).map_err(|error| cannot("write", temp, &error))?;
+    file.sync_all().map_err(|error| cannot("finish writing", temp, &error))
 }
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     first_spot(path, is_file, |one| !taken(one, is_file))
@@ -864,9 +822,8 @@ pub fn first_spot(path: &Path, is_file: bool, fits: impl Fn(&Path) -> bool) -> P
         return path.to_path_buf();
     }
     let parent = path.parent().map_or_else(PathBuf::new, Path::to_path_buf);
-    let file_name = path
-        .file_name()
-        .map_or_else(String::new, |name| name.to_string_lossy().to_string());
+    let file_name =
+        path.file_name().map_or_else(String::new, |name| name.to_string_lossy().to_string());
     let (stem, extension) = match file_name.rfind('.') {
         Some(dot) if is_file && dot > 0 => {
             (file_name[..dot].to_string(), file_name[dot..].to_string())
@@ -960,16 +917,10 @@ pub fn same_entry(one: &Path, other: &Path) -> bool {
         _ => false,
     }
 }
-#[cfg(all(
-    any(test, feature = "testing"),
-    any(target_os = "linux", target_os = "macos")
-))]
+#[cfg(all(any(test, feature = "testing"), any(target_os = "linux", target_os = "macos")))]
 pub fn pipe_in(folder: &Path) -> PathBuf {
     let pipe = folder.join("pipe.txt");
-    let made = std::process::Command::new("mkfifo")
-        .arg(&pipe)
-        .status()
-        .expect("mkfifo ran");
+    let made = std::process::Command::new("mkfifo").arg(&pipe).status().expect("mkfifo ran");
     assert!(made.success());
     pipe
 }
@@ -991,32 +942,17 @@ mod tests {
     #[test]
     fn a_path_key_is_one_folder_however_it_is_spelled() {
         let key = |naming, path: &str| path_key_as(naming, Path::new(path));
-        assert_eq!(
-            key(Naming::Cased, "/Users/a/Photos"),
-            key(Naming::Cased, "/users/A/photos")
-        );
-        assert_eq!(
-            key(Naming::Win32, "/Users/a/Photos."),
-            key(Naming::Win32, "/users/a/photos")
-        );
-        assert_eq!(
-            key(Naming::Exact, "/a/./b/../c"),
-            key(Naming::Exact, "/a/c")
-        );
-        assert_ne!(
-            key(Naming::Exact, "/a/Photos"),
-            key(Naming::Exact, "/a/photos")
-        );
+        assert_eq!(key(Naming::Cased, "/Users/a/Photos"), key(Naming::Cased, "/users/A/photos"));
+        assert_eq!(key(Naming::Win32, "/Users/a/Photos."), key(Naming::Win32, "/users/a/photos"));
+        assert_eq!(key(Naming::Exact, "/a/./b/../c"), key(Naming::Exact, "/a/c"));
+        assert_ne!(key(Naming::Exact, "/a/Photos"), key(Naming::Exact, "/a/photos"));
         assert_ne!(key(Naming::Cased, "/a/b"), key(Naming::Cased, "/a/bc"));
         assert_ne!(key(Naming::Cased, "/a/b/c"), key(Naming::Cased, "/a/b"));
     }
     #[test]
     fn a_stream_or_an_alias_is_not_spoken_on_windows() {
-        let unsaid = |naming, path: &str| {
-            Path::new(path)
-                .components()
-                .any(|part| unspoken(naming, part))
-        };
+        let unsaid =
+            |naming, path: &str| Path::new(path).components().any(|part| unspoken(naming, part));
         assert!(unsaid(Naming::Win32, "/a/b.txt:hidden"));
         assert!(unsaid(Naming::Win32, "/a/PROGRA~1/b"));
         assert!(!unsaid(Naming::Win32, "/a/Program Files/b"));
@@ -1066,28 +1002,16 @@ mod tests {
         let fresh = root(&["data", "so.orden.Orden", "Spaces"]);
         let old = root(&["home", "Documents", "Nib"]);
         assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
-        assert_eq!(
-            super::spaces_folder(None, Some(old.clone()), fresh.clone()),
-            old
-        );
+        assert_eq!(super::spaces_folder(None, Some(old.clone()), fresh.clone()), old);
         let kept = fresh.to_string_lossy().to_string();
         assert_eq!(
             super::spaces_folder(Some(&kept), Some(old.clone()), root(&["elsewhere"])),
             fresh
         );
         let edited = format!("{}\n", old.to_string_lossy());
-        assert_eq!(
-            super::spaces_folder(Some(&edited), None, fresh.clone()),
-            old
-        );
-        assert_eq!(
-            super::spaces_folder(Some("Spaces"), None, fresh.clone()),
-            fresh
-        );
-        assert_eq!(
-            super::spaces_folder(Some(""), Some(old.clone()), fresh),
-            old
-        );
+        assert_eq!(super::spaces_folder(Some(&edited), None, fresh.clone()), old);
+        assert_eq!(super::spaces_folder(Some("Spaces"), None, fresh.clone()), fresh);
+        assert_eq!(super::spaces_folder(Some(""), Some(old.clone()), fresh), old);
     }
     #[cfg(desktop)]
     #[test]
@@ -1106,15 +1030,9 @@ mod tests {
         assert_eq!(super::outside_folder(Some("Spaces"), &own), None);
         assert_eq!(super::outside_folder(None, &own), None);
         let vault = root(&["home", "Obsidian", "Vault"]);
-        assert_eq!(
-            super::outside_folder(Some(&said(&vault)), &own),
-            Some(vault.clone())
-        );
+        assert_eq!(super::outside_folder(Some(&said(&vault)), &own), Some(vault.clone()));
         let within = root(&["home", "Documents", "Nib", "Work"]);
-        assert_eq!(
-            super::outside_folder(Some(&said(&within)), &own),
-            Some(within)
-        );
+        assert_eq!(super::outside_folder(Some(&said(&within)), &own), Some(within));
         assert_eq!(
             super::outside_folder(Some(&said(&nib)), &[Some(fresh.as_path()), None]),
             Some(nib.clone())
@@ -1147,18 +1065,9 @@ mod tests {
     #[test]
     fn climbing_out_of_the_folder_does_not_count_as_inside() {
         let root = path(&["notes", "Orden"]);
-        assert!(!inside(
-            &root,
-            &path(&["notes", "Orden", "..", "secret.md"])
-        ));
-        assert!(!inside(
-            &root,
-            &path(&["notes", "Orden", "Work", "..", "..", "secret.md"])
-        ));
-        assert!(inside(
-            &root,
-            &path(&["notes", "Orden", "Work", "..", "Home", "a.md"])
-        ));
+        assert!(!inside(&root, &path(&["notes", "Orden", "..", "secret.md"])));
+        assert!(!inside(&root, &path(&["notes", "Orden", "Work", "..", "..", "secret.md"])));
+        assert!(inside(&root, &path(&["notes", "Orden", "Work", "..", "Home", "a.md"])));
     }
     #[test]
     fn nothing_is_inside_a_folder_with_no_name() {
@@ -1228,11 +1137,7 @@ mod tests {
             judged_as(naming, &root, &path(&parts).to_string_lossy())
         };
         for naming in [Naming::Cased, Naming::Win32] {
-            for trash in [
-                &[".TRASH", "1-0", "a.md"][..],
-                &[".Trash"],
-                &[".tra\u{17f}h"],
-            ] {
+            for trash in [&[".TRASH", "1-0", "a.md"][..], &[".Trash"], &[".tra\u{17f}h"]] {
                 assert!(said(naming, trash).is_err(), "{naming:?} {trash:?}");
             }
             assert!(said(naming, &["Work", "Plan.md"]).is_ok(), "{naming:?}");
@@ -1288,21 +1193,14 @@ mod tests {
     #[test]
     fn a_space_outside_ascii_is_a_space_like_any_other() {
         let root = path(&["Documents", "Orden"]);
-        assert!(judged(
-            &root,
-            &path(&["Documents", "Orden", "メモ", "考え.md"]).to_string_lossy()
-        )
-        .is_ok());
+        assert!(judged(&root, &path(&["Documents", "Orden", "メモ", "考え.md"]).to_string_lossy())
+            .is_ok());
         assert!(judged_space(
             &root,
             &path(&["Documents", "Orden", "Ideen über alles"]).to_string_lossy()
         )
         .is_ok());
-        assert!(judged(
-            &root,
-            &path(&["Documents", "メモ", "考え.md"]).to_string_lossy()
-        )
-        .is_err());
+        assert!(judged(&root, &path(&["Documents", "メモ", "考え.md"]).to_string_lossy()).is_err());
     }
     #[test]
     fn the_top_of_a_disk_is_not_a_folder_a_pick_shares() {
@@ -1362,28 +1260,16 @@ mod tests {
         let spaces = path(&["Documents", "Orden"]);
         let space = path(&["Documents", "Orden", "Notes"]);
         assert_eq!(space_root(&spaces, &space), Some(space.clone()));
-        assert_eq!(
-            space_root(&spaces, &space.join("Work")),
-            Some(space.clone())
-        );
-        assert_eq!(
-            space_root(&spaces, &space.join("Work").join("2026")),
-            Some(space.clone())
-        );
-        assert_eq!(
-            space_root(&spaces, &space.join("Work").join("..")),
-            Some(space)
-        );
+        assert_eq!(space_root(&spaces, &space.join("Work")), Some(space.clone()));
+        assert_eq!(space_root(&spaces, &space.join("Work").join("2026")), Some(space.clone()));
+        assert_eq!(space_root(&spaces, &space.join("Work").join("..")), Some(space));
     }
     #[test]
     fn a_working_folder_of_a_kept_space_is_a_space_of_its_own() {
         let spaces = path(&["Documents", "Orden"]);
         let working = path(&["Documents", "Orden", ".orden", ".work", "Notes"]);
         assert_eq!(space_root(&spaces, &working), Some(working.clone()));
-        assert_eq!(
-            space_root(&spaces, &working.join("Work").join("Plan.md")),
-            Some(working)
-        );
+        assert_eq!(space_root(&spaces, &working.join("Work").join("Plan.md")), Some(working));
         assert_eq!(
             space_root(&spaces, &path(&["Documents", "Orden", ".orden", "Notes"])),
             Some(path(&["Documents", "Orden", ".orden"]))
@@ -1416,10 +1302,7 @@ mod tests {
         let target = dir.path().join("Note.md");
         write_atomically(&target, b"first").expect("the first write");
         write_atomically(&target, b"second").expect("the second write");
-        assert_eq!(
-            std::fs::read_to_string(&target).expect("the note"),
-            "second"
-        );
+        assert_eq!(std::fs::read_to_string(&target).expect("the note"), "second");
         let left: Vec<_> = std::fs::read_dir(dir.path())
             .expect("the folder")
             .flatten()
@@ -1474,16 +1357,10 @@ mod tests {
         let target = dir.path().join("Note.md");
         for shrink_first in [true, false] {
             std::fs::write(&target, "a first, longer version").expect("the old text");
-            let mut file = std::fs::OpenOptions::new()
-                .write(true)
-                .open(&target)
-                .expect("the note");
+            let mut file = std::fs::OpenOptions::new().write(true).open(&target).expect("the note");
             super::poured(&mut file, b"second", shrink_first).expect("the write");
             drop(file);
-            assert_eq!(
-                std::fs::read_to_string(&target).expect("the note"),
-                "second"
-            );
+            assert_eq!(std::fs::read_to_string(&target).expect("the note"), "second");
         }
     }
     #[test]
@@ -1497,14 +1374,8 @@ mod tests {
             Err(std::io::Error::other("the file is mapped"))
         })
         .expect("the copy put over the note");
-        assert_eq!(
-            std::fs::read_to_string(&target).expect("the note"),
-            "second"
-        );
-        assert_eq!(
-            std::fs::read_dir(dir.path()).expect("the folder").count(),
-            1
-        );
+        assert_eq!(std::fs::read_to_string(&target).expect("the note"), "second");
+        assert_eq!(std::fs::read_dir(dir.path()).expect("the folder").count(), 1);
     }
     #[cfg(unix)]
     #[test]
@@ -1516,19 +1387,13 @@ mod tests {
         std::thread::spawn(move || {
             let _ = said.send(super::at_most(&read, 1024).is_err());
         });
-        assert_eq!(
-            heard.recv_timeout(std::time::Duration::from_secs(5)),
-            Ok(true)
-        );
+        assert_eq!(heard.recv_timeout(std::time::Duration::from_secs(5)), Ok(true));
         let (said, heard) = std::sync::mpsc::channel();
         let written = pipe.clone();
         std::thread::spawn(move || {
             let _ = said.send(super::write_in_place(&written, b"text").is_ok());
         });
-        assert_eq!(
-            heard.recv_timeout(std::time::Duration::from_secs(5)),
-            Ok(true)
-        );
+        assert_eq!(heard.recv_timeout(std::time::Duration::from_secs(5)), Ok(true));
         assert_eq!(std::fs::read(&pipe).expect("the note"), b"text");
     }
     #[cfg(unix)]
@@ -1586,15 +1451,9 @@ mod tests {
         std::fs::write(&outside, "untouched").expect("a file the link points at");
         std::os::unix::fs::symlink(&outside, &link).expect("a link");
         super::write_in_place(&link, b"words").expect("the write");
-        assert_eq!(
-            std::fs::read_to_string(&outside).expect("the far file"),
-            "untouched"
-        );
+        assert_eq!(std::fs::read_to_string(&outside).expect("the far file"), "untouched");
         assert_eq!(std::fs::read_to_string(&link).expect("the note"), "words");
-        assert!(!std::fs::symlink_metadata(&link)
-            .expect("the note")
-            .file_type()
-            .is_symlink());
+        assert!(!std::fs::symlink_metadata(&link).expect("the note").file_type().is_symlink());
     }
     #[test]
     #[cfg(unix)]
@@ -1604,10 +1463,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp folder");
         let secret = dir.path().join("automation.json");
         super::write_privately(&secret, b"{}").expect("the private write");
-        let mode = std::fs::metadata(&secret)
-            .expect("the file")
-            .permissions()
-            .mode();
+        let mode = std::fs::metadata(&secret).expect("the file").permissions().mode();
         assert_eq!(mode & 0o777, 0o600);
     }
     #[test]
@@ -1632,10 +1488,7 @@ mod tests {
         std::fs::write(here.join("Idea.md"), "").expect("a note");
         std::fs::write(here.join("Idea 2.md"), "").expect("a second note");
         std::fs::create_dir_all(here.join("Notes")).expect("a folder");
-        assert_eq!(
-            free_spot(&here.join("Idea.md"), true),
-            here.join("Idea 3.md")
-        );
+        assert_eq!(free_spot(&here.join("Idea.md"), true), here.join("Idea 3.md"));
         assert_eq!(free_spot(&here.join("Notes"), false), here.join("Notes 2"));
         assert_eq!(free_spot(&here.join("New.md"), true), here.join("New.md"));
     }
@@ -1692,10 +1545,7 @@ mod tests {
             highlights_of(&path(&["Orden", "Notes", "paper.pdf"])),
             path(&["Orden", "Notes", "paper.pdf.highlights.json"])
         );
-        assert_ne!(
-            highlights_of(Path::new("paper.pdf")),
-            highlights_of(Path::new("paper.PDF"))
-        );
+        assert_ne!(highlights_of(Path::new("paper.pdf")), highlights_of(Path::new("paper.PDF")));
     }
     #[test]
     fn a_sidecar_never_leaves_the_folder_its_pdf_is_in() {
@@ -1733,10 +1583,7 @@ mod tests {
         std::fs::rename(&was, &now).expect("the move");
         move_held(&was, &now);
         assert!(!highlights_of(&was).exists());
-        assert_eq!(
-            std::fs::read_to_string(highlights_of(&now)).expect("its own"),
-            "mine"
-        );
+        assert_eq!(std::fs::read_to_string(highlights_of(&now)).expect("its own"), "mine");
     }
     #[test]
     fn a_page_notes_paper_never_goes_over_a_pdf_already_there() {
@@ -1748,24 +1595,12 @@ mod tests {
         std::fs::write(paper_of(&lecture), b"%PDF lecture").expect("its paper");
         std::fs::write(paper_of(&report), b"%PDF mine").expect("somebody's own PDF");
         let never = |_: &Path, _: &Path| false;
-        assert_eq!(
-            super::paper_in_the_way(&lecture, &report, never),
-            Some(paper_of(&report))
-        );
+        assert_eq!(super::paper_in_the_way(&lecture, &report, never), Some(paper_of(&report)));
         std::fs::rename(&lecture, &report).expect("the note's own move");
         move_held(&lecture, &report);
-        assert_eq!(
-            std::fs::read(paper_of(&report)).expect("still there"),
-            b"%PDF mine"
-        );
-        assert_eq!(
-            std::fs::read(paper_of(&lecture)).expect("left where it was"),
-            b"%PDF lecture"
-        );
-        assert_eq!(
-            free_spot(&here.join("Report.pages"), true),
-            here.join("Report 2.pages")
-        );
+        assert_eq!(std::fs::read(paper_of(&report)).expect("still there"), b"%PDF mine");
+        assert_eq!(std::fs::read(paper_of(&lecture)).expect("left where it was"), b"%PDF lecture");
+        assert_eq!(free_spot(&here.join("Report.pages"), true), here.join("Report 2.pages"));
     }
     #[test]
     fn a_page_note_respelled_is_not_in_its_own_way() {
@@ -1774,14 +1609,8 @@ mod tests {
         let lecture = here.join("Lecture.pages");
         std::fs::write(paper_of(&lecture), b"%PDF").expect("its paper");
         let same = |_: &Path, _: &Path| true;
-        assert_eq!(
-            super::paper_in_the_way(&lecture, &here.join("lecture.pages"), same),
-            None
-        );
-        assert_eq!(
-            super::paper_in_the_way(&lecture, &here.join("Elsewhere.pages"), same),
-            None
-        );
+        assert_eq!(super::paper_in_the_way(&lecture, &here.join("lecture.pages"), same), None);
+        assert_eq!(super::paper_in_the_way(&lecture, &here.join("Elsewhere.pages"), same), None);
         assert_eq!(
             super::paper_in_the_way(&here.join("Idea.md"), &here.join("Note.md"), same),
             None
@@ -1847,26 +1676,17 @@ mod tests {
         let moved = here.join("Final.pages");
         std::fs::rename(&package, &moved).expect("the folder's own move");
         move_held(&package, &moved);
-        assert_eq!(
-            std::fs::read(paper_of(&package)).expect("still there"),
-            b"%PDF mine"
-        );
+        assert_eq!(std::fs::read(paper_of(&package)).expect("still there"), b"%PDF mine");
         assert!(!paper_of(&moved).exists());
         std::fs::write(here.join("Other.pages.pdf"), b"%PDF other").expect("another PDF");
-        assert_eq!(
-            super::paper_in_the_way(&moved, &here.join("Other.pages"), never),
-            None
-        );
+        assert_eq!(super::paper_in_the_way(&moved, &here.join("Other.pages"), never), None);
     }
     #[test]
     fn a_pdfs_name_is_taken_by_highlights_left_behind() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let here = dir.path();
         std::fs::write(highlights_of(&here.join("Paper.pdf")), "[]").expect("leftovers");
-        assert_eq!(
-            free_spot(&here.join("Paper.pdf"), true),
-            here.join("Paper 2.pdf")
-        );
+        assert_eq!(free_spot(&here.join("Paper.pdf"), true), here.join("Paper 2.pdf"));
     }
     #[test]
     fn a_note_has_no_sidecar_to_move() {
@@ -1960,10 +1780,7 @@ mod tests {
         std::fs::create_dir_all(spaces.join("Work/Notes")).expect("a space");
         std::fs::create_dir_all(&elsewhere).expect("a folder outside");
         assert!(link_to(&elsewhere, &spaces.join("Work/Refs")));
-        assert!(link_to(
-            &spaces.join("Work/Notes"),
-            &spaces.join("Work/Same")
-        ));
+        assert!(link_to(&spaces.join("Work/Notes"), &spaces.join("Work/Same")));
         let at = |one: &str| spaces.join(one).to_string_lossy().into_owned();
         assert!(judged(&spaces, &at("Work/Refs")).is_ok());
         assert!(walked(&spaces, &at("Work/Refs")).is_err());
@@ -2052,9 +1869,7 @@ mod tests {
     #[test]
     fn a_folder_linux_kept_by_the_lowercased_path_goes_with_that_spelling_only() {
         let root = tempfile::tempdir().expect("a temp folder");
-        let was = root
-            .path()
-            .join(folder_key_as(Naming::Cased, "/Notes/Plan.md"));
+        let was = root.path().join(folder_key_as(Naming::Cased, "/Notes/Plan.md"));
         std::fs::create_dir(&was).expect("an old folder");
         std::fs::write(was.join(ORIGIN), "/Notes/Plan.md").expect("its origin");
         let kept = |path| kept_folder_named(root.path(), &folder_key_as(Naming::Exact, path), path);
@@ -2093,11 +1908,7 @@ mod tests {
         let through = spaces.join("Work/Refs/README.md");
         assert!(judged(&spaces, &through.to_string_lossy()).is_err());
         assert!(judged(&spaces, &spaces.join("Work/Refs").to_string_lossy()).is_ok());
-        assert!(judged(
-            &spaces,
-            &spaces.join("Work/Notes/Plan.md").to_string_lossy()
-        )
-        .is_ok());
+        assert!(judged(&spaces, &spaces.join("Work/Notes/Plan.md").to_string_lossy()).is_ok());
     }
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]

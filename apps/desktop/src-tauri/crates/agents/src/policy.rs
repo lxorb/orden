@@ -9,10 +9,7 @@ pub fn host_of(url: &str) -> Option<String> {
 }
 pub fn host_key(url: &tauri::Url) -> Option<String> {
     url.host_str().map(|host| {
-        host.trim_start_matches('[')
-            .trim_end_matches(']')
-            .trim_end_matches('.')
-            .to_lowercase()
+        host.trim_start_matches('[').trim_end_matches(']').trim_end_matches('.').to_lowercase()
     })
 }
 pub fn from_a_site(url: &str) -> bool {
@@ -48,10 +45,7 @@ pub fn site_of(host: &str) -> String {
         return host;
     }
     let labels: Vec<&str> = host.split('.').collect();
-    if let Some(shared) = SHARED_HOSTS
-        .split('|')
-        .find(|one| host.ends_with(&format!(".{one}")))
-    {
+    if let Some(shared) = SHARED_HOSTS.split('|').find(|one| host.ends_with(&format!(".{one}"))) {
         return labels[labels.len() - shared.split('.').count() - 1..].join(".");
     }
     let keep = match labels.as_slice() {
@@ -94,17 +88,15 @@ pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String
     if !on_the_web(url) {
         return Err(format!("an agent stays on the web, and {url} is not on it"));
     }
-    host_of(&made_by(url)).map_or(Ok(()), |host| {
-        allowed_on(grant, &host, store, ": open it with store \"agent\"")
-    })
+    host_of(&made_by(url))
+        .map_or(Ok(()), |host| allowed_on(grant, &host, store, ": open it with store \"agent\""))
 }
 fn allowed_on(grant: &Grant, host: &str, store: Store, hint: &str) -> Result<(), String> {
     match rule_for(grant, host) {
         Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(host))),
-        Some(SiteRule::AgentStore) if store != Store::Agent => Err(format!(
-            "{} is only for this agent's own store{hint}",
-            site_of(host)
-        )),
+        Some(SiteRule::AgentStore) if store != Store::Agent => {
+            Err(format!("{} is only for this agent's own store{hint}", site_of(host)))
+        }
         _ => Ok(()),
     }
 }
@@ -202,10 +194,7 @@ impl Facts {
 }
 fn card_field(field: &Field) -> bool {
     if field.completes(|one| {
-        matches!(
-            one,
-            "cc-number" | "cc-csc" | "cc-exp" | "cc-exp-month" | "cc-exp-year"
-        )
+        matches!(one, "cc-number" | "cc-csc" | "cc-exp" | "cc-exp-month" | "cc-exp-year")
     }) {
         return true;
     }
@@ -299,11 +288,7 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
         }
         Act::Enter => {
             let own = &facts.field;
-            let sent = if body(own) {
-                social || message_box(own)
-            } else {
-                composed
-            };
+            let sent = if body(own) { social || message_box(own) } else { composed };
             sent.then_some(Sends::ByShape)
         }
     }
@@ -393,11 +378,7 @@ pub fn judge(
             }
         }
         if let Some(how) = sends(facts, act, &host) {
-            let said = if how == Sends::ByWords {
-                label.as_str()
-            } else {
-                ""
-            };
+            let said = if how == Sends::ByWords { label.as_str() } else { "" };
             if let Some(question) = ask(Category::Sending, on(said, "Send", &site)) {
                 return Some(question);
             }
@@ -948,24 +929,13 @@ mod tests {
         Grant::own("a".into(), "A")
     }
     fn press(name: &str) -> Facts {
-        Facts {
-            tag: "button".into(),
-            name: name.into(),
-            ..Facts::default()
-        }
+        Facts { tag: "button".into(), name: name.into(), ..Facts::default() }
     }
     fn called(said: &str) -> Field {
-        Field {
-            kind: "text".into(),
-            said: said.into(),
-            ..Field::default()
-        }
+        Field { kind: "text".into(), said: said.into(), ..Field::default() }
     }
     fn in_dialog(name: &str, dialog: &str) -> Facts {
-        Facts {
-            dialog: dialog.into(),
-            ..press(name)
-        }
+        Facts { dialog: dialog.into(), ..press(name) }
     }
     fn category(facts: &Facts, url: &str) -> Option<Category> {
         judge(&grant(), facts, Act::Press, url, &[]).map(|question| question.category)
@@ -985,16 +955,8 @@ mod tests {
             ("Agree", "We start the deletion of your data.", Deleting),
             ("Confirm", "20 EUR is debited today.", Paying),
             ("OK", "Are you sure? All your files get deleted.", Deleting),
-            (
-                "Confirm",
-                "Order summary. Total 99 EUR. Pay with Visa ending 4242.",
-                Paying,
-            ),
-            (
-                "OK",
-                "Your card is charged 99 EUR. Purchase details below.",
-                Paying,
-            ),
+            ("Confirm", "Order summary. Total 99 EUR. Pay with Visa ending 4242.", Paying),
+            ("OK", "Your card is charged 99 EUR. Purchase details below.", Paying),
             ("Continue \u{2192}", "Delete your account?", Deleting),
             ("Confirm and close", "Delete your account?", Deleting),
             ("Keep going", "Delete your account?", Deleting),
@@ -1003,11 +965,7 @@ mod tests {
             ("Done", "You can remove your data at any time.", Deleting),
             ("", "Remove item from cart?", Deleting),
         ] {
-            assert_eq!(
-                category(&in_dialog(name, dialog), url),
-                Some(asked),
-                "{name}: {dialog}"
-            );
+            assert_eq!(category(&in_dialog(name, dialog), url), Some(asked), "{name}: {dialog}");
         }
         for (name, dialog) in [
             ("Got it", "How to delete your data"),
@@ -1020,25 +978,15 @@ mod tests {
             ("Abbrechen", "Konto l\u{f6}schen?"),
             ("Confirm", "Change your name?"),
         ] {
-            assert_eq!(
-                category(&in_dialog(name, dialog), url),
-                None,
-                "{name}: {dialog}"
-            );
+            assert_eq!(category(&in_dialog(name, dialog), url), None, "{name}: {dialog}");
         }
     }
     #[test]
     fn the_way_out_of_a_dialog_and_what_reads_as_paying_by_mistake() {
         let url = "https://app.example/";
         for (name, dialog) in [
-            (
-                "Accept all cookies",
-                "We use cookies. You can remove them at any time.",
-            ),
-            (
-                "Allow all cookies",
-                "Our partners use cookies to process payment and measure ads.",
-            ),
+            ("Accept all cookies", "We use cookies. You can remove them at any time."),
+            ("Allow all cookies", "Our partners use cookies to process payment and measure ads."),
             ("Next", "Tip: drag a widget to move it."),
             ("Continue", "This upgrade is free of charge."),
             ("Assign", "Who is in charge of this project?"),
@@ -1049,18 +997,11 @@ mod tests {
             ("Continue shopping", "Item removed"),
             ("Stay", "Delete your account?"),
             ("Sluiten", "Delete your account?"),
-            (
-                "\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}",
-                "Delete your account?",
-            ),
+            ("\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}", "Delete your account?"),
             ("Keep", "Delete this item?"),
             ("No, keep it", "Delete your account?"),
         ] {
-            assert_eq!(
-                category(&in_dialog(name, dialog), url),
-                None,
-                "{name}: {dialog}"
-            );
+            assert_eq!(category(&in_dialog(name, dialog), url), None, "{name}: {dialog}");
         }
     }
     #[test]
@@ -1075,46 +1016,22 @@ mod tests {
             ("No, thanks and charge me", "Pay 99 EUR?", Paying),
             ("OK", "Delete your account? We use cookies.", Deleting),
             ("OK", "Your card is charged 99 EUR. We use cookies.", Paying),
-            (
-                "Continue",
-                "Free of charge for a month, then you are charged 9 EUR.",
-                Paying,
-            ),
+            ("Continue", "Free of charge for a month, then you are charged 9 EUR.", Paying),
             ("Continue", "This upgrade is 20 EUR. Pay now?", Paying),
-            (
-                "OK",
-                "We use cookies. You can delete them in your browser.",
-                Deleting,
-            ),
+            ("OK", "We use cookies. You can delete them in your browser.", Deleting),
             ("OK", "Consent to payment of 99 EUR.", Paying),
-            (
-                "Agree",
-                "By clicking Agree you consent to be charged 99 EUR every month.",
-                Paying,
-            ),
+            ("Agree", "By clicking Agree you consent to be charged 99 EUR every month.", Paying),
             (
                 "Allow",
                 "Payment consent. Allow shop.example to take 500 EUR from your account.",
                 Paying,
             ),
-            (
-                "OK",
-                "We use cookies. Your account will be deleted permanently.",
-                Deleting,
-            ),
-            (
-                "Accept all",
-                "We use cookies. You can delete them in your browser.",
-                Deleting,
-            ),
+            ("OK", "We use cookies. Your account will be deleted permanently.", Deleting),
+            ("Accept all", "We use cookies. You can delete them in your browser.", Deleting),
             ("Next", "Your card will be charged 99 EUR.", Paying),
             ("Next", "Your account will be deleted.", Deleting),
         ] {
-            assert_eq!(
-                category(&in_dialog(name, dialog), url),
-                Some(asked),
-                "{name}: {dialog}"
-            );
+            assert_eq!(category(&in_dialog(name, dialog), url), Some(asked), "{name}: {dialog}");
         }
     }
     #[test]
@@ -1139,10 +1056,7 @@ mod tests {
         ] {
             assert_eq!(enter(&facts), Some(Deleting), "{}", facts.default_button);
         }
-        assert_eq!(
-            enter(&field(true, "Next", "Your account will be deleted.")),
-            Some(Deleting)
-        );
+        assert_eq!(enter(&field(true, "Next", "Your account will be deleted.")), Some(Deleting));
         assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
         assert_eq!(enter(&field(true, "", "Change your name?")), None);
     }
@@ -1153,10 +1067,7 @@ mod tests {
             tag: "input".into(),
             editable: true,
             in_form: true,
-            field: Field {
-                kind: kind.into(),
-                ..Field::default()
-            },
+            field: Field { kind: kind.into(), ..Field::default() },
             ..Facts::default()
         };
         let (facts, act) = key_act(field("text"), &key).expect("it does something");
@@ -1171,16 +1082,10 @@ mod tests {
         let facts = Facts {
             tag: "input".into(),
             name: "4111111111111111".into(),
-            field: Field {
-                autocomplete: "cc-number".into(),
-                ..Field::default()
-            },
+            field: Field { autocomplete: "cc-number".into(), ..Field::default() },
             ..Facts::default()
         };
-        let confirm = Grant {
-            mode: Mode::Confirm,
-            ..grant()
-        };
+        let confirm = Grant { mode: Mode::Confirm, ..grant() };
         let question = judge(&confirm, &facts, Act::Press, url, &[]);
         let summary = question.map(|one| one.summary).unwrap_or_default();
         assert!(!summary.is_empty());
@@ -1189,10 +1094,7 @@ mod tests {
     #[test]
     fn a_dialog_is_read_in_its_inflections() {
         let url = "https://app.example/";
-        let in_dialog = |dialog: &str| Facts {
-            dialog: dialog.into(),
-            ..press("OK")
-        };
+        let in_dialog = |dialog: &str| Facts { dialog: dialog.into(), ..press("OK") };
         for (dialog, asked) in [
             ("Tu cuenta sera eliminada", Deleting),
             ("Paying 20 EUR", Paying),
@@ -1217,14 +1119,7 @@ mod tests {
     }
     #[test]
     fn a_line_leads_by_how_it_opens() {
-        for line in [
-            "Pay now",
-            "Pay 20.00 EUR",
-            "Delete 3 files",
-            "Remove item",
-            "Kaufen",
-            "pay",
-        ] {
+        for line in ["Pay now", "Pay 20.00 EUR", "Delete 3 files", "Remove item", "Kaufen", "pay"] {
             assert!(leads(line), "{line}");
         }
         for line in [
@@ -1242,18 +1137,12 @@ mod tests {
     }
     #[test]
     fn what_says_nothing_of_itself_asks() {
-        let unread = Facts {
-            opaque: true,
-            ..Facts::default()
-        };
+        let unread = Facts { opaque: true, ..Facts::default() };
         assert_eq!(category(&unread, "https://app.example/"), Some(Unread));
     }
     #[test]
     fn what_is_no_code_and_no_payment_card_stays_readable() {
-        let called = |said: &str, kind: &str| Field {
-            kind: kind.into(),
-            ..called(said)
-        };
+        let called = |said: &str, kind: &str| Field { kind: kind.into(), ..called(said) };
         for said in [
             "One-time donation",
             "Authenticator app name",
@@ -1266,10 +1155,7 @@ mod tests {
         }
         assert!(!secret(&called("Pin notes", "textarea")));
         assert!(!card_field(&called("Library card no", "text")));
-        let postal = Field {
-            autocomplete: "postal-code".into(),
-            ..called("PIN code", "text")
-        };
+        let postal = Field { autocomplete: "postal-code".into(), ..called("PIN code", "text") };
         assert!(!secret(&postal));
     }
     #[test]
@@ -1310,10 +1196,7 @@ mod tests {
         ] {
             assert!(secret(&called(said)), "{said}");
         }
-        let code = Field {
-            label: "Code".into(),
-            ..called("Code")
-        };
+        let code = Field { label: "Code".into(), ..called("Code") };
         assert!(secret(&code));
     }
     #[test]
@@ -1332,15 +1215,9 @@ mod tests {
         ] {
             assert!(secret(&called(said)), "{said}");
         }
-        for said in [
-            "shipping",
-            "spinner",
-            "hotpot",
-            "Search",
-            "Card notes",
-            "tangent",
-            "Discount code",
-        ] {
+        for said in
+            ["shipping", "spinner", "hotpot", "Search", "Card notes", "tangent", "Discount code"]
+        {
             assert!(!secret(&called(said)), "{said}");
         }
     }
@@ -1363,17 +1240,10 @@ mod tests {
     #[test]
     fn a_rule_covers_its_site_and_every_host_under_it() {
         let mut grant = grant();
-        grant
-            .sites
-            .insert("bank.example".into(), SiteRule::AgentStore);
+        grant.sites.insert("bank.example".into(), SiteRule::AgentStore);
         grant.sites.insert("evil.example".into(), SiteRule::Deny);
-        grant
-            .sites
-            .insert("ok.evil.example".into(), SiteRule::Allow);
-        assert_eq!(
-            rule_for(&grant, "login.bank.example"),
-            Some(SiteRule::AgentStore)
-        );
+        grant.sites.insert("ok.evil.example".into(), SiteRule::Allow);
+        assert_eq!(rule_for(&grant, "login.bank.example"), Some(SiteRule::AgentStore));
         assert_eq!(rule_for(&grant, "evil.example"), Some(SiteRule::Deny));
         assert_eq!(rule_for(&grant, "ok.evil.example"), Some(SiteRule::Allow));
         assert_eq!(rule_for(&grant, "notbank.example"), None);
@@ -1400,10 +1270,7 @@ mod tests {
             assert!(site_allowed(&grant, url, Store::Agent).is_err(), "{url}");
         }
         assert!(site_allowed(&grant, "https://notevil.example/", Store::Agent).is_ok());
-        assert_eq!(
-            host_of("https://Evil.Example./"),
-            Some("evil.example".into())
-        );
+        assert_eq!(host_of("https://Evil.Example./"), Some("evil.example".into()));
     }
     #[test]
     fn presses_are_recognised_in_every_language() {
@@ -1462,31 +1329,13 @@ mod tests {
         let mut facts = press("Continue");
         facts.submit = true;
         let hosts = vec!["js.stripe.com".to_string()];
-        let asked = judge(
-            &grant(),
-            &facts,
-            Act::Press,
-            "https://shop.example/",
-            &hosts,
-        );
+        let asked = judge(&grant(), &facts, Act::Press, "https://shop.example/", &hosts);
         assert_eq!(asked.map(|one| one.category), Some(Paying));
         facts.submit = false;
-        assert!(judge(
-            &grant(),
-            &facts,
-            Act::Press,
-            "https://shop.example/",
-            &hosts
-        )
-        .is_none());
+        assert!(judge(&grant(), &facts, Act::Press, "https://shop.example/", &hosts).is_none());
     }
     fn field(kind: &str, label: &str) -> Field {
-        Field {
-            kind: kind.into(),
-            said: label.into(),
-            label: label.into(),
-            ..Field::default()
-        }
+        Field { kind: kind.into(), said: label.into(), label: label.into(), ..Field::default() }
     }
     fn submitting(name: &str, fields: Vec<Field>) -> Facts {
         Facts {
@@ -1499,21 +1348,11 @@ mod tests {
         }
     }
     fn on_the_page(name: &str, fields: Vec<Field>) -> Facts {
-        Facts {
-            tag: "div".into(),
-            name: name.into(),
-            fields,
-            ..Facts::default()
-        }
+        Facts { tag: "div".into(), name: name.into(), fields, ..Facts::default() }
     }
     fn enter_in(own: Field, in_form: bool, fields: Vec<Field>) -> Facts {
         Facts {
-            tag: if own.kind == "textarea" {
-                "textarea"
-            } else {
-                "input"
-            }
-            .into(),
+            tag: if own.kind == "textarea" { "textarea" } else { "input" }.into(),
             editable: true,
             submit: in_form,
             in_form,
@@ -1523,11 +1362,7 @@ mod tests {
         }
     }
     fn compose() -> Vec<Field> {
-        vec![
-            field("email", "To"),
-            field("text", "Subject"),
-            field("textarea", "Message"),
-        ]
+        vec![field("email", "To"), field("text", "Subject"), field("textarea", "Message")]
     }
     fn asked(facts: &Facts, act: Act, url: &str) -> Option<(Category, String)> {
         judge(&grant(), facts, act, url, &[]).map(|one| (one.category, one.summary))
@@ -1574,17 +1409,10 @@ mod tests {
         let mut mention = field("textarea", "");
         mention.mentions = true;
         assert_eq!(
-            asked(
-                &submitting("\u{2192}", vec![mention]),
-                Act::Press,
-                "https://forum.example/"
-            ),
+            asked(&submitting("\u{2192}", vec![mention]), Act::Press, "https://forum.example/"),
             Some((Sending, "Send on forum.example".to_string()))
         );
-        let support = vec![
-            field("email", "Email"),
-            field("textarea", "How can we help?"),
-        ];
+        let support = vec![field("email", "Email"), field("textarea", "How can we help?")];
         assert!(!sent(
             &enter_in(support[1].clone(), true, support.clone()),
             Act::Enter,
@@ -1632,11 +1460,7 @@ mod tests {
             "Post comment",
         ] {
             assert!(
-                sent(
-                    &on_the_page(name, composer()),
-                    Act::Press,
-                    "https://a.example/"
-                ),
+                sent(&on_the_page(name, composer()), Act::Press, "https://a.example/"),
                 "{name}"
             );
         }
@@ -1648,14 +1472,8 @@ mod tests {
             submitting("Search", vec![field("search", "Search")]),
             submitting("Submit", vec![field("search", "q Search")]),
             submitting("Google Search", vec![field("search", "q Search")]),
-            submitting(
-                "Submit",
-                vec![field("email", "Email"), field("password", "Password")],
-            ),
-            submitting(
-                "Send",
-                vec![field("email", "Email"), field("password", "Password")],
-            ),
+            submitting("Submit", vec![field("email", "Email"), field("password", "Password")]),
+            submitting("Send", vec![field("email", "Email"), field("password", "Password")]),
             submitting("Subscribe", vec![field("email", "Email")]),
             submitting("Submit", vec![field("email", "Email")]),
             submitting("Submit", vec![field("text", "From"), field("text", "To")]),
@@ -1668,51 +1486,26 @@ mod tests {
             on_the_page("Find by post code", vec![field("textarea", "")]),
             on_the_page("Sender", vec![field("textarea", "")]),
             on_the_page("Send", Vec::new()),
-            Facts {
-                link: true,
-                ..on_the_page("Reply", vec![field("textarea", "")])
-            },
+            Facts { link: true, ..on_the_page("Reply", vec![field("textarea", "")]) },
         ];
         for facts in &never {
-            assert!(
-                !sent(facts, Act::Press, url),
-                "{} {:?}",
-                facts.name,
-                facts.fields
-            );
+            assert!(!sent(facts, Act::Press, url), "{} {:?}", facts.name, facts.fields);
         }
-        let mut into = enter_in(
-            field("textarea", "Reply"),
-            false,
-            vec![field("textarea", "Reply")],
-        );
+        let mut into =
+            enter_in(field("textarea", "Reply"), false, vec![field("textarea", "Reply")]);
         into.name = "Reply".into();
         assert!(!sent(&into, Act::Press, url));
         let words = field("textarea", "words Words");
-        assert!(!sent(
-            &enter_in(words.clone(), false, vec![words]),
-            Act::Enter,
-            url
-        ));
+        assert!(!sent(&enter_in(words.clone(), false, vec![words]), Act::Enter, url));
         let search = field("search", "q Search");
-        assert!(!sent(
-            &enter_in(search.clone(), true, vec![search]),
-            Act::Enter,
-            url
-        ));
+        assert!(!sent(&enter_in(search.clone(), true, vec![search]), Act::Enter, url));
     }
     #[test]
     fn a_sign_in_is_the_readers_whatever_the_page_calls_it() {
         let sign_in = vec![field("email", "Email"), field("password", "Password")];
-        assert!(signs_in(
-            &submitting("Sign in", sign_in.clone()),
-            Act::Press
-        ));
+        assert!(signs_in(&submitting("Sign in", sign_in.clone()), Act::Press));
         assert!(signs_in(&submitting("Weiter", sign_in.clone()), Act::Press));
-        assert!(signs_in(
-            &enter_in(field("email", "Email"), true, sign_in.clone()),
-            Act::Enter
-        ));
+        assert!(signs_in(&enter_in(field("email", "Email"), true, sign_in.clone()), Act::Enter));
         let mut shown = field("text", "Password");
         shown.autocomplete = "current-password".into();
         assert!(signs_in(
@@ -1721,14 +1514,8 @@ mod tests {
         ));
         let mut masked = field("text", "PIN");
         masked.masked = true;
-        assert!(signs_in(
-            &enter_in(masked.clone(), false, vec![masked]),
-            Act::Enter
-        ));
-        assert!(signs_in(
-            &on_the_page("Anmelden", sign_in.clone()),
-            Act::Press
-        ));
+        assert!(signs_in(&enter_in(masked.clone(), false, vec![masked]), Act::Enter));
+        assert!(signs_in(&on_the_page("Anmelden", sign_in.clone()), Act::Press));
         assert!(signs_in(
             &on_the_page("\u{30ed}\u{30b0}\u{30a4}\u{30f3}", sign_in.clone()),
             Act::Press
@@ -1736,15 +1523,9 @@ mod tests {
         let mut show = submitting("Show password", sign_in.clone());
         show.submit = false;
         assert!(!signs_in(&show, Act::Press));
-        assert!(!signs_in(
-            &submitting("Next", vec![field("email", "Email")]),
-            Act::Press
-        ));
+        assert!(!signs_in(&submitting("Next", vec![field("email", "Email")]), Act::Press));
         assert!(!signs_in(&on_the_page("Sign in", Vec::new()), Act::Press));
-        let forgot = Facts {
-            link: true,
-            ..on_the_page("Forgot your login?", sign_in.clone())
-        };
+        let forgot = Facts { link: true, ..on_the_page("Forgot your login?", sign_in.clone()) };
         assert!(!signs_in(&forgot, Act::Press));
         assert!(!signs_in(&submitting("Sign in", sign_in), Act::Write));
     }
@@ -1764,10 +1545,7 @@ mod tests {
             with("text", "", "CVC"),
             with("text", "", "Expiry"),
             with("text", "", "Kartennummer"),
-            Field {
-                masked: true,
-                ..field("text", "PIN")
-            },
+            Field { masked: true, ..field("text", "PIN") },
         ] {
             assert!(secret(&one), "{one:?}");
         }
@@ -1796,31 +1574,14 @@ mod tests {
     fn a_category_turned_off_or_always_allowed_does_not_ask() {
         let mut grant = grant();
         grant.asks.insert(Deleting, false);
-        assert!(judge(
-            &grant,
-            &press("Delete"),
-            Act::Press,
-            "https://a.example/",
-            &[]
-        )
-        .is_none());
+        assert!(judge(&grant, &press("Delete"), Act::Press, "https://a.example/", &[]).is_none());
         grant.always.insert("shop.example".into(), vec![Paying]);
-        assert!(judge(
-            &grant,
-            &press("Buy now"),
-            Act::Press,
-            "https://shop.example/",
-            &[]
-        )
-        .is_none());
-        assert!(judge(
-            &grant,
-            &press("Buy now"),
-            Act::Press,
-            "https://other.example/",
-            &[]
-        )
-        .is_some());
+        assert!(
+            judge(&grant, &press("Buy now"), Act::Press, "https://shop.example/", &[]).is_none()
+        );
+        assert!(
+            judge(&grant, &press("Buy now"), Act::Press, "https://other.example/", &[]).is_some()
+        );
     }
     #[test]
     fn signing_in_asks_as_the_mode_says_and_full_permissions_just_signs_in() {
@@ -1868,37 +1629,23 @@ mod tests {
         off.asks.insert(SigningIn, false);
         assert!(answering(&off, DialogKind::SignIn, true, url, "").is_none());
         for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
-            assert!(
-                answering(&approve, kind, true, url, "Leave this page?").is_none(),
-                "{kind:?}"
-            );
+            assert!(answering(&approve, kind, true, url, "Leave this page?").is_none(), "{kind:?}");
         }
     }
     #[test]
     fn a_confirm_that_says_it_pays_or_deletes_asks() {
         let url = "https://shop.example/";
         let unsupervised = grant();
-        let question = answering(
-            &unsupervised,
-            DialogKind::Confirm,
-            true,
-            url,
-            "Pay 500 EUR now?",
-        )
-        .expect("asked");
+        let question = answering(&unsupervised, DialogKind::Confirm, true, url, "Pay 500 EUR now?")
+            .expect("asked");
         assert_eq!(question.category, Paying);
         assert_eq!(
             question.summary,
             "The page says \u{201c}Pay 500 EUR now?\u{201d} on shop.example"
         );
-        let question = answering(
-            &unsupervised,
-            DialogKind::Confirm,
-            true,
-            url,
-            "Delete this repository?",
-        )
-        .expect("asked");
+        let question =
+            answering(&unsupervised, DialogKind::Confirm, true, url, "Delete this repository?")
+                .expect("asked");
         assert_eq!(question.category, Deleting);
         assert!(answering(&unsupervised, DialogKind::Confirm, false, url, "Pay now?").is_none());
         assert!(answering(&unsupervised, DialogKind::Alert, true, url, "Pay now?").is_none());
@@ -1917,10 +1664,7 @@ mod tests {
             ("De\u{2060}lete", Deleting),
             ("Delet\u{435}", Deleting),
             ("\u{ff24}\u{ff45}\u{ff4c}\u{ff45}\u{ff54}\u{ff45}", Deleting),
-            (
-                "\u{1d403}\u{1d41e}\u{1d425}\u{1d41e}\u{1d42d}\u{1d41e}",
-                Deleting,
-            ),
+            ("\u{1d403}\u{1d41e}\u{1d425}\u{1d41e}\u{1d42d}\u{1d41e}", Deleting),
             ("\u{420}\u{430}\u{443}", Paying),
             ("P\u{feff}ay now", Paying),
             ("Buy\u{fe0f} now", Paying),
@@ -1928,25 +1672,14 @@ mod tests {
         for (name, wanted) in disguised {
             assert_eq!(category(&press(name), url), Some(wanted), "{name:?}");
         }
-        let question = answering(
-            &grant(),
-            DialogKind::Confirm,
-            true,
-            url,
-            "Del\u{200b}ete this repository?",
-        )
-        .expect("asked");
+        let question =
+            answering(&grant(), DialogKind::Confirm, true, url, "Del\u{200b}ete this repository?")
+                .expect("asked");
         assert_eq!(question.category, Deleting);
         assert!(leads("Del\u{200b}ete all"));
         let dialog = "This will delete your account.";
-        let out = |name: &str| Facts {
-            dialog: dialog.into(),
-            ..press(name)
-        };
-        assert_eq!(
-            category(&out("\u{41e}\u{422}\u{41c}\u{415}\u{41d}\u{410}"), url),
-            None
-        );
+        let out = |name: &str| Facts { dialog: dialog.into(), ..press(name) };
+        assert_eq!(category(&out("\u{41e}\u{422}\u{41c}\u{415}\u{41d}\u{410}"), url), None);
         assert_eq!(category(&out("C\u{200b}ancel"), url), None);
         assert_eq!(category(&out("D\u{200b}elete"), url), Some(Deleting));
     }
@@ -1991,28 +1724,19 @@ mod tests {
     fn a_denied_site_in_a_frame_is_denied() {
         let mut owner = grant();
         owner.sites.insert("denied.example".into(), SiteRule::Deny);
-        owner
-            .sites
-            .insert("mine.example".into(), SiteRule::AgentStore);
+        owner.sites.insert("mine.example".into(), SiteRule::AgentStore);
         let at = |urls: &[&str]| urls.iter().map(ToString::to_string).collect::<Vec<_>>();
         assert!(frame_allowed(&owner, &at(&["https://a.example/"]), Store::Reader).is_ok());
         assert!(frame_allowed(&owner, &at(&["https://denied.example/x"]), Store::Agent).is_err());
         assert!(frame_allowed(
             &owner,
-            &at(&[
-                "about:srcdoc",
-                "https://denied.example",
-                "https://a.example"
-            ]),
+            &at(&["about:srcdoc", "https://denied.example", "https://a.example"]),
             Store::Agent
         )
         .is_err());
-        assert!(frame_allowed(
-            &owner,
-            &at(&["about:blank", "https://a.example"]),
-            Store::Agent
-        )
-        .is_ok());
+        assert!(
+            frame_allowed(&owner, &at(&["about:blank", "https://a.example"]), Store::Agent).is_ok()
+        );
         assert!(frame_allowed(
             &owner,
             &at(&["blob:https://denied.example/1f2e", "https://a.example/"]),
@@ -2032,21 +1756,9 @@ mod tests {
     fn confirm_mode_asks_for_every_write() {
         let mut grant = grant();
         grant.mode = Mode::Confirm;
-        let asked = judge(
-            &grant,
-            &press("Next"),
-            Act::Press,
-            "https://a.example/",
-            &[],
-        );
+        let asked = judge(&grant, &press("Next"), Act::Press, "https://a.example/", &[]);
         assert_eq!(asked.map(|one| one.category), Some(Writing));
-        let typed = judge(
-            &grant,
-            &Facts::default(),
-            Act::Write,
-            "https://a.example/",
-            &[],
-        );
+        let typed = judge(&grant, &Facts::default(), Act::Write, "https://a.example/", &[]);
         assert_eq!(typed.map(|one| one.category), Some(Writing));
     }
     #[test]
@@ -2054,24 +1766,11 @@ mod tests {
         let mut grant = grant();
         grant.mode = Mode::Autonomous;
         let url = "https://mail.example/";
-        for name in [
-            "Send",
-            "Delete",
-            "Publish",
-            "Next",
-            "Buy now",
-            "Place order",
-        ] {
-            assert!(
-                judge(&grant, &press(name), Act::Press, url, &[]).is_none(),
-                "{name}"
-            );
+        for name in ["Send", "Delete", "Publish", "Next", "Buy now", "Place order"] {
+            assert!(judge(&grant, &press(name), Act::Press, url, &[]).is_none(), "{name}");
         }
         assert!(judge(&grant, &Facts::default(), Act::Write, url, &[]).is_none());
-        let submit = Facts {
-            submit: true,
-            ..press("Continue")
-        };
+        let submit = Facts { submit: true, ..press("Continue") };
         let hosts = ["js.stripe.com".to_string()];
         assert!(judge(&grant, &submit, Act::Press, url, &hosts).is_none());
         assert!(judge(&grant, &press("Send"), Act::Enter, url, &[]).is_none());
@@ -2082,31 +1781,15 @@ mod tests {
             tag: "input".into(),
             kind: "email".into(),
             in_form: true,
-            fields: vec![Field {
-                kind: "password".into(),
-                ..Field::default()
-            }],
+            fields: vec![Field { kind: "password".into(), ..Field::default() }],
             ..Facts::default()
         };
         assert!(facts.sign_in());
         assert!(!facts.password());
-        let card = Facts {
-            tag: "input".into(),
-            autocomplete: "cc-csc".into(),
-            ..Facts::default()
-        };
+        let card = Facts { tag: "input".into(), autocomplete: "cc-csc".into(), ..Facts::default() };
         assert!(card.sensitive());
-        assert!(Facts {
-            tag: "select".into(),
-            ..Facts::default()
-        }
-        .picker());
-        assert!(Facts {
-            tag: "input".into(),
-            kind: "date".into(),
-            ..Facts::default()
-        }
-        .picker());
+        assert!(Facts { tag: "select".into(), ..Facts::default() }.picker());
+        assert!(Facts { tag: "input".into(), kind: "date".into(), ..Facts::default() }.picker());
     }
     #[test]
     fn an_agent_stays_on_the_web() {
@@ -2127,10 +1810,7 @@ mod tests {
             "tauri://localhost",
             "orden://open",
         ] {
-            assert!(
-                site_allowed(&grant, address, Store::Agent).is_err(),
-                "{address}"
-            );
+            assert!(site_allowed(&grant, address, Store::Agent).is_err(), "{address}");
         }
         for address in [
             "https://example.com/",
@@ -2139,10 +1819,7 @@ mod tests {
             "blob:https://example.com/5d2f",
             "",
         ] {
-            assert!(
-                site_allowed(&grant, address, Store::Agent).is_ok(),
-                "{address}"
-            );
+            assert!(site_allowed(&grant, address, Store::Agent).is_ok(), "{address}");
         }
     }
     #[test]
@@ -2163,25 +1840,14 @@ mod tests {
     fn a_trailing_dot_is_the_same_host() {
         let mut grant = grant();
         grant.sites.insert("denied.example".into(), SiteRule::Deny);
-        grant
-            .sites
-            .insert("bank.example.".into(), SiteRule::AgentStore);
-        assert_eq!(
-            host_of("http://Denied.Example.:8/").as_deref(),
-            Some("denied.example")
-        );
+        grant.sites.insert("bank.example.".into(), SiteRule::AgentStore);
+        assert_eq!(host_of("http://Denied.Example.:8/").as_deref(), Some("denied.example"));
         assert!(site_allowed(&grant, "http://denied.example./", Store::Agent).is_err());
         assert!(site_allowed(&grant, "http://a.denied.example../", Store::Agent).is_err());
         assert!(site_allowed(&grant, "https://bank.example./", Store::Reader).is_err());
         assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
-        assert!(payment_host(
-            host_of("https://js.stripe.com./").as_deref().unwrap_or("")
-        ));
-        assert!(social(
-            host_of("https://mail.google.com./")
-                .as_deref()
-                .unwrap_or("")
-        ));
+        assert!(payment_host(host_of("https://js.stripe.com./").as_deref().unwrap_or("")));
+        assert!(social(host_of("https://mail.google.com./").as_deref().unwrap_or("")));
     }
     fn keyed(grant: &Grant, facts: Facts, keys: &str) -> Option<Category> {
         let key = crate::keys::chord(keys).expect("key");
@@ -2193,11 +1859,7 @@ mod tests {
         let grant = grant();
         for key in ["Space", "Enter", "Shift+Enter", "Control+Enter"] {
             assert_eq!(keyed(&grant, press("Pay now"), key), Some(Paying), "{key}");
-            assert_eq!(
-                keyed(&grant, press("Delete account"), key),
-                Some(Deleting),
-                "{key}"
-            );
+            assert_eq!(keyed(&grant, press("Delete account"), key), Some(Deleting), "{key}");
         }
         let send = Facts {
             fields: vec![field("textarea", "Type a message"), field("email", "To")],
@@ -2235,16 +1897,10 @@ mod tests {
             field: field("text", "Name"),
             ..Facts::default()
         };
-        assert_eq!(
-            keyed(&grant, field_of("Delete account"), "Enter"),
-            Some(Deleting)
-        );
+        assert_eq!(keyed(&grant, field_of("Delete account"), "Enter"), Some(Deleting));
         assert_eq!(keyed(&grant, field_of("Pay now"), "Enter"), Some(Paying));
         assert_eq!(keyed(&grant, field_of("Search"), "Enter"), None);
-        let submitted = Facts {
-            submit: true,
-            ..field_of("Delete account")
-        };
+        let submitted = Facts { submit: true, ..field_of("Delete account") };
         let question = judge(&grant, &submitted, Act::Enter, "https://shop.example/", &[]);
         assert_eq!(question.as_ref().map(|one| one.category), Some(Deleting));
         assert_eq!(
@@ -2265,11 +1921,8 @@ mod tests {
             ..field_of("Delete account")
         };
         assert_eq!(keyed(&grant, boxed, "Enter"), None);
-        let other = Facts {
-            default_button: "Delete account".into(),
-            in_form: true,
-            ..press("Open menu")
-        };
+        let other =
+            Facts { default_button: "Delete account".into(), in_form: true, ..press("Open menu") };
         assert_eq!(keyed(&grant, other, "Space"), None);
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
@@ -2278,11 +1931,7 @@ mod tests {
     #[test]
     fn a_press_on_what_cannot_be_read_asks() {
         let grant = grant();
-        let host = || Facts {
-            tag: "x-pay".into(),
-            opaque: true,
-            ..Facts::default()
-        };
+        let host = || Facts { tag: "x-pay".into(), opaque: true, ..Facts::default() };
         assert_eq!(keyed(&grant, host(), "Space"), Some(Unread));
         assert_eq!(keyed(&grant, host(), "Enter"), Some(Unread));
         let mut full = grant.clone();

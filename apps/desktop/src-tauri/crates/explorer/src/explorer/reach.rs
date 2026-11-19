@@ -70,15 +70,11 @@ impl Fences {
         }
     }
     pub fn in_spaces(&self, path: &Path) -> bool {
-        self.spaces
-            .as_deref()
-            .is_some_and(|spaces| inside(spaces, path))
+        self.spaces.as_deref().is_some_and(|spaces| inside(spaces, path))
     }
     pub fn in_own(&self, path: &Path, real: &impl Fn(&Path) -> PathBuf) -> bool {
         let real_path = real(path);
-        self.own
-            .iter()
-            .any(|own| inside(own, path) || inside(&real(own), &real_path))
+        self.own.iter().any(|own| inside(own, path) || inside(&real(own), &real_path))
     }
 }
 pub fn judged(
@@ -130,10 +126,7 @@ fn stripped_by_win32(part: Component) -> bool {
     matches!(part, Component::Normal(name) if name.to_string_lossy().ends_with(['.', ' ']))
 }
 fn unseen(path: &Path) -> String {
-    format!(
-        "{} is not in a folder a file explorer has shown",
-        path.display()
-    )
+    format!("{} is not in a folder a file explorer has shown", path.display())
 }
 fn stored(fences: &Fences, real: &impl Fn(&Path) -> PathBuf, path: &Path) -> Result<(), String> {
     let Some(spaces) = fences.spaces.as_deref() else {
@@ -153,15 +146,8 @@ fn stored(fences: &Fences, real: &impl Fn(&Path) -> PathBuf, path: &Path) -> Res
 }
 const SHALLOWEST: usize = if cfg!(windows) { 1 } else { 2 };
 fn is_top(fences: &Fences, path: &Path) -> bool {
-    let depth = path
-        .components()
-        .filter(|part| matches!(part, Component::Normal(_)))
-        .count();
-    depth < SHALLOWEST
-        || fences
-            .home
-            .as_deref()
-            .is_some_and(|home| inside(path, home))
+    let depth = path.components().filter(|part| matches!(part, Component::Normal(_))).count();
+    depth < SHALLOWEST || fences.home.as_deref().is_some_and(|home| inside(path, home))
 }
 fn fenced(
     fences: &Fences,
@@ -177,10 +163,7 @@ fn fenced(
             || (whole && (inside(path, fence) || inside(&real_path, &real_fence)))
     };
     if fences.spaces.as_deref().is_some_and(meets) {
-        return Err(format!(
-            "{} is in your spaces: the file list changes those",
-            path.display()
-        ));
+        return Err(format!("{} is in your spaces: the file list changes those", path.display()));
     }
     if fences.own.iter().any(|own| meets(own)) {
         return Err(format!(
@@ -219,10 +202,7 @@ mod tests {
     fn nothing_is_looked_at_or_changed_in_a_folder_no_tab_has_shown() {
         let seen = Explored::default();
         for using in [Use::Look, Use::Change, Use::Into] {
-            assert!(
-                judge(&seen, "/home/me/Pictures/a.png", using).is_err(),
-                "{using:?}"
-            );
+            assert!(judge(&seen, "/home/me/Pictures/a.png", using).is_err(), "{using:?}");
         }
         seen.saw(Path::new("/home/me/Pictures"));
         assert!(judge(&seen, "/home/me/Pictures/a.png", Use::Look).is_ok());
@@ -237,11 +217,7 @@ mod tests {
         seen.saw(Path::new("/home/me/Pictures"));
         for name in ["a.png ", " a.png", "a.png\t", "a.png\n"] {
             let asked = format!("/home/me/Pictures/{name}");
-            assert_eq!(
-                judge(&seen, &asked, Use::Change),
-                Ok(PathBuf::from(&asked)),
-                "{name:?}"
-            );
+            assert_eq!(judge(&seen, &asked, Use::Change), Ok(PathBuf::from(&asked)), "{name:?}");
         }
         seen.saw(Path::new("/home/me/Music "));
         assert_eq!(
@@ -298,12 +274,8 @@ mod tests {
             seen.saw(Path::new(folder));
             assert!(judge(&seen, folder, Use::List).is_err(), "{folder}");
         }
-        assert!(judge(
-            &seen,
-            "/home/me/Documents/Orden/.orden/Notes/.entries/k1.md",
-            Use::Look
-        )
-        .is_err());
+        assert!(judge(&seen, "/home/me/Documents/Orden/.orden/Notes/.entries/k1.md", Use::Look)
+            .is_err());
         let working = "/home/me/Documents/Orden/.orden/.work/Notes";
         assert!(judge(&seen, working, Use::List).is_ok());
         seen.saw(Path::new(working));

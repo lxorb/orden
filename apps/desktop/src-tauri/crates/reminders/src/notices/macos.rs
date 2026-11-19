@@ -110,12 +110,8 @@ pub fn clear_all() {
     if !crate::reminders::macos::bundled() {
         return;
     }
-    let names: Vec<Retained<NSString>> = in_showing(|showing| {
-        showing
-            .drain()
-            .map(|(_, name)| NSString::from_str(&name))
-            .collect()
-    });
+    let names: Vec<Retained<NSString>> =
+        in_showing(|showing| showing.drain().map(|(_, name)| NSString::from_str(&name)).collect());
     if !names.is_empty() {
         UNUserNotificationCenter::currentNotificationCenter()
             .removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&names));

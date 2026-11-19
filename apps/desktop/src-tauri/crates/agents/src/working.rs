@@ -91,14 +91,7 @@ mod tests {
         std::fs::create_dir_all(spaces.join("Work")).expect("a folder space");
         assert_eq!(
             kept_twin(spaces, &spaces.join("Notes").join("Lists").join("a.pdf")),
-            Some(
-                spaces
-                    .join(KEPT)
-                    .join("Notes")
-                    .join("Notes")
-                    .join("Lists")
-                    .join("a.pdf")
-            )
+            Some(spaces.join(KEPT).join("Notes").join("Notes").join("Lists").join("a.pdf"))
         );
         assert_eq!(kept_twin(spaces, &spaces.join("Work").join("a.pdf")), None);
         assert_eq!(kept_twin(spaces, &spaces.join(KEPT).join("Notes")), None);
@@ -112,10 +105,7 @@ mod tests {
         assert_eq!(kept(spaces, Path::new("/elsewhere/Plan.md")), Kept::No);
         assert_eq!(kept(spaces, &at(".orden/.work/Notes/Plan.md")), Kept::No);
         assert_eq!(kept(spaces, &at(".orden/Notes/Notes")), Kept::Space);
-        assert_eq!(
-            kept(spaces, &at(".orden/Notes/Notes/Lists/Plan.md")),
-            Kept::Space
-        );
+        assert_eq!(kept(spaces, &at(".orden/Notes/Notes/Lists/Plan.md")), Kept::Space);
         for inside in [
             ".orden",
             ".orden/Notes",

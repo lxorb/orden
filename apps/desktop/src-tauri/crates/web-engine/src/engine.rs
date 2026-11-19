@@ -28,9 +28,7 @@ impl SandboxPolicy {
 pub const LOWEST_DEBUG_PORT: u16 = 1024;
 #[must_use]
 pub fn debug_port(asked: Option<&str>) -> Option<u16> {
-    asked
-        .and_then(|port| port.parse::<u16>().ok())
-        .filter(|port| *port >= LOWEST_DEBUG_PORT)
+    asked.and_then(|port| port.parse::<u16>().ok()).filter(|port| *port >= LOWEST_DEBUG_PORT)
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EngineSettings {
@@ -52,10 +50,7 @@ impl Default for EngineSettings {
             remote_debugging: None,
             switches: vec![(swipe_switch.to_owned(), Some(swipe_off.to_owned()))],
             disabled_features: vec![swipe_feature.to_owned()],
-            enabled_features: overlay_scrollbars()
-                .map(str::to_owned)
-                .into_iter()
-                .collect(),
+            enabled_features: overlay_scrollbars().map(str::to_owned).into_iter().collect(),
             deep_link_schemes: vec!["orden".to_owned(), "nib".to_owned()],
             root_cache: None,
             windowless: false,
@@ -96,11 +91,7 @@ pub struct Embed {
 }
 pub fn embed_allowed(embed: &Embed, extensions: &impl ExtensionUrls) -> Outcome<()> {
     if embed.label.is_empty() {
-        return Err(Failure::new(
-            MODULE,
-            FailureKind::Invalid,
-            "a page has a label",
-        ));
+        return Err(Failure::new(MODULE, FailureKind::Invalid, "a page has a label"));
     }
     if crate::policy::blank(&embed.url) || tab_may_open(&embed.url, extensions) {
         return Ok(());

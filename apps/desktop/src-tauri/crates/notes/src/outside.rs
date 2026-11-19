@@ -52,10 +52,7 @@ pub fn take_in_outside(app: AppHandle) -> Result<Option<TakenIn>, String> {
         orden_base::logs::say(
             &app,
             "error",
-            &format!(
-                "{name} stays in {} only: it could not be copied",
-                folder.display()
-            ),
+            &format!("{name} stays in {} only: it could not be copied", folder.display()),
         );
     }
     Ok(Some(taken))
@@ -65,10 +62,7 @@ pub fn settle_outside(app: AppHandle) -> Result<(), String> {
     let _one = TAKING.held();
     let own = paths::spaces_dir(&app)?;
     let settings = config_dir(&app)?;
-    write_atomically(
-        &settings.join(SPACES_KEPT),
-        own.to_string_lossy().as_bytes(),
-    )?;
+    write_atomically(&settings.join(SPACES_KEPT), own.to_string_lossy().as_bytes())?;
     let _ = fs::remove_file(settings.join(TAKEN));
     if let Ok(mut pending) = SPACES_OUTSIDE.lock() {
         *pending = None;
@@ -85,33 +79,20 @@ fn take_in_from(folder: &Path, own: &Path, record: &Path) -> TakenIn {
         }
         match carried_into(&from, &into, kept) {
             Ok(to) => {
-                let moved = Moved {
-                    from: root,
-                    to: space_root_of(&to, kept),
-                };
+                let moved = Moved { from: root, to: space_root_of(&to, kept) };
                 note_taken(record, &done, &moved);
                 done.push(moved);
             }
             Err(_) => left.push(leaf_name(&from)),
         }
     }
-    TakenIn {
-        folder: folder.to_string_lossy().to_string(),
-        moved: done,
-        left,
-    }
+    TakenIn { folder: folder.to_string_lossy().to_string(), moved: done, left }
 }
 fn leaf_name(path: &Path) -> String {
-    path.file_name()
-        .map(|name| name.to_string_lossy().to_string())
-        .unwrap_or_default()
+    path.file_name().map(|name| name.to_string_lossy().to_string()).unwrap_or_default()
 }
 fn space_root_of(folder: &Path, kept: bool) -> String {
-    let root = if kept {
-        folder.join(leaf_name(folder))
-    } else {
-        folder.to_path_buf()
-    };
+    let root = if kept { folder.join(leaf_name(folder)) } else { folder.to_path_buf() };
     root.to_string_lossy().to_string()
 }
 fn taken_before(record: &Path) -> Vec<Moved> {
@@ -119,10 +100,7 @@ fn taken_before(record: &Path) -> Vec<Moved> {
         .unwrap_or_default()
         .lines()
         .filter_map(|line| line.split_once('\t'))
-        .map(|(from, to)| Moved {
-            from: from.to_owned(),
-            to: to.to_owned(),
-        })
+        .map(|(from, to)| Moved { from: from.to_owned(), to: to.to_owned() })
         .collect()
 }
 fn note_taken(record: &Path, done: &[Moved], moved: &Moved) {
@@ -271,26 +249,14 @@ mod tests {
         assert_eq!(
             taken.moved,
             vec![
-                Moved {
-                    from: path(&vault.join("Home")),
-                    to: path(&own.join("Home")),
-                },
-                Moved {
-                    from: path(&vault.join("Work")),
-                    to: path(&own.join("Work 2")),
-                },
+                Moved { from: path(&vault.join("Home")), to: path(&own.join("Home")) },
+                Moved { from: path(&vault.join("Work")), to: path(&own.join("Work 2")) },
             ]
         );
         assert!(taken.left.is_empty());
         assert_eq!(said_in(&own.join("Work 2").join("Plans.md")), "# Plans");
-        assert_eq!(
-            said_in(&own.join("Work 2").join(".obsidian").join("app.json")),
-            "{}"
-        );
-        assert_eq!(
-            said_in(&own.join("Home").join("deep").join("List.md")),
-            "- milk"
-        );
+        assert_eq!(said_in(&own.join("Work 2").join(".obsidian").join("app.json")), "{}");
+        assert_eq!(said_in(&own.join("Home").join("deep").join("List.md")), "- milk");
         assert_eq!(said_in(&own.join("Work").join("Old.md")), "already here");
         assert!(!own.join("Loose.md").exists());
         assert!(!own.join(".obsidian").exists());
@@ -322,10 +288,7 @@ mod tests {
                 to: path(&own.join(".orden").join("Notes").join("Notes")),
             }]
         );
-        assert_eq!(
-            said_in(&own.join(".orden").join("Notes").join(".index.0.json")),
-            "{}"
-        );
+        assert_eq!(said_in(&own.join(".orden").join("Notes").join(".index.0.json")), "{}");
         assert!(!own.join("Notes").exists());
         assert!(!own.join(".orden").join("Half").exists());
     }

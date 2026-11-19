@@ -16,21 +16,9 @@ use objc2_foundation::{NSArray, NSString};
 const MOST_PIXELS: u32 = 6144;
 const COMES_UP_WITHIN: Duration = Duration::from_secs(3);
 enum Ask {
-    Make {
-        width: u32,
-        height: u32,
-        dpr: f64,
-        made: Sender<Result<CGDirectDisplayID, String>>,
-    },
-    Fit {
-        id: CGDirectDisplayID,
-        width: u32,
-        height: u32,
-        dpr: f64,
-    },
-    End {
-        id: CGDirectDisplayID,
-    },
+    Make { width: u32, height: u32, dpr: f64, made: Sender<Result<CGDirectDisplayID, String>> },
+    Fit { id: CGDirectDisplayID, width: u32, height: u32, dpr: f64 },
+    End { id: CGDirectDisplayID },
 }
 pub struct Display {
     pub id: CGDirectDisplayID,
@@ -56,25 +44,15 @@ impl Display {
     pub fn start(width: u32, height: u32, dpr: f64) -> Result<Display, String> {
         let asks = thread()?;
         let (made, answer) = mpsc::channel();
-        asks.send(Ask::Make {
-            width,
-            height,
-            dpr,
-            made,
-        })
-        .map_err(|_| "the display thread has gone")?;
+        asks.send(Ask::Make { width, height, dpr, made })
+            .map_err(|_| "the display thread has gone")?;
         let id = answer
             .recv_timeout(COMES_UP_WITHIN * 2)
             .map_err(|_| "the display did not come up")??;
         Ok(Display { id, asks })
     }
     pub fn fit(&self, width: u32, height: u32, dpr: f64) {
-        let _ = self.asks.send(Ask::Fit {
-            id: self.id,
-            width,
-            height,
-            dpr,
-        });
+        let _ = self.asks.send(Ask::Fit { id: self.id, width, height, dpr });
     }
 }
 impl Drop for Display {
@@ -84,10 +62,7 @@ impl Drop for Display {
 }
 pub fn pixels_of(id: CGDirectDisplayID) -> (usize, usize) {
     let mode = CGDisplayCopyDisplayMode(id);
-    (
-        CGDisplayMode::pixel_width(mode.as_deref()),
-        CGDisplayMode::pixel_height(mode.as_deref()),
-    )
+    (CGDisplayMode::pixel_width(mode.as_deref()), CGDisplayMode::pixel_height(mode.as_deref()))
 }
 fn thread() -> Result<Sender<Ask>, String> {
     static ASKS: OnceLock<Option<Sender<Ask>>> = OnceLock::new();
@@ -106,18 +81,10 @@ fn serve(heard: &Receiver<Ask>) {
     let mut held: Vec<(CGDirectDisplayID, Retained<AnyObject>)> = Vec::new();
     for ask in heard {
         match ask {
-            Ask::Make {
-                width,
-                height,
-                dpr,
-                made,
-            } => held.extend(handed(make(width, height, dpr), &made)),
-            Ask::Fit {
-                id,
-                width,
-                height,
-                dpr,
-            } => {
+            Ask::Make { width, height, dpr, made } => {
+                held.extend(handed(make(width, height, dpr), &made));
+            }
+            Ask::Fit { id, width, height, dpr } => {
                 if let Some((_, display)) = held.iter().find(|(one, _)| *one == id) {
                     if apply(display, width, height, dpr) {
                         out_of_the_way(id);
@@ -181,10 +148,9 @@ fn make(
 }
 #[allow(unsafe_code)]
 fn apply(display: &AnyObject, width: u32, height: u32, dpr: f64) -> bool {
-    let (Some(settings_class), Some(mode_class)) = (
-        AnyClass::get(c"CGVirtualDisplaySettings"),
-        AnyClass::get(c"CGVirtualDisplayMode"),
-    ) else {
+    let (Some(settings_class), Some(mode_class)) =
+        (AnyClass::get(c"CGVirtualDisplaySettings"), AnyClass::get(c"CGVirtualDisplayMode"))
+    else {
         return false;
     };
     let retina = dpr >= 1.5;
@@ -214,23 +180,14 @@ fn active() -> Vec<CGDirectDisplayID> {
     ids[..usize::try_from(count).unwrap_or(0).min(32)].to_vec()
 }
 pub fn corner(others: &[CGRect]) -> CGPoint {
-    let right = others
-        .iter()
-        .map(|one| one.origin.x + one.size.width)
-        .fold(0.0, f64::max);
-    let bottom = others
-        .iter()
-        .map(|one| one.origin.y + one.size.height)
-        .fold(0.0, f64::max);
+    let right = others.iter().map(|one| one.origin.x + one.size.width).fold(0.0, f64::max);
+    let bottom = others.iter().map(|one| one.origin.y + one.size.height).fold(0.0, f64::max);
     CGPoint::new(right, bottom)
 }
 #[allow(unsafe_code)]
 fn out_of_the_way(id: CGDirectDisplayID) {
-    let others: Vec<CGRect> = active()
-        .into_iter()
-        .filter(|&one| one != id)
-        .map(|one| CGDisplayBounds(one))
-        .collect();
+    let others: Vec<CGRect> =
+        active().into_iter().filter(|&one| one != id).map(|one| CGDisplayBounds(one)).collect();
     if others.is_empty() {
         return;
     }

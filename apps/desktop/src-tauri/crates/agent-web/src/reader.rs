@@ -49,9 +49,7 @@ pub fn page(app: &AppHandle, tab: &str) -> Option<View> {
     if label == "web-session" || !(label.starts_with("web-") || label.starts_with("agent-")) {
         return None;
     }
-    let lend = window::Lend {
-        tab: tab.to_string(),
-    };
+    let lend = window::Lend { tab: tab.to_string() };
     let _ = orden_agents::endpoint::ask(
         app,
         window::LEND,

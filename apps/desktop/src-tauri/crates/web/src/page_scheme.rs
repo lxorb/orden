@@ -47,14 +47,8 @@ mod tests {
     }
     #[test]
     fn a_scheme_is_read_as_the_page_says_it() {
-        assert_eq!(
-            serde_json::from_str::<Scheme>("\"dark\"").ok(),
-            Some(Scheme::Dark)
-        );
-        assert_eq!(
-            serde_json::from_str::<Scheme>("\"light\"").ok(),
-            Some(Scheme::Light)
-        );
+        assert_eq!(serde_json::from_str::<Scheme>("\"dark\"").ok(), Some(Scheme::Dark));
+        assert_eq!(serde_json::from_str::<Scheme>("\"light\"").ok(), Some(Scheme::Light));
         assert!(serde_json::from_str::<Scheme>("\"system\"").is_err());
     }
 }

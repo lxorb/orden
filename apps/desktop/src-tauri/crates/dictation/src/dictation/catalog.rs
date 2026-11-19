@@ -22,12 +22,7 @@ const fn pinned(name: &'static str, size: u64, sha256: &'static str) -> Pinned {
     Pinned { name, size, sha256 }
 }
 const fn runtime(rid: &'static str, package: Pinned, onnxruntime: Pinned, api: Pinned) -> Runtime {
-    Runtime {
-        rid,
-        package,
-        onnxruntime,
-        api,
-    }
+    Runtime { rid, package, onnxruntime, api }
 }
 pub const RUNTIMES: &[Runtime] = &[
     runtime(
@@ -209,10 +204,7 @@ mod tests {
             .chain(PARAKEET.files.iter().copied());
         for pin in pins {
             assert_eq!(pin.sha256.len(), 64, "{}", pin.name);
-            assert!(pin
-                .sha256
-                .bytes()
-                .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()));
+            assert!(pin.sha256.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()));
             assert!(pin.size > 0);
         }
     }

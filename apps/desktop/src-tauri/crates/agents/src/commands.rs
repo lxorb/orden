@@ -44,11 +44,7 @@ pub async fn agents_dialog_path(
         let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
             return Answer::error(Code::NotGranted, "there is no such agent");
         };
-        let op = if write {
-            verbs::FilesOp::Write
-        } else {
-            verbs::FilesOp::Read
-        };
+        let op = if write { verbs::FilesOp::Write } else { verbs::FilesOp::Read };
         match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
             Ok(path) => {
                 orden_base::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
@@ -101,19 +97,12 @@ pub fn agents_ask(
     let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
         return Answer::error(Code::NotGranted, "there is no such agent");
     };
-    if !grant.asks(category)
-        || site
-            .as_deref()
-            .is_some_and(|site| grant.always(site, category))
-    {
+    if !grant.asks(category) || site.as_deref().is_some_and(|site| grant.always(site, category)) {
         return Answer::ok(verbs::Nothing {});
     }
     approvals::ask(
         &app,
-        approvals::Asking {
-            site,
-            ..approvals::Asking::of(&grant, category, summary, key)
-        },
+        approvals::Asking { site, ..approvals::Asking::of(&grant, category, summary, key) },
     )
 }
 #[tauri::command(async)]

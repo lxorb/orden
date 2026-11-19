@@ -27,10 +27,7 @@ fn may_capture(caller: &Caller, asked: &Asked) -> Result<(), Answer> {
     orden_agents::may_ask_the_window(caller, VERB)
         .map_err(|why| Answer::error(Code::NotGranted, why))?;
     if !caller.holds(Scope::Browser) && !caller.holds(Scope::BrowserReader) {
-        return Err(Answer::error(
-            Code::NotGranted,
-            "this agent was not granted the browser",
-        ));
+        return Err(Answer::error(Code::NotGranted, "this agent was not granted the browser"));
     }
     if asked.shape == CaptureAs::Pdf && asked.paper.is_none() {
         return Err(no_paper());
@@ -48,10 +45,7 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
         return engines::refused(VERB);
     }
     if crate::tabs::find(caller.id(), tab).is_some() && !caller.holds(Scope::Browser) {
-        return Answer::error(
-            Code::NotGranted,
-            "this agent was not granted tabs of its own",
-        );
+        return Answer::error(Code::NotGranted, "this agent was not granted tabs of its own");
     }
     let since = orden_agents::stop::generation();
     crate::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
@@ -64,25 +58,23 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
                 ..Captured::default()
             }),
             CaptureAs::Screenshot => {
-                page.screenshot(None, asked.full_page, None)
-                    .map(|picture| Captured {
-                        url: url.clone(),
-                        title: page.title(),
-                        png: Some(picture.png),
-                        ..Captured::default()
-                    })
-            }
-            CaptureAs::Pdf => asked
-                .paper
-                .as_ref()
-                .ok_or_else(no_paper)
-                .and_then(|paper| page.pdf(paper))
-                .map(|pdf| Captured {
+                page.screenshot(None, asked.full_page, None).map(|picture| Captured {
                     url: url.clone(),
                     title: page.title(),
-                    pdf: Some(pdf),
+                    png: Some(picture.png),
                     ..Captured::default()
-                }),
+                })
+            }
+            CaptureAs::Pdf => {
+                asked.paper.as_ref().ok_or_else(no_paper).and_then(|paper| page.pdf(paper)).map(
+                    |pdf| Captured {
+                        url: url.clone(),
+                        title: page.title(),
+                        pdf: Some(pdf),
+                        ..Captured::default()
+                    },
+                )
+            }
         };
         match captured {
             Ok(captured) => Answer::Ok {
@@ -103,12 +95,7 @@ mod tests {
         Asked {
             shape,
             full_page: false,
-            paper: Some(PdfPage {
-                width: 8.27,
-                height: 11.69,
-                margin: 0.787,
-                landscape: false,
-            }),
+            paper: Some(PdfPage { width: 8.27, height: 11.69, margin: 0.787, landscape: false }),
         }
     }
     fn agent(scopes: &[Scope]) -> Caller {
@@ -125,14 +112,8 @@ mod tests {
     #[test]
     fn a_capture_needs_what_capture_to_note_needs_and_a_browser() {
         let clip = asked(CaptureAs::Clip);
-        assert_eq!(
-            code(may_capture(&agent(&[Scope::Browser]), &clip)),
-            Some(Code::NotGranted)
-        );
-        assert_eq!(
-            code(may_capture(&agent(&[Scope::NotesWrite]), &clip)),
-            Some(Code::NotGranted)
-        );
+        assert_eq!(code(may_capture(&agent(&[Scope::Browser]), &clip)), Some(Code::NotGranted));
+        assert_eq!(code(may_capture(&agent(&[Scope::NotesWrite]), &clip)), Some(Code::NotGranted));
         assert!(may_capture(&agent(&[Scope::NotesWrite, Scope::Browser]), &clip).is_ok());
         assert!(may_capture(&agent(&[Scope::NotesWrite, Scope::BrowserReader]), &clip).is_ok());
         assert!(may_capture(&Caller::Reader, &clip).is_ok());
@@ -142,10 +123,7 @@ mod tests {
         let mut pdf = asked(CaptureAs::Pdf);
         assert!(may_capture(&Caller::Reader, &pdf).is_ok());
         pdf.paper = None;
-        assert_eq!(
-            code(may_capture(&Caller::Reader, &pdf)),
-            Some(Code::BadArguments)
-        );
+        assert_eq!(code(may_capture(&Caller::Reader, &pdf)), Some(Code::BadArguments));
         let mut shot = asked(CaptureAs::Screenshot);
         shot.paper = None;
         assert!(may_capture(&Caller::Reader, &shot).is_ok());
@@ -158,10 +136,7 @@ mod tests {
             (CaptureAs::Pdf, "pdf"),
         ] {
             assert_eq!(serde_json::to_value(shape).expect("a word"), word);
-            assert_eq!(
-                serde_json::from_value::<CaptureAs>(word.into()).expect("a shape"),
-                shape
-            );
+            assert_eq!(serde_json::from_value::<CaptureAs>(word.into()).expect("a shape"), shape);
         }
         assert!(serde_json::from_value::<CaptureAs>("link".into()).is_err());
     }

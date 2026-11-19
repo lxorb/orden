@@ -52,11 +52,7 @@ fn folder(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| error.to_string())
 }
 fn runtime_folder(root: &Path, runtime: &Runtime) -> PathBuf {
-    root.join(format!(
-        "runtime-{}-{}",
-        runtime.rid,
-        catalog::RUNTIME_VERSION
-    ))
+    root.join(format!("runtime-{}-{}", runtime.rid, catalog::RUNTIME_VERSION))
 }
 fn present(path: &Path, pin: &Pinned) -> bool {
     fs::metadata(path).is_ok_and(|found| found.len() == pin.size)
@@ -86,14 +82,9 @@ fn installed(root: &Path) -> bool {
         return false;
     };
     let libraries = runtime_folder(root, runtime);
-    present(
-        &libraries.join(runtime.onnxruntime.name),
-        &runtime.onnxruntime,
-    ) && present(&libraries.join(runtime.api.name), &runtime.api)
-        && model()
-            .files
-            .iter()
-            .all(|one| present(&root.join(model().id).join(one.name), one))
+    present(&libraries.join(runtime.onnxruntime.name), &runtime.onnxruntime)
+        && present(&libraries.join(runtime.api.name), &runtime.api)
+        && model().files.iter().all(|one| present(&root.join(model().id).join(one.name), one))
 }
 #[tauri::command]
 pub async fn dictation_local(app: AppHandle) -> Result<Local, String> {
@@ -103,11 +94,7 @@ pub async fn dictation_local(app: AppHandle) -> Result<Local, String> {
         Ok(Local {
             fit: device::fit(&here, model),
             device: here,
-            model: Offered {
-                id: model.id,
-                name: model.name,
-                bytes: model.bytes(),
-            },
+            model: Offered { id: model.id, name: model.name, bytes: model.bytes() },
             installed: installed(&folder(&app)?),
         })
     })
@@ -133,17 +120,11 @@ async fn fetch_all(root: &Path, progress: &mut impl FnMut(Fetched)) -> Result<()
     let runtime = catalog::this_runtime().ok_or("This device has no speech runtime.")?;
     let model = model();
     let libraries = runtime_folder(root, runtime);
-    let runtime_here = present(
-        &libraries.join(runtime.onnxruntime.name),
-        &runtime.onnxruntime,
-    ) && present(&libraries.join(runtime.api.name), &runtime.api);
+    let runtime_here = present(&libraries.join(runtime.onnxruntime.name), &runtime.onnxruntime)
+        && present(&libraries.join(runtime.api.name), &runtime.api);
     let mut wanted: Vec<(String, Pinned, PathBuf)> = Vec::new();
     if !runtime_here {
-        wanted.push((
-            runtime.url(),
-            runtime.package,
-            root.join(format!("{}.zip", runtime.rid)),
-        ));
+        wanted.push((runtime.url(), runtime.package, root.join(format!("{}.zip", runtime.rid))));
     }
     let models = root.join(model.id);
     for file in model.files {
@@ -173,9 +154,7 @@ async fn fetch_all(root: &Path, progress: &mut impl FnMut(Fetched)) -> Result<()
 }
 fn client() -> Result<reqwest::Client, String> {
     let _ = rustls::crypto::ring::default_provider().install_default();
-    reqwest::Client::builder()
-        .build()
-        .map_err(|error| error.to_string())
+    reqwest::Client::builder().build().map_err(|error| error.to_string())
 }
 async fn fetch_one(
     client: &reqwest::Client,
@@ -223,10 +202,7 @@ async fn fetch_one(
         if size == pin.size && hex(&hash.finalize()) == pin.sha256 {
             Ok(())
         } else {
-            Err(format!(
-                "{} did not arrive as it should; nothing was kept",
-                pin.name
-            ))
+            Err(format!("{} did not arrive as it should; nothing was kept", pin.name))
         }
     });
     match checked {
@@ -243,9 +219,7 @@ fn unpack(zip: &Path, runtime: &Runtime, into: &Path) -> Result<(), String> {
     fs::create_dir_all(into).map_err(|error| error.to_string())?;
     for pin in [runtime.onnxruntime, runtime.api] {
         let inside = format!("runtimes/{}/native/{}", runtime.rid, pin.name);
-        let mut entry = archive
-            .by_name(&inside)
-            .map_err(|error| format!("{inside}: {error}"))?;
+        let mut entry = archive.by_name(&inside).map_err(|error| format!("{inside}: {error}"))?;
         let path = into.join(pin.name);
         let mut out = fs::File::create(&path).map_err(|error| error.to_string())?;
         std::io::copy(&mut entry, &mut out).map_err(|error| error.to_string())?;
@@ -352,11 +326,7 @@ fn open_engine(root: &Path) -> Result<sherpa::Engine, String> {
 fn vocabulary(tokens: &str) -> String {
     use std::fmt::Write as _;
     let mut out = String::new();
-    for (i, line) in tokens
-        .lines()
-        .filter(|line| !line.trim().is_empty())
-        .enumerate()
-    {
+    for (i, line) in tokens.lines().filter(|line| !line.trim().is_empty()).enumerate() {
         let piece = line.rsplit_once(' ').map_or(line, |(piece, _)| piece);
         let _ = writeln!(out, "{piece}\t-{i}");
     }
@@ -394,10 +364,7 @@ pub async fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Resul
 }
 fn framed(body: &[u8]) -> Result<(String, Vec<f32>), String> {
     let wrong = || "dictation was sent a body it cannot read".to_owned();
-    let head: [u8; 4] = body
-        .get(..4)
-        .and_then(|b| b.try_into().ok())
-        .ok_or_else(wrong)?;
+    let head: [u8; 4] = body.get(..4).and_then(|b| b.try_into().ok()).ok_or_else(wrong)?;
     let length = u32::from_le_bytes(head) as usize;
     let context = body.get(4..4 + length).ok_or_else(wrong)?;
     let context = String::from_utf8(context.to_vec()).map_err(|_| wrong())?;
@@ -405,12 +372,7 @@ fn framed(body: &[u8]) -> Result<(String, Vec<f32>), String> {
     if !sound.len().is_multiple_of(4) {
         return Err(wrong());
     }
-    let samples = sound
-        .as_chunks::<4>()
-        .0
-        .iter()
-        .map(|b| f32::from_le_bytes(*b))
-        .collect();
+    let samples = sound.as_chunks::<4>().0.iter().map(|b| f32::from_le_bytes(*b)).collect();
     Ok((context, samples))
 }
 #[cfg(test)]
@@ -471,12 +433,9 @@ mod tests {
         held = None;
         assert_eq!(opened(&mut held, || Ok(8), |_| Ok(0.5)), Ok((0.5, true)));
         assert_eq!(opened(&mut held, || Ok(9), |_| Ok(0.9)), Ok((0.5, false)));
-        assert!(opened(
-            &mut None::<(u32, Instant, f32)>,
-            || Err("gone".into()),
-            |_| Ok(1.0)
-        )
-        .is_err());
+        assert!(
+            opened(&mut None::<(u32, Instant, f32)>, || Err("gone".into()), |_| Ok(1.0)).is_err()
+        );
     }
     #[test]
     fn nothing_is_installed_in_an_empty_folder() {
@@ -518,12 +477,8 @@ mod tests {
         for one in list.as_array().unwrap() {
             let raw =
                 fs::read(samples.join(format!("{}.f32", one["file"].as_str().unwrap()))).unwrap();
-            let sound: Vec<f32> = raw
-                .as_chunks::<4>()
-                .0
-                .iter()
-                .map(|b| f32::from_le_bytes(*b))
-                .collect();
+            let sound: Vec<f32> =
+                raw.as_chunks::<4>().0.iter().map(|b| f32::from_le_bytes(*b)).collect();
             let group = one["group"].as_str().unwrap().to_owned();
             let mut live = Vec::new();
             if group != "phone" {
@@ -534,9 +489,7 @@ mod tests {
                 }
             }
             let at = Instant::now();
-            let heard = engine
-                .hear(&sound, if group == "phone" { "" } else { &names })
-                .unwrap();
+            let heard = engine.hear(&sound, if group == "phone" { "" } else { &names }).unwrap();
             for term in one["terms"].as_array().unwrap() {
                 terms.1 += 1;
                 terms.0 += usize::from(heard.contains(term.as_str().unwrap()));
@@ -574,13 +527,7 @@ mod tests {
         text.to_lowercase()
             .replace('-', " ")
             .chars()
-            .map(|c| {
-                if c.is_alphanumeric() || c == '\'' || c.is_whitespace() {
-                    c
-                } else {
-                    ' '
-                }
-            })
+            .map(|c| if c.is_alphanumeric() || c == '\'' || c.is_whitespace() { c } else { ' ' })
             .collect::<String>()
             .split_whitespace()
             .map(str::to_owned)
@@ -592,9 +539,7 @@ mod tests {
             let mut previous = row[0];
             row[0] = i + 1;
             for (j, h) in heard.iter().enumerate() {
-                let here = (row[j + 1] + 1)
-                    .min(row[j] + 1)
-                    .min(previous + usize::from(r != h));
+                let here = (row[j + 1] + 1).min(row[j] + 1).min(previous + usize::from(r != h));
                 previous = row[j + 1];
                 row[j + 1] = here;
             }

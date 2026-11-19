@@ -52,11 +52,7 @@ impl Claude {
             }
         })?;
         *answering.held() = Some(running.clone());
-        Ok(Self {
-            running,
-            next: AtomicU64::new(1),
-            waiting: held,
-        })
+        Ok(Self { running, next: AtomicU64::new(1), waiting: held })
     }
     pub fn stop(&self) {
         self.running.stop();
@@ -66,10 +62,9 @@ impl Claude {
             Say::Turn { text, images } => user(text, images),
             Say::Steer { text } => user(text, &[]),
             Say::Interrupt => self.control(json!({ "subtype": "interrupt" }), None),
-            Say::Model { model } => self.control(
-                json!({ "subtype": "set_model", "model": model }),
-                Some("model"),
-            ),
+            Say::Model { model } => {
+                self.control(json!({ "subtype": "set_model", "model": model }), Some("model"))
+            }
             Say::Effort { effort } => effort_line(*effort)?,
             Say::Fast { .. } => return Err("Claude Code has no fast mode headless".into()),
             Say::Compact { focus } => command(format!("/compact {}", one_line(focus)).trim_end()),
@@ -86,12 +81,8 @@ impl Claude {
         let (sent, answer) = mpsc::channel();
         let id = self.id();
         waiting(&self.waiting).insert(id.clone(), Asked::Crate(sent));
-        self.running
-            .write_line(&control_line(&id, request))
-            .map_err(|error| error.to_string())?;
-        answer
-            .recv_timeout(patience)
-            .map_err(|_| "Claude Code did not answer".to_owned())?
+        self.running.write_line(&control_line(&id, request)).map_err(|error| error.to_string())?;
+        answer.recv_timeout(patience).map_err(|_| "Claude Code did not answer".to_owned())?
     }
     pub fn close_input(&self) {
         self.running.close_input();
@@ -152,30 +143,18 @@ fn message(content: Value) -> String {
 fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message> {
     let event: Value = match serde_json::from_str(line) {
         Ok(event) => event,
-        Err(_) => {
-            return Some(Message::Line {
-                line: line.to_owned(),
-            })
-        }
+        Err(_) => return Some(Message::Line { line: line.to_owned() }),
     };
     match event["type"].as_str() {
         Some("control_response") => {
             let response = &event["response"];
             let id = response["request_id"].as_str().unwrap_or_default();
             let asked = waiting(held).remove(id)?;
-            let error = (response["subtype"] == "error").then(|| {
-                response["error"]
-                    .as_str()
-                    .unwrap_or("Claude Code refused")
-                    .to_owned()
-            });
+            let error = (response["subtype"] == "error")
+                .then(|| response["error"].as_str().unwrap_or("Claude Code refused").to_owned());
             let result = response.get("response").cloned().unwrap_or(Value::Null);
             match asked {
-                Asked::Window(to) => Some(Message::Reply {
-                    to: to.to_owned(),
-                    result,
-                    error,
-                }),
+                Asked::Window(to) => Some(Message::Reply { to: to.to_owned(), result, error }),
                 Asked::Crate(sent) => {
                     let _ = sent.send(error.map_or(Ok(result), Err));
                     None
@@ -188,9 +167,7 @@ fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message>
             }
             None
         }
-        _ => Some(Message::Line {
-            line: line.to_owned(),
-        }),
+        _ => Some(Message::Line { line: line.to_owned() }),
     }
 }
 fn refusal(id: &str, request: &Value) -> String {
@@ -206,10 +183,7 @@ fn refusal(id: &str, request: &Value) -> String {
     json!({ "type": "control_response", "response": response }).to_string()
 }
 fn effort_line(effort: Option<Effort>) -> Result<String, String> {
-    let word = effort
-        .map(|one| one.word(Tool::ClaudeCode))
-        .transpose()?
-        .unwrap_or("auto");
+    let word = effort.map(|one| one.word(Tool::ClaudeCode)).transpose()?.unwrap_or("auto");
     Ok(command(&format!("/effort {word}")))
 }
 #[cfg(test)]
@@ -224,10 +198,7 @@ mod tests {
         let text = |goal: &GoalSay| {
             goal_line(goal).map(|line| parsed(&line)["message"]["content"][0]["text"].clone())
         };
-        let set = GoalSay::Set {
-            objective: "tests\npass".into(),
-            budget: Some(9),
-        };
+        let set = GoalSay::Set { objective: "tests\npass".into(), budget: Some(9) };
         assert_eq!(text(&set), Ok(json!("/goal tests pass")));
         assert_eq!(text(&GoalSay::Clear), Ok(json!("/goal clear")));
         assert!(text(&GoalSay::Pause).is_err());
@@ -236,13 +207,7 @@ mod tests {
     }
     #[test]
     fn a_turn_is_a_user_message_with_its_pictures_first() {
-        let line = user(
-            "what is this",
-            &[Image {
-                mime: "image/png".into(),
-                data: "iVBO".into(),
-            }],
-        );
+        let line = user("what is this", &[Image { mime: "image/png".into(), data: "iVBO".into() }]);
         let message = parsed(&line);
         assert_eq!(message["type"], "user");
         let content = &message["message"]["content"];
@@ -253,25 +218,16 @@ mod tests {
     #[test]
     fn the_reader_s_slash_is_words_not_a_command() {
         let message = parsed(&user("/clear everything", &[]));
-        assert_eq!(
-            message["message"]["content"][0]["text"],
-            " /clear everything"
-        );
+        assert_eq!(message["message"]["content"][0]["text"], " /clear everything");
         let message = parsed(&user("  /model opus", &[]));
         assert_eq!(message["message"]["content"][0]["text"], " /model opus");
     }
     #[test]
     fn effort_is_typed_as_claude_code_s_own_command() {
         let line = effort_line(Some(Effort::Xhigh)).expect("line");
-        assert_eq!(
-            parsed(&line)["message"]["content"][0]["text"],
-            "/effort xhigh"
-        );
+        assert_eq!(parsed(&line)["message"]["content"][0]["text"], "/effort xhigh");
         let line = effort_line(None).expect("line");
-        assert_eq!(
-            parsed(&line)["message"]["content"][0]["text"],
-            "/effort auto"
-        );
+        assert_eq!(parsed(&line)["message"]["content"][0]["text"], "/effort auto");
         assert!(effort_line(Some(Effort::Off)).is_err());
     }
     #[test]
@@ -306,9 +262,6 @@ mod tests {
         )
         .is_none());
         let line = r#"{"type":"assistant","message":{"content":[]}}"#;
-        assert_eq!(
-            read(line, &held, None),
-            Some(Message::Line { line: line.into() })
-        );
+        assert_eq!(read(line, &held, None), Some(Message::Line { line: line.into() }));
     }
 }

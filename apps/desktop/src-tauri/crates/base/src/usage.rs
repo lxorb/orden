@@ -40,11 +40,7 @@ fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Total
     };
     let seconds = now.saturating_duration_since(*at).as_secs_f64();
     if seconds <= 0.0 {
-        return Usage {
-            cpu: 0.0,
-            memory: totals.memory,
-            gpu: None,
-        };
+        return Usage { cpu: 0.0, memory: totals.memory, gpu: None };
     }
     let cpu = totals.ticks.saturating_sub(old.ticks) as f64 / TICKS / seconds * 100.0;
     let gpu = (!totals.engines.is_empty()).then(|| {
@@ -58,11 +54,7 @@ fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Total
             .fold(0.0_f64, f64::max)
             .min(100.0)
     });
-    Usage {
-        cpu,
-        memory: totals.memory,
-        gpu,
-    }
+    Usage { cpu, memory: totals.memory, gpu }
 }
 pub fn resident_of(text: &str) -> Option<u64> {
     let line = text.lines().find(|line| line.starts_with("VmRSS:"))?;
@@ -107,11 +99,7 @@ fn totals(whose: Whose) -> Option<Totals> {
         }
     }
     let chosen: Vec<u32> = match whose {
-        Whose::Group(group) => all
-            .iter()
-            .filter(|one| one.2 == group)
-            .map(|one| one.0)
-            .collect(),
+        Whose::Group(group) => all.iter().filter(|one| one.2 == group).map(|one| one.0).collect(),
         Whose::Tree(root) => {
             let mut found = vec![root];
             let mut at = 0;
@@ -178,10 +166,7 @@ mod tests {
 
     #[test]
     fn reads_the_memory_resident_and_the_gpus_engines() {
-        assert_eq!(
-            resident_of("Name:\tx\nVmRSS:\t  2048 kB\nVmSwap:\t0 kB\n"),
-            Some(2048 * 1024)
-        );
+        assert_eq!(resident_of("Name:\tx\nVmRSS:\t  2048 kB\nVmSwap:\t0 kB\n"), Some(2048 * 1024));
         assert_eq!(resident_of("Name:\tkthread\n"), None);
         let fdinfo = "pos:\t0\ndrm-driver:\ti915\ndrm-client-id:\t7\ndrm-engine-render:\t5000000 ns\ndrm-engine-capacity-video:\t2\ndrm-engine-video:\t10 ns\n";
         assert_eq!(
@@ -197,18 +182,11 @@ mod tests {
     fn makes_rates_of_two_samples_and_leaves_out_a_gpu_it_cannot_read() {
         let start = Instant::now();
         let mut sampler = Sampler::default();
-        let first = Totals {
-            ticks: 100,
-            memory: 1000,
-            engines: HashMap::from([("render".to_owned(), 0)]),
-        };
+        let first =
+            Totals { ticks: 100, memory: 1000, engines: HashMap::from([("render".to_owned(), 0)]) };
         assert_eq!(
             sampler.rate("a", start, first),
-            Usage {
-                cpu: 0.0,
-                memory: 1000,
-                gpu: Some(0.0)
-            }
+            Usage { cpu: 0.0, memory: 1000, gpu: Some(0.0) }
         );
         let second = Totals {
             ticks: 150,
@@ -219,29 +197,18 @@ mod tests {
         assert!((usage.cpu - 50.0).abs() < 1e-9);
         assert_eq!(usage.memory, 2000);
         assert!((usage.gpu.unwrap() - 25.0).abs() < 1e-9);
-        let no_gpu = Totals {
-            ticks: 0,
-            memory: 5,
-            engines: HashMap::new(),
-        };
+        let no_gpu = Totals { ticks: 0, memory: 5, engines: HashMap::new() };
         assert_eq!(sampler.rate("b", start, no_gpu).gpu, None);
         assert_eq!(
-            serde_json::to_string(&Usage {
-                cpu: 1.0,
-                memory: 2,
-                gpu: None
-            })
-            .unwrap(),
+            serde_json::to_string(&Usage { cpu: 1.0, memory: 2, gpu: None }).unwrap(),
             r#"{"cpu":1.0,"memory":2}"#
         );
     }
     #[cfg(target_os = "linux")]
     #[test]
     fn reads_a_busy_process_from_the_kernel() {
-        let mut busy = std::process::Command::new("sh")
-            .args(["-c", "while :; do :; done"])
-            .spawn()
-            .unwrap();
+        let mut busy =
+            std::process::Command::new("sh").args(["-c", "while :; do :; done"]).spawn().unwrap();
         let pid = busy.id();
         let before = totals(Whose::Tree(pid)).unwrap();
         std::thread::sleep(Duration::from_millis(300));
@@ -249,11 +216,6 @@ mod tests {
         let _ = busy.kill();
         let _ = busy.wait();
         assert!(before.memory > 0);
-        assert!(
-            after.ticks > before.ticks,
-            "{} then {}",
-            before.ticks,
-            after.ticks
-        );
+        assert!(after.ticks > before.ticks, "{} then {}", before.ticks, after.ticks);
     }
 }

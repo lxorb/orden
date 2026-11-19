@@ -11,35 +11,16 @@ use super::tables::{Column, Kind, Table};
 #[derive(Deserialize, Debug)]
 #[serde(tag = "t", rename_all = "camelCase", deny_unknown_fields)]
 pub enum Query {
-    Get {
-        table: String,
-        key: String,
-    },
-    Scan {
-        table: String,
-        space: Option<String>,
-    },
+    Get { table: String, key: String },
+    Scan { table: String, space: Option<String> },
 }
 #[derive(Deserialize, Debug)]
 #[serde(tag = "t", rename_all = "camelCase", deny_unknown_fields)]
 pub enum Change {
-    Put {
-        table: String,
-        row: Map<String, Json>,
-    },
-    Patch {
-        table: String,
-        key: String,
-        set: Map<String, Json>,
-    },
-    Delete {
-        table: String,
-        key: String,
-    },
-    Clear {
-        table: String,
-        space: String,
-    },
+    Put { table: String, row: Map<String, Json> },
+    Patch { table: String, key: String, set: Map<String, Json> },
+    Delete { table: String, key: String },
+    Clear { table: String, space: String },
 }
 const MOST: u64 = (1 << 53) - 1;
 const VERSION: u8 = 1;
@@ -150,9 +131,7 @@ pub fn to_sql(
     })
 }
 fn whole(value: &Json) -> Option<i64> {
-    value
-        .as_i64()
-        .filter(|number| number.unsigned_abs() <= MOST)
+    value.as_i64().filter(|number| number.unsigned_abs() <= MOST)
 }
 pub fn from_sql(column: &Column, value: ValueRef<'_>, parts: &mut Parts) -> Result<Json, String> {
     let odd = || format!("the sync store holds an odd {}", column.name);
@@ -195,9 +174,7 @@ pub fn unpack(bytes: &[u8]) -> Result<String, String> {
         Some((&PLAIN, rest)) => String::from_utf8(rest.to_vec()).map_err(|_| broken()),
         Some((&DEFLATED, rest)) => {
             let mut text = String::new();
-            DeflateDecoder::new(rest)
-                .read_to_string(&mut text)
-                .map_err(|_| broken())?;
+            DeflateDecoder::new(rest).read_to_string(&mut text).map_err(|_| broken())?;
             Ok(text)
         }
         _ => Err(broken()),
@@ -236,14 +213,8 @@ mod tests {
         let good = frame(&json!([]), &[vec![1]]);
         assert!(unframe(&good).is_ok());
         assert!(unframe(&[]).is_err());
-        assert!(
-            unframe(&good[..good.len() - 1]).is_err(),
-            "a part cut short"
-        );
-        assert!(
-            unframe(&[good.as_slice(), &[0]].concat()).is_err(),
-            "a byte left over"
-        );
+        assert!(unframe(&good[..good.len() - 1]).is_err(), "a part cut short");
+        assert!(unframe(&[good.as_slice(), &[0]].concat()).is_err(), "a byte left over");
         let mut versioned = good.clone();
         versioned[0] = 2;
         assert!(unframe(&versioned).is_err(), "another version");
@@ -267,17 +238,11 @@ mod tests {
         assert!(empty.contains("docs.epoch"), "{empty}");
         let pending = docs.column("pending").expect("pending");
         assert_eq!(to_sql(docs, pending, &json!(null), tail), Ok(Sql::Null));
-        assert_eq!(
-            to_sql(docs, pending, &json!({ "$part": 1 }), tail),
-            Ok(Sql::Blob(vec![8, 9]))
-        );
+        assert_eq!(to_sql(docs, pending, &json!({ "$part": 1 }), tail), Ok(Sql::Blob(vec![8, 9])));
         assert!(to_sql(docs, pending, &json!({ "$part": 2 }), tail).is_err());
         assert!(to_sql(docs, pending, &json!([1, 2]), tail).is_err());
         let deleted = entries.column("deleted").expect("deleted");
-        assert_eq!(
-            to_sql(entries, deleted, &json!(true), tail),
-            Ok(Sql::Integer(1))
-        );
+        assert_eq!(to_sql(entries, deleted, &json!(true), tail), Ok(Sql::Integer(1)));
         assert!(to_sql(entries, deleted, &json!(1), tail).is_err());
     }
     #[test]

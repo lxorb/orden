@@ -91,10 +91,7 @@ fn page(marks: &[Mark], version: &str) -> String {
     out
 }
 fn line(marks: &[Mark], version: &str) -> String {
-    let mut out = format!(
-        "{{\"orden\":\"{}\",\"launched\":{},\"steps\":[",
-        version, STARTED.1
-    );
+    let mut out = format!("{{\"orden\":\"{}\",\"launched\":{},\"steps\":[", version, STARTED.1);
     for (index, mark) in marks.iter().enumerate() {
         if index > 0 {
             out.push(',');
@@ -117,11 +114,7 @@ fn push(step: &str, at: Duration) {
 }
 fn push_with(step: &str, at: Duration, cpu: Option<Duration>) {
     let Ok(mut marks) = MARKS.lock() else { return };
-    let mark = Mark {
-        step: step.to_owned(),
-        at,
-        cpu,
-    };
+    let mark = Mark { step: step.to_owned(), at, cpu };
     let place = marks.partition_point(|held| held.at <= mark.at);
     marks.insert(place, mark);
 }
@@ -133,10 +126,7 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>, facts: Optio
         let at = at.saturating_add(shift).saturating_add(*BEFORE);
         push_with(&format!("window: {}", said.step), at, None);
     }
-    let told = MARKS
-        .lock()
-        .ok()
-        .map(|marks| said(&marks, facts.as_deref()));
+    let told = MARKS.lock().ok().map(|marks| said(&marks, facts.as_deref()));
     if let Some(told) = told {
         crate::logs::say(&app, "info", &told);
     }
@@ -158,12 +148,7 @@ fn said(marks: &[Mark], facts: Option<&str>) -> String {
         let Some(mark) = marks.iter().find(|one| one.step == step) else {
             continue;
         };
-        let _ = write!(
-            out,
-            "{} {word} {:.0}",
-            if first { "" } else { "," },
-            millis(mark.at)
-        );
+        let _ = write!(out, "{} {word} {:.0}", if first { "" } else { "," }, millis(mark.at));
         first = false;
     }
     out.push_str(" ms");
@@ -217,9 +202,7 @@ fn process_ticks() -> Option<[u64; 4]> {
 #[cfg(windows)]
 pub fn cpu() -> Option<Duration> {
     let [_, _, kernel, user] = process_ticks()?;
-    Some(Duration::from_nanos(
-        kernel.checked_add(user)?.saturating_mul(100),
-    ))
+    Some(Duration::from_nanos(kernel.checked_add(user)?.saturating_mul(100)))
 }
 #[cfg(not(windows))]
 pub fn cpu() -> Option<Duration> {
@@ -286,16 +269,8 @@ mod tests {
     #[test]
     fn every_step_says_how_long_since_the_one_before_it() {
         let written = only(vec![
-            Mark {
-                step: "first".to_owned(),
-                at: Duration::from_millis(10),
-                cpu: None,
-            },
-            Mark {
-                step: "second".to_owned(),
-                at: Duration::from_millis(45),
-                cpu: None,
-            },
+            Mark { step: "first".to_owned(), at: Duration::from_millis(10), cpu: None },
+            Mark { step: "second".to_owned(), at: Duration::from_millis(45), cpu: None },
         ]);
         assert!(written.contains("first"), "{written}");
         assert!(written.contains("10.0 ms  +    10.0 ms"), "{written}");
@@ -303,15 +278,9 @@ mod tests {
     }
     #[test]
     fn a_long_step_name_cannot_push_the_numbers_out_of_line() {
-        let written = only(vec![Mark {
-            step: "x".repeat(COLUMN * 2),
-            at: Duration::ZERO,
-            cpu: None,
-        }]);
-        let line = written
-            .lines()
-            .find(|one| one.starts_with('x'))
-            .expect("the step");
+        let written =
+            only(vec![Mark { step: "x".repeat(COLUMN * 2), at: Duration::ZERO, cpu: None }]);
+        let line = written.lines().find(|one| one.starts_with('x')).expect("the step");
         assert_eq!(line.chars().filter(|one| *one == 'x').count(), COLUMN);
     }
     #[test]
@@ -342,10 +311,7 @@ mod tests {
             },
         ]);
         assert!(written.ends_with("]}\n"), "{written}");
-        assert!(
-            written.contains(r#""step":"app starting","at":0.0,"cpu":2.0"#),
-            "{written}"
-        );
+        assert!(written.contains(r#""step":"app starting","at":0.0,"cpu":2.0"#), "{written}");
         assert!(
             written.contains(r#""step":"window: first frame painted","at":400.0}"#),
             "{written}"
@@ -375,10 +341,7 @@ mod tests {
                 cpu: Some(Duration::from_millis(30)),
             },
         ]);
-        let second = written
-            .lines()
-            .find(|one| one.starts_with("second"))
-            .unwrap_or_default();
+        let second = written.lines().find(|one| one.starts_with("second")).unwrap_or_default();
         assert!(second.contains("22.0 cpu"), "{written}");
     }
     #[test]

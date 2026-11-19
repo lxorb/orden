@@ -43,32 +43,26 @@ pub fn each_doing_now(mut each: impl FnMut(&str)) {
     }
 }
 fn now_doing() -> String {
-    DOING
-        .lock()
-        .ok()
-        .filter(|held| !held.is_empty())
-        .map_or_else(
-            || "nothing of Orden's own".to_owned(),
-            |held| held.iter().rev().cloned().collect::<Vec<_>>().join(" < "),
-        )
+    DOING.lock().ok().filter(|held| !held.is_empty()).map_or_else(
+        || "nothing of Orden's own".to_owned(),
+        |held| held.iter().rev().cloned().collect::<Vec<_>>().join(" < "),
+    )
 }
 pub fn start(app: &AppHandle) {
     let app = app.clone();
     let watched = Watched::this_thread(&app);
-    let _ = std::thread::Builder::new()
-        .name("stall watch".to_owned())
-        .spawn(move || {
-            if let Some(dir) = marker_dir(&app) {
-                if let Some(said) = last_run(&dir.join(MARKER)) {
-                    say(&app, "warn", &said);
-                }
+    let _ = std::thread::Builder::new().name("stall watch".to_owned()).spawn(move || {
+        if let Some(dir) = marker_dir(&app) {
+            if let Some(said) = last_run(&dir.join(MARKER)) {
+                say(&app, "warn", &said);
             }
-            loop {
-                std::thread::sleep(LOOK);
-                let answers = watch_once(&app, &watched);
-                crate::crashes::tick(answers);
-            }
-        });
+        }
+        loop {
+            std::thread::sleep(LOOK);
+            let answers = watch_once(&app, &watched);
+            crate::crashes::tick(answers);
+        }
+    });
 }
 fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     let asked = Instant::now();
@@ -82,11 +76,7 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
         Late::Nested => format!("{}, in a nested loop", now_doing()),
         Late::Page => format!("{}, its page not answering", now_doing()),
     };
-    say(
-        app,
-        "warn",
-        &format!("stall: the window has not answered for 1 s ({what})"),
-    );
+    say(app, "warn", &format!("stall: the window has not answered for 1 s ({what})"));
     let marker = marker_dir(app).map(|dir| dir.join(MARKER));
     let since = orden_base::clock::now().saturating_sub(millis(asked.elapsed()));
     let mut written = false;
@@ -110,10 +100,7 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     say(
         app,
         "warn",
-        &format!(
-            "stall: the window answered after {} ({what})",
-            seconds(asked.elapsed())
-        ),
+        &format!("stall: the window answered after {} ({what})", seconds(asked.elapsed())),
     );
     if written {
         if let Some(marker) = &marker {
@@ -132,12 +119,8 @@ struct Marked {
     doing: String,
 }
 fn marked(since: u64, held: Duration, doing: &str) -> String {
-    serde_json::to_string(&Marked {
-        since,
-        held: millis(held),
-        doing: doing.to_owned(),
-    })
-    .unwrap_or_default()
+    serde_json::to_string(&Marked { since, held: millis(held), doing: doing.to_owned() })
+        .unwrap_or_default()
 }
 fn last_run(marker: &Path) -> Option<String> {
     let text = std::fs::read_to_string(marker).ok()?;
@@ -281,9 +264,7 @@ fn menu_shown(thread: u32) -> bool {
     unsafe extern "system" fn each(window: HWND, found: LPARAM) -> BOOL {
         let mut name = [0u16; 8];
         let length = unsafe { GetClassNameW(window, &mut name) };
-        let said = name
-            .get(..usize::try_from(length).unwrap_or(0))
-            .unwrap_or_default();
+        let said = name.get(..usize::try_from(length).unwrap_or(0)).unwrap_or_default();
         let menu = String::from_utf16_lossy(said) == "#32768";
         if menu && unsafe { IsWindowVisible(window) }.as_bool() {
             unsafe { *(found.0 as *mut bool) = true };
@@ -383,11 +364,8 @@ mod tests {
     fn a_hang_the_last_run_ended_in_is_said_once() {
         let dir = tempfile::tempdir().expect("a folder");
         let marker = dir.path().join("not-responding.json");
-        std::fs::write(
-            &marker,
-            marked(1_791_065_463_685, Duration::from_secs(41), "web_open"),
-        )
-        .expect("written");
+        std::fs::write(&marker, marked(1_791_065_463_685, Duration::from_secs(41), "web_open"))
+            .expect("written");
         assert_eq!(
             last_run(&marker).as_deref(),
             Some("stall: Orden was not responding for 41.0 s when it was ended (web_open), since 2026-10-03T22:11:03.685Z")
@@ -453,10 +431,7 @@ mod tests {
         assert_eq!(pumps(thread, Duration::from_millis(500)), Answer::Answered);
         stop.send(()).expect("stop");
         std::thread::sleep(Duration::from_millis(50));
-        assert_eq!(
-            pumps(thread, Duration::from_millis(300)),
-            Answer::Late(Late::Stuck)
-        );
+        assert_eq!(pumps(thread, Duration::from_millis(300)), Answer::Late(Late::Stuck));
         go.send(()).expect("go");
         assert_eq!(pumps(thread, Duration::from_secs(2)), Answer::Answered);
         worker.join().expect("the worker");

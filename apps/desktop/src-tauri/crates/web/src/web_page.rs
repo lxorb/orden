@@ -29,10 +29,7 @@ pub fn ended(view: &tauri::Webview) {
         return;
     };
     let window = view.window().label().to_string();
-    let heard = Heard {
-        tab,
-        said: Said::Crashed,
-    };
+    let heard = Heard { tab, said: Said::Crashed };
     let _ = view.app_handle().emit_to(window.as_str(), SAID, heard);
 }
 pub fn stepped(app: &AppHandle, tab: &str, step: Step) {
@@ -41,10 +38,7 @@ pub fn stepped(app: &AppHandle, tab: &str, step: Step) {
     let Ok(view) = crate::web_tabs::found(app, tab) else {
         return;
     };
-    let heard = Heard {
-        tab: tab.to_string(),
-        said: Said::Step { step },
-    };
+    let heard = Heard { tab: tab.to_string(), said: Said::Step { step } };
     let _ = app.emit_to(view.window().label(), SAID, heard);
 }
 pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
@@ -54,10 +48,7 @@ pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
         return;
     };
     if view.set_zoom(crate::page_scale::web(1.0)).is_ok() {
-        let heard = Heard {
-            tab: tab.to_string(),
-            said: Said::Zoom { factor: 1.0 },
-        };
+        let heard = Heard { tab: tab.to_string(), said: Said::Zoom { factor: 1.0 } };
         let _ = app.emit_to(window, SAID, heard);
     }
 }
@@ -81,11 +72,8 @@ mod tests {
     #[test]
     fn a_zoom_asked_in_the_page_reaches_the_window_as_a_step() {
         let said = |step| {
-            serde_json::to_value(Heard {
-                tab: "t1".into(),
-                said: Said::Step { step },
-            })
-            .expect("a step")
+            serde_json::to_value(Heard { tab: "t1".into(), said: Said::Step { step } })
+                .expect("a step")
         };
         assert_eq!(
             said(Step::In),
