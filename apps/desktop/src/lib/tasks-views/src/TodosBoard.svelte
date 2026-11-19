@@ -4,6 +4,7 @@
     GROUPING_NAMES,
     GROUPINGS,
     type Grouping,
+    priorityTone,
     SORTS,
     startTodos,
     todos,
@@ -144,7 +145,11 @@
           use:carrying.area={column.key}
         >
           <h2 use:carrying.head={column.key} title="Drag to move this column">
-            <span class="name">{column.name}</span>
+            <span
+              class="name"
+              style:color={shown.grouping === 'priority' ? priorityTone(Number(column.key)) : undefined}
+              >{column.name}</span
+            >
             <span class="count">{column.todos.length}</span>
             {#if column.takes}
               <button

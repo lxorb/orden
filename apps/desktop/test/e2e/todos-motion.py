@@ -184,7 +184,32 @@ def board(page: Page) -> None:
     say(f"column b: {titles(page, 'b')}, column c: {titles(page, 'c')}")
     if titles(page, "b").index("Charlie two") != titles(page, "b").index("Bravo one") - 1:
         wrong(f"Charlie two did not land above Bravo one: {titles(page, 'b')}")
+def tones(browser: Browser, scheme: str) -> None:
+    context = DRIVE.context(browser, viewport={"width": 1100, "height": 600}, color_scheme=scheme)
+    page = context.new_page()
+    page.on("pageerror", lambda error: wrong(f"page error: {error}"))
+    DRIVE.open(page)
+    page.wait_for_function("() => !!window.ordenApp?.tasks", timeout=60000)
+    page.evaluate("() => window.ordenApp.tasks().then(({ openTodos }) => openTodos())")
+    page.wait_for_selector(f"{BOARD} [data-todos-column]", state="attached")
+    for title, priority in [("Fix the roof", 3), ("Call the bank", 2), ("Sort the photos", 1), ("Read a book", 0)]:
+        page.evaluate("([title, priority]) => window.ordenApp.tasks().then(({ todos }) => todos.add({ title, priority }))", [title, priority])
+    wait_for(page, f"document.querySelectorAll('{BOARD} [data-todo-card]').length >= 4", "the cards")
+    page.wait_for_timeout(400)
+    seen = page.evaluate(f"""() => Object.fromEntries([...document.querySelectorAll('{BOARD} [data-todo-card]')].map((one) => {{
+      const label = one.querySelector('.priority')
+      const meta = one.querySelector('.meta') ?? one
+      return [one.querySelector('.title').textContent.trim(), [label ? getComputedStyle(label).color : null, getComputedStyle(meta).color, getComputedStyle(one.querySelector('.tick')).borderColor]]
+    }}))""")
+    say(f"tones ({scheme}): {seen}")
+    low, medium, high = seen["Sort the photos"][0], seen["Call the bank"][0], seen["Fix the roof"][0]
+    if not low or low == seen["Sort the photos"][1] or low in (medium, high) or medium == high:
+        wrong(f"({scheme}) Low, Medium and High are not each in their own tone: {seen}")
+    DRIVE.shot(page, f"tones-{scheme}")
+    context.close()
 def drive(browser: Browser) -> None:
+    tones(browser, "light")
+    tones(browser, "dark")
     context = DRIVE.context(browser, viewport={"width": 1400, "height": 820}, color_scheme="dark")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))

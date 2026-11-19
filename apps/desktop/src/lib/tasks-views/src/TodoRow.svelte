@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PRIORITY_NAMES, type Todo } from '../../tasks-model/src/api'
+  import { PRIORITY_NAMES, priorityTone, type Todo } from '../../tasks-model/src/api'
   import { dayWords } from '../../ui-controls/src/api'
   import { longPress } from '../../ui-kit/src/api'
   import { linksIn } from './acts'
@@ -40,8 +40,7 @@
   const late = $derived(!todo.done && todo.deadline !== null && todo.deadline < today)
   const subtasksDone = $derived(todo.subtasks.filter((one) => one.done).length)
   const notes = $derived(linksIn(todo.description))
-  const TONES: Readonly<Record<number, string>> = { 2: 'var(--callout-warning)', 3: 'var(--danger)' }
-  const tone = $derived(TONES[todo.priority])
+  const tone = $derived(priorityTone(todo.priority))
 </script>
 
 <div
