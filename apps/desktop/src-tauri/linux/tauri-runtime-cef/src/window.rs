@@ -702,6 +702,16 @@ impl AppWindow {
       request_context::apply_theme_scheme(request_context.as_ref(), theme);
     }
   }
+
+  pub(crate) fn follow_system_theme(&self) {
+    if self.preferred_theme().is_some() {
+      return;
+    }
+    for child in self.children.iter().filter(|child| child.label == self.label) {
+      let request_context = child.host.request_context();
+      request_context::apply_theme_scheme(request_context.as_ref(), None);
+    }
+  }
 }
 
 impl<T: UserEvent> WinitCefApp<T> {
@@ -1065,8 +1075,9 @@ impl<T: UserEvent> WinitCefApp<T> {
         let _ = tx.send(send_handle);
       }
       WindowMessage::Theme(tx) => {
-        let theme = window.theme();
-        let theme = theme.map(winit_theme_to_tauri_theme);
+        let theme = crate::system_theme::system_theme()
+          .filter(|_| appwindow.preferred_theme().is_none())
+          .or_else(|| window.theme().map(winit_theme_to_tauri_theme));
         let theme = theme.unwrap_or(Theme::Light);
         let _ = tx.send(Ok(theme));
       }

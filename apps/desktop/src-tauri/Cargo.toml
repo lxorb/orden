@@ -333,6 +333,9 @@ syn = { version = "2", features = ["full", "visit", "visit-mut"] }
 tempfile.workspace = true
 
 
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+zbus = { workspace = true, features = ["p2p"] }
+
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 windows = { workspace = true, features = [
   "Win32_Graphics_Gdi",

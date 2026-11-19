@@ -36,6 +36,8 @@ mod runtime;
 mod sandbox;
 /// Helpers for the Chromium command line the runtime hands to CEF.
 mod switches;
+mod system_theme;
+pub use system_theme::set_system_theme;
 mod tauri_ext;
 mod webview;
 pub use devtools::{DevToolsMessageIdExhausted, allocate_devtools_message_id};

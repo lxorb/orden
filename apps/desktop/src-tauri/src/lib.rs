@@ -1,3 +1,5 @@
+#[cfg(target_os = "linux")]
+mod appearance;
 #[cfg(test)]
 mod calls;
 #[cfg(desktop)]
@@ -565,6 +567,8 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
 }
 #[cfg(desktop)]
 fn hearing(handle: &tauri::AppHandle) {
+    #[cfg(target_os = "linux")]
+    appearance::follow();
     orden_web::page_carry::forget_carried(handle);
     #[cfg(windows)]
     orden_system::touchpad::start(handle);
