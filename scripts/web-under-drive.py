@@ -22,7 +22,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
 from probe_app import main_window, refuse_updating  # noqa: E402
 from fresh_app import ended, fresh  # noqa: E402
-from native_app import App, config_of, endpoint, known
+from native_app import App, config_of, endpoint
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
@@ -290,7 +290,7 @@ def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.
     for i in range(1, len(smalls) - 1):
         a, b, across = d(smalls[i - 1], smalls[i]), d(smalls[i], smalls[i + 1]), d(smalls[i - 1], smalls[i + 1])
         if min(a, b) > 10 and across < min(a, b) / 2:
-            known(2205, f"[overview {name}] frame {i} flashes: {a:.1f}, {b:.1f}, {across:.1f} across")
+            wrong.append(f"[overview {name}] frame {i} flashes: {a:.1f}, {b:.1f}, {across:.1f} across")
     opens = [opened_at(log if isinstance(log, list) else [], at) for at, _ in frames]
     if not any(open is not None and open > 0.9 for open in opens):
         wrong.append(f"[overview {name}] never opened: {opens}")
