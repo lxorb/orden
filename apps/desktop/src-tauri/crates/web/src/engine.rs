@@ -19,6 +19,7 @@ pub type Tell = fn(&Webview, Option<&str>, Vec<(&'static str, Value)>);
 pub type Zooms = Box<dyn Fn(crate::web_page::Step) + Send + Sync>;
 pub type Menus = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Dialogs = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
+pub type Permissions = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Page = WebviewBuilder<orden_base::Engine>;
 pub struct Engine {
     pub page_id: fn(&PlatformWebview) -> Option<NativeWindow>,
@@ -34,6 +35,8 @@ pub struct Engine {
     pub menu_pick: fn(u64, Option<i32>) -> bool,
     pub dialogs: fn(Page, Dialogs) -> Page,
     pub dialog_answer: fn(u64, bool, Option<String>) -> bool,
+    pub permissions: fn(Page, Permissions) -> Page,
+    pub permission_answer: fn(u64, bool) -> bool,
 }
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
 pub fn hand(engine: Engine) {
@@ -48,6 +51,12 @@ pub fn menus(page: Page, menus: Menus) -> Page {
 pub fn dialogs(page: Page, dialogs: Dialogs) -> Page {
     match engine() {
         Ok(engine) => (engine.dialogs)(page, dialogs),
+        Err(_) => page,
+    }
+}
+pub fn permissions(page: Page, permissions: Permissions) -> Page {
+    match engine() {
+        Ok(engine) => (engine.permissions)(page, permissions),
         Err(_) => page,
     }
 }

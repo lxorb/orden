@@ -31,6 +31,8 @@ mod macros;
 mod js_dialog;
 pub use js_dialog::{JsDialog, JsDialogEvent, JsDialogHandler, answer_js_dialog};
 mod menu;
+mod permission_ask;
+pub use permission_ask::{PermissionAsk, PermissionAskHandler, PermissionEvent, answer_permission};
 pub use menu::{ContextMenu, ContextMenuHandler, ContextMenuItem, answer_context_menu};
 mod offscreen;
 pub use offscreen::{CursorHandler, Offscreen, OffscreenView};

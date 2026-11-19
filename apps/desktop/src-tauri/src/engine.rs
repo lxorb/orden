@@ -179,6 +179,16 @@ pub(crate) fn dialogs(
 pub(crate) fn dialog_answer(id: u64, ok: bool, text: Option<String>) -> bool {
     tauri_runtime_cef::answer_js_dialog(id, ok, text.as_deref())
 }
+pub(crate) fn permissions(
+    page: orden_web::engine::Page,
+    permissions: orden_web::engine::Permissions,
+) -> orden_web::engine::Page {
+    use tauri_runtime_cef::WebviewBuilderCefExt as _;
+    page.on_permission_ask(move |said| serde_json::to_value(said).is_ok_and(&*permissions))
+}
+pub(crate) fn permission_answer(id: u64, allow: bool) -> bool {
+    tauri_runtime_cef::answer_permission(id, allow)
+}
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,

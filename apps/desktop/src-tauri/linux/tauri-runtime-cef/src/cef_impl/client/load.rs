@@ -43,6 +43,7 @@ wrap_load_handler! {
       };
       if let Some(window) = self.own_window.filter(|_| frame.is_main() != 0) {
         crate::js_dialog::drop_where(|_, one| one == window);
+        crate::permission_ask::drop_for_window(window);
       }
       let url = cef::CefString::from(&frame.url()).to_string();
       if let Ok(url) = url::Url::parse(&url) {

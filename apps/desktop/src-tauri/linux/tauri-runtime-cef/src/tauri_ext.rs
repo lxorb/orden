@@ -455,6 +455,12 @@ pub trait WebviewBuilderCefExt {
     handler: F,
   ) -> Self;
 
+  #[must_use]
+  fn on_permission_ask<F: Fn(crate::PermissionEvent) -> bool + Send + Sync + 'static>(
+    self,
+    handler: F,
+  ) -> Self;
+
   /// Keeps the named families of Chrome commands rather than swallowing them.
   ///
   /// A Chrome style browser keeps its whole accelerator table live even hosted as a
@@ -544,6 +550,17 @@ where
     let handler = Arc::new(handler);
     with_cef_webview_attributes(self.runtime_specific_attributes_mut(), |attributes| {
       attributes.js_dialog_handler = Some(handler);
+    });
+    self
+  }
+
+  fn on_permission_ask<F: Fn(crate::PermissionEvent) -> bool + Send + Sync + 'static>(
+    mut self,
+    handler: F,
+  ) -> Self {
+    let handler = Arc::new(handler);
+    with_cef_webview_attributes(self.runtime_specific_attributes_mut(), |attributes| {
+      attributes.permission_ask_handler = Some(handler);
     });
     self
   }
