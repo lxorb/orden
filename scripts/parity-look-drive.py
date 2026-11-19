@@ -882,7 +882,10 @@ class Drive:
                 time.sleep(0.8)
             tab = self.tab_of(kind, pane)
             if tab:
-                self.eval(f"orden.workspace.focusPane({json.dumps(pane)}); orden.workspace.activate({json.dumps(tab)}); return true")
+                self.eval(
+                    f"const ws = orden.workspace; ws.moveTab({json.dumps(tab)}, {json.dumps(pane)}, 0);"
+                    f" ws.focusPane({json.dumps(pane)}); ws.activate({json.dumps(tab)}); return true"
+                )
         time.sleep(1)
         if kind == "web" and not self.web_shown(len(panes)):
             return False
