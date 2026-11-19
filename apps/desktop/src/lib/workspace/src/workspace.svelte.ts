@@ -184,6 +184,7 @@ import {
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from './agent-marks.svelte'
+import { filesUnder, SpaceFiles } from './space-files.svelte'
 import { services } from './services'
 
 function isInstructions(root: string, path: string): boolean {
@@ -288,6 +289,30 @@ class Workspace {
     if (this.panes.at(tab.paneId)) return false
     const key = this.setOf(tab)
     return key !== null && this.spaces.some((one) => one.id === key && this.archivedSpaces.has(one.root))
+  }
+  spaceOfTab(tab: Tab): string | null {
+    const key = this.panes.at(tab.paneId) ? this.activeSpaceId : this.setOf(tab)
+    return key !== null && this.spaces.some((one) => one.id === key) ? key : null
+  }
+  openHere(id: string, how: OpenHow = {}): void {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return
+    if (this.panes.at(tab.paneId) || this.spaceOfTab(tab) === null) {
+      this.activate(id)
+      return
+    }
+    const here = this.tabHere((one) => one.note === tab.note)
+    if (here) {
+      this.activate(here.id)
+      return
+    }
+    const copy = this.copyOf(tab, this.panes.focusedId)
+    copy.address = webPages().addressOf(tab.id) ?? tab.address
+    copy.inPrivate = tab.inPrivate
+    copy.page = tab.page
+    if (tab.kind === 'web') webPages().copyPage(tab.id, copy.id, copy.address ?? null, tab.inPrivate)
+    this.arrive(copy, how)
+    this.persist()
   }
   get shownTabs(): Tab[] {
     return this.tabs.filter((tab) => !this.archivedTab(tab))
@@ -508,14 +533,7 @@ class Workspace {
     return tab?.kind === 'note' && !this.protection.locked(tab.path) ? tab.doc : ''
   }
   readonly files = $derived.by((): Entry[] => {
-    const out: Entry[] = []
-    const walk = (entry: Entry) => {
-      for (const child of entry.children) {
-        if (child.is_dir) walk(child)
-        else out.push(child)
-      }
-    }
-    if (this.tree) walk(this.tree)
+    const out = filesUnder(this.tree)
     const root = this.tree?.path
     return root === undefined ? out : out.filter((one) => !isInstructions(root, one.path))
   })
@@ -533,6 +551,10 @@ class Workspace {
     const root = this.tree?.path
     return root === undefined ? [] : this.files.filter((one) => !this.unlisted(root, one.path))
   })
+  listedIn(tree: Entry): Entry[] {
+    return filesUnder(tree).filter((one) => !this.unlisted(tree.path, one.path))
+  }
+  readonly spaceFiles = new SpaceFiles(this)
   readonly shownTree = $derived.by((): Entry | null => {
     const coming = this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
