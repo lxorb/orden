@@ -79,7 +79,7 @@
   <span class="name">
     {#if host.own}
       <input
-        class="title"
+        class="title orden-title-field"
         value={host.name}
         aria-label="Name"
         spellcheck="false"
@@ -169,19 +169,16 @@
   .title {
     display: block;
     width: 100%;
-    padding: 2px 0;
-    border: none;
-    border-bottom: 1px solid transparent;
-    background: none;
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
-    outline: none;
-    transition: border-color var(--dur-fast) var(--ease-out);
   }
-  input.title:focus {
-    border-bottom-color: var(--accent);
+  span.title {
+    padding: 3px 0;
+  }
+  input.title {
+    margin-inline-start: calc(-1px - var(--space-2));
   }
   .address {
     font-family: var(--font-mono);

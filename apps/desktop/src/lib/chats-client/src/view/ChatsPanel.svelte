@@ -8,6 +8,7 @@
   import ChatMark from './ChatMark.svelte'
   import { bySpace } from './by-space'
   import { Glyph } from '../../../chat-kit/src/api'
+  import { Select } from '../../../ui-controls/src/api'
   import { makeChat, openChat } from './open'
   import type { Who } from '@orden/chats'
   import { Avatar } from '../../../accounts-ui/src/api'
@@ -121,15 +122,16 @@
         <span class="orden-row-label">{one.entry.name ?? 'Chat'}</span>
         {#if one.entry.unread}<span class="orden-row-meta count">{localNumber(one.entry.unread)}</span>{/if}
       </button>
-      <select
-        class="level"
-        aria-label="Priority"
-        value={one.level ?? ''}
-        onchange={(event) => moved(one.entry, event.currentTarget.value)}
-      >
-        <option value="" disabled>-</option>
-        {#each LEVELS as level (level)}<option value={level}>{levelWord(level)}</option>{/each}
-      </select>
+      <span class="level">
+        <Select
+          plain
+          label="Priority"
+          placeholder="-"
+          value={one.level ?? ''}
+          options={LEVELS.map((level) => ({ value: level, label: levelWord(level) }))}
+          onchange={(next: string) => moved(one.entry, next)}
+        />
+      </span>
     </div>
     {@const suggested = priorities.suggestions[one.entry.id]}
     {#if suggested}
@@ -318,10 +320,6 @@
   .level {
     flex: none;
     max-width: 7.5em;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-size: var(--text-xs);
   }
   .badge {
     flex: none;

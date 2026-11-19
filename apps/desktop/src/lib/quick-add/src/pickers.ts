@@ -8,44 +8,12 @@ export interface When {
   time?: string | undefined
 }
 const weekendOf = (today: string) => addDays(today, (6 - weekday(today) + 7) % 7)
-const askNative = (type: 'date' | 'time', value: string | undefined, anchor: DOMRect): Promise<string | null> =>
-  new Promise((resolve) => {
-    const field = document.createElement('input')
-    field.type = type
-    field.value = value ?? ''
-    field.tabIndex = -1
-    field.setAttribute('aria-hidden', 'true')
-    Object.assign(field.style, {
-      position: 'fixed',
-      left: `${anchor.left}px`,
-      top: `${anchor.bottom}px`,
-      width: '1px',
-      height: '1px',
-      opacity: '0',
-      pointerEvents: 'none',
-    })
-    document.body.append(field)
-    let settled = false
-    const done = (answer: string | null) => {
-      if (settled) return
-      settled = true
-      field.remove()
-      resolve(answer)
-    }
-    field.addEventListener('change', () => done(field.value || null))
-    field.addEventListener('blur', () => done(null))
-    field.addEventListener('cancel', () => done(null))
-    try {
-      field.showPicker()
-    } catch {
-      done(null)
-    }
-  })
+export type Ask = (kind: 'date' | 'time', value: string | undefined) => Promise<string | null>
 export function dayRows(
   current: When,
   today: string,
   set: (when: { due: string | null; time?: string | null }) => void,
-  anchor: () => DOMRect,
+  ask: Ask,
   timed = true,
 ): MenuEntry[] {
   const day = (due: string) => ({
@@ -63,17 +31,14 @@ export function dayRows(
     {
       label: 'Pick a date…',
       asks: true,
-      run: () => void askNative('date', current.due, anchor()).then((due) => due && set({ due })),
+      run: () => void ask('date', current.due).then((due) => due && set({ due })),
     },
     ...(timed
       ? [
           {
             label: 'Set a time…',
             asks: true,
-            run: () =>
-              void askNative('time', current.time, anchor()).then(
-                (time) => time && set({ due: current.due ?? today, time }),
-              ),
+            run: () => void ask('time', current.time).then((time) => time && set({ due: current.due ?? today, time })),
           },
         ]
       : []),

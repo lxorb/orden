@@ -47,10 +47,20 @@ function shown(
   return { target, writes }
 }
 function typed(target: HTMLElement, words: string) {
-  const field = target.querySelector<HTMLInputElement | HTMLSelectElement>('input, select')
+  const field = target.querySelector<HTMLInputElement>('input')
   if (!field) throw new Error('no field')
   field.value = words
   field.dispatchEvent(new Event('change', { bubbles: true }))
+  flushSync()
+}
+function picked(target: HTMLElement, words: string) {
+  target.querySelector<HTMLButtonElement>('[role="combobox"]')?.click()
+  flushSync()
+  const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+    (one) => one.textContent.trim() === words,
+  )
+  if (!option) throw new Error(`no option ${words}`)
+  option.click()
   flushSync()
 }
 function taskEdited(line: string, property: string, editor: string, words: string) {
@@ -153,28 +163,28 @@ describe('a select cell, when an option is picked', () => {
     const { target, writes } = shown(rowOf('d.md', '---\npriority: 1\n---\n'), 'note.priority', 'select', {
       base: numbered,
     })
-    typed(target, '3')
+    picked(target, '3')
     expect(writes).toEqual([{ note: { priority: 3 } }])
   })
   test('writes a number where the note has none and every option is a number', () => {
     const { target, writes } = shown(rowOf('d.md', 'words\n'), 'note.priority', 'select', {
       base: numbered,
     })
-    typed(target, '2')
+    picked(target, '2')
     expect(writes).toEqual([{ note: { priority: 2 } }])
   })
   test('keeps words that only look like numbers as words', () => {
     const { target, writes } = shown(rowOf('e.md', "---\nzip: '007'\n---\n"), 'note.zip', 'select', {
       base: `${TABLE}orden:\n  properties:\n    zip:\n      options: ['007', '008']\n`,
     })
-    typed(target, '008')
+    picked(target, '008')
     expect(writes).toEqual([{ note: { zip: '008' } }])
   })
   test('keeps words where the property holds words', () => {
     const { target, writes } = shown(rowOf('f.md', "---\nrank: '1'\n---\n"), 'note.rank', 'select', {
       base: `${TABLE}orden:\n  properties:\n    rank:\n      options: [1, 2]\n`,
     })
-    typed(target, '2')
+    picked(target, '2')
     expect(writes).toEqual([{ note: { rank: '2' } }])
   })
 })

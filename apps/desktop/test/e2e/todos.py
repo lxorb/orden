@@ -18,6 +18,15 @@ BOARD = """() => [...document.querySelectorAll('[data-todos-board] [data-todos-c
   [...column.querySelectorAll('[data-todo] .title')].map((one) => one.textContent.trim()),
 ])"""
 HELD = "() => window.ordenApp.tasks().then(({ todos }) => todos.todos.map((one) => [one.title, one.done, one.labels, one.space, one.subtasks.length]))"
+TITLE_RING = """() => {
+  const style = getComputedStyle(document.querySelector('[data-todos-panel] [data-todo-editor] input[aria-label="Title"]'))
+  return {
+    shadow: style.boxShadow,
+    outline: style.outlineStyle,
+    borders: [style.borderTopColor, style.borderRightColor, style.borderBottomColor, style.borderLeftColor],
+    pad: parseFloat(style.paddingLeft),
+  }
+}"""
 AGAIN = "() => window.ordenApp.tasks().then(({ todos }) => todos.exchange())"
 class Worker(harness.Worker):
     def __init__(self) -> None:
@@ -97,6 +106,26 @@ def pick_label(page: Page, scope: str, name: str) -> None:
     page.locator(f"{scope} [data-todos-label]").click()
     page.locator(f"{scope} .search").fill(name)
     page.locator(f"{scope} [role=option]", has_text=name).first.click()
+def sheet_controls(page: Page) -> None:
+    sheet = "[data-todos-panel] [data-todo-editor]"
+    if page.locator(f"{sheet} select, {sheet} input[type=date], {sheet} input[type=time]").count():
+        wrong("the todo sheet draws a native dropdown or date input")
+    page.locator(f"{sheet} input[aria-label='Title']").focus()
+    ring = page.evaluate(TITLE_RING)
+    if ring["shadow"] != "none" or ring["outline"] != "none" or len(set(ring["borders"])) != 1 or ring["pad"] < 4:
+        wrong(f"the title field in focus draws {ring}")
+    shot(page, "05-sheet-title")
+    page.locator(f"{sheet} [role=combobox][aria-label='Space']").click()
+    page.wait_for_selector("[role=listbox][aria-label='Space'] [role=option]")
+    shot(page, "06-sheet-space")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("[role=listbox][aria-label='Space']", state="detached")
+    page.locator(f"{sheet} [aria-label='Choose a date']").first.click()
+    page.wait_for_selector("[role=dialog][aria-label='Start date'] [role=grid]")
+    shot(page, "07-sheet-calendar")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("[role=dialog][aria-label='Start date']", state="detached")
+    say("the todo sheet uses the app dropdown and date picker, and its title has one focus outline")
 def main() -> int:
     worker = Worker()
     with DRIVE.session(playwright=True) as play:
@@ -117,7 +146,9 @@ def main() -> int:
         label(desk, "Call the bank", "admin")
         label(desk, "Water the plants", "home")
         open_editor(desk, "Starts next week")
-        desk.locator("[data-todos-panel] [data-todo-editor] input[type=date]").first.fill("2099-01-01")
+        start = desk.locator("[data-todos-panel] [data-todo-editor] input[aria-label='Start date']")
+        start.fill("2099-01-01")
+        start.press("Enter")
         desk.wait_for_function("() => ![...document.querySelectorAll('[data-todos-panel] [data-todo] .title')].some((one) => one.textContent.includes('Starts next week'))")
         say("a start date in the future hides the todo")
         open_editor(desk, "Read a book")
@@ -125,6 +156,7 @@ def main() -> int:
         sub.fill("Chapter one")
         sub.press("Enter")
         desk.wait_for_selector("[data-todos-panel] [data-todo-editor] li")
+        sheet_controls(desk)
         desk.locator("[data-todos-panel] [data-todo-editor] .close").click()
         shot(desk, "01-panel")
         pick_label(desk, "[data-todos-panel]", "admin")
@@ -145,7 +177,9 @@ def main() -> int:
         say(f"board: {board}")
         if [one[0] for one in board] != ["admin", "home", "No label"]:
             wrong(f"the board columns are {board}")
-        desk.select_option("[data-todos-board] [data-todos-sort]", "priority")
+        desk.locator("[data-todos-board] [data-todos-sort] [role=combobox]").click()
+        desk.locator("[role=listbox] [role=option]", has_text="Priority").click()
+        desk.wait_for_function("() => document.querySelector('[data-todos-board] [data-todos-sort] [role=combobox]').textContent.includes('Priority')")
         shot(desk, "03-board")
         desk.locator("[data-todos-board] [data-todo] .tick").first.check()
         desk.wait_for_function("() => document.querySelector('[data-todos-board] [data-todo].done')")

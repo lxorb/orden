@@ -9,6 +9,7 @@
     type Todo,
     type TodoPatch,
   } from '../../tasks-model/src/api'
+  import { DateField, Select } from '../../ui-controls/src/api'
   import type { Space } from './shown.svelte'
 
   const {
@@ -91,7 +92,7 @@
 <div class="editor" data-todo-editor={todo.id}>
   <div class="head">
     <input
-      class="title"
+      class="title orden-title-field"
       type="text"
       aria-label="Title"
       bind:value={title}
@@ -115,48 +116,44 @@
     onblur={saveDescription}></textarea>
 
   <div class="fields">
-    <label>
+    <div class="field">
       <span>Space</span>
-      <select
+      <Select
+        label="Space"
         value={inSpace?.id ?? todo.space ?? ''}
-        onchange={(event) => void change({ space: event.currentTarget.value || null })}
-      >
-        <option value="">No space</option>
-        {#each spaces as space (space.id)}
-          <option value={space.id}>{space.name}</option>
-        {/each}
-        {#if todo.space !== null && inSpace === null}
-          <option value={todo.space}>{todo.space}</option>
-        {/if}
-      </select>
-    </label>
-    <label>
+        options={[
+          { value: '', label: 'No space' },
+          ...spaces.map((space) => ({ value: space.id, label: space.name })),
+          ...(todo.space !== null && inSpace === null ? [{ value: todo.space, label: todo.space }] : []),
+        ]}
+        onchange={(next: string) => void change({ space: next || null })}
+      />
+    </div>
+    <div class="field">
       <span>Start date</span>
-      <input
-        type="date"
+      <DateField
+        label="Start date"
         value={todo.start ?? ''}
-        onchange={(event) => void change({ start: dayOr(event.currentTarget.value) })}
+        onchange={(next: string) => void change({ start: dayOr(next) })}
       />
-    </label>
-    <label>
+    </div>
+    <div class="field">
       <span>Deadline</span>
-      <input
-        type="date"
+      <DateField
+        label="Deadline"
         value={todo.deadline ?? ''}
-        onchange={(event) => void change({ deadline: dayOr(event.currentTarget.value) })}
+        onchange={(next: string) => void change({ deadline: dayOr(next) })}
       />
-    </label>
-    <label>
+    </div>
+    <div class="field">
       <span>Priority</span>
-      <select
+      <Select
+        label="Priority"
         value={String(todo.priority)}
-        onchange={(event) => void change({ priority: Number(event.currentTarget.value) as Priority })}
-      >
-        {#each PRIORITIES as priority (priority)}
-          <option value={String(priority)}>{PRIORITY_NAMES[priority]}</option>
-        {/each}
-      </select>
-    </label>
+        options={PRIORITIES.map((priority) => ({ value: String(priority), label: PRIORITY_NAMES[priority] }))}
+        onchange={(next: string) => void change({ priority: Number(next) as Priority })}
+      />
+    </div>
   </div>
 
   <div class="labels">
@@ -248,18 +245,9 @@
   }
   .title {
     flex: 1;
-    min-width: 0;
-    padding: var(--space-1) 0;
-    border: none;
-    border-bottom: 1px solid var(--line);
-    background: none;
-    color: var(--text-strong);
-    font: inherit;
-    font-weight: var(--weight-strong);
   }
   .description,
-  .new,
-  input[type='date'] {
+  .new {
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
@@ -276,14 +264,14 @@
     grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     gap: var(--space-2);
   }
-  .fields label,
+  .field,
   .labels,
   .subtasks {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
   }
-  .fields span,
+  .field > span,
   .name {
     color: var(--muted);
     font-size: var(--text-xs);

@@ -220,6 +220,37 @@ describe('the box a caret sits in', () => {
     expect(draw(/\.orden-field-mark(?![\w-])/)).toEqual([])
   })
 })
+describe('the field a title is renamed in where it stands', () => {
+  test('is drawn in the themes package and nowhere else, with one focus of its own', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.orden-title-field {')
+    expect(shared).toContain('.orden-title-field:focus {')
+    expect(shared).toMatch(/:not\(\s*\.orden-field \*,\s*\.orden-edit-row \*,\s*\.orden-title-field\s*\):focus/)
+    expect(draw(/\.orden-title-field(?![\w-])/)).toEqual([])
+  })
+  test('and every title typed over in place wears it', () => {
+    const wearing = components
+      .filter((one) => one.text.includes('orden-title-field'))
+      .map((one) => one.name)
+      .sort()
+    expect(wearing).toEqual([
+      'lib/agents/src/settings/AgentDetail.svelte',
+      'lib/tasks-views/src/TodoEditor.svelte',
+      'lib/terminal/src/remote/HostDetail.svelte',
+    ])
+    const own = components
+      .filter((one) =>
+        rules(one.style).some(
+          (rule) =>
+            /(^|[\s,])\.title(?![\w-])/.test(rule.selector) &&
+            /(^|;)\s*(border|background|outline|box-shadow)/.test(rule.declarations),
+        ),
+      )
+      .map((one) => one.name)
+      .filter((name) => wearing.includes(name))
+    expect(own, `these draw a title field of their own: ${own.join(', ')}`).toEqual([])
+  })
+})
 describe('the badge in front of a name', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')

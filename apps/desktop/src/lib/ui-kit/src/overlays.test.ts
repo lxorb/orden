@@ -228,6 +228,7 @@ describe('what hides a web page', () => {
     'lib/palette/src/Palette.svelte',
     'lib/surfaces/src/PromptSheet.svelte',
     'lib/ai-sidebar/src/QuickQuestion.svelte',
+    'lib/ui-controls/src/DateField.svelte',
     'lib/ui-controls/src/Select.svelte',
     'lib/sidebar/src/Sidebar.svelte',
     'lib/ui-controls/src/Sheet.svelte',

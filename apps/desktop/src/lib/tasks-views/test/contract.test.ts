@@ -51,14 +51,18 @@ function world(list: Fake[], active: string | null = 'home') {
   return { world: made, read: () => kept }
 }
 describe('tasks-views contract', () => {
-  test('the module reads the model only through its api and nothing from the shell', () => {
+  test('the module reads the model and the shared controls only through their apis and nothing from the shell', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
       const text = readFileSync(join(src, name), 'utf8')
       const imports = [...text.matchAll(/from '([^']+)'/g)].map((m) => m[1] ?? '')
       for (const one of imports) {
         const allowed =
-          one.startsWith('./') || one === 'svelte' || one === '@orden/contracts' || one === '../../tasks-model/src/api'
+          one.startsWith('./') ||
+          one === 'svelte' ||
+          one === '@orden/contracts' ||
+          one === '../../tasks-model/src/api' ||
+          one === '../../ui-controls/src/api'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }

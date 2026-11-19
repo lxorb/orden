@@ -21,6 +21,8 @@
     label,
     plain = false,
     disabled = false,
+    autofocus = false,
+    placeholder = '',
   }: {
     value: string
     options: Option[]
@@ -28,6 +30,8 @@
     label?: string
     plain?: boolean
     disabled?: boolean
+    autofocus?: boolean
+    placeholder?: string
   } = $props()
   let open = $state(false)
   let walking = $state<Walk>({ cursor: null, typed: '', typedAt: 0 })
@@ -90,6 +94,9 @@
       list?.children[walking.cursor]?.scrollIntoView({ block: 'nearest' })
     }
   }
+  function focusOnMount(node: HTMLElement) {
+    if (autofocus) node.focus()
+  }
   $effect(() => (open ? overlays.show(close, () => [host, list]) : undefined))
   $effect(() => closeOnBack(open && viewport.touch, close))
 </script>
@@ -112,10 +119,11 @@
     aria-label={label}
     aria-controls={open ? id : undefined}
     aria-activedescendant={open && walking.cursor !== null ? `${id}-${walking.cursor}` : undefined}
+    use:focusOnMount
     onclick={() => (open ? close() : show())}
     onkeydown={onKey}
   >
-    <span class="text">{current?.label ?? ''}</span>
+    <span class="text">{current?.label ?? placeholder}</span>
     <svg class="chevron" viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" /></svg>
   </button>
 
@@ -155,6 +163,7 @@
       style:min-width={host ? `${host.offsetWidth}px` : undefined}
       use:hang={{ side: above ? 'above' : 'below', gap: 4, from: host ?? null }}
       onmouseleave={() => (hovered = null)}
+      onmousedown={(event) => event.preventDefault()}
       transition:fly={{ y: above ? 4 : -4, duration: dur(120), easing: cubicOut }}
     >
       {#each options as option, index (option.value)}

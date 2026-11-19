@@ -13,7 +13,7 @@
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
   import type { Dictates } from '../../dictation/src/api'
-  import { longPaste } from '../../ui-controls/src/api'
+  import { DateAsk, longPaste } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
   import type { Entry, Prefill } from './entry'
   import { carried, chosen, pastedLines, piecesOf, type Span, suggestions, tokenAt, without } from './field'
@@ -21,7 +21,7 @@
   import { priorityTone } from '../../tasks-model/src/api'
   import { dayWords, durationLabel } from './labels'
   import Picker from './Picker.svelte'
-  import { dayRows, durationRows, priorityRows, remindRows, tagRows } from './pickers'
+  import { type Ask, dayRows, durationRows, priorityRows, remindRows, tagRows } from './pickers'
 
   const {
     langs,
@@ -208,8 +208,26 @@
     if (!(target instanceof HTMLElement)) return
     asking = { rows, at: target.getBoundingClientRect() }
   }
-  $effect(() => onpicking?.(asking !== null))
   const anchor = () => asking?.at ?? input?.getBoundingClientRect() ?? new DOMRect()
+  let choosing = $state<{
+    kind: 'date' | 'time'
+    value: string
+    at: DOMRect
+    done: (value: string | null) => void
+  } | null>(null)
+  $effect(() => onpicking?.(asking !== null || choosing !== null))
+  const choose: Ask = (kind, value) =>
+    new Promise((settle) => {
+      choosing = {
+        kind,
+        value: value ?? '',
+        at: anchor(),
+        done: (picked) => {
+          choosing = null
+          settle(picked)
+        },
+      }
+    })
   function askDay(event: MouseEvent) {
     ask(
       event,
@@ -225,7 +243,7 @@
           }
           input?.focus()
         },
-        anchor,
+        choose,
       ),
     )
   }
@@ -240,7 +258,7 @@
           picked = { ...picked, deadline: when.due }
           input?.focus()
         },
-        anchor,
+        choose,
         false,
       ),
     )
@@ -573,6 +591,9 @@
 
 {#if asking}
   <Picker rows={asking.rows} at={asking.at} onclose={() => (asking = null)} />
+{/if}
+{#if choosing}
+  <DateAsk kind={choosing.kind} value={choosing.value} at={choosing.at} onpick={choosing.done} />
 {/if}
 
 <style>
