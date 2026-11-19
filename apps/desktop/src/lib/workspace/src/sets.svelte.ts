@@ -4,7 +4,7 @@ import { focusEditor } from './focus'
 import { identifier, log, without, forget, isRecord, stored, invoke, isDesktop } from '../../platform/src/api'
 import { IN_A_PAGE } from '../../ui-controls/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from './workspace.svelte'
+import { archivedRefused, workspace } from './workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from '../../panes/src/api'
 import { focusIn, GLOBAL, readSets, type SetDraft, type SetsDraft, setKey, sharedGoesTo, tidied } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
@@ -36,6 +36,7 @@ class Sets {
     this.drafted = read?.aside ?? {}
     this.handOver()
     workspace.setsWritten = () => this.written()
+    workspace.setOf = (tab) => this.setOf(tab)
     tabSets.fetched = true
     void askSheet('space-sound')
   }
@@ -160,6 +161,10 @@ class Sets {
     const ws = workspace
     const tab = ws.tabs.find((one) => one.id === id)
     if (!tab) return
+    if (ws.archivedTab(tab)) {
+      archivedRefused()
+      return
+    }
     const key = this.setOf(tab)
     const space = key !== null && ws.spaces.some((one) => one.id === key) ? key : null
     if (space !== null) await this.toSpace(space)
