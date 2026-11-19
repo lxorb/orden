@@ -74,7 +74,7 @@
   const commands = $derived(open ? paletteCommands(view) : [])
   const settingRows = $derived(open ? paletteKind('settings').rows(view) : [])
   const tabs = $derived(
-    workspace.tabs.map((tab): OpenTab => ({
+    workspace.shownTabs.map((tab): OpenTab => ({
       id: tab.id,
       kind: tab.kind,
       path: tab.path,
@@ -263,7 +263,7 @@
     return row.kind === 'place' ? row.hint : null
   }
   const dimmed = (row: Row) => row.kind === 'command' && row.command.disabled === true
-  const tabOf = (row: Extract<Row, { kind: 'tab' }>) => workspace.tabs.find((one) => one.id === row.tab.id)
+  const tabOf = (row: Extract<Row, { kind: 'tab' }>) => workspace.shownTabs.find((one) => one.id === row.tab.id)
   const unsavedTab = (row: Extract<Row, { kind: 'tab' }>) => {
     const tab = tabOf(row)
     return tab !== undefined && isDraft(tab.note)
