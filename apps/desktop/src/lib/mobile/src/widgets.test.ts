@@ -46,24 +46,18 @@ describe('the rows', () => {
   })
 })
 describe('today', () => {
-  test('the first five, each with where its note is on this phone', () => {
+  test('the first five, each a todo with no space and no note to open', () => {
     const tasks = Array.from({ length: 7 }, (_, at) => ({
       text: `Task ${String(at)}`,
-      at: `Work/Plan.md#${String(at)}:abc`,
-      space: at === 0 ? 'Gone' : 'Notes',
-    }))
-    const rows = todayRows(tasks, (space) => (space === 'Notes' ? '/Notes' : undefined))
-    expect(rows).toHaveLength(5)
-    expect(rows[1]).toEqual({
-      text: 'Task 1',
-      at: 'Work/Plan.md#1:abc',
+      at: `t${String(at)}`,
       space: 'Notes',
-      path: '/Notes/Work/Plan.md',
-    })
-    expect(rows[0]?.path).toBe('')
+    }))
+    const rows = todayRows(tasks)
+    expect(rows).toHaveLength(5)
+    expect(rows[1]).toEqual({ text: 'Task 1', at: 't1' })
   })
   test("a task's escapes are not on the home screen", () => {
-    const rows = todayRows([{ text: 'milk \\$3 \\~5', at: 'A.md#0:a', space: 'Notes' }], () => '/N')
+    const rows = todayRows([{ text: 'milk \\$3 \\~5', at: 't1' }])
     expect(rows[0]?.text).toBe('milk $3 ~5')
   })
 })

@@ -14,7 +14,7 @@ import {
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
-import { type AgentAnswer, threadSpaceOf } from '../../automation/src/api'
+import type { AgentAnswer } from '../../automation/src/api'
 import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
 import { reachedByOthersIn } from '../../sharing/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -34,7 +34,6 @@ import {
   judgedForWriting,
   onDisk,
   type Place,
-  placeFor,
   reachesSpace,
   placeOf,
   sharedSource,
@@ -42,15 +41,7 @@ import {
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
 import { guardedAt } from './guard'
-import {
-  isPriority,
-  type Priority,
-  type Todo,
-  type TodoPatch,
-  type TodoSpace,
-  isTodoSpace,
-  todoSpaceOf,
-} from '../../tasks-model/src/api'
+import { isPriority, type Priority, type Todo, type TodoPatch } from '../../tasks-model/src/api'
 import { at, made, noteOf } from './notes'
 import { notes } from './docs'
 
@@ -103,7 +94,6 @@ function todoOut(todo: Todo) {
     title: todo.title,
     done: todo.done,
     labels: todo.labels,
-    space: todo.space,
     start: todo.start,
     deadline: todo.deadline,
     priority: todo.priority,
@@ -111,22 +101,9 @@ function todoOut(todo: Todo) {
     ...(todo.subtasks.length ? { subtasks: todo.subtasks } : {}),
   }
 }
-function namedSpace(call: Call): TodoSpace | null {
-  const named = maybe(call, 'space')
-  if (named === null) return null
-  const kept = workspace.spaces.find((one) => todoSpaceOf(one).id === named)
-  return todoSpaceOf(placeFor(call, kept?.id ?? named).space)
-}
-const unreached = () => new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
-function openSpace(call: Call): TodoSpace | null {
-  const thread = threadSpaceOf(call.caller)
-  const open = workspace.spaces.find((one) => one.id === thread) ?? workspace.activeSpace ?? null
-  if (!reachesSpace(call, open?.id ?? null)) throw unreached()
-  return open ? todoSpaceOf(open) : null
-}
-function reachesTodoSpace(call: Call, id: string | null): boolean {
-  if (reachesSpace(call, id)) return true
-  return id !== null && workspace.spaces.some((one) => isTodoSpace(todoSpaceOf(one), id) && reachesSpace(call, one.id))
+function reachTodos(call: Call): void {
+  if (!reachesSpace(call, null))
+    throw new Refused('not_granted', 'todos are reached only by agents that reach every space')
 }
 function textsOf(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined
@@ -155,7 +132,6 @@ function patchOf(call: Call): TodoPatch {
   if (typeof description === 'string') patch.description = description
   const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
   if (labels !== undefined) patch.labels = labels
-  if ('space' in call.args) patch.space = namedSpace(call)?.id ?? null
   const start = dayArg(call, 'start')
   if (start !== undefined) patch.start = start
   const deadline = dayArg(call, 'deadline' in call.args ? 'deadline' : 'due')
@@ -167,46 +143,35 @@ function patchOf(call: Call): TodoPatch {
 }
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const { todos, sortedTodos } = await import('../../tasks-model/src/api')
-  const space = namedSpace(call)
+  reachTodos(call)
   const label = maybe(call, 'label')
   const withDone = flag(call, 'done')
   const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
-  const inSpace = (one: Todo) =>
-    space === null || one.space === space.id || (one.space !== null && (space.also?.includes(one.space) ?? false))
   const shown = sortedTodos(
-    todos.todos.filter(
-      (one) =>
-        inSpace(one) &&
-        (label === null || one.labels.includes(label)) &&
-        (withDone || !one.done) &&
-        reachesTodoSpace(call, one.space),
-    ),
+    todos.todos.filter((one) => (label === null || one.labels.includes(label)) && (withDone || !one.done)),
     'deadline',
   )
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await import('../../tasks-model/src/api')
+  reachTodos(call)
   const title = maybe(call, 'title') ?? need(call, 'text')
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
-  const patch = patchOf(call)
-  const space = 'space' in call.args ? (patch.space ?? null) : (openSpace(call)?.id ?? null)
-  if (!reachesTodoSpace(call, space)) throw unreached()
-  const made = await todos.add({ ...patch, title, space, done: false })
+  const made = await todos.add({ ...patchOf(call), title, done: false })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
 export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await import('../../tasks-model/src/api')
+  reachTodos(call)
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was || !reachesTodoSpace(call, was.space)) throw new Refused('no_such_file', `there is no todo ${id}`)
+  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
-  const patch = patchOf(call)
-  if ('space' in call.args && !reachesTodoSpace(call, patch.space ?? null)) throw unreached()
-  const kept = await todos.update(id, patch)
+  const kept = await todos.update(id, patchOf(call))
   if (!kept.ok) throw new Refused('bad_arguments', kept.error.message)
   return done(todoOut(kept.value))
 }

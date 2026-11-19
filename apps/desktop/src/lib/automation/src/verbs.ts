@@ -68,12 +68,12 @@ const VERBS: Record<string, Verb> = {
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
   'tasks.list': {
     takes: ['filter'],
-    run: (args) => asReader('list_tasks', unheard(args, 'tasks.list', ['filter', 'view'])),
+    run: (args) => asReader('list_tasks', unheard(spaceless(args), 'tasks.list', ['filter', 'view'])),
   },
   'tasks.add': { takes: ['text'], byLink: 'back', run: addTask },
   'tasks.done': {
     takes: ['at'],
-    run: (args) => asReader('update_task', { ...args, done: !yes(args, 'undo') }),
+    run: (args) => asReader('update_task', { ...spaceless(args), done: !yes(args, 'undo') }),
   },
   'base.query': { takes: ['path'], run: (args) => asReader('query_base', args) },
   'files.list': { run: listFiles },
@@ -194,9 +194,11 @@ function unheard(args: Said, verb: string, names: readonly string[]): Said {
   return args
 }
 function addTask(args: Said, road: Road): Promise<unknown> {
-  if (road !== 'link') return asReader('add_task', unheard(args, 'tasks.add', ['note', 'under']))
-  const space = wordsOf(args, 'space')
-  return asReader('add_task', { text: args.text, ...(space === null ? {} : { space }) })
+  if (road !== 'link') return asReader('add_task', unheard(spaceless(args), 'tasks.add', ['note', 'under']))
+  return asReader('add_task', { text: args.text })
+}
+function spaceless(args: Said): Said {
+  return Object.fromEntries(Object.entries(args).filter(([name]) => name !== 'space'))
 }
 async function fromTheCrate(name: string, args: Said): Promise<unknown> {
   const crate = portOf('agents.crate')

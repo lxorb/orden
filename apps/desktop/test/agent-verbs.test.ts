@@ -1,12 +1,4 @@
-import {
-  agentVerbNames,
-  type AgentHeard,
-  type PortMap,
-  providePort,
-  runAgentVerb,
-  type WebLent,
-  webPages,
-} from '@orden/contracts'
+import { agentVerbNames, type AgentHeard, providePort, runAgentVerb, type WebLent, webPages } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../src/lib/automation/src/api'
 import { AGENT_WINDOW_VERBS } from '../src/lib/agent-protocol/src/api'
@@ -1614,117 +1606,73 @@ describe('what the crate asks', () => {
 })
 describe('to-dos and bases', () => {
   const written = () => docs.writeNote.mock.calls.map((one) => String(one[2]))
+  const onTodos = (verb: string, args: Record<string, unknown>) => call(verb, args, agent({ spaces: 'all' }))
   beforeEach(() => {
     files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk #shop\n')
     files.set('/s/Secret/Diary.md', '# Diary\n- [ ] Hidden 📅 2026-01-01\n')
   })
-  test('a todo is listed, added into the open space and changed through the model', async () => {
+  test('a todo is listed, added and changed through the model, with no space', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const added = await call('add_task', { text: 'Call mum', deadline: '2026-10-06', priority: 3 })
+    const added = await onTodos('add_task', { text: 'Call mum', deadline: '2026-10-06', priority: 3, space: 'Work' })
     expect(added).toMatchObject({
       result: { title: 'Call mum', deadline: '2026-10-06', priority: 3, done: false },
     })
     const id = (added as { result: { id: string } }).result.id
-    expect(todos.todo(id)?.space).toBe(work.id)
-    const listed = await call('list_tasks', {})
+    expect(todos.todo(id)?.space).toBeNull()
+    const listed = await onTodos('list_tasks', { space: 'Secret' })
     expect(listed).toMatchObject({ result: { total: 1, todos: [{ id, title: 'Call mum' }] } })
-    expect(await call('update_task', { id, done: true, labels: ['family'] })).toMatchObject({
+    expect(JSON.stringify(listed)).not.toContain('space')
+    expect(await onTodos('update_task', { id, done: true, labels: ['family'], space: 'Work' })).toMatchObject({
       result: { done: true, labels: ['family'] },
     })
-    expect(await call('list_tasks', { space: 'Secret' })).toMatchObject({ code: 'no_such_space' })
-    expect(await call('update_task', { id: 'nothing', done: true })).toMatchObject({
+    expect(todos.todo(id)?.space).toBeNull()
+    expect(await onTodos('update_task', { id: 'nothing', done: true })).toMatchObject({
       code: 'no_such_file',
     })
-    expect(await call('add_task', { text: '   ' })).toMatchObject({ code: 'bad_arguments' })
+    expect(await onTodos('add_task', { text: '   ' })).toMatchObject({ code: 'bad_arguments' })
     expect(docs.writeNote).not.toHaveBeenCalled()
     await todos.remove(id)
   })
-  test('a todo of a space the agent does not reach is not listed, changed or added to', async () => {
+  test('an agent kept to some spaces reaches no todo, one granted every space reaches them all', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const kept = await todos.add({ title: 'Hidden plan', space: secret.id })
-    const loose = await todos.add({ title: 'Loose one', space: null })
-    if (!kept.ok || !loose.ok) throw new Error('not added')
+    const kept = await todos.add({ title: 'Hidden plan' })
+    if (!kept.ok) throw new Error('not added')
+    const before = todos.todos.length
     try {
-      const listed = JSON.stringify(await call('list_tasks', { done: true }))
-      expect(listed).not.toContain('Hidden plan')
-      expect(listed).not.toContain('Loose one')
-      expect(JSON.stringify(await call('list_tasks', {}, READER))).toContain('Hidden plan')
-      for (const id of [kept.value.id, loose.value.id]) {
-        expect(await call('update_task', { id, done: true })).toMatchObject({
-          code: 'no_such_file',
+      for (const [verb, args] of [
+        ['list_tasks', { done: true }],
+        ['add_task', { text: 'Sneak' }],
+        ['update_task', { id: kept.value.id, done: true }],
+      ] as const) {
+        expect(await call(verb, args)).toMatchObject({
+          code: 'not_granted',
+          message: expect.stringContaining('every space') as string,
         })
       }
+      expect(todos.todos.length).toBe(before)
       expect(todos.todo(kept.value.id)?.done).toBe(false)
-      expect(await call('update_task', { id: kept.value.id, space: 'Secret' }, READER)).toMatchObject({
-        result: { space: secret.id },
-      })
-      const everywhere = agent({ spaces: 'all' })
-      expect(JSON.stringify(await call('list_tasks', {}, everywhere))).toContain('Loose one')
+      expect(JSON.stringify(await call('list_tasks', {}, READER))).toContain('Hidden plan')
+      expect(JSON.stringify(await onTodos('list_tasks', {}))).toContain('Hidden plan')
     } finally {
-      await todos.remove(kept.value.id)
-      await todos.remove(loose.value.id)
-    }
-  })
-  test('a todo is not moved into an open space the agent does not reach', async () => {
-    const { todos } = await import('../src/lib/tasks-model/src/api')
-    const kept = await todos.add({ title: 'Stays at work', space: work.id })
-    if (!kept.ok) throw new Error('not added')
-    workspace.activeSpaceId = 'home'
-    try {
-      expect(await call('update_task', { id: kept.value.id, space: null }, agent({ spaces: ['Work'] }))).toMatchObject({
-        code: 'no_such_space',
-      })
-      expect(todos.todo(kept.value.id)?.space).toBe(work.id)
-    } finally {
-      workspace.activeSpaceId = 'work'
       await todos.remove(kept.value.id)
     }
   })
-  test('a todo is not added into an open space the agent does not reach', async () => {
+  test('a change takes a day off when sent empty, and leaves done alone when sent null', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const before = todos.todos.length
-    expect(await call('add_task', { text: 'Sneak' }, agent({ spaces: ['Home'] }))).toMatchObject({
-      code: 'no_such_space',
-    })
-    expect(todos.todos.length).toBe(before)
-  })
-  test('a todo in a synced space carries the account id, and the older local one still counts', async () => {
-    const { todos } = await import('../src/lib/tasks-model/src/api')
-    const gone = providePort('sync.store', {
-      remoteIdFor: (root: string) => (root === '/s/Work' ? 'acct-work' : null),
-    } as unknown as PortMap['sync.store'])
-    const before = await todos.add({ title: 'Older', space: work.id })
-    const added = await call('add_task', { text: 'Newer' })
+    const added = await onTodos('add_task', { text: 'Pay rent', deadline: '2026-12-01' })
     const id = (added as { result: { id: string } }).result.id
-    expect(todos.todo(id)?.space).toBe('acct-work')
-    expect(await call('list_tasks', { space: 'Work' })).toMatchObject({ result: { total: 2 } })
-    expect(await call('list_tasks', { space: 'acct-work' })).toMatchObject({ result: { total: 2 } })
-    expect(await call('update_task', { id, space: '' }, agent({ spaces: 'all' }))).toMatchObject({
-      result: { space: null },
-    })
-    gone()
-    await todos.remove(id)
-    if (before.ok) await todos.remove(before.value.id)
-  })
-  test('a change takes a day or the space off when sent empty, and leaves done alone when sent null', async () => {
-    const { todos } = await import('../src/lib/tasks-model/src/api')
-    const added = await call('add_task', { text: 'Pay rent', deadline: '2026-12-01' })
-    const id = (added as { result: { id: string } }).result.id
-    await call('update_task', { id, done: true })
-    expect(await call('update_task', { id, deadline: '', done: null })).toMatchObject({
+    await onTodos('update_task', { id, done: true })
+    expect(await onTodos('update_task', { id, deadline: '', done: null })).toMatchObject({
       result: { deadline: null, done: true },
-    })
-    expect(await call('update_task', { id, space: '' }, agent({ spaces: 'all' }))).toMatchObject({
-      result: { space: null },
     })
     await todos.remove(id)
   })
   test('a description is kept as written, and taken off when sent empty', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const steps = await call('add_task', { text: 'Steps', description: '  - one\n  - two' })
-    const rent = await call('add_task', { text: 'Pay rent', description: 'Ask about the lease' })
+    const steps = await onTodos('add_task', { text: 'Steps', description: '  - one\n  - two' })
+    const rent = await onTodos('add_task', { text: 'Pay rent', description: 'Ask about the lease' })
     const ids = [steps, rent].map((one) => (one as { result: { id: string } }).result.id)
-    const cleared = (await call('update_task', { id: ids[1], description: '' })) as {
+    const cleared = (await onTodos('update_task', { id: ids[1], description: '' })) as {
       result: Record<string, unknown>
     }
     const kept = ids.map((id) => todos.todo(id)?.description)
@@ -1736,7 +1684,7 @@ describe('to-dos and bases', () => {
   })
   test('a new todo starts not done, as the hosted server makes it', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const added = await call('add_task', { text: 'Call mum', done: true })
+    const added = await onTodos('add_task', { text: 'Call mum', done: true })
     const id = (added as { result: { id: string } }).result.id
     const made = todos.todo(id)
     await todos.remove(id)
@@ -1745,13 +1693,13 @@ describe('to-dos and bases', () => {
   })
   test('a priority sent as the words a terminal types is still a priority', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const added = await call('add_task', { text: 'Call mum', priority: '2' })
+    const added = await onTodos('add_task', { text: 'Call mum', priority: '2' })
     const id = (added as { result: { id: string } }).result.id
-    const changed = await call('update_task', { id, priority: ' 3 ' })
+    const changed = await onTodos('update_task', { id, priority: ' 3 ' })
     const refused = [
-      await call('update_task', { id, priority: '2.5' }),
-      await call('update_task', { id, priority: 'high' }),
-      await call('update_task', { id, priority: '' }),
+      await onTodos('update_task', { id, priority: '2.5' }),
+      await onTodos('update_task', { id, priority: 'high' }),
+      await onTodos('update_task', { id, priority: '' }),
     ]
     await todos.remove(id)
     expect(added).toMatchObject({ result: { priority: 2 } })
@@ -1762,9 +1710,9 @@ describe('to-dos and bases', () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const made: unknown[] = []
     for (const text of ['Call mum', 'Buy leeks', 'Water the fern']) {
-      made.push(await call('add_task', { text }))
+      made.push(await onTodos('add_task', { text }))
     }
-    const listed = (await call('list_tasks', { limit: '2' })) as {
+    const listed = (await onTodos('list_tasks', { limit: '2' })) as {
       result: { total: number; todos: unknown[] }
     }
     expect(listed.result.total).toBe(3)
@@ -1773,26 +1721,26 @@ describe('to-dos and bases', () => {
   })
   test('every todo is listed, one that starts later and one done another day too', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const later = await todos.add({ title: 'Next week', start: '2099-01-01', space: work.id })
+    const later = await todos.add({ title: 'Next week', start: '2099-01-01' })
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-10T10:00:00.000Z'))
-    const finished = await todos.add({ title: 'Last week', space: home.id })
+    const finished = await todos.add({ title: 'Last week' })
     if (finished.ok) await todos.update(finished.value.id, { done: true })
     vi.useRealTimers()
     const titles = async (args: Record<string, unknown>) =>
-      ((await call('list_tasks', args)) as { result: { todos: { title: string }[] } }).result.todos
+      ((await onTodos('list_tasks', args)) as { result: { todos: { title: string }[] } }).result.todos
         .map((one) => one.title)
         .sort()
     const listed = {
       open: await titles({}),
       withDone: await titles({ done: true }),
-      inHome: await titles({ space: 'Home', done: true }),
+      withSpace: await titles({ space: 'Home', done: true }),
     }
     for (const one of [later, finished]) if (one.ok) await todos.remove(one.value.id)
     expect(listed).toEqual({
       open: ['Next week'],
       withDone: ['Last week', 'Next week'],
-      inHome: ['Last week'],
+      withSpace: ['Last week', 'Next week'],
     })
   })
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
@@ -2082,7 +2030,7 @@ describe('to-dos and bases', () => {
   })
   test('an agent that may only read cannot add one', async () => {
     const { dispatch } = await import('../src/lib/automation/src/verbs')
-    const reader = agent({ scopes: ['notes.read'] })
+    const reader = agent({ scopes: ['notes.read'], spaces: 'all' })
     expect(await dispatch('add_task', { text: 'x' }, [], 'here', reader)).toMatchObject({
       status: 'error',
       code: 'not_granted',
@@ -2250,7 +2198,7 @@ describe('a panel thread works in its own space', () => {
       result: { path: 'Fresh.md', created: true, space: 'home' },
     })
   })
-  test('a todo added without a space is the thread’s space’s, granted all or only that one', async () => {
+  test('a todo added from a thread has no space, and an agent kept to that space adds none', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const homeOnly = callerOf(
       {
@@ -2266,17 +2214,12 @@ describe('a panel thread works in its own space', () => {
     const answers = [
       await call('add_task', { text: 'Buy bread' }, fromHome()),
       await call('add_task', { text: 'Buy eggs' }, homeOnly),
-      await call('add_task', { text: 'Buy tea', space: 'Work' }, fromHome()),
     ]
-    for (const one of answers) {
-      const id = (one as { result?: { id: string } }).result?.id
-      if (id) await todos.remove(id)
-    }
-    expect(answers).toMatchObject([
-      { result: { space: 'home' } },
-      { result: { space: 'home' } },
-      { result: { space: 'work' } },
-    ])
+    const id = (answers[0] as { result?: { id: string } }).result?.id
+    const space = id ? todos.todo(id)?.space : undefined
+    if (id) await todos.remove(id)
+    expect(answers).toMatchObject([{ result: { title: 'Buy bread' } }, { code: 'not_granted' }])
+    expect(space).toBeNull()
   })
   test('a space it names still wins', async () => {
     await call('write_note', { space: 'Work', path: 'Broth', content: '# Broth\n' }, fromHome())

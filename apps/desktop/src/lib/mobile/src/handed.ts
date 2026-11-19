@@ -24,11 +24,10 @@ interface Asked {
   command: string
   open: string
   tick: string
-  tickSpace: string
 }
 export const HANDED: ReadonlySet<string> = new Set(['new', 'search-space', 'record', 'quick-add'])
 export function askedFrom(json: string): Asked {
-  const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
+  const nothing: Asked = { command: '', open: '', tick: '' }
   if (!json) return nothing
   let parsed: unknown
   try {
@@ -43,7 +42,6 @@ export function askedFrom(json: string): Asked {
     command: HANDED.has(words(held.command)) ? words(held.command) : '',
     open: words(held.open),
     tick: words(held.tick),
-    tickSpace: words(held.tickSpace),
   }
 }
 async function run(id: string): Promise<boolean> {
