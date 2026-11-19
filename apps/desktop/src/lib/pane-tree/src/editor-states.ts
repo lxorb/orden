@@ -13,6 +13,40 @@ interface Kept {
 function noteOf(tab: NoteTab): { note: NoteTab['note']; arrivals: number } {
   return untrack(() => ({ note: tab.note, arrivals: tab.note.arrivals }))
 }
+export class Parked<T extends NoteTab = NoteTab> {
+  private readonly kept = new Map<T, Kept>()
+  private open = true
+  constructor(private readonly wanted: (tab: T) => boolean) {}
+  get count(): number {
+    return this.kept.size
+  }
+  put(tab: T, one: Kept) {
+    const was = this.kept.get(tab)
+    if (was && was !== one) was.state.release()
+    if (this.open && this.wanted(tab)) this.kept.set(tab, one)
+    else {
+      this.kept.delete(tab)
+      one.state.release()
+    }
+  }
+  claim(tab: T): Kept | undefined {
+    const one = this.kept.get(tab)
+    this.kept.delete(tab)
+    return one
+  }
+  shut() {
+    this.open = false
+    this.keepOnly([])
+  }
+  keepOnly(tabs: readonly T[]) {
+    const kept = new Set(tabs)
+    for (const [tab, one] of this.kept) {
+      if (kept.has(tab)) continue
+      one.state.release()
+      this.kept.delete(tab)
+    }
+  }
+}
 export class EditorStates {
   private readonly held = new Map<NoteTab, Kept>()
   private shown: Kept | null = null
@@ -73,6 +107,28 @@ export class EditorStates {
       one.state.release()
       this.held.delete(tab)
     }
+  }
+  resumed<T extends NoteTab>(tab: T, from: Parked<T>): boolean {
+    const one = from.claim(tab)
+    if (!one) return false
+    const on = noteOf(tab)
+    if (one.note !== on.note || one.arrivals !== on.arrivals) {
+      one.state.release()
+      return false
+    }
+    this.held.set(tab, one)
+    return true
+  }
+  park<T extends NoteTab>(view: StateView, into: Parked<T>) {
+    const shown = this.shown
+    for (const [tab, one] of this.held) {
+      if (one !== shown) continue
+      one.state.take(view)
+      this.held.delete(tab)
+      this.shown = null
+      into.put(tab as T, one)
+    }
+    this.releaseAll(view)
   }
   releaseAll(view: StateView) {
     for (const one of this.held.values()) {
