@@ -186,3 +186,28 @@ describe('opening a note another space holds', () => {
     }
   })
 })
+describe('a chat', () => {
+  const ROOT = '/notes/Talk'
+  const PLAN = `${ROOT}/Plan.md`
+  const TEAM = `${ROOT}/Team.chat`
+  const row = (path: string) => ({
+    name: path.slice(path.lastIndexOf('/') + 1),
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  test('never reaches a note surface, and showing it opens Chats', () => {
+    workspace.spaces = [{ id: 'talk', name: 'Talk', root: ROOT }]
+    workspace.activeSpaceId = 'talk'
+    workspace.tree = { ...row(ROOT), name: 'Talk', is_dir: true, children: [row(PLAN), row(TEAM)] }
+    expect(workspace.shownFiles.map((one) => one.path)).toEqual([PLAN])
+    expect(workspace.shownTree?.children.map((one) => one.path)).toEqual([PLAN])
+    workspace.device.recent = [TEAM, PLAN]
+    expect(workspace.recent).toEqual([PLAN])
+    workspace.revealNote(TEAM)
+    expect([workspace.panel, workspace.rightPanel]).toContain('chats')
+    expect(workspace.revealing).not.toBe(TEAM)
+  })
+})

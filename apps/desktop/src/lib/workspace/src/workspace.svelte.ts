@@ -18,6 +18,7 @@ import { keptAway } from '../../away/src/api'
 import {
   blockIds,
   isApplicationTarget,
+  isChatTarget,
   isBaseTarget,
   isCanvasTarget,
   isPagesTarget,
@@ -523,7 +524,10 @@ class Workspace {
     const apps = appsOn()
     const bases = basesOn()
     return (root: string, path: string) =>
-      isInstructions(root, path) || (!apps && isApplicationTarget(path)) || (!bases && isBaseTarget(path))
+      isInstructions(root, path) ||
+      isChatTarget(path) ||
+      (!apps && isApplicationTarget(path)) ||
+      (!bases && isBaseTarget(path))
   })
   readonly shownFiles = $derived.by((): Entry[] => {
     const root = this.tree?.path
@@ -2234,7 +2238,11 @@ class Workspace {
   }
   get recent(): string[] {
     return this.device.recent.filter(
-      (path) => !this.outside(path) && !this.instructionsAt(path) && !(this.archive.any && this.archive.has(path)),
+      (path) =>
+        !isChatTarget(path) &&
+        !this.outside(path) &&
+        !this.instructionsAt(path) &&
+        !(this.archive.any && this.archive.has(path)),
     )
   }
   remember(path: string) {
@@ -2547,6 +2555,10 @@ class Workspace {
   }
   revealing = $state<string | null>(null)
   revealNote(path = this.active?.path) {
+    if (path && isChatTarget(path)) {
+      this.showPanel('chats')
+      return
+    }
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
     if (this.inEssentials(path)) {
