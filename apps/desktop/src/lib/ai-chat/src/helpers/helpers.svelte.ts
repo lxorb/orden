@@ -1,6 +1,7 @@
 import { keepThread, newThread } from '../chat/threads'
 import { untrusted } from '../chat/transcript'
 import type { Effort, Mode, Thread } from '../../../ai-providers/src/api'
+import { keptUnder } from '../chat/reach'
 import { tasks } from '../commands/tasks.svelte'
 import type { Ended } from '../commands/types'
 import { type Offered, routed } from './route'
@@ -162,6 +163,7 @@ class Helpers {
     return this.get(id)
   }
   startedUnder(parent: Thread, child: Thread): void {
+    keptUnder(parent, child)
     this.under.set(child.id, { parent, child })
     for (let above: Helped | undefined = parent; above; above = this.under.get(above.id)?.parent) {
       if (above.helpers?.includes(child.id)) continue

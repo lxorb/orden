@@ -366,9 +366,11 @@ export function threadIn(value: unknown, gone = false): Thread | null {
   const updated = isNumber(value.updated) ? value.updated : 0
   const always = Array.isArray(value.always) ? value.always.filter(isString) : []
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
+  const only = Array.isArray(value.only) ? value.only.filter(isString) : null
   const rest = [
     'always',
     'without',
+    'only',
     'parent',
     'answered',
     'seen',
@@ -393,6 +395,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     mode: modeIn(mode) ?? FIRST_MODE,
     ...(always.length ? { always } : {}),
     ...(kept.length ? { without: kept } : {}),
+    ...(only ? { only } : {}),
     turns,
     usage: usageIn(value.usage),
     created: isNumber(value.created) ? value.created : 0,

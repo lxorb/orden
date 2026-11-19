@@ -29,11 +29,14 @@ const TOOLS_OF: Record<TaskTool, () => string[]> = {
   notes: () => verbsOf('notes.read').filter((one) => one !== 'list_tasks'),
   edits: () => [...verbsOf('notes.write'), ...verbsOf('tree')].filter((one) => one !== 'update_task'),
 }
-export const keptOut = (off: readonly TaskTool[]): string[] => off.flatMap((one) => TOOLS_OF[one]())
+const NEEDED = ['update_task', 'list_tasks']
+export const reachOf = (on: readonly TaskTool[]): string[] => [
+  ...new Set([...NEEDED, ...on.flatMap((one) => TOOLS_OF[one]())]),
+]
 export async function doWithAi(todo: Todo, space: string): Promise<boolean> {
   if (todo.done || space === '') return false
   const { chat } = await import('./chat.svelte')
-  const without = keptOut(TASK_TOOLS.filter((one) => !taskUses(one)))
-  void chat.startAside(space, todo.title, taskMode(), askOf(todo, taskAsk()), without).catch(() => undefined)
+  const only = reachOf(TASK_TOOLS.filter(taskUses))
+  void chat.startAside(space, todo.title, taskMode(), askOf(todo, taskAsk()), only).catch(() => undefined)
   return true
 }

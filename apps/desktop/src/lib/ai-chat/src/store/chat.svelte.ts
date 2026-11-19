@@ -448,8 +448,8 @@ class Chat implements Panel {
       .catch(() => undefined)
       .then(() => this.refreshHeads())
   }
-  startAside(space: string, title: string, mode: Mode, text: string, without: string[] = []): Promise<Ended> {
-    const thread = { ...this.fresh(), space, title, mode, ...(without.length ? { without } : {}) }
+  startAside(space: string, title: string, mode: Mode, text: string, only?: string[]): Promise<Ended> {
+    const thread = { ...this.fresh(), space, title, mode, ...(only ? { only } : {}) }
     this.adopt(thread)
     return this.turn(thread, text)
   }

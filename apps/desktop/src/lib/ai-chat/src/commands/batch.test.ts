@@ -90,3 +90,18 @@ test('/batch runs helpers of the thread, which its line opens (#1062)', async ()
     adopted.map((one) => one.id),
   )
 })
+test('/batch helpers keep out what the thread keeps out', async () => {
+  const adopted: Thread[] = []
+  const ended: Ended = { stop: 'end', turn: null, usage: null }
+  const host = {
+    turn: () => Promise.resolve(ended),
+    adopt: (thread: Thread) => adopted.push(thread),
+    touched: vi.fn(),
+    line: vi.fn(),
+  } as unknown as Host
+  const parent = { ...newThread('space', 'p', 'm', 'auto', 'approve'), without: ['browser_open'], only: ['edit_note'] }
+  await batch(host, parent, 'tag every note in Inbox/ with done')
+  expect(adopted).toHaveLength(3)
+  expect(adopted.every((one) => one.without?.includes('browser_open') && one.mode === 'approve')).toBe(true)
+  expect(adopted.every((one) => one.only?.join() === 'edit_note')).toBe(true)
+})

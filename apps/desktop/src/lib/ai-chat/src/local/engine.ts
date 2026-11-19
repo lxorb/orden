@@ -123,6 +123,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           effort: levelOf(kind, thread.effort),
           thread: thread.id,
           ...(thread.without?.length ? { without: thread.without } : {}),
+          ...(thread.only ? { only: thread.only } : {}),
         },
         (said) => {
           if (box.live?.hear) box.live.hear(said)

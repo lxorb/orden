@@ -208,6 +208,35 @@ describe('a tool the thread is not given', () => {
     })
   })
 })
+describe('a thread given only some tools', () => {
+  test('lists only those, a call to any other never reaches the crate, and no context is put in for it', async () => {
+    answers = [stream('anthropic-1'), stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    thread.only = ['update_task']
+    where = 'Space: Birds.'
+    contextFor.length = 0
+    await send(thread, 'What is in Birds.md?')
+    expect(sent[0]?.body.tools ?? []).toEqual([])
+    expect(contextFor).toEqual([])
+    expect(JSON.stringify(sent[0]?.body.messages)).not.toContain('Space: Birds.')
+    expect(calls).toEqual([])
+    expect(thread.turns[1]?.parts[2]).toMatchObject({
+      state: 'error',
+      result: { text: 'read_note is not available in this chat.', error: true },
+    })
+  })
+  test('lists what is in it and not kept out', async () => {
+    answers = [stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    thread.only = ['read_note', 'get_context']
+    await send(thread, 'Hello')
+    expect(((sent[0]?.body.tools ?? []) as { name: string }[]).map((one) => one.name)).toEqual(['read_note'])
+    thread.without = ['read_note']
+    answers = [stream('anthropic-2')]
+    await send(thread, 'Again')
+    expect(sent[1]?.body.tools ?? []).toEqual([])
+  })
+})
 function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
   const given: { id: string; allow: boolean }[] = []
   const waited: string[] = []

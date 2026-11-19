@@ -307,6 +307,11 @@ describe('a Claude Code thread', () => {
     expect(opened[0]?.said[2]).toEqual({ kind: 'effort', effort: 'max' })
     expect(opened[0]?.said[3]).toEqual({ kind: 'turn', text: 'two', images: [] })
   })
+  test('hands the session only the tools the thread may use, and none it keeps out', async () => {
+    const on = thread(CLAUDE, { only: ['update_task', 'list_tasks'], without: ['list_tasks'] })
+    await send(CLAUDE, on, 'one')
+    expect(opened[0]?.opening).toMatchObject({ only: ['update_task', 'list_tasks'], without: ['list_tasks'] })
+  })
   test('a new mode is a new session, seeded with the instructions and the transcript', async () => {
     const built = engine(CLAUDE, 'File papers under Reading.')
     const on = thread(CLAUDE)
