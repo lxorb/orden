@@ -9,8 +9,8 @@
   import type { Tab } from '../../documents/src/api'
   import { sessionOf } from './sessions.svelte'
 
-  const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
-  const tab = untrack(() => shown)
+  const { tab: given, focused, shown = true }: { tab: Tab; focused: boolean; shown?: boolean } = $props()
+  const tab = untrack(() => given)
   const session = sessionOf(tab)
   let place = $state<HTMLElement>()
   onMount(() => {
@@ -22,7 +22,9 @@
     return () => session.detach()
   })
   $effect(() => {
-    if (focused) untrack(() => session.focus())
+    const on = shown
+    const focus = focused
+    untrack(() => session.show(on, focus))
   })
 </script>
 
