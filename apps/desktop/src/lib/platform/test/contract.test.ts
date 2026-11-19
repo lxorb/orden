@@ -16,8 +16,11 @@ import {
   insideOnly,
   isNative,
   isReserved,
+  isString,
+  Kept,
   keepJson,
   meet,
+  merged,
   mimeOfPath,
   nameFault,
   nameFromContent,
@@ -28,6 +31,7 @@ import {
   passing,
   platform,
   pollDelay,
+  recordOf,
   roomDelay,
   safeName,
   samePath,
@@ -37,6 +41,7 @@ import {
   spaceOf,
   stored,
   storedText,
+  stringList,
   toBase64,
   tokensOut,
   under,
@@ -241,6 +246,42 @@ describe('what this machine keeps', () => {
     expect(memory.get('n')).toBe('9')
     expect(shared.get()).toBe(9)
     expect(read).toHaveBeenCalledTimes(2)
+  })
+  test('a kept value hears what another window writes, and its own writes keep it', () => {
+    vi.stubGlobal('window', new EventTarget())
+    const elsewhere = (key: string, value: unknown) => {
+      memory.set(key, JSON.stringify(value))
+      window.dispatchEvent(Object.assign(new Event('storage'), { key }))
+    }
+    const heard = vi.fn()
+    const spaces = new Kept('spaces', (saved) => recordOf(saved, isString), heard)
+    const list = new Kept('list', (saved) => stringList(saved) ?? [])
+    spaces.value = { a: 'mine', gone: 'soon' }
+    spaces.write()
+    list.value = ['mine']
+    list.write()
+    elsewhere('spaces', { a: 'mine', gone: 'soon', b: 'theirs' })
+    expect(heard).toHaveBeenCalledTimes(1)
+    expect(spaces.value).toEqual({ a: 'mine', gone: 'soon', b: 'theirs' })
+    elsewhere('other', 1)
+    expect(heard).toHaveBeenCalledTimes(1)
+    memory.set('spaces', JSON.stringify({ a: 'mine', gone: 'soon', b: 'theirs', c: 'unheard' }))
+    memory.set('list', JSON.stringify(['mine', 'theirs']))
+    spaces.value = { a: 'changed', b: 'theirs' }
+    spaces.write()
+    expect(stored('spaces')).toEqual({ a: 'changed', b: 'theirs', c: 'unheard' })
+    list.value = [...list.value, 'more']
+    list.write()
+    expect(stored('list')).toEqual(['mine', 'theirs', 'more'])
+    expect(list.value).toEqual(['mine', 'theirs', 'more'])
+  })
+  test('three ways meet: what changed here wins, what changed there stays', () => {
+    expect(merged({ a: 1 }, { a: 1 }, { a: 2 })).toEqual({ a: 2 })
+    expect(merged<Record<string, number>>({ a: 1, b: 1 }, { a: 1 }, { a: 2, c: 3 })).toEqual({ a: 2, b: 1, c: 3 })
+    expect(merged<Record<string, number>>({}, { a: 1, b: 1 }, { a: 1, b: 2 })).toEqual({})
+    expect(merged(['x', 'y'], ['x'], ['x', 'z'])).toEqual(['x', 'z', 'y'])
+    expect(merged(['y'], ['x', 'y'], ['x', 'y', 'z'])).toEqual(['y', 'z'])
+    expect(merged('mine', 'base', 'theirs')).toBe('mine')
   })
   test('without storage nothing is kept and nothing throws', () => {
     vi.stubGlobal('localStorage', undefined)

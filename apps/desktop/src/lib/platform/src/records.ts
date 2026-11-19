@@ -12,8 +12,9 @@ export function withOrWithout<T>(record: Record<string, T>, key: string, value: 
 export interface Folded {
   account: string | null
 }
-export function readSpaces<T>(key: string, own: (one: Record<string, unknown>) => T): Record<string, T & Folded> {
-  const saved = stored(key)
+export const readSpaces = <T>(key: string, own: (one: Record<string, unknown>) => T): Record<string, T & Folded> =>
+  spacesOf(stored(key), own)
+export function spacesOf<T>(saved: unknown, own: (one: Record<string, unknown>) => T): Record<string, T & Folded> {
   if (!isRecord(saved)) return {}
   const out: Record<string, T & Folded> = {}
   for (const [root, one] of Object.entries(saved)) {
