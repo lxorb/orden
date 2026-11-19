@@ -215,6 +215,7 @@ if (!__EVEN_PLUGIN__) {
   registerFeature(() => import('./chats-client/src/api'))
   registerFeature(() => import('./crash-reports/src/api'))
   registerFeature(() => import('./terminal/src/api'))
+  registerFeature(() => import('./auto-tidy/src/api'))
   registerTabKind('terminal', async () => (await import('./terminal/src/api')).terminalTabKind())
   registerCommand(
     'app.new-private',

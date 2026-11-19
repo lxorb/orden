@@ -1,0 +1,5 @@
+{
+  "name": "auto-tidy",
+  "layer": "features",
+  "dependsOn": ["contracts", "platform", "ui-kit", "workspace"]
+}
