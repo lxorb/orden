@@ -20,9 +20,7 @@
     boxToCanvas,
     type Camera,
     eased,
-    isOnView,
     lookingAt,
-    overlooking,
     pinched,
     type Point,
     showing,
@@ -43,7 +41,7 @@
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
   import { keptAt, readsBefore, roomFor, settled, stripLanding, stripPlace } from './free'
-  import { meets, packed, pushedAside } from './pack'
+  import { inRows, meets, packed, pushedAside } from './pack'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot, WIDEST } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
@@ -81,17 +79,10 @@
   const room = $derived<Box>(places.at(spaceKey) ?? { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h })
   let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
   let unmoved = false
-  function lookAtSpace() {
+  function lookAtAll() {
     placeNew([spaceKey])
-    const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
-    camera = lookingAt(place, screenRoom)
-    const cell = cellBoxes.find((one) => one.key === spaceKey)
-    if (!all || !cell) return
-    camera = overlooking(wholeOf([cell]), wholeOf(cellBoxes), screenRoom, windowWide())
-  }
-  function windowWide(): number {
-    const wide = resting.map((one) => one.w).sort((a, b) => a - b)
-    return wide[Math.floor(wide.length / 2)] ?? screenRoom.w * WIDEST
+    places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
+    camera = lookingAt(wholeOf(cellBoxes), screenRoom)
   }
   const wholeOf = (cells: readonly Cell[]): Box =>
     around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
@@ -151,10 +142,35 @@
       : { x: screenRoom.w / 2, y: screenRoom.h / 2 }
     places.arrange(packedPlaces(fresh, taken, middle))
   }
+  function sortedPlaces(keys: readonly string[]): Record<string, Box> {
+    const rank = (key: string) => workspace.shownSpaces.findIndex((space) => space.id === key)
+    const cells = [...keys]
+      .sort((a, b) => rank(a) - rank(b))
+      .flatMap((key) => {
+        const outline = cellAlone(key)
+        return outline ? [{ key, box: boundsOf(outline) }] : []
+      })
+    const spots = inRows(
+      cells.map((one) => one.box),
+      CELLS_APART,
+      screenRoom,
+    )
+    const out: Record<string, Box> = {}
+    for (const [index, { key, box }] of cells.entries()) {
+      const spot = spots[index] ?? { x: 0, y: 0 }
+      out[key] = { x: spot.x - box.x, y: spot.y - box.y, w: screenRoom.w, h: screenRoom.h }
+    }
+    return out
+  }
+  const byHand = () => Object.keys(places.windows).length > 0
+  function arrange(keys: readonly string[]) {
+    if (byHand()) placeNew(keys)
+    else places.tidy(sortedPlaces(keys))
+    for (const key of keys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
+  }
   async function tidy() {
-    const keys = [spaceKey, ...shownKeys.filter((key) => key !== spaceKey)]
-    places.tidy(packedPlaces(keys, [], { x: 0, y: 0 }))
-    for (const key of shownKeys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
+    places.tidy()
+    arrange(shownKeys)
     await laidOut()
     flyTo(lookingAt(wholeOf(cellBoxes), screenRoom))
   }
@@ -226,10 +242,11 @@
   $effect(() => {
     const keys = shownKeys
     untrack(() => {
-      placeNew(keys)
-      for (const key of keys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
-      apartAll()
-      if (unmoved && shown && out) lookAtSpace()
+      if (byHand()) {
+        arrange(keys)
+        apartAll()
+      } else if (shown) arrange(keys)
+      if (unmoved && shown && out) lookAtAll()
     })
   })
   function apartAll() {
@@ -725,15 +742,9 @@
       stood = holding === null
       void holding?.finally(() => (stood = true))
       measure()
-      lookAtSpace()
+      arrange(shownKeys)
+      lookAtAll()
       unmoved = true
-      const kept = places.camera
-      const front =
-        slots.find((one) => one.id === workspace.activeTabId) ?? cellBoxes.find((one) => one.key === spaceKey)?.box
-      if (kept && (!front || isOnView(kept, front, screenRoom))) {
-        camera = kept
-        unmoved = false
-      }
       panesAsWindows.clear()
       riders.clear()
       const asWindows: Record<string, true> = {}
@@ -780,7 +791,7 @@
   }
   $effect(() => arrivedIn(spaceKey))
   function arrivedIn(space: string) {
-    if (space && untrack(() => shown && out)) untrack(lookAtSpace)
+    if (space && untrack(() => shown && out)) untrack(lookAtAll)
   }
   function leave() {
     held = null
@@ -794,7 +805,6 @@
     zoomGoal = null
     cancelAnimationFrame(zoomFrame)
     zoomFrame = 0
-    places.remember(camera)
     out = false
     arrived.clear()
     if (started) onTheWay = true

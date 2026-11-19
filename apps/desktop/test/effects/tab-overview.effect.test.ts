@@ -118,18 +118,29 @@ test('nothing in it is chosen as text, and a drag is never the browser’s own',
     }
   }
 })
-test('it comes back where the camera was left', async () => {
+test('it opens on every window whole each time, wherever the camera was left', async () => {
   await opened()
   const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
-  const canvas = layer()
-  canvas?.dispatchEvent(new WheelEvent('wheel', { deltaX: 120, deltaY: 40, bubbles: true, cancelable: true }))
+  const first = world()
+  layer()?.dispatchEvent(new WheelEvent('wheel', { deltaX: 120, deltaY: 400, bubbles: true, cancelable: true }))
   flushSync()
-  const moved = world()
+  expect(world()).not.toBe(first)
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
   await opened()
-  expect(world()).toBe(moved)
+  expect(world()).toBe(first)
+  for (const one of windows()) {
+    const [x, y, sx, sy] = (
+      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+), ([-\d.]+)\)/.exec(one.style.transform) ?? []
+    )
+      .slice(1)
+      .map(Number)
+    expect(x).toBeGreaterThanOrEqual(0)
+    expect(y).toBeGreaterThanOrEqual(0)
+    expect((x ?? 0) + parseFloat(one.style.width) * (sx ?? 1)).toBeLessThanOrEqual(innerWidth)
+    expect((y ?? 0) + parseFloat(one.style.height) * (sy ?? 1)).toBeLessThanOrEqual(innerHeight)
+  }
 })
 test('Tidy up puts every window back where its panes put it', async () => {
   const { places } = await import('../../src/lib/overview/src/places.svelte')
