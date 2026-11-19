@@ -65,9 +65,8 @@
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
   import { commandRowsLoaded, type OpenHow, sayNotice } from '@orden/contracts'
-  import { appsOn, explorerOn } from '../../gates/src/api'
+  import { explorerOn } from '../../gates/src/api'
   import {
-    applicationSurface,
     archivedStrip,
     askPanel,
     canvasSurface,
@@ -410,10 +409,6 @@
       {/key}
     {:else if tab?.kind === 'terminal'}
       {@render surface(terminalSurface, tab)}
-    {:else if tab?.kind === 'application'}
-      {#if appsOn()}
-        {@render surface(applicationSurface, tab)}
-      {/if}
     {:else if tab?.kind === 'explorer'}
       {#if explorerOn()}
         {@render surface(explorerSurface, tab)}
