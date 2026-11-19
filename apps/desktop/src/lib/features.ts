@@ -226,6 +226,7 @@ if (!__EVEN_PLUGIN__) {
   )
   registerCommand('agents.stop', async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents)
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  registerCommand('explorer.turn', async () => (await import('./explorer/src/api')).turnExplorer)
   registerCommand('app.handwriting', async () => {
     const { handwrite } = await (await import('./canvas/src/api')).handwriting()
     return () => void handwrite()

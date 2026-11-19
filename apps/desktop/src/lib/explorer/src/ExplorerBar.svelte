@@ -15,9 +15,12 @@
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
   import { shortcuts } from '../../shortcuts/src/api'
+  import { explorerOn } from '../../gates/src/api'
+  import { TurnButton } from '../../workspace/src/api'
   import { crumbsOf, typedFolder } from './crumbs'
   import { dropInto, over } from './drag'
   import { sortMenu } from './menu'
+  import { turnLabel, turnTab } from './turn'
   import { places } from './places.svelte'
   import { explorerPrefs } from './prefs.svelte'
   import type { ExplorerView } from './view.svelte'
@@ -224,6 +227,9 @@
     aria-pressed={explorerPrefs.preview}
     onclick={() => explorerPrefs.togglePreview()}>{@render glyph(PanelRight)}</button
   >
+  {#if explorerOn()}
+    <TurnButton title={shortcuts.tooltip(turnLabel(view.tab), 'tab.flip')} onclick={() => turnTab(view.tab)} />
+  {/if}
 </div>
 
 <style>
