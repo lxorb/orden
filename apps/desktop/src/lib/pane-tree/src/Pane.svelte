@@ -15,7 +15,6 @@
     replaceHere,
     selectEveryMatch,
     setFind,
-    setReadOnlyMode,
   } from '@orden/editor'
   import { type Component, untrack } from 'svelte'
   import {
@@ -57,6 +56,7 @@
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
   import Editor from './Editor.svelte'
+  import { Parked } from './editor-states'
   import { keptAway } from '../../away/src/api'
   import { chrome } from '../../theme/src/api'
   import { without } from '../../graph/src/api'
@@ -88,7 +88,6 @@
   } from '../../surfaces/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
-  import { shortcuts } from '../../shortcuts/src/api'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
   import { usage } from '../../accounts/src/api'
 
@@ -123,20 +122,41 @@
       : [],
   )
   const stacking = $derived(columns.length > 1 && columns.some((one) => one.id === tab?.id))
-  let view = $state<EditorView>()
+  const KEPT_NOTES = 6
+  const inEditor = (one: Tab) =>
+    one.kind === 'note' && !one.coming && !one.reading && !protection.locked(noteBehind(one))
+  const parked = new Parked<Tab>((one) => untrack(() => one.paneId === pane.id && workspace.tabs.includes(one)))
+  let recent: string[] = []
+  let alive = $state<string[]>([])
+  $effect.pre(() => {
+    const keeping = !stacking
+    const front = keeping && tab && inEditor(tab) ? tab.id : null
+    const notes = keeping ? held.filter(inEditor).map((one) => one.id) : []
+    untrack(() => {
+      recent = (front ? [front, ...recent.filter((id) => id !== front)] : recent).filter((id) => notes.includes(id))
+      const keep = recent.slice(0, KEPT_NOTES)
+      const next = [...alive.filter((id) => keep.includes(id)), ...keep.filter((id) => !alive.includes(id))]
+      if (next.length !== alive.length || next.some((id, at) => id !== alive[at])) alive = next
+    })
+  })
+  $effect(() => {
+    parked.keepOnly(held)
+  })
+  $effect(() => () => parked.shut())
+  const kept = $derived(alive.flatMap((id) => held.find((one) => one.id === id) ?? []))
+  const shownNote = $derived(tab && alive.includes(tab.id) ? tab.id : null)
+  const keptViews = $state<Record<string, EditorView | undefined>>({})
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
   const edged = $derived(keepsMiddle ? '' : undefined)
   const columnViews = $state<Record<string, EditorView | undefined>>({})
+  const view = $derived(
+    stacking ? columnViews[pane.activeTabId ?? ''] : shownNote === null ? undefined : keptViews[shownNote],
+  )
   function takeColumn(id: string) {
     if (id === pane.activeTabId && workspace.panes.focusedId === pane.id) return
     workspace.focusPane(pane.id)
     workspace.activate(id)
   }
-  $effect(() => {
-    if (!stacking) return
-    const current = columnViews[pane.activeTabId ?? '']
-    if (current && current !== view) view = current
-  })
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
   let finding = $state(false)
   let replacing = $state(false)
@@ -211,25 +231,13 @@
     const current = view
     if (!current) return
     views.put(pane.id, current)
-    modes.apply(current)
-    shortcuts.apply(current)
-    return () => {
-      views.forget(pane.id)
-      modes.forget(current)
-      shortcuts.forget(current)
-    }
+    return () => views.forget(pane.id)
   })
   $effect(() => {
     const current = view
     const showing = tab
     if (!current || !showing) return
     return placement.follow(current, showing)
-  })
-  $effect(() => {
-    const current = view
-    const note = tab?.note
-    if (!current) return
-    setReadOnlyMode(current, modes.readOnly || !canWriteIn(note))
   })
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
@@ -471,18 +479,35 @@
           </section>
         {/each}
       </div>
-    {:else if tab}
+    {:else if !tab}
+      {#await emptySurface() then NewHere}
+        <NewHere paneId={pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/if}
+
+    {#each kept as one (one.id)}
+      {@const here = one.id === shownNote}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="editor" data-region="editor" oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}>
+      <div
+        class:editor={here}
+        class:kept={!here}
+        hidden={!here}
+        data-region={here ? 'editor' : undefined}
+        oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews[one.id], one.path)}
+      >
         <Editor
-          bind:view
-          {tab}
-          focused={workspace.panes.focusedId === pane.id}
-          kept={held}
+          bind:view={keptViews[one.id]}
+          tab={one}
+          shown={here}
+          focused={here && workspace.panes.focusedId === pane.id}
+          kept={[one]}
+          {parked}
           onimage={saveImage}
           resolveimage={resolveImage}
           openlink={followHref}
-          notes={(one: Tab) => links.index(one.path, one.note.shared !== null)}
+          notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
           opennote={followNote}
           nameblock={nameBlock}
           onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
@@ -494,13 +519,7 @@
           }}
         />
       </div>
-    {:else}
-      {#await emptySurface() then NewHere}
-        <NewHere paneId={pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/if}
+    {/each}
 
     {#if paneCorners.draw && workspace.panes.focusedId === pane.id}
       {@render paneCorners.draw()}
@@ -637,6 +656,9 @@
     flex: 1;
     min-height: 0;
     display: flex;
+  }
+  .kept {
+    display: none;
   }
   .stack {
     position: relative;
