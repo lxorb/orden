@@ -74,7 +74,7 @@
   $effect(() => {
     const slot = hole
     if (!slot) return
-    slot.tabIndex = page.live && !pictured ? 0 : -1
+    slot.tabIndex = page.live ? 0 : -1
     const into = (event: FocusEvent) => {
       if (!slot.matches(':focus-visible')) return
       const last = cameFromAfter(slot, event.relatedTarget)
@@ -244,14 +244,18 @@
     let unheard: (() => void) | null = null
     let gone = false
     if (isDesktop) {
-      void import('../../windows/src/api').then(async ({ hearHere }) => {
-        const stop = await hearHere('orden://keyboard-left-page', (event) => {
-          const said = readLeft(event.payload)
-          if (said?.tab === tab.id && hole) focusBeside(hole, said.next)
+      void import('../../windows/src/api')
+        .then(({ hearHere }) =>
+          hearHere('orden://keyboard-left-page', (event) => {
+            const said = readLeft(event.payload)
+            if (said?.tab === tab.id && hole) focusBeside(hole, said.next)
+          }),
+        )
+        .then((stop) => {
+          if (gone) stop()
+          else unheard = stop
         })
-        if (gone) stop()
-        else unheard = stop
-      })
+        .catch(() => undefined)
     }
     const asking = () => {
       ready = true

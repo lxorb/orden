@@ -169,6 +169,7 @@ pub fn keyboard_into(webview: Webview, tab: String, last: bool) -> bool {
     if page.window().label() != window || !native::take(webview.app_handle(), &label) {
         return false;
     }
+    native::hand_over(&label);
     homes(|all| all.page_took(&window, &label));
     let _ = page.eval(format!("globalThis.ordenIntoLast = {last};\n{INTO_SCRIPT}"));
     true
@@ -402,6 +403,8 @@ mod tests {
         let heard = &opens[opens.find("if name == PRESSED_IN {").expect("the press")..];
         let heard = &heard[..heard.find("return;").expect("its end")];
         assert!(heard.contains("crate::keyboard::page_pressed(window, &page)"));
+        let into = &source[source.find("pub fn keyboard_into(").expect("keyboard_into")..];
+        assert!(into[..into.find("\n}\n").expect("its end")].contains("native::hand_over(&label)"));
     }
     #[test]
     fn the_engine_tells_the_app_s_own_page_as_a_page_takes_the_keyboard() {
