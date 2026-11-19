@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import type { Box } from './layout'
 import { boundsOf, gapOf, moved, outlineOf, type Outline } from './outline'
-import { meets, packed, pushedAside, type Shift } from './pack'
+import { inRows, meets, packed, pushedAside, type Shift } from './pack'
 
 const GAP = 4
 const shapeOf = (box: Box): Outline => {
@@ -109,4 +109,30 @@ test('two bubbles touch only where their outlines meet: nothing is pushed until 
     expect(first ?? 99).toBeLessThanOrEqual(GAP)
     expect(first ?? -99).toBeGreaterThan(GAP - 3.5)
   }
+})
+test('in rows they read in the order given, left to right and down, none nearer another than the gap', () => {
+  const boxes = sizes.map(({ outline }) => boundsOf(outline))
+  const at = inRows(boxes, GAP, { w: 1200, h: 700 })
+  const laid = boxes.map((one, i) => ({ ...one, x: at[i]?.x ?? 0, y: at[i]?.y ?? 0 }))
+  for (const [i, one] of laid.entries()) {
+    const next = laid[i + 1]
+    if (next) expect(next.x > one.x + one.w || next.y > one.y + one.h).toBe(true)
+    for (const other of laid.slice(i + 1)) {
+      const apart = Math.max(
+        other.x - (one.x + one.w),
+        one.x - (other.x + other.w),
+        other.y - (one.y + one.h),
+        one.y - (other.y + other.h),
+      )
+      expect(apart).toBeGreaterThanOrEqual(GAP - 0.01)
+    }
+  }
+})
+test('in rows they take the shape of the room they are shown in', () => {
+  const four = Array.from({ length: 4 }, () => ({ w: 1000, h: 600 }))
+  const square = inRows(four, GAP, { w: 1200, h: 700 })
+  expect(new Set(square.map((one) => one.y)).size).toBe(2)
+  const wide = inRows(four, GAP, { w: 4800, h: 700 })
+  expect(new Set(wide.map((one) => one.y)).size).toBe(1)
+  expect(inRows([], GAP, { w: 1200, h: 700 })).toEqual([])
 })

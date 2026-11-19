@@ -1,12 +1,10 @@
 import { forget, keepJson, stored, storedText } from '../../platform/src/api'
-import type { Camera } from './camera'
 import type { Box } from './layout'
 import { type Keyed, lastingKeys } from './tab-keys'
 
 const KEY = 'orden:overview-places'
 const WINDOWS = 'orden:overview-windows-2'
 const WINDOWS_BEFORE = 'orden:overview-windows'
-const CAMERA = 'orden:overview-camera'
 const APART = 360
 export function readPlaces(value: unknown): Record<string, Box> {
   if (typeof value !== 'object' || value === null) return {}
@@ -20,12 +18,6 @@ export function readPlaces(value: unknown): Record<string, Box> {
     }
   }
   return out
-}
-export function readCamera(value: unknown): Camera | null {
-  if (typeof value !== 'object' || value === null) return null
-  const { x, y, zoom } = value as Record<string, unknown>
-  const fine = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n)
-  return fine(x) && fine(y) && fine(zoom) && zoom > 0 ? { x, y, zoom } : null
 }
 export function nextPlace(all: Record<string, Box>, size: { w: number; h: number }): Box {
   const placed = Object.values(all)
@@ -50,23 +42,14 @@ class Places {
   private slot = 0
   private all = $state.raw<Record<string, Box>>(readPlaces(stored(KEY)))
   private put = $state.raw<Record<string, Box>>({})
-  private kept: Camera | null = readCamera(stored(CAMERA))
   own(slot: number) {
     if (slot === this.slot) return
     this.slot = slot
     this.all = readPlaces(storedFor(KEY, slot))
     this.put = {}
-    this.kept = readCamera(storedFor(CAMERA, slot))
   }
   private key(key: string): string {
     return scoped(key, this.slot)
-  }
-  get camera(): Camera | null {
-    return this.kept
-  }
-  remember(camera: Camera) {
-    this.kept = { ...camera }
-    keepJson(this.key(CAMERA), this.kept)
   }
   get windows(): Readonly<Record<string, Box>> {
     return this.put

@@ -113,3 +113,38 @@ export function pushedAside(
   for (const [key, shift] of now) if (Math.abs(shift.x) > 0.01 || Math.abs(shift.y) > 0.01) out[key] = shift
   return out
 }
+const sum = (all: readonly number[]) => all.reduce((one, more) => one + more, 0)
+const most = (all: readonly number[]) => all.reduce((high, one) => Math.max(high, one), 0)
+const before = (all: readonly number[], gap: number) => all.map((_, i) => sum(all.slice(0, i)) + gap * i)
+export function inRows(
+  sizes: readonly { w: number; h: number }[],
+  gap: number,
+  room: { w: number; h: number },
+): Shift[] {
+  let best = { zoom: -1, at: [] as Shift[] }
+  for (let across = 1; across <= sizes.length; across++) {
+    const down = Math.ceil(sizes.length / across)
+    const wides = Array.from({ length: across }, (_, col) =>
+      most(sizes.filter((_, i) => i % across === col).map((one) => one.w)),
+    )
+    const talls = Array.from({ length: down }, (_, row) =>
+      most(sizes.slice(row * across, (row + 1) * across).map((one) => one.h)),
+    )
+    const w = sum(wides) + gap * (across - 1)
+    const h = sum(talls) + gap * (down - 1)
+    const zoom = Math.min(room.w / Math.max(w, 1), room.h / Math.max(h, 1))
+    if (zoom <= best.zoom + 1e-9) continue
+    const lefts = before(wides, gap)
+    const tops = before(talls, gap)
+    const at = sizes.map((one, i) => {
+      const col = i % across
+      const row = Math.floor(i / across)
+      return {
+        x: (lefts[col] ?? 0) + ((wides[col] ?? 0) - one.w) / 2,
+        y: (tops[row] ?? 0) + ((talls[row] ?? 0) - one.h) / 2,
+      }
+    })
+    best = { zoom, at }
+  }
+  return best.at
+}
