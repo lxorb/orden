@@ -6,6 +6,7 @@ class NoLayout {
   disconnect = () => undefined
 }
 globalThis.ResizeObserver = NoLayout
+if (typeof Element.prototype.getAnimations !== 'function') Element.prototype.getAnimations = () => []
 function letGoOfFocusIn(node: Node) {
   const held = document.activeElement
   if (held instanceof HTMLElement && held !== document.body && node.contains(held)) held.blur()

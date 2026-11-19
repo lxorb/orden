@@ -10,6 +10,9 @@ export interface Filter {
   readonly spaceAlso?: readonly string[]
   readonly label: string | null
   readonly today: string
+  readonly done?: boolean
+  readonly anyStart?: boolean
+  readonly keep?: readonly string[]
 }
 export const ALL_LABELS = null
 export function dayOf(at: number | Date = new Date()): string {
@@ -25,21 +28,24 @@ const inSpace = (todo: Todo, filter: SpaceFilter): boolean =>
   (todo.space !== null && (filter.spaceAlso?.includes(todo.space) ?? false))
 const started = (todo: Todo, today: string): boolean => todo.start === null || todo.start <= today
 const hasLabel = (todo: Todo, label: string | null): boolean => label === ALL_LABELS || todo.labels.includes(label)
-const stillShown = (todo: Todo, today: string): boolean =>
-  !todo.done || (todo.doneAt !== null && dayOf(todo.doneAt) === today)
+const stillShown = (todo: Todo, filter: Pick<Filter, 'done' | 'keep'>): boolean =>
+  !todo.done || filter.done === true || (filter.keep?.includes(todo.id) ?? false)
 export const shownTodos = (todos: readonly Todo[], filter: Filter): Todo[] =>
   todos.filter(
     (todo) =>
       inSpace(todo, filter) &&
-      stillShown(todo, filter.today) &&
-      started(todo, filter.today) &&
+      stillShown(todo, filter) &&
+      (filter.anyStart === true || started(todo, filter.today)) &&
       hasLabel(todo, filter.label),
   )
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
-export function labelsOf(todos: readonly Todo[], filter: SpaceFilter & Pick<Filter, 'today'>): string[] {
+export function labelsOf(
+  todos: readonly Todo[],
+  filter: SpaceFilter & Pick<Filter, 'today' | 'done' | 'keep'>,
+): string[] {
   const seen = new Set<string>()
   for (const todo of todos) {
-    if (!inSpace(todo, filter) || !stillShown(todo, filter.today)) continue
+    if (!inSpace(todo, filter) || !stillShown(todo, filter)) continue
     for (const label of todo.labels) seen.add(label)
   }
   return [...seen].sort(byName)

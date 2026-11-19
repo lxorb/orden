@@ -1,11 +1,15 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
+  import { flip } from 'svelte/animate'
   import { dur, slide } from '../../platform/src/api'
   import { startTodos, todos, type TodoPatch } from '../../tasks-model/src/api'
-  import { addTodo, patchTodo, removeTodo } from './acts'
+  import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
+  import { Carrying } from './carrying.svelte'
   import Filters from './Filters.svelte'
+  import { openNote } from './notes'
   import { shellWorld, Shown } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
+  import { previewed, edgeScroll } from './todo-drag.svelte'
   import { rowKeys, TodoRows } from './rows.svelte'
   import TodoRow from './TodoRow.svelte'
 
@@ -13,13 +17,18 @@
   const shown = new Shown(shellWorld(() => todos.todos))
   let typed = $state('')
   let openId = $state<string | null>(null)
+  const LIST = 'panel:'
+  const carrying = new Carrying({ shown, list: () => shown.todos, grouping: () => null })
   const rows = new TodoRows({
     order: () => shown.todos,
     opened: () => openId,
     open: (id) => (openId = id),
+    move: (id, by) => carrying.step(LIST, id, by),
   })
   $effect(() => rows.keep())
   const open = $derived(openId === null ? null : todos.todo(openId))
+  const listed = $derived(previewed(shown.todos, LIST, carrying.drag))
+  const moving = { duration: dur(180), easing: cubicOut }
   async function add() {
     const title = typed.trim()
     if (title === '') return
@@ -28,7 +37,7 @@
   }
 </script>
 
-<section class="todos" aria-label="Todos" data-todos-panel>
+<section class="todos" aria-label="Todos" data-todos-panel use:edgeScroll>
   <Filters {shown} />
   <form
     class="adder"
@@ -45,21 +54,27 @@
   {#if !shown.todos.length}
     <p class="empty">Nothing to do</p>
   {/if}
-  <ul class="list" use:rowKeys={rows}>
-    {#each shown.todos as todo (todo.id)}
+  <ul class="list" use:rowKeys={rows} use:carrying.area={LIST}>
+    {#each listed as todo (todo.id)}
       {@const here = open?.id === todo.id ? open : null}
-      <li>
-        <TodoRow
-          {todo}
-          today={shown.filter.today}
-          open={openId === todo.id}
-          ontoggle={(done: boolean) => void patchTodo(todo.id, { done })}
-          picked={rows.picking.has(todo.id)}
-          onopen={() => (openId = openId === todo.id ? null : todo.id)}
-          onpick={(event: MouseEvent) => rows.click(event, todo.id)}
-          onmenu={(event: MouseEvent) => rows.menu(event, todo)}
-          onaway={() => void rows.remove([todo.id])}
-        />
+      <li animate:flip={moving} out:slide={{ duration: dur(200), easing: cubicOut }}>
+        <div use:carrying.card={{ todo, column: LIST }}>
+          <TodoRow
+            {todo}
+            today={shown.filter.today}
+            open={openId === todo.id}
+            lifted={carrying.drag.todo?.id === todo.id}
+            taking={carrying.taking === todo.id}
+            ontoggle={(done: boolean) => void tickTodo(shown, todo.id, done)}
+            picked={rows.picking.has(todo.id)}
+            onopen={() => (openId = openId === todo.id ? null : todo.id)}
+            onpick={(event: MouseEvent) => rows.click(event, todo.id)}
+            onmenu={(event: MouseEvent) => rows.menu(event, todo)}
+            onaway={() => void rows.remove([todo.id])}
+            onai={() => void doWithAi(todo, shown.space?.id ?? null)}
+            onnote={openNote}
+          />
+        </div>
         {#if here}
           <div class="sheet" in:slide={{ duration: dur(180), easing: cubicOut }}>
             <TodoEditor
@@ -72,6 +87,7 @@
                 openId = null
               }}
               onclose={() => (openId = null)}
+              onai={() => void doWithAi(here, shown.space?.id ?? null)}
             />
           </div>
         {/if}
@@ -98,7 +114,8 @@
   .list {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: var(--space-1);
+    min-height: var(--space-6);
     margin: 0;
     padding: 0;
     list-style: none;

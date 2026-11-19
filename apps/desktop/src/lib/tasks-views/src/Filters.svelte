@@ -6,17 +6,33 @@
 </script>
 
 <div class="filters">
-  <label class="only">
-    <input
-      type="checkbox"
-      class="orden-checkbox"
-      data-todos-only-space
-      checked={shown.onlySpace}
-      disabled={shown.space === null}
-      onchange={(event) => shown.setOnlySpace(event.currentTarget.checked)}
-    />
-    Only this space
-  </label>
+  <button
+    type="button"
+    class="orden-chip"
+    class:is-on={shown.onlySpace && shown.space !== null}
+    aria-pressed={shown.onlySpace && shown.space !== null}
+    disabled={shown.space === null}
+    data-todos-only-space
+    onclick={() => shown.setOnlySpace(!shown.onlySpace)}>Only this space</button
+  >
+  <button
+    type="button"
+    class="orden-chip"
+    class:is-on={shown.showDone}
+    aria-pressed={shown.showDone}
+    data-todos-show-done
+    onclick={() => shown.setShowDone(!shown.showDone)}>Show done</button
+  >
+  {#if shown.where === 'board'}
+    <button
+      type="button"
+      class="orden-chip"
+      class:is-on={shown.anyStart}
+      aria-pressed={shown.anyStart}
+      data-todos-any-start
+      onclick={() => shown.setAnyStart(!shown.anyStart)}>Ignore start date</button
+    >
+  {/if}
   <LabelSelect
     labels={shown.labels}
     chosen={shown.filter.label}
@@ -30,13 +46,5 @@
     flex-wrap: wrap;
     gap: var(--space-2);
     align-items: center;
-  }
-  .only {
-    display: inline-flex;
-    align-items: center;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    white-space: nowrap;
   }
 </style>

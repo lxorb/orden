@@ -30,6 +30,7 @@
     "sync-store",
     "modes",
     "gates",
-    "panes"
+    "panes",
+    "agent-protocol"
   ]
 }

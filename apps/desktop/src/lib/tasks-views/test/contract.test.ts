@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { Shown, type ShownWorld, SORT_NAMES } from '../src/shown.svelte'
 
 const TODAY = '2026-11-14'
@@ -35,8 +35,15 @@ const todo = (over: Partial<Fake>): Fake => ({
   created: 0,
   ...over,
 })
+const plain = (): ReturnType<ShownWorld['board']> => ({
+  grouping: 'label',
+  done: false,
+  anyStart: false,
+  columns: { label: [], deadline: [], priority: [], space: [] },
+})
 function world(list: Fake[], active: string | null = 'home') {
   let kept: unknown = undefined
+  let board = plain()
   const made: ShownWorld = {
     todos: () => list,
     activeSpace: () => (active === null ? null : { id: active, name: `Space ${active}` }),
@@ -47,11 +54,13 @@ function world(list: Fake[], active: string | null = 'home') {
     today: () => TODAY,
     kept: () => kept,
     keep: (value) => (kept = value),
+    board: () => board,
+    arrange: (next) => (board = next),
   }
-  return { world: made, read: () => kept }
+  return { world: made, read: () => kept, board: () => board }
 }
 describe('tasks-views contract', () => {
-  test('the module reads the model, the motion, the shortcuts and the shared controls only through their apis and nothing from the shell', () => {
+  test('the module reads the model, the motion, the shortcuts, the shared controls and the shell parts it borrows only through their apis', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
       const text = readFileSync(join(src, name), 'utf8')
@@ -66,7 +75,11 @@ describe('tasks-views contract', () => {
           one === '../../platform/src/api' ||
           one === '../../ui-controls/src/api' ||
           one === '../../ui-kit/src/api' ||
-          one === '../../shortcuts/src/api'
+          one === '../../shortcuts/src/api' ||
+          one === 'svelte/animate' ||
+          one === '../../windows/src/api' ||
+          one === '../../undo-toast/src/api' ||
+          one === '../../ai-chat/src/api'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }
@@ -83,7 +96,7 @@ describe('tasks-views contract', () => {
     first.setOnlySpace(true)
     first.setSort('manual')
     first.setLabel('x')
-    expect(read()).toEqual({ onlySpace: true, sort: 'manual' })
+    expect(read()).toEqual({ onlySpace: true, sort: 'manual', done: false })
     const second = new Shown(w)
     expect(second.onlySpace).toBe(true)
     expect(second.sort).toBe('manual')
@@ -117,13 +130,13 @@ describe('tasks-views contract', () => {
       todo({ id: 'b', labels: ['work'], deadline: '2026-11-16', order: 1 }),
       todo({ id: 'c', order: 0 }),
     ])
-    const shown = new Shown(w)
-    expect(shown.groups.map((g) => [g.label, g.todos.map((t) => t.id)])).toEqual([
+    const shown = new Shown(w, 'board')
+    expect(shown.columns.map((g) => [g.key, g.todos.map((t) => t.id)])).toEqual([
       ['work', ['b', 'a']],
-      [null, ['c']],
+      ['', ['c']],
     ])
     shown.setSort('manual')
-    expect(shown.groups[0]?.todos.map((t) => t.id)).toEqual(['b', 'a'])
+    expect(shown.columns[0]?.todos.map((t) => t.id)).toEqual(['b', 'a'])
   })
   test('with no open space the space filter cannot narrow anything', () => {
     const { world: w } = world([todo({ id: 'a', space: 'home' }), todo({ id: 'b' })], null)
@@ -132,5 +145,50 @@ describe('tasks-views contract', () => {
     expect(shown.space).toBeNull()
     expect(shown.spaceName('work')).toBe('Space work')
     expect(shown.todos.map((t) => t.id).sort()).toEqual(['a', 'b'])
+  })
+  test('done todos stay hidden until Show done is on, and one just ticked lingers a moment', () => {
+    vi.useFakeTimers()
+    const list = [todo({ id: 'a', done: true, doneAt: 1 }), todo({ id: 'b' })]
+    const { world: w, read } = world(list)
+    const shown = new Shown(w)
+    expect(shown.todos.map((t) => t.id)).toEqual(['b'])
+    shown.linger('a', 500)
+    expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
+    vi.advanceTimersByTime(600)
+    expect(shown.todos.map((t) => t.id)).toEqual(['b'])
+    shown.setShowDone(true)
+    expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
+    expect(read()).toEqual({ onlySpace: false, sort: 'deadline', done: true })
+    vi.useRealTimers()
+  })
+  test('the board keeps its grouping, Show done, Ignore start date and column order in the synced board', () => {
+    const list = [
+      todo({ id: 'a', labels: ['x'] }),
+      todo({ id: 'b', labels: ['y'] }),
+      todo({ id: 'c', start: '2026-12-01', priority: 3 }),
+    ]
+    const { world: w, board } = world(list)
+    const shown = new Shown(w, 'board')
+    expect(shown.columns.map((one) => one.key)).toEqual(['x', 'y', ''])
+    shown.moveColumn('y', 0)
+    expect(board().columns.label).toEqual(['y', 'x', ''])
+    expect(shown.columns.map((one) => one.key)).toEqual(['y', 'x', ''])
+    expect(shown.todos.map((t) => t.id)).not.toContain('c')
+    shown.setAnyStart(true)
+    expect(board().anyStart).toBe(true)
+    expect(shown.todos.map((t) => t.id)).toContain('c')
+    shown.setGrouping('priority')
+    expect(board().grouping).toBe('priority')
+    expect(shown.columns.map((one) => [one.name, one.todos.map((t) => t.id)])).toEqual([
+      ['High', ['c']],
+      ['Medium', []],
+      ['Low', []],
+      ['No priority', ['a', 'b']],
+    ])
+    shown.setShowDone(true)
+    expect(board().done).toBe(true)
+    const panel = new Shown(w)
+    expect(panel.anyStart).toBe(false)
+    expect(panel.showDone).toBe(false)
   })
 })

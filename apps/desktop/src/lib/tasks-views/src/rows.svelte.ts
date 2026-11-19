@@ -8,6 +8,7 @@ export interface RowsHost {
   order: () => readonly Todo[]
   opened: () => string | null
   open: (id: string | null) => void
+  move?: (id: string, by: number) => Promise<void>
 }
 const rowOf = (event: Event): HTMLElement | null =>
   event.target instanceof Element ? event.target.closest<HTMLElement>('[data-todo]') : null
@@ -103,6 +104,19 @@ export class TodoRows {
       if (here !== null && !this.picking.ids.length) this.picking.only(here)
       const next = this.step(list, row, shortcuts.pressed('tree.extend-down', event) ? 1 : -1)
       if (next !== null) this.picking.range(this.ids(), next)
+    } else if (
+      (shortcuts.pressed('tree.move-up', event) || shortcuts.pressed('tree.move-down', event)) &&
+      here !== null
+    ) {
+      event.preventDefault()
+      const by = shortcuts.pressed('tree.move-down', event) ? 1 : -1
+      void this.host
+        .move?.(here, by)
+        .then(() =>
+          requestAnimationFrame(() =>
+            list.querySelector<HTMLElement>(`[data-todo="${CSS.escape(here)}"] .body`)?.focus(),
+          ),
+        )
     } else if (shortcuts.pressed('tree.toggle', event) && here !== null) {
       event.preventDefault()
       this.picking.toggle(here)

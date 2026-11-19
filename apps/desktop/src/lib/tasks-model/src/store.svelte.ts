@@ -1,6 +1,7 @@
 import { err, failure, ok, type Result } from '@orden/contracts'
 import { type Kept, TodoRecords, type TodoDisk, type TodoServer } from './records'
 import { nextOrder } from './query'
+import { type Board, BOARD_ID, boardFields, boardOf } from './board'
 import { checkedPatch, fieldsOf, fitsOneChange, KIND, newId, type Todo, todoOf, type TodoPatch } from './todo'
 
 const SEND_AFTER = 1500
@@ -27,6 +28,7 @@ export interface StoreWorld {
 const missing = (what: string) => err(failure('tasks-model', 'missing', what))
 export class TodoStore {
   todos = $state<readonly Todo[]>([])
+  board = $state<Board>(boardOf(null))
   answers = $state<boolean | null>(null)
   openedFor = $state<string | null | undefined>(undefined)
   private records: TodoRecords | null = null
@@ -108,6 +110,7 @@ export class TodoStore {
   }
   private told(): void {
     const records = this.records
+    this.board = boardOf(records?.fieldsOf(BOARD_ID) ?? null)
     this.todos = records
       ? records
           .entries()
@@ -186,6 +189,22 @@ export class TodoStore {
     await records.change([{ id, fields: { gone: true } }])
     this.wrote()
     return ok(undefined)
+  }
+  async restore(id: string): Promise<Result<Todo>> {
+    const records = this.records
+    if (!records) return missing('the todos are not open yet')
+    if (records.fieldsOf(id)?.gone !== true) return missing(`no deleted todo ${id}`)
+    await records.change([{ id, fields: { gone: false } }])
+    this.wrote()
+    const back = this.todo(id)
+    return back ? ok(back) : missing(`no todo ${id}`)
+  }
+  async arrange(board: Board): Promise<Result<Board>> {
+    const records = this.records
+    if (!records) return missing('the todos are not open yet')
+    await records.change([{ id: BOARD_ID, fields: boardFields(board) }])
+    this.wrote()
+    return ok(this.board)
   }
   exchange(): Promise<boolean> {
     if (this.exchanging) {

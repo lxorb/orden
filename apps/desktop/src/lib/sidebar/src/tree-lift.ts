@@ -3,6 +3,7 @@ import { tick } from 'svelte'
 import { dropTarget, targetFor, entryAt, shownNames } from '../../tree/src/api'
 import { dur, folderOf, nameOf } from '../../platform/src/api'
 import { spaceDropping } from '../../tab-strip/src/api'
+import { carryThumb } from '../../ui-kit/src/api'
 import { placedBeside, stepped, trimmed } from './tree-arranging'
 import { workspace } from '../../workspace/src/api'
 
@@ -158,6 +159,7 @@ export function letGo(held: Held): void {
 }
 function lift(held: Held, row: HTMLElement, entry: Entry) {
   holding = null
+  carryThumb(true)
   held.carry(workspace.dragPayload(entry.path))
   const box = row.getBoundingClientRect()
   const copy = row.cloneNode(true)
@@ -243,6 +245,7 @@ function onLiftKey(held: Held, event: KeyboardEvent) {
   dropLift(held)
 }
 export function dropLift(held: Held): void {
+  if (ghost) carryThumb(false)
   ghost?.remove()
   ghost = null
   cancelHold()

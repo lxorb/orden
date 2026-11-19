@@ -1,50 +1,95 @@
 <script lang="ts">
-  import { placedBetween, SORTS, startTodos, todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+  import {
+    columnPatch,
+    GROUPING_NAMES,
+    GROUPINGS,
+    type Grouping,
+    SORTS,
+    startTodos,
+    todos,
+    type TodoPatch,
+  } from '../../tasks-model/src/api'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly } from '../../platform/src/api'
+  import { flip } from 'svelte/animate'
+  import { tick } from 'svelte'
+  import { dur, fly, slide } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import { addTodo, patchTodo, removeTodo } from './acts'
-  import { dropAt } from './drop-at'
+  import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
+  import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
+  import { openNote } from './notes'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
+  import { edgeScroll, previewed } from './todo-drag.svelte'
   import { rowKeys, TodoRows } from './rows.svelte'
   import TodoRow from './TodoRow.svelte'
 
   startTodos()
-  const shown = new Shown(shellWorld(() => todos.todos))
+  const shown = new Shown(
+    shellWorld(() => todos.todos),
+    'board',
+  )
   let typed = $state('')
   let openId = $state<string | null>(null)
+  let adding = $state<string | null>(null)
+  let columnTyped = $state('')
+  let columnField = $state<HTMLInputElement | null>(null)
+  const columns = $derived(shown.columns)
+  const carrying = new Carrying({
+    shown,
+    list: (key) => columns.find((one) => one.key === key)?.todos ?? [],
+    grouping: () => shown.grouping,
+  })
   const rows = new TodoRows({
-    order: () => shown.groups.flatMap((group) => group.todos),
+    order: () => columns.flatMap((column) => column.todos),
     opened: () => openId,
     open: (id) => (openId = id),
+    move: async (id, by) => {
+      const column = columns.find((one) => one.todos.some((todo) => todo.id === id))
+      if (column) await carrying.step(column.key, id, by)
+    },
   })
   $effect(() => rows.keep())
-  let dragged = $state<string | null>(null)
   const open = $derived(openId === null ? null : todos.todo(openId))
+  const shownColumns = $derived(columnPreview(columns, carrying.drag))
+  const moving = { duration: dur(180), easing: cubicOut }
   async function add() {
     const title = typed.trim()
     if (title === '') return
     typed = ''
     await addTodo(shown, title)
   }
-  function dropped(column: readonly Todo[], at: number) {
-    const id = dragged
-    dragged = null
-    if (id === null || shown.sort !== 'manual') return
-    const from = column.findIndex((one) => one.id === id)
-    if (from === -1 || from === at || from + 1 === at) return
-    const without = column.filter((one) => one.id !== id)
-    const place = from < at ? at - 1 : at
-    void patchTodo(id, { order: placedBetween(without[place - 1], without[place]) })
+  async function startAdding(key: string) {
+    adding = key
+    columnTyped = ''
+    await tick()
+    columnField?.focus()
+  }
+  async function addInColumn(key: string) {
+    const title = columnTyped.trim()
+    if (title === '') return
+    columnTyped = ''
+    const patch = columnPatch(shown.grouping, key, shown.filter.today) ?? {}
+    const labels =
+      shown.grouping === 'label' ? (patch.labels ?? []) : shown.filter.label === null ? [] : [shown.filter.label]
+    await addTodo(shown, title, { ...patch, labels })
   }
 </script>
 
 <div class="board" data-todos-board>
   <header class="bar">
     <Filters {shown} />
-    <div class="sort" data-todos-sort>
+    <div class="pick" data-todos-group>
+      <span>Group</span>
+      <Select
+        plain
+        label="Group"
+        value={shown.grouping}
+        options={GROUPINGS.map((one) => ({ value: one, label: GROUPING_NAMES[one] }))}
+        onchange={(next: string) => shown.setGrouping(next as Grouping)}
+      />
+    </div>
+    <div class="pick" data-todos-sort>
       <span>Sort</span>
       <Select
         plain
@@ -69,63 +114,92 @@
   </header>
 
   <div class="body">
-    <div class="columns" use:rowKeys={rows}>
-      {#each shown.groups as group (group.label ?? '')}
-        <section class="column" aria-label={group.label ?? 'No label'} data-todos-column>
-          <h2>
-            {group.label ?? 'No label'}
-            <span class="count">{group.todos.length}</span>
-          </h2>
-          <ul>
-            {#each group.todos as todo, at (todo.id)}
-              <li
-                class="card"
-                draggable={shown.sort === 'manual'}
-                class:dragging={dragged === todo.id}
-                ondragstart={(event) => {
-                  dragged = todo.id
-                  event.dataTransfer?.setData('text/plain', todo.id)
-                }}
-                ondragend={() => (dragged = null)}
-                ondragenter={(event) => {
-                  if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
-                }}
-                ondragover={(event) => {
-                  if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
-                }}
-                ondrop={(event) => {
-                  event.preventDefault()
-                  const box = event.currentTarget.getBoundingClientRect()
-                  dropped(group.todos, dropAt(at, event.clientY, box))
-                }}
+    <div
+      class="columns"
+      use:rowKeys={rows}
+      use:edgeScroll={'x'}
+      use:carrying.row={(key: string, at: number) => shown.moveColumn(key, at)}
+    >
+      {#each shownColumns as column (column.key)}
+        {@const list = previewed(column.todos, column.key, carrying.drag)}
+        <section
+          class="column"
+          class:is-taking={carrying.drag.spot?.column === column.key && carrying.drag.from !== column.key}
+          class:is-lifted={carrying.drag.column === column.key}
+          aria-label={column.name}
+          data-todos-column
+          data-key={column.key}
+          animate:flip={moving}
+          use:carrying.area={column.key}
+        >
+          <h2 use:carrying.head={column.key} title="Drag to move this column">
+            <span class="name">{column.name}</span>
+            <span class="count">{column.todos.length}</span>
+            {#if column.takes}
+              <button
+                type="button"
+                class="plus orden-glyph"
+                aria-label={`Add a todo to ${column.name}`}
+                title={`Add a todo to ${column.name}`}
+                data-todos-column-add
+                onclick={() => void startAdding(column.key)}
               >
-                <TodoRow
-                  {todo}
-                  today={shown.filter.today}
-                  open={openId === todo.id}
-                  showLabels={todo.labels.length > 1}
-                  ontoggle={(done: boolean) => void patchTodo(todo.id, { done })}
-                  picked={rows.picking.has(todo.id)}
-                  onopen={() => (openId = openId === todo.id ? null : todo.id)}
-                  onpick={(event: MouseEvent) => rows.click(event, todo.id)}
-                  onmenu={(event: MouseEvent) => rows.menu(event, todo)}
-                  onaway={() => void rows.remove([todo.id])}
-                />
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
+              </button>
+            {/if}
+          </h2>
+          {#if adding === column.key}
+            <form
+              class="column-adder"
+              transition:slide={{ duration: dur(160), easing: cubicOut }}
+              onsubmit={(event) => {
+                event.preventDefault()
+                void addInColumn(column.key)
+              }}
+            >
+              <input
+                bind:this={columnField}
+                bind:value={columnTyped}
+                class="orden-field"
+                type="text"
+                placeholder="Add a todo"
+                aria-label={`Add a todo to ${column.name}`}
+                data-todos-column-field
+                onkeydown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault()
+                    adding = null
+                  }
+                }}
+                onblur={() => {
+                  if (columnTyped.trim() === '') adding = null
+                }}
+              />
+            </form>
+          {/if}
+          <ul use:edgeScroll>
+            {#each list as todo (todo.id)}
+              <li animate:flip={moving} out:slide={{ duration: dur(200), easing: cubicOut }}>
+                <div class="card" use:carrying.card={{ todo, column: column.key }}>
+                  <TodoRow
+                    {todo}
+                    today={shown.filter.today}
+                    open={openId === todo.id}
+                    showLabels={shown.grouping !== 'label' || todo.labels.length > 1}
+                    lifted={carrying.drag.todo?.id === todo.id}
+                    taking={carrying.taking === todo.id}
+                    ontoggle={(done: boolean) => void tickTodo(shown, todo.id, done)}
+                    picked={rows.picking.has(todo.id)}
+                    onopen={() => (openId = openId === todo.id ? null : todo.id)}
+                    onpick={(event: MouseEvent) => rows.click(event, todo.id)}
+                    onmenu={(event: MouseEvent) => rows.menu(event, todo)}
+                    onaway={() => void rows.remove([todo.id])}
+                    onai={() => void doWithAi(todo, shown.space?.id ?? null)}
+                    onnote={openNote}
+                  />
+                </div>
               </li>
             {/each}
-            <li
-              class="tail"
-              ondragenter={(event) => {
-                if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
-              }}
-              ondragover={(event) => {
-                if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
-              }}
-              ondrop={(event) => {
-                event.preventDefault()
-                dropped(group.todos, group.todos.length)
-              }}
-            ></li>
           </ul>
         </section>
       {:else}
@@ -144,6 +218,7 @@
             openId = null
           }}
           onclose={() => (openId = null)}
+          onai={() => void doWithAi(open, shown.space?.id ?? null)}
         />
       </aside>
     {/if}
@@ -166,7 +241,7 @@
     padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--line);
   }
-  .sort {
+  .pick {
     display: inline-flex;
     gap: var(--space-1);
     align-items: center;
@@ -192,24 +267,43 @@
     padding: var(--space-3);
   }
   .column {
+    display: flex;
     flex: none;
+    flex-direction: column;
     width: 17rem;
     max-height: 100%;
-    overflow: auto;
     padding: var(--space-2);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out);
+  }
+  .column.is-taking {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .column.is-lifted {
+    opacity: 0.45;
   }
   h2 {
     display: flex;
     gap: var(--space-2);
     align-items: center;
+    min-height: var(--row-height);
     margin: 0 0 var(--space-2);
-    padding: var(--space-1) var(--space-2) 0;
+    padding: 0 var(--space-1) 0 var(--space-2);
     color: var(--text-strong);
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
+    cursor: grab;
+  }
+  .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .count {
     min-width: 18px;
@@ -222,29 +316,42 @@
     font-variant-numeric: tabular-nums;
     text-align: center;
   }
+  .plus {
+    margin-inline-start: auto;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+  .column:hover .plus,
+  .plus:focus-visible,
+  :global([data-touch]) .plus {
+    opacity: 1;
+  }
+  .plus svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .column-adder {
+    margin: 0 0 var(--space-2);
+  }
+  .column-adder input {
+    width: 100%;
+  }
   ul {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    min-height: var(--space-6);
     margin: 0;
     padding: 0;
+    overflow: auto;
     list-style: none;
   }
   .card {
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    box-shadow: var(--shadow-sm);
-    transition:
-      opacity var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
-  }
-  .card.dragging {
-    opacity: 0.5;
-    transform: scale(0.98);
-  }
-  .tail {
-    min-height: var(--space-3);
+    --todo-card: var(--bg);
   }
   .empty {
     margin: 0;

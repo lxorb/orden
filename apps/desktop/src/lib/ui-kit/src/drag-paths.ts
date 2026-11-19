@@ -11,6 +11,8 @@ const TAB = 'text/orden-tab'
 const EXPLORER = 'text/orden-explorer'
 const PAGE = 'text/orden-page'
 const AI_CHAT = 'text/orden-ai-chat'
+const TODO = 'text/orden-todo'
+const TODO_COLUMN = 'text/orden-todo-column'
 const HERE = `text/orden-from-${crypto.randomUUID()}`
 let carrying: readonly string[] = []
 export function carry(transfer: DataTransfer | null, paths: string[]) {
@@ -205,6 +207,23 @@ export function draggedAiChat(transfer: DataTransfer | null): CarriedChat | null
   } catch {
     return null
   }
+}
+export function carryTodo(transfer: DataTransfer | null, id: string, title: string) {
+  if (!transfer) return
+  carryHere(transfer, TODO, id)
+  transfer.setData('text/plain', title)
+  transfer.effectAllowed = 'copyMove'
+}
+export function isTodoDrag(transfer: DataTransfer | null): boolean {
+  return fromHere(transfer, TODO)
+}
+export function carryTodoColumn(transfer: DataTransfer | null, key: string) {
+  if (!transfer) return
+  carryHere(transfer, TODO_COLUMN, key)
+  transfer.effectAllowed = 'move'
+}
+export function isTodoColumnDrag(transfer: DataTransfer | null): boolean {
+  return fromHere(transfer, TODO_COLUMN)
 }
 function carryHere(transfer: DataTransfer, type: string, value: string) {
   transfer.setData(type, value)

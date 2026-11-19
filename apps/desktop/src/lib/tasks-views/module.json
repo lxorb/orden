@@ -1,5 +1,17 @@
 {
   "name": "tasks-views",
   "layer": "content",
-  "dependsOn": ["contracts", "platform", "shortcuts", "tasks-model", "ui-controls", "ui-kit"]
+  "dependsOn": [
+    "contracts",
+    "platform",
+    "shortcuts",
+    "tasks-model",
+    "ui-controls",
+    "ui-kit",
+    "ai-chat",
+    "tab-strip",
+    "windows",
+    "undo-toast",
+    "workspace"
+  ]
 }
