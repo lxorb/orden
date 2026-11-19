@@ -1328,10 +1328,6 @@
   function dragging(event: PointerEvent) {
     if (carrying) return carried(event)
     if (pressed?.whole && pressed.pointer === event.pointerId) return moved(event)
-    if (!touching.size && event.buttons === 0 && event.target instanceof HTMLElement) {
-      const floor = event.target.closest<HTMLElement>('.floor')
-      if (floor) floor.style.cursor = all && nameAt(event) ? 'grab' : ''
-    }
     const was = touching.get(event.pointerId)
     if (!was) return
     const now = { x: event.clientX, y: event.clientY }
