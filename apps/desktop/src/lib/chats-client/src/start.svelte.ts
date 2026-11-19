@@ -1,4 +1,4 @@
-import type { Entry } from '@orden/contracts'
+import { type Entry, registerSidebarPart } from '@orden/contracts'
 import { untrack } from 'svelte'
 import { CHAT_EXTENSION } from '@orden/chats'
 import { account } from '../../accounts/src/api'
@@ -8,6 +8,7 @@ import { isMobile } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
+import { unreadIn } from './unread'
 
 const isPointer = (path: string) => path.toLowerCase().endsWith(CHAT_EXTENSION)
 function followed(op: FileOp): void {
@@ -45,6 +46,10 @@ $effect.root(() => {
     const who = chatsOn() ? (account.user?.id ?? account.guest?.id ?? null) : null
     untrack(() => void chats.start(who))
   })
+})
+registerSidebarPart({
+  id: 'chats',
+  unreadIn: (root) => (chatsOn() && account.accountToken ? unreadIn(chats.list, root, Date.now()) : 0),
 })
 account.forgetWithSession(() => void chats.forget())
 hub.on('chat', (frame) => chats.poked(frame.said))
