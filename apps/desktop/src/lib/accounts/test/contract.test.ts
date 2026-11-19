@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { account, ApiError, called, clearsAt, faceUrl, farApart, fromServer, readSeats, stands } from '../src/api'
 import { clampOffset, sourceSquare, zoomed } from '../src/crop'
 import { withoutMetadata } from '../src/encode'
@@ -111,5 +111,22 @@ describe('the places in a shared space', () => {
     expect(readSeats({ used: -1, most: 10 })).toBeNull()
     expect(readSeats({ used: 1.5, most: 10 })).toBeNull()
     expect(readSeats({ used: 0, most: 0 })).toBeNull()
+  })
+})
+describe('what a module keeps for an account', () => {
+  test('is let go of when another account arrives in place, as on sign-out, and kept for the same account', async () => {
+    vi.stubGlobal('fetch', () => Promise.reject(new Error('offline')))
+    const cleared: boolean[] = []
+    account.forgetWithSession((kept) => cleared.push(kept))
+    const ada = { id: 'ua', email: 'ada@example.org', name: 'Ada' }
+    await account.arrive('first', { user: ada })
+    await account.arrive('again', { user: ada })
+    expect(cleared).toEqual([])
+    await account.arrive('other', { user: { id: 'ub', email: 'bo@example.org', name: 'Bo' } })
+    expect(cleared).toEqual([false])
+    await account.signOut()
+    expect(cleared).toEqual([false, false])
+    expect(account.signedIn).toBe(false)
+    vi.unstubAllGlobals()
   })
 })

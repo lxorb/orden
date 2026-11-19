@@ -35,6 +35,8 @@ class Connectors {
         this.clients = []
         this.token = null
         this.freshToken = null
+        this.busy = false
+        this.error = null
       })
     }
     const saved = stored(STORAGE_KEY)
@@ -47,13 +49,15 @@ class Connectors {
     keep(CLIENT_KEY, client)
   }
   async load() {
-    if (!account.accountToken) {
+    const token = account.accountToken
+    if (!token) {
       this.clients = []
       this.token = null
       return
     }
     try {
-      const listed = await api.connector(account.accountToken)
+      const listed = await api.connector(token)
+      if (account.accountToken !== token) return
       this.clients = listed.clients
       this.token = {
         exists: listed.exists,
@@ -73,44 +77,49 @@ class Connectors {
     return () => clearInterval(timer)
   }
   async disconnect(id: string) {
-    if (!account.accountToken) return
+    const token = account.accountToken
+    if (!token) return
     this.clients = this.clients.filter((one) => one.id !== id)
     this.error = null
     try {
-      await api.disconnectClient(account.accountToken, id)
+      await api.disconnectClient(token, id)
     } catch (error) {
-      this.error = message(error, 'could not reach the server')
+      if (account.accountToken === token) this.error = message(error, 'could not reach the server')
     } finally {
       await this.load()
     }
   }
   async createToken() {
-    if (!account.accountToken) return
+    const session = account.accountToken
+    if (!session) return
     this.busy = true
     this.error = null
     try {
-      const { token } = await api.issueConnector(account.accountToken, this.readOnly)
+      const { token } = await api.issueConnector(session, this.readOnly)
+      if (account.accountToken !== session) return
       this.freshToken = token
       keepJson(STORAGE_KEY, { readOnly: this.readOnly })
       await this.load()
     } catch (error) {
-      this.error = message(error, 'could not create a token')
+      if (account.accountToken === session) this.error = message(error, 'could not create a token')
     } finally {
-      this.busy = false
+      if (account.accountToken === session) this.busy = false
     }
   }
   async revokeToken() {
-    if (!account.accountToken) return
+    const token = account.accountToken
+    if (!token) return
     this.busy = true
     this.error = null
     try {
-      await api.revokeConnector(account.accountToken)
+      await api.revokeConnector(token)
+      if (account.accountToken !== token) return
       this.freshToken = null
       await this.load()
     } catch (error) {
-      this.error = message(error, 'could not reach the server')
+      if (account.accountToken === token) this.error = message(error, 'could not reach the server')
     } finally {
-      this.busy = false
+      if (account.accountToken === token) this.busy = false
     }
   }
   setReadOnly(on: boolean) {

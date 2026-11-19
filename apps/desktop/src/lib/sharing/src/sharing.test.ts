@@ -1000,6 +1000,24 @@ describe('who manages a space', () => {
     expect(world.asked).toContain('ada@example.com is now read in space-1')
   })
 })
+describe('the people of a space read for one account', () => {
+  test('are gone once the account goes, and an answer still on its way for it is dropped', async () => {
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'owner')]
+    world.sharing.members = [member('ada@example.com')]
+    await share.show(local('Notes'))
+    share.email = 'bob@example.com'
+    world.holding = true
+    const looking = members.look(local('Notes'))
+    await account.signOut()
+    await land()
+    await looking
+    expect(share.open).toBe(false)
+    expect(share.who).toBeNull()
+    expect(share.email).toBe('')
+    expect(members.who).toBeNull()
+  })
+})
 describe('the places in a shared space', () => {
   beforeEach(() => {
     world.mirrors = { Notes: 'space-1' }
