@@ -470,8 +470,10 @@ mod tests {
             assert!(fragment.contains(&line), "browser.wxs does not say: {line}");
         }
         assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs", "wix/pdf.wxs"]"#));
-        assert!(config.contains(r#""componentRefs": ["NibBrowser", "NibOldShortcuts", "NibPdf"]"#));
-        assert!(fragment.contains(r#"<Component Id="NibBrowser""#));
+        assert!(
+            config.contains(r#""componentRefs": ["OrdenBrowser", "OldNameShortcuts", "OrdenPdf"]"#)
+        );
+        assert!(fragment.contains(r#"<Component Id="OrdenBrowser""#));
     }
     #[test]
     fn the_installer_forgets_the_old_names_and_keeps_the_prog_id() {
