@@ -193,6 +193,11 @@ describe('a file read back', () => {
     expect(read?.without).toEqual(['browser_open', 'write_note'])
     expect(threadIn(kept)).not.toHaveProperty('without')
   })
+  test('keeps the only tools a thread may use, even none at all', () => {
+    expect(threadIn({ ...kept, only: ['update_task', 3] })?.only).toEqual(['update_task'])
+    expect(threadIn({ ...kept, only: [] })?.only).toEqual([])
+    expect(threadIn(kept)).not.toHaveProperty('only')
+  })
   test('keeps what it can read and leaves out what it cannot', () => {
     const read = threadIn({
       ...kept,

@@ -45,3 +45,16 @@ test('/fork leaves a chat of the reader’s own, even of a helper', () => {
   fork(host, helper, '')
   expect(adopted[0]).not.toHaveProperty('parent')
 })
+test('a helper the slash commands start keeps out what its parent keeps out, in no wider a mode', async () => {
+  const { host, adopted } = hosted()
+  const from = { ...parent(), mode: 'plan' as const, without: ['browser_open', 'edit_note'], only: ['read_note'] }
+  await subtask(host, from, 'check the proof')
+  await research(host, from, 'who proved it')
+  fork(host, from, 'go on')
+  await vi.waitFor(() => expect(adopted).toHaveLength(3))
+  for (const one of adopted) {
+    expect(one.without).toEqual(expect.arrayContaining(['browser_open', 'edit_note']))
+    expect(one.mode).toBe('plan')
+    expect(one.only).toEqual(['read_note'])
+  }
+})

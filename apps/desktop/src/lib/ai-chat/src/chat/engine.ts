@@ -33,6 +33,7 @@ import { crateTools, type Tools } from './tools'
 import { baseEffort, type Call, errorText, modelTurn, stepsOf, type Step, youTurn } from './transcript'
 import { added, estimate, shouldCompact } from './usage'
 import type { ToolDef, Wire } from './wire'
+import { allows } from './reach'
 
 function apiOf(kind: ProviderKind): Api | null {
   if (kind === 'anthropic') return 'anthropic'
@@ -104,8 +105,7 @@ function lastModel(thread: Thread): string {
   return ''
 }
 function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
-  const out = thread.without
-  return out?.length ? { ...listing, tools: listing.tools.filter((one) => !out.includes(one.name)) } : listing
+  return { ...listing, tools: listing.tools.filter((one) => allows(thread, one.name)) }
 }
 function failRunning(turn: Turn): void {
   for (const part of turn.parts) if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
@@ -163,7 +163,7 @@ export function createApiEngine(setup: Setup): Engine {
       await compact(thread).catch(() => undefined)
     }
     const switched = lastModel(thread)
-    const context = await tools.context(provider, thread.id).catch(() => '')
+    const context = allows(thread, 'get_context') ? await tools.context(provider, thread.id).catch(() => '') : ''
     const begin = (made: Turn) => {
       thread.turns.push(made)
       on({ type: 'turn', turn: made })
@@ -350,9 +350,9 @@ export function createApiEngine(setup: Setup): Engine {
     return await Promise.all(
       calls.map(async (call) => {
         const ask = (): Promise<ToolOutput> =>
-          thread.without?.includes(call.name)
-            ? Promise.resolve(keptOut(call.name))
-            : tools.call(provider, thread.mode, call.name, call.args, thread.id)
+          allows(thread, call.name)
+            ? tools.call(provider, thread.mode, call.name, call.args, thread.id)
+            : Promise.resolve(keptOut(call.name))
         let output = await ask()
         for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {
           const approval = output.approval

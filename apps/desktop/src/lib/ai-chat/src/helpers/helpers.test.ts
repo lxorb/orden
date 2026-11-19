@@ -234,3 +234,39 @@ describe('the review', () => {
     ])
   })
 })
+describe('a helper of a chat that keeps tools out', () => {
+  test('cannot use the tools its parent chat may not', async () => {
+    const { made, runs } = roads()
+    const from: Thread = { ...parent('p-without'), without: ['browser_open', 'edit_note'] }
+    const started = await helpers.start(asked(from, 'sonnet'), made)
+    if ('refused' in started) throw new Error(started.refused)
+    expect(runs[0]?.thread.without ?? []).toEqual(expect.arrayContaining(['browser_open', 'edit_note']))
+  })
+  test('passes them on to its own helpers, and works in no wider a mode than its parent', async () => {
+    const { made, runs } = roads()
+    const from: Thread = { ...parent('p-nested'), mode: 'approve', without: ['browser_open'] }
+    const first = await helpers.start({ ...asked(from, 'sonnet'), mode: 'full' }, made)
+    if ('refused' in first) throw new Error(first.refused)
+    const child = runs[0]?.thread
+    if (!child) throw new Error('no helper ran')
+    expect(child.mode).toBe('approve')
+    child.without = [...(child.without ?? []), 'edit_note']
+    const second = await helpers.start({ ...asked(child, 'opus'), mode: 'full' }, made)
+    if ('refused' in second) throw new Error(second.refused)
+    expect(runs[1]?.thread.without).toEqual(['browser_open', 'edit_note'])
+    expect(runs[1]?.thread.mode).toBe('approve')
+  })
+  test('uses no tool outside its parent’s only ones, nested too', async () => {
+    const { made, runs } = roads()
+    const from: Thread = { ...parent('p-only'), only: ['update_task', 'read_note'] }
+    const first = await helpers.start(asked(from, 'sonnet'), made)
+    if ('refused' in first) throw new Error(first.refused)
+    const child = runs[0]?.thread
+    if (!child) throw new Error('no helper ran')
+    expect(child.only).toEqual(['update_task', 'read_note'])
+    child.only = ['read_note']
+    const second = await helpers.start(asked(child, 'opus'), made)
+    if ('refused' in second) throw new Error(second.refused)
+    expect(runs[1]?.thread.only).toEqual(['read_note'])
+  })
+})
