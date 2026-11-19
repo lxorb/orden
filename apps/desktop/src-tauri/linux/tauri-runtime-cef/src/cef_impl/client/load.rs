@@ -40,6 +40,9 @@ wrap_load_handler! {
       let Some(frame) = frame else {
         return;
       };
+      if let Some(browser) = browser.as_deref() {
+        crate::webview::clear_ground_again(browser, frame.is_main() != 0);
+      }
       let url = cef::CefString::from(&frame.url()).to_string();
       if let Ok(url) = url::Url::parse(&url) {
         let is_main = frame.is_main() != 0;

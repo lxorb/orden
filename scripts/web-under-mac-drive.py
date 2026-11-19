@@ -366,11 +366,141 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
         return said
     finally:
         ended(process, gentle=True)
+MEASURED: list[str] = []
+def measure(name: str, value: Any) -> None:
+    MEASURED.append(f"{name}: {value}")
+    print(f"[measure] {name}: {value}", flush=True)
+LAYER_AT = (
+    "(({x, y, size, colour, id}) => { const one = document.createElement('div'); one.className = 'orden-layer'; one.id = id;"
+    " Object.assign(one.style, { position: 'fixed', left: x + 'px', top: y + 'px', width: size + 'px', height: size + 'px',"
+    " background: colour, zIndex: 9999 }); document.body.append(one); window.__drawnAt = null;"
+    " requestAnimationFrame(() => requestAnimationFrame(() => { window.__drawnAt = Date.now() })); return Date.now() })(ARGS)"
+)
+def layer_at(app: App, x: float, y: float, size: float, colour: str, name: str) -> Any:
+    args = json.dumps({"x": x, "y": y, "size": size, "colour": colour, "id": name})
+    return app.eval(LAYER_AT.replace("ARGS", args))
+def gone(app: App, name: str) -> None:
+    app.eval(f"document.getElementById({json.dumps(name)})?.remove(); return true")
+    time.sleep(0.8)
+def see_through(app: App, pane: dict[str, float], hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path, under: bool) -> list[str]:
+    wrong: list[str] = []
+    x, y = pane["x"] + pane["width"] * 0.25, pane["y"] + pane["height"] * 0.55
+    layer_at(app, x, y, 120, "rgba(0,160,0,0.5)", "drive-glass")
+    time.sleep(1.2)
+    image = shot()
+    image.save(out / "glass.png")
+    spot = (hole[0] + pane["width"] * 0.25 + 60, hole[1] + pane["height"] * 0.55 + 60)
+    seen = colour_at(image, spot, ratio)
+    wanted = (128, 80, 128)
+    measure("half clear layer over the page (page magenta, layer green at 0.5; blended is (128, 80, 128))", seen)
+    if under and not near(seen, wanted, 30):
+        wrong.append(f"a half clear layer over the page is not blended with the live page under it: {seen}, not {wanted}")
+    gone(app, "drive-glass")
+    return wrong
+def first_frame(app: App, pane: dict[str, float], hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path, under: bool) -> list[str]:
+    wrong: list[str] = []
+    film = Film()
+    time.sleep(0.6)
+    x, y = pane["x"] + pane["width"] * 0.25, pane["y"] + pane["height"] * 0.3
+    added = layer_at(app, x, y, 120, "rgb(0,160,0)", "drive-first")
+    time.sleep(1.5)
+    frames = film.stop()
+    drawn = app.eval("window.__drawnAt")
+    spot = (hole[0] + pane["width"] * 0.25 + 60, hole[1] + pane["height"] * 0.3 + 60)
+    if not isinstance(drawn, (int, float)) or not isinstance(added, (int, float)):
+        gone(app, "drive-first")
+        return [f"[first frame] the app did not say when it drew its layer: {added}, {drawn}"]
+    after = [(at, one) for at, one in frames if at >= drawn + 34]
+    late = [at for at, one in after if not near(colour_at(one, spot, ratio), LAYER)]
+    shown = next((at for at, one in frames if at >= added and near(colour_at(one, spot, ratio), LAYER)), None)
+    folder = out / "first-frame"
+    folder.mkdir(parents=True, exist_ok=True)
+    for index, (at, one) in enumerate(frames):
+        if at >= added - 200:
+            one.resize((one.width // 2, one.height // 2)).save(folder / f"{index:03d}-{int(at - added)}.jpg", quality=70)
+    measure("frames grabbed after the app drew a layer over the page in which the page still shows there", f"{len(late)} of {len(after)}")
+    measure("ms from the app's draw to the first grab with the layer over the page", None if shown is None else round(shown - drawn))
+    if under and late:
+        wrong.append(f"[first frame] the page shows through a layer the app has drawn, in {len(late)} of {len(after)} grabs")
+    gone(app, "drive-first")
+    return wrong
+PANE = "(() => { const all = orden.pages.each().map(([, one]) => one.sent).filter((one) => one && one.visible && !one.away); return all[0] ? all[0].pane : null })()"
+def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, under: bool) -> tuple[list[str], list[str]]:
+    app.eval("if (orden.workspace.panel) orden.workspace.toggleSidebar('left'); return true")
+    pane = app.until(f"(() => {{ const pane = {PANE}; return pane && pane.x < 1 ? pane : null }})()", 10)
+    inner = inner_of(app, pid)
+    if not isinstance(pane, dict) or not isinstance(inner, dict):
+        return [f"[peek] the page never reached the window's left edge: {app.eval(PANE)}"], []
+    time.sleep(1.5)
+    film = Film()
+    time.sleep(0.6)
+    asked = app.eval(
+        "(() => { window.__peekAt = null; const look = () => { const one = document.querySelector('.column.peek aside');"
+        " if (one && one.getBoundingClientRect().width > 40) requestAnimationFrame(() => { window.__peekAt = Date.now() });"
+        " else requestAnimationFrame(look) }; requestAnimationFrame(look);"
+        " dispatchEvent(new PointerEvent('pointermove', { clientX: 1, clientY: 300, pointerType: 'mouse', buttons: 0 }));"
+        " return Date.now() })()"
+    )
+    time.sleep(1.5)
+    frames = film.stop()
+    drawn = app.eval("window.__peekAt")
+    box = app.eval("(() => { const one = document.querySelector('.column.peek aside'); if (!one) return null; const r = one.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()")
+    if not isinstance(box, dict) or not isinstance(drawn, (int, float)):
+        return [], [f"the left peek did not come out over the page: {box}, {drawn}"]
+    inside = (inner["x"] + box["x"] + box["width"] / 2, inner["y"] + box["y"] + box["height"] / 2)
+    beside = (inner["x"] + box["x"] + box["width"] + 120, inner["y"] + box["y"] + box["height"] * 0.85)
+    after = [(at, one) for at, one in frames if at >= drawn + 34]
+    late = [at for at, one in after if near(colour_at(one, inside, ratio), COLOUR)]
+    folder = out / "peek"
+    folder.mkdir(parents=True, exist_ok=True)
+    for index, (at, one) in enumerate(frames):
+        if isinstance(asked, (int, float)) and at >= asked - 200:
+            one.resize((one.width // 2, one.height // 2)).save(folder / f"{index:03d}-{int(at - asked)}.jpg", quality=70)
+    image = shot()
+    image.save(out / "peek.png")
+    wrong: list[str] = []
+    measure("grabs after the app drew the left peek in which the page still shows inside it", f"{len(late)} of {len(after)}")
+    measure("colour inside the left peek over the page", colour_at(image, inside, ratio))
+    measure("colour of the page beside the left peek", colour_at(image, beside, ratio))
+    if late:
+        wrong.append(f"[peek] the page shows through the left peek the app has drawn, in {len(late)} of {len(after)} grabs")
+    if near(colour_at(image, inside, ratio), COLOUR):
+        wrong.append("[peek] the page is drawn over the left peek")
+    if not near(colour_at(image, beside, ratio), COLOUR):
+        wrong.append("[peek] the page is not drawn beside the left peek")
+    stays = app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible && !one.sent.away)") is True
+    measure("the page stays live under the left peek", stays)
+    if under and not stays:
+        wrong.append("[peek] the page steps away for the left peek")
+    return wrong, []
+def cleared_after_reload(app: App, hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path) -> list[str]:
+    middle = (hole[0] + (hole[2] - hole[0]) * 0.75, hole[1] + (hole[3] - hole[1]) * 0.8)
+    app.eval("setTimeout(() => location.reload(), 50); return true")
+    time.sleep(3)
+    until = time.monotonic() + 60
+    while time.monotonic() < until and app.eval("!!(window.orden && orden.workspace)") is not True:
+        time.sleep(1)
+    until = time.monotonic() + 40
+    while time.monotonic() < until and app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is not True:
+        time.sleep(0.5)
+    time.sleep(2)
+    app.eval("document.documentElement.style.opacity = '0'; return true")
+    time.sleep(1)
+    image = shot()
+    image.save(out / "reloaded-bare.png")
+    app.eval("document.documentElement.style.opacity = ''; return true")
+    seen = colour_at(image, middle, ratio)
+    measure("the hole after the app reloaded, its HTML at no opacity", seen)
+    measure("the engine lays the page under the app after the reload", app.eval("orden.pages.under"))
+    return [] if near(seen, COLOUR) else [f"[reload] the app's ground is not clear after it reloaded: {seen}"]
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
     parser.add_argument("--identifier", required=True)
     parser.add_argument("--out", required=True, type=pathlib.Path)
+    parser.add_argument("--under", action="store_true")
+    parser.add_argument("--fail", action="store_true")
+    parser.add_argument("--falls-back", action="store_true")
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
@@ -387,7 +517,7 @@ def main() -> int:
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))
-    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), "ORDEN_PAGES_UNDER": "1" if args.under or args.fail else "0", "ORDEN_PAGES_UNDER_FAIL": "1" if args.fail else "0"}
     as_before = moves_as_before(args.exe, args.identifier, secret, env)
     print(f"moves the app's page heard with no page under it: {as_before}", flush=True)
     carry_url = url.replace("/under", "/carry")
@@ -439,7 +569,7 @@ def main() -> int:
         print(f"the page with the window's HTML at no opacity: {colour_at(bare, middle, ratio)}", flush=True)
         top = page_edge(bare, middle, (0, -1), ratio)[1]
         left = page_edge(bare, (middle[0], hole[3] - 40), (-1, 0), ratio)[0]
-        if (left, top) != hole[:2]:
+        if (left, top) != hole[:2] and abs(left - hole[0]) < 40 and abs(top - hole[1]) < 40:
             print(f"the page itself begins at {(left, top)}, not at the pane's corner {hole[:2]}", flush=True)
             hole = (left, top, hole[2], hole[3])
         app.eval("document.documentElement.style.opacity = ''; return true")
@@ -463,6 +593,15 @@ def main() -> int:
             wrong.append(f"the app's layer is not drawn over the page: {colour_at(image, middle, ratio)}")
         if not near(colour_at(image, beside, ratio), COLOUR):
             wrong.append(f"the page is not drawn beside the app's layer: {colour_at(image, beside, ratio)}")
+        back = args.fail or args.falls_back
+        wanted = "false" if back else "true"
+        laid = app.until(f"(() => {{ const one = orden.pages.under; return String(one) === '{wanted}' ? one : null }})()", 15) is True
+        laid = app.eval("orden.pages.under") is True
+        measure("the engine lays the page under the app", laid)
+        if args.under and not back and not laid:
+            wrong.append("the engine did not lay the page under the app")
+        if back and laid:
+            wrong.append("the engine kept the page under the app though its ground does not clear")
         cuts = app.eval("orden.pages.cuts") is True
         still = app.eval("!!document.querySelector('.hole.still')") is True
         print(f"the engine cuts layers out of pages: {cuts}; the page is held as a still under the layer: {still}", flush=True)
@@ -518,6 +657,8 @@ def main() -> int:
             wrong.append("a click on the page beside the notice was not heard by the page")
         app.eval("document.getElementById('drive-notices')?.remove(); return true")
         time.sleep(1)
+        wrong += see_through(app, pane, hole, ratio, args.out, args.under)
+        wrong += first_frame(app, pane, hole, ratio, args.out, args.under)
         press(at(120, 60))
         typed("under")
         now = heard()
@@ -572,6 +713,11 @@ def main() -> int:
         unverified += beside_unverified
         wrong += overview(app, hole, ratio, args.out)
         wrong += picks(app, inner, hole, ratio, args.out)
+        if args.under and not (args.fail or args.falls_back):
+            wrong += cleared_after_reload(app, hole, ratio, args.out)
+        peeked, unseen = peek(app, process.pid, ratio, args.out, as_before, app.eval("orden.pages.under") is True)
+        wrong += peeked
+        unverified += unseen
     finally:
         refuser.stop()
         ended(process, gentle=True)
@@ -585,7 +731,7 @@ def main() -> int:
         print(f"::warning::{one}", flush=True)
     for one in wrong:
         print(f"::error::{one}", flush=True)
-    (args.out / "wrong.json").write_text(json.dumps({"wrong": wrong, "unverified": unverified}, indent=1), encoding="utf-8")
+    (args.out / "wrong.json").write_text(json.dumps({"wrong": wrong, "unverified": unverified, "measured": MEASURED}, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
 if __name__ == "__main__":

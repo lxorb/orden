@@ -5,6 +5,9 @@ use std::sync::{LazyLock, Mutex};
 use serde::Deserialize;
 use tauri::Webview;
 
+#[cfg(target_os = "macos")]
+mod under;
+
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
     pub x: f64,
@@ -134,14 +137,335 @@ const HOLLOWS: bool = cfg!(any(windows, target_os = "macos"));
 pub enum Layering {
     Cuts(bool),
     Hollows(&'static str),
+    Under(&'static str),
 }
 pub fn layering(label: &str) -> Layering {
-    let _ = label;
-    if HOLLOWS {
+    if lowered(label) {
+        Layering::Under("under")
+    } else if HOLLOWS {
         Layering::Hollows("hollows")
     } else {
         Layering::Cuts(CUTS)
     }
+}
+#[must_use]
+pub fn pages_under() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("ORDEN_PAGES_UNDER").is_some_and(|said| said == "1"))
+}
+static LOWERED: LazyLock<Mutex<std::collections::HashSet<String>>> = LazyLock::new(Mutex::default);
+fn lowered(label: &str) -> bool {
+    LOWERED.held().contains(label)
+}
+pub(crate) fn lay_under(label: &str, under: bool) {
+    let mut all = LOWERED.held();
+    if under {
+        all.insert(label.to_owned());
+    } else {
+        all.remove(label);
+    }
+}
+#[must_use]
+pub fn takes(cut: Option<&Cut>, x: f64, y: f64) -> bool {
+    cut.is_none_or(|cut| !cut.all && !cut.hollows.iter().any(|one| holds(one, x, y)))
+}
+fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
+    let (right, bottom) = (layer.x + layer.width, layer.y + layer.height);
+    if x < layer.x || y < layer.y || x >= right || y >= bottom {
+        return false;
+    }
+    let round = layer.radius.min(layer.width / 2.0).min(layer.height / 2.0).max(0.0);
+    let (nearest_x, nearest_y) =
+        (x.clamp(layer.x + round, right - round), y.clamp(layer.y + round, bottom - round));
+    (x - nearest_x).powi(2) + (y - nearest_y).powi(2) <= round * round
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Verdict {
+    Asking,
+    Clear,
+    Opaque,
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+static VERDICTS: LazyLock<Mutex<HashMap<String, Verdict>>> = LazyLock::new(Mutex::default);
+#[cfg_attr(not(target_os = "macos"), allow(clippy::unused_async))]
+pub async fn settle(own: &Webview, page: &str) {
+    #[cfg(target_os = "macos")]
+    if pages_under() {
+        let window = own.window();
+        let key = window.label().to_owned();
+        let known = VERDICTS.held().get(&key).copied();
+        let verdict = match known {
+            Some(Verdict::Clear) => Verdict::Clear,
+            Some(Verdict::Opaque | Verdict::Asking) => Verdict::Opaque,
+            None => {
+                VERDICTS.held().insert(key.clone(), Verdict::Asking);
+                let asking = own.clone();
+                let said = tauri::async_runtime::spawn_blocking(move || ground_cleared(&asking))
+                    .await
+                    .unwrap_or_else(|why| Err(why.to_string()));
+                let verdict = if said.is_ok() { Verdict::Clear } else { Verdict::Opaque };
+                VERDICTS.held().insert(key.clone(), verdict);
+                if let Err(why) = said {
+                    told_why(&format!("{why}; pages stay cut out"));
+                } else {
+                    let watching = window.clone();
+                    std::thread::spawn(move || watch(&watching, &key));
+                }
+                verdict
+            }
+        };
+        if verdict == Verdict::Clear {
+            use tauri::Manager as _;
+            if let Some(view) = own.app_handle().get_webview(page) {
+                let (sending, mut waiting) = tauri::async_runtime::channel::<()>(1);
+                let laying = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    under::lower(&laying, &view);
+                    let _ = sending.try_send(());
+                });
+                let _ = waiting.recv().await;
+            }
+        }
+    }
+    let _ = (own, page);
+}
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+pub(crate) fn at_once<T>(change: impl FnOnce() -> T) -> T {
+    use objc2::msg_send;
+    use objc2::runtime::{AnyClass, Bool};
+    let transaction = AnyClass::get(c"CATransaction");
+    if let Some(one) = transaction {
+        unsafe {
+            let () = msg_send![one, begin];
+            let () = msg_send![one, setDisableActions: Bool::YES];
+        }
+    }
+    let done = change();
+    if let Some(one) = transaction {
+        unsafe {
+            let () = msg_send![one, commit];
+            let () = msg_send![one, flush];
+        }
+    }
+    done
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn told_why(why: &str) {
+    orden_base::trace::mark(&format!("pages under the app: {why}"));
+    eprintln!("pages under the app: {why}");
+}
+static TOLD: LazyLock<Mutex<HashMap<String, std::time::Instant>>> = LazyLock::new(Mutex::default);
+pub fn answered(label: &str, said: Layering) {
+    let mut all = TOLD.held();
+    if said == Layering::Under("under") {
+        all.entry(label.to_owned()).or_insert_with(std::time::Instant::now);
+    } else {
+        all.remove(label);
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn told_long_enough(label: &str) -> bool {
+    TOLD.held().get(label).is_some_and(|at| at.elapsed() >= std::time::Duration::from_millis(600))
+}
+type Sizes = HashMap<String, (u32, u32, f64)>;
+static SIZES: LazyLock<Mutex<Sizes>> = LazyLock::new(Mutex::default);
+#[cfg(target_os = "macos")]
+fn watch(window: &tauri::Window, key: &str) {
+    use tauri::Manager as _;
+    for _ in 0..LOOKS {
+        std::thread::sleep(std::time::Duration::from_millis(800));
+        match looked(window) {
+            Sight::Unseen => {}
+            Sight::Through => return,
+            Sight::Unsure(why) => return told_why(&why),
+            Sight::Ground(why) => {
+                VERDICTS.held().insert(key.to_owned(), Verdict::Opaque);
+                told_why(&format!("{why}; pages go back to being cut out"));
+                let raising = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    for (name, page) in raising.app_handle().webviews() {
+                        if name.starts_with(crate::web_tabs::LABEL)
+                            && page.window().label() == raising.label()
+                            && lowered(&name)
+                        {
+                            lay_under(&name, false);
+                            under::raise(&page);
+                            reshape(&page);
+                        }
+                    }
+                });
+                return;
+            }
+        }
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn reshape(view: &Webview) {
+    let kept = given(|all| all.get(view.label()).map(|(cut, corner, _)| (cut.clone(), *corner)));
+    let sized = SIZES.held().get(view.label()).copied();
+    if let (Some((cut, corner)), Some((wide, tall, scale))) = (kept, sized) {
+        apply(view, cut, wide, tall, scale, corner);
+    }
+}
+#[cfg(target_os = "macos")]
+const LOOKS: usize = 12;
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+#[derive(Debug, PartialEq)]
+enum Sight {
+    Unseen,
+    Through,
+    Unsure(String),
+    Ground(String),
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+const SPOTS: [(f64, f64); 3] = [(0.5, 120.0), (0.25, 200.0), (0.75, 60.0)];
+#[cfg(target_os = "macos")]
+fn looked(window: &tauri::Window) -> Sight {
+    use tauri::Manager as _;
+    let page = window.app_handle().webviews().into_values().find(|page| {
+        page.label().starts_with(crate::web_tabs::LABEL)
+            && page.window().label() == window.label()
+            && lowered(page.label())
+            && told_long_enough(page.label())
+            && under::shown(page)
+    });
+    let Some(page) = page else {
+        return Sight::Unseen;
+    };
+    if !hole_drawn(window) {
+        return Sight::Unseen;
+    }
+    let Some((cut, wide)) = under::held(page.label()) else {
+        return Sight::Unseen;
+    };
+    let spots: Vec<(f64, f64)> = SPOTS
+        .iter()
+        .map(|&(across, down)| (wide * across, down))
+        .filter(|&(x, y)| takes(cut.as_ref(), x, y))
+        .collect();
+    if spots.is_empty() {
+        return Sight::Unseen;
+    }
+    let Some(seen) = under::looked_at(&page, spots.clone()) else {
+        return Sight::Unsure(
+            "the window could not be looked at, so the app's ground is trusted as the engine said"
+                .to_owned(),
+        );
+    };
+    let mut drawn = Vec::new();
+    for (x, y) in spots {
+        let shot = crate::engine::devtools::call(
+            &page,
+            None,
+            "Page.captureScreenshot",
+            &serde_json::json!({ "format": "png", "fromSurface": true,
+                "clip": { "x": x, "y": y, "width": 1, "height": 1, "scale": 1 } }),
+            std::time::Duration::from_secs(2),
+        );
+        match shot.ok().and_then(|shot| shot["data"].as_str().and_then(first_pixel)) {
+            Some(one) => drawn.push(one),
+            None => return Sight::Unsure("the page could not be looked at".to_owned()),
+        }
+    }
+    sight(&seen, &drawn)
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+const HOLE_SAID: &str = "document.documentElement.hasAttribute('data-underlay')";
+#[cfg(target_os = "macos")]
+fn hole_drawn(window: &tauri::Window) -> bool {
+    use tauri::Manager as _;
+    let Some(own) = window.app_handle().get_webview(window.label()) else {
+        return false;
+    };
+    let said = crate::engine::devtools::call(
+        &own,
+        None,
+        "Runtime.evaluate",
+        &serde_json::json!({ "expression": HOLE_SAID, "returnByValue": true }),
+        std::time::Duration::from_secs(2),
+    );
+    said.ok().and_then(|one| one.pointer("/result/value").and_then(serde_json::Value::as_bool))
+        == Some(true)
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn sight(seen: &[[u8; 3]], drawn: &[[u8; 3]]) -> Sight {
+    if seen.is_empty() || seen.len() != drawn.len() {
+        return Sight::Unsure("the window and the page gave no matching spots".to_owned());
+    }
+    let alike =
+        |one: &[u8; 3], other: &[u8; 3]| one.iter().zip(other).all(|(a, b)| a.abs_diff(*b) < 40);
+    if seen.iter().zip(drawn).all(|(one, other)| alike(one, other)) {
+        Sight::Through
+    } else {
+        Sight::Ground(format!("the window shows {seen:?} where the page under it draws {drawn:?}"))
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn first_pixel(data: &str) -> Option<[u8; 3]> {
+    use base64::Engine as _;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(data).ok()?;
+    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
+    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+    let mut reader = decoder.read_info().ok()?;
+    let mut pixels = vec![0; reader.output_buffer_size()?];
+    let info = reader.next_frame(&mut pixels).ok()?;
+    match info.color_type {
+        png::ColorType::Grayscale | png::ColorType::GrayscaleAlpha => Some([pixels[0]; 3]),
+        _ => Some([*pixels.first()?, *pixels.get(1)?, *pixels.get(2)?]),
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+const GROUND_SAID: &str = "[document.documentElement, document.body].every((one) => !one || getComputedStyle(one).backgroundColor === 'rgba(0, 0, 0, 0)')";
+#[cfg(target_os = "macos")]
+fn ground_cleared(own: &Webview) -> Result<(), String> {
+    let patience = std::time::Duration::from_secs(3);
+    let failing = std::env::var_os("ORDEN_PAGES_UNDER_FAIL").is_some_and(|said| said == "1");
+    let alone = std::env::var_os("ORDEN_PAGES_UNDER_GROUND").is_some_and(|said| said == "cef");
+    let cleared = if alone {
+        Ok(serde_json::Value::Null)
+    } else {
+        crate::engine::devtools::call(
+            own,
+            None,
+            "Emulation.setDefaultBackgroundColorOverride",
+            &serde_json::json!({ "color": { "r": 0, "g": 0, "b": 0, "a": 0 } }),
+            patience,
+        )
+    };
+    let looked = crate::engine::devtools::call(
+        own,
+        None,
+        "Runtime.evaluate",
+        &serde_json::json!({ "expression": GROUND_SAID, "returnByValue": true }),
+        patience,
+    );
+    judged(failing, cleared.map(|_| ()), looked)
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn judged(
+    failing: bool,
+    cleared: Result<(), String>,
+    looked: Result<serde_json::Value, String>,
+) -> Result<(), String> {
+    if failing {
+        return Err("asked to fail by ORDEN_PAGES_UNDER_FAIL".to_owned());
+    }
+    cleared.map_err(|why| format!("the app's ground could not be cleared: {why}"))?;
+    let looked = looked.map_err(|why| format!("the app's ground could not be read: {why}"))?;
+    if looked.pointer("/result/value") == Some(&serde_json::Value::Bool(true)) {
+        Ok(())
+    } else {
+        Err(format!("the app paints a ground of its own under its pages: {looked}"))
+    }
+}
+pub fn opacity(view: &Webview, opacity: f64) {
+    #[cfg(target_os = "macos")]
+    if lowered(view.label()) {
+        under::opacity(view, opacity);
+    }
+    let _ = (view, opacity);
 }
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
 type Given = HashMap<String, (Option<Cut>, Foot, Shape)>;
@@ -149,7 +473,13 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.held())
 }
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
-    let shape = shape_of(cut.as_ref(), wide, tall, scale, corner);
+    SIZES.held().insert(view.label().to_owned(), (wide, tall, scale));
+    let under = lowered(view.label());
+    #[cfg(target_os = "macos")]
+    if under {
+        under::cut(view, cut.clone(), f64::from(wide) / scale.max(0.01));
+    }
+    let shape = shape_of(drawn(under, cut.as_ref()), wide, tall, scale, corner);
     let label = view.label().to_string();
     let changed = given(|all| {
         let before = all.get(&label).and_then(|(_, _, one)| one.clone());
@@ -171,6 +501,18 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 }
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
+    SIZES.held().remove(label);
+    TOLD.held().remove(label);
+    lay_under(label, false);
+    #[cfg(target_os = "macos")]
+    under::forget(label);
+}
+fn drawn(under: bool, cut: Option<&Cut>) -> Option<&Cut> {
+    if under {
+        None
+    } else {
+        cut
+    }
 }
 #[cfg(target_os = "linux")]
 mod engine {
@@ -320,7 +662,7 @@ mod engine {
 
     use objc2::encode::{Encoding, RefEncode};
     use objc2::rc::Retained;
-    use objc2::runtime::{AnyClass, AnyObject, ClassBuilder, Sel};
+    use objc2::runtime::{AnyClass, AnyObject, Bool, ClassBuilder, Sel};
     use objc2::{msg_send, sel};
     use objc2_app_kit::NSView;
     use objc2_foundation::{NSPoint, NSRect, NSSize, NSString};
@@ -416,6 +758,10 @@ mod engine {
     }
     #[allow(unsafe_code)]
     fn mask(page: &NSView, whole: Option<&[NSRect]>, hollows: Option<&[(NSRect, f64)]>) {
+        crate::web_cut::at_once(|| mask_now(page, whole, hollows));
+    }
+    #[allow(unsafe_code)]
+    fn mask_now(page: &NSView, whole: Option<&[NSRect]>, hollows: Option<&[(NSRect, f64)]>) {
         unsafe {
             if whole.is_none() && hollows.is_none() {
                 let layer: *mut AnyObject = msg_send![page, layer];
@@ -432,7 +778,15 @@ mod engine {
             let Some(shapes) = AnyClass::get(c"CAShapeLayer") else {
                 return;
             };
-            let cut: *mut AnyObject = msg_send![shapes, layer];
+            let worn: *mut AnyObject = msg_send![layer, mask];
+            let reused = worn.as_ref().filter(|one| {
+                let kind: Bool = msg_send![*one, isKindOfClass: shapes];
+                kind.as_bool()
+            });
+            let cut: *mut AnyObject = match reused {
+                Some(one) => std::ptr::from_ref(one).cast_mut(),
+                None => msg_send![shapes, layer],
+            };
             let Some(cut) = cut.as_ref() else {
                 return;
             };
@@ -452,7 +806,9 @@ mod engine {
             let () = msg_send![cut, setPath: path.cast_const()];
             CGPathRelease(path);
             let () = msg_send![cut, setFillRule: &*NSString::from_str("even-odd")];
-            let () = msg_send![layer, setMask: cut];
+            if reused.is_none() {
+                let () = msg_send![layer, setMask: cut];
+            }
         }
     }
     fn within(page: &NSView, point: NSPoint) -> bool {
@@ -527,7 +883,7 @@ mod engine {
 }
 #[cfg(test)]
 mod tests {
-    use super::{lower, rectangles, shape_of, Cut, Foot, Hollow};
+    use super::{drawn, holds, lay_under, lower, rectangles, shape_of, takes, Cut, Foot, Hollow};
 
     fn cut(all: bool, hollows: &[(f64, f64, f64, f64, f64)]) -> Cut {
         let hollows = hollows
@@ -596,6 +952,77 @@ mod tests {
             serde_json::json!(false)
         };
         assert_eq!(said, wanted);
+    }
+    #[test]
+    fn a_page_laid_under_the_app_says_so_and_is_drawn_whole() {
+        lay_under("web-under-said", true);
+        let said = serde_json::to_value(super::layering("web-under-said")).expect("said");
+        assert_eq!(said, serde_json::json!("under"));
+        let menu = cut(false, &[(10.0, 20.0, 200.0, 100.0, 0.0)]);
+        assert_eq!(drawn(true, Some(&menu)), None);
+        assert_eq!(drawn(false, Some(&menu)), Some(&menu));
+        assert_eq!(
+            shape_of(drawn(true, Some(&menu)), 800, 600, 1.0, Foot::Even(10.0)),
+            Some(vec![(0, 0, 800, 600, 20, 20)])
+        );
+        super::uncut("web-under-said");
+        let said = serde_json::to_value(super::layering("web-under-said")).expect("said");
+        assert_ne!(said, serde_json::json!("under"));
+    }
+    #[test]
+    fn pages_stay_cut_out_unless_the_app_s_ground_is_clear() {
+        use serde_json::json;
+        let clear = || Ok(json!({ "result": { "type": "boolean", "value": true } }));
+        assert_eq!(super::judged(false, Ok(()), clear()), Ok(()));
+        assert!(super::judged(true, Ok(()), clear()).is_err());
+        assert!(super::judged(false, Err("no agent".into()), clear()).is_err());
+        assert!(super::judged(false, Ok(()), Err("no answer".into())).is_err());
+        let painted = Ok(json!({ "result": { "type": "boolean", "value": false } }));
+        assert!(super::judged(false, Ok(()), painted).is_err());
+        assert!(super::GROUND_SAID.contains("rgba(0, 0, 0, 0)"));
+    }
+    #[test]
+    fn pages_go_back_to_being_cut_out_when_the_window_shows_a_ground_where_the_page_draws() {
+        use super::{sight, Sight};
+        let magenta = [255, 0, 255];
+        assert_eq!(sight(&[magenta, [250, 4, 250]], &[magenta, magenta]), Sight::Through);
+        assert!(matches!(sight(&[[255, 255, 255]], &[magenta]), Sight::Ground(_)));
+        assert!(matches!(sight(&[], &[]), Sight::Unsure(_)));
+        assert!(matches!(sight(&[magenta], &[]), Sight::Unsure(_)));
+    }
+    #[test]
+    fn a_page_s_picture_gives_its_first_pixel() {
+        use base64::Engine as _;
+        let mut bytes = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut bytes, 1, 1);
+            encoder.set_color(png::ColorType::Rgba);
+            encoder.set_depth(png::BitDepth::Eight);
+            let mut writer = encoder.write_header().expect("a header");
+            writer.write_image_data(&[255, 0, 255, 255]).expect("a pixel");
+        }
+        let data = base64::engine::general_purpose::STANDARD.encode(&bytes);
+        assert_eq!(super::first_pixel(&data), Some([255, 0, 255]));
+        assert_eq!(super::first_pixel("not a picture"), None);
+    }
+    #[test]
+    fn a_page_under_the_app_takes_what_no_layer_is_over() {
+        assert!(takes(None, 10.0, 10.0));
+        let menu = cut(false, &[(100.0, 0.0, 200.0, 300.0, 0.0)]);
+        assert!(!takes(Some(&menu), 150.0, 10.0));
+        assert!(takes(Some(&menu), 50.0, 10.0));
+        assert!(takes(Some(&menu), 300.0, 10.0));
+        assert!(!takes(Some(&cut(true, &[])), 10.0, 10.0));
+        let card = Hollow { x: 0.0, y: 0.0, width: 100.0, height: 100.0, radius: 20.0 };
+        assert!(holds(&card, 50.0, 50.0));
+        assert!(holds(&card, 20.0, 2.0));
+        assert!(!holds(&card, 1.0, 1.0));
+        assert!(!holds(&card, 99.0, 99.0));
+        assert!(holds(
+            &Hollow { x: 0.0, y: 0.0, width: 10.0, height: 100.0, radius: 50.0 },
+            5.0,
+            50.0
+        ));
     }
     #[test]
     fn a_page_is_rounded_at_each_bottom_corner_its_card_rounds() {
