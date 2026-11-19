@@ -231,6 +231,35 @@ test('a window drawn before is drawn at once the next time, never waited on', as
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
 })
+test('a zoom moves only the camera while it turns, and lines and names are fitted to it once it rests', async () => {
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 400 && waiting.size; i++) frame()
+  const world = document.querySelector<HTMLElement>('.world')
+  const line = () => world?.style.getPropertyValue('--overview-line')
+  const rings = () =>
+    [...document.querySelectorAll<HTMLElement>('.ring')].map((one) => one.style.getPropertyValue('--overview-line'))
+  const before = line()
+  const ringsBefore = rings()
+  const at = () => world?.style.transform
+  const start = at()
+  for (let i = 0; i < 30; i++) {
+    if (i % 3 === 0)
+      document
+        .querySelector('.canvas')
+        ?.dispatchEvent(
+          new WheelEvent('wheel', { deltaY: 100, clientX: 400, clientY: 300, bubbles: true, cancelable: true }),
+        )
+    frame()
+    expect(line()).toBe(before)
+    expect(rings()).toEqual(ringsBefore)
+  }
+  expect(at()).not.toBe(start)
+  await idle(250)
+  flushSync()
+  expect(line()).not.toBe(before)
+})
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
