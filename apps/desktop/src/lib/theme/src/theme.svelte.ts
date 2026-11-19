@@ -123,7 +123,6 @@ export function builtIns(): ThemeInfo[] {
 }
 const LIGHT = '(prefers-color-scheme: light)'
 const MORE = '(prefers-contrast: more)'
-const SAYS_ITS_SCHEME = ['macos', 'windows']
 export function appSettings(): ThemeSetting[] {
   return [accentSetting()]
 }
@@ -219,7 +218,7 @@ class Themes {
         await shown.onThemeChanged(({ payload }) => {
           if (this.scheme === 'system') this.prefer(payload)
         })
-        if (this.scheme === 'system' && SAYS_ITS_SCHEME.includes(platform())) this.prefer(await shown.theme())
+        if (this.scheme === 'system') this.prefer(await shown.theme())
       })
       .catch((error: unknown) => {
         log('warn', `window appearance: ${error instanceof Error ? error.message : String(error)}`)

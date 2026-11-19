@@ -273,7 +273,7 @@ describe('the scheme, which is not a theme', () => {
   })
 })
 describe('the system turning light or dark while the app runs', () => {
-  test.each(['macos', 'windows'])(
+  test.each(['macos', 'windows', 'linux'])(
     'is heard from the window on %s, even when the page is never told',
     async (platform) => {
       host.platform = platform
@@ -289,13 +289,16 @@ describe('the system turning light or dark while the app runs', () => {
       expect(dataset.theme).toBe('light')
     },
   )
-  test('is read from the window once the app starts, when the page said otherwise', async () => {
-    host.platform = 'macos'
-    shown.scheme = 'light'
-    theme.init()
-    await settled(() => theme.current === 'light')
-    expect(dataset.theme).toBe('light')
-  })
+  test.each(['macos', 'windows', 'linux'])(
+    'is read from the window once the app starts on %s, when the page said otherwise',
+    async (platform) => {
+      host.platform = platform
+      shown.scheme = 'light'
+      theme.init()
+      await settled(() => theme.current === 'light')
+      expect(dataset.theme).toBe('light')
+    },
+  )
   test('leaves a chosen scheme alone, and is heard again on going back to the system', async () => {
     host.platform = 'macos'
     theme.init()
@@ -307,18 +310,6 @@ describe('the system turning light or dark while the app runs', () => {
     expect(theme.current).toBe('dark')
     systemTurns('light')
     expect(theme.current).toBe('light')
-  })
-  test('on Linux is heard from the window and the page, never from a window that cannot say and answers light', async () => {
-    host.platform = 'linux'
-    shown.scheme = 'light'
-    theme.init()
-    await settled(() => shown.heard.length > 0)
-    await settled()
-    expect(dataset.theme).toBe('dark')
-    systemPrefers(true)
-    expect(dataset.theme).toBe('light')
-    systemTurns('dark')
-    expect(dataset.theme).toBe('dark')
   })
 })
 describe('a theme with one scheme', () => {
