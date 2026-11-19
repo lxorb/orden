@@ -17,6 +17,7 @@ export interface Opening {
   forkOf?: string
   thread?: string
   without?: string[]
+  only?: string[]
 }
 interface Picture {
   mime: string
@@ -91,6 +92,7 @@ export async function openSession(opening: Opening, heard: (said: Heard) => void
       account: opening.agent.id,
       ...(opening.thread ? { thread: opening.thread } : {}),
       ...(opening.without?.length ? { without: opening.without } : {}),
+      ...(opening.only ? { only: opening.only } : {}),
     },
     output: channel,
   })

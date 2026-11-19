@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 import { firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
-import { noMoreThan, offeredKinds, sseJson, sseLines, talkable } from '../src/api'
+import { noMoreThan, offeredKinds, sseJson, sseLines, talkable, type Thread } from '../src/api'
 
 describe('the module stands on its own', () => {
   test('signing in to a local program answers no while no module lends a terminal', async () => {
@@ -42,5 +42,12 @@ describe('the providers', () => {
     const second = sseLines(first.rest, ':2}\n')
     expect(second.payloads.map((one) => sseJson(one))).toEqual([{ b: 2 }])
     expect(sseJson('[DONE]')).toBeNull()
+  })
+})
+describe('a thread', () => {
+  test('may name the only tools it can list and call, and an empty list names none', () => {
+    expectTypeOf<Thread['only']>().toEqualTypeOf<string[] | undefined>()
+    const none: Pick<Thread, 'only'> = { only: [] }
+    expect(none.only).toEqual([])
   })
 })
