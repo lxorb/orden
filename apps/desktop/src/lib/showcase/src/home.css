@@ -1,11 +1,11 @@
-html,
-body {
+html:root,
+:root > body {
   height: auto;
   overflow: visible;
   overflow-x: clip;
   overscroll-behavior: auto;
 }
-body {
+:root > body {
   background: var(--bg);
 }
 .track {
