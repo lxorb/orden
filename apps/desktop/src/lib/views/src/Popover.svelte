@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack, overlays } from '../../ui-kit/src/api'
+  import { closeOnBack, hang, overlays } from '../../ui-kit/src/api'
   import { fly, LAYER } from '../../platform/src/api'
 
   const {
@@ -32,8 +32,8 @@
 {#if open}
   <div
     class="pop orden-layer"
-    class:start
     bind:this={layer}
+    use:hang={{ gap: 4, align: start ? 'start' : 'end' }}
     role="dialog"
     aria-label={label}
     tabindex="-1"
@@ -51,10 +51,7 @@
 
 <style>
   .pop {
-    position: absolute;
-    top: calc(100% + 4px);
-    inset-inline-end: 0;
-    z-index: var(--z-popover);
+    z-index: var(--z-menu);
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -64,9 +61,5 @@
     overflow-y: auto;
     font-family: var(--font-ui);
     font-size: var(--text-row);
-  }
-  .pop.start {
-    inset-inline-end: auto;
-    inset-inline-start: 0;
   }
 </style>
