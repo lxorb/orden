@@ -41,7 +41,6 @@
   import { zoomTo as zoomPageTo } from './zoom'
   import { shownAddress } from '@orden/scan/visits'
   import { cardCorner, type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
-  import { fading, opacityOf, underlaid } from './underlay'
   import { seek, shut, sought } from './seek'
   import { watchScale, watchShifts } from './shifts'
   import { siteOf } from './permissions.svelte'
@@ -65,9 +64,8 @@
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
   const tab = untrack(() => shown)
   const LEAVING = 300
-  const UNSEEN = 0.01
   const page = $derived(pages.of(tab.id))
-  const pictured = $derived(page.shot !== null && (page.layering !== 'under' || page.heldAt !== null))
+  const pictured = $derived(page.shot !== null)
   let hole = $state<HTMLElement>()
   let marked = $state(true)
   $effect(() => {
@@ -125,7 +123,6 @@
   }
   let scheduled = 0
   let told = ''
-  let grounded = false
   const NO_ROOM = 'no room'
   let last: Rect | null = null
   let ready = false
@@ -141,19 +138,6 @@
       watching.unobserve(room)
       unshift()
     }
-  })
-  $effect(() => {
-    const room = hole
-    if (!room || page.layering !== 'under' || typeof MutationObserver !== 'function') return
-    const holding = new MutationObserver(now)
-    for (let at = room.parentElement; at; at = at.parentElement) {
-      holding.observe(at, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'hidden', 'inert'],
-      })
-    }
-    holding.observe(document.documentElement, { attributes: true })
-    return () => holding.disconnect()
   })
   $effect(() => heldOrLet(pages.still, page.heldAt))
   function heldOrLet(..._now: unknown[]) {
@@ -172,18 +156,11 @@
   function look() {
     if (!isDesktop || !ready || own) return
     if (page.heldAt || (pages.still && !page.shown)) {
-      if (!grounded) {
-        const at = page.heldAt !== null && page.layering === 'under' ? last : null
-        underlaid(tab.id, at && { ...at, corner: cardCorner(hole), cut: false })
-      }
-      grounded = true
       told = ''
       return
     }
-    grounded = false
     const box = rect()
     if (!box) {
-      underlaid(tab.id, null)
       if (last && told !== NO_ROOM) {
         told = NO_ROOM
         void pages.place(tab.id, last, false)
@@ -192,15 +169,10 @@
     }
     const covered = coverOf(box)
     const at = covered.box
-    const under = page.layering === 'under'
-    const opacity = !under || page.filling ? 1 : filling.by !== null ? 0 : hole ? opacityOf(hole) : 1
-    const seen = opacity > UNSEEN
-    const cut = under ? (seen ? covered.cut : ALL) : settled(covered.cut, page.shot !== null, pages.cuts)
+    const cut = settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
     const corner = page.filling ? ([0, 0] as const) : cardCorner(hole)
-    underlaid(tab.id, under && page.live && seen ? { ...at, corner } : null)
-    if (under && hole && fading(hole)) follow()
     if (visible) leaving = 0
     else if (overlays.depth === 0) {
       if (leaving === 0) leaving = Date.now() + LEAVING
@@ -208,13 +180,12 @@
     }
     if (!visible && hole && moving(hole)) follow()
     const frame = frameOf()
-    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio, opacity, corner])
+    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio, corner])
     if (said === told && page.live) return
     told = said
     page.space = space
     if (!page.live) page.own = apart
-    if (under) void pages.show(tab.id, address, at, true, { cut, frame, opacity, corner })
-    else void pages.show(tab.id, address, at, visible, { cut, frame, corner })
+    void pages.show(tab.id, address, at, visible, { cut, frame, corner })
   }
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
   const own = $derived(isOwnPage(address))
@@ -288,7 +259,6 @@
         void invoke('web_unfill', { tab: tab.id }).catch(() => undefined)
         void filling.give(tab.id)
       }
-      underlaid(tab.id, null)
       if (last) pages.hide(tab.id, last)
     }
   })
@@ -679,7 +649,6 @@
       class:acted={worn !== null}
       class:resting={worn?.stopped}
       style:--agent={worn?.colour}
-      class:under={page.layering === 'under' && page.live && page.heldAt === null}
       class:still={pictured}
       style:background-image={pictured ? `url(${page.shot})` : 'none'}
       bind:this={hole}
@@ -745,33 +714,6 @@
     flex: 1;
     min-height: 0;
     background: var(--bg);
-  }
-  .hole.under {
-    background: none;
-  }
-  :global(html[data-underlay]),
-  :global([data-underlay]) {
-    background: none !important;
-  }
-  :global(:not(html)[data-underlay])::before {
-    content: '';
-    position: fixed;
-    left: var(--underlay-x);
-    top: var(--underlay-y);
-    width: var(--underlay-w);
-    height: var(--underlay-h);
-    z-index: var(--z-under);
-    pointer-events: none;
-    clip-path: var(--underlay-clip);
-  }
-  :global(body[data-underlay])::before {
-    background: var(--window-ground);
-  }
-  :global(main[data-underlay])::before {
-    background: var(--shell-ground);
-  }
-  :global(main > .middle[data-underlay])::before {
-    background: var(--chrome-ground);
   }
   .waiting {
     margin: 0;
