@@ -1,6 +1,6 @@
 export { chooseTarget, deliver, download, handOver, type Payload, writeFile } from './save'
 export { saveCopy } from './copy'
-export { reveal, showLabel } from './reveal'
+export { remotePath, reveal, showLabel } from './reveal'
 export { printInFrame, printsInFrame } from './frame'
 export { claimName, fileNameFor, stemOf } from './naming'
 export {
