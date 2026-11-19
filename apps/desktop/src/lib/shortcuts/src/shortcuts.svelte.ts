@@ -23,6 +23,7 @@ import {
   SHORTCUTS,
   type Shortcut,
   SYSTEM_KEYS,
+  BORROWED_KEYS,
 } from './registry'
 import { saveFront } from '../../save-place/src/api'
 import { ran } from '../../usage/src/api'
@@ -230,21 +231,9 @@ class Shortcuts {
     return true
   }
 }
-const EXPLORER_TREE_KEYS: ReadonlySet<string> = new Set([
-  'tree.delete',
-  'tree.deselect',
-  'tree.down',
-  'tree.extend-down',
-  'tree.extend-up',
-  'tree.open',
-  'tree.rename',
-  'tree.select-all',
-  'tree.toggle',
-  'tree.up',
-])
 function placesOf(id: string): string[] {
   const prefix = id.split('.')[0] ?? id
-  return EXPLORER_TREE_KEYS.has(id) ? [prefix, 'explorer'] : [prefix]
+  return [prefix, ...Object.keys(BORROWED_KEYS).filter((list) => BORROWED_KEYS[list]?.has(id))]
 }
 function usable(value: unknown): KeyOverrides {
   if (!isRecord(value)) return {}

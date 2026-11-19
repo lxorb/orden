@@ -51,7 +51,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'format', label: () => 'Format' },
   { id: 'paragraph', label: () => 'Paragraph' },
   { id: 'view', label: () => 'View' },
-  { id: 'panel', label: () => 'File list' },
+  { id: 'panel', label: () => 'Files and todos' },
   { id: 'canvas', label: () => 'Canvas' },
   { id: 'pages', label: () => 'Pages' },
   { id: 'table', label: () => 'Tables' },
@@ -516,16 +516,41 @@ export function showTab(at: number | 'last') {
   const tab = at === 'last' ? tabs.at(-1) : tabs[at]
   if (tab) workspace.activate(tab.id)
 }
+export const BORROWED_KEYS: Readonly<Record<string, ReadonlySet<string>>> = {
+  explorer: new Set([
+    'tree.delete',
+    'tree.deselect',
+    'tree.down',
+    'tree.extend-down',
+    'tree.extend-up',
+    'tree.open',
+    'tree.rename',
+    'tree.select-all',
+    'tree.toggle',
+    'tree.up',
+  ]),
+  todos: new Set([
+    'tree.delete',
+    'tree.delete.alt',
+    'tree.deselect',
+    'tree.down',
+    'tree.extend-down',
+    'tree.extend-up',
+    'tree.select-all',
+    'tree.toggle',
+    'tree.up',
+  ]),
+}
 const PANEL_ENTRIES: Shortcut[] = [
-  panel('panel', 'tree.select-all', 'Select every file', 'Mod-a'),
+  panel('panel', 'tree.select-all', 'Select every file or todo', 'Mod-a'),
   panel('panel', 'tree.deselect', 'Clear the selection', 'Escape'),
-  panel('panel', 'tree.delete', 'Delete the selected files', 'Delete', { mac: 'Mod-Backspace' }),
-  panel('panel', 'tree.delete.alt', 'Delete the selected files', 'Backspace', {
+  panel('panel', 'tree.delete', 'Delete the selected files or todos', 'Delete', { mac: 'Mod-Backspace' }),
+  panel('panel', 'tree.delete.alt', 'Delete the selected files or todos', 'Backspace', {
     mac: 'Mod-Delete',
     alias: true,
   }),
-  panel('panel', 'tree.down', 'Next file', 'ArrowDown'),
-  panel('panel', 'tree.up', 'Previous file', 'ArrowUp'),
+  panel('panel', 'tree.down', 'Next file or todo', 'ArrowDown'),
+  panel('panel', 'tree.up', 'Previous file or todo', 'ArrowUp'),
   panel('panel', 'tree.into', 'Show what it holds', 'ArrowRight'),
   panel('panel', 'tree.out', 'Hide what it holds', 'ArrowLeft'),
   panel('panel', 'tree.open', 'Open', 'Enter'),
