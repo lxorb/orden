@@ -10,8 +10,8 @@ use orden_web_engine::{
     internal, once_built, one_at_a_time, overlay_scrollbars, signs_in, switches, tab_may_open,
     with_extensions, Becomes, Cookie, Download, Edge, Embed, EngineSettings, NativeWindow,
     NoExtensions, Outbox, Picture, Plain, Profiles, SandboxPolicy, Sending, StoreName, Url,
-    WebEngine, WebPage, WindowSystem, APP_PROFILE, ENGINE_SWIPE, LONGEST_STORE_NAME,
-    LOWEST_DEBUG_PORT, ROOT, STORE_PROFILE,
+    WebEngine, WebPage, WindowSystem, APP_PROFILE, DOWNLOAD_BUBBLE, ENGINE_SWIPE,
+    LONGEST_STORE_NAME, LOWEST_DEBUG_PORT, ROOT, STORE_PROFILE,
 };
 
 struct FakePage {
@@ -338,8 +338,11 @@ fn the_settings_switch_the_engine_s_swipe_off_on_every_desktop() {
     let bars = overlay_scrollbars();
     assert_eq!(bars.is_some(), cfg!(any(target_os = "linux", windows)));
     assert_eq!(settings.enabled_features, bars.map(str::to_owned).into_iter().collect::<Vec<_>>());
+    for bubble in DOWNLOAD_BUBBLE {
+        assert!(settings.disabled_features.contains(&bubble.to_owned()), "{bubble}");
+    }
     let more = settings.clone().disabling(feature).enabling("Probe");
-    assert_eq!(more.disabled_features.len(), 1);
+    assert_eq!(more.disabled_features.len(), 1 + DOWNLOAD_BUBBLE.len());
     assert!(more.enabled_features.contains(&"Probe".to_owned()));
 }
 #[test]

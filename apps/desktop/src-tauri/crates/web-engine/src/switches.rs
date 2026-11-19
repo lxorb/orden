@@ -4,6 +4,7 @@ pub type Switch = (String, Option<String>);
 pub const ENGINE_SWIPE: (&str, &str, &str) =
     ("TouchpadOverscrollHistoryNavigation", "overscroll-history-navigation", "0");
 pub const LOAD_EXTENSION_OFF: &str = "DisableLoadExtensionCommandLineSwitch";
+pub const DOWNLOAD_BUBBLE: [&str; 2] = ["DownloadBubble", "DownloadBubbleV2"];
 pub const LOAD_EXTENSION: &str = "load-extension";
 #[must_use]
 pub fn overlay_scrollbars() -> Option<&'static str> {

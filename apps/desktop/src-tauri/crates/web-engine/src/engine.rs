@@ -49,7 +49,10 @@ impl Default for EngineSettings {
             sandbox: SandboxPolicy::Auto,
             remote_debugging: None,
             switches: vec![(swipe_switch.to_owned(), Some(swipe_off.to_owned()))],
-            disabled_features: vec![swipe_feature.to_owned()],
+            disabled_features: std::iter::once(swipe_feature)
+                .chain(crate::switches::DOWNLOAD_BUBBLE)
+                .map(str::to_owned)
+                .collect(),
             enabled_features: overlay_scrollbars().map(str::to_owned).into_iter().collect(),
             deep_link_schemes: vec!["orden".to_owned()],
             root_cache: None,

@@ -528,3 +528,23 @@ fn allow_content_settings(
     );
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn a_request_the_app_has_no_answer_for_is_asked_in_the_app_s_names() {
+    let notify = PermissionType::CEF_PERMISSION_TYPE_NOTIFICATIONS as u32;
+    let place = PermissionType::CEF_PERMISSION_TYPE_GEOLOCATION as u32;
+    assert_eq!(asks_of(notify, permission_kind), Some(vec!["notifications"]));
+    let mut both = asks_of(notify | place, permission_kind).unwrap();
+    both.sort_unstable();
+    assert_eq!(both, ["location", "notifications"]);
+    assert_eq!(
+      asks_of(AUDIO_CAPTURE | VIDEO_CAPTURE, media_permission_kind),
+      Some(vec!["microphone", "camera"])
+    );
+    assert_eq!(asks_of(0, permission_kind), None);
+  }
+}

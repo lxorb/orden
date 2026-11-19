@@ -19,7 +19,7 @@ pub use policy::{
 pub use profiles::{Profiles, StoreName, APP_PROFILE, LONGEST_STORE_NAME, ROOT, STORE_PROFILE};
 pub use sequence::{handed_out, once_built, one_at_a_time, Outbox, Sending};
 pub use switches::{
-    from_run, overlay_scrollbars, switches, with_extensions, Switch, ENGINE_SWIPE, LOAD_EXTENSION,
-    LOAD_EXTENSION_OFF,
+    from_run, overlay_scrollbars, switches, with_extensions, Switch, DOWNLOAD_BUBBLE, ENGINE_SWIPE,
+    LOAD_EXTENSION, LOAD_EXTENSION_OFF,
 };
 pub use url::Url;
