@@ -18,6 +18,7 @@ import numpy
 from PIL import Image, ImageStat
 from fresh_app import ended, fresh
 from native_app import App, endpoint
+import overview_pick
 
 COLOUR = (255, 0, 255)
 PAGE = b"<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%;background:#ff00ff}</style>"
@@ -372,6 +373,44 @@ SEE_THROUGH = """(() => {
 def barred(name: str, ground: str) -> list[str]:
     print(f"[{name}] the bar over the overview: {ground}", flush=True)
     return [] if ground == "clear" else [f"[{name}] the bar over the overview is not see-through: {ground}"]
+def picks(app: App, desk: Desk, hole: dict[str, float], out: pathlib.Path, scale: float) -> list[str]:
+    tabs = app.eval(overview_pick.TABS)
+    if not isinstance(tabs, dict) or not tabs.get("mate"):
+        return [f"no note beside the web tab to pick: {tabs}"]
+    time.sleep(1.5)
+    web, mate, other = tabs["web"], tabs["mate"], tabs.get("other")
+    steps = [("pick-note", mate, web, False), ("pick-web", web, mate, True)]
+    if other:
+        steps.append(("pick-beside", other, web, True))
+    wrong: list[str] = []
+    rows: list[dict[str, Any]] = []
+    for name, chosen, left, page in steps:
+        desk.forward()
+        box = desk.box()
+        pressed: list[tuple[float, str]] = []
+        how = toggled(app, desk, True, pressed)
+        time.sleep(1.8)
+        at = app.eval(overview_pick.bubble(chosen["name"]))
+        if not isinstance(at, dict):
+            wrong.append(f"[{name}] no window of {chosen['name']} in the overview, opened by {how}: {at}")
+            toggled(app, desk, False, pressed)
+            time.sleep(1.5)
+            continue
+        app.eval(overview_pick.LOG)
+        film = Film(box)
+        time.sleep(0.3)
+        clicked = time.time() * 1000
+        desk.click(box[0] + round(at["x"] * scale), box[1] + round(at["y"] * scale))
+        time.sleep(2.2)
+        frames = film.stop()
+        log = app.eval(overview_pick.TAKE)
+        spot = (hole["x"] * scale, hole["y"] * scale, (hole["x"] + hole["width"]) * scale, (hole["y"] + hole["height"]) * scale)
+        said, row = overview_pick.judged(name, frames, log, clicked, spot, chosen["id"], left["id"], page, out)
+        wrong += said
+        rows.append(row)
+        time.sleep(1)
+    (out / "picks.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    return wrong
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -443,6 +482,7 @@ def main() -> int:
             print(f"the page's hole: {hole}", flush=True)
             wrong += round_trip(app, desk, "web", hole, args.out, scale)
             wrong += round_trip(app, desk, "web-again", hole, args.out, scale)
+            wrong += picks(app, desk, hole, args.out, scale)
     finally:
         ended(process, gentle=True)
         site.shutdown()

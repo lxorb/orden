@@ -26,6 +26,7 @@ from PIL import Image, ImageChops, ImageGrab, ImageStat
 from carry_page import PAGE as CARRY_PAGE, carried
 from fresh_app import ended, fresh
 from native_app import App, config_of, endpoint, known
+import overview_pick
 
 COLOUR = (255, 0, 255)
 LAYER = (0, 160, 0)
@@ -268,6 +269,41 @@ def overview(app: App, hole: tuple[float, float, float, float], ratio: float, ou
         if sum(near(colour_at(one, at, ratio), COLOUR) for at in corners) >= 3:
             wrong.append(f"[overview] frame {index}: the page is drawn over the overview, {open:.2f} out")
     print(f"[overview] {len(frames)} frames, open {[None if o is None else round(o, 2) for o in opens]}", flush=True)
+    times = [one[0] for one in log] if isinstance(log, list) else []
+    gaps = [later - before for before, later in zip(times, times[1:])]
+    print(f"[overview] longest gap between the app's frames: {max(gaps, default=0)} ms", flush=True)
+    return wrong
+def picks(app: App, inner: dict[str, float], hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path) -> list[str]:
+    tabs = app.eval(overview_pick.TABS)
+    if not isinstance(tabs, dict) or not tabs.get("mate"):
+        return [f"no note beside the web tab to pick: {tabs}"]
+    time.sleep(1.5)
+    web, mate = tabs["web"], tabs["mate"]
+    wrong: list[str] = []
+    rows: list[dict[str, Any]] = []
+    for name, chosen, left, page in (("pick-note", mate, web, False), ("pick-web", web, mate, True)):
+        app.eval("document.querySelector('button.orden-glyph.overview')?.click(); return true")
+        time.sleep(2.5)
+        at = app.eval(overview_pick.bubble(chosen["name"]))
+        if not isinstance(at, dict):
+            wrong.append(f"[{name}] no window of {chosen['name']} in the overview: {at}")
+            app.eval("document.querySelector('button.orden-glyph.overview')?.click(); return true")
+            time.sleep(1.5)
+            continue
+        app.eval(overview_pick.LOG)
+        film = Film()
+        time.sleep(0.3)
+        clicked = time.time() * 1000
+        press((inner["x"] + at["x"], inner["y"] + at["y"]))
+        time.sleep(2.6)
+        frames = film.stop()
+        log = app.eval(overview_pick.TAKE)
+        spot = tuple(one * ratio for one in hole)
+        said, row = overview_pick.judged(name, frames, log, clicked, spot, chosen["id"], left["id"], page, out)  # type: ignore[arg-type]
+        wrong += said
+        rows.append(row)
+        time.sleep(1)
+    (out / "picks.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     return wrong
 INNER = (
     "const i = window.__TAURI_INTERNALS__;"
@@ -535,6 +571,7 @@ def main() -> int:
         wrong += beside_wrong
         unverified += beside_unverified
         wrong += overview(app, hole, ratio, args.out)
+        wrong += picks(app, inner, hole, ratio, args.out)
     finally:
         refuser.stop()
         ended(process, gentle=True)
