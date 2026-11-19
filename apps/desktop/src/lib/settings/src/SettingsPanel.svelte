@@ -58,7 +58,7 @@
   import { modes } from '../../modes/src/api'
   import { workspace } from '../../workspace/src/api'
   import { dur, fly, slide } from '../../platform/src/api'
-  import { waited } from '../../platform/src/api'
+  import { rootedAt, waited } from '../../platform/src/api'
 
   let refused = $state<string | null>(null)
   let leaving = $state(false)
@@ -66,6 +66,8 @@
   const GROUPS = $derived(sectionGroups())
   const SECTIONS = $derived(GROUPS.flat())
   const titleOf = (id: SettingsSectionId) => SECTIONS.find((one) => one.id === id)?.label ?? ''
+  const spaceName = $derived(rootedAt(workspace.spaces, settings.space ?? workspace.activeSpace?.root ?? null)?.name)
+  const headOf = (id: SettingsSectionId) => (id === 'space' && spaceName ? spaceName : titleOf(id))
   const SIDE_BY_SIDE = 560
   let width = $state(0)
   const stacked = $derived(viewport.touch || viewport.narrow || (width > 0 && width < SIDE_BY_SIDE))
@@ -305,7 +307,7 @@
         <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
       </button>
 
-      <h2>{titleOf(settings.section)}</h2>
+      <h2>{headOf(settings.section)}</h2>
     </header>
   {/if}
 
@@ -372,7 +374,7 @@
         {#key settings.section}
           <div class="pane" in:arrive>
             {#if !stacked}
-              <h2>{titleOf(settings.section)}</h2>
+              <h2>{headOf(settings.section)}</h2>
             {/if}
             {@render pane()}
           </div>
@@ -764,6 +766,7 @@
   {:else if settings.section === 'online' || settings.section === 'remote' || settings.section === 'archived'}
     {@render parts(settings.section)}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
+    {@render parts('space')}
     {#await import('./SpacePane.svelte') then pane}
       <pane.default />
     {/await}

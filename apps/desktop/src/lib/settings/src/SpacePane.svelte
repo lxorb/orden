@@ -16,14 +16,13 @@
   import { canWriteAt } from '../../sharing/src/api'
   import { protection } from '../../protect/src/api'
   import { settings } from './window.svelte'
-  import { folderOf, rootedAt, samePath } from '../../platform/src/api'
+  import { folderOf, samePath } from '../../platform/src/api'
   import { joinPath } from '../../platform/src/api'
   import { noteText, workspace, writeNoteText } from '../../workspace/src/api'
   import { writeFile } from '../../file-writes/src/api'
   import { type FieldHands, InstructionsField as Field } from './instructions-field.svelte'
 
   const root = $derived(settings.space ?? workspace.activeSpace?.root ?? null)
-  const name = $derived(rootedAt(workspace.spaces, root)?.name ?? '')
   const shut = $derived(root !== null && protection.locked(joinPath(root, AGENTS_NAME)))
   async function nudged() {
     const { sync } = await import('../../sync-store/src/api')
@@ -86,9 +85,7 @@
 {#if field}
   <div class="card">
     <label class="orden-setting setting tall">
-      <span class="name"
-        >Agent instructions{#if name}<small>{name}</small>{/if}</span
-      >
+      <span class="name">Agent instructions</span>
       <textarea
         bind:this={box}
         rows="12"
@@ -116,11 +113,6 @@
   }
   .name {
     flex: 1;
-  }
-  small {
-    margin-inline-start: var(--space-2);
-    color: var(--muted);
-    font-size: var(--text-sm);
   }
   textarea {
     flex: 1 0 100%;
