@@ -123,6 +123,7 @@ export function builtIns(): ThemeInfo[] {
 }
 const LIGHT = '(prefers-color-scheme: light)'
 const MORE = '(prefers-contrast: more)'
+const SAYS_ITS_SCHEME = ['macos', 'windows']
 export function appSettings(): ThemeSetting[] {
   return [accentSetting()]
 }
@@ -190,10 +191,8 @@ class Themes {
     this.owns = owns
     const light = window.matchMedia(LIGHT)
     this.preferred = light.matches ? 'light' : 'dark'
-    light.addEventListener('change', (event) => {
-      this.preferred = event.matches ? 'light' : 'dark'
-      if (this.scheme === 'system') this.apply()
-    })
+    light.addEventListener('change', (event) => this.prefer(event.matches ? 'light' : 'dark'))
+    this.hearWindow()
     if (owns) {
       const unwritten = storedText(STORAGE_KEY) === null
       const first = this.restoreChoice()
@@ -204,6 +203,27 @@ class Themes {
     this.apply()
     this.listed = this.reload({ atLaunch: true }).catch(() => undefined)
     this.hearOthers()
+  }
+  private prefer(scheme: Scheme | null) {
+    if (scheme === null || scheme === this.preferred) return
+    this.preferred = scheme
+    if (this.scheme === 'system') this.apply()
+  }
+  private windowHeardOn: Window | null = null
+  private hearWindow() {
+    if (this.windowHeardOn === window || !isDesktop) return
+    this.windowHeardOn = window
+    void import('@tauri-apps/api/window')
+      .then(async ({ getCurrentWindow }) => {
+        const shown = getCurrentWindow()
+        await shown.onThemeChanged(({ payload }) => {
+          if (this.scheme === 'system') this.prefer(payload)
+        })
+        if (this.scheme === 'system' && SAYS_ITS_SCHEME.includes(platform())) this.prefer(await shown.theme())
+      })
+      .catch((error: unknown) => {
+        log('warn', `window appearance: ${error instanceof Error ? error.message : String(error)}`)
+      })
   }
   private heardOn: Window | null = null
   private hearOthers() {
@@ -642,7 +662,10 @@ class Themes {
     if (told === this.toldWindow) return
     this.toldWindow = told
     void import('@tauri-apps/api/window')
-      .then(({ getCurrentWindow }) => getCurrentWindow().setTheme(told))
+      .then(async ({ getCurrentWindow }) => {
+        await getCurrentWindow().setTheme(told)
+        if (told === null && this.scheme === 'system') this.prefer(await getCurrentWindow().theme())
+      })
       .catch((error: unknown) => {
         log('warn', `window appearance: ${error instanceof Error ? error.message : String(error)}`)
       })

@@ -108,6 +108,28 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 vi.mock('../../ui-kit/src/insets', () => ({ tintSystemBars: () => undefined }))
+const shown = vi.hoisted(() => ({
+  scheme: null as 'light' | 'dark' | null,
+  told: [] as ('light' | 'dark' | null)[],
+  heard: [] as ((event: { payload: 'light' | 'dark' }) => void)[],
+}))
+vi.mock('@tauri-apps/api/window', () => ({
+  getCurrentWindow: () => ({
+    theme: () => Promise.resolve(shown.scheme ?? (media.light ? 'light' : 'dark')),
+    setTheme: (told: 'light' | 'dark' | null) => {
+      shown.told.push(told)
+      return Promise.resolve()
+    },
+    onThemeChanged: (heard: (event: { payload: 'light' | 'dark' }) => void) => {
+      shown.heard.push(heard)
+      return Promise.resolve(() => undefined)
+    },
+  }),
+}))
+function systemTurns(scheme: 'light' | 'dark') {
+  shown.scheme = scheme
+  for (const heard of shown.heard) heard({ payload: scheme })
+}
 const { chosenFirst, theme } = await import('./theme.svelte')
 const { stamped, stampOf } = await import('./stamp')
 await Promise.all([
@@ -155,6 +177,9 @@ beforeEach(() => {
   folder.reading = true
   host.platform = 'windows'
   host.called = []
+  shown.scheme = null
+  shown.told = []
+  shown.heard = []
   theme.files = []
   theme.id = 'default'
   theme.scheme = 'system'
@@ -245,6 +270,55 @@ describe('the scheme, which is not a theme', () => {
     expect(theme.id).toBe('file:rose')
     expect(theme.scheme).toBe('light')
     expect(theme.current).toBe('light')
+  })
+})
+describe('the system turning light or dark while the app runs', () => {
+  test.each(['macos', 'windows'])(
+    'is heard from the window on %s, even when the page is never told',
+    async (platform) => {
+      host.platform = platform
+      shown.scheme = 'light'
+      media.light = true
+      theme.init()
+      await settled(() => shown.heard.length > 0)
+      expect(theme.current).toBe('light')
+      systemTurns('dark')
+      expect(theme.current).toBe('dark')
+      expect(dataset.theme).toBe('dark')
+      systemTurns('light')
+      expect(dataset.theme).toBe('light')
+    },
+  )
+  test('is read from the window once the app starts, when the page said otherwise', async () => {
+    host.platform = 'macos'
+    shown.scheme = 'light'
+    theme.init()
+    await settled(() => theme.current === 'light')
+    expect(dataset.theme).toBe('light')
+  })
+  test('leaves a chosen scheme alone, and is heard again on going back to the system', async () => {
+    host.platform = 'macos'
+    theme.init()
+    await settled(() => shown.heard.length > 0)
+    theme.setScheme('light')
+    systemTurns('dark')
+    expect(theme.current).toBe('light')
+    theme.setScheme('system')
+    expect(theme.current).toBe('dark')
+    systemTurns('light')
+    expect(theme.current).toBe('light')
+  })
+  test('on Linux is heard from the window and the page, never from a window that cannot say and answers light', async () => {
+    host.platform = 'linux'
+    shown.scheme = 'light'
+    theme.init()
+    await settled(() => shown.heard.length > 0)
+    await settled()
+    expect(dataset.theme).toBe('dark')
+    systemPrefers(true)
+    expect(dataset.theme).toBe('light')
+    systemTurns('dark')
+    expect(dataset.theme).toBe('dark')
   })
 })
 describe('a theme with one scheme', () => {
