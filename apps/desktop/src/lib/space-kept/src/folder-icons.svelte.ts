@@ -5,12 +5,11 @@ import {
   within,
   isRecord,
   isString,
-  keepJson,
-  filledIn,
   type Folded,
   type Folding,
   meet,
-  readSpaces,
+  spacesOf,
+  Kept,
   without,
   withOrWithout,
 } from '../../platform/src/api'
@@ -31,13 +30,13 @@ export function folderIconMap(value: unknown): Record<string, string> {
   }
   return out
 }
-interface Kept extends Folded {
+interface Held extends Folded {
   icons: Record<string, string>
   colors: Record<string, string>
   sent: boolean
 }
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({
+function read(saved: unknown): Record<string, Held> {
+  return spacesOf(saved, (one) => ({
     icons: folderIconMap(one.icons),
     colors: folderIconMap(one.colors),
     sent: one.sent !== false,
@@ -47,7 +46,7 @@ function same(one: Record<string, string>, other: Record<string, string>): boole
   const keys = Object.keys(one)
   return keys.length === Object.keys(other).length && keys.every((key) => one[key] === other[key])
 }
-const MAPS: Folding<Pick<Kept, 'icons' | 'colors'>> = {
+const MAPS: Folding<Pick<Held, 'icons' | 'colors'>> = {
   fold: (theirs, mine) => ({
     icons: { ...theirs.icons, ...mine.icons },
     colors: { ...theirs.colors, ...mine.colors },
@@ -55,12 +54,17 @@ const MAPS: Folding<Pick<Kept, 'icons' | 'colors'>> = {
   same: (one, other) => same(one.icons, other.icons) && same(one.colors, other.colors),
 }
 export class FolderIcons {
-  private spaces = $state<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read)
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
   constructor(private readonly root: () => string | null) {}
   reread(): void {
-    const grown = filledIn(this.spaces, read())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
   of(root: string): Record<string, string> {
     return this.spaces[root]?.icons ?? {}
@@ -201,6 +205,6 @@ export class FolderIcons {
     this.write()
   }
   private write() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
   }
 }

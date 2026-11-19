@@ -4,10 +4,9 @@ import {
   within,
   isNumber,
   isRecord,
-  keepJson,
-  filledIn,
   type Folded,
-  readSpaces,
+  spacesOf,
+  Kept,
   without,
   coveredBy,
 } from '../../platform/src/api'
@@ -30,21 +29,26 @@ export function archiveMap(value: unknown): ArchiveMap {
 function under(path: string, key: string, root: string): boolean {
   return !!key && within(key, path, root) !== null
 }
-interface Kept extends Folded {
+interface Held extends Folded {
   map: ArchiveMap
 }
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({ map: archiveMap(one.map) }))
+function read(saved: unknown): Record<string, Held> {
+  return spacesOf(saved, (one) => ({ map: archiveMap(one.map) }))
 }
 const EMPTY: ArchiveMap = {}
 export class Archive {
-  private spaces = $state.raw<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read)
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   private live = new WeakMap<ArchiveMap, ReadonlySet<string>>()
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
   constructor(private readonly root: () => string | null) {}
   reread(): void {
-    const grown = filledIn(this.spaces, read())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
   of(root: string): ArchiveMap {
     return this.spaces[root]?.map ?? EMPTY
@@ -129,6 +133,6 @@ export class Archive {
     this.pushing[root] = setTimeout(() => void import('./archive-map').then(({ send }) => send(this, root)), 700)
   }
   private write() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
   }
 }

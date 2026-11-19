@@ -3,12 +3,11 @@ import {
   isNumber,
   isRecord,
   isString,
-  keepJson,
-  filledIn,
   type Folded,
   type Folding,
   meet,
-  readSpaces,
+  spacesOf,
+  Kept,
   without,
 } from '../../platform/src/api'
 
@@ -100,12 +99,12 @@ export function graphSettingsOf(value: unknown): GraphSettings {
 export function sameGraph(one: GraphSettings, other: GraphSettings): boolean {
   return JSON.stringify(one) === JSON.stringify(other)
 }
-interface Kept extends Folded {
+interface Held extends Folded {
   settings: GraphSettings
   sent: boolean
 }
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({
+function read(saved: unknown): Record<string, Held> {
+  return spacesOf(saved, (one) => ({
     settings: graphSettingsOf(one.settings),
     sent: one.sent !== false,
   }))
@@ -116,12 +115,17 @@ const SETTINGS: Folding<GraphSettings> = {
 }
 const UNSENT: Folding<GraphSettings> = { fold: (_theirs, mine) => mine, same: sameGraph }
 export class SpaceGraphSettings {
-  private spaces = $state<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read)
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
   constructor(private readonly root: () => string | null) {}
   reread(): void {
-    const grown = filledIn(this.spaces, read())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
   of(root: string): GraphSettings {
     return this.spaces[root]?.settings ?? DEFAULT_GRAPH
@@ -221,6 +225,6 @@ export class SpaceGraphSettings {
     this.write()
   }
   private write() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
   }
 }

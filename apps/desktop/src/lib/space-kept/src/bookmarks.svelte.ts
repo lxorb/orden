@@ -7,11 +7,11 @@ import {
   type Folded,
   type Folding,
   meet,
-  readSpaces,
+  spacesOf,
+  Kept,
   without,
   isRecord,
   isString,
-  keepJson,
 } from '../../platform/src/api'
 import { carried, moving } from '../../file-ops/src/api'
 
@@ -103,19 +103,25 @@ export function mergeBookmarks(theirs: Bookmark[], mine: Bookmark[]): Bookmark[]
   const extra = mine.filter((one) => !theirs.some((held) => sameBookmark(held, one)))
   return [...theirs, ...extra].slice(0, MOST_BOOKMARKS)
 }
-interface Kept extends Folded {
+interface Held extends Folded {
   list: Bookmark[]
   sent: boolean
 }
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({
+function read(saved: unknown): Record<string, Held> {
+  return spacesOf(saved, (one) => ({
     list: bookmarkList(one.list),
     sent: one.sent !== false,
   }))
 }
 const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 export class Bookmarks {
-  private spaces = $state<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read, () => this.changed())
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   private get ids(): SyncStorePort | null {
     return syncStore()
   }
@@ -323,7 +329,7 @@ export class Bookmarks {
     this.offered = syncStore()?.pushBookmarks(root) ?? Promise.resolve()
   }
   private write() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
     this.changed()
   }
 }

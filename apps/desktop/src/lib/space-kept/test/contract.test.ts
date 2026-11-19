@@ -1,5 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { Archive, ArchivedSpaces, DEEPEST, isTile, sameBookmark, SHALLOWEST, SpaceGraphSettings } from '../src/api'
+import {
+  Archive,
+  ArchivedSpaces,
+  Bookmarks,
+  DEEPEST,
+  Excluded,
+  FolderIcons,
+  isTile,
+  ItemMetaStore,
+  sameBookmark,
+  SHALLOWEST,
+  SpaceGraphSettings,
+} from '../src/api'
 
 function storage(): Storage {
   const store = new Map<string, string>()
@@ -63,5 +75,131 @@ describe("a space's graph settings", () => {
     expect(settings.here.depth).toBe(DEEPEST)
     settings.set({ depth: 0 })
     expect(settings.here.depth).toBe(SHALLOWEST)
+  })
+})
+describe('what another window keeps', () => {
+  const MINE = '/mine'
+  const THEIRS = '/theirs'
+  const inMine = (path: string | null) => (path?.startsWith(MINE) ? MINE : THEIRS)
+  const saved = (key: string): unknown => JSON.parse(localStorage.getItem(key) ?? 'null')
+  const inTheirs = (one: Record<string, unknown>) => (held: unknown) => ({
+    ...(held && typeof held === 'object' ? held : {}),
+    [THEIRS]: { account: null, sent: false, ...one },
+  })
+  function elsewhere(key: string, value: unknown) {
+    localStorage.setItem(key, JSON.stringify(value))
+    window.dispatchEvent(Object.assign(new Event('storage'), { key }))
+  }
+  interface Store {
+    key: string
+    theirs: (held: unknown) => unknown
+    open: () => { act: () => unknown; seen: () => boolean }
+  }
+  const stores: Record<string, Store> = {
+    archive: {
+      key: 'orden:archived',
+      theirs: inTheirs({ map: { Work: 1 } }),
+      open: () => {
+        const store = new Archive(() => MINE)
+        return { act: () => store.change(MINE, ['Plan.md'], []), seen: () => store.of(THEIRS).Work === 1 }
+      },
+    },
+    'archived spaces': {
+      key: 'orden:archived-spaces',
+      theirs: (held) => [...(Array.isArray(held) ? (held as unknown[]) : []), THEIRS],
+      open: () => {
+        const store = new ArchivedSpaces()
+        return { act: () => store.set(MINE, true), seen: () => store.has(THEIRS) }
+      },
+    },
+    bookmarks: {
+      key: 'orden:bookmarks',
+      theirs: inTheirs({ list: [{ kind: 'search', path: '', text: 'theirs' }] }),
+      open: () => {
+        const store = new Bookmarks(() => MINE)
+        return { act: () => store.toggle(store.forSearch('mine')), seen: () => store.of(THEIRS).length === 1 }
+      },
+    },
+    'item meta': {
+      key: 'orden:item-meta',
+      theirs: inTheirs({ items: { 'Plan.md': { icon: 'star' } }, unsent: {}, adopted: false, moved: false }),
+      open: () => {
+        const store = new ItemMetaStore(inMine)
+        return {
+          act: () => store.set(`${MINE}/Plan.md`, { icon: 'rocket' }),
+          seen: () => store.itemsOf(THEIRS)['Plan.md']?.icon === 'star',
+        }
+      },
+    },
+    'buried item meta': {
+      key: 'orden:item-meta-buried',
+      theirs: (held) => ({ ...(held && typeof held === 'object' ? held : {}), theirs: { '': { icon: 'star' } } }),
+      open: () => {
+        const store = new ItemMetaStore(inMine)
+        return {
+          act: () => {
+            store.set(`${MINE}/Plan.md`, { icon: 'rocket' })
+            store.gone(`${MINE}/Plan.md`, MINE, 'mine')
+          },
+          seen: () => {
+            store.cameBack(`${MINE}/Back.md`, MINE, 'theirs')
+            return store.of(`${MINE}/Back.md`)?.icon === 'star'
+          },
+        }
+      },
+    },
+    excluded: {
+      key: 'orden:excluded',
+      theirs: inTheirs({ paths: ['Drafts'] }),
+      open: () => {
+        const store = new Excluded(() => MINE)
+        return { act: () => store.toggle(`${MINE}/Drafts`), seen: () => store.of(THEIRS).includes('Drafts') }
+      },
+    },
+    'folder icons': {
+      key: 'orden:folder-icons',
+      theirs: inTheirs({ icons: { Work: 'star' }, colors: {} }),
+      open: () => {
+        const store = new FolderIcons(() => MINE)
+        return { act: () => store.set(`${MINE}/Work`, 'rocket'), seen: () => store.of(THEIRS).Work === 'star' }
+      },
+    },
+    graph: {
+      key: 'orden:graph',
+      theirs: inTheirs({ settings: { filter: 'theirs' } }),
+      open: () => {
+        const store = new SpaceGraphSettings(() => MINE)
+        return {
+          act: () => {
+            store.set({ filter: 'mine' })
+            store.flush()
+          },
+          seen: () => store.of(THEIRS).filter === 'theirs',
+        }
+      },
+    },
+  }
+  beforeEach(() => vi.stubGlobal('window', new EventTarget()))
+  afterEach(() => vi.stubGlobal('window', undefined))
+  test.each(Object.entries(stores))('%s shows what another window wrote as soon as it is heard', (_, store) => {
+    const here = store.open()
+    elsewhere(store.key, store.theirs(saved(store.key)))
+    expect(here.seen()).toBe(true)
+  })
+  test.each(Object.entries(stores))('%s writing here keeps what another window wrote', async (_, store) => {
+    const here = store.open()
+    localStorage.setItem(store.key, JSON.stringify(store.theirs(saved(store.key))))
+    await here.act()
+    expect(saved(store.key)).not.toBeNull()
+    expect(store.open().seen()).toBe(true)
+  })
+  test('a space put away in another window is told here', () => {
+    const heard = vi.fn()
+    const spaces = new ArchivedSpaces(heard)
+    elsewhere('orden:archived-spaces', ['/away'])
+    expect(spaces.has('/away')).toBe(true)
+    expect(heard).toHaveBeenCalledTimes(1)
+    elsewhere('orden:archived-spaces', ['/away'])
+    expect(heard).toHaveBeenCalledTimes(1)
   })
 })
