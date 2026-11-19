@@ -1,8 +1,14 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import type { AccountDouble } from '../../accounts/test/fakes'
 import { headingAbove, sentWords } from '../src/sent-words'
 import { levelWord } from '../src/level-words'
 import { recordVoice } from '../src/voice'
 
+const held = vi.hoisted(() => ({ account: null as AccountDouble | null }))
+vi.mock('../../accounts/src/account.svelte', async () => {
+  held.account = (await import('../../accounts/test/fakes')).accountDouble()
+  return { account: held.account }
+})
 describe('a note sent to a chat', () => {
   test('is its link alone, or the quoted lines above a link to the heading they sit under', () => {
     expect(sentWords('Plan')).toBe('[[Plan]] ')
@@ -31,13 +37,12 @@ describe('the voice', () => {
 })
 describe('what one account leaves behind (#2167)', () => {
   test('its chat priorities, lessons, drafted replies and notification words go when it is forgotten', async () => {
-    const { account } = await import('../../accounts/src/api')
     const { priorities } = await import('../src/priorities.svelte')
     const { hush } = await import('../src/hush.svelte')
     priorities.reassign('c1', 'urgent', { title: 'Lab', from: 'Ada', words: 'the results are in' })
     priorities.suggestions = { c1: { reply: 'Thanks', todo: null, at: 1 } }
     hush.receive({ chatKeywords: ['thesis'], chatHours: null, chatPreviews: false, chatSound: true })
-    ;(account as unknown as { forget(): void }).forget()
+    held.account?.signOut()
     expect([priorities.assigned, priorities.lessons, priorities.suggestions]).toEqual([{}, [], {}])
     expect([hush.keywords, hush.hours, hush.previews, hush.sound]).toEqual([[], null, true, false])
   })
