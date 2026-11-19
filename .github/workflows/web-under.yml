@@ -12,6 +12,8 @@ on:
       - scripts/overview-drive.py
       - scripts/tools-freeze-drive.py
       - scripts/alt-alone-drive.py
+      - scripts/todo-picks-drive.py
+      - apps/desktop/src/lib/tasks-views/**
       - scripts/web-corner-drive.py
       - apps/desktop/src-tauri/crates/web/**
       - apps/desktop/src-tauri/crates/pty/**
@@ -79,6 +81,11 @@ jobs:
         if: always()
         run: |
           python scripts/alt-alone-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER"
+
+      - name: Todos pick with Ctrl and Shift clicks, show their menu on a right click and go with the Delete key
+        if: always()
+        run: |
+          python scripts/todo-picks-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
