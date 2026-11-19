@@ -4,6 +4,7 @@ import type { Cut } from '../../src/lib/web-tab/src/covers'
 import { elapse, settle } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
+const hears = vi.hoisted(() => new Map<string, (event: { payload: unknown }) => void>())
 let holding: Promise<void> | null = null
 let refuses: string | null = null
 let cuts: boolean | 'under' = false
@@ -14,6 +15,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, args })
+    if (command === 'web_open') hears.get('orden://web-painted')?.({ payload: { tab: args.tab, url: args.url } })
     if (command === refuses) return Promise.reject(new Error(`${command} was refused`))
     if (command === 'web_open' && holding) return holding
     if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0) return new Promise(() => undefined)
@@ -25,7 +27,10 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
-  hearHere: () => Promise.resolve(() => undefined),
+  hearHere: (name: string, tell: (event: { payload: unknown }) => void) => {
+    hears.set(name, tell)
+    return Promise.resolve(() => undefined)
+  },
 }))
 class NoLayout {
   static readonly all: NoLayout[] = []

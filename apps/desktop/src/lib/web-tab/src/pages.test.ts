@@ -20,6 +20,7 @@ let refusing = false
 let photographing: Promise<void> | null = null
 let photo: string | null = null
 let cuts: boolean | 'under' | 'hollows' = false
+let paints = true
 const cutsOf = new Map<string, boolean | 'under' | 'hollows'>()
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
@@ -39,6 +40,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     if (command !== 'web_open') return undefined
     await new Promise<void>((go) => (building = go))
     if (refuse) throw new Error('no webview to be had here')
+    if (paints) heard.get('orden://web-painted')?.({ payload: { tab: args?.tab, url: args?.url } })
     return cutsOf.get(String(args?.tab)) ?? cuts
   },
 }))
@@ -122,6 +124,7 @@ beforeEach(async () => {
   looked = null
   holdingLooks = false
   heldLooks.length = 0
+  paints = true
   cuts = false
   cutsOf.clear()
   localStorage.clear()
@@ -206,7 +209,36 @@ test('a page the crate will not build leaves the pane its card', async () => {
 test('a page that was built is placed and shown', async () => {
   await built()
   expect(pages.of('a').live).toBe(true)
-  expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE, pane: PANE })
+  expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE, pane: { x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY } })
+  await settle()
+  expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
+})
+describe('a new page before it first paints', () => {
+  const placedIn = () =>
+    calls.some(
+      (one) =>
+        one.command === 'web_place' && one.args.visible === true && (one.args.pane as { x: number }).x === PANE.x,
+    )
+  test('is built out of the way, drawn, and takes its pane once it paints', async () => {
+    paints = false
+    await built()
+    expect((last('web_open')?.pane as { x: number }).x).toBe(-OUT_OF_THE_WAY)
+    await settle()
+    expect(placedIn()).toBe(false)
+    heard.get('orden://web-painted')?.({ payload: { tab: 'a', url: SITE } })
+    await settle()
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
+  })
+  test('takes its pane a moment after its first commit, when no paint is heard', async () => {
+    paints = false
+    await built()
+    ;(await hearing('orden://web-tab'))({
+      payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading: true },
+    })
+    await settle()
+    expect(placedIn()).toBe(false)
+    await vi.waitFor(() => expect(placedIn()).toBe(true), { timeout: 2000 })
+  })
 })
 describe('a page asked for while something is over the pane', () => {
   test('is built anyway', async () => {
@@ -588,8 +620,9 @@ describe('where a page keeps what the site stores', () => {
     expect(last('web_open')).toMatchObject({
       tab: 'a',
       profile: { store: 'note_3f9a0c17e2b4d685' },
-      pane: PANE,
+      pane: { x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY },
     })
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
     expect(pages.of('a').notice).toBe('kept apart')
     pages.of('a').own = null
   })
