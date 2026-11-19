@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../accounts/src/account.svelte', () => ({ account: { accountToken: null } }))
+vi.mock('../../accounts/src/account.svelte', () => ({
+  account: { accountToken: null, forgetWithSession: () => undefined },
+}))
 const { hush } = await import('./hush.svelte')
 const { priorities } = await import('./priorities.svelte')
 function anotherWindowWrote(key: string, value: unknown) {

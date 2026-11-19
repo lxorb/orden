@@ -79,6 +79,10 @@ export interface Place {
 }
 const FRAMES_A_SECOND = INPUT_RATE / 2
 const LANDS_WITHIN = 20_000
+const live = new Set<OnlineSource>()
+account.forgetWithSession(() => {
+  for (const one of live) one.signedOut()
+})
 export class OnlineSource implements Source {
   readonly remote = true
   private link: Link | null = null
@@ -86,6 +90,7 @@ export class OnlineSource implements Source {
   private readonly opener: Opener
   private sent = { second: 0, count: 0 }
   private diskSaid = false
+  private told: ((what: Said) => void) | null = null
   private readonly pictures = new Map<string, (path: string | null) => void>()
   constructor(
     private readonly path: () => string | null,
@@ -97,6 +102,8 @@ export class OnlineSource implements Source {
     this.opener = new Opener(place.tab, build, (url) => this.link?.say({ t: 'callback', url }), place.offer)
   }
   async start(cols: number, rows: number, said: (what: Said) => void): Promise<void> {
+    live.add(this)
+    this.told = said
     if (!account.accountToken) {
       said({ refused: refusalWords('signed-out') ?? '' })
       return
@@ -249,7 +256,13 @@ export class OnlineSource implements Source {
   take(): void {
     this.link?.take()
   }
+  signedOut(): void {
+    this.link?.close()
+    this.link = null
+    this.told?.({ refused: refusalWords('signed-out') ?? '' })
+  }
   end(): void {
+    live.delete(this)
     this.ended = true
     for (const settle of this.pictures.values()) settle(null)
     this.opener.end()

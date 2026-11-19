@@ -5,15 +5,19 @@ import type { Said } from '../source'
 import { termSession } from './calls'
 import { OnlineSource } from './source'
 
-const seen = vi.hoisted((): { words: string | null; written: string[]; passes: number } => ({
-  words: '',
-  written: [],
-  passes: 0,
-}))
+const seen = vi.hoisted(
+  (): { words: string | null; written: string[]; passes: number; forgets: (() => void)[]; closed: number } => ({
+    words: '',
+    written: [],
+    passes: 0,
+    forgets: [],
+    closed: 0,
+  }),
+)
 vi.mock('../../../accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',
-    forgetWithSession: () => undefined,
+    forgetWithSession: (clear: () => void) => void seen.forgets.push(clear),
     holdsNoAccount: () => undefined,
   },
 }))
@@ -51,7 +55,7 @@ vi.mock('../../../online-link/src/api', async (real) => ({
       // The socket stays shut here.
     }
     close(): void {
-      // Nothing was opened.
+      seen.closed += 1
     }
   },
 }))
@@ -184,5 +188,23 @@ describe('an online source carrying a picture up', () => {
     await expect(refused).rejects.toThrow()
     inside.link = { say: () => false }
     await expect(online.image(new Uint8Array(1), 'png')).rejects.toThrow()
+  })
+})
+describe('an online source when the account is forgotten (#2167)', () => {
+  test('lets go of the terminal it opened for the old account and says it is signed out', async () => {
+    vi.mocked(termSession).mockResolvedValue({ v: 1, machine: 'm1', session: 's_old' })
+    seen.words = '{"v":1,"machine":"m1","session":"s_old"}\n'
+    const said: Said[] = []
+    const open = source()
+    await open.start(80, 24, (what) => said.push(what))
+    const late: Said[] = []
+    const ended = source()
+    await ended.start(80, 24, (what) => late.push(what))
+    ended.end()
+    const closed = seen.closed
+    for (const forget of seen.forgets) forget()
+    expect(seen.closed).toBeGreaterThan(closed)
+    expect(said.at(-1)).toEqual({ refused: 'Sign in to use an online terminal' })
+    expect(late).toEqual([])
   })
 })

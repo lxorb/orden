@@ -29,3 +29,16 @@ describe('the voice', () => {
     await expect(recordVoice()).rejects.toThrow(/voice/)
   })
 })
+describe('what one account leaves behind (#2167)', () => {
+  test('its chat priorities, lessons, drafted replies and notification words go when it is forgotten', async () => {
+    const { account } = await import('../../accounts/src/api')
+    const { priorities } = await import('../src/priorities.svelte')
+    const { hush } = await import('../src/hush.svelte')
+    priorities.reassign('c1', 'urgent', { title: 'Lab', from: 'Ada', words: 'the results are in' })
+    priorities.suggestions = { c1: { reply: 'Thanks', todo: null, at: 1 } }
+    hush.receive({ chatKeywords: ['thesis'], chatHours: null, chatPreviews: false, chatSound: true })
+    ;(account as unknown as { forget(): void }).forget()
+    expect([priorities.assigned, priorities.lessons, priorities.suggestions]).toEqual([{}, [], {}])
+    expect([hush.keywords, hush.hours, hush.previews, hush.sound]).toEqual([[], null, true, false])
+  })
+})
