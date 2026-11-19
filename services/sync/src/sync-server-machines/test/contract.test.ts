@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { askMachine, eraseMachines } from '../src/machines/ask'
 import { isMachineHost, machineDomain } from '../src/machines/hetzner-host'
+import { TASK_TOOLS } from '../src/mcp/tasks'
 
 type Env = Parameters<typeof askMachine>[0]
 function fakeMachines(
@@ -77,5 +78,14 @@ describe('machine hosts', () => {
     expect(isMachineHost('machines.example', 'machines.example')).toBe(false)
     expect(isMachineHost(`m-${id}.other.example`, 'machines.example')).toBe(false)
     expect(isMachineHost(`x-${id}.machines.example`, 'machines.example')).toBe(false)
+  })
+})
+describe('the todo tools', () => {
+  test('take no space, a todo belonging to none', () => {
+    for (const name of ['list_tasks', 'add_task', 'update_task']) {
+      const tool = TASK_TOOLS.find((one) => one.name === name)
+      expect(Object.keys(tool?.inputSchema.properties ?? {}), name).not.toContain('space')
+      expect(tool?.description, name).not.toMatch(/space/)
+    }
   })
 })

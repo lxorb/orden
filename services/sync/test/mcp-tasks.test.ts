@@ -49,7 +49,7 @@ async function tool(key: string, name: string, args: Record<string, unknown> = {
 }
 async function json(key: string, name: string, args: Record<string, unknown> = {}) {
   return JSON.parse(await tool(key, name, args)) as Record<string, unknown> & {
-    todos: { id: string; title: string; space: string | null }[]
+    todos: { id: string; title: string }[]
   }
 }
 async function basesTurned(on: boolean) {
@@ -65,14 +65,12 @@ describe('the todos, with Orden closed', () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
       title: 'Call the bank',
-      space: 'Work',
       deadline: '2026-10-06',
       priority: 3,
       labels: ['money'],
     })
     expect(added).toMatchObject({
       title: 'Call the bank',
-      space,
       deadline: '2026-10-06',
       priority: 3,
       labels: ['money'],
@@ -82,9 +80,8 @@ describe('the todos, with Orden closed', () => {
     await json(key, 'add_task', { title: 'Post the letter' })
     expect((await json(key, 'list_tasks', {})).todos).toMatchObject([
       { id, title: 'Call the bank' },
-      { title: 'Post the letter', space: null },
+      { title: 'Post the letter' },
     ])
-    expect((await json(key, 'list_tasks', { space: 'Work' })).todos).toHaveLength(1)
     expect((await json(key, 'list_tasks', { label: 'money' })).todos).toHaveLength(1)
     expect(await json(key, 'update_task', { id, done: true, priority: 1 })).toMatchObject({
       done: true,
@@ -114,6 +111,25 @@ describe('the todos, with Orden closed', () => {
     ) as Record<string, string>
     expect((stamps.done ?? '') > ahead).toBe(true)
   })
+  test('belong to no space: none is written, kept from before, read or filtered on', async () => {
+    const key = await connector()
+    const stored = (id: string) =>
+      JSON.parse(
+        (env.db.prepare('select fields from inbox_items where id = ?').get(id) as { fields: string }).fields,
+      ) as Record<string, unknown>
+    const added = await json(key, 'add_task', { title: 'Call the bank', space: 'Work' })
+    expect(added).not.toHaveProperty('space')
+    expect(stored(added.id as string)).not.toHaveProperty('space')
+    const old = (await json(key, 'add_task', { title: 'Post the letter' })).id as string
+    env.db.prepare('update inbox_items set fields = json_set(fields, ?, ?) where id = ?').run('$.space', space, old)
+    const changed = await json(key, 'update_task', { id: old, priority: 2, space: '' })
+    expect(changed).toMatchObject({ priority: 2 })
+    expect(changed).not.toHaveProperty('space')
+    expect(stored(old)).toMatchObject({ space, priority: 2 })
+    const listed = await json(key, 'list_tasks', { space: 'Elsewhere' })
+    expect(listed.todos.map((one) => one.title)).toEqual(['Post the letter', 'Call the bank'])
+    for (const one of listed.todos) expect(one).not.toHaveProperty('space')
+  })
   test('a change that would make a todo larger than a device reads is refused, the todo kept', async () => {
     const key = await connector()
     const id = (await json(key, 'add_task', { title: 'Call the bank' })).id as string
@@ -137,7 +153,6 @@ describe('the todos, with Orden closed', () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
       title: 'Call the bank',
-      space: 'Work',
       labels: ['work'],
     })
     const changed = await json(key, 'update_task', {

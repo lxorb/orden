@@ -27,11 +27,10 @@ export const TASK_TOOLS = [
   {
     name: 'list_tasks',
     description:
-      "The account's todos, open ones unless `done` is true: every space, or `space` alone; `label` narrows to one label. Each todo's `id` is what update_task takes.",
+      "The account's todos, open ones unless `done` is true; `label` narrows to one label. Each todo's `id` is what update_task takes.",
     inputSchema: {
       type: 'object',
       properties: {
-        space: string,
         label: string,
         done: { type: 'boolean' },
         limit: { type: 'integer' },
@@ -41,14 +40,13 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      'Add a todo: `title`, and optionally `description`, `labels`, `space` (none when left out), `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).',
+      'Add a todo: `title`, and optionally `description`, `labels`, `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).',
     inputSchema: {
       type: 'object',
       properties: {
         title: string,
         description: string,
         labels: { type: 'array', items: string },
-        space: string,
         start: string,
         deadline: string,
         priority: { type: 'integer' },
@@ -59,7 +57,7 @@ export const TASK_TOOLS = [
   {
     name: 'update_task',
     description:
-      'Change one todo by its `id`: `done`, `title`, `description`, `labels`, `space` (`""` for none), `start`, `deadline` (`""` takes a day off), `priority` 0 to 3.',
+      'Change one todo by its `id`: `done`, `title`, `description`, `labels`, `start`, `deadline` (`""` takes a day off), `priority` 0 to 3.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -68,7 +66,6 @@ export const TASK_TOOLS = [
         title: string,
         description: string,
         labels: { type: 'array', items: string },
-        space: string,
         start: string,
         deadline: string,
         priority: { type: 'integer' },
@@ -254,7 +251,6 @@ interface Todo {
   title: string
   description: string
   labels: string[]
-  space: string | null
   start: string | null
   deadline: string | null
   priority: number
@@ -273,7 +269,6 @@ function todoOf(id: string, fields: Fields): Todo | null {
     title: fields.title,
     description: typeof fields.description === 'string' ? fields.description : '',
     labels: texts(fields.labels),
-    space: typeof fields.space === 'string' && fields.space !== '' ? fields.space : null,
     start: typeof fields.start === 'string' && DAY.test(fields.start) ? fields.start : null,
     deadline: typeof fields.deadline === 'string' && DAY.test(fields.deadline) ? fields.deadline : null,
     priority: typeof priority === 'number' && [0, 1, 2, 3].includes(priority) ? priority : 0,
@@ -293,10 +288,6 @@ async function heldTodos(env: Env, userId: string): Promise<Map<string, Fields>>
   }
   return out
 }
-async function spaceIdOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<string | null> {
-  if (args.space === undefined || args.space === null || args.space === '') return null
-  return (await spaceOf(env, token, args, seen)).id
-}
 function dayArg(args: Args, name: string): string | null | undefined {
   const value = args[name]
   if (value === undefined) return undefined
@@ -304,7 +295,7 @@ function dayArg(args: Args, name: string): string | null | undefined {
   if (typeof value !== 'string' || !DAY.test(value)) throw new Said(`${name} is a day as YYYY-MM-DD.`)
   return value
 }
-async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Fields> {
+function patchOf(args: Args): Fields {
   const patch: Fields = {}
   const title = words(args, 'title') ?? words(args, 'text')
   if (title !== undefined) patch.title = title.slice(0, 500)
@@ -319,7 +310,6 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
       ),
     ]
   }
-  if (args.space !== undefined) patch.space = await spaceIdOf(env, token, args, seen)
   for (const name of ['start', 'deadline']) {
     const day = dayArg(args, name)
     if (day !== undefined) patch[name] = day
@@ -350,8 +340,7 @@ async function keep(env: Env, userId: string, id: string, fields: Fields): Promi
   const kept = await writeInbox(env, userId, [change], 'mcp')
   if (kept === 'full') throw new Said('That is more todos than an account keeps.')
 }
-async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
-  const space = await spaceIdOf(env, token, args, seen)
+async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   if (args.limit !== undefined && !(Number.isInteger(args.limit) && Number(args.limit) > 0)) {
     throw new Said('limit is a whole number of todos, one or more.')
   }
@@ -361,7 +350,7 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   const todos = [...(await heldTodos(env, token.user_id))]
     .map(([id, fields]) => todoOf(id, fields))
     .filter((one): one is Todo => one !== null)
-    .filter((one) => (space === null || one.space === space) && (withDone || !one.done))
+    .filter((one) => withDone || !one.done)
     .filter((one) => label === undefined || one.labels.includes(label))
     .sort((a, b) => {
       if (a.deadline !== b.deadline) {
@@ -376,9 +365,9 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
 function mayWrite(token: TokenRow): void {
   if (token.read_only) throw new Said('This token may only read. Allow writing in Orden’s settings first.')
 }
-async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
+async function add(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   mayWrite(token)
-  const patch = await patchOf(env, token, args, seen)
+  const patch = patchOf(args)
   if (typeof patch.title !== 'string') throw new Said('A todo needs a title.')
   const held = await heldTodos(env, token.user_id)
   let order = 0
@@ -391,7 +380,6 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
     kind: 'todo',
     description: '',
     labels: [],
-    space: null,
     start: null,
     deadline: null,
     priority: 0,
@@ -405,14 +393,14 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
   await keep(env, token.user_id, id, fields)
   return todoOf(id, fields)
 }
-async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
+async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   mayWrite(token)
   const id = words(args, 'id')
   if (id === undefined) throw new Said('update_task takes the id of a todo.')
   const was = (await heldTodos(env, token.user_id)).get(id)
   const before = was ? todoOf(id, was) : null
   if (!was || !before) throw new Said(`There is no todo ${id}.`)
-  const patch = await patchOf(env, token, args, seen)
+  const patch = patchOf(args)
   if (typeof patch.done === 'boolean' && patch.done !== before.done) {
     patch.doneAt = patch.done ? Date.now() : null
   }
