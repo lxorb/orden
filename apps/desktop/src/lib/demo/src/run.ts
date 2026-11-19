@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import { setPeers } from '@orden/editor'
 import { emptyCanvas, writeCanvas } from '@orden/markdown/canvas'
 import type { Hand } from '@orden/markdown/plane'
@@ -8,7 +9,7 @@ import { isDemoCue, type DemoCue } from '../../showcase/src/api'
 import { undoToast } from '../../undo-toast/src/api'
 import { tabOverview, toggleTabOverview, type Tab, workspace } from '../../workspace/src/api'
 import { drifted, type Frame, frameAt, type Point, replacement, type Scene, TEAM, writtenAt } from './scenes'
-import { CANVAS, LAUNCH, NOTES, PAGE, PICTURES, PLAN, PLAN_TEXT, PRESS, ROOT, SPACE } from './space'
+import { CANVAS, LAUNCH, NOTES, PAGE, PAGE_TITLE, PICTURES, PLAN, PLAN_TEXT, PRESS, ROOT, SPACE } from './space'
 
 const at = (path: string) => `${ROOT}/${path}`
 const FOLDERS = ['Research', 'Design', LAUNCH]
@@ -52,6 +53,10 @@ async function staged(): Promise<Stage> {
   const canvas = await until(() => workspace.tabs.find((one) => samePath(one.path, canvasPath)))
   const plan = await until(() => workspace.tabs.find((one) => samePath(one.path, at(PLAN))))
   const page = workspace.tabs.find((one) => one.id === pageId) ?? null
+  if (page) {
+    page.note.name = PAGE_TITLE
+    webPages().named(page.id, location.origin + PAGE, PAGE_TITLE)
+  }
   workspace.activate(canvas.id)
   const ours = new Set([canvas.id, plan.id, page?.id])
   workspace.closeEach(workspace.tabs.filter((one) => !ours.has(one.id)).map((one) => one.id))
@@ -98,6 +103,7 @@ export async function play(): Promise<void> {
     return stage.canvas
   }
   const showPage = () => {
+    if (stage.page) webPages().named(stage.page.id, location.origin + PAGE, PAGE_TITLE)
     const button = document.querySelector<HTMLButtonElement>('.card .rows .orden-button:not(.is-quiet)')
     button?.click()
   }
@@ -161,7 +167,7 @@ export async function play(): Promise<void> {
       ),
     ])
   }
-  const fit = Math.min(1, innerWidth / 1000)
+  const phone = document.documentElement.dataset.demo === 'phone'
   let store: CanvasStore | null = null
   let handsAt = -Infinity
   let made = { scene: cue.scene, at: -1, frame: want }
@@ -169,7 +175,7 @@ export async function play(): Promise<void> {
     const still = cue.still === true
     const at = still ? 1 : cue.at
     if (made.scene !== cue.scene || made.at !== at)
-      made = { scene: cue.scene, at, frame: frameAt(cue.scene, at, origin) }
+      made = { scene: cue.scene, at, frame: frameAt(cue.scene, at, origin, phone) }
     const { frame } = made
     const showing = CanvasStore.drawing(stage.canvas.note, workspace.tabs)
     if (showing !== store) {
@@ -189,7 +195,7 @@ export async function play(): Promise<void> {
   const paint = (into: CanvasStore, frame: Frame, now: number) => {
     if (drawn?.cards !== frame.cards) into.arrived({ ...into.canvas, nodes: frame.nodes, edges: frame.edges })
     const view = into.camera
-    const scale = frame.view.scale * fit
+    const { scale } = frame.view
     if (view.x !== frame.view.x || view.y !== frame.view.y || view.scale !== scale)
       into.camera = { x: frame.view.x, y: frame.view.y, scale }
     if (now - handsAt >= HANDS_EVERY || cue.still) {
