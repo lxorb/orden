@@ -463,6 +463,23 @@ return {{ one, two, three, web, left, right: right.id, keep: [...before, one, tw
         time.sleep(2)
         self.screen.shot().save(self.out / "stage.png")
         self.page_box()
+    def fresh_page(self) -> None:
+        ids = self.ids
+        made = self.js(
+            f"const ws = orden.workspace; ws.focusPane({json.dumps(ids['right'])}); const id = ws.openPage({json.dumps(self.url + '?main')});"
+            f" ws.moveTab(id, {json.dumps(ids['right'])}); ws.closeEach([{json.dumps(ids['web'])}], false); return id"
+        )
+        if not isinstance(made, str):
+            print(f"::warning::a page left with a dialog open could not be replaced: {made}", flush=True)
+            return
+        ids["keep"] = [made if one == ids["web"] else one for one in ids["keep"]]
+        ids["web"] = made
+        self.js(f"orden.workspace.activate({json.dumps(made)}); return true")
+        if self.app.until("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible) || null", 40) is None:
+            print("::warning::the fresh page was never shown", flush=True)
+        time.sleep(1.5)
+        self.page_box()
+        print("a page left with a dialog open was replaced by a fresh one", flush=True)
     def page_box(self) -> None:
         pane = self.js("(() => { const all = orden.pages.each().filter(([, one]) => one.sent && one.sent.visible); return all[0] ? all[0][1].sent.pane : null })()")
         if not isinstance(pane, dict):
@@ -1004,6 +1021,7 @@ return true
                 web["page heard"] = replied
             if left:
                 web["left open"] = len(left)
+                self.fresh_page()
             reference, ref_ok = (menu_ref, menu_ok) if kind == "menu" else (sheet_ref, sheet_ok)
             same = got["drawn"] == "orden" and layer is not None and layer["ground"] == reference.get("ground")
             if same and kind == "menu" and answer is None and reference.get("from the click"):
