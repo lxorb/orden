@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { idle } from './settle'
 
 window.matchMedia = ((query: string) => ({
@@ -259,6 +259,38 @@ test('a zoom moves only the camera while it turns, and lines and names are fitte
   await idle(250)
   flushSync()
   expect(line()).not.toBe(before)
+})
+test('each tab is copied once, riding its pane while in front, a chip otherwise, and the copy moves with a pick', async () => {
+  const strip = workspace.tabs.map((tab, index) => {
+    const one = document.createElement('div')
+    one.dataset.box = tab.id
+    one.textContent = tab.shown
+    one.getBoundingClientRect = () => new DOMRect(index * 120, 40, 110, 32)
+    document.body.append(one)
+    return one
+  })
+  onTestFinished(() => strip.forEach((one) => one.remove()))
+  const real = window.getComputedStyle.bind(window)
+  vi.spyOn(window, 'getComputedStyle').mockImplementation((one) => {
+    const style = real(one)
+    return Object.assign([], { getPropertyValue: (name: string) => style.getPropertyValue(name) }) as never
+  })
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 400 && waiting.size; i++) frame()
+  const copies = () => document.querySelectorAll('.canvas .chip-copy > *, .canvas .rider > *').length
+  expect(copies()).toBe(workspace.tabs.length)
+  const front = workspace.activeTabId
+  const rider = () => [...document.querySelectorAll('.canvas .rider > *')].map((one) => one.textContent)
+  expect(rider()).toEqual([workspace.tabs.find((one) => one.id === front)?.shown])
+  const other = workspace.tabs.find((one) => one.id !== front)
+  ;[...document.querySelectorAll<HTMLElement>('.window')]
+    .find((one) => one.getAttribute('aria-label') === other?.shown)
+    ?.click()
+  flushSync()
+  expect(copies()).toBe(workspace.tabs.length)
+  expect(rider()).toEqual([other?.shown])
 })
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]

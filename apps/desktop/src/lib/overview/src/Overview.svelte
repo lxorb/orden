@@ -696,7 +696,11 @@
       panesAsWindows.set(front, one)
       moved.push(id, front)
     }
-    if (moved.length) asPanes = Object.fromEntries([...panesAsWindows.keys()].map((id) => [id, true as const]))
+    if (!moved.length) return moved
+    asPanes = Object.fromEntries([...panesAsWindows.keys()].map((id) => [id, true as const]))
+    const copies = Object.entries({ ...tabsAsDrawn, ...ridersDrawn })
+    tabsAsDrawn = Object.fromEntries(copies.filter(([id]) => !panesAsWindows.has(id)))
+    ridersDrawn = Object.fromEntries(copies.filter(([id]) => panesAsWindows.has(id)))
     return moved
   }
   function aimAll() {
@@ -780,9 +784,7 @@
       const riderCopies: Record<string, HTMLElement> = {}
       for (const tab of workspace.tabs) {
         const copy = tabCopyOf(tab.id, inherited)
-        if (copy) tabCopies[tab.id] = copy
-        const rider = copy && tabCopyOf(tab.id, inherited)
-        if (rider) riderCopies[tab.id] = rider
+        if (copy) (asWindows[tab.id] ? riderCopies : tabCopies)[tab.id] = copy
       }
       tabsAsDrawn = tabCopies
       ridersDrawn = riderCopies
