@@ -3,9 +3,9 @@ import { workspace } from '../../workspace/src/api'
 import { openTodos } from './open'
 
 export function showTodos(): void {
-  const there = workspace.tabs.find(
+  const here = workspace.tabHere(
     (tab) => tab.kind === 'view' && tab.path === null && readViewSpec(tab.doc)?.builtin === 'todos',
   )
-  if (there) workspace.panes.activate(there.paneId, there.id)
+  if (here) workspace.activate(here.id)
   else openTodos()
 }

@@ -34,7 +34,7 @@ export async function madeOnline(beside: string | null, activate = true): Promis
 }
 export function openTerm(path: string, how: OpenHow = {}, text = ''): Tab | null {
   if (__EVEN_PLUGIN__) return null
-  const open = workspace.tabs.find((one) => one.kind === 'terminal' && samePath(one.path, path))
+  const open = workspace.tabHere((one) => one.kind === 'terminal' && samePath(one.path, path))
   if (open) {
     if (how.activate !== false) workspace.activeTabId = open.id
     return open

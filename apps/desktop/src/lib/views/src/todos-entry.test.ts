@@ -10,7 +10,7 @@ interface FakeTab {
 }
 const state = vi.hoisted(() => ({
   tabs: [] as FakeTab[],
-  activated: [] as [string, string][],
+  activated: [] as string[],
   opened: [] as (string | undefined)[],
 }))
 vi.mock('../../workspace/src/api', () => ({
@@ -18,7 +18,8 @@ vi.mock('../../workspace/src/api', () => ({
     get tabs() {
       return state.tabs
     },
-    panes: { activate: (pane: string, tab: string) => state.activated.push([pane, tab]) },
+    tabHere: (match: (tab: FakeTab) => boolean) => state.tabs.find(match) ?? null,
+    activate: (tab: string) => state.activated.push(tab),
   },
 }))
 vi.mock('./open', () => ({ openTodos: (space?: string) => state.opened.push(space) }))
@@ -41,16 +42,16 @@ describe('Todos, asked for', () => {
     expect(state.opened).toEqual([undefined])
     expect(state.activated).toEqual([])
   })
-  test('brings forward the tab showing it, in whichever pane it is', () => {
+  test('brings forward this space’s tab showing it, in whichever pane it is', () => {
     state.tabs = [view('a', 'left', {}), view('b', 'right', { builtin: 'todos' })]
     showTodos()
-    expect(state.activated).toEqual([['right', 'b']])
+    expect(state.activated).toEqual(['b'])
     expect(state.opened).toEqual([])
   })
-  test('and the one an older build opened for one space, whatever space is open', () => {
+  test('and the one an older build opened for one space', () => {
     state.tabs = [view('b', 'left', { builtin: 'todos', space: 'Home' })]
     showTodos()
-    expect(state.activated).toEqual([['left', 'b']])
+    expect(state.activated).toEqual(['b'])
     expect(state.opened).toEqual([])
   })
 })

@@ -1,5 +1,5 @@
 import { identifier, invoke, isNumber, isRecord, isString } from '../../../platform/src/api'
-import { workspace } from '../../../workspace/src/api'
+import { spaceMoving, spaceSets, workspace } from '../../../workspace/src/api'
 import type { Tab } from '../../../documents/src/api'
 import { hostIdOf, readSpec, writeSpec } from '../spec'
 
@@ -54,8 +54,17 @@ function tmuxOf(value: unknown): TmuxRow | null {
 function listOf<T>(value: unknown, of: (one: unknown) => T | null): T[] {
   return Array.isArray(value) ? value.flatMap((one) => of(one) ?? []) : []
 }
+const holds = (key: string) => (tab: Tab) => tab.kind === 'terminal' && readSpec(tab.doc)?.key === key
 function tabOf(key: string): Tab | undefined {
-  return workspace.tabs.find((tab) => tab.kind === 'terminal' && readSpec(tab.doc)?.key === key)
+  return workspace.tabs.find(holds(key))
+}
+async function bringHere(tab: Tab): Promise<void> {
+  const space = workspace.activeSpaceId
+  if (space !== null) {
+    await (await spaceMoving()).moveToSpace([tab.id], space)
+    if (!workspace.tabHere((one) => one.id === tab.id)) await (await spaceSets()).sets.adopt([tab], space)
+  }
+  workspace.activate(tab.id)
 }
 class HeldSessions {
   list = $state.raw<HeldRow[]>([])
@@ -69,10 +78,15 @@ class HeldSessions {
     this.tmux = listOf(tmux, tmuxOf).sort((a, b) => b.last - a.last)
   }
   open(row: HeldRow, activate = true): string {
-    const here = tabOf(row.key)
+    const here = workspace.tabHere(holds(row.key))
     if (here) {
-      if (activate) workspace.activeTabId = here.id
+      if (activate) workspace.activate(here.id)
       return here.id
+    }
+    const there = tabOf(row.key)
+    if (there) {
+      if (activate) void bringHere(there)
+      return there.id
     }
     const spec = { shell: row.shell, folder: row.folder, key: row.key, name: row.name }
     const name = row.name ?? 'Terminal'
