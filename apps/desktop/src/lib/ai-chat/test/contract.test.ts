@@ -30,3 +30,33 @@ describe('a reply drafted for a chat', () => {
     expect(sent).toEqual([])
   })
 })
+describe('an answer naming a path on another host', () => {
+  const ELSEWHERE = [
+    '\\\\server\\share\\a.md',
+    '//server/share/a.md',
+    '\\/server/share',
+    '/\\server\\share',
+    '\\\\?\\UNC\\server\\share\\a.md',
+    '\\\\.\\UNC\\server\\share',
+    'file://server/share/a.md',
+    'file:///C:/a.md',
+  ]
+  test('is never a link, nor placed anywhere, on any system, in words or in code', async () => {
+    const { placeOf, withPaths } = await import('../src/store/paths')
+    for (const system of ['windows', 'macos', 'linux']) {
+      const here = {
+        root: system === 'windows' ? 'C:\\Notes' : '/Users/me/Notes',
+        system,
+        spaces: [{ root: system === 'windows' ? 'C:\\Notes' : '/Users/me/Notes' }],
+        holds: () => true,
+        opens: () => true,
+        reveals: true,
+      }
+      for (const path of ELSEWHERE) {
+        const written = path.replace(/&/g, '&amp;')
+        expect(withPaths(`<p>${written}</p><p><code>${written}</code></p>`, here)).not.toContain('data-path')
+        expect(placeOf(path, here, system === 'windows' ? 'C:\\Users\\me' : '/Users/me')).toBeNull()
+      }
+    }
+  })
+})

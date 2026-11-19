@@ -11,8 +11,7 @@ export interface Here {
 type Kind = 'absolute' | 'home' | 'relative'
 const LINE = /:\d+(?::\d+)?$/
 const DRIVE = /^[A-Za-z]:[\\/]/
-const SHARE = /^\\\\[^\\/]+[\\/][^\\/]+/
-const FOREIGN = /:\/\/|^\/\/|[\n\r\t<>"|*?$={}`]|^[@#~]?[\\/]?$|^[@#]/
+const FOREIGN = /:\/\/|^[\\/]{2}|[\n\r\t<>"|*?$={}`]|^[@#~]?[\\/]?$|^[@#]/
 const TOPS = new Set([
   'Applications',
   'Library',
@@ -40,7 +39,7 @@ function kindOf(path: string, system: string): Kind | null {
   if (colon !== -1 && !(colon === 1 && DRIVE.test(path))) return null
   if (path.split(/[\\/]/).some((step) => step === '..')) return null
   if (/^~[\\/]/.test(path)) return 'home'
-  if (system === 'windows' ? DRIVE.test(path) || SHARE.test(path) : path.startsWith('/')) return 'absolute'
+  if (system === 'windows' ? DRIVE.test(path) : path.startsWith('/')) return 'absolute'
   return /^[\\/]/.test(path) || DRIVE.test(path) ? null : 'relative'
 }
 const forward = (path: string) => path.replace(/\\/g, '/').replace(/^(?:\.\/)+/, '')

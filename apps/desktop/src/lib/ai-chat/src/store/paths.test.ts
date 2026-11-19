@@ -81,7 +81,6 @@ describe('what is not a path', () => {
     expect(linked('<p><code>C:\\Users\\me\\a.md</code></p>')).toEqual([])
     expect(linked('<p><code>C:\\Users\\me\\a.md</code> \\\\server\\share\\a.md</p>', { system: 'windows' })).toEqual([
       'C:\\Users\\me\\a.md',
-      '\\\\server\\share\\a.md',
     ])
     expect(linked('<p><code>/Users/me/Notes/plan.md</code></p>', { system: 'windows' })).toEqual([])
   })
