@@ -95,8 +95,7 @@ jobs:
           path: packages
       - name: The .deb, sway, Mesa and a session bus
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder
+          bash scripts/ci-apt.sh ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder
       - name: The .deb runs as orden only
         run: |
           test -x /usr/bin/orden
@@ -117,7 +116,7 @@ jobs:
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Cores
         run: |
-          sudo apt-get install -y gdb
+          bash scripts/ci-apt.sh gdb
           sudo mkdir -p /tmp/cores && sudo chmod 1777 /tmp/cores
           sudo sysctl -w kernel.core_pattern=/tmp/cores/core.%e.%p
       - name: A web tab's page where its tab is, on every screen, under the app's layers
@@ -468,8 +467,7 @@ jobs:
           ls -la packages
       - name: The .deb, sway, Mesa and a session bus
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
+          bash scripts/ci-apt.sh ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
       - name: The id the edge build keeps its files under
         run: |
           bin=$(command -v orden || command -v nib)

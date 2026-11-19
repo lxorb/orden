@@ -24,7 +24,9 @@ PING_FRAMES = 1.0
 SETTLE = 20.0
 IDLE = 20.0
 WIGGLE = 10.0
+COVERED = 60.0
 COLS, ROWS = 9, 7
+ENOUGH = COLS * ROWS // 2
 OOBE = {"wwahost.exe", "useroobebroker.exe"}
 u32 = ctypes.WinDLL("user32", use_last_error=True)
 g32 = ctypes.WinDLL("gdi32")
@@ -212,15 +214,28 @@ def front(hwnd: int) -> None:
         time.sleep(1)
 def ours(hwnd: int, x: int, y: int) -> bool:
     return u32.GetAncestor(u32.WindowFromPoint(W.POINT(x, y)), 2) == hwnd
-def hovers(hwnd: int, rect: tuple[int, int, int, int]) -> list[float]:
+def cover(x: int, y: int) -> str:
+    top = u32.GetAncestor(u32.WindowFromPoint(W.POINT(x, y)), 2)
+    name = ctypes.create_unicode_buffer(256)
+    u32.GetClassNameW(top, name, 256)
+    owner = W.DWORD()
+    u32.GetWindowThreadProcessId(top, ctypes.byref(owner))
+    return f"{name.value or '?'} of {processes().get(owner.value, (0, '?'))[1]}"
+def hovers(hwnd: int, rect: tuple[int, int, int, int], covers: set[str]) -> list[float]:
     left, top, right, bottom = rect
     grab = Grab(60, 30)
     took: list[float] = []
+    calm = time.monotonic() + COVERED
     for row in range(ROWS):
         columns = range(COLS) if row % 2 == 0 else reversed(range(COLS))
         for column in columns:
             x = int(left + (column + 0.5) * (right - left) / COLS)
             y = int(top + (row + 0.5) * (bottom - top) / ROWS)
+            while not ours(hwnd, x, y) and time.monotonic() < calm:
+                covers.add(cover(x, y))
+                clear_screen()
+                front(hwnd)
+                time.sleep(0.5)
             if not ours(hwnd, x, y):
                 continue
             before = grab.at(x - 30, y - 15)
@@ -273,9 +288,16 @@ def measure(app: App, root: int) -> dict[str, Any]:
     said: dict[str, Any] = {"idle_cpu": cpu_over(root, IDLE), "renderer": str(app.eval(RENDERER))}
     asked = subprocess.run(["powershell", "-NoProfile", "-Command", GPU_LINES % root], capture_output=True, text=True, timeout=120, check=False)
     said["gpu"] = [line for line in asked.stdout.splitlines() if line.strip()]
-    grid(app)
-    front(hwnd)
-    took = hovers(hwnd, area)
+    covers: set[str] = set()
+    took: list[float] = []
+    for _ in range(2):
+        grid(app)
+        front(hwnd)
+        took = max(took, hovers(hwnd, area, covers), key=len)
+        if len(took) >= ENOUGH:
+            break
+    for one in sorted(covers):
+        print(f"::warning::{one} lay over the window during the hover sweep")
     said["hover_ms"] = median(took)
     said["hovered"] = len(took)
     pings: list[float] = []
@@ -306,7 +328,7 @@ def judged(said: dict[str, Any]) -> list[str]:
             wrong.append(f"the GPU process draws in software ({flag})")
     if said["idle_cpu"] > IDLE_CPU:
         wrong.append(f"idle CPU {said['idle_cpu']:.1f}% of a core, over {IDLE_CPU}%")
-    if said["hovered"] < COLS * ROWS // 2:
+    if said["hovered"] < ENOUGH:
         wrong.append(f"only {said['hovered']} of {COLS * ROWS} cells showed their hover")
     if said["hover_ms"] > HOVER_FRAMES * frame:
         wrong.append(f"a hover shows after {said['hover_ms']:.0f} ms, over {HOVER_FRAMES:.0f} frames of {frame:.1f} ms")

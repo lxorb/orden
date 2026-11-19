@@ -87,7 +87,7 @@ jobs:
       - name: A screen, on Linux
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y xvfb dbus-x11
+          bash scripts/ci-apt.sh xvfb dbus-x11
           sandbox="$(dirname "$EXE")/chrome-sandbox"
           if [ -f "$sandbox" ]; then
             sudo chown root:root "$sandbox"
@@ -142,7 +142,7 @@ jobs:
           drive=(scripts/pinch-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
           case "$RUNNER_OS" in
             Linux)
-              sudo apt-get install -y xserver-xorg-core xserver-xorg-video-dummy xserver-xorg-input-libinput
+              bash scripts/ci-apt.sh xserver-xorg-core xserver-xorg-video-dummy xserver-xorg-input-libinput
               python3 -m pip install --quiet --break-system-packages evdev python-xlib
               sudo modprobe uinput || true
               sudo chmod 666 /dev/uinput

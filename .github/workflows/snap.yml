@@ -98,7 +98,20 @@ jobs:
           grep -nE "^version:|^grade:|releases/download|sha256/" snapcraft.yaml
 
       - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79
-        id: build
+        id: first
+        continue-on-error: true
+        with:
+          path: packaging/snap
+
+      - name: The build failed; once more after a pause, for an archive that did not answer
+        if: steps.first.outcome == 'failure'
+        run: |
+          echo "::warning::the first snap build failed"
+          sleep 120
+
+      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79
+        id: again
+        if: steps.first.outcome == 'failure'
         with:
           path: packaging/snap
 
@@ -107,7 +120,7 @@ jobs:
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
-          snap: ${{ steps.build.outputs.snap }}
+          snap: ${{ steps.first.outputs.snap || steps.again.outputs.snap }}
           release: ${{ steps.channel.outputs.channel }}
 
       - name: No Snapcraft credentials yet

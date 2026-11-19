@@ -79,7 +79,7 @@ jobs:
       - name: A screen, on Linux
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y xvfb dbus-x11
+          bash scripts/ci-apt.sh xvfb dbus-x11
           sandbox="$(dirname "$EXE")/chrome-sandbox"
           if [ -f "$sandbox" ]; then
             sudo chown root:root "$sandbox"

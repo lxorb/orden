@@ -449,3 +449,26 @@ jobs:
     with:
       flake: github:${{ github.repository }}/${{ needs.nix-edge.outputs.sha }}?dir=packaging/nix
       package: orden-unstable
+
+  failed:
+    needs: [version, draft, settle, build, hover, mac, caches, publish, apt, rpm, snap, linux, nix-edge, nix]
+    if: ${{ failure() && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      issues: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: 2229
+    steps:
+      - name: Say so on the issue that collects failed releases
+        run: |
+          jobs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" \
+            --jq '.jobs[] | select(.conclusion == "failure") | "- \(.name)"')
+          edge=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/edge" --jq '"\(.name): \(.body)"' 2>/dev/null || echo "no edge release")
+          body=$(printf '%s\n\n%s\n\n%s\n' \
+            "Release run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (attempt $GITHUB_RUN_ATTEMPT) for $GITHUB_REF_NAME at $GITHUB_SHA failed in:" \
+            "${jobs:-- (no job reports a failure)}" \
+            "Edge is now $edge")
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="$body" --jq .html_url

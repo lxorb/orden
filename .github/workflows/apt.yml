@@ -83,6 +83,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           sparse-checkout: |
+            scripts/ci-apt.sh
             scripts/apt-repo.sh
             packaging/apt
           persist-credentials: false
@@ -106,15 +107,15 @@ jobs:
 
       - name: Write the suite
         run: |
-          command -v apt-ftparchive >/dev/null || sudo apt-get install -y apt-utils
+          command -v apt-ftparchive >/dev/null || bash scripts/ci-apt.sh apt-utils
           bash scripts/apt-repo.sh "$SUITE" debs apt
 
       - name: The bucket's key
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          said=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify ||
-            curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/tokens/verify")
+          said=$(curl -fsS --retry 4 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify ||
+            curl -fsS --retry 4 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/tokens/verify")
           id=$(jq -r '.result.id // empty' <<<"$said")
           [ -n "$id" ] || { echo "::error::CLOUDFLARE_API_TOKEN did not verify"; exit 1; }
           secret=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -d' ' -f1)
@@ -123,13 +124,22 @@ jobs:
             echo "AWS_ACCESS_KEY_ID=$id"
             echo "AWS_SECRET_ACCESS_KEY=$secret"
             echo "AWS_DEFAULT_REGION=auto"
+            echo "AWS_REQUEST_CHECKSUM_CALCULATION=when_required"
+            echo "AWS_RESPONSE_CHECKSUM_VALIDATION=when_required"
             echo "R2=https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com"
           } >>"$GITHUB_ENV"
 
       - name: Into the bucket
         working-directory: apt
         run: |
-          s3() { aws --endpoint-url "$R2" s3 "$@"; }
+          s3() {
+            for try in 1 2 3 4 5; do
+              aws --endpoint-url "$R2" s3 "$@" && return 0
+              [ "$try" -lt 5 ] || return 1
+              echo "::warning::aws s3 $1 failed (try $try of 5)"
+              sleep $((try * 20))
+            done
+          }
           bucket="s3://$R2_BUCKET"
           s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --only-show-errors --cache-control 'public, max-age=31536000, immutable'
           s3 sync "dists/$SUITE" "$bucket/dists/$SUITE" --only-show-errors --delete --cache-control 'public, max-age=60'
@@ -150,7 +160,7 @@ jobs:
       - name: Served
         run: |
           for path in "dists/$SUITE/InRelease" "dists/$SUITE/main/binary-amd64/Packages" orden-archive-keyring.asc; do
-            curl -fsSI "$APT_BASE_URL/$path" | head -1
+            curl -fsSI --retry 4 "$APT_BASE_URL/$path" | head -1
           done
 
   move:
@@ -166,6 +176,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           sparse-checkout: |
+            scripts/ci-apt.sh
             scripts/apt-repo.sh
             scripts/apt-move.sh
             packaging/apt
@@ -188,7 +199,7 @@ jobs:
 
       - name: The last of it, pointing at apt.orden.so
         run: |
-          command -v apt-ftparchive >/dev/null || sudo apt-get install -y apt-utils
+          command -v apt-ftparchive >/dev/null || bash scripts/ci-apt.sh apt-utils
           bash scripts/apt-move.sh apt
 
       - name: Push
