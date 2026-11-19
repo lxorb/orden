@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../platform/src/api'
   import { roleOf } from '../../sharing/src/api'
-  import type { Space } from '../../workspace/src/api'
+  import { type Space, workspace } from '../../workspace/src/api'
   import { deleteSpace } from './api'
   import SpaceBadge from './SpaceBadge.svelte'
   import { archivedSpaces, unarchiveSpace } from './space-archive'
@@ -20,14 +20,17 @@
   const theirs = (space: Space) => roleOf(space.root) !== 'owner'
 </script>
 
-<p class="hint">Archived spaces stay out of the space switcher until you unarchive them.</p>
-
 {#if archived.length}
   <div class="card" data-archived-spaces>
     {#each archived as space (space.id)}
       <div class="row" transition:slide={{ duration: dur(180), easing: cubicOut }}>
         <SpaceBadge {space} />
         <span class="name">{space.name}</span>
+        <button
+          class="quiet"
+          disabled={busy || workspace.openedArchived === space.id}
+          onclick={() => void held(() => workspace.openArchived(space.id))}>Open</button
+        >
         <button class="quiet" disabled={busy} onclick={() => void held(() => unarchiveSpace(space))}>Unarchive</button>
         <button class="quiet danger" disabled={busy} onclick={() => void held(() => deleteSpace(space))}>
           {theirs(space) ? 'Leave' : 'Delete'}
@@ -36,7 +39,7 @@
     {/each}
   </div>
 {:else}
-  <p class="hint empty">No archived spaces.</p>
+  <p class="hint">No archived spaces.</p>
 {/if}
 
 <style>
@@ -46,14 +49,10 @@
     color: var(--muted);
     line-height: 1.5;
   }
-  .hint.empty {
-    margin-top: var(--space-3);
-  }
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-top: var(--space-3);
   }
   .row {
     display: flex;
