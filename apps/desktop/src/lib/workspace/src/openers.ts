@@ -10,7 +10,7 @@ import {
 } from '@orden/markdown/links'
 import { isMarkdownPath } from '../../platform/src/api'
 
-export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'application' | 'note'
+export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'note'
 export interface Build {
   evenBuild: boolean
   isPlugin: boolean
@@ -24,7 +24,7 @@ export function openerFor(path: string, isUrlNote: (path: string) => boolean, bu
   if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
   if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
   if (isTermTarget(path)) return build.isPlugin ? null : 'term'
-  if (isApplicationTarget(path)) return build.isPlugin ? null : 'application'
+  if (isApplicationTarget(path)) return null
   return 'note'
 }
 export function sharedKind(path: string): 'canvas' | 'pages' | 'channel' | 'note' {
