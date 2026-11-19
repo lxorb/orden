@@ -390,29 +390,44 @@ def first_frame(app: App, pane: dict[str, float], hole: tuple[float, float, floa
     return wrong
 PANE = "(() => { const all = orden.pages.each().map(([, one]) => one.sent).filter((one) => one && one.visible && !one.away); return all[0] ? all[0].pane : null })()"
 def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, under: bool) -> tuple[list[str], list[str]]:
-    if not as_before:
-        return [], ["this machine hands the app no pointer moves: the left peek over a page is not driven"]
     app.eval("if (orden.workspace.panel) orden.workspace.toggleSidebar('left'); return true")
     pane = app.until(f"(() => {{ const pane = {PANE}; return pane && pane.x < 1 ? pane : null }})()", 10)
     inner = inner_of(app, pid)
     if not isinstance(pane, dict) or not isinstance(inner, dict):
         return [f"[peek] the page never reached the window's left edge: {app.eval(PANE)}"], []
-    middle = (inner["x"] + pane["x"] + pane["width"] / 2, inner["y"] + pane["y"] + pane["height"] / 2)
-    point(middle)
+    time.sleep(1.5)
+    film = Film()
     time.sleep(0.6)
-    for step in range(12):
-        point((middle[0] - (middle[0] - inner["x"] - 1) * (step + 1) / 12, middle[1]))
-    box = app.until("(() => { const one = document.querySelector('.column.peek'); if (!one) return null; const r = one.getBoundingClientRect(); return r.width > 40 ? { x: r.x, y: r.y, width: r.width, height: r.height } : null })()", 4)
-    if not isinstance(box, dict):
-        return [], ["the left peek did not come out over the page with posted pointer moves"]
-    time.sleep(0.8)
-    image = shot()
-    image.save(out / "peek.png")
+    asked = app.eval(
+        "(() => { window.__peekAt = null; const look = () => { const one = document.querySelector('.column.peek aside');"
+        " if (one && one.getBoundingClientRect().width > 40) requestAnimationFrame(() => { window.__peekAt = Date.now() });"
+        " else requestAnimationFrame(look) }; requestAnimationFrame(look);"
+        " dispatchEvent(new PointerEvent('pointermove', { clientX: 1, clientY: 300, pointerType: 'mouse', buttons: 0 }));"
+        " return Date.now() })()"
+    )
+    time.sleep(1.5)
+    frames = film.stop()
+    drawn = app.eval("window.__peekAt")
+    box = app.eval("(() => { const one = document.querySelector('.column.peek aside'); if (!one) return null; const r = one.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()")
+    if not isinstance(box, dict) or not isinstance(drawn, (int, float)):
+        return [], [f"the left peek did not come out over the page: {box}, {drawn}"]
     inside = (inner["x"] + box["x"] + box["width"] / 2, inner["y"] + box["y"] + box["height"] / 2)
     beside = (inner["x"] + box["x"] + box["width"] + 120, inside[1])
+    after = [(at, one) for at, one in frames if at >= drawn + 34]
+    late = [at for at, one in after if near(colour_at(one, inside, ratio), COLOUR)]
+    folder = out / "peek"
+    folder.mkdir(parents=True, exist_ok=True)
+    for index, (at, one) in enumerate(frames):
+        if isinstance(asked, (int, float)) and at >= asked - 200:
+            one.resize((one.width // 2, one.height // 2)).save(folder / f"{index:03d}-{int(at - asked)}.jpg", quality=70)
+    image = shot()
+    image.save(out / "peek.png")
     wrong: list[str] = []
+    measure("grabs after the app drew the left peek in which the page still shows inside it", f"{len(late)} of {len(after)}")
     measure("colour inside the left peek over the page", colour_at(image, inside, ratio))
     measure("colour of the page beside the left peek", colour_at(image, beside, ratio))
+    if late:
+        wrong.append(f"[peek] the page shows through the left peek the app has drawn, in {len(late)} of {len(after)} grabs")
     if near(colour_at(image, inside, ratio), COLOUR):
         wrong.append("[peek] the page is drawn over the left peek")
     if not near(colour_at(image, beside, ratio), COLOUR):
@@ -447,6 +462,7 @@ def main() -> int:
     parser.add_argument("--out", required=True, type=pathlib.Path)
     parser.add_argument("--under", action="store_true")
     parser.add_argument("--fail", action="store_true")
+    parser.add_argument("--falls-back", action="store_true")
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
@@ -539,12 +555,15 @@ def main() -> int:
             wrong.append(f"the app's layer is not drawn over the page: {colour_at(image, middle, ratio)}")
         if not near(colour_at(image, beside, ratio), COLOUR):
             wrong.append(f"the page is not drawn beside the app's layer: {colour_at(image, beside, ratio)}")
+        back = args.fail or args.falls_back
+        wanted = "false" if back else "true"
+        laid = app.until(f"(() => {{ const one = orden.pages.under; return String(one) === '{wanted}' ? one : null }})()", 15) is True
         laid = app.eval("orden.pages.under") is True
         measure("the engine lays the page under the app", laid)
-        if args.under and not laid:
+        if args.under and not back and not laid:
             wrong.append("the engine did not lay the page under the app")
-        if args.fail and laid:
-            wrong.append("the engine laid the page under the app though its ground was said not to clear")
+        if back and laid:
+            wrong.append("the engine kept the page under the app though its ground does not clear")
         cuts = app.eval("orden.pages.cuts") is True
         still = app.eval("!!document.querySelector('.hole.still')") is True
         print(f"the engine cuts layers out of pages: {cuts}; the page is held as a still under the layer: {still}", flush=True)
@@ -655,7 +674,7 @@ def main() -> int:
         wrong += beside_wrong
         unverified += beside_unverified
         wrong += overview(app, hole, ratio, args.out)
-        if args.under:
+        if args.under and not (args.fail or args.falls_back):
             wrong += cleared_after_reload(app, hole, ratio, args.out)
         peeked, unseen = peek(app, process.pid, ratio, args.out, as_before, args.under)
         wrong += peeked

@@ -7,9 +7,6 @@ use tauri::Webview;
 
 #[cfg(target_os = "macos")]
 mod under;
-#[cfg(windows)]
-#[path = "web_cut/under_windows.rs"]
-mod under;
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
@@ -182,17 +179,17 @@ fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
         (x.clamp(layer.x + round, right - round), y.clamp(layer.y + round, bottom - round));
     (x - nearest_x).powi(2) + (y - nearest_y).powi(2) <= round * round
 }
-#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Verdict {
     Asking,
     Clear,
     Opaque,
 }
-#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 static VERDICTS: LazyLock<Mutex<HashMap<String, Verdict>>> = LazyLock::new(Mutex::default);
 pub fn lay_page_under(window: &tauri::Window, view: &Webview) {
-    #[cfg(any(target_os = "macos", windows))]
+    #[cfg(target_os = "macos")]
     if pages_under() {
         let label = window.label().to_owned();
         let was = VERDICTS.held().get(&label).copied();
@@ -208,7 +205,7 @@ pub fn lay_page_under(window: &tauri::Window, view: &Webview) {
     }
     let _ = (window, view);
 }
-#[cfg(any(target_os = "macos", windows))]
+#[cfg(target_os = "macos")]
 fn ask_ground(window: &tauri::Window, label: &str) {
     use tauri::Manager as _;
     let Some(own) = window.app_handle().get_webview(label) else {
@@ -232,10 +229,127 @@ fn ask_ground(window: &tauri::Window, label: &str) {
             }
         }
     });
+    for _ in 0..LOOKS {
+        std::thread::sleep(std::time::Duration::from_millis(800));
+        match looked(window) {
+            Sight::Unseen => continue,
+            Sight::Through => return,
+            Sight::Unsure(why) => {
+                orden_base::trace::mark(&format!("pages under the app: {why}"));
+                eprintln!("pages under the app: {why}");
+                return;
+            }
+            Sight::Ground(why) => {
+                VERDICTS.held().insert(label.to_owned(), Verdict::Opaque);
+                orden_base::trace::mark(&format!(
+                    "pages under the app: {why}; pages go back to being cut out"
+                ));
+                eprintln!("pages under the app: {why}; pages go back to being cut out");
+                let raising = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    use tauri::Manager as _;
+                    for (name, page) in raising.app_handle().webviews() {
+                        if name.starts_with(crate::web_tabs::LABEL)
+                            && page.window().label() == raising.label()
+                        {
+                            lay_under(page.label(), false);
+                            under::raise(&page);
+                        }
+                    }
+                });
+                return;
+            }
+        }
+    }
 }
-#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[cfg(target_os = "macos")]
+const LOOKS: usize = 12;
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+#[derive(Debug, PartialEq)]
+enum Sight {
+    Unseen,
+    Through,
+    Unsure(String),
+    Ground(String),
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+const SPOTS: [(f64, f64); 3] = [(0.5, 120.0), (0.25, 200.0), (0.75, 60.0)];
+#[cfg(target_os = "macos")]
+fn looked(window: &tauri::Window) -> Sight {
+    use tauri::Manager as _;
+    let page = window.app_handle().webviews().into_values().find(|page| {
+        page.label().starts_with(crate::web_tabs::LABEL)
+            && page.window().label() == window.label()
+            && lowered(page.label())
+            && under::shown(page)
+    });
+    let Some(page) = page else {
+        return Sight::Unseen;
+    };
+    let Some((cut, wide)) = under::held(page.label()) else {
+        return Sight::Unseen;
+    };
+    let spots: Vec<(f64, f64)> = SPOTS
+        .iter()
+        .map(|&(across, down)| (wide * across, down))
+        .filter(|&(x, y)| takes(cut.as_ref(), x, y))
+        .collect();
+    if spots.is_empty() {
+        return Sight::Unseen;
+    }
+    let Some(seen) = under::looked_at(&page, spots.clone()) else {
+        return Sight::Unsure(
+            "the window could not be looked at, so the app's ground is trusted as the engine said"
+                .to_owned(),
+        );
+    };
+    let mut drawn = Vec::new();
+    for (x, y) in spots {
+        let shot = crate::engine::devtools::call(
+            &page,
+            None,
+            "Page.captureScreenshot",
+            &serde_json::json!({ "format": "png", "fromSurface": true,
+                "clip": { "x": x, "y": y, "width": 1, "height": 1, "scale": 1 } }),
+            std::time::Duration::from_secs(2),
+        );
+        match shot.ok().and_then(|shot| shot["data"].as_str().and_then(first_pixel)) {
+            Some(one) => drawn.push(one),
+            None => return Sight::Unsure("the page could not be looked at".to_owned()),
+        }
+    }
+    sight(&seen, &drawn)
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn sight(seen: &[[u8; 3]], drawn: &[[u8; 3]]) -> Sight {
+    if seen.is_empty() || seen.len() != drawn.len() {
+        return Sight::Unsure("the window and the page gave no matching spots".to_owned());
+    }
+    let alike =
+        |one: &[u8; 3], other: &[u8; 3]| one.iter().zip(other).all(|(a, b)| a.abs_diff(*b) < 40);
+    if seen.iter().zip(drawn).all(|(one, other)| alike(one, other)) {
+        Sight::Through
+    } else {
+        Sight::Ground(format!("the window shows {seen:?} where the page under it draws {drawn:?}"))
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn first_pixel(data: &str) -> Option<[u8; 3]> {
+    use base64::Engine as _;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(data).ok()?;
+    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
+    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+    let mut reader = decoder.read_info().ok()?;
+    let mut pixels = vec![0; reader.output_buffer_size()?];
+    let info = reader.next_frame(&mut pixels).ok()?;
+    match info.color_type {
+        png::ColorType::Grayscale | png::ColorType::GrayscaleAlpha => Some([pixels[0]; 3]),
+        _ => Some([*pixels.first()?, *pixels.get(1)?, *pixels.get(2)?]),
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 const GROUND_SAID: &str = "[document.documentElement, document.body].every((one) => !one || getComputedStyle(one).backgroundColor === 'rgba(0, 0, 0, 0)')";
-#[cfg(any(target_os = "macos", windows))]
+#[cfg(target_os = "macos")]
 fn ground_cleared(own: &Webview) -> Result<(), String> {
     let patience = std::time::Duration::from_secs(3);
     let failing = std::env::var_os("ORDEN_PAGES_UNDER_FAIL").is_some_and(|said| said == "1");
@@ -260,7 +374,7 @@ fn ground_cleared(own: &Webview) -> Result<(), String> {
     );
     judged(failing, cleared.map(|_| ()), looked)
 }
-#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn judged(
     failing: bool,
     cleared: Result<(), String>,
@@ -278,7 +392,7 @@ fn judged(
     }
 }
 pub fn opacity(view: &Webview, opacity: f64) {
-    #[cfg(any(target_os = "macos", windows))]
+    #[cfg(target_os = "macos")]
     if lowered(view.label()) {
         under::opacity(view, opacity);
     }
@@ -291,7 +405,7 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
 }
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
     let under = lowered(view.label());
-    #[cfg(any(target_os = "macos", windows))]
+    #[cfg(target_os = "macos")]
     if under {
         under::cut(view, cut.clone(), f64::from(wide) / scale.max(0.01));
     }
@@ -318,7 +432,7 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
     lay_under(label, false);
-    #[cfg(any(target_os = "macos", windows))]
+    #[cfg(target_os = "macos")]
     under::forget(label);
 }
 fn drawn(under: bool, cut: Option<&Cut>) -> Option<&Cut> {
@@ -780,6 +894,30 @@ mod tests {
         let painted = Ok(json!({ "result": { "type": "boolean", "value": false } }));
         assert!(super::judged(false, Ok(()), painted).is_err());
         assert!(super::GROUND_SAID.contains("rgba(0, 0, 0, 0)"));
+    }
+    #[test]
+    fn pages_go_back_to_being_cut_out_when_the_window_shows_a_ground_where_the_page_draws() {
+        use super::{sight, Sight};
+        let magenta = [255, 0, 255];
+        assert_eq!(sight(&[magenta, [250, 4, 250]], &[magenta, magenta]), Sight::Through);
+        assert!(matches!(sight(&[[255, 255, 255]], &[magenta]), Sight::Ground(_)));
+        assert!(matches!(sight(&[], &[]), Sight::Unsure(_)));
+        assert!(matches!(sight(&[magenta], &[]), Sight::Unsure(_)));
+    }
+    #[test]
+    fn a_page_s_picture_gives_its_first_pixel() {
+        use base64::Engine as _;
+        let mut bytes = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut bytes, 1, 1);
+            encoder.set_color(png::ColorType::Rgba);
+            encoder.set_depth(png::BitDepth::Eight);
+            let mut writer = encoder.write_header().expect("a header");
+            writer.write_image_data(&[255, 0, 255, 255]).expect("a pixel");
+        }
+        let data = base64::engine::general_purpose::STANDARD.encode(&bytes);
+        assert_eq!(super::first_pixel(&data), Some([255, 0, 255]));
+        assert_eq!(super::first_pixel("not a picture"), None);
     }
     #[test]
     fn a_page_under_the_app_takes_what_no_layer_is_over() {

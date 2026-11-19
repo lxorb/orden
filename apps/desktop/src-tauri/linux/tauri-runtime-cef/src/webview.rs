@@ -690,17 +690,7 @@ impl<T: UserEvent> WinitCefApp<T> {
     // and bury an overlay webview under the one that fills the window.
     #[cfg(windows)]
     if child.offscreen.is_none() {
-      let own = appwindow
-        .children
-        .first()
-        .filter(|_| {
-          drag_drop_event_target == browser_client::DragDropEventTarget::Webview && pages_under()
-        })
-        .map(AppWebview::hwnd);
-      match own {
-        Some(own) => child.lower_beneath(own),
-        None => child.raise_to_top(),
-      }
+      child.raise_to_top();
     } else {
       appwindow.background_surface = None;
     }
@@ -2402,7 +2392,7 @@ fn ground_by_settings_alone() -> bool {
 }
 
 fn clears_ground(own_window: bool, offscreen: bool, asked: bool) -> bool {
-  cfg!(any(target_os = "macos", windows)) && own_window && !offscreen && asked
+  cfg!(target_os = "macos") && own_window && !offscreen && asked
 }
 
 fn clear_ground_message(id: i32) -> String {
@@ -2622,7 +2612,7 @@ mod tests {
 
   #[test]
   fn only_a_window_s_own_browser_clears_its_ground_and_only_when_asked() {
-    assert_eq!(clears_ground(true, false, true), cfg!(any(target_os = "macos", windows)));
+    assert_eq!(clears_ground(true, false, true), cfg!(target_os = "macos"));
     assert!(!clears_ground(false, false, true));
     assert!(!clears_ground(true, true, true));
     assert!(!clears_ground(true, false, false));

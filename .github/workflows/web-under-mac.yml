@@ -53,12 +53,12 @@ jobs:
         run: |
           "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/fails --fail
 
-      - name: Driven with the page under the app, its ground cleared by the engine's settings alone
+      - name: Driven with the page under the app and no ground cleared by the engine's protocol, falling back
         if: always() && env.EXE != ''
         env:
           ORDEN_PAGES_UNDER_GROUND: cef
         run: |
-          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/under-cef --under
+          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/under-cef --under --falls-back
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

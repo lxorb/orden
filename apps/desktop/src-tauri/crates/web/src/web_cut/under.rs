@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use std::ffi::CString;
+use std::ffi::{c_void, CString};
 use std::sync::{LazyLock, Mutex};
 
 use objc2::rc::Retained;
 use objc2::runtime::{AnyClass, AnyObject, Bool, ClassBuilder, Sel};
 use objc2::{msg_send, sel};
 use objc2_app_kit::{NSView, NSWindowOrderingMode};
-use objc2_foundation::NSPoint;
+use objc2_foundation::{NSPoint, NSRect, NSSize};
 use orden_base::Held as _;
 use tauri::{Manager as _, Webview};
 
@@ -412,4 +412,138 @@ extern "C-unwind" fn drag_conclude(this: &NSView, _: Sel, info: *mut AnyObject) 
             None => msg_send![super(this, original), concludeDragOperation: info],
         }
     }
+}
+pub fn held(label: &str) -> Option<(Option<Cut>, f64)> {
+    PAGES
+        .held()
+        .values()
+        .find(|one| one.label == label && one.wide > 0.0)
+        .map(|one| (one.cut.clone(), one.wide))
+}
+fn on_page<T: Send + 'static>(
+    view: &Webview,
+    then: impl FnOnce(&NSView) -> Option<T> + Send + 'static,
+) -> Option<T> {
+    let (told, heard) = std::sync::mpsc::sync_channel(1);
+    let _ = crate::engine::with_platform!(view, move |platform| {
+        let _ = told.send(native(&platform).and_then(view_at).and_then(|page| then(&page)));
+    });
+    heard.recv_timeout(std::time::Duration::from_secs(2)).ok().flatten()
+}
+pub fn shown(view: &Webview) -> bool {
+    on_page(view, |page| {
+        (!page.isHiddenOrHasHiddenAncestor() && page.alphaValue() > 0.99).then_some(())
+    })
+    .is_some()
+}
+pub fn raise(view: &Webview) {
+    let label = view.label().to_owned();
+    let host = PAGES.held().values().find(|one| one.label == label).map(|one| one.host);
+    forget(&label);
+    let _ = crate::engine::with_platform!(view, move |platform| {
+        let Some(page) = native(&platform).and_then(view_at) else {
+            return;
+        };
+        page.setAlphaValue(1.0);
+        let (Some(holder), Some(host)) = (holder_of(&page), host.and_then(view_at)) else {
+            return;
+        };
+        holder.addSubview_positioned_relativeTo(&page, NSWindowOrderingMode::Above, Some(&host));
+    });
+}
+#[allow(unsafe_code)]
+#[link(name = "CoreGraphics", kind = "framework")]
+unsafe extern "C" {
+    fn CGWindowListCreateImage(bounds: NSRect, list: u32, window: u32, options: u32)
+        -> *mut c_void;
+    fn CGColorSpaceCreateDeviceRGB() -> *mut c_void;
+    fn CGBitmapContextCreate(
+        data: *mut c_void,
+        width: usize,
+        height: usize,
+        bits: usize,
+        row: usize,
+        space: *mut c_void,
+        info: u32,
+    ) -> *mut c_void;
+    fn CGContextDrawImage(context: *mut c_void, rect: NSRect, image: *mut c_void);
+    fn CGContextRelease(context: *mut c_void);
+    fn CGImageRelease(image: *mut c_void);
+    fn CGColorSpaceRelease(space: *mut c_void);
+}
+const ONLY_THIS_WINDOW: u32 = 1 << 3;
+const NO_FRAME_AT_NOMINAL_SCALE: u32 = (1 << 0) | (1 << 4);
+const PREMULTIPLIED_LAST: u32 = 1;
+pub fn looked_at(view: &Webview, spots: Vec<(f64, f64)>) -> Option<Vec<[u8; 3]>> {
+    let (_, wide) = held(view.label())?;
+    on_page(view, move |page| {
+        let window = page.window()?;
+        let bounds = page.bounds();
+        let by = if bounds.size.width > 0.0 { wide / bounds.size.width } else { return None };
+        let tall = primary_height()?;
+        let number = u32::try_from(window.windowNumber()).ok()?;
+        spots
+            .iter()
+            .map(|&(x, y)| {
+                let (x, y) = (x / by, y / by);
+                let local = NSPoint::new(
+                    bounds.origin.x + x,
+                    if page.isFlipped() {
+                        bounds.origin.y + y
+                    } else {
+                        bounds.origin.y + bounds.size.height - y
+                    },
+                );
+                let screen = window.convertPointToScreen(page.convertPoint_toView(local, None));
+                pixel_at(NSPoint::new(screen.x.floor(), (tall - screen.y).floor()), number)
+            })
+            .collect()
+    })
+}
+#[allow(unsafe_code)]
+fn primary_height() -> Option<f64> {
+    let screens = AnyClass::get(c"NSScreen")?;
+    unsafe {
+        let all: *mut AnyObject = msg_send![screens, screens];
+        let all = all.as_ref()?;
+        let count: usize = msg_send![all, count];
+        if count == 0 {
+            return None;
+        }
+        let first: *mut AnyObject = msg_send![all, objectAtIndex: 0usize];
+        let frame: NSRect = msg_send![first.as_ref()?, frame];
+        Some(frame.size.height)
+    }
+}
+#[allow(unsafe_code)]
+fn pixel_at(at: NSPoint, window: u32) -> Option<[u8; 3]> {
+    let mut pixel = [0u8; 4];
+    unsafe {
+        let image = CGWindowListCreateImage(
+            NSRect::new(at, NSSize::new(1.0, 1.0)),
+            ONLY_THIS_WINDOW,
+            window,
+            NO_FRAME_AT_NOMINAL_SCALE,
+        );
+        if image.is_null() {
+            return None;
+        }
+        let space = CGColorSpaceCreateDeviceRGB();
+        let context =
+            CGBitmapContextCreate(pixel.as_mut_ptr().cast(), 1, 1, 8, 4, space, PREMULTIPLIED_LAST);
+        if !context.is_null() {
+            CGContextDrawImage(
+                context,
+                NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(1.0, 1.0)),
+                image,
+            );
+            CGContextRelease(context);
+        }
+        CGColorSpaceRelease(space);
+        CGImageRelease(image);
+        if context.is_null() {
+            return None;
+        }
+    }
+    Some([pixel[0], pixel[1], pixel[2]])
 }
