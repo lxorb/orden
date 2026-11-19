@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Notify } from '@orden/chats'
-  import { DIVIDER, type MenuEntry, menu } from '../../ui-kit/src/api'
+  import { menu } from '../../ui-kit/src/api'
   import { askToShow } from '../../notify/src/api'
-  import { MUTE_HOURS, mutedUntil as muteFor, ringOf } from './bell'
+  import { bellRows, ringOf } from './bell'
 
   const {
     notify,
@@ -21,37 +21,9 @@
     return () => clearInterval(ticking)
   })
   const ring = $derived(ringOf(notify, mutedUntil, members, now))
-  const muted = $derived(mutedUntil !== null && mutedUntil > now)
-  function length(hours: number): string {
-    return hours < 24 ? `${hours} h` : hours / 24 === 1 ? '1 day' : `${hours / 24} days`
-  }
   function open(event: MouseEvent) {
     askToShow()
-    const level = ringOf(notify, null, members, now)
-    const levels: [Notify, string][] = [
-      ['all', 'All'],
-      ['mentions', 'Mentions'],
-      ['nothing', 'Nothing'],
-    ]
-    const rows: MenuEntry[] = levels.map(([value, label]) => ({
-      label,
-      checked: value === 'nothing' ? level === 'off' : level === value,
-      run: () => onchange(value, mutedUntil),
-    }))
-    const mute: MenuEntry = muted
-      ? { label: 'Unmute', run: () => onchange(notify, null) }
-      : {
-          label: 'Mute',
-          run: () => onchange(notify, muteFor(null, Date.now())),
-          more: () =>
-            Promise.resolve(
-              MUTE_HOURS.map((hours) => ({
-                label: length(hours),
-                run: () => onchange(notify, muteFor(hours, Date.now())),
-              })),
-            ),
-        }
-    menu.show(event, [...rows, DIVIDER, mute])
+    menu.show(event, bellRows(notify, mutedUntil, members, now, onchange))
   }
 </script>
 

@@ -92,7 +92,8 @@ const { sync } = await import('../src/lib/sync-store/src/api')
 const { account } = await import('../src/lib/accounts/src/account.svelte')
 const { newKinds, offeredKinds } = await import('../src/lib/new-here/src/api')
 const { busy } = await import('../src/lib/ui-kit/src/busy.svelte')
-const { makeChat, openChat } = await import('../src/lib/chats-client/src/view/open')
+const { makeChat, nameChat, openChat } = await import('../src/lib/chats-client/src/view/open')
+const { chatsView } = await import('../src/lib/chats-client/src/view/chats-view.svelte')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../src/lib/gates/src/api')
 let opened: { path: string | null; name: string; pointer: boolean }[] = []
 beforeEach(async () => {
@@ -118,12 +119,12 @@ beforeEach(async () => {
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
   workspace.activeSpaceId = 's'
   workspace.tabs = []
-  workspace.naming = null
+  chatsView.naming = null
   workspace.panel = 'tree'
   await workspace.loadTree()
 })
 async function named(name: string) {
-  await workspace.makeNamed(`${name}.chat`)
+  await nameChat(name)
 }
 function pointerAt(path: string) {
   expect(JSON.parse(files.get(path) ?? '{}')).toEqual({ v: 1, chat: CHAT })
@@ -141,21 +142,21 @@ describe('a new chat', () => {
     expect(offeredKinds().map((one) => one.kind)).not.toContain('chat')
     await makeChat()
     openChat('/space/Team.chat')
-    expect(workspace.naming).toBeNull()
+    expect(chatsView.naming).toBeNull()
     expect(asked.spaces).toEqual([])
     expect(workspace.tabs).toHaveLength(0)
     expect(said).toHaveBeenCalledWith('Chats are off. Turn them on in Settings.')
     hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
     expect(newKinds().map((one) => one.kind)).toContain('chat')
   })
-  test("from Ctrl+T's M is a row in the list first, and the name places it", async () => {
+  test("from Ctrl+T's M is named in the Chats list first, never the file list, and the name places it (#2269)", async () => {
     workspace.panel = null
     newKinds()
       .find((one) => one.kind === 'chat')
       ?.make()
-    await vi.waitFor(() => expect(workspace.naming?.making).toBe('chat'))
-    expect(workspace.panel).toBe('tree')
-    expect(workspace.naming?.path).toBe('/space/Chat.chat')
+    await vi.waitFor(() => expect(chatsView.naming).toBe('/space'))
+    expect(workspace.panel).toBe('chats')
+    expect(workspace.naming).toBeNull()
     expect(asked.spaces).toEqual([])
     expect(files.has('/space/Chat.chat')).toBe(false)
     expect(workspace.tabs).toHaveLength(0)
@@ -163,11 +164,11 @@ describe('a new chat', () => {
     expect(asked.spaces).toEqual(['remote-space'])
     pointerAt('/space/Launch.chat')
   })
-  test("from the Chats panel's plus the same, the Chats panel giving way to the list", async () => {
+  test("from the Chats panel's plus the same, the Chats panel staying (#2269)", async () => {
     workspace.panel = 'chats'
     await makeChat()
-    expect(workspace.panel).toBe('tree')
-    expect(workspace.naming?.path).toBe('/space/Chat.chat')
+    expect(workspace.panel).toBe('chats')
+    expect(chatsView.naming).toBe('/space')
     await named('Team')
     pointerAt('/space/Team.chat')
   })
@@ -176,10 +177,9 @@ describe('a new chat', () => {
     await named('Standup')
     pointerAt('/space/Standup.chat')
   })
-  test('in a folder it was asked in, which opens for it', async () => {
+  test('in a folder it was asked in', async () => {
     await makeChat('/space/Work')
-    expect(workspace.naming?.path).toBe('/space/Work/Chat.chat')
-    expect(workspace.isExpanded('/space/Work')).toBe(true)
+    expect(chatsView.naming).toBe('/space/Work')
     await named('Thesis')
     pointerAt('/space/Work/Thesis.chat')
   })
@@ -193,14 +193,15 @@ describe('a new chat', () => {
   })
   test('left unnamed makes nothing at all', async () => {
     await makeChat()
-    workspace.cancelNaming()
+    chatsView.naming = null
+    await nameChat('Late')
     expect(asked.spaces).toEqual([])
     expect([...files.keys()].filter((one) => one.endsWith('.chat'))).toEqual([])
     expect(workspace.tabs).toHaveLength(0)
   })
-  test('with no list to name it in, is made at once under a stepped name', async () => {
-    workspace.tree = null
+  test('named with nothing typed, takes a stepped name', async () => {
     await makeChat()
+    await named('  ')
     pointerAt('/space/Chat.chat')
   })
   test('and a space the account does not hold makes no tab', async () => {
@@ -214,7 +215,7 @@ describe('a new chat', () => {
     readOnly.add('/space')
     expect(offeredKinds().map((one) => one.kind)).not.toContain('chat')
     await makeChat()
-    expect(workspace.naming).toBeNull()
+    expect(chatsView.naming).toBeNull()
     expect(asked.spaces).toEqual([])
     expect(workspace.tabs).toHaveLength(0)
   })

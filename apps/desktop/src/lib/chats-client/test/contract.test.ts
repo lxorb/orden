@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 import type { AccountDouble } from '../../accounts/test/fakes'
 import { headingAbove, sentWords } from '../src/sent-words'
@@ -9,6 +11,28 @@ vi.mock('../../accounts/src/account.svelte', async () => {
   held.account = (await import('../../accounts/test/fakes')).accountDouble()
   return { account: held.account }
 })
+const asked = vi.hoisted(() => ({ panels: [] as string[], namings: 0, made: [] as string[][], hits: [] as unknown[] }))
+vi.mock('../../gates/src/api', () => ({ chatsOn: () => true }))
+vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
+vi.mock('../../workspace/src/api', () => ({
+  workspace: {
+    activeSpace: { root: '/spaces/Lab' },
+    showPanel: (panel: string) => asked.panels.push(panel),
+    startNaming: () => ++asked.namings,
+    freeName: () => 'Chat.chat',
+    loadTree: () => Promise.resolve(),
+  },
+}))
+vi.mock('../src/view/source.svelte', () => ({
+  store: () => ({
+    ready: true,
+    make: (dir: string, name: string) => {
+      asked.made.push([dir, name])
+      return Promise.resolve(null)
+    },
+    search: () => Promise.resolve(asked.hits),
+  }),
+}))
 describe('a note sent to a chat', () => {
   test('is its link alone, or the quoted lines above a link to the heading they sit under', () => {
     expect(sentWords('Plan')).toBe('[[Plan]] ')
@@ -33,6 +57,26 @@ describe('how urgent a message is', () => {
 describe('the voice', () => {
   test('is refused with a reason while no module has bound the voice port', async () => {
     await expect(recordVoice()).rejects.toThrow(/voice/)
+  })
+})
+describe('the Chats view', () => {
+  test('a new chat is named in the Chats list, never in the file tree (#2269)', async () => {
+    const { makeChat } = await import('../src/view/open')
+    const { chatsView } = await import('../src/view/chats-view.svelte')
+    await makeChat()
+    expect([asked.panels, asked.namings, chatsView.naming, asked.made]).toEqual([['chats'], 0, '/spaces/Lab', []])
+    await makeChat('/spaces/Lab', 'Team')
+    expect(asked.made).toEqual([['/spaces/Lab', 'Team']])
+  })
+  test('its search, once words are typed, lists the messages that match as well as the chats (#2269)', async () => {
+    const { messagesFor } = await import('../src/view/found')
+    const said = (id: string, deleted = false) => ({ chat: 'c1', message: { id, deleted } })
+    asked.hits = [said('m1'), said('m2', true), said('m3')]
+    expect(await messagesFor('   ')).toEqual([])
+    expect((await messagesFor('plan')).map((one) => one.message.id)).toEqual(['m1', 'm3'])
+    const panel = readFileSync(join(import.meta.dirname, '../src/view/ChatsPanel.svelte'), 'utf8')
+    expect(panel).toMatch(/messagesFor\(asked\)/)
+    expect(panel).toMatch(/\{#each hits as one/)
   })
 })
 describe('what one account leaves behind (#2167)', () => {
