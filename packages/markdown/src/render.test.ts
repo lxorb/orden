@@ -549,7 +549,7 @@ describe('definition lists', () => {
   test('renders a term and its meaning; takes several meanings for one term', () => {
     expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dt>Markdown</dt>')
     expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dd>A way of writing.</dd>')
-    const html = renderMarkdown('Nib\n: A pen tip.\n: This editor.\n')
+    const html = renderMarkdown('Pen\n: A tool for writing.\n: A place for pigs.\n')
     expect(html.match(/<dd>/g)).toHaveLength(2)
   })
   test('takes several terms in one list', () => {

@@ -283,7 +283,7 @@ mod tests {
     fn the_command_is_the_one_this_install_is_started_by() {
         let some = |text: &str| Some(text.to_owned());
         assert_eq!(
-            started_by(some("so.orden.Orden"), None, None, some("/app/bin/nib")),
+            started_by(some("so.orden.Orden"), None, None, some("/app/bin/orden")),
             "flatpak run so.orden.Orden"
         );
         assert_eq!(
