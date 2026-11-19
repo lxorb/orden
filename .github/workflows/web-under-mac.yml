@@ -43,9 +43,17 @@ jobs:
           "$RUNNER_TEMP/drive/bin/pip" install --quiet pillow pyobjc-framework-Quartz pyobjc-framework-Cocoa pyobjc-framework-ApplicationServices
           "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive
 
+      - name: Layers over a page, filmed
+        if: always()
+        run: |
+          "$RUNNER_TEMP/drive/bin/pip" install --quiet mss psutil
+          "$RUNNER_TEMP/drive/bin/python" scripts/layer-film-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out film
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: web-under-mac
-          path: drive
+          path: |
+            drive
+            film
           retention-days: 5

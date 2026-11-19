@@ -9,6 +9,7 @@ on:
       - apps/desktop/src-tauri/linux/tauri-runtime-cef/src/**
       - apps/desktop/src/lib/web-tab/**
       - scripts/web-under-drive.py
+      - scripts/layer-film-drive.py
       - scripts/overview-drive.py
       - scripts/tools-freeze-drive.py
       - scripts/alt-alone-drive.py
@@ -61,6 +62,12 @@ jobs:
           python -m pip install --quiet pillow comtypes
           python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out drive
 
+      - name: Layers over a page, filmed
+        if: always()
+        run: |
+          python -m pip install --quiet pillow mss psutil
+          python scripts/layer-film-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out film
+
       - name: A page that runs wide keeps the pane's corners
         if: always()
         run: |
@@ -101,4 +108,5 @@ jobs:
             drive
             corner
             overview
+            film
           retention-days: 5
